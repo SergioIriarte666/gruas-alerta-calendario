@@ -108,6 +108,7 @@ export const EnhancedServiceForm = ({
     }] : [],
     value: service?.value || 0,
     costDetails: [],
+    markCostsPaidOnCreate: true,
     salesItems: [],
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
@@ -154,6 +155,7 @@ export const EnhancedServiceForm = ({
         operators: prefilledData.operators || [],
         value: 0,
         costDetails: [],
+        markCostsPaidOnCreate: true,
         salesItems: [],
         hasExcess: false,
         clientCoveredAmount: 0,
@@ -322,6 +324,7 @@ export const EnhancedServiceForm = ({
         operators: [],
         value: service.value,
         costDetails: [],
+        markCostsPaidOnCreate: true,
         salesItems: [],
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
@@ -968,6 +971,28 @@ export const EnhancedServiceForm = ({
                     disabled={false}
                   />
                 )}
+                
+                {/* Marcar como pagado al crear */}
+                <ColoredSectionCard
+                  title="Pago de costos al crear"
+                  icon={<DollarSign className="h-5 w-5" />}
+                  color="orange"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Marcar costos como pagados al crear
+                      </Label>
+                      <div className="text-sm text-muted-foreground">
+                        Si está activado, los costos del servicio se registran como pagados usando la fecha del servicio
+                      </div>
+                    </div>
+                    <Switch
+                      checked={!!formData.markCostsPaidOnCreate}
+                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, markCostsPaidOnCreate: !!checked }))}
+                    />
+                  </div>
+                </ColoredSectionCard>
               </div>
             )}
 

@@ -92,6 +92,7 @@ export interface ServiceFormData {
     subcategory?: string;
     isExisting?: boolean;
   }>;
+  markCostsPaidOnCreate?: boolean;
   hasExcess?: boolean;
   clientCoveredAmount?: number;
   excessAmount?: number;

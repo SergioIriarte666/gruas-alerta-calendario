@@ -52,6 +52,7 @@ export interface ServiceFormData {
   // Financiero
   value: number;
   costDetails: ServiceCostDetail[]; // Kept for form compatibility
+  markCostsPaidOnCreate?: boolean;
   hasExcess?: boolean;
   clientCoveredAmount?: number;
   excessAmount?: number;
