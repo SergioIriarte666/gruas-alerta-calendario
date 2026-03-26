@@ -311,26 +311,86 @@ export const useSupplierPayments = () => {
         throw new Error('Ubicación de bodega no encontrada');
       }
 
-      // Crear movimiento de inventario
-      const { error: movementError } = await supabase
-        .from('inventory_movements')
-        .insert({
-          item_id: itemId,
-          location_id: defaultLocation.id,
-          movement_type: 'entry',
-          quantity: partDetails.part_quantity,
-          unit_cost: partDetails.part_unit_price,
-          total_cost: totalAmount,
-          crane_id: partDetails.crane_id,
-          supplier_id: paymentData.supplier_id,
-          cost_id: costId,
-          movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
-          reason: 'Compra desde módulo de proveedores',
-          observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        });
+      const movementPayload = {
+        item_id: itemId,
+        location_id: defaultLocation.id,
+        movement_type: 'entry' as const,
+        quantity: partDetails.part_quantity,
+        unit_cost: partDetails.part_unit_price,
+        total_cost: totalAmount,
+        crane_id: partDetails.crane_id,
+        supplier_id: paymentData.supplier_id,
+        cost_id: costId,
+        movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        reason: 'Compra desde módulo de proveedores',
+        observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      };
 
-      if (movementError) throw movementError;
+      const { data: existingEntry } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('cost_id', costId)
+        .eq('movement_type', 'entry')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (existingEntry?.id) {
+        const { error: updateExistingError } = await supabase
+          .from('inventory_movements')
+          .update(movementPayload)
+          .eq('id', existingEntry.id);
+
+        if (updateExistingError) throw updateExistingError;
+
+        await supabase
+          .from('costs')
+          .update({ inventory_movement_id: existingEntry.id })
+          .eq('id', costId);
+      } else {
+        const { data: createdEntry, error: movementError } = await supabase
+          .from('inventory_movements')
+          .insert({
+            ...movementPayload,
+            status: 'active'
+          })
+          .select('id')
+          .single();
+
+        if (movementError) {
+          const supabaseError = movementError as any;
+          if (
+            supabaseError?.code === '23505' &&
+            typeof supabaseError?.message === 'string' &&
+            supabaseError.message.includes('uniq_inventory_entry_active_per_cost')
+          ) {
+            const { data: alreadyCreated } = await supabase
+              .from('inventory_movements')
+              .select('id')
+              .eq('cost_id', costId)
+              .eq('movement_type', 'entry')
+              .eq('status', 'active')
+              .maybeSingle();
+
+            if (alreadyCreated?.id) {
+              await supabase
+                .from('costs')
+                .update({ inventory_movement_id: alreadyCreated.id })
+                .eq('id', costId);
+              return;
+            }
+          }
+
+          throw movementError;
+        }
+
+        if (createdEntry?.id) {
+          await supabase
+            .from('costs')
+            .update({ inventory_movement_id: createdEntry.id })
+            .eq('id', costId);
+        }
+      }
     }
 
     // NOTA: La creación de crane_parts se maneja automáticamente por triggers

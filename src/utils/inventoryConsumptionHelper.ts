@@ -190,6 +190,23 @@ export const createDirectInventoryEntry = async ({
   try {
     console.log('[InventoryEntry] Starting entry for cost:', costId);
 
+    const { data: existingEntry } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('cost_id', costId)
+      .eq('movement_type', 'entry')
+      .eq('status', 'active')
+      .limit(1)
+      .single();
+
+    if (existingEntry?.id) {
+      await supabase
+        .from('costs')
+        .update({ inventory_movement_id: existingEntry.id })
+        .eq('id', costId);
+      return true;
+    }
+
     // 1. Find or create inventory item
     let inventoryItemId: string;
 
@@ -254,6 +271,30 @@ export const createDirectInventoryEntry = async ({
       .single();
 
     if (entryError || !entryMovement) {
+      const supabaseError = entryError as any;
+      if (
+        supabaseError?.code === '23505' &&
+        typeof supabaseError?.message === 'string' &&
+        supabaseError.message.includes('uniq_inventory_entry_active_per_cost')
+      ) {
+        const { data: alreadyCreated } = await supabase
+          .from('inventory_movements')
+          .select('id')
+          .eq('cost_id', costId)
+          .eq('movement_type', 'entry')
+          .eq('status', 'active')
+          .limit(1)
+          .single();
+
+        if (alreadyCreated?.id) {
+          await supabase
+            .from('costs')
+            .update({ inventory_movement_id: alreadyCreated.id })
+            .eq('id', costId);
+          return true;
+        }
+      }
+
       console.error('[InventoryEntry] Error creating entry:', entryError);
       throw new Error('No se pudo crear el movimiento de entrada');
     }

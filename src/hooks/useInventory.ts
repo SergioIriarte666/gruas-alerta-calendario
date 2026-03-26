@@ -480,7 +480,49 @@ export const useCreateInventoryMovement = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const supabaseError = error as any;
+        if (
+          supabaseError?.code === '23505' &&
+          typeof supabaseError?.message === 'string' &&
+          supabaseError.message.includes('uniq_inventory_entry_active_per_cost') &&
+          costId
+        ) {
+          const { data: existingEntry, error: existingEntryError } = await supabase
+            .from('inventory_movements')
+            .select('*')
+            .eq('cost_id', costId)
+            .eq('movement_type', 'entry')
+            .eq('status', 'active')
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single();
+
+          if (existingEntryError || !existingEntry) throw error;
+
+          const updates: Partial<InventoryMovement> = {};
+          if (!existingEntry.supplier_id && (movementData as any).supplier_id) updates.supplier_id = (movementData as any).supplier_id;
+          if (!existingEntry.supplier_name && (movementData as any).supplier_name) updates.supplier_name = (movementData as any).supplier_name;
+          if (!existingEntry.batch_number && (movementData as any).batch_number) updates.batch_number = (movementData as any).batch_number;
+          if (!existingEntry.expiration_date && (movementData as any).expiration_date) updates.expiration_date = (movementData as any).expiration_date;
+          if (!existingEntry.reference_document && (movementData as any).reference_document) updates.reference_document = (movementData as any).reference_document;
+          if ((!existingEntry.observations || existingEntry.observations.trim() === '') && (movementData as any).observations) updates.observations = (movementData as any).observations;
+
+          if (Object.keys(updates).length === 0) return existingEntry as any;
+
+          const { data: updatedEntry, error: updateError } = await supabase
+            .from('inventory_movements')
+            .update(updates)
+            .eq('id', existingEntry.id)
+            .select()
+            .single();
+
+          if (updateError || !updatedEntry) return existingEntry as any;
+          return updatedEntry as any;
+        }
+
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
