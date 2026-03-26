@@ -40,6 +40,12 @@ export interface DebtFormData {
   interest_rate?: number | null;
   adjustment_enabled: boolean;
   adjustment_rate?: number | null;
+  currency?: string;
+  down_payment_amount?: number | null;
+  down_payment_date?: string | null;
+  down_payment_paid?: boolean;
+  down_payment_method?: string | null;
+  down_payment_payment_date?: string | null;
 }
 
 const generateInstallmentDates = (firstDate: string, count: number, frequency: string) => {
@@ -128,6 +134,7 @@ export const useCreateDebt = () => {
           interest_rate: data.interest_rate || null,
           adjustment_enabled: data.adjustment_enabled,
           adjustment_rate: data.adjustment_rate || null,
+          currency: data.currency || 'CLP',
           created_by: userId,
         })
         .select()
@@ -135,27 +142,122 @@ export const useCreateDebt = () => {
       if (error) throw error;
 
       // Generate installments
-      const dates = generateInstallmentDates(data.first_due_date, data.installments_count, data.frequency);
-      const baseAmount = data.total_amount / data.installments_count;
+      const hasDownPayment = !!data.down_payment_amount;
+      const installmentsCount = data.installments_count;
+      const remainingCount = hasDownPayment ? (installmentsCount - 1) : installmentsCount;
+      if (remainingCount <= 0) throw new Error('Cantidad de cuotas inválida');
+      const dates = generateInstallmentDates(data.first_due_date, remainingCount, data.frequency);
+      const isUF = (data.currency || 'CLP') === 'UF';
+      const remainingTotal = hasDownPayment ? (data.total_amount - Number(data.down_payment_amount)) : data.total_amount;
+      if (remainingTotal < 0) throw new Error('El pie no puede ser mayor al monto total');
+      const baseAmount = remainingCount > 0 ? remainingTotal / remainingCount : 0;
+      const normalizedBase = isUF ? Number(baseAmount.toFixed(4)) : Math.round(baseAmount);
 
-      const installments = dates.map((dueDate, i) => ({
-        debt_id: debt.id,
-        installment_number: i + 1,
-        due_date: dueDate,
-        principal_amount: Math.round(baseAmount),
-        interest_amount: data.interest_enabled && data.interest_rate
-          ? Math.round(baseAmount * (data.interest_rate / 100))
-          : 0,
-        adjustment_amount: 0,
-        total_amount: data.interest_enabled && data.interest_rate
-          ? Math.round(baseAmount * (1 + data.interest_rate / 100))
-          : Math.round(baseAmount),
-        status: 'pending',
-        created_by: userId,
-      }));
+      const installments = [
+        ...(hasDownPayment
+          ? [{
+              debt_id: debt.id,
+              installment_number: 1,
+              due_date: String(data.down_payment_date || data.first_due_date),
+              principal_amount: isUF ? Number(Number(data.down_payment_amount).toFixed(4)) : Math.round(Number(data.down_payment_amount)),
+              interest_amount: 0,
+              adjustment_amount: 0,
+              total_amount: isUF ? Number(Number(data.down_payment_amount).toFixed(4)) : Math.round(Number(data.down_payment_amount)),
+              status: 'pending',
+              paid_amount: 0,
+              paid_date: null,
+              created_by: userId,
+            }] : []),
+        ...dates.map((dueDate, i) => ({
+          debt_id: debt.id,
+          installment_number: hasDownPayment ? i + 2 : i + 1,
+          due_date: dueDate,
+          principal_amount: normalizedBase,
+          interest_amount: data.interest_enabled && data.interest_rate
+            ? (isUF
+              ? Number((normalizedBase * (data.interest_rate / 100)).toFixed(4))
+              : Math.round(normalizedBase * (data.interest_rate / 100)))
+            : 0,
+          adjustment_amount: 0,
+          total_amount: data.interest_enabled && data.interest_rate
+            ? (isUF
+              ? Number((normalizedBase * (1 + data.interest_rate / 100)).toFixed(4))
+              : Math.round(normalizedBase * (1 + data.interest_rate / 100)))
+            : normalizedBase,
+          status: 'pending',
+          paid_amount: 0,
+          paid_date: null,
+          created_by: userId,
+        }))
+      ];
 
       const { error: iErr } = await supabase.from('debt_installments').insert(installments);
       if (iErr) throw iErr;
+
+      // Marcar el pie como pagado solo si el usuario así lo decide
+      if (hasDownPayment && data.down_payment_paid) {
+        const { data: firstInstallment } = await supabase
+          .from('debt_installments')
+          .select('id,total_amount')
+          .eq('debt_id', debt.id)
+          .eq('installment_number', 1)
+          .limit(1)
+          .single();
+        if (firstInstallment?.id) {
+          const paymentDate = String(data.down_payment_payment_date || data.down_payment_date || data.first_due_date);
+          const pieAmount = (data.currency || 'CLP') === 'UF'
+            ? Number(Number(data.down_payment_amount).toFixed(4))
+            : Math.round(Number(data.down_payment_amount));
+
+          const { error: uErr } = await supabase
+            .from('debt_installments')
+            .update({
+              status: 'paid',
+              paid_amount: pieAmount,
+              paid_date: paymentDate,
+              updated_by: userId,
+            })
+            .eq('id', firstInstallment.id);
+          if (uErr) throw uErr;
+
+          const { error: pErr } = await supabase.from('debt_payments').insert({
+            debt_installment_id: firstInstallment.id,
+            amount: pieAmount,
+            payment_date: paymentDate,
+            method: data.down_payment_method || 'initial',
+            notes: 'Pago inicial (pie) registrado al crear la deuda',
+            created_by: userId,
+          });
+          if (pErr) throw pErr;
+
+          // Crear costo solo para CLP (UF requiere valor UF y se genera al pagar desde el modal)
+          if ((data.currency || 'CLP') === 'CLP') {
+            const { data: categories } = await supabase
+              .from('cost_categories')
+              .select('id')
+              .ilike('name', 'Deudas y Obligaciones')
+              .limit(1);
+            const categoryId = categories?.[0]?.id;
+            const { data: creditor } = await supabase
+              .from('creditors')
+              .select('name')
+              .eq('id', data.creditor_id)
+              .limit(1)
+              .single();
+            if (categoryId) {
+              const { error: cErr } = await supabase.from('costs').insert({
+                description: `Cuota 1 de ${data.description} - ${creditor?.name || 'Acreedor'}`,
+                amount: pieAmount,
+                date: paymentDate,
+                payment_date: paymentDate,
+                category_id: categoryId,
+                created_by: userId,
+              });
+              if (cErr) throw cErr;
+            }
+          }
+        }
+      }
 
       return debt;
     },
@@ -163,8 +265,41 @@ export const useCreateDebt = () => {
       qc.invalidateQueries({ queryKey: ['debts'] });
       qc.invalidateQueries({ queryKey: ['debts-with-progress'] });
       qc.invalidateQueries({ queryKey: ['debt-installments'] });
+      qc.invalidateQueries({ queryKey: ['costs'] });
       toast.success('Deuda creada con cuotas generadas');
     },
     onError: (e: Error) => toast.error(`Error: ${e.message}`),
   });
 };
+
+export const useUpdateDebt = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<DebtFormData> }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const updateData: any = {
+        description: data.description,
+        total_amount: data.total_amount,
+        installments_count: data.installments_count,
+        frequency: data.frequency,
+        first_due_date: data.first_due_date,
+        interest_enabled: data.interest_enabled,
+        interest_rate: data.interest_enabled ? (data.interest_rate ?? null) : null,
+        adjustment_enabled: data.adjustment_enabled,
+        adjustment_rate: data.adjustment_enabled ? (data.adjustment_rate ?? null) : null,
+        currency: data.currency,
+        updated_by: userId,
+        updated_at: new Date().toISOString(),
+      };
+      Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
+      const { error } = await supabase.from('debts').update(updateData).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['debts'] });
+      qc.invalidateQueries({ queryKey: ['debts-with-progress'] });
+      toast.success('Deuda actualizada');
+    },
+    onError: (e: Error) => toast.error(`Error: ${e.message}`),
+  });
+}

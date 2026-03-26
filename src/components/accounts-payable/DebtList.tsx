@@ -18,6 +18,13 @@ interface DebtListProps {
 export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
   const { data: debts, isLoading } = useDebtsWithProgress();
 
+  const formatAmount = (amount: number, currency?: string) => {
+    if (currency === 'UF') {
+      return `UF ${Number(amount).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+    }
+    return `$${Number(amount).toLocaleString('es-CL')}`;
+  };
+
   const getStatusBadge = (debt: DebtWithProgress) => {
     if (debt.overdue_count > 0)
       return <Badge variant="destructive" className="text-xs">Vencida</Badge>;
@@ -88,7 +95,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
                     </TableCell>
                     <TableCell className="text-foreground">{debt.description}</TableCell>
                     <TableCell className="text-foreground font-medium">
-                      ${Number(debt.total_amount).toLocaleString('es-CL')}
+                      {formatAmount(Number(debt.total_amount), debt.currency)}
                     </TableCell>
                     <TableCell className="text-foreground">
                       {getFrequencyLabel(debt.frequency)}

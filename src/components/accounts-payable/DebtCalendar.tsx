@@ -19,6 +19,13 @@ export const DebtCalendar = () => {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
+  const formatAmount = (amount: number, currency?: string) => {
+    if (currency === 'UF') {
+      return `UF ${Number(amount).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+    }
+    return `$${Number(amount).toLocaleString('es-CL')}`;
+  };
+
   const getInstallmentsForDay = (day: Date) => {
     const dateStr = format(day, 'yyyy-MM-dd');
     return (installments || []).filter((i) => i.due_date === dateStr);
@@ -77,7 +84,7 @@ export const DebtCalendar = () => {
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      ${Number(inst.total_amount).toLocaleString('es-CL')}
+                      {formatAmount(Number(inst.total_amount), inst.debts?.currency)}
                     </button>
                   ))}
                   {dayInstallments.length > 2 && (

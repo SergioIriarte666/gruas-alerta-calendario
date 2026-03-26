@@ -10,6 +10,7 @@ import { DebtForm } from '@/components/accounts-payable/DebtForm';
 import { CreditorForm } from '@/components/accounts-payable/CreditorForm';
 import { DebtDetailModal } from '@/components/accounts-payable/DebtDetailModal';
 import { DebtWithProgress } from '@/hooks/useDebts';
+import { CreditorList } from '@/components/accounts-payable/CreditorList';
 
 const AccountsPayable = () => {
   const [isDebtFormOpen, setIsDebtFormOpen] = useState(false);
@@ -35,6 +36,7 @@ const AccountsPayable = () => {
           <TabsTrigger value="installments">Cuotas del Mes</TabsTrigger>
           <TabsTrigger value="debts">Deudas</TabsTrigger>
           <TabsTrigger value="calendar">Calendario</TabsTrigger>
+          <TabsTrigger value="creditors">Acreedores</TabsTrigger>
         </TabsList>
 
         <TabsContent value="installments">
@@ -50,6 +52,10 @@ const AccountsPayable = () => {
 
         <TabsContent value="calendar">
           <DebtCalendar />
+        </TabsContent>
+        
+        <TabsContent value="creditors" className="mt-6">
+          <CreditorList />
         </TabsContent>
       </Tabs>
 

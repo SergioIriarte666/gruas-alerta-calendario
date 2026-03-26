@@ -19,6 +19,13 @@ export const MonthlyInstallments = () => {
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
+  const formatAmount = (amount: number, currency?: string) => {
+    if (currency === 'UF') {
+      return `UF ${Number(amount).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+    }
+    return `$${Number(amount).toLocaleString('es-CL')}`;
+  };
+
   const getStatusBadge = (inst: DebtInstallment) => {
     if (inst.status === 'paid')
       return <Badge className="bg-green-100 text-green-800 text-xs">Pagada</Badge>;
@@ -79,7 +86,7 @@ export const MonthlyInstallments = () => {
                     <TableCell className="text-foreground">{inst.debts?.description || '-'}</TableCell>
                     <TableCell className="text-foreground">{inst.installment_number}</TableCell>
                     <TableCell className="text-foreground font-medium">
-                      ${Number(inst.total_amount).toLocaleString('es-CL')}
+                      {formatAmount(Number(inst.total_amount), inst.debts?.currency)}
                     </TableCell>
                     <TableCell>{getStatusBadge(inst)}</TableCell>
                     <TableCell>

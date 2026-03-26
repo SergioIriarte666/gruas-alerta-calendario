@@ -18,6 +18,8 @@ export interface CreditorFormData {
   type: string;
   notes?: string;
   supplier_id?: string | null;
+  category_id?: string | null;
+  subcategory?: string | null;
 }
 
 export const useCreditors = () => {
@@ -47,6 +49,10 @@ export const useCreateCreditor = () => {
           type: data.type,
           notes: data.notes || null,
           supplier_id: data.supplier_id || null,
+          metadata: {
+            category_id: data.category_id || null,
+            subcategory: data.subcategory || null,
+          },
           created_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .select()
@@ -73,6 +79,10 @@ export const useUpdateCreditor = () => {
           type: data.type,
           notes: data.notes || null,
           supplier_id: data.supplier_id || null,
+          metadata: {
+            category_id: data.category_id || null,
+            subcategory: data.subcategory || null,
+          },
           updated_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .eq('id', id);

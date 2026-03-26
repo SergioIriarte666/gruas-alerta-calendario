@@ -18,6 +18,7 @@ export interface DebtInstallment {
   debts?: {
     description: string;
     creditor_id: string;
+    currency?: string;
     creditors?: { name: string; type: string };
   };
 }
@@ -28,7 +29,7 @@ export const useDebtInstallments = (debtId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('debt_installments')
-        .select('*, debts(description, creditor_id, creditors(name, type))')
+        .select('*, debts(description, creditor_id, currency, creditors(name, type))')
         .order('due_date');
 
       if (debtId) query = query.eq('debt_id', debtId);
@@ -51,7 +52,7 @@ export const useMonthlyInstallments = (monthDate?: Date) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('debt_installments')
-        .select('*, debts(description, creditor_id, creditors(name, type))')
+        .select('*, debts(description, creditor_id, currency, creditors(name, type))')
         .gte('due_date', start)
         .lte('due_date', end)
         .order('due_date');
@@ -70,14 +71,29 @@ export const usePayInstallment = () => {
       paymentDate,
       method,
       notes,
+      cost_center_id,
+      crane_id,
+      operator_id,
+      uf_value,
     }: {
       installment: DebtInstallment;
       paymentDate: string;
       method?: string;
       notes?: string;
+      cost_center_id?: string | null;
+      crane_id?: string | null;
+      operator_id?: string | null;
+      uf_value?: number | null;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const amount = Number(installment.total_amount);
+      const installmentAmount = Number(installment.total_amount);
+      const isUF = installment.debts?.currency === 'UF';
+      const ufValue = isUF ? Number(uf_value || 0) : 0;
+      if (isUF && (!ufValue || ufValue <= 0)) {
+        throw new Error('Debe ingresar el valor de la UF para calcular el monto en CLP');
+      }
+      const clpAmount = isUF ? Math.round(installmentAmount * ufValue) : Math.round(installmentAmount);
+      const installmentLabel = `Cuota ${installment.installment_number}`;
 
       // 1. Update installment
       const { error: uErr } = await supabase
@@ -85,19 +101,24 @@ export const usePayInstallment = () => {
         .update({
           status: 'paid',
           paid_date: paymentDate,
-          paid_amount: amount,
+          paid_amount: installmentAmount,
           updated_by: userId,
         })
         .eq('id', installment.id);
       if (uErr) throw uErr;
 
       // 2. Create debt_payment record
+      const paymentNotes = [
+        notes || null,
+        isUF ? `UF: ${installmentAmount} | Valor UF: ${ufValue} | CLP: ${clpAmount}` : null,
+      ].filter(Boolean).join(' · ') || null;
+
       const { error: pErr } = await supabase.from('debt_payments').insert({
         debt_installment_id: installment.id,
-        amount,
+        amount: installmentAmount,
         payment_date: paymentDate,
         method: method || null,
-        notes: notes || null,
+        notes: paymentNotes,
         created_by: userId,
       });
       if (pErr) throw pErr;
@@ -117,11 +138,15 @@ export const usePayInstallment = () => {
 
       // 4. Create cost record
       const { error: cErr } = await supabase.from('costs').insert({
-        description: `Cuota ${installment.installment_number} de ${debtDesc} - ${creditorName}`,
-        amount,
+        description: `${installmentLabel} de ${debtDesc} - ${creditorName}`,
+        amount: clpAmount,
         date: paymentDate,
         payment_date: paymentDate,
         category_id: categoryId,
+        cost_center_id: cost_center_id || null,
+        crane_id: crane_id || null,
+        operator_id: operator_id || null,
+        notes: paymentNotes,
         created_by: userId,
       });
       if (cErr) throw cErr;

@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { useCreditors } from '@/hooks/useCreditors';
 import { useCreateDebt } from '@/hooks/useDebts';
 import { format } from 'date-fns';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface DebtFormProps {
   open: boolean;
@@ -26,12 +27,19 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
     description: '',
     total_amount: '',
     installments_count: '',
+    currency: 'CLP',
     frequency: 'monthly',
     first_due_date: format(new Date(), 'yyyy-MM-dd'),
     interest_enabled: false,
     interest_rate: '',
     adjustment_enabled: false,
     adjustment_rate: '',
+    has_down_payment: false,
+    down_payment_amount: '',
+    down_payment_date: format(new Date(), 'yyyy-MM-dd'),
+    down_payment_paid: false,
+    down_payment_payment_date: format(new Date(), 'yyyy-MM-dd'),
+    down_payment_method: 'transferencia',
   });
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -46,20 +54,40 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
         description: form.description,
         total_amount: Number(form.total_amount),
         installments_count: Number(form.installments_count),
+        currency: form.currency,
         frequency: form.frequency,
         first_due_date: form.first_due_date,
         interest_enabled: form.interest_enabled,
         interest_rate: form.interest_enabled ? Number(form.interest_rate) : null,
         adjustment_enabled: form.adjustment_enabled,
         adjustment_rate: form.adjustment_enabled ? Number(form.adjustment_rate) : null,
+        down_payment_amount: form.has_down_payment ? Number(form.down_payment_amount) : null,
+        down_payment_date: form.has_down_payment ? form.down_payment_date : null,
+        down_payment_paid: form.has_down_payment ? form.down_payment_paid : false,
+        down_payment_payment_date: form.has_down_payment && form.down_payment_paid ? form.down_payment_payment_date : null,
+        down_payment_method: form.has_down_payment && form.down_payment_paid ? form.down_payment_method : null,
       },
       { onSuccess: () => onOpenChange(false) }
     );
   };
 
-  const installmentPreview = form.total_amount && form.installments_count
-    ? Math.round(Number(form.total_amount) / Number(form.installments_count))
+  const total = Number(form.total_amount || 0);
+  const totalInstallments = Number(form.installments_count || 0);
+  const downPayment = form.has_down_payment ? Number(form.down_payment_amount || 0) : 0;
+  const remainingCount = form.has_down_payment ? (totalInstallments - 1) : totalInstallments;
+  const remainingTotal = form.has_down_payment ? (total - downPayment) : total;
+
+  const installmentPreview = remainingTotal > 0 && remainingCount > 0
+    ? (form.currency === 'UF'
+      ? Number((remainingTotal / remainingCount).toFixed(4))
+      : Math.round(remainingTotal / remainingCount))
     : 0;
+
+  const canSubmit = !!form.creditor_id
+    && Number(form.total_amount) > 0
+    && Number(form.installments_count) > 0
+    && (!form.has_down_payment || (Number(form.down_payment_amount) > 0 && !!form.down_payment_date))
+    && (!form.has_down_payment || remainingTotal >= 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,15 +125,92 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
             </div>
             <div className="space-y-2">
               <Label>Cantidad de Cuotas</Label>
-              <Input type="number" value={form.installments_count} onChange={(e) => handleChange('installments_count', e.target.value)} min="1" required />
+              <Input
+                type="number"
+                value={form.installments_count}
+                onChange={(e) => handleChange('installments_count', e.target.value)}
+                min={form.has_down_payment ? '2' : '1'}
+                required
+              />
             </div>
           </div>
 
-          {installmentPreview > 0 && (
-            <div className="rounded-lg bg-muted/50 p-3 text-sm text-foreground">
-              Cuota estimada: <strong>${installmentPreview.toLocaleString('es-CL')}</strong>
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label className="text-sm">Tiene pie inicial</Label>
+              <p className="text-xs text-muted-foreground">Registrar pago inicial (pie) y repartir el saldo en cuotas</p>
+            </div>
+            <Switch checked={form.has_down_payment} onCheckedChange={(v) => handleChange('has_down_payment', v)} />
+          </div>
+
+          {form.has_down_payment && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Monto Pie</Label>
+                <Input type="number" value={form.down_payment_amount} onChange={(e) => handleChange('down_payment_amount', e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Fecha Pie</Label>
+                <DatePickerInput value={form.down_payment_date} onChange={(v) => handleChange('down_payment_date', v)} />
+              </div>
+              <div className="col-span-2 flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="text-sm">Pie pagado</Label>
+                  <p className="text-xs text-muted-foreground">Marcar el pie como pagado en la creación</p>
+                </div>
+                <Switch checked={form.down_payment_paid} onCheckedChange={(v) => handleChange('down_payment_paid', v)} />
+              </div>
+              {form.down_payment_paid && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Fecha de pago del pie</Label>
+                    <DatePickerInput value={form.down_payment_payment_date} onChange={(v) => handleChange('down_payment_payment_date', v)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Método de pago</Label>
+                    <Select value={form.down_payment_method} onValueChange={(v) => handleChange('down_payment_method', v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="transferencia">Transferencia</SelectItem>
+                        <SelectItem value="efectivo">Efectivo</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="tarjeta">Tarjeta</SelectItem>
+                        <SelectItem value="initial">Inicial</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </div>
           )}
+
+          {installmentPreview > 0 && (
+            <div className="rounded-lg bg-muted/50 p-3 text-sm text-foreground">
+              Cuota estimada:{' '}
+              <strong>
+                {form.currency === 'UF'
+                  ? `UF ${installmentPreview.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`
+                  : `$${installmentPreview.toLocaleString('es-CL')}`}
+              </strong>
+              {form.has_down_payment && remainingCount > 0 && (
+                <span className="block text-xs text-muted-foreground mt-1">
+                  Cuotas pendientes: {remainingCount} (total: {totalInstallments} incluyendo pie)
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Moneda</Label>
+            <Select value={form.currency} onValueChange={(v) => handleChange('currency', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CLP">CLP</SelectItem>
+                <SelectItem value="UF">UF</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -121,7 +226,7 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
             </div>
             <div className="space-y-2">
               <Label>Primera Cuota</Label>
-              <Input type="date" value={form.first_due_date} onChange={(e) => handleChange('first_due_date', e.target.value)} required />
+              <DatePickerInput value={form.first_due_date} onChange={(v) => handleChange('first_due_date', v)} />
             </div>
           </div>
 
@@ -141,7 +246,7 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={isPending || !form.creditor_id}>
+            <Button type="submit" disabled={isPending || !canSubmit}>
               {isPending ? 'Creando...' : 'Crear Deuda'}
             </Button>
           </DialogFooter>

@@ -9,29 +9,42 @@ export const APDashboardCards = () => {
   const { data: debts } = useDebtsWithProgress();
   const { data: monthlyInstallments } = useMonthlyInstallments();
 
-  const totalPending = debts?.reduce((s, d) => s + d.pending_amount, 0) || 0;
+  const totalPendingCLP = debts?.filter(d => d.currency !== 'UF').reduce((s, d) => s + Number(d.pending_amount || 0), 0) || 0;
+  const totalPendingUF = debts?.filter(d => d.currency === 'UF').reduce((s, d) => s + Number(d.pending_amount || 0), 0) || 0;
   const totalOverdue = debts?.reduce((s, d) => s + d.overdue_count, 0) || 0;
 
-  const monthlyTotal = monthlyInstallments
-    ?.filter((i) => i.status === 'pending')
+  const monthlyPendingCLP = monthlyInstallments
+    ?.filter((i) => i.status === 'pending' && i.debts?.currency !== 'UF')
+    .reduce((s, i) => s + Number(i.total_amount), 0) || 0;
+  const monthlyPendingUF = monthlyInstallments
+    ?.filter((i) => i.status === 'pending' && i.debts?.currency === 'UF')
     .reduce((s, i) => s + Number(i.total_amount), 0) || 0;
 
-  const monthlyPaid = monthlyInstallments
-    ?.filter((i) => i.status === 'paid')
+  const monthlyPaidCLP = monthlyInstallments
+    ?.filter((i) => i.status === 'paid' && i.debts?.currency !== 'UF')
     .reduce((s, i) => s + Number(i.paid_amount || 0), 0) || 0;
+  const monthlyPaidUF = monthlyInstallments
+    ?.filter((i) => i.status === 'paid' && i.debts?.currency === 'UF')
+    .reduce((s, i) => s + Number(i.paid_amount || 0), 0) || 0;
+
+  const formatUF = (amount: number) => `UF ${Number(amount).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 
   const cards = [
     {
       title: 'Deuda Total Vigente',
-      value: `$${totalPending.toLocaleString('es-CL')}`,
+      value: totalPendingCLP > 0 ? `$${totalPendingCLP.toLocaleString('es-CL')}` : (totalPendingUF > 0 ? formatUF(totalPendingUF) : '$0'),
+      subtitle: totalPendingCLP > 0 && totalPendingUF > 0 ? formatUF(totalPendingUF) : undefined,
       icon: DollarSign,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
     },
     {
       title: 'Cuotas del Mes',
-      value: `$${monthlyTotal.toLocaleString('es-CL')}`,
-      subtitle: `${monthlyInstallments?.filter((i) => i.status === 'pending').length || 0} pendientes`,
+      value: monthlyPendingCLP > 0 ? `$${monthlyPendingCLP.toLocaleString('es-CL')}` : (monthlyPendingUF > 0 ? formatUF(monthlyPendingUF) : '$0'),
+      subtitle: [
+        `${monthlyInstallments?.filter((i) => i.status === 'pending').length || 0} pendientes`,
+        monthlyPendingCLP > 0 && monthlyPendingUF > 0 ? formatUF(monthlyPendingUF) : null
+      ].filter(Boolean).join(' · '),
       icon: CalendarClock,
       color: 'text-amber-600',
       bg: 'bg-amber-50',
@@ -45,8 +58,11 @@ export const APDashboardCards = () => {
     },
     {
       title: 'Pagado este Mes',
-      value: `$${monthlyPaid.toLocaleString('es-CL')}`,
-      subtitle: `${monthlyInstallments?.filter((i) => i.status === 'paid').length || 0} cuotas`,
+      value: monthlyPaidCLP > 0 ? `$${monthlyPaidCLP.toLocaleString('es-CL')}` : (monthlyPaidUF > 0 ? formatUF(monthlyPaidUF) : '$0'),
+      subtitle: [
+        `${monthlyInstallments?.filter((i) => i.status === 'paid').length || 0} cuotas`,
+        monthlyPaidCLP > 0 && monthlyPaidUF > 0 ? formatUF(monthlyPaidUF) : null
+      ].filter(Boolean).join(' · '),
       icon: CheckCircle,
       color: 'text-green-600',
       bg: 'bg-green-50',
