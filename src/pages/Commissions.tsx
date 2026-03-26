@@ -247,6 +247,20 @@ const Commissions = () => {
   const toggleCommissionSelection = (commissionId: string) => {
     const commission = filteredCommissions.find(c => c.id === commissionId);
     if (commission?.status === 'paid') return; // Don't allow selection of paid commissions
+
+    const isSelecting = !selectedCommissions.includes(commissionId);
+    if (isSelecting && selectedCommissions.length > 0) {
+      const firstSelected = filteredCommissions.find(c => c.id === selectedCommissions[0]);
+      const selectedOperatorId = firstSelected?.operator_id;
+      if (selectedOperatorId && commission?.operator_id && selectedOperatorId !== commission.operator_id) {
+        toast({
+          type: "error",
+          title: "Selección inválida",
+          description: "Solo puedes seleccionar comisiones de un operador por lote.",
+        });
+        return;
+      }
+    }
     
     setSelectedCommissions(prev => 
       prev.includes(commissionId) 

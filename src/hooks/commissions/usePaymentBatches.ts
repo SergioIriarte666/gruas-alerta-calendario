@@ -43,15 +43,11 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   // Marcar comisiones como pagadas usando la fecha seleccionada por el usuario
   const paymentDateFormatted = formatForDatabase(data.payment_date);
   
-  const { error: updateError } = await supabase
-    .from('costs')
-    .update({ 
-      subcategory: 'comisiones_pagadas',
-      payment_date: paymentDateFormatted, // Registrar fecha real de pago seleccionada
-      payment_batch_id: batchNumber, // Asociar al lote de pago
-      notes: `Pagado en lote ${batchNumber} el ${paymentDateFormatted}. ${data.notes || ''}`.trim()
-    })
-    .in('id', data.commission_ids);
+  const { error: updateError } = await supabase.rpc('update_commission_payment_date', {
+    p_commission_ids: data.commission_ids,
+    p_payment_date: paymentDateFormatted,
+    p_payment_batch_id: batchNumber,
+  });
     
   if (updateError) {
     throw new Error(`Error updating commissions: ${updateError.message}`);

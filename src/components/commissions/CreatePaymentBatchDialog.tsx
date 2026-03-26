@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { Commission, PAYMENT_METHODS } from '@/types/commissions';
 import { formatForDisplay, getCurrentChileDate, createLocalDateFromCalendar } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface CreatePaymentBatchDialogProps {
   selectedCommissions: string[];
@@ -54,6 +55,17 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!operatorId) {
+      toast.error('No se pudo determinar el operador del lote');
+      return;
+    }
+
+    const operatorIds = new Set(selectedCommissionObjects.map(c => c.operator_id).filter(Boolean));
+    if (operatorIds.size > 1) {
+      toast.error('Solo puedes crear un lote con comisiones de un solo operador');
+      return;
+    }
     
     onSuccess({
       operator_id: operatorId,
