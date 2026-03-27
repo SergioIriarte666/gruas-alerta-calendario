@@ -73,7 +73,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         referencedMovementIds.length > 0
           ? supabase
               .from('inventory_movements')
-              .select('id')
+              .select('id, movement_type, quantity, unit_cost, total_cost, movement_date, status')
               .in('id', referencedMovementIds)
               .eq('status', 'active')
           : Promise.resolve({ data: [] as { id: string }[] } as any),
@@ -85,7 +85,18 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
           : Promise.resolve({ data: [] as { id: string }[] } as any),
       ]);
 
-      const activeMovementIds = new Set((activeMovementsResp as any).data?.map((m: any) => m.id) || []);
+      const activeMovements = ((activeMovementsResp as any).data || []) as Array<{
+        id: string;
+        movement_type: string;
+        quantity: number | null;
+        unit_cost: number | null;
+        total_cost: number | null;
+        movement_date: string | null;
+        status: string;
+      }>;
+
+      const activeMovementIds = new Set(activeMovements.map(m => m.id));
+      const movementById = new Map(activeMovements.map(m => [m.id, m] as const));
       const existingCostIds = new Set((existingCostsResp as any).data?.map((c: any) => c.id) || []);
 
       // Filtrar piezas directas que refieren a movimientos/costos eliminados
@@ -99,10 +110,33 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         return true;
       });
 
+      const normalizeDirect = (part: CranePart): CranePart => {
+        if (!part.inventory_movement_id) return part;
+        const movement = movementById.get(part.inventory_movement_id);
+        if (!movement) return part;
+        if (movement.movement_type !== 'exit') return part;
+
+        const qty = typeof movement.quantity === 'number' ? Math.abs(movement.quantity) : Math.abs(part.quantity || 0);
+        const unit = typeof movement.unit_cost === 'number' ? movement.unit_cost : part.unit_price;
+        const total =
+          typeof movement.total_cost === 'number'
+            ? movement.total_cost
+            : typeof unit === 'number' && typeof qty === 'number'
+            ? unit * qty
+            : part.total_value;
+
+        return {
+          ...part,
+          quantity: qty,
+          unit_price: unit,
+          total_value: total,
+        };
+      };
+
       // Si solo queremos fuente directa, devolvemos aquí
       if (sourceMode === 'direct') {
         const byKey = new Map<string, CranePart>();
-        (directPartsRaw || []).forEach(part => {
+        (directParts || []).map(normalizeDirect).forEach(part => {
           const key =
             part.inventory_movement_id
               ? `m:${part.inventory_movement_id}`
@@ -234,7 +268,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
       }));
 
       // Marcar piezas directas
-      const enhancedDirectParts: EnhancedCranePart[] = (directParts || []).map(part => ({
+      const enhancedDirectParts: EnhancedCranePart[] = (directParts || []).map(normalizeDirect).map(part => ({
         ...part,
         origin: 'direct' as const,
       }));

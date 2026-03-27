@@ -28,6 +28,295 @@ export const useSupplierPayments = () => {
   const queryClient = useQueryClient();
   const { invalidateAll } = useUniversalSync();
 
+  async function createPartCostAndInventory({
+    paymentId,
+    paymentData,
+    partDetails
+  }: {
+    paymentId: string;
+    paymentData: SupplierPayment;
+    partDetails: {
+      part_name: string;
+      part_quantity: number;
+      part_unit_price: number;
+      crane_id: string | null;
+      add_to_inventory: boolean;
+    };
+  }) {
+    let supplierName = 'Proveedor';
+    if (paymentData.supplier_id) {
+      const { data: supplierData } = await (supabase as any)
+        .from('inventory_suppliers')
+        .select('name')
+        .eq('id', paymentData.supplier_id)
+        .single();
+
+      if (supplierData) {
+        supplierName = supplierData.name;
+      }
+    }
+
+    const { data: maintenanceCategory } = await supabase
+      .from('cost_categories')
+      .select('id')
+      .eq('name', 'Mantenimiento')
+      .single();
+
+    if (!maintenanceCategory) {
+      throw new Error('Categoría de Mantenimiento no encontrada');
+    }
+
+    const totalAmount = partDetails.part_quantity * partDetails.part_unit_price;
+
+    const { data: paymentWithCost } = await supabase
+      .from('supplier_payments')
+      .select('cost_id')
+      .eq('id', paymentId)
+      .single();
+
+    let costId: string;
+
+    if (paymentWithCost?.cost_id) {
+      const { data: updatedCost, error: updateError } = await supabase
+        .from('costs')
+        .update({
+          amount: totalAmount,
+          category_id: maintenanceCategory.id,
+          crane_id: partDetails.crane_id,
+          description: `Compra de piezas: ${partDetails.part_name}`,
+          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
+          payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        })
+        .eq('id', paymentWithCost.cost_id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      costId = updatedCost.id;
+
+      await supabase
+        .from('costs')
+        .update({ supplier_payment_id: paymentId })
+        .eq('id', costId)
+        .is('supplier_payment_id', null);
+    } else {
+      const { data: costData, error: costError } = await supabase
+        .from('costs')
+        .insert({
+          amount: totalAmount,
+          category_id: maintenanceCategory.id,
+          crane_id: partDetails.crane_id,
+          date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          description: `Compra de piezas: ${partDetails.part_name}`,
+          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
+          supplier_payment_id: paymentId,
+          supplier_id: paymentData.supplier_id,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (costError) throw costError;
+      costId = costData.id;
+
+      await supabase
+        .from('supplier_payments')
+        .update({ cost_id: costId })
+        .eq('id', paymentId)
+        .is('cost_id', null);
+    }
+
+    if (partDetails.add_to_inventory) {
+      const { data: existingItem } = await supabase
+        .from('inventory_items')
+        .select('id')
+        .eq('name', partDetails.part_name)
+        .single();
+
+      let itemId = existingItem?.id;
+
+      if (!itemId) {
+        const { data: newItem, error: itemError } = await supabase
+          .from('inventory_items')
+          .insert({
+            name: partDetails.part_name,
+            unit_of_measure: 'unidad',
+            unit_cost: partDetails.part_unit_price,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          })
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+        itemId = newItem.id;
+      }
+
+      const { data: defaultLocation } = await supabase
+        .from('inventory_locations')
+        .select('id')
+        .eq('name', 'Bodega Principal')
+        .single();
+
+      if (!defaultLocation) {
+        throw new Error('Ubicación de bodega no encontrada');
+      }
+
+      const movementPayload = {
+        item_id: itemId,
+        location_id: defaultLocation.id,
+        movement_type: 'entry' as const,
+        quantity: partDetails.part_quantity,
+        unit_cost: partDetails.part_unit_price,
+        total_cost: totalAmount,
+        crane_id: null,
+        supplier_id: paymentData.supplier_id,
+        supplier_name: supplierName,
+        cost_id: costId,
+        movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        reason: 'Compra desde módulo de proveedores',
+        observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      };
+
+      await supabase
+        .from('inventory_items')
+        .update({ unit_cost: partDetails.part_unit_price })
+        .eq('id', itemId)
+        .or('unit_cost.is.null,unit_cost.lte.0');
+
+      const { data: existingEntry } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('cost_id', costId)
+        .eq('movement_type', 'entry')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      let entryId: string | null = existingEntry?.id || null;
+
+      if (existingEntry?.id) {
+        const { error: updateExistingError } = await supabase
+          .from('inventory_movements')
+          .update(movementPayload)
+          .eq('id', existingEntry.id);
+
+        if (updateExistingError) throw updateExistingError;
+      } else {
+        const { data: createdEntry, error: movementError } = await supabase
+          .from('inventory_movements')
+          .insert({
+            ...movementPayload,
+            status: 'active'
+          })
+          .select('id')
+          .single();
+
+        if (movementError) {
+          const supabaseError = movementError as any;
+          if (
+            supabaseError?.code === '23505' &&
+            typeof supabaseError?.message === 'string' &&
+            supabaseError.message.includes('uniq_inventory_entry_active_per_cost')
+          ) {
+            const { data: alreadyCreated } = await supabase
+              .from('inventory_movements')
+              .select('id')
+              .eq('cost_id', costId)
+              .eq('movement_type', 'entry')
+              .eq('status', 'active')
+              .maybeSingle();
+
+            if (alreadyCreated?.id) entryId = alreadyCreated.id;
+            if (!entryId) {
+              throw new Error('No se pudo recuperar el movimiento de entrada existente para este costo');
+            }
+            // Continuar el flujo (por ejemplo, consumo inmediato) usando entryId existente
+            // No retornar aquí.
+          }
+
+          throw movementError;
+        }
+
+        if (createdEntry?.id) entryId = createdEntry.id;
+      }
+
+      if (!entryId) return;
+
+      const shouldImmediateConsume = !!partDetails.crane_id;
+
+      if (shouldImmediateConsume) {
+        const exitPayload = {
+          item_id: itemId,
+          location_id: defaultLocation.id,
+          movement_type: 'exit' as const,
+          quantity: partDetails.part_quantity,
+          unit_cost: partDetails.part_unit_price,
+          total_cost: totalAmount,
+          crane_id: partDetails.crane_id,
+          supplier_id: paymentData.supplier_id,
+          supplier_name: supplierName,
+          cost_id: costId,
+          movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          reason: 'Consumo inmediato',
+          observations: `Consumo inmediato desde proveedor. Pago: ${paymentData.reference_number || paymentData.description}`,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        };
+
+        const { data: existingExit } = await supabase
+          .from('inventory_movements')
+          .select('id')
+          .eq('cost_id', costId)
+          .eq('movement_type', 'exit')
+          .eq('status', 'active')
+          .eq('crane_id', partDetails.crane_id)
+          .maybeSingle();
+
+        let exitId: string | null = existingExit?.id || null;
+
+        if (existingExit?.id) {
+          const { error: updateExitError } = await supabase
+            .from('inventory_movements')
+            .update(exitPayload)
+            .eq('id', existingExit.id);
+
+          if (updateExitError) throw updateExitError;
+        } else {
+          const { data: createdExit, error: createExitError } = await supabase
+            .from('inventory_movements')
+            .insert({
+              ...exitPayload,
+              status: 'active'
+            })
+            .select('id')
+            .single();
+
+          if (createExitError) throw createExitError;
+          exitId = createdExit?.id || null;
+        }
+
+        if (exitId) {
+          await supabase
+            .from('costs')
+            .update({ inventory_movement_id: exitId })
+            .eq('id', costId);
+
+          await supabase
+            .from('crane_parts')
+            .select('id')
+            .eq('inventory_movement_id', exitId)
+            .maybeSingle();
+        }
+      } else {
+        await supabase
+          .from('costs')
+          .update({ inventory_movement_id: entryId })
+          .eq('id', costId);
+      }
+    }
+  }
+
   const paymentsQuery = useQuery({
     queryKey: ['supplier-payments'],
     queryFn: async (): Promise<SupplierPayment[]> => {
@@ -72,6 +361,25 @@ export const useSupplierPayments = () => {
         .single();
 
       if (error) throw error;
+
+      if (
+        isPaid &&
+        payment &&
+        data.part_name &&
+        (data.add_to_inventory || !!data.crane_id)
+      ) {
+        await createPartCostAndInventory({
+          paymentId: (payment as any).id,
+          paymentData: payment as SupplierPayment,
+          partDetails: {
+            part_name: data.part_name,
+            part_quantity: data.part_quantity || 1,
+            part_unit_price: data.part_unit_price || 0,
+            crane_id: data.crane_id || null,
+            add_to_inventory: data.add_to_inventory || false
+          }
+        });
+      }
 
       // If there are selected invoices and payment is marked as paid, update invoice paid_amount
       if (data.selected_invoice_ids && data.selected_invoice_ids.length > 0 && data.status === 'paid') {
@@ -130,14 +438,23 @@ export const useSupplierPayments = () => {
         notes: data.notes || null,
         status: data.status || 'pending',
         crane_id: data.crane_id === "" ? null : (data.crane_id || null),
+        part_name: data.part_name === "" ? null : (data.part_name || null),
+        part_quantity: data.part_quantity,
+        part_unit_price: data.part_unit_price,
+        add_to_inventory: data.add_to_inventory,
         supplier_invoice_id: data.supplier_invoice_id || null,
       };
+
+      if (!('part_name' in data)) delete cleanedData.part_name;
+      if (!('part_quantity' in data)) delete cleanedData.part_quantity;
+      if (!('part_unit_price' in data)) delete cleanedData.part_unit_price;
+      if (!('add_to_inventory' in data)) delete cleanedData.add_to_inventory;
       
       // Si se está marcando como paid, sincronizar paid_amount con amount total
       if (data.status === 'paid') {
-        cleanedData.paid_date = cleanedData.paid_date || new Date().toISOString().split('T')[0];
+        cleanedData.paid_date = data.paid_date || new Date().toISOString().split('T')[0];
         // Siempre igualar paid_amount al monto total cuando se marca como pagado
-        cleanedData.paid_amount = data.amount || cleanedData.paid_amount || 0;
+        cleanedData.paid_amount = typeof data.amount === 'number' ? data.amount : 0;
       }
       
       const { data: payment, error } = await supabase
@@ -152,7 +469,7 @@ export const useSupplierPayments = () => {
       const typedPayment = payment as SupplierPayment;
 
       // Si se está marcando como paid y tiene detalles de productos, ejecutar lógica adicional
-      if (data.status === 'paid' && payment && data.part_name && data.crane_id) {
+      if (data.status === 'paid' && payment && data.part_name && (data.add_to_inventory || !!data.crane_id)) {
         await createPartCostAndInventory({
           paymentId: id,
           paymentData: typedPayment,
@@ -160,7 +477,7 @@ export const useSupplierPayments = () => {
             part_name: data.part_name,
             part_quantity: data.part_quantity || 1,
             part_unit_price: data.part_unit_price || 0,
-            crane_id: data.crane_id,
+            crane_id: data.crane_id || null,
             add_to_inventory: data.add_to_inventory || false
           }
         });
@@ -177,224 +494,6 @@ export const useSupplierPayments = () => {
       toast.error('Error al actualizar el pago');
     }
   });
-
-  // Función auxiliar para crear costos, crane_parts e inventory_movements
-  const createPartCostAndInventory = async ({
-    paymentId,
-    paymentData,
-    partDetails
-  }: {
-    paymentId: string;
-    paymentData: SupplierPayment;
-    partDetails: {
-      part_name: string;
-      part_quantity: number;
-      part_unit_price: number;
-      crane_id: string;
-      add_to_inventory: boolean;
-    }
-  }) => {
-    // Obtener nombre del proveedor
-    let supplierName = 'Proveedor';
-    if (paymentData.supplier_id) {
-      const { data: supplierData } = await (supabase as any)
-        .from('inventory_suppliers')
-        .select('name')
-        .eq('id', paymentData.supplier_id)
-        .single();
-      
-      if (supplierData) {
-        supplierName = supplierData.name;
-      }
-    }
-
-    // Obtener categoría de Mantenimiento
-    const { data: maintenanceCategory } = await supabase
-      .from('cost_categories')
-      .select('id')
-      .eq('name', 'Mantenimiento')
-      .single();
-
-    if (!maintenanceCategory) {
-      throw new Error('Categoría de Mantenimiento no encontrada');
-    }
-
-    const totalAmount = partDetails.part_quantity * partDetails.part_unit_price;
-
-    // Buscar si el payment ya tiene un cost vinculado (via cost_id en el payment)
-    const { data: paymentWithCost } = await supabase
-      .from('supplier_payments')
-      .select('cost_id')
-      .eq('id', paymentId)
-      .single();
-
-    let costId: string;
-
-    if (paymentWithCost?.cost_id) {
-      // Ya existe un cost vinculado → actualizar en vez de crear
-      const { data: updatedCost, error: updateError } = await supabase
-        .from('costs')
-        .update({
-          amount: totalAmount,
-          category_id: maintenanceCategory.id,
-          crane_id: partDetails.crane_id,
-          description: `Compra de piezas: ${partDetails.part_name}`,
-          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
-          payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
-        })
-        .eq('id', paymentWithCost.cost_id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-      costId = updatedCost.id;
-    } else {
-      // No existe cost → crear uno nuevo con supplier_payment_id para evitar trigger circular
-      const { data: costData, error: costError } = await supabase
-        .from('costs')
-        .insert({
-          amount: totalAmount,
-          category_id: maintenanceCategory.id,
-          crane_id: partDetails.crane_id,
-          date: paymentData.paid_date || new Date().toISOString().split('T')[0],
-          description: `Compra de piezas: ${partDetails.part_name}`,
-          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
-          supplier_payment_id: paymentId,
-          supplier_id: paymentData.supplier_id,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        })
-        .select()
-        .single();
-
-      if (costError) throw costError;
-      costId = costData.id;
-    }
-
-    // Si add_to_inventory es true, crear movimiento de inventario
-    if (partDetails.add_to_inventory) {
-      // Buscar o crear el item de inventario
-      const { data: existingItem } = await supabase
-        .from('inventory_items')
-        .select('id')
-        .eq('name', partDetails.part_name)
-        .single();
-
-      let itemId = existingItem?.id;
-
-      // Si no existe, crear el item
-      if (!itemId) {
-        const { data: newItem, error: itemError } = await supabase
-          .from('inventory_items')
-          .insert({
-            name: partDetails.part_name,
-            unit_of_measure: 'unidad',
-            unit_cost: partDetails.part_unit_price,
-            created_by: (await supabase.auth.getUser()).data.user?.id
-          })
-          .select()
-          .single();
-
-        if (itemError) throw itemError;
-        itemId = newItem.id;
-      }
-
-      // Obtener la ubicación por defecto (Bodega Principal)
-      const { data: defaultLocation } = await supabase
-        .from('inventory_locations')
-        .select('id')
-        .eq('name', 'Bodega Principal')
-        .single();
-
-      if (!defaultLocation) {
-        throw new Error('Ubicación de bodega no encontrada');
-      }
-
-      const movementPayload = {
-        item_id: itemId,
-        location_id: defaultLocation.id,
-        movement_type: 'entry' as const,
-        quantity: partDetails.part_quantity,
-        unit_cost: partDetails.part_unit_price,
-        total_cost: totalAmount,
-        crane_id: partDetails.crane_id,
-        supplier_id: paymentData.supplier_id,
-        cost_id: costId,
-        movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
-        reason: 'Compra desde módulo de proveedores',
-        observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
-        created_by: (await supabase.auth.getUser()).data.user?.id
-      };
-
-      const { data: existingEntry } = await supabase
-        .from('inventory_movements')
-        .select('id')
-        .eq('cost_id', costId)
-        .eq('movement_type', 'entry')
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (existingEntry?.id) {
-        const { error: updateExistingError } = await supabase
-          .from('inventory_movements')
-          .update(movementPayload)
-          .eq('id', existingEntry.id);
-
-        if (updateExistingError) throw updateExistingError;
-
-        await supabase
-          .from('costs')
-          .update({ inventory_movement_id: existingEntry.id })
-          .eq('id', costId);
-      } else {
-        const { data: createdEntry, error: movementError } = await supabase
-          .from('inventory_movements')
-          .insert({
-            ...movementPayload,
-            status: 'active'
-          })
-          .select('id')
-          .single();
-
-        if (movementError) {
-          const supabaseError = movementError as any;
-          if (
-            supabaseError?.code === '23505' &&
-            typeof supabaseError?.message === 'string' &&
-            supabaseError.message.includes('uniq_inventory_entry_active_per_cost')
-          ) {
-            const { data: alreadyCreated } = await supabase
-              .from('inventory_movements')
-              .select('id')
-              .eq('cost_id', costId)
-              .eq('movement_type', 'entry')
-              .eq('status', 'active')
-              .maybeSingle();
-
-            if (alreadyCreated?.id) {
-              await supabase
-                .from('costs')
-                .update({ inventory_movement_id: alreadyCreated.id })
-                .eq('id', costId);
-              return;
-            }
-          }
-
-          throw movementError;
-        }
-
-        if (createdEntry?.id) {
-          await supabase
-            .from('costs')
-            .update({ inventory_movement_id: createdEntry.id })
-            .eq('id', costId);
-        }
-      }
-    }
-
-    // NOTA: La creación de crane_parts se maneja automáticamente por triggers
-  };
 
   const markPaymentAsPaidMutation = useMutation({
     mutationFn: async ({ 
@@ -437,6 +536,7 @@ export const useSupplierPayments = () => {
           paymentData: typedPaymentData,
           partDetails: {
             ...partDetails,
+            crane_id: partDetails.crane_id || null,
             add_to_inventory: partDetails.add_to_inventory || false
           }
         });

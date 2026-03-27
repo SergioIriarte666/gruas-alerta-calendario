@@ -166,6 +166,7 @@ EXCEPTION
 END;
 $$;
 
+DROP TRIGGER IF EXISTS sync_parts_purchase_to_inventory_trigger ON public.crane_parts;
 CREATE TRIGGER sync_parts_purchase_to_inventory_trigger
 AFTER INSERT ON public.crane_parts
 FOR EACH ROW

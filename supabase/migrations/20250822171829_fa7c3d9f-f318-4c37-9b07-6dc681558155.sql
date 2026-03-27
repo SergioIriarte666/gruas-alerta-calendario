@@ -3,12 +3,14 @@
 
 -- Agregar campos a la tabla costs para fecha de pago real
 ALTER TABLE public.costs 
-ADD COLUMN payment_date DATE DEFAULT NULL,
-ADD COLUMN payment_batch_id TEXT DEFAULT NULL;
+ADD COLUMN IF NOT EXISTS payment_date DATE DEFAULT NULL;
+
+ALTER TABLE public.costs 
+ADD COLUMN IF NOT EXISTS payment_batch_id TEXT DEFAULT NULL;
 
 -- Crear índices para mejorar consultas
-CREATE INDEX idx_costs_payment_date ON public.costs(payment_date) WHERE payment_date IS NOT NULL;
-CREATE INDEX idx_costs_payment_batch ON public.costs(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_costs_payment_date ON public.costs(payment_date) WHERE payment_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_costs_payment_batch ON public.costs(payment_batch_id) WHERE payment_batch_id IS NOT NULL;
 
 -- Actualizar función get_commissions_with_details para incluir fecha de pago
 CREATE OR REPLACE FUNCTION public.get_commissions_with_details()
