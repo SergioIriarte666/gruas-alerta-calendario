@@ -16,6 +16,13 @@ import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye } f
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@/contexts/UserContext';
+import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -53,13 +60,46 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentDetail, setShowPaymentDetail] = useState(false);
   const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
+  const [showHistoricalBackfill, setShowHistoricalBackfill] = useState(false);
+  const [historicalMonth, setHistoricalMonth] = useState('');
+  const [showAllBackfillClients, setShowAllBackfillClients] = useState(false);
+  const [selectedBackfillClientIds, setSelectedBackfillClientIds] = useState<string[]>([]);
+  const [backfillSelectionDirty, setBackfillSelectionDirty] = useState(false);
+  const [backfillIsRunning, setBackfillIsRunning] = useState(false);
+  const [backfillPreview, setBackfillPreview] = useState<{
+    month: string;
+    clientCount: number;
+    serviceCount: number;
+    totalNet: number;
+    clientTotals: Array<{ clientId: string; clientName: string; serviceCount: number; net: number }>;
+  } | null>(null);
+  const [backfillResults, setBackfillResults] = useState<{
+    month: string;
+    processedClients: number;
+    createdClosures: number;
+    createdInvoices: number;
+    createdPayments: number;
+    reconciledInvoices: number;
+    skippedClients: number;
+    errors: Array<{ clientId: string; clientName: string; reason: string }>;
+  } | null>(null);
 
   const { clients } = useClients();
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     loadReconciliationStats();
     loadSystemDiagnosis();
   }, []);
+
+  useEffect(() => {
+    if (!showHistoricalBackfill) return;
+    if (!historicalMonth) return;
+    if (backfillIsRunning) return;
+    if (!backfillPreview) return;
+    buildBackfillPreview();
+  }, [showAllBackfillClients]);
 
 
   const handleManualApplication = async (payment: PaymentWithDetails) => {
@@ -137,6 +177,378 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     ? payments 
     : payments.filter(payment => payment.client_id === selectedClient);
 
+  const toISODate = (date: Date) => date.toISOString().slice(0, 10);
+
+  const getMonthRange = (month: string) => {
+    const [yearStr, monthStr] = month.split('-');
+    const year = Number(yearStr);
+    const monthIndex = Number(monthStr) - 1;
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0);
+    return { from: toISODate(start), to: toISODate(end) };
+  };
+
+  const getHistoricalTags = (month: string, clientId: string) => {
+    const monthTag = `HIST-${month}`;
+    return {
+      monthTag,
+      closurePurchaseOrder: monthTag,
+      invoiceNotes: `${monthTag}|CLI=${clientId}`,
+      paymentBankReference: `${monthTag}-CLI-${clientId}`,
+      paymentNotes: `Pago histórico ${month} | 1 factura/cliente`,
+      applicationNotes: `Conciliación histórica ${month}`,
+    };
+  };
+
+  const fetchEligibleServicesForMonth = async (month: string) => {
+    const { from, to } = getMonthRange(month);
+    const { data: services, error } = await supabase
+      .from('services')
+      .select(
+        'id, client_id, status, service_date, value, client_covered_amount, has_excess, custody_mode, custody_days, custody_daily_rate, custody_total_amount'
+      )
+      .gte('service_date', from)
+      .lte('service_date', to)
+      .in('status', ['completed'])
+      .not('client_id', 'is', null);
+
+    if (error) throw error;
+    return services || [];
+  };
+
+  const buildBackfillPreview = async () => {
+    if (!historicalMonth) return;
+    setBackfillIsRunning(true);
+    setBackfillPreview(null);
+    setBackfillResults(null);
+    try {
+      const services = await fetchEligibleServicesForMonth(historicalMonth);
+      const clientMap = new Map<string, { serviceCount: number; net: number }>();
+      for (const s of services) {
+        const clientId = s.client_id as string;
+        const prev = clientMap.get(clientId) || { serviceCount: 0, net: 0 };
+        const net = calculateClosureTotal([s as any]);
+        clientMap.set(clientId, { serviceCount: prev.serviceCount + 1, net: prev.net + net });
+      }
+
+      const baseClients = showAllBackfillClients
+        ? clients
+        : clients.filter(c => clientMap.has(c.id));
+
+      const clientTotals = baseClients.map((c) => {
+        const agg = clientMap.get(c.id) || { serviceCount: 0, net: 0 };
+        return { clientId: c.id, clientName: toTitleCase(c.name), serviceCount: agg.serviceCount, net: Math.round(agg.net) };
+      }).sort((a, b) => b.net - a.net);
+
+      const totalNet = clientTotals.reduce((sum, c) => sum + c.net, 0);
+      if (!backfillSelectionDirty) {
+        setSelectedBackfillClientIds(clientTotals.filter(c => c.net > 0).map(c => c.clientId));
+      }
+      setBackfillPreview({
+        month: historicalMonth,
+        clientCount: clientTotals.length,
+        serviceCount: services.length,
+        totalNet,
+        clientTotals,
+      });
+    } catch (e: any) {
+      toast.error(e.message || 'Error generando previsualización');
+    } finally {
+      setBackfillIsRunning(false);
+    }
+  };
+
+  const generateNextClosureFolio = async () => {
+    const { data: lastClosure } = await supabase
+      .from('service_closures')
+      .select('folio')
+      .like('folio', 'CIE-%')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let nextNumber = 1;
+    if (lastClosure?.folio) {
+      const match = (lastClosure.folio as string).match(/CIE-(\d+)/);
+      if (match) nextNumber = parseInt(match[1]) + 1;
+    }
+    return `CIE-${String(nextNumber).padStart(3, '0')}`;
+  };
+
+  const ensureClosure = async (month: string, clientId: string, serviceIds: string[], totalNet: number) => {
+    const { from, to } = getMonthRange(month);
+    const { closurePurchaseOrder } = getHistoricalTags(month, clientId);
+
+    const { data: existing } = await supabase
+      .from('service_closures')
+      .select('id, folio, total, status')
+      .eq('client_id', clientId)
+      .eq('date_from', from)
+      .eq('date_to', to)
+      .eq('purchase_order', closurePurchaseOrder)
+      .maybeSingle();
+
+    if (existing?.id) {
+      return existing as any;
+    }
+
+    const folio = await generateNextClosureFolio();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+
+    const { data: closure, error } = await supabase
+      .from('service_closures')
+      .insert({
+        folio,
+        date_from: from,
+        date_to: to,
+        client_id: clientId,
+        total: Math.round(totalNet),
+        status: 'closed',
+        purchase_order: closurePurchaseOrder,
+        created_by: authUser?.id || null,
+      })
+      .select('id, folio, total, status')
+      .single();
+
+    if (error) throw error;
+
+    if (serviceIds.length > 0) {
+      const closureServices = serviceIds.map(serviceId => ({ closure_id: closure.id, service_id: serviceId }));
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < closureServices.length; i += BATCH_SIZE) {
+        const batch = closureServices.slice(i, i + BATCH_SIZE);
+        const { error: relError } = await supabase
+          .from('closure_services')
+          .upsert(batch as any, { onConflict: 'closure_id,service_id', ignoreDuplicates: true });
+        if (relError) throw relError;
+      }
+    }
+
+    return closure;
+  };
+
+  const ensureInvoice = async (month: string, clientId: string, closureId: string, serviceIds: string[], subtotalNet: number) => {
+    const { to } = getMonthRange(month);
+    const { invoiceNotes } = getHistoricalTags(month, clientId);
+
+    const { data: existing } = await supabase
+      .from('invoices')
+      .select('id, folio, total, remaining_amount, status')
+      .eq('client_id', clientId)
+      .eq('notes', invoiceNotes)
+      .maybeSingle();
+
+    if (existing?.id) return existing as any;
+
+    const issueDate = to;
+    const dueDate = to;
+    const vat = Math.round(subtotalNet * 0.19);
+    const total = Math.round(subtotalNet + vat);
+
+    const invoiceDataForTransaction = {
+      client_id: clientId,
+      issue_date: issueDate,
+      due_date: dueDate,
+      subtotal: Math.round(subtotalNet),
+      vat,
+      total,
+      numero_fiscal: null,
+      status: 'sent',
+      payment_term_id: '',
+      notes: invoiceNotes,
+    };
+
+    const { data: transactionResult, error: transactionError } = await supabase
+      .rpc('create_invoice_transaction', {
+        p_invoice_data: invoiceDataForTransaction,
+        p_service_ids: serviceIds,
+      });
+
+    if (transactionError) throw transactionError;
+    if (!transactionResult || !Array.isArray(transactionResult) || transactionResult.length === 0) {
+      throw new Error('No se recibió respuesta válida al crear factura');
+    }
+
+    const result = transactionResult[0] as any;
+    if (!result?.invoice_id) throw new Error('Respuesta incompleta al crear factura');
+
+    const { data: invoice, error: fetchError } = await supabase
+      .from('invoices')
+      .select('id, folio, total, remaining_amount, status')
+      .eq('id', result.invoice_id)
+      .single();
+
+    if (fetchError || !invoice) throw new Error('No se pudo obtener la factura creada');
+
+    const { error: relError } = await supabase
+      .from('invoice_closures')
+      .upsert({ invoice_id: invoice.id, closure_id: closureId } as any, { onConflict: 'invoice_id,closure_id', ignoreDuplicates: true });
+    if (relError) throw relError;
+
+    await supabase.from('service_closures').update({ status: 'invoiced', updated_at: new Date().toISOString() }).eq('id', closureId);
+
+    if (invoice.folio && !invoice.folio.startsWith('HIST-')) {
+      const newFolio = `HIST-F-${invoice.folio}`;
+      const { error: folioError } = await supabase.from('invoices').update({ folio: newFolio }).eq('id', invoice.id);
+      if (folioError) throw folioError;
+      if (serviceIds.length > 0) {
+        await supabase.from('services').update({ invoice_folio: newFolio }).in('id', serviceIds);
+      }
+      return { ...invoice, folio: newFolio } as any;
+    }
+
+    return invoice as any;
+  };
+
+  const ensurePaymentAndReconcile = async (month: string, clientId: string, invoice: any) => {
+    const { paymentBankReference, paymentNotes, applicationNotes } = getHistoricalTags(month, clientId);
+    const { to } = getMonthRange(month);
+
+    const { data: invoiceFresh } = await supabase
+      .from('invoices')
+      .select('id, status, total, remaining_amount')
+      .eq('id', invoice.id)
+      .maybeSingle();
+
+    if (!invoiceFresh?.id) throw new Error('Factura no encontrada para conciliación');
+    if (invoiceFresh.status === 'paid' || (invoiceFresh.remaining_amount || 0) <= 0) {
+      return { paymentCreated: false, reconciled: true };
+    }
+
+    const { data: existingPayment } = await supabase
+      .from('payments')
+      .select('id, amount, applied_amount, remaining_amount, status')
+      .eq('client_id', clientId)
+      .eq('bank_reference', paymentBankReference)
+      .maybeSingle();
+
+    let paymentId = existingPayment?.id as string | undefined;
+    if (!paymentId) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: payment, error } = await supabase
+        .from('payments')
+        .insert({
+          client_id: clientId,
+          amount: invoiceFresh.remaining_amount || invoiceFresh.total,
+          payment_date: to,
+          payment_method: 'transferencia',
+          bank_reference: paymentBankReference,
+          notes: paymentNotes,
+          status: 'pending',
+          applied_amount: 0,
+          remaining_amount: invoiceFresh.remaining_amount || invoiceFresh.total,
+          created_by: authUser?.id || null,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      paymentId = payment.id;
+    }
+
+    const applications = [
+      { invoice_id: invoiceFresh.id, amount: invoiceFresh.remaining_amount || invoiceFresh.total, notes: applicationNotes },
+    ];
+
+    const { error: applyError } = await supabase.rpc('apply_payment_manual', {
+      p_payment_id: paymentId,
+      p_applications: applications,
+    });
+    if (applyError) throw applyError;
+
+    const { data: after } = await supabase
+      .from('invoices')
+      .select('status, remaining_amount')
+      .eq('id', invoiceFresh.id)
+      .maybeSingle();
+
+    const reconciled = after?.status === 'paid' || (after?.remaining_amount || 0) <= 0;
+    return { paymentCreated: !existingPayment?.id, reconciled };
+  };
+
+  const runHistoricalBackfill = async () => {
+    if (!historicalMonth) return;
+    setBackfillIsRunning(true);
+    setBackfillResults(null);
+    try {
+      const services = await fetchEligibleServicesForMonth(historicalMonth);
+      const servicesByClient = new Map<string, any[]>();
+      for (const s of services) {
+        const clientId = s.client_id as string;
+        const list = servicesByClient.get(clientId) || [];
+        list.push(s);
+        servicesByClient.set(clientId, list);
+      }
+
+      const targetClientIds = selectedBackfillClientIds.length
+        ? selectedBackfillClientIds
+        : Array.from(servicesByClient.keys());
+
+      const result = {
+        month: historicalMonth,
+        processedClients: 0,
+        createdClosures: 0,
+        createdInvoices: 0,
+        createdPayments: 0,
+        reconciledInvoices: 0,
+        skippedClients: 0,
+        errors: [] as Array<{ clientId: string; clientName: string; reason: string }>,
+      };
+
+      for (const clientId of targetClientIds) {
+        const clientServices = servicesByClient.get(clientId) || [];
+        const clientName = toTitleCase(clients.find(c => c.id === clientId)?.name || clientId);
+        try {
+          const serviceIds = clientServices.map(s => s.id);
+          const totalNet = calculateClosureTotal(clientServices as any);
+          if (!serviceIds.length || totalNet <= 0) {
+            result.skippedClients += 1;
+            continue;
+          }
+
+          const { invoiceNotes } = getHistoricalTags(historicalMonth, clientId);
+
+          const { data: existingInvoice } = await supabase
+            .from('invoices')
+            .select('id, status, remaining_amount, total')
+            .eq('client_id', clientId)
+            .eq('notes', invoiceNotes)
+            .maybeSingle();
+
+          if (existingInvoice?.id && (existingInvoice.status === 'paid' || (existingInvoice.remaining_amount || 0) <= 0)) {
+            result.skippedClients += 1;
+            continue;
+          }
+
+          const closure = await ensureClosure(historicalMonth, clientId, serviceIds, totalNet);
+          result.createdClosures += closure?.id ? 1 : 0;
+
+          const invoice = existingInvoice?.id
+            ? { ...existingInvoice, id: existingInvoice.id }
+            : await ensureInvoice(historicalMonth, clientId, closure.id, serviceIds, Math.round(totalNet));
+
+          if (!existingInvoice?.id) result.createdInvoices += 1;
+
+          const reconcile = await ensurePaymentAndReconcile(historicalMonth, clientId, invoice);
+          if (reconcile.paymentCreated) result.createdPayments += 1;
+          if (reconcile.reconciled) result.reconciledInvoices += 1;
+
+          result.processedClients += 1;
+        } catch (e: any) {
+          result.errors.push({ clientId, clientName, reason: e?.message || 'Error desconocido' });
+        }
+      }
+
+      setBackfillResults(result);
+      await refetch();
+      await loadReconciliationStats();
+      toast.success('Backfill histórico completado');
+    } catch (e: any) {
+      toast.error(e.message || 'Error ejecutando backfill');
+    } finally {
+      setBackfillIsRunning(false);
+    }
+  };
+
   if (!paymentSystemAvailable) {
     return (
       <Alert className="m-4">
@@ -153,6 +565,26 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Conciliación de Pagos</h2>
         <div className="flex gap-2">
+          {isAdmin && (
+            <Button
+              onClick={() => {
+                setShowHistoricalBackfill(true);
+                const now = new Date();
+                const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                setHistoricalMonth(month);
+                setShowAllBackfillClients(false);
+                setSelectedBackfillClientIds([]);
+                setBackfillSelectionDirty(false);
+                setBackfillPreview(null);
+                setBackfillResults(null);
+              }}
+              variant="outline"
+              size="sm"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Backfill Mes
+            </Button>
+          )}
           <Button
             onClick={() => refetch()}
             variant="outline"
@@ -390,6 +822,154 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           }}
         />
       )}
+
+      <Dialog open={showHistoricalBackfill} onOpenChange={setShowHistoricalBackfill}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Backfill histórico (cierre → factura → conciliación)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Mes</Label>
+                <Input
+                  type="month"
+                  value={historicalMonth}
+                  onChange={(e) => setHistoricalMonth(e.target.value)}
+                  disabled={backfillIsRunning}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Regla</Label>
+                <Input value="1 factura por cliente" disabled />
+              </div>
+            </div>
+
+            {backfillPreview && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Previsualización</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={showAllBackfillClients}
+                        onCheckedChange={(checked) => setShowAllBackfillClients(Boolean(checked))}
+                        disabled={backfillIsRunning}
+                      />
+                      <span>Mostrar todos los clientes</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Seleccionados: {selectedBackfillClientIds.length}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Clientes: {backfillPreview.clientCount} · Servicios: {backfillPreview.serviceCount} · Neto: {formatCurrency(backfillPreview.totalNet)}
+                  </div>
+                  <div className="max-h-48 overflow-auto border rounded">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[48px]">
+                            <Checkbox
+                              checked={
+                                backfillPreview.clientTotals.length > 0 &&
+                                backfillPreview.clientTotals.every(row => selectedBackfillClientIds.includes(row.clientId))
+                              }
+                              onCheckedChange={(checked) => {
+                                setBackfillSelectionDirty(true);
+                                if (checked === true) {
+                                  setSelectedBackfillClientIds(backfillPreview.clientTotals.map(r => r.clientId));
+                                } else {
+                                  setSelectedBackfillClientIds([]);
+                                }
+                              }}
+                              disabled={backfillIsRunning}
+                            />
+                          </TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead className="text-right">Servicios</TableHead>
+                          <TableHead className="text-right">Neto</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {backfillPreview.clientTotals.map(row => (
+                          <TableRow key={row.clientId}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedBackfillClientIds.includes(row.clientId)}
+                                onCheckedChange={(checked) => {
+                                  setBackfillSelectionDirty(true);
+                                  const isChecked = checked === true;
+                                  setSelectedBackfillClientIds((prev) => {
+                                    if (isChecked) return prev.includes(row.clientId) ? prev : [...prev, row.clientId];
+                                    return prev.filter(id => id !== row.clientId);
+                                  });
+                                }}
+                                disabled={backfillIsRunning}
+                              />
+                            </TableCell>
+                            <TableCell>{row.clientName}</TableCell>
+                            <TableCell className="text-right">{row.serviceCount}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(row.net)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {backfillResults && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Resultado</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div>
+                    Procesados: {backfillResults.processedClients} · Conciliadas: {backfillResults.reconciledInvoices} · Omitidos: {backfillResults.skippedClients}
+                  </div>
+                  <div>
+                    Cierres: {backfillResults.createdClosures} · Facturas: {backfillResults.createdInvoices} · Pagos: {backfillResults.createdPayments}
+                  </div>
+                  {backfillResults.errors.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="font-medium text-destructive">Errores ({backfillResults.errors.length})</div>
+                      <div className="max-h-40 overflow-auto border rounded p-2 space-y-1">
+                        {backfillResults.errors.map((err, idx) => (
+                          <div key={`${err.clientId}-${idx}`}>
+                            {err.clientName}: {err.reason}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={buildBackfillPreview}
+              disabled={backfillIsRunning || !historicalMonth}
+            >
+              Previsualizar
+            </Button>
+            <Button
+              type="button"
+              onClick={runHistoricalBackfill}
+              disabled={backfillIsRunning || !historicalMonth}
+            >
+              Ejecutar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
