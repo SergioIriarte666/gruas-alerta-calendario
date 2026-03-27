@@ -40,7 +40,7 @@ import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtil
 import { toTitleCase } from '@/lib/utils';
 
 interface ServiceDetailsModalProps {
-  service: Service;
+  service: Service | null;
   isOpen: boolean;
   onClose: () => void;
   onDuplicate?: (service: Service) => void;
@@ -111,63 +111,52 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const queryClient = useQueryClient();
   
   // Usar el nuevo sistema global para obtener datos completos del servicio
-  const { enhancedService, isLoading } = useServiceDetailsForView(service.id);
-  
+  const { enhancedService, isLoading } = useServiceDetailsForView(service?.id || null);
   // Hook para generar PDF
   const { generatePDF, isGenerating } = useServiceDetailsPDF();
   
-  // Crear datos combinados preservando SIEMPRE el creatorName
-  const serviceData = enhancedService ? {
-    ...enhancedService,
-    // Preservar datos críticos del service básico
-    client: {
-      ...enhancedService.client,
-      department: (enhancedService.client.department && enhancedService.client.department.trim()) 
-                  ? enhancedService.client.department 
-                  : service.client.department
-    },
-    // FORZAR preservación del creador: usar enhanced SOLO si tiene valor, sino usar service básico
-    createdBy: enhancedService.createdBy || service.createdBy,
-    creatorName: enhancedService.creatorName || service.creatorName || 'Usuario Desconocido'
-  } : service;
-
-  // Debug logs para rastrear el creador
-  console.log('🔍🔍🔍 [MODAL] Enhanced creatorName:', enhancedService?.creatorName);
-  console.log('🔍🔍🔍 [MODAL] Basic service creatorName:', service.creatorName);
-  console.log('🔍🔍🔍 [MODAL] Final serviceData creatorName:', serviceData.creatorName);
+  // Datos combinados seguros cuando no hay servicio seleccionado
+  const serviceData = React.useMemo(() => {
+    if (!service) return null;
+    if (enhancedService) {
+      return {
+        ...enhancedService,
+        client: {
+          ...enhancedService.client,
+          department: (enhancedService.client.department && enhancedService.client.department.trim())
+            ? enhancedService.client.department
+            : service.client.department
+        },
+        createdBy: enhancedService.createdBy || service.createdBy,
+        creatorName: enhancedService.creatorName || service.creatorName || 'Usuario Desconocido'
+      } as any;
+    }
+    return service as any;
+  }, [service, enhancedService]);
   
   const serviceCosts = enhancedService?.serviceCosts || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;
   const totalServiceCosts = enhancedService?.totalCosts || 0;
   
-  // Obtener información del operador principal
-  const getPrimaryOperator = () => {
-    if (enhancedService?.operators && enhancedService.operators.length > 0) {
-      // Usar datos enhanced: buscar operador principal o tomar el primero
-      const primaryOperator = enhancedService.operators.find(op => op.role === 'Principal') || enhancedService.operators[0];
-      return primaryOperator.operator;
-    }
-    // Usar datos básicos como fallback
-    return serviceData.operator;
-  };
-  
-  const primaryOperator = getPrimaryOperator();
+  const primaryOperator =
+    enhancedService?.operators && enhancedService.operators.length > 0
+      ? (enhancedService.operators.find(op => op.role === 'Principal') || enhancedService.operators[0])?.operator
+      : (serviceData as any)?.operator;
   const hasMultipleOperators = enhancedService?.operators && enhancedService.operators.length > 1;
   
   // Detectar si es un servicio de custodia y obtener información
-  const isCustody = isCustodyService(serviceData);
-  const custodyInfo = isCustody ? getCustodyInfo(serviceData) : null;
-  const isEquipmentRental = isEquipmentRentalService(serviceData);
+  const isCustody = serviceData ? isCustodyService(serviceData) : false;
+  const custodyInfo = isCustody && serviceData ? getCustodyInfo(serviceData) : null;
+  const isEquipmentRental = serviceData ? isEquipmentRentalService(serviceData) : false;
   
   // FASE 4: VERIFICACIÓN SILENCIOSA DE INTEGRIDAD DE COMISIONES
   useEffect(() => {
     const verifyAndSyncCommissions = async () => {
-      if (!isOpen || !serviceData.id) return;
+      if (!isOpen || !serviceData?.id) return;
 
       try {
         // Solo verificar servicios con comisiones configuradas (operator_commission > 0)
-        if ((serviceData.operatorCommission || 0) <= 0) {
-          console.log(`[MODAL_VERIFY] ✅ Servicio ${serviceData.folio} sin comisiones - no requiere verificación`);
+        if (((serviceData as any)?.operatorCommission || 0) <= 0) {
           return;
         }
 
@@ -186,8 +175,6 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
         }
 
         if (!existingCommissions || existingCommissions.length === 0) {
-          console.log(`[MODAL_VERIFY] 🔧 Servicio ${serviceData.folio} requiere sincronización silenciosa`);
-          
           // Sincronización silenciosa usando la función de la base de datos
           const { data: syncResult, error: syncError } = await supabase.rpc(
             'force_commission_sync_for_service', 
@@ -197,33 +184,31 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           if (syncError) {
             console.error('[MODAL_VERIFY] ❌ Error en sincronización silenciosa:', syncError);
           } else if (syncResult && typeof syncResult === 'object' && 'success' in syncResult) {
-            console.log(`[MODAL_VERIFY] ✅ Sincronización silenciosa exitosa para ${serviceData.folio}:`, syncResult);
-            
             // Invalidar queries después de la sincronización
             queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData.id] });
             queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceData.id] });
             queryClient.invalidateQueries({ queryKey: ['costs'] });
             queryClient.invalidateQueries({ queryKey: ['commissions'] });
           }
-        } else {
-          console.log(`[MODAL_VERIFY] ✅ Servicio ${serviceData.folio} ya tiene comisiones sincronizadas`);
         }
       } catch (error) {
         console.error('[MODAL_VERIFY] ❌ Error en verificación silenciosa:', error);
       }
     };
 
-    if (isOpen && serviceData.id) {
+    if (isOpen && serviceData?.id) {
       // Invalidación estándar
-      queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData.id] });
-      queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceData.id] });
+      queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData?.id] });
+      queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceData?.id] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
       
       // Verificación silenciosa después de un pequeño delay
       setTimeout(verifyAndSyncCommissions, 100);
     }
-  }, [isOpen, serviceData.id, serviceData.folio, serviceData.operatorCommission, queryClient]);
+  }, [isOpen, serviceData?.id, serviceData?.folio, serviceData?.operatorCommission, queryClient]);
+
+  if (!isOpen || !serviceData) return null;
   
   // Calcular totales usando datos mejorados si están disponibles
   const totalCosts = totalServiceCosts + totalCommissions;
@@ -257,7 +242,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => onDuplicate(service)}
+                  onClick={() => onDuplicate(serviceData as Service)}
                   className="flex items-center gap-2"
                 >
                   <Copy className="h-4 w-4" />

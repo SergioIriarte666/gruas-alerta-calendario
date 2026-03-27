@@ -3,7 +3,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DollarSign, Tag, Package, Phone, Hash, Gauge } from 'lucide-react';
 import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
@@ -12,6 +12,9 @@ import { CostCombobox } from './CostCombobox';
 import { InventoryPurchaseFields } from './InventoryPurchaseFields';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface CostFormStep2Props {
   form: UseFormReturn<CostFormValues>;
@@ -28,11 +31,17 @@ export const CostFormStep2 = ({
   onServiceExpenseSelect,
   calculatedServiceTotal = 0,
 }: CostFormStep2Props) => {
+  const CREATE_SUBCATEGORY_VALUE = '__create_subcategory__';
   const selectedCategoryId = form.watch('category_id');
   const selectedSubcategory = form.watch('subcategory');
   const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
   
-  const { subcategories, isLoading: isLoadingSubcategories } = useCostSubcategories(selectedCategoryId);
+  const {
+    subcategories,
+    isLoading: isLoadingSubcategories,
+    createSubcategory,
+    isCreating,
+  } = useCostSubcategories(selectedCategoryId);
   
   const isGastosDeServicios = selectedCategory?.name === 'Gastos de Servicios';
   const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
@@ -41,6 +50,9 @@ export const CostFormStep2 = ({
   
   const hasSubcategories = subcategories.length > 0;
   const selectedSubcategoryRow = subcategories.find(s => s.name === selectedSubcategory);
+
+  const [isCreateSubcategoryOpen, setIsCreateSubcategoryOpen] = React.useState(false);
+  const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
 
   const quantity = form.watch('quantity');
   const unitPrice = form.watch('unit_price');
@@ -51,6 +63,55 @@ export const CostFormStep2 = ({
       form.setValue('amount', total);
     }
   }, [quantity, unitPrice, isPiezasYRepuestos, form]);
+
+  React.useEffect(() => {
+    setIsCreateSubcategoryOpen(false);
+    setNewSubcategoryName('');
+  }, [selectedCategoryId]);
+
+  const handleSubcategoryChange = (value: string, onChange: (value: string) => void) => {
+    if (value === CREATE_SUBCATEGORY_VALUE) {
+      setIsCreateSubcategoryOpen(true);
+      return;
+    }
+    onChange(value);
+  };
+
+  const handleCreateSubcategory = () => {
+    const categoryId = selectedCategoryId;
+    const name = newSubcategoryName.trim();
+
+    if (!categoryId) return;
+
+    if (!name) {
+      toast.error('Ingresa un nombre de subcategoría');
+      return;
+    }
+
+    const normalized = name.toLowerCase();
+    const exists = subcategories.some(s => (s.name || '').trim().toLowerCase() === normalized);
+    if (exists) {
+      toast.error('Esa subcategoría ya existe en esta categoría');
+      return;
+    }
+
+    const maxOrder = subcategories.reduce((max, sub) => Math.max(max, sub.display_order || 0), 0);
+
+    createSubcategory(
+      {
+        category_id: categoryId,
+        name,
+        display_order: maxOrder + 1,
+      },
+      {
+        onSuccess: (data: any) => {
+          form.setValue('subcategory', data.name, { shouldDirty: true, shouldValidate: true });
+          setIsCreateSubcategoryOpen(false);
+          setNewSubcategoryName('');
+        },
+      }
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -92,7 +153,7 @@ export const CostFormStep2 = ({
               
               {hasSubcategories ? (
                 <Select 
-                  onValueChange={field.onChange} 
+                  onValueChange={(value) => handleSubcategoryChange(value, field.onChange)} 
                   value={field.value || ''}
                   disabled={isLoadingSubcategories}
                 >
@@ -112,24 +173,79 @@ export const CostFormStep2 = ({
                         {sub.name}
                       </SelectItem>
                     ))}
+                    <SelectSeparator />
+                    <SelectItem value={CREATE_SUBCATEGORY_VALUE}>Crear subcategoría...</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
-                <FormControl>
-                  <CostCombobox
-                    value={field.value || ''}
-                    onValueChange={field.onChange}
-                    placeholder="Ej: Papelería, Honorarios, Prima anual, Aguinaldo..."
-                    type="subcategory"
-                    categoryId={selectedCategoryId}
-                  />
-                </FormControl>
+                <div className="space-y-2">
+                  <FormControl>
+                    <CostCombobox
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                      placeholder="Ej: Papelería, Honorarios, Prima anual, Aguinaldo..."
+                      type="subcategory"
+                      categoryId={selectedCategoryId}
+                    />
+                  </FormControl>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCreateSubcategoryOpen(true)}
+                      disabled={isLoadingSubcategories}
+                    >
+                      Crear subcategoría...
+                    </Button>
+                  </div>
+                </div>
               )}
               <FormMessage />
             </FormItem>
           )} />
         </ColoredSectionCard>
       )}
+
+      <Dialog open={isCreateSubcategoryOpen} onOpenChange={setIsCreateSubcategoryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nueva subcategoría</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-foreground">Nombre *</Label>
+            <Input
+              value={newSubcategoryName}
+              onChange={(e) => setNewSubcategoryName(e.target.value)}
+              placeholder="Ej: Certificados"
+              disabled={isCreating}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleCreateSubcategory();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCreateSubcategoryOpen(false)}
+              disabled={isCreating}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateSubcategory}
+              disabled={isCreating || !newSubcategoryName.trim()}
+            >
+              Crear
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {selectedSubcategoryRow?.requires_location && (
         <ColoredSectionCard

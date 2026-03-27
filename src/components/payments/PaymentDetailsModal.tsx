@@ -69,7 +69,12 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Proveedor</p>
-                  <p className="font-medium">{payment.supplier_invoice.supplier_name || 'N/A'}</p>
+                  <p className="font-medium">
+                    {payment.supplier_invoice.supplier_name ||
+                      payment.supplier_invoice.inventory_suppliers?.name ||
+                      payment.supplier_invoice.supplier?.name ||
+                      'N/A'}
+                  </p>
                 </div>
                 {payment.supplier_invoice.invoice_number && (
                   <div>
