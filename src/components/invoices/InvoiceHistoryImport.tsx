@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, Trash2, ArrowRight } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
@@ -81,6 +82,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const [editingClientIndex, setEditingClientIndex] = useState<number | null>(null);
   const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
   const [bulkAssignClientId, setBulkAssignClientId] = useState<string>('');
+  const [progressCurrent, setProgressCurrent] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
+  const [progressStage, setProgressStage] = useState('');
   const [editClientForm, setEditClientForm] = useState<{
     name: string;
     address: string;
@@ -97,6 +101,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setSelectedInvoices(new Set());
     setSelectedUnmatchedClientIndices(new Set());
     setEditingClientIndex(null);
+    setProgressCurrent(0);
+    setProgressTotal(0);
+    setProgressStage('');
   };
 
   // Initialize selection when preview changes
@@ -384,14 +391,17 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setStep('importing');
     setImporting(true);
     setLastError(null);
+    setProgressCurrent(0);
+    setProgressTotal(0);
+    setProgressStage('Preparando importación...');
 
     let imported = 0;
     let errors = 0;
     const totalItems = invoicesToInsertCount();
-    let currentProgress = 0;
+    setProgressTotal(totalItems);
 
     const updateProgress = (count: number) => {
-        currentProgress += count;
+      setProgressCurrent((prev) => prev + count);
     };
 
     try {
@@ -403,6 +413,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       }
 
       // Step 1: Create clients that need to be created
+      setProgressStage('Resolviendo clientes...');
       const clientRutToId = new Map<string, string>();
       const setClientRutToId = (rut: string, id: string) => {
         rutCandidates(rut).forEach((c) => clientRutToId.set(c, id));
@@ -437,6 +448,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       }
 
       // Step 2: Build invoices to insert (only selected ones)
+      setProgressStage('Preparando documentos...');
       const invoicesToInsert: any[] = [];
 
       // Add selected matched invoices
@@ -572,9 +584,14 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           return;
       }
 
+      setProgressTotal(invoicesToInsert.length);
+      setProgressCurrent(0);
+      setProgressStage(invoicesToInsert.length > 0 ? 'Insertando facturas...' : 'Sin facturas para importar');
+
       const batchSize = 50;
       for (let i = 0; i < invoicesToInsert.length; i += batchSize) {
         const batch = invoicesToInsert.slice(i, i + batchSize);
+        setProgressStage(`Insertando facturas (${Math.min(i + batch.length, invoicesToInsert.length)}/${invoicesToInsert.length})...`);
         const { error } = await supabase.from('invoices').insert(batch);
         
         if (error) {
@@ -1042,6 +1059,21 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <p className="text-lg font-medium text-foreground">Importando facturas...</p>
             <p className="text-sm text-muted-foreground">Esto puede tomar unos segundos</p>
+            <div className="w-full max-w-md mt-6 space-y-2 px-4">
+              <Progress
+                value={
+                  progressTotal > 0
+                    ? Math.min(100, Math.round((progressCurrent / progressTotal) * 100))
+                    : 0
+                }
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{progressStage || 'Procesando...'}</span>
+                <span>
+                  {progressTotal > 0 ? Math.min(100, Math.round((progressCurrent / progressTotal) * 100)) : 0}% ({Math.min(progressCurrent, progressTotal)}/{progressTotal})
+                </span>
+              </div>
+            </div>
           </div>
         )}
 

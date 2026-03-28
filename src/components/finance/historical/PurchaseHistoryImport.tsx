@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, Trash2, ArrowRight, Check } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
@@ -73,6 +74,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const [editingSupplierIndex, setEditingSupplierIndex] = useState<number | null>(null);
   const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
   const [bulkAssignSupplierId, setBulkAssignSupplierId] = useState<string>('');
+  const [progressCurrent, setProgressCurrent] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
+  const [progressStage, setProgressStage] = useState('');
   const [editSupplierForm, setEditSupplierForm] = useState<{
     name: string;
     rut: string;
@@ -319,6 +323,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setSelectedUnmatchedSupplierIndices(new Set());
     setEditingSupplierIndex(null);
     setMarkAllAsPaid(false);
+    setProgressCurrent(0);
+    setProgressTotal(0);
+    setProgressStage('');
   };
 
   const handleClose = () => {
@@ -554,6 +561,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setStep('importing');
     setImporting(true);
     setLastError(null);
+    setProgressCurrent(0);
+    setProgressTotal(0);
+    setProgressStage('Preparando importación...');
 
     let imported = 0;
     let errors = 0;
@@ -566,6 +576,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         rutCandidates(rut).forEach((c) => supplierRutToId.set(c, id));
     };
 
+    setProgressStage('Resolviendo proveedores...');
     // Process all unmatched suppliers with resolution
     for (const us of unmatchedSuppliers) {
         const nRut = normalizeRut(us.rut);
@@ -751,6 +762,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     }
 
     // 3. Prepare invoices to insert
+    setProgressStage('Preparando documentos...');
     const invoicesToInsert: any[] = [];
     const withPaidOverride = (payload: any, invoiceAmount: number, status: string) => {
         if (!markAllAsPaid) return { ...payload, status };
@@ -875,6 +887,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             console.log(`${skipped} facturas omitidas por duplicado`);
         }
 
+        setProgressTotal(filteredInvoices.length);
+        setProgressCurrent(0);
+        setProgressStage(filteredInvoices.length > 0 ? 'Insertando facturas...' : 'Sin facturas para importar');
+
         const isMissingProductServiceDescriptionColumn = (message: string | null | undefined) => {
             const m = (message || '').toLowerCase();
             return m.includes("product_service_description") && (m.includes("could not find") || m.includes("schema cache"));
@@ -890,6 +906,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const batchSize = 50;
         for (let i = 0; i < filteredInvoices.length; i += batchSize) {
             const batch = filteredInvoices.slice(i, i + batchSize);
+            setProgressStage(`Insertando facturas (${Math.min(i + batch.length, filteredInvoices.length)}/${filteredInvoices.length})...`);
             
             const { error } = await supabase
                 .from('supplier_invoices')
@@ -909,6 +926,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         .insert(sanitizedBatch);
                     if (!retryError) {
                         imported += sanitizedBatch.length;
+                        setProgressCurrent(prev => prev + batch.length);
                         continue;
                     }
                 }
@@ -935,6 +953,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             } else {
                 imported += batch.length;
             }
+
+            setProgressCurrent(prev => prev + batch.length);
         }
     }
 
@@ -1385,6 +1405,21 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             <p className="text-sm text-muted-foreground mt-2">
               Esto puede tomar unos momentos. Por favor no cierres esta ventana.
             </p>
+            <div className="w-full max-w-md mt-6 space-y-2">
+              <Progress
+                value={
+                  progressTotal > 0
+                    ? Math.min(100, Math.round((progressCurrent / progressTotal) * 100))
+                    : 0
+                }
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{progressStage || 'Procesando...'}</span>
+                <span>
+                  {progressTotal > 0 ? Math.min(100, Math.round((progressCurrent / progressTotal) * 100)) : 0}% ({Math.min(progressCurrent, progressTotal)}/{progressTotal})
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
