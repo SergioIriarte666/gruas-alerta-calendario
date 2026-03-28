@@ -260,17 +260,6 @@ const ClosureForm = ({
                     {currentStep === 1 && (
                       <div className="space-y-4">
                         <ColoredSectionCard
-                          title="Cliente (Opcional)"
-                          icon={<AlertCircle className="h-4 w-4" />}
-                          color="blue"
-                        >
-                          <ClientSelector 
-                            clientId={formData.clientId} 
-                            onClientChange={handleClientChange} 
-                          />
-                        </ColoredSectionCard>
-
-                        <ColoredSectionCard
                           title="Servicios Disponibles"
                           icon={<AlertCircle className="h-4 w-4" />}
                           color="green"
@@ -294,6 +283,17 @@ const ClosureForm = ({
                             searchingProcessed={searchingProcessed}
                             onSearchProcessed={searchProcessedServices}
                             onClearProcessed={clearProcessedServices}
+                          />
+                        </ColoredSectionCard>
+
+                        <ColoredSectionCard
+                          title="Cliente (Opcional)"
+                          icon={<AlertCircle className="h-4 w-4" />}
+                          color="blue"
+                        >
+                          <ClientSelector 
+                            clientId={formData.clientId} 
+                            onClientChange={handleClientChange} 
                           />
                         </ColoredSectionCard>
                       </div>

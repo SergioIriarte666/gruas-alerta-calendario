@@ -54,6 +54,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const [fileName, setFileName] = useState('');
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [selectedUnmatchedSupplierIndices, setSelectedUnmatchedSupplierIndices] = useState<Set<number>>(new Set());
+  const [markAllAsPaid, setMarkAllAsPaid] = useState(false);
   const [editingSupplierIndex, setEditingSupplierIndex] = useState<number | null>(null);
   const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
   const [bulkAssignSupplierId, setBulkAssignSupplierId] = useState<string>('');
@@ -302,6 +303,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setIsCreatingSupplier(false);
     setSelectedUnmatchedSupplierIndices(new Set());
     setEditingSupplierIndex(null);
+    setMarkAllAsPaid(false);
   };
 
   const handleClose = () => {
@@ -707,6 +709,15 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     // 3. Prepare invoices to insert
     const invoicesToInsert: any[] = [];
+    const withPaidOverride = (payload: any, invoiceAmount: number, status: string) => {
+        if (!markAllAsPaid) return { ...payload, status };
+        return {
+            ...payload,
+            status: 'paid',
+            paid_amount: invoiceAmount,
+            balance: 0,
+        };
+    };
     
     // Matched invoices
     preview.matched.forEach((inv, i) => {
@@ -714,7 +725,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (selectedInvoices.has(key) && inv.supplierId) {
             const nRut = normalizeRut(inv.rut);
             const resolvedSupplierId = supplierRutToId.get(nRut) || inv.supplierId;
-            invoicesToInsert.push({
+            invoicesToInsert.push(withPaidOverride({
                 invoice_number: inv.invoice_number,
                 supplier_id: resolvedSupplierId,
                 issue_date: inv.issueDate,
@@ -722,9 +733,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 amount: inv.amount,
                 tax_amount: inv.tax_amount,
                 net_amount: inv.net_amount,
-                status: inv.status,
                 description: inv.description,
-            });
+            }, inv.amount, inv.status));
         }
     });
 
@@ -742,7 +752,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const supplierId = supplierRutToId.get(nRut);
             
             if (supplierId) {
-                invoicesToInsert.push({
+                invoicesToInsert.push(withPaidOverride({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
                     issue_date: inv.issueDate,
@@ -750,9 +760,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     amount: inv.amount,
                     tax_amount: inv.tax_amount,
                     net_amount: inv.net_amount,
-                    status: inv.status,
                     description: inv.description,
-                });
+                }, inv.amount, inv.status));
             } else {
                 console.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
                 errors++;
@@ -768,7 +777,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
              const supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
-                invoicesToInsert.push({
+                invoicesToInsert.push(withPaidOverride({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
                     issue_date: inv.issueDate,
@@ -776,9 +785,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     amount: inv.amount,
                     tax_amount: inv.tax_amount,
                     net_amount: inv.net_amount,
-                    status: inv.status,
                     description: inv.description,
-                });
+                }, inv.amount, inv.status));
              } else {
                  errors++;
              }
@@ -927,7 +935,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-              <div className="px-1">
+              <div className="px-1 space-y-2">
                 <TabsList className="w-full justify-start">
                   <TabsTrigger value="matched" className="flex-1">
                     Listas para importar ({preview.matched.length})
@@ -939,6 +947,15 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     Duplicados ({preview.duplicates.length})
                   </TabsTrigger>
                 </TabsList>
+                <div className="flex justify-end">
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                    <Checkbox
+                      checked={markAllAsPaid}
+                      onCheckedChange={(checked) => setMarkAllAsPaid(!!checked)}
+                    />
+                    Marcar todas como pagadas
+                  </label>
+                </div>
               </div>
 
               <div className="flex-1 min-h-0 mt-2 border rounded-md relative">
@@ -970,7 +987,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {preview.matched.map((inv, i) => (
+                                {preview.matched.map((inv, i) => {
+                                    const effectiveStatus = markAllAsPaid ? 'paid' : inv.status;
+                                    return (
                                     <TableRow key={i}>
                                         <TableCell>
                                             <Checkbox
@@ -983,12 +1002,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
                                         <TableCell>
-                                            <Badge variant={inv.status === 'paid' ? 'default' : inv.status === 'overdue' ? 'destructive' : 'secondary'}>
-                                                {inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Pendiente'}
+                                            <Badge variant={effectiveStatus === 'paid' ? 'default' : effectiveStatus === 'overdue' ? 'destructive' : 'secondary'}>
+                                                {effectiveStatus === 'paid' ? 'Pagada' : effectiveStatus === 'overdue' ? 'Vencida' : 'Pendiente'}
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
