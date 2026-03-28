@@ -37,9 +37,10 @@ interface HistoricalPurchasesTableProps {
   onEdit: (invoice: SupplierInvoiceWithDetails) => void;
   onDelete?: (id: string) => void;
   onReceiveInventory?: (invoice: SupplierInvoiceWithDetails) => void;
+  hideSupplierColumn?: boolean;
   selectedIds?: string[];
   onSelectId?: (id: string, checked: boolean) => void;
-  onSelectAll?: (checked: boolean) => void;
+  onSelectAll?: (ids: string[], checked: boolean) => void;
 }
 
 const statusLabels: Record<string, string> = {
@@ -64,10 +65,12 @@ export const HistoricalPurchasesTable = ({
   onEdit,
   onDelete,
   onReceiveInventory,
+  hideSupplierColumn = false,
   selectedIds = [],
   onSelectId,
   onSelectAll,
 }: HistoricalPurchasesTableProps) => {
+  const emptyColSpan = hideSupplierColumn ? 8 : 9;
   const SortIcon = ({ columnKey }: { columnKey: PurchaseSortKey }) => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-3 w-3 opacity-30" />;
     return sortConfig.direction === 'asc' ? 
@@ -83,7 +86,7 @@ export const HistoricalPurchasesTable = ({
             <TableHead className="w-[40px]">
               <Checkbox
                 checked={invoices.length > 0 && invoices.every((inv) => selectedIds.includes(inv.id))}
-                onCheckedChange={(checked) => onSelectAll?.(!!checked)}
+                onCheckedChange={(checked) => onSelectAll?.(invoices.map((inv) => inv.id), !!checked)}
                 aria-label="Seleccionar todo"
               />
             </TableHead>
@@ -99,15 +102,30 @@ export const HistoricalPurchasesTable = ({
               </Button>
             </TableHead>
             
-            <TableHead>
+            {!hideSupplierColumn && (
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onSort('supplier')}
+                  className="-ml-4 h-8 font-semibold hover:bg-transparent hover:text-primary"
+                >
+                  Proveedor
+                  <SortIcon columnKey="supplier" />
+                </Button>
+              </TableHead>
+            )}
+
+            <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onSort('supplier')}
-                className="-ml-4 h-8 font-semibold hover:bg-transparent hover:text-primary"
+                type="button"
+                className="-ml-4 h-8 w-full justify-start font-semibold hover:bg-transparent hover:text-primary disabled:opacity-100"
+                disabled
+                title="Descripción de Producto o Servicio"
               >
-                Proveedor
-                <SortIcon columnKey="supplier" />
+                <span className="block truncate">Descripción de Producto o Servicio</span>
               </Button>
             </TableHead>
 
@@ -165,7 +183,7 @@ export const HistoricalPurchasesTable = ({
         <TableBody>
           {invoices.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+              <TableCell colSpan={emptyColSpan} className="h-32 text-center text-muted-foreground">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <FileText className="h-8 w-8 text-muted-foreground/30" />
                   <p>No se encontraron registros.</p>
@@ -216,8 +234,16 @@ export const HistoricalPurchasesTable = ({
                   </div>
                 </TableCell>
                 
-                <TableCell className="font-medium text-foreground/80">
-                  {toTitleCase(invoice.supplier?.name || 'Proveedor Desconocido')}
+                {!hideSupplierColumn && (
+                  <TableCell className="font-medium text-foreground/80">
+                    {toTitleCase(invoice.supplier?.name || 'Proveedor Desconocido')}
+                  </TableCell>
+                )}
+
+                <TableCell className="text-muted-foreground text-sm max-w-[320px]">
+                  <span className="block truncate" title={invoice.product_service_description || invoice.description || ''}>
+                    {invoice.product_service_description || invoice.description || ''}
+                  </span>
                 </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">

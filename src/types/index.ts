@@ -235,6 +235,7 @@ export interface Invoice {
   paidAmount?: number;
   remainingAmount?: number;
   notes?: string;
+  productServiceDescription: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;

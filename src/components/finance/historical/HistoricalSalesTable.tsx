@@ -127,6 +127,19 @@ export const HistoricalSalesTable = ({
               </TableHead>
             )}
 
+            <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                className="-ml-4 h-8 w-full justify-start font-semibold hover:bg-transparent hover:text-primary disabled:opacity-100"
+                disabled
+                title="Descripción de Producto o Servicio"
+              >
+                <span className="block truncate">Descripción de Producto o Servicio</span>
+              </Button>
+            </TableHead>
+
             <TableHead>
               <Button
                 variant="ghost"
@@ -169,7 +182,7 @@ export const HistoricalSalesTable = ({
         <TableBody>
           {invoices.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={hideClientColumn ? 6 : 7} className="h-32 text-center text-muted-foreground">
+              <TableCell colSpan={hideClientColumn ? 7 : 8} className="h-32 text-center text-muted-foreground">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <FileText className="h-8 w-8 text-muted-foreground/30" />
                   <p>No se encontraron registros.</p>
@@ -224,6 +237,12 @@ export const HistoricalSalesTable = ({
                       {toTitleCase(invoice.client?.name || 'Cliente Desconocido')}
                   </TableCell>
                 )}
+
+                <TableCell className="text-muted-foreground text-sm max-w-[320px]">
+                  <span className="block truncate" title={invoice.productServiceDescription}>
+                    {invoice.productServiceDescription}
+                  </span>
+                </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">
                   {format(new Date(invoice.issueDate), 'dd MMM yyyy', { locale: es })}

@@ -120,6 +120,7 @@ export const formatInvoiceData = (data: any): Invoice => {
     paymentTermId: data.payment_term_id || undefined,
     numeroFiscal: safeString(data.numero_fiscal) || null,
     notes: safeString(data.notes) || undefined,
+    productServiceDescription: safeString(data.product_service_description) || 'Descripción no registrada',
     createdAt: safeString(data.created_at),
     updatedAt: safeString(data.updated_at),
     createdBy: data.created_by || undefined,

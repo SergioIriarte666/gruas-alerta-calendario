@@ -92,6 +92,7 @@ export const exportInvoiceReport = async ({
       invoice.client?.name || 'N/A',
       invoice.folio || 'N/A',
       invoice.numeroFiscal || 'N/A',
+      (invoice.productServiceDescription || '').slice(0, 60),
       invoice.issueDate 
         ? formatDate(new Date(invoice.issueDate), 'dd/MM/yy', { locale: es })
         : '-',
@@ -110,25 +111,26 @@ export const exportInvoiceReport = async ({
     ]);
 
     autoTable(doc, {
-      head: [['Cliente', 'Folio', 'N° Fiscal', 'F. Emisión', 'F. Venc.', 'F. Pago', 'Subtotal', 'IVA', 'Total', 'Pagado', 'Saldo', 'Estado']],
+      head: [['Cliente', 'Folio', 'N° Fiscal', 'Descripción', 'F. Emisión', 'F. Venc.', 'F. Pago', 'Subtotal', 'IVA', 'Total', 'Pagado', 'Saldo', 'Estado']],
       body: tableData,
       startY: startY + 4,
       headStyles: { fillColor: [220, 53, 69], fontSize: 7 },
       styles: { fontSize: 6, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.12 },
-        1: { cellWidth: availableWidth * 0.07 },
-        2: { cellWidth: availableWidth * 0.08 },
-        3: { cellWidth: availableWidth * 0.07 },
-        4: { cellWidth: availableWidth * 0.07 },
-        5: { cellWidth: availableWidth * 0.07 },
-        6: { cellWidth: availableWidth * 0.08, halign: 'right' },
-        7: { cellWidth: availableWidth * 0.07, halign: 'right' },
-        8: { cellWidth: availableWidth * 0.09, halign: 'right' },
-        9: { cellWidth: availableWidth * 0.09, halign: 'right' },
-        10: { cellWidth: availableWidth * 0.09, halign: 'right' },
-        11: { cellWidth: availableWidth * 0.10 }
+        0: { cellWidth: availableWidth * 0.11 },
+        1: { cellWidth: availableWidth * 0.06 },
+        2: { cellWidth: availableWidth * 0.07 },
+        3: { cellWidth: availableWidth * 0.13 },
+        4: { cellWidth: availableWidth * 0.06 },
+        5: { cellWidth: availableWidth * 0.06 },
+        6: { cellWidth: availableWidth * 0.06 },
+        7: { cellWidth: availableWidth * 0.08, halign: 'right' },
+        8: { cellWidth: availableWidth * 0.06, halign: 'right' },
+        9: { cellWidth: availableWidth * 0.08, halign: 'right' },
+        10: { cellWidth: availableWidth * 0.08, halign: 'right' },
+        11: { cellWidth: availableWidth * 0.08, halign: 'right' },
+        12: { cellWidth: availableWidth * 0.07 }
       }
     });
     
@@ -174,6 +176,7 @@ export const exportInvoiceReport = async ({
       'Cliente': invoice.client?.name || '',
       'Folio': invoice.folio || '',
       'Número Fiscal': invoice.numeroFiscal || '',
+      'Descripción de Producto o Servicio': invoice.productServiceDescription || '',
       'Fecha Emisión': invoice.issueDate,
       'Fecha Vencimiento': invoice.dueDate,
       'Fecha Pago': invoice.paymentDate || '',

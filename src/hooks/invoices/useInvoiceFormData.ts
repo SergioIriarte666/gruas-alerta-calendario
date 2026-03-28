@@ -24,7 +24,8 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
-        numeroFiscal: invoice.numeroFiscal || ''
+        numeroFiscal: invoice.numeroFiscal || '',
+        productServiceDescription: invoice.productServiceDescription || ''
       };
     }
     
@@ -35,7 +36,8 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
       status: 'draft' as InvoiceStatus,
       paymentTermId: undefined,
       paymentDate: '',
-      numeroFiscal: ''
+      numeroFiscal: '',
+      productServiceDescription: ''
     };
   }, [invoice, preselectedClosureId]); // Removed specific props to be safe, though invoice?.id was fine
 

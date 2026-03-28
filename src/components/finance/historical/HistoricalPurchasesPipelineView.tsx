@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
-import { Search, ChevronDown, ChevronRight, Truck, Calendar } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Truck, Calendar, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,7 +65,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
     return invoices.filter(inv =>
       inv.supplier?.name?.toLowerCase().includes(search) ||
       inv.invoice_number.toLowerCase().includes(search) ||
-      inv.description?.toLowerCase().includes(search)
+      (inv.product_service_description || inv.description || '').toLowerCase().includes(search)
     );
   }, [invoices, searchTerm]);
 
@@ -231,24 +231,47 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
 
                           <CollapsibleContent>
                             <div className="px-6 py-4 bg-accent/10">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                {month.invoices.map(inv => (
+                              <div className="bg-card border rounded-lg overflow-hidden">
+                                {month.invoices.map((inv) => (
                                   <div
                                     key={inv.id}
-                                    className="bg-card border rounded-lg p-3 hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
+                                    className="flex items-center justify-between gap-4 px-4 py-3 border-b last:border-b-0 hover:bg-accent/30 transition-colors cursor-pointer"
                                     onClick={() => onEdit(inv)}
                                   >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="font-mono text-sm font-semibold text-foreground">{inv.invoice_number}</span>
-                                      {getStatusBadge(inv.status)}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono text-sm font-semibold text-foreground">
+                                          {inv.invoice_number}
+                                        </span>
+                                        {getStatusBadge(inv.status)}
+                                      </div>
+                                      {(inv.product_service_description || inv.description) && (
+                                        <div className="text-xs text-muted-foreground truncate">
+                                          {inv.product_service_description || inv.description}
+                                        </div>
+                                      )}
                                     </div>
-                                    {inv.description && (
-                                      <p className="text-xs text-muted-foreground mb-1 line-clamp-1">{inv.description}</p>
-                                    )}
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      {format(parseISO(inv.issue_date), 'dd/MM/yyyy')}
-                                    </p>
-                                    <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.amount)}</p>
+
+                                    <div className="flex items-center gap-4">
+                                      <span className="text-xs text-muted-foreground tabular-nums">
+                                        {format(parseISO(inv.issue_date), 'dd/MM/yyyy')}
+                                      </span>
+                                      <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 tabular-nums">
+                                        {formatCurrency(inv.amount)}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onDelete(inv.id);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>

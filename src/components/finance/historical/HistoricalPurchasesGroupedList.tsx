@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Accordion,
   AccordionContent,
@@ -6,78 +6,86 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
-import { Search, User } from 'lucide-react';
-import { Invoice } from '@/types';
+import { Search, Truck } from 'lucide-react';
+import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
-import { HistoricalSalesTable, SortConfig, SortKey } from './HistoricalSalesTable';
+import { HistoricalPurchasesTable, PurchaseSortConfig, PurchaseSortKey } from './HistoricalPurchasesTable';
 
-interface HistoricalSalesGroupedListProps {
-  invoices: Invoice[];
-  sortConfig: SortConfig;
-  onSort: (key: SortKey) => void;
-  onEdit: (invoice: Invoice) => void;
+interface HistoricalPurchasesGroupedListProps {
+  invoices: SupplierInvoiceWithDetails[];
+  invoiceItemsMap?: Record<string, string[]>;
+  sortConfig: PurchaseSortConfig;
+  onSort: (key: PurchaseSortKey) => void;
+  onEdit: (invoice: SupplierInvoiceWithDetails) => void;
   onDelete?: (id: string) => void;
+  onReceiveInventory?: (invoice: SupplierInvoiceWithDetails) => void;
   selectedIds?: string[];
   onSelectId?: (id: string, checked: boolean) => void;
   onSelectAll?: (ids: string[], checked: boolean) => void;
 }
 
-export const HistoricalSalesGroupedList = ({
+export const HistoricalPurchasesGroupedList = ({
   invoices,
+  invoiceItemsMap,
   sortConfig,
   onSort,
   onEdit,
   onDelete,
+  onReceiveInventory,
   selectedIds,
   onSelectId,
   onSelectAll,
-}: HistoricalSalesGroupedListProps) => {
-  // Persistence for expanded groups
+}: HistoricalPurchasesGroupedListProps) => {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [groupSearchTerms, setGroupSearchTerms] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const saved = localStorage.getItem('historical-sales-expanded-groups');
+    const saved = localStorage.getItem('historical-purchases-expanded-groups');
     if (saved) {
       try {
         setExpandedGroups(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to parse expanded groups', e);
+      } catch {
+        setExpandedGroups([]);
       }
     }
   }, []);
 
   const handleExpansionChange = (value: string[]) => {
     setExpandedGroups(value);
-    localStorage.setItem('historical-sales-expanded-groups', JSON.stringify(value));
+    localStorage.setItem('historical-purchases-expanded-groups', JSON.stringify(value));
   };
 
-  const handleGroupSearch = (clientName: string, term: string) => {
+  const handleGroupSearch = (groupId: string, term: string) => {
     setGroupSearchTerms(prev => ({
       ...prev,
-      [clientName]: term
+      [groupId]: term,
     }));
   };
 
-  // Group by client
   const grouped = useMemo(() => {
     return invoices.reduce((acc, invoice) => {
-      const clientName = invoice.client?.name || 'Cliente Desconocido';
-      if (!acc[clientName]) {
-        acc[clientName] = [];
+      const supplierId = invoice.supplier_id || 'no_supplier';
+      const supplierName = invoice.supplier?.name || 'Proveedor Desconocido';
+      if (!acc[supplierId]) {
+        acc[supplierId] = { supplierName, invoices: [] as SupplierInvoiceWithDetails[] };
       }
-      acc[clientName].push(invoice);
+      acc[supplierId].invoices.push(invoice);
       return acc;
-    }, {} as Record<string, Invoice[]>);
+    }, {} as Record<string, { supplierName: string; invoices: SupplierInvoiceWithDetails[] }>);
   }, [invoices]);
 
-  // Sort groups alphabetically
-  const sortedGroupKeys = useMemo(() => Object.keys(grouped).sort(), [grouped]);
+  const sortedGroupIds = useMemo(() => {
+    return Object.keys(grouped).sort((a, b) => {
+      const nameA = (grouped[a]?.supplierName || '').toLowerCase();
+      const nameB = (grouped[b]?.supplierName || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [grouped]);
 
-  if (sortedGroupKeys.length === 0) {
+  if (sortedGroupIds.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-        <User className="mx-auto h-12 w-12 opacity-20 mb-3" />
+        <Truck className="mx-auto h-12 w-12 opacity-20 mb-3" />
         <p className="text-lg font-medium">No se encontraron resultados para agrupar.</p>
         <p className="text-sm">Intenta ajustar los filtros.</p>
       </div>
@@ -85,56 +93,55 @@ export const HistoricalSalesGroupedList = ({
   }
 
   return (
-    <Accordion 
-      type="multiple" 
+    <Accordion
+      type="multiple"
       className="w-full space-y-4"
       value={expandedGroups}
       onValueChange={handleExpansionChange}
     >
-      {sortedGroupKeys.map((clientName) => {
-        const allClientInvoices = grouped[clientName];
-        const searchTerm = groupSearchTerms[clientName] || '';
-        
-        // Filter invoices within group
-        const filteredClientInvoices = allClientInvoices.filter(inv => {
+      {sortedGroupIds.map((supplierId) => {
+        const group = grouped[supplierId];
+        const allSupplierInvoices = group.invoices;
+        const searchTerm = groupSearchTerms[supplierId] || '';
+
+        const filteredSupplierInvoices = allSupplierInvoices.filter((inv) => {
           if (!searchTerm) return true;
           const lowerTerm = searchTerm.toLowerCase();
           return (
-            inv.folio.toLowerCase().includes(lowerTerm) ||
-            inv.numeroFiscal?.toLowerCase().includes(lowerTerm) ||
-            inv.productServiceDescription.toLowerCase().includes(lowerTerm) ||
-            inv.total.toString().includes(lowerTerm) ||
-            inv.status.toLowerCase().includes(lowerTerm)
+            inv.invoice_number.toLowerCase().includes(lowerTerm) ||
+            (inv.product_service_description || inv.description || '').toLowerCase().includes(lowerTerm) ||
+            String(inv.amount).includes(lowerTerm) ||
+            String(inv.status || '').toLowerCase().includes(lowerTerm)
           );
         });
 
-        const totalAmount = allClientInvoices.reduce((sum, inv) => sum + inv.total, 0);
+        const totalAmount = allSupplierInvoices.reduce((sum, inv) => sum + inv.amount, 0);
 
         return (
-          <AccordionItem 
-            key={clientName} 
-            value={clientName}
+          <AccordionItem
+            key={supplierId}
+            value={supplierId}
             className="border rounded-lg bg-card shadow-sm overflow-hidden"
           >
             <AccordionTrigger className="px-6 py-4 hover:bg-muted/30 transition-colors [&[data-state=open]]:bg-muted/30">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full pr-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                    <User className="h-5 w-5" />
+                    <Truck className="h-5 w-5" />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="font-semibold text-lg truncate">
-                      {toTitleCase(clientName)}
+                      {toTitleCase(group.supplierName)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {allClientInvoices.length} facturas registradas
+                      {allSupplierInvoices.length} facturas registradas
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4 text-sm text-muted-foreground ml-14 sm:ml-0">
                   <div className="flex flex-col sm:items-end min-w-[100px]">
-                    <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground/70">Total Facturado</span>
+                    <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground/70">Total Comprado</span>
                     <span className="font-bold text-foreground text-lg">
                       {formatCurrency(totalAmount)}
                     </span>
@@ -142,38 +149,40 @@ export const HistoricalSalesGroupedList = ({
                 </div>
               </div>
             </AccordionTrigger>
-            
+
             <AccordionContent className="pb-6 px-6 pt-2">
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder="Filtrar documentos..."
                       className="pl-9 bg-background"
                       value={searchTerm}
-                      onChange={(e) => handleGroupSearch(clientName, e.target.value)}
+                      onChange={(e) => handleGroupSearch(supplierId, e.target.value)}
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 </div>
-                
-                {filteredClientInvoices.length > 0 ? (
-                  <HistoricalSalesTable
-                    invoices={filteredClientInvoices}
+
+                {filteredSupplierInvoices.length > 0 ? (
+                  <HistoricalPurchasesTable
+                    invoices={filteredSupplierInvoices}
+                    invoiceItemsMap={invoiceItemsMap}
                     sortConfig={sortConfig}
                     onSort={onSort}
                     onEdit={onEdit}
                     onDelete={onDelete}
-                    hideClientColumn
+                    onReceiveInventory={onReceiveInventory}
+                    hideSupplierColumn
                     selectedIds={selectedIds}
                     onSelectId={onSelectId}
-                    onSelectAll={(checked) => onSelectAll?.(filteredClientInvoices.map(i => i.id), checked)}
+                    onSelectAll={onSelectAll}
                   />
                 ) : (
                   <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/5">
-                    No se encontraron facturas con "{searchTerm}" para este cliente.
+                    No se encontraron facturas con "{searchTerm}" para este proveedor.
                   </div>
                 )}
               </div>

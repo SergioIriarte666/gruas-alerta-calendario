@@ -53,6 +53,7 @@ export const BatchEditHistoricalInvoicesModal = ({
   const [shippingInfo, setShippingInfo] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [appendNote, setAppendNote] = useState<string>('');
+  const [productServiceDescription, setProductServiceDescription] = useState<string>('');
   
   // Flags to know which fields to update
   const [updateStatus, setUpdateStatus] = useState(false);
@@ -60,6 +61,7 @@ export const BatchEditHistoricalInvoicesModal = ({
   const [updatePayment, setUpdatePayment] = useState(false);
   const [updateNote, setUpdateNote] = useState(false);
   const [updateOrigin, setUpdateOrigin] = useState(false);
+  const [updateProductServiceDescription, setUpdateProductServiceDescription] = useState(false);
   const [origin, setOrigin] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,11 +77,13 @@ export const BatchEditHistoricalInvoicesModal = ({
     setShippingInfo('');
     setPaymentMethod('');
     setAppendNote('');
+    setProductServiceDescription('');
     setUpdateStatus(false);
     setUpdateShipping(false);
     setUpdatePayment(false);
     setUpdateNote(false);
     setUpdateOrigin(false);
+    setUpdateProductServiceDescription(false);
     setOrigin('');
   };
 
@@ -96,6 +100,15 @@ export const BatchEditHistoricalInvoicesModal = ({
     let processed = 0;
 
     try {
+      const trimmedDescription = productServiceDescription.trim();
+      if (updateProductServiceDescription) {
+        if (trimmedDescription.length < 10 || trimmedDescription.length > 500) {
+          toast.error('La descripción debe tener entre 10 y 500 caracteres');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const promises = selectedInvoices.map(async (invoice) => {
         const updates: any = {};
         const changes: string[] = [];
@@ -167,6 +180,11 @@ export const BatchEditHistoricalInvoicesModal = ({
         // Handle Note Appending
         if (updateNote && appendNote.trim()) {
            userNotes = userNotes ? `${userNotes}\n${appendNote}` : appendNote;
+        }
+
+        if (updateProductServiceDescription) {
+          updates.productServiceDescription = trimmedDescription;
+          changes.push('Descripción actualizada');
         }
 
         // Reconstruct notes with metadata if needed
@@ -241,6 +259,28 @@ export const BatchEditHistoricalInvoicesModal = ({
                   <SelectItem value="cancelled">Anulada</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <Checkbox
+              id="check-psd"
+              checked={updateProductServiceDescription}
+              onCheckedChange={(c) => setUpdateProductServiceDescription(c === true)}
+              className="mt-3"
+            />
+            <div className="grid gap-2 flex-1">
+              <Label htmlFor="productServiceDescription" className={!updateProductServiceDescription ? 'text-muted-foreground' : ''}>
+                Descripción de Producto o Servicio
+              </Label>
+              <Textarea
+                id="productServiceDescription"
+                value={productServiceDescription}
+                onChange={(e) => setProductServiceDescription(e.target.value)}
+                disabled={!updateProductServiceDescription}
+                className="min-h-[90px] resize-none"
+                placeholder="Describe el motivo o razón que originó la creación del documento..."
+              />
             </div>
           </div>
 

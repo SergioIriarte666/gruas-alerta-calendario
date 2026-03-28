@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
 import { toast } from 'sonner';
 
@@ -21,8 +22,9 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
   onSuccess,
 }) => {
   const { deleteInvoice, updateInvoice } = usePurchaseInvoices();
-  const [action, setAction] = React.useState<'delete' | 'update_status'>('update_status');
+  const [action, setAction] = React.useState<'delete' | 'update_status' | 'update_description'>('update_status');
   const [newStatus, setNewStatus] = React.useState<string>('pending');
+  const [newDescription, setNewDescription] = React.useState('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handleSubmit = async () => {
@@ -41,6 +43,21 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
                     data: { status: newStatus }
                 })
             )
+        );
+        toast.success(`${selectedIds.length} facturas actualizadas correctamente`);
+      } else if (action === 'update_description') {
+        const trimmed = newDescription.trim();
+        if (trimmed.length < 10 || trimmed.length > 500) {
+          toast.error('La descripción debe tener entre 10 y 500 caracteres');
+          return;
+        }
+        await Promise.all(
+          selectedIds.map(id =>
+            updateInvoice({
+              id,
+              data: { product_service_description: trimmed, description: trimmed }
+            })
+          )
         );
         toast.success(`${selectedIds.length} facturas actualizadas correctamente`);
       }
@@ -70,13 +87,14 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
             <Label>Acción</Label>
             <Select 
                 value={action} 
-                onValueChange={(val: 'delete' | 'update_status') => setAction(val)}
+                onValueChange={(val: 'delete' | 'update_status' | 'update_description') => setAction(val)}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="update_status">Cambiar Estado</SelectItem>
+                <SelectItem value="update_description">Cambiar Descripción</SelectItem>
                 <SelectItem value="delete">Eliminar</SelectItem>
               </SelectContent>
             </Select>
@@ -102,6 +120,19 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
           {action === 'delete' && (
             <div className="p-4 bg-destructive/10 text-destructive rounded-md text-sm">
               Advertencia: Esta acción no se puede deshacer. Se eliminarán permanentemente las facturas seleccionadas.
+            </div>
+          )}
+
+          {action === 'update_description' && (
+            <div className="grid gap-2">
+              <Label>Descripción de Producto o Servicio</Label>
+              <Textarea
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Describe el motivo o razón que originó la creación del documento..."
+                className="resize-none"
+                rows={4}
+              />
             </div>
           )}
         </div>

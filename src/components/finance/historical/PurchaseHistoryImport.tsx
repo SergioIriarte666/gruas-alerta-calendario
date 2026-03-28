@@ -25,6 +25,7 @@ import {
   UnmatchedSupplier,
   ProcessedPurchase,
 } from '@/utils/purchaseHistoryParser';
+import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { Supplier } from '@/types/suppliers';
 
 interface PurchaseHistoryImportProps {
@@ -40,6 +41,20 @@ const formatCLP = (amount: number) =>
 
 const normalizeRut = (rut: string): string =>
   rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
+
+const rutCandidates = (rut: string): string[] => {
+  const n = normalizeRut(rut);
+  if (!n) return [''];
+  if (n.length === 1) return [n];
+  const base = n.slice(0, -1);
+  return n === base ? [n] : [n, base];
+};
+
+const rutMatches = (a: string, b: string): boolean => {
+  const aC = rutCandidates(a);
+  const bC = new Set(rutCandidates(b));
+  return aC.some((c) => bC.has(c));
+};
 
 const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { suppliers } = useSuppliers();
@@ -165,7 +180,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
        preview.unmatched.forEach((inv, i) => {
            const nRut = normalizeRut(inv.rut);
            // Find if this invoice belongs to one of the resolved suppliers
-           const supplierIndex = unmatchedSuppliers.findIndex(s => normalizeRut(s.rut) === nRut);
+           const supplierIndex = unmatchedSuppliers.findIndex(s => rutMatches(s.rut, nRut));
            if (selectedUnmatchedSupplierIndices.has(supplierIndex)) {
                indicesToSelect.push(`unmatched-${inv.invoice_number}-${i}`);
            }
@@ -181,7 +196,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
        const indicesToDeselect: string[] = [];
        preview?.unmatched.forEach((inv, i) => {
            const nRut = normalizeRut(inv.rut);
-           const supplierIndex = unmatchedSuppliers.findIndex(s => normalizeRut(s.rut) === nRut);
+           const supplierIndex = unmatchedSuppliers.findIndex(s => rutMatches(s.rut, nRut));
            if (selectedUnmatchedSupplierIndices.has(supplierIndex)) {
                indicesToDeselect.push(`unmatched-${inv.invoice_number}-${i}`);
            }
@@ -327,18 +342,43 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       }
 
       // Fetch existing invoices and inventory_suppliers separately (no FK join available)
-      const [{ data: existingInvoices }, { data: allInvSups }] = await Promise.all([
-        supabase.from('supplier_invoices').select('invoice_number, supplier_id').not('invoice_number', 'is', null),
-        (supabase as any).from('inventory_suppliers').select('id, rut'),
-      ]);
+      const PAGE_SIZE = 1000;
+      const existingInvoices: any[] = [];
+      let invFrom = 0;
+      while (true) {
+        const { data: chunk, error } = await supabase
+          .from('supplier_invoices')
+          .select('invoice_number, supplier_id')
+          .not('invoice_number', 'is', null)
+          .range(invFrom, invFrom + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!chunk || chunk.length === 0) break;
+        existingInvoices.push(...chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        invFrom += PAGE_SIZE;
+      }
+
+      const allInvSups: any[] = [];
+      let supFrom = 0;
+      while (true) {
+        const { data: chunk, error } = await (supabase as any)
+          .from('inventory_suppliers')
+          .select('id, rut')
+          .range(supFrom, supFrom + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!chunk || chunk.length === 0) break;
+        allInvSups.push(...chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        supFrom += PAGE_SIZE;
+      }
 
       const supplierIdToRut = new Map<string, string>();
-      allInvSups?.forEach((s: any) => {
+      allInvSups.forEach((s: any) => {
         if (s.rut) supplierIdToRut.set(s.id, normalizeRut(s.rut));
       });
 
       const existingKeys = new Set<string>();
-      existingInvoices?.forEach((inv: any) => {
+      existingInvoices.forEach((inv: any) => {
         const nRut = supplierIdToRut.get(inv.supplier_id);
         if (nRut && inv.invoice_number) {
           existingKeys.add(`${nRut}-${inv.invoice_number}`);
@@ -403,7 +443,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       const next = new Set(prev);
       preview?.unmatched.forEach((inv, i) => {
         const nRut = normalizeRut(inv.rut);
-        const uc = unmatchedSuppliers.find(c => normalizeRut(c.rut) === nRut);
+        const uc = unmatchedSuppliers.find(c => rutMatches(c.rut, nRut));
         
         // Only select if resolved (created or assigned)
         if (uc && (uc.resolution === 'create' || uc.resolution === 'assign')) {
@@ -439,7 +479,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       const key = `unmatched-${inv.invoice_number}-${i}`;
       if (!selectedInvoices.has(key)) return false;
       const nRut = normalizeRut(inv.rut);
-      const us = unmatchedSuppliers.find(s => normalizeRut(s.rut) === nRut);
+      const us = unmatchedSuppliers.find(s => rutMatches(s.rut, nRut));
       return !!us && (us.resolution === 'create' || us.resolution === 'assign');
     }).length;
   };
@@ -464,7 +504,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     const nRut = normalizeRut(newSupplierData.rut);
     
     setUnmatchedSuppliers(prev => prev.map(us => {
-      if (normalizeRut(us.rut) === nRut) {
+      if (rutMatches(us.rut, nRut)) {
         return { 
           ...us, 
           resolution: 'create',
@@ -478,7 +518,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     if (preview) {
         const indicesToSelect: string[] = [];
         preview.unmatched.forEach((inv, i) => {
-            if (normalizeRut(inv.rut) === nRut) {
+            if (rutMatches(inv.rut, nRut)) {
                 indicesToSelect.push(`unmatched-${inv.invoice_number}-${i}`);
             }
         });
@@ -522,6 +562,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     // 1. Prepare supplier mapping (RUT -> ID) for creation or assignment
     // Map includes newly created suppliers AND assigned existing suppliers
     const supplierRutToId = new Map<string, string>();
+    const setSupplierRutToId = (rut: string, id: string) => {
+        rutCandidates(rut).forEach((c) => supplierRutToId.set(c, id));
+    };
 
     // Process all unmatched suppliers with resolution
     for (const us of unmatchedSuppliers) {
@@ -542,7 +585,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     .from('inventory_suppliers')
                     .select('id, rut');
                 
-                const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
+                const existingInvSup = allInvSups?.find((s: any) => rutMatches(s.rut || '', nRut));
 
                 if (existingInvSup) {
                     inventorySupplierId = existingInvSup.id;
@@ -575,7 +618,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         .from('suppliers')
                         .select('id, rut');
                     
-                    const existingSup = allSups?.find(s => normalizeRut(s.rut || '') === nRut);
+                    const existingSup = allSups?.find(s => rutMatches(s.rut || '', nRut));
                     
                     if (!existingSup) {
                          const { error: supError } = await supabase
@@ -607,7 +650,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
                 // Map the RUT to the INVENTORY_SUPPLIER ID because that's what the invoice table references
                 if (inventorySupplierId) {
-                    supplierRutToId.set(nRut, inventorySupplierId);
+                    setSupplierRutToId(nRut, inventorySupplierId);
                 }
 
             } catch (err) {
@@ -625,10 +668,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 .from('inventory_suppliers')
                 .select('id, rut');
             
-            const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
+            const existingInvSup = allInvSups?.find((s: any) => rutMatches(s.rut || '', nRut));
             
             if (existingInvSup) {
-                supplierRutToId.set(nRut, existingInvSup.id);
+                setSupplierRutToId(nRut, existingInvSup.id);
             } else {
                 // If not found in inventory_suppliers, we must create it there too!
                 try {
@@ -643,14 +686,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         .single();
                         
                     if (!invSupError && newInvSup) {
-                        supplierRutToId.set(nRut, newInvSup.id);
+                        setSupplierRutToId(nRut, newInvSup.id);
                     } else {
                         console.error('Failed to create missing inventory_supplier for assigned supplier:', invSupError);
                         // Fallback: try using the assigned ID directly
-                        supplierRutToId.set(nRut, us.assignedSupplierId);
+                        setSupplierRutToId(nRut, us.assignedSupplierId);
                     }
                 } catch (e) {
-                    supplierRutToId.set(nRut, us.assignedSupplierId);
+                    setSupplierRutToId(nRut, us.assignedSupplierId);
                 }
             }
         }
@@ -676,13 +719,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 .from('inventory_suppliers')
                 .select('id, rut, name');
             
-            const matchedInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === rut);
+            const matchedInvSup = allInvSups?.find((s: any) => rutMatches(s.rut || '', rut));
             
             if (matchedInvSup) {
-                supplierRutToId.set(rut, matchedInvSup.id);
+                setSupplierRutToId(rut, matchedInvSup.id);
             } else {
                 // Find supplier info from matched invoices
-                const matchedInv = preview.matched.find(inv => normalizeRut(inv.rut) === rut);
+                const matchedInv = preview.matched.find(inv => rutMatches(inv.rut, rut));
                 const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
                 const originalRut = matchedInv?.rut || rut;
                 
@@ -697,7 +740,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     .single();
                     
                 if (!invSupError && newInvSup) {
-                    supplierRutToId.set(rut, newInvSup.id);
+                    setSupplierRutToId(rut, newInvSup.id);
                 } else {
                     console.error('Failed to create inventory_supplier for matched RUT:', rut, invSupError);
                 }
@@ -714,8 +757,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         return {
             ...payload,
             status: 'paid',
-            paid_amount: invoiceAmount,
-            balance: 0,
         };
     };
     
@@ -725,6 +766,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (selectedInvoices.has(key) && inv.supplierId) {
             const nRut = normalizeRut(inv.rut);
             const resolvedSupplierId = supplierRutToId.get(nRut) || inv.supplierId;
+            const psd = normalizeProductServiceDescription(inv.description);
             invoicesToInsert.push(withPaidOverride({
                 invoice_number: inv.invoice_number,
                 supplier_id: resolvedSupplierId,
@@ -733,7 +775,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 amount: inv.amount,
                 tax_amount: inv.tax_amount,
                 net_amount: inv.net_amount,
-                description: inv.description,
+                description: psd,
+                product_service_description: psd,
             }, inv.amount, inv.status));
         }
     });
@@ -752,6 +795,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const supplierId = supplierRutToId.get(nRut);
             
             if (supplierId) {
+                const psd = normalizeProductServiceDescription(inv.description);
                 invoicesToInsert.push(withPaidOverride({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
@@ -760,7 +804,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     amount: inv.amount,
                     tax_amount: inv.tax_amount,
                     net_amount: inv.net_amount,
-                    description: inv.description,
+                    description: psd,
+                    product_service_description: psd,
                 }, inv.amount, inv.status));
             } else {
                 console.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
@@ -777,6 +822,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
              const supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
+                const psd = normalizeProductServiceDescription(inv.description);
                 invoicesToInsert.push(withPaidOverride({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
@@ -785,7 +831,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     amount: inv.amount,
                     tax_amount: inv.tax_amount,
                     net_amount: inv.net_amount,
-                    description: inv.description,
+                    description: psd,
+                    product_service_description: psd,
                 }, inv.amount, inv.status));
              } else {
                  errors++;
@@ -828,6 +875,17 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             console.log(`${skipped} facturas omitidas por duplicado`);
         }
 
+        const isMissingProductServiceDescriptionColumn = (message: string | null | undefined) => {
+            const m = (message || '').toLowerCase();
+            return m.includes("product_service_description") && (m.includes("could not find") || m.includes("schema cache"));
+        };
+
+        const stripProductServiceDescription = (row: any) => {
+            if (!row || typeof row !== 'object') return row;
+            const { product_service_description: _ignored, ...rest } = row;
+            return rest;
+        };
+
         // Simple batch insert (no upsert, no created_by)
         const batchSize = 50;
         for (let i = 0; i < filteredInvoices.length; i += batchSize) {
@@ -839,6 +897,21 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
             if (error) {
                 console.error('Batch insert error, trying individually:', error);
+                setLastError((prev) => prev ?? (error.message || 'Error desconocido al insertar facturas de compra'));
+                toast.error('Error al importar compras', {
+                  description: error.message || 'Error desconocido al insertar facturas de compra',
+                });
+
+                if (isMissingProductServiceDescriptionColumn(error.message)) {
+                    const sanitizedBatch = batch.map(stripProductServiceDescription);
+                    const { error: retryError } = await supabase
+                        .from('supplier_invoices')
+                        .insert(sanitizedBatch);
+                    if (!retryError) {
+                        imported += sanitizedBatch.length;
+                        continue;
+                    }
+                }
                 
                 // Fallback: insert one by one to identify specific failures
                 for (const item of batch) {
@@ -852,6 +925,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             console.log(`Omitiendo duplicado: ${item.invoice_number}`);
                         } else {
                             console.error('Failed to insert:', item.invoice_number, singleError);
+                            setLastError((prev) => prev ?? (singleError.message || 'Error desconocido al insertar factura de compra'));
                             errors++;
                         }
                     } else {

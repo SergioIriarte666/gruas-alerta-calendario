@@ -39,6 +39,11 @@ export const useInvoiceOperations = () => {
       const serviceIds = closureServices.map(cs => cs.service_id);
       console.log('📋 Servicios a facturar:', serviceIds);
 
+      const trimmedDescription = (invoiceData.productServiceDescription || '').trim();
+      if (trimmedDescription.length < 10 || trimmedDescription.length > 500) {
+        throw new Error('La descripción de producto o servicio debe tener entre 10 y 500 caracteres');
+      }
+
       // Preparar datos para la transacción
       const invoiceDataForTransaction = {
         client_id: invoiceData.clientId,
@@ -50,7 +55,8 @@ export const useInvoiceOperations = () => {
         numero_fiscal: invoiceData.numeroFiscal,
         status: invoiceData.status || 'draft',
         payment_term_id: invoiceData.paymentTermId || '',
-        notes: null
+        notes: invoiceData.notes || null,
+        product_service_description: trimmedDescription
       };
 
       // Usar función transaccional que maneja folio correctamente
@@ -274,6 +280,13 @@ export const useInvoiceOperations = () => {
       }
       if (invoiceData.notes !== undefined) {
         updateData.notes = invoiceData.notes;
+      }
+      if (invoiceData.productServiceDescription !== undefined) {
+        const trimmed = invoiceData.productServiceDescription.trim();
+        if (trimmed.length < 10 || trimmed.length > 500) {
+          throw new Error('La descripción de producto o servicio debe tener entre 10 y 500 caracteres');
+        }
+        updateData.product_service_description = trimmed;
       }
       
       // Handle calculated fields with validation

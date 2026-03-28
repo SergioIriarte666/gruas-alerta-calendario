@@ -81,6 +81,20 @@ const normalizeRut = (rut: string): string => {
   return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 };
 
+const rutCandidates = (rut: string): string[] => {
+  const n = normalizeRut(rut);
+  if (!n) return [''];
+  if (n.length === 1) return [n];
+  const base = n.slice(0, -1);
+  return n === base ? [n] : [n, base];
+};
+
+const rutMatches = (a: string, b: string): boolean => {
+  const aC = rutCandidates(a);
+  const bC = new Set(rutCandidates(b));
+  return aC.some((c) => bC.has(c));
+};
+
 // Parse number handling Chilean format and parenthesized negatives: (181000) → -181000
 const parseNumber = (value: any): number => {
   if (typeof value === 'number') return value;
@@ -515,8 +529,8 @@ export const processInvoiceRows = (
       documentType: docType,
     };
 
-    // Match client by RUT
-    const matchingClients = clients.filter(c => normalizeRut(c.rut) === normalizedRut);
+    // Match client by RUT (tolerates RUTs stored without DV in DB)
+    const matchingClients = clients.filter(c => rutMatches(c.rut, row.rut));
 
     if (matchingClients.length >= 1) {
       processed.clientId = matchingClients[0].id;

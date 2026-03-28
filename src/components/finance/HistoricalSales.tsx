@@ -129,26 +129,34 @@ export const HistoricalSales = () => {
     // 1. All invoices (historical + app-created)
     let result = [...invoices];
 
+    const toLocalDateKey = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const invoiceDateKey = (value: string) => (value || '').slice(0, 10);
+
     // 2. Apply search term (searches across client, folio, N° fiscal)
     if (filters.searchTerm) {
       const query = filters.searchTerm.toLowerCase();
       result = result.filter((inv) =>
         inv.client?.name?.toLowerCase().includes(query) ||
         inv.folio.toLowerCase().includes(query) ||
-        inv.numeroFiscal?.toLowerCase().includes(query)
+        inv.numeroFiscal?.toLowerCase().includes(query) ||
+        inv.productServiceDescription.toLowerCase().includes(query)
       );
     }
 
     // 3. Apply specific filters
     if (filters.dateFrom) {
-      const fromTime = filters.dateFrom.getTime();
-      result = result.filter((inv) => new Date(inv.issueDate).getTime() >= fromTime);
+      const fromKey = toLocalDateKey(filters.dateFrom);
+      result = result.filter((inv) => invoiceDateKey(inv.issueDate) >= fromKey);
     }
     if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      const toTime = toDate.getTime();
-      result = result.filter((inv) => new Date(inv.issueDate).getTime() <= toTime);
+      const toKey = toLocalDateKey(filters.dateTo);
+      result = result.filter((inv) => invoiceDateKey(inv.issueDate) <= toKey);
     }
     if (filters.clientName) {
       const query = filters.clientName.toLowerCase();
@@ -182,8 +190,8 @@ export const HistoricalSales = () => {
         valA = a.client?.name?.toLowerCase() || '';
         valB = b.client?.name?.toLowerCase() || '';
       } else if (sortConfig.key === 'issueDate') {
-        valA = new Date(valA).getTime();
-        valB = new Date(valB).getTime();
+        valA = invoiceDateKey(String(valA || ''));
+        valB = invoiceDateKey(String(valB || ''));
       } else if (sortConfig.key === 'folio') {
         // Sort by numeroFiscal numerically when available
         const numA = parseInt((a.numeroFiscal || a.folio).replace(/\D/g, ''), 10) || 0;

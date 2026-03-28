@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
+import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -41,6 +42,20 @@ const formatCLP = (amount: number) =>
 
 const normalizeRut = (rut: string): string =>
   rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
+
+const rutCandidates = (rut: string): string[] => {
+  const n = normalizeRut(rut);
+  if (!n) return [''];
+  if (n.length === 1) return [n];
+  const base = n.slice(0, -1);
+  return n === base ? [n] : [n, base];
+};
+
+const rutMatches = (a: string, b: string): boolean => {
+  const aC = rutCandidates(a);
+  const bC = new Set(rutCandidates(b));
+  return aC.some((c) => bC.has(c));
+};
 
 const formatClientWithDepartment = (client: Client): string => {
   const department = client.department?.trim();
@@ -336,7 +351,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       const key = `unmatched-${inv.folio}-${i}`;
       if (!selectedInvoices.has(key)) return false;
       const nRut = normalizeRut(inv.rut);
-      const uc = unmatchedClients.find(c => normalizeRut(c.rut) === nRut);
+      const uc = unmatchedClients.find(c => rutMatches(c.rut, inv.rut));
       return !!uc && uc.resolution !== 'ignore' && uc.resolution !== 'pending';
     }).length;
   };
@@ -389,6 +404,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
       // Step 1: Create clients that need to be created
       const clientRutToId = new Map<string, string>();
+      const setClientRutToId = (rut: string, id: string) => {
+        rutCandidates(rut).forEach((c) => clientRutToId.set(c, id));
+      };
       
       for (const uc of unmatchedClients) {
         const nRut = normalizeRut(uc.rut);
@@ -407,14 +425,14 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               contactName: '',
             } as any);
             if (result.clients && result.clients.length > 0) {
-              clientRutToId.set(nRut, result.clients[0].id);
+              setClientRutToId(nRut, result.clients[0].id);
             }
           } catch (err) {
             console.error('Error creating client:', uc.rut, err);
             errors++;
           }
         } else if (uc.resolution === 'assign' && uc.assignedClientId) {
-          clientRutToId.set(nRut, uc.assignedClientId);
+          setClientRutToId(nRut, uc.assignedClientId);
         }
       }
 
@@ -446,6 +464,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           paid_amount: inv.isPaid ? inv.total : 0,
           payment_date: inv.isPaid ? inv.issueDate : null,
           notes: inv.notes,
+          product_service_description: normalizeProductServiceDescription(inv.notes),
           created_by: userId,
         });
       }
@@ -459,7 +478,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         const nRut = normalizeRut(inv.rut);
         const clientId = clientRutToId.get(nRut);
         
-        const ucEntry = unmatchedClients.find(uc => normalizeRut(uc.rut) === nRut);
+        const ucEntry = unmatchedClients.find(uc => rutMatches(uc.rut, inv.rut));
         
         if (ucEntry?.resolution === 'ignore') continue;
         if (!clientId) {
@@ -486,6 +505,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           paid_amount: inv.isPaid ? inv.total : 0,
           payment_date: inv.isPaid ? inv.issueDate : null,
           notes: inv.notes,
+          product_service_description: normalizeProductServiceDescription(inv.notes),
           created_by: userId,
         });
       }
@@ -505,7 +525,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             
             // If still not found, check existing clients
              if (!clientId) {
-                const existingClient = clients.find(c => normalizeRut(c.rut) === nRut);
+                const existingClient = clients.find(c => rutMatches(c.rut, inv.rut));
                 if (existingClient) clientId = existingClient.id;
              }
           }
@@ -535,6 +555,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             paid_amount: inv.isPaid ? inv.total : 0,
             payment_date: inv.isPaid ? inv.issueDate : null,
             notes: inv.notes,
+            product_service_description: normalizeProductServiceDescription(inv.notes),
             created_by: userId,
           });
         }
@@ -557,6 +578,23 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         const { error } = await supabase.from('invoices').insert(batch);
         
         if (error) {
+          const m = (error.message || '').toLowerCase();
+          const isMissingProductServiceDescriptionColumn =
+            m.includes('product_service_description') && (m.includes('could not find') || m.includes('schema cache'));
+
+          if (isMissingProductServiceDescriptionColumn) {
+            const sanitizedBatch = batch.map((row: any) => {
+              const { product_service_description: _ignored, ...rest } = row;
+              return rest;
+            });
+            const { error: retryError } = await supabase.from('invoices').insert(sanitizedBatch);
+            if (!retryError) {
+              imported += sanitizedBatch.length;
+              updateProgress(batch.length);
+              continue;
+            }
+          }
+
           console.error('Batch insert error:', error);
           errors += batch.length;
           const isDuplicate = error.message?.includes('invoices_folio_key') || error.message?.includes('duplicate key');

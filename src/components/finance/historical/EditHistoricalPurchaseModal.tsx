@@ -22,7 +22,7 @@ const invoiceSchema = z.object({
   net_amount: z.coerce.number().min(0, 'El monto neto debe ser mayor o igual a 0'),
   tax_amount: z.coerce.number().min(0, 'El IVA debe ser mayor o igual a 0'),
   status: z.string().min(1, 'El estado es requerido'),
-  description: z.string().optional(),
+  product_service_description: z.string().trim().min(10, 'Debe tener al menos 10 caracteres').max(500, 'Debe tener máximo 500 caracteres'),
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -48,7 +48,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
       net_amount: 0,
       tax_amount: 0,
       status: 'pending',
-      description: '',
+      product_service_description: '',
     },
   });
 
@@ -62,7 +62,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
         net_amount: invoice.net_amount,
         tax_amount: invoice.tax_amount || 0,
         status: invoice.status || 'pending',
-        description: invoice.description || '',
+        product_service_description: invoice.product_service_description || invoice.description || '',
       });
     }
   }, [invoice, open, form]);
@@ -81,7 +81,8 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
           net_amount: data.net_amount,
           tax_amount: data.tax_amount,
           status: data.status,
-          description: data.description,
+          product_service_description: data.product_service_description,
+          description: data.product_service_description,
         },
       });
       onOpenChange(false);
@@ -258,10 +259,10 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
 
             <FormField
               control={form.control}
-              name="description"
+              name="product_service_description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción / Observaciones</FormLabel>
+                  <FormLabel>Descripción de Producto o Servicio</FormLabel>
                   <FormControl>
                     <Textarea {...field} className="resize-none" />
                   </FormControl>

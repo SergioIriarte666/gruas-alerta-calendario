@@ -65,11 +65,13 @@ export const EditHistoricalInvoiceModal = ({
 }: EditHistoricalInvoiceModalProps) => {
   const [status, setStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [productServiceDescription, setProductServiceDescription] = useState<string>('');
   const [shippingInfo, setShippingInfo] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [origin, setOrigin] = useState<OriginType>('sistema');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metadata, setMetadata] = useState<InvoiceMetadata>({});
+  const [descriptionError, setDescriptionError] = useState<string>('');
 
   const isSystemInvoice = invoice ? !invoice.folio.startsWith('HIST-') : false;
 
@@ -77,6 +79,8 @@ export const EditHistoricalInvoiceModal = ({
     if (invoice && isOpen) {
       setStatus(invoice.status);
       setOrigin(getOriginFromFolio(invoice.folio));
+      setProductServiceDescription(invoice.productServiceDescription || '');
+      setDescriptionError('');
 
       const fullNotes = invoice.notes || '';
       if (fullNotes.includes(METADATA_SEPARATOR)) {
@@ -105,6 +109,13 @@ export const EditHistoricalInvoiceModal = ({
 
     setIsSubmitting(true);
     try {
+      const trimmedDescription = productServiceDescription.trim();
+      if (trimmedDescription.length < 10 || trimmedDescription.length > 500) {
+        setDescriptionError('La descripción debe tener entre 10 y 500 caracteres');
+        setIsSubmitting(false);
+        return;
+      }
+
       const originalOrigin = getOriginFromFolio(invoice.folio);
       const originChanged = origin !== originalOrigin;
 
@@ -143,6 +154,7 @@ export const EditHistoricalInvoiceModal = ({
       const updates: Partial<Invoice> = {
         status: status as any,
         notes: newNotes,
+        productServiceDescription: trimmedDescription,
       };
 
       if (originChanged) {
@@ -230,6 +242,23 @@ export const EditHistoricalInvoiceModal = ({
                 placeholder="Ej: Transferencia Banco Chile"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="productServiceDescription">Descripción de Producto o Servicio</Label>
+            <Textarea
+              id="productServiceDescription"
+              value={productServiceDescription}
+              onChange={(e) => {
+                setProductServiceDescription(e.target.value);
+                if (descriptionError) setDescriptionError('');
+              }}
+              className="min-h-[100px]"
+              placeholder="Describe el motivo o razón que originó la creación del documento..."
+            />
+            {descriptionError && (
+              <p className="text-xs text-destructive">{descriptionError}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">

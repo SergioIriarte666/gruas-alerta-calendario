@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePurchaseInvoices, usePurchaseInvoiceItems } from '@/hooks/usePurchaseInvoices';
 import { usePurchaseExport } from '@/hooks/finance/usePurchaseExport';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Edit, Upload, X, MoreHorizontal, Check, Download, FileSpreadsheet, FileText, LayoutList, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, Edit, X, MoreHorizontal, Check, Download, FileSpreadsheet, FileText, LayoutList, LayoutGrid, Users } from 'lucide-react';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { toast } from 'sonner';
 import {
@@ -24,6 +24,7 @@ import {
   PurchaseSortConfig,
   PurchaseSortKey,
 } from './historical/HistoricalPurchasesTable';
+import { HistoricalPurchasesGroupedList } from './historical/HistoricalPurchasesGroupedList';
 import { CreateHistoricalPurchaseModal } from './historical/CreateHistoricalPurchaseModal';
 import { EditHistoricalPurchaseModal } from './historical/EditHistoricalPurchaseModal';
 import { BatchEditHistoricalPurchasesModal } from './historical/BatchEditHistoricalPurchasesModal';
@@ -56,7 +57,7 @@ export const HistoricalPurchases = () => {
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
   const [isBatchDelete, setIsBatchDelete] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'table' | 'pipeline'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grouped' | 'pipeline'>('table');
 
   const selectedInvoices = useMemo(
     () => invoices.filter((inv) => selectedIds.includes(inv.id)),
@@ -67,6 +68,7 @@ export const HistoricalPurchases = () => {
   const [filters, setFilters] = useState<PurchaseFilterConfig>({
     dateFrom: undefined,
     dateTo: undefined,
+    searchTerm: '',
     supplierName: '',
     invoiceNumber: '',
     minAmount: '',
@@ -93,6 +95,7 @@ export const HistoricalPurchases = () => {
     setFilters({
       dateFrom: undefined,
       dateTo: undefined,
+      searchTerm: '',
       supplierName: '',
       invoiceNumber: '',
       minAmount: '',
@@ -102,24 +105,35 @@ export const HistoricalPurchases = () => {
     });
   };
 
-  const handleFilterChange = (newFilters: PurchaseFilterConfig) => {
-    setFilters(newFilters);
-  };
-
   // Memoized Data
   const filteredAndSortedInvoices = useMemo(() => {
     let result = [...invoices];
 
+    const toLocalDateKey = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const invoiceDateKey = (value: string) => (value || '').slice(0, 10);
+
     // Apply Filters
+    if (filters.searchTerm) {
+      const query = filters.searchTerm.toLowerCase();
+      result = result.filter((inv) =>
+        inv.supplier?.name?.toLowerCase().includes(query) ||
+        inv.invoice_number.toLowerCase().includes(query) ||
+        (inv.product_service_description || inv.description || '').toLowerCase().includes(query)
+      );
+    }
     if (filters.dateFrom) {
-      const fromTime = filters.dateFrom.getTime();
-      result = result.filter((inv) => new Date(inv.issue_date).getTime() >= fromTime);
+      const fromKey = toLocalDateKey(filters.dateFrom);
+      result = result.filter((inv) => invoiceDateKey(inv.issue_date) >= fromKey);
     }
     if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      const toTime = toDate.getTime();
-      result = result.filter((inv) => new Date(inv.issue_date).getTime() <= toTime);
+      const toKey = toLocalDateKey(filters.dateTo);
+      result = result.filter((inv) => invoiceDateKey(inv.issue_date) <= toKey);
     }
     if (filters.supplierName) {
       const query = filters.supplierName.toLowerCase();
@@ -139,7 +153,7 @@ export const HistoricalPurchases = () => {
       
       result = result.filter((inv) => {
         // Check description
-        const descLower = (inv.description || '').toLowerCase();
+        const descLower = (inv.product_service_description || inv.description || '').toLowerCase();
         const inDescription = queryParts.every(part => descLower.includes(part));
         if (inDescription) return true;
         
@@ -195,8 +209,8 @@ export const HistoricalPurchases = () => {
         valA = a.supplier?.name?.toLowerCase() || '';
         valB = b.supplier?.name?.toLowerCase() || '';
       } else if (sortConfig.key === 'issue_date' || sortConfig.key === 'due_date') {
-        valA = new Date(valA).getTime();
-        valB = new Date(valB).getTime();
+        valA = (String(valA || '')).slice(0, 10);
+        valB = (String(valB || '')).slice(0, 10);
       }
 
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -272,13 +286,13 @@ export const HistoricalPurchases = () => {
     );
   }, []);
 
-  const handleSelectAll = useCallback((checked: boolean) => {
+  const handleSelectAll = useCallback((ids: string[], checked: boolean) => {
     if (checked) {
-      setSelectedIds(filteredAndSortedInvoices.map((inv) => inv.id));
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...ids])));
     } else {
-      setSelectedIds([]);
+      setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
     }
-  }, [filteredAndSortedInvoices]);
+  }, []);
 
   const handleBatchUpdateStatus = async (status: string) => {
     if (selectedIds.length === 0) return;
@@ -307,10 +321,10 @@ export const HistoricalPurchases = () => {
   return (
     <div className="space-y-6 relative pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Histórico de Compras</h2>
+        <div className="space-y-1">
+          <h3 className="text-2xl font-bold tracking-tight">Histórico de Compras</h3>
           <p className="text-muted-foreground">
-            Gestiona y visualiza el historial de facturas de compra y proveedores.
+            Gestiona y analiza el registro histórico de compras
           </p>
         </div>
         <div className="flex gap-2">
@@ -333,9 +347,9 @@ export const HistoricalPurchases = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Importar
+            <Button onClick={() => setIsImportOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Importar Histórico
             </Button>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -346,54 +360,87 @@ export const HistoricalPurchases = () => {
 
       <HistoricalPurchasesStats invoices={filteredAndSortedInvoices} />
 
-      <div className="flex justify-end">
-        <TooltipProvider>
-          <ToggleGroup
-            type="single"
-            value={viewMode}
-            onValueChange={(v) => v && setViewMode(v as any)}
-            className="bg-muted/50 p-1 rounded-lg border"
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
-                  <LayoutList className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Tabla</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <ToggleGroupItem value="pipeline" aria-label="Pipeline por proveedor" className="px-3">
-                  <LayoutGrid className="h-4 w-4" />
-                </ToggleGroupItem>
-              </TooltipTrigger>
-              <TooltipContent>Pipeline por proveedor</TooltipContent>
-            </Tooltip>
-          </ToggleGroup>
-        </TooltipProvider>
-      </div>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <HistoricalPurchasesFilters
+            filters={filters}
+            onFilterChange={setFilters}
+            onClearFilters={handleClearFilters}
+          />
 
-      {viewMode === 'pipeline' ? (
-        <HistoricalPurchasesPipelineView
-          invoices={filteredAndSortedInvoices}
-          onEdit={(inv) => setEditingInvoice(inv)}
-          onDelete={confirmDelete}
-        />
-      ) : (
-        <HistoricalPurchasesTable
-          invoices={filteredAndSortedInvoices}
-          invoiceItemsMap={invoiceItemsMap}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          onEdit={(inv) => setEditingInvoice(inv)}
-          onDelete={confirmDelete}
-          onReceiveInventory={setReceivingInventoryInvoice}
-          selectedIds={selectedIds}
-          onSelectId={handleSelectId}
-          onSelectAll={handleSelectAll}
-        />
-      )}
+          <TooltipProvider>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(v) => v && setViewMode(v as any)}
+              className="bg-muted/50 p-1 rounded-lg border"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
+                    <LayoutList className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Tabla</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="grouped" aria-label="Agrupado por proveedor" className="px-3">
+                    <Users className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Agrupado por proveedor</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="pipeline" aria-label="Pipeline por proveedor" className="px-3">
+                    <LayoutGrid className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Pipeline por proveedor</TooltipContent>
+              </Tooltip>
+            </ToggleGroup>
+          </TooltipProvider>
+        </div>
+
+        {viewMode === 'pipeline' ? (
+          <HistoricalPurchasesPipelineView
+            invoices={filteredAndSortedInvoices}
+            onEdit={(inv) => setEditingInvoice(inv)}
+            onDelete={confirmDelete}
+          />
+        ) : viewMode === 'grouped' ? (
+          <div className="rounded-md border bg-card">
+            <HistoricalPurchasesGroupedList
+              invoices={filteredAndSortedInvoices}
+              invoiceItemsMap={invoiceItemsMap}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onEdit={(inv) => setEditingInvoice(inv)}
+              onDelete={confirmDelete}
+              onReceiveInventory={setReceivingInventoryInvoice}
+              selectedIds={selectedIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
+            />
+          </div>
+        ) : (
+          <div className="rounded-md border bg-card">
+            <HistoricalPurchasesTable
+              invoices={filteredAndSortedInvoices}
+              invoiceItemsMap={invoiceItemsMap}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onEdit={(inv) => setEditingInvoice(inv)}
+              onDelete={confirmDelete}
+              onReceiveInventory={setReceivingInventoryInvoice}
+              selectedIds={selectedIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(

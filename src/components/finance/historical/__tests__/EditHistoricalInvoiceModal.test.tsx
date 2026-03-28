@@ -22,6 +22,7 @@ describe('EditHistoricalInvoiceModal', () => {
     vat: 190,
     total: 1190,
     status: 'sent',
+    productServiceDescription: 'Descripción de prueba ventas 1',
     createdAt: '2023-01-01',
     updatedAt: '2023-01-01',
     client: { id: 'c1', name: 'Client A', rut: '1-9' },

@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
-import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
+import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { ChevronLeft, ChevronRight, Save, X, Receipt } from 'lucide-react';
@@ -22,7 +22,8 @@ const invoiceSchema = z.object({
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const),
   paymentTermId: z.string().optional(),
   paymentDate: z.string().optional(),
-  numeroFiscal: z.string().optional()
+  numeroFiscal: z.string().optional(),
+  productServiceDescription: z.string().trim().min(10, 'Debe tener al menos 10 caracteres').max(500, 'Debe tener máximo 500 caracteres')
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -121,7 +122,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     switch (step) {
       case 1: return watch('closureId') !== '';
       case 2: return watch('issueDate') !== '' && watch('dueDate') !== '';
-      case 3: return true;
+      case 3: {
+        const desc = (watch('productServiceDescription') || '').trim();
+        return desc.length >= 10 && desc.length <= 500;
+      }
       default: return true;
     }
   };
@@ -142,7 +146,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       case 2:
         return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
       case 3:
-        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v) => setValue('status', v)} onNumeroFiscalChange={(v) => setValue('numeroFiscal', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message }} />;
+        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} productServiceDescription={watch('productServiceDescription') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v: InvoiceStatus) => setValue('status', v)} onNumeroFiscalChange={(v: string) => setValue('numeroFiscal', v)} onProductServiceDescriptionChange={(v: string) => setValue('productServiceDescription', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message, productServiceDescription: errors.productServiceDescription?.message } as any} />;
       default: return null;
     }
   };

@@ -124,6 +124,9 @@ const MonthSection = ({
               {inv.numeroFiscal && (
                 <p className="text-xs text-muted-foreground mb-1">N° Fiscal: {inv.numeroFiscal}</p>
               )}
+              <p className="text-xs text-muted-foreground mb-1 truncate" title={inv.productServiceDescription}>
+                {inv.productServiceDescription}
+              </p>
               <p className="text-xs text-muted-foreground mb-2">
                 {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
               </p>
@@ -148,7 +151,8 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
     return invoices.filter(inv =>
       inv.client?.name?.toLowerCase().includes(search) ||
       inv.folio.toLowerCase().includes(search) ||
-      inv.numeroFiscal?.toLowerCase().includes(search)
+      inv.numeroFiscal?.toLowerCase().includes(search) ||
+      inv.productServiceDescription.toLowerCase().includes(search)
     );
   }, [invoices, searchTerm]);
 

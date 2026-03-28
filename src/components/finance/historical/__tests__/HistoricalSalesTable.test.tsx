@@ -28,6 +28,7 @@ describe('HistoricalSalesTable', () => {
       vat: 190,
       total: 1190,
       status: 'paid',
+      productServiceDescription: 'Descripción de prueba ventas 1',
       createdAt: '2023-01-01',
       updatedAt: '2023-01-01',
       client: { id: 'c1', name: 'Client A', rut: '1-9' }
@@ -43,6 +44,7 @@ describe('HistoricalSalesTable', () => {
       vat: 380,
       total: 2380,
       status: 'sent',
+      productServiceDescription: 'Descripción de prueba ventas 2',
       createdAt: '2023-01-02',
       updatedAt: '2023-01-02',
       client: { id: 'c2', name: 'Client B', rut: '2-7' }
@@ -70,6 +72,7 @@ describe('HistoricalSalesTable', () => {
     expect(screen.getByText(/N°\s*Fiscal/i)).toBeInTheDocument();
     expect(screen.getByText('Cliente')).toBeInTheDocument();
     expect(screen.getByText('Monto')).toBeInTheDocument();
+    expect(screen.getByText('Descripción de Producto o Servicio')).toBeInTheDocument();
     expect(screen.getByText('Estado')).toBeInTheDocument();
 
     expect(screen.getByText('1001')).toBeInTheDocument();

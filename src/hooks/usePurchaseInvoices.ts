@@ -11,38 +11,63 @@ export const usePurchaseInvoices = () => {
   const queryClient = useQueryClient();
 
   const fetchPurchaseInvoices = async (): Promise<SupplierInvoiceWithDetails[]> => {
+    const PAGE_SIZE = 1000;
+
     try {
       // Intento 1: Fetch optimizado con JOIN (requiere Foreign Key)
-      const { data, error } = await supabase
-        .from('supplier_invoices')
-        .select(`
-          *,
-          supplier:supplier_id (
-            id,
-            name,
-            rut
-          )
-        `)
-        .order('issue_date', { ascending: false });
+      const allData: SupplierInvoiceWithDetails[] = [];
+      let from = 0;
 
-      if (error) throw error;
-      return data as SupplierInvoiceWithDetails[];
+      while (true) {
+        const { data, error } = await supabase
+          .from('supplier_invoices')
+          .select(`
+            *,
+            supplier:supplier_id (
+              id,
+              name,
+              rut
+            )
+          `)
+          .order('issue_date', { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allData.push(...(data as SupplierInvoiceWithDetails[]));
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      return allData;
     } catch (error: any) {
       console.warn('Fallo fetch con JOIN, intentando fetch manual:', error.message);
 
       // Intento 2: Fetch manual sin JOIN (si falta FK en base de datos)
       // 1. Obtener facturas
-      const { data: invoices, error: invoicesError } = await supabase
-        .from('supplier_invoices')
-        .select('*')
-        .order('issue_date', { ascending: false });
+      const invoices: any[] = [];
+      let from = 0;
 
-      if (invoicesError) {
-        console.error('Error fetching purchase invoices (fallback):', invoicesError);
-        throw invoicesError;
+      while (true) {
+        const { data: chunk, error: invoicesError } = await supabase
+          .from('supplier_invoices')
+          .select('*')
+          .order('issue_date', { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (invoicesError) {
+          console.error('Error fetching purchase invoices (fallback):', invoicesError);
+          throw invoicesError;
+        }
+
+        if (!chunk || chunk.length === 0) break;
+        invoices.push(...chunk);
+        if (chunk.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
       }
 
-      if (!invoices || invoices.length === 0) return [];
+      if (invoices.length === 0) return [];
 
       // 2. Obtener proveedores relacionados
       const supplierIds = Array.from(new Set(invoices.map(inv => inv.supplier_id).filter(Boolean)));
@@ -51,15 +76,19 @@ export const usePurchaseInvoices = () => {
         return invoices.map(inv => ({ ...inv, supplier: null })) as SupplierInvoiceWithDetails[];
       }
 
-      const { data: suppliers, error: suppliersError } = await (supabase as any)
-        .from('inventory_suppliers')
-        .select('id, name, rut')
-        .in('id', supplierIds);
+      const suppliers: any[] = [];
+      const BATCH = 500;
+      for (let i = 0; i < supplierIds.length; i += BATCH) {
+        const { data: chunk, error: suppliersError } = await (supabase as any)
+          .from('inventory_suppliers')
+          .select('id, name, rut')
+          .in('id', supplierIds.slice(i, i + BATCH));
 
-      if (suppliersError) {
-        console.error('Error fetching suppliers for manual join:', suppliersError);
-        // Retornar facturas sin proveedor si falla fetch de proveedores
-        return invoices.map(inv => ({ ...inv, supplier: null })) as SupplierInvoiceWithDetails[];
+        if (suppliersError) {
+          console.error('Error fetching suppliers for manual join:', suppliersError);
+          return invoices.map(inv => ({ ...inv, supplier: null })) as SupplierInvoiceWithDetails[];
+        }
+        if (chunk) suppliers.push(...chunk);
       }
 
       // 3. Unir en memoria

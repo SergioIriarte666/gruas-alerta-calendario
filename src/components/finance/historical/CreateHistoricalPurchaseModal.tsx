@@ -35,7 +35,7 @@ const purchaseSchema = z.object({
   tax_amount: z.coerce.number().min(0, 'El IVA no puede ser negativo'),
   amount: z.coerce.number().min(0, 'El monto total no puede ser negativo'),
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']),
-  description: z.string().optional(),
+  product_service_description: z.string().trim().min(10, 'Debe tener al menos 10 caracteres').max(500, 'Debe tener máximo 500 caracteres'),
 });
 
 type PurchaseFormValues = z.infer<typeof purchaseSchema>;
@@ -65,7 +65,7 @@ export const CreateHistoricalPurchaseModal = ({
       tax_amount: 0,
       amount: 0,
       status: 'pending',
-      description: '',
+      product_service_description: '',
     },
   });
 
@@ -86,6 +86,7 @@ export const CreateHistoricalPurchaseModal = ({
         ...data,
         issue_date: format(data.issue_date, 'yyyy-MM-dd'),
         due_date: format(data.due_date, 'yyyy-MM-dd'),
+        description: data.product_service_description,
       });
       form.reset();
       onClose();
@@ -249,14 +250,17 @@ export const CreateHistoricalPurchaseModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
+            <Label htmlFor="product_service_description">Descripción de Producto o Servicio</Label>
             <Textarea
-              id="description"
-              {...form.register('description')}
-              placeholder="Descripción o notas internas..."
+              id="product_service_description"
+              {...form.register('product_service_description')}
+              placeholder="Describe el motivo o razón que originó la creación del documento..."
               className="resize-none"
-              rows={3}
+              rows={4}
             />
+            {errors.product_service_description && (
+              <p className="text-sm text-red-500">{errors.product_service_description.message}</p>
+            )}
           </div>
 
           <DialogFooter>

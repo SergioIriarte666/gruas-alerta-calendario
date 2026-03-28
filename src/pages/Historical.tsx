@@ -16,10 +16,25 @@ const Historical = () => {
       </div>
 
       <Tabs defaultValue="sales" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="sales">Histórico de Ventas</TabsTrigger>
-          <TabsTrigger value="purchases">Histórico de Compras</TabsTrigger>
-          <TabsTrigger value="results">Resultados</TabsTrigger>
+        <TabsList className="bg-muted/30 p-1">
+          <TabsTrigger
+            value="sales"
+            className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Histórico de Ventas
+          </TabsTrigger>
+          <TabsTrigger
+            value="purchases"
+            className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Histórico de Compras
+          </TabsTrigger>
+          <TabsTrigger
+            value="results"
+            className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+          >
+            Resultados
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="sales" className="space-y-4">

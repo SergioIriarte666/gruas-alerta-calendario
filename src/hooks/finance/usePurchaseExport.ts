@@ -20,7 +20,7 @@ export const usePurchaseExport = () => {
         'RUT Proveedor': inv.supplier?.rut || 'N/A',
         'Fecha Emisión': format(new Date(inv.issue_date), 'dd/MM/yyyy'),
         'Fecha Vencimiento': format(new Date(inv.due_date), 'dd/MM/yyyy'),
-        'Descripción': inv.description || '',
+        'Descripción de Producto o Servicio': inv.product_service_description || inv.description || '',
         'Estado': inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Pendiente',
         'Monto Neto': inv.net_amount,
         'Impuestos': inv.tax_amount,
@@ -36,7 +36,7 @@ export const usePurchaseExport = () => {
         { wch: 15 }, // RUT
         { wch: 15 }, // Emisión
         { wch: 15 }, // Vencimiento
-        { wch: 40 }, // Descripción
+        { wch: 50 }, // Descripción
         { wch: 15 }, // Estado
         { wch: 15 }, // Neto
         { wch: 15 }, // Impuestos
@@ -80,18 +80,19 @@ export const usePurchaseExport = () => {
         inv.invoice_number,
         inv.supplier?.name || 'Sin Proveedor',
         format(new Date(inv.issue_date), 'dd/MM/yyyy'),
+        (inv.product_service_description || inv.description || '').slice(0, 60),
         inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Pendiente',
         formatCurrency(inv.amount)
       ]);
 
       autoTable(doc, {
         startY: 55,
-        head: [['Folio', 'Proveedor', 'Fecha', 'Estado', 'Total']],
+        head: [['Folio', 'Proveedor', 'Fecha', 'Descripción', 'Estado', 'Total']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
         styles: { fontSize: 8 },
-        foot: [['', '', '', 'Total:', formatCurrency(totalAmount)]],
+        foot: [['', '', '', '', 'Total:', formatCurrency(totalAmount)]],
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
       });
 

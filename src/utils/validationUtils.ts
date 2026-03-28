@@ -32,3 +32,20 @@ export const getDuplicateErrorMessage = (entity: string, field: string, value: s
   const fieldName = fieldNames[field] || field;
   return `Ya existe ${entity} registrado con ${fieldName} ${value}`;
 };
+
+export const normalizeProductServiceDescription = (value: string | null | undefined): string => {
+  const trimmed = (value ?? '').trim();
+
+  if (trimmed.length >= 10) {
+    return trimmed.slice(0, 500);
+  }
+
+  return 'Descripción no registrada';
+};
+
+export const getProductServiceDescriptionError = (value: string | null | undefined): string | null => {
+  const trimmed = (value ?? '').trim();
+  if (trimmed.length < 10) return 'Debe tener al menos 10 caracteres';
+  if (trimmed.length > 500) return 'Debe tener máximo 500 caracteres';
+  return null;
+};

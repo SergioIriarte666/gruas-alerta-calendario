@@ -43,6 +43,7 @@ export interface SupplierInvoice {
   currency: string | null;
   status: string | null;
   description: string | null;
+  product_service_description: string;
   tax_amount: number | null;
   net_amount: number;
   payment_terms: number | null;

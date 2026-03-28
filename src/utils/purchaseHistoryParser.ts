@@ -69,6 +69,20 @@ const normalizeRut = (rut: string): string => {
   return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 };
 
+const rutCandidates = (rut: string): string[] => {
+  const n = normalizeRut(rut);
+  if (!n) return [''];
+  if (n.length === 1) return [n];
+  const base = n.slice(0, -1);
+  return n === base ? [n] : [n, base];
+};
+
+const rutMatches = (a: string, b: string): boolean => {
+  const aC = rutCandidates(a);
+  const bC = new Set(rutCandidates(b));
+  return aC.some((c) => bC.has(c));
+};
+
 // Parse number handling Chilean format and parenthesized negatives
 const parseNumber = (value: any): number => {
   if (typeof value === 'number') return value;
@@ -344,7 +358,7 @@ export const processPurchaseRows = (
     const isDuplicate = existingInvoiceKeys.has(uniqueKey);
     
     // Find supplier
-    const matchedSupplier = suppliers.find(s => normalizeRut(s.rut || '') === rut);
+    const matchedSupplier = suppliers.find(s => rutMatches(s.rut || '', rut));
     
     // Status
     const status = determineStatus(row.pagado, row.fechaVencimiento);
