@@ -14,6 +14,7 @@ serve(async (req) => {
   }
 
   try {
+    // 1. Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
@@ -28,15 +29,15 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // 2. Parse body
     const body = await req.json().catch(() => ({}));
     const imageUrl = body?.imageUrl as string | undefined;
     const imageBase64 = body?.imageBase64 as string | undefined;
@@ -49,32 +50,45 @@ serve(async (req) => {
       });
     }
 
+    // 3. Check API key
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY is not configured");
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // 4. Download image and convert to data URL
     let dataUrl: string;
     if (imageBase64) {
       dataUrl = `data:${imageMimeType};base64,${imageBase64}`;
     } else {
-      const res = await fetch(imageUrl!);
-      if (!res.ok) {
+      try {
+        const res = await fetch(imageUrl!);
+        if (!res.ok) {
+          console.error(`Failed to download image: HTTP ${res.status}`);
+          return new Response(JSON.stringify({ error: "No se pudo descargar la imagen" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const mime = res.headers.get("content-type") || "image/jpeg";
+        const buf = new Uint8Array(await res.arrayBuffer());
+        dataUrl = `data:${mime};base64,${base64Encode(buf)}`;
+      } catch (downloadErr) {
+        console.error("Image download error:", downloadErr);
         return new Response(JSON.stringify({ error: "No se pudo descargar la imagen" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const mime = res.headers.get("content-type") || "image/jpeg";
-      const buf = new Uint8Array(await res.arrayBuffer());
-      dataUrl = `data:${mime};base64,${base64Encode(buf)}`;
     }
 
     const imagePayload = { type: "image_url", image_url: { url: dataUrl } };
 
+    // 5. Call AI gateway
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -151,6 +165,8 @@ Reglas:
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
+      console.error("AI gateway error:", aiResponse.status, errorText);
+
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Límite de solicitudes excedido, intenta más tarde" }), {
           status: 429,
@@ -163,14 +179,27 @@ Reglas:
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.error("AI gateway error:", aiResponse.status, errorText);
-      throw new Error(`AI gateway error: ${aiResponse.status}`);
+      if (aiResponse.status === 401) {
+        return new Response(JSON.stringify({ error: "Error de autenticación con el gateway de IA. Verifique LOVABLE_API_KEY." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: `Error del gateway de IA (HTTP ${aiResponse.status})` }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    // 6. Parse AI response
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
-      throw new Error("No se pudo extraer datos del comprobante");
+      console.error("No tool call in AI response:", JSON.stringify(aiData));
+      return new Response(JSON.stringify({ error: "No se pudo extraer datos del comprobante" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const parsed = JSON.parse(toolCall.function.arguments);
