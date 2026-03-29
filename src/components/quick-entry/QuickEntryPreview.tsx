@@ -1,11 +1,12 @@
-import React from 'react';
-import { X, Calendar, DollarSign, FileText } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Calendar, DollarSign, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { QuickEntry } from '@/hooks/useQuickEntry';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
 
 const TYPE_LABELS = {
   service: 'Servicio',
@@ -36,6 +37,77 @@ export function QuickEntryPreview({
   onComplete, 
   onDiscard 
 }: QuickEntryPreviewProps) {
+  const [showTechnicalData, setShowTechnicalData] = useState(false);
+
+  const rawPhotos = useMemo(() => {
+    const photos = (entry.data as any)?.photos as Array<{ path?: string; signedUrl?: string }> | undefined;
+    return Array.isArray(photos) ? photos : [];
+  }, [entry.data]);
+
+  const [photoUrls, setPhotoUrls] = useState<Array<{ path: string | undefined; url: string }>>([]);
+  const [failedPhotoKeys, setFailedPhotoKeys] = useState<Record<string, true>>({});
+
+  const sanitizedData = useMemo(() => {
+    const data = (entry.data as any) ?? null;
+    if (!data || typeof data !== 'object') return null;
+
+    const cloned = JSON.parse(JSON.stringify(data)) as Record<string, unknown>;
+    const photos = cloned.photos as Array<Record<string, unknown>> | undefined;
+    if (Array.isArray(photos)) {
+      cloned.photos = photos.map((photo) => ({
+        path: typeof photo?.path === 'string' ? photo.path : undefined,
+      }));
+    }
+    if ('receipt_extraction' in cloned) {
+      cloned.receipt_extraction = undefined;
+    }
+
+    return cloned;
+  }, [entry.data]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (!isOpen) {
+        setPhotoUrls([]);
+        return;
+      }
+      if (rawPhotos.length === 0) {
+        setPhotoUrls([]);
+        return;
+      }
+
+      const results = await Promise.all(
+        rawPhotos.map(async (photo) => {
+          const existing = typeof photo.signedUrl === 'string' ? photo.signedUrl : '';
+          if (!photo.path) {
+            return existing ? { path: undefined, url: existing } : null;
+          }
+
+          const { data, error } = await supabase.storage
+            .from('quick-entry-photos')
+            .createSignedUrl(photo.path, 60 * 60 * 24 * 7);
+
+          if (error || !data?.signedUrl) {
+            return existing ? { path: photo.path, url: existing } : null;
+          }
+
+          return { path: photo.path, url: data.signedUrl };
+        }),
+      );
+
+      if (cancelled) return;
+      setPhotoUrls(results.filter((value): value is { path: string | undefined; url: string } => value !== null));
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, rawPhotos]);
+
   if (!isOpen) return null;
 
   return (
@@ -92,15 +164,59 @@ export function QuickEntryPreview({
             )}
           </div>
 
-          {/* Data Section */}
-          {entry.data && Object.keys(entry.data).length > 0 && (
+          {photoUrls.length > 0 && (
             <div>
-              <h4 className="font-medium mb-3">Datos Adicionales</h4>
-              <div className="bg-muted p-3 rounded-md">
-                <pre className="text-xs overflow-x-auto">
-                  {JSON.stringify(entry.data, null, 2)}
-                </pre>
+              <h4 className="font-medium mb-3">Comprobante (Fotos)</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {photoUrls.map((photo, index) => (
+                  <a
+                    key={`${photo.path ?? 'inline'}-${index}`}
+                    href={photo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-md border border-border overflow-hidden bg-background"
+                  >
+                    {failedPhotoKeys[`${photo.path ?? 'inline'}-${index}`] ? (
+                      <div className="w-full h-64 flex items-center justify-center bg-black/5 text-sm text-muted-foreground px-4 text-center">
+                        No se pudo cargar la foto. Toca para abrirla.
+                      </div>
+                    ) : (
+                      <img
+                        src={photo.url}
+                        alt={`Comprobante ${index + 1}`}
+                        className="w-full h-64 object-contain bg-black/5"
+                        loading="eager"
+                        onError={() => {
+                          const key = `${photo.path ?? 'inline'}-${index}`;
+                          setFailedPhotoKeys((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+                        }}
+                      />
+                    )}
+                  </a>
+                ))}
               </div>
+            </div>
+          )}
+
+          {/* Data Section */}
+          {sanitizedData && Object.keys(sanitizedData).length > 0 && (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTechnicalData((prev) => !prev)}
+              >
+                {showTechnicalData ? 'Ocultar datos técnicos' : 'Ver datos técnicos'}
+              </Button>
+
+              {showTechnicalData && (
+                <div className="mt-3 bg-muted p-3 rounded-md">
+                  <pre className="text-xs overflow-x-auto">
+                    {JSON.stringify(sanitizedData, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 

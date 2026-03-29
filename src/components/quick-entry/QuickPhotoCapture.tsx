@@ -14,6 +14,43 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isHeicFile = (file: File) => {
+    const type = file.type.toLowerCase();
+    if (type === 'image/heic' || type === 'image/heif') return true;
+    const name = file.name.toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif');
+  };
+
+  const convertToJpegIfNeeded = async (file: File) => {
+    if (!isHeicFile(file)) return file;
+
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.decoding = 'async';
+      image.src = objectUrl;
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error('No se pudo decodificar la imagen HEIC/HEIF'));
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth || image.width;
+      canvas.height = image.naturalHeight || image.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(image, 0, 0);
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      if (!blob) return file;
+
+      const baseName = file.name.replace(/\.(heic|heif)$/i, '');
+      return new File([blob], `${baseName || 'foto'}.jpg`, { type: 'image/jpeg' });
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
@@ -27,22 +64,36 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
       const newPhotos: Array<{ path: string; signedUrl: string; file?: File }> = [];
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const originalFile = files[i];
         
         // Validate file type
-        if (!file.type.startsWith('image/')) {
+        if (originalFile.type && !originalFile.type.startsWith('image/')) {
           toast.error('Solo se permiten archivos de imagen');
           continue;
         }
 
         // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
+        if (originalFile.size > 5 * 1024 * 1024) {
           toast.error('El archivo es demasiado grande (máximo 5MB)');
           continue;
         }
 
+        let file: File;
+        try {
+          file = await convertToJpegIfNeeded(originalFile);
+        } catch (error) {
+          console.error('HEIC conversion error:', error);
+          toast.error('No se pudo convertir la foto (HEIC)');
+          file = originalFile;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('El archivo convertido es demasiado grande (máximo 5MB)');
+          continue;
+        }
+
         // Generate unique filename
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg');
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
         // Upload to Supabase Storage

@@ -53,7 +53,7 @@ const normalizeDate = (day: string, month: string, year: string) => {
 };
 
 const extractDate = (text: string) => {
-  const matches = [...text.matchAll(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g)];
+  const matches = [...text.matchAll(/\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})\b/g)];
   for (const match of matches) {
     const normalized = normalizeDate(match[1], match[2], match[3]);
     if (normalized) return normalized;

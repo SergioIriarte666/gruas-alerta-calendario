@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,6 @@ import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { extractReceiptDataLocally } from '@/utils/localReceiptOcr';
 
 interface QuickEntryFormProps {
   isOpen: boolean;
@@ -27,30 +24,6 @@ const ENTRY_TYPES = [
   { value: 'inventory', label: 'Bodega' },
   { value: 'maintenance', label: 'Mantenimiento' },
 ] as const;
-
-const getFunctionErrorMessage = (error: unknown) => {
-  const context = (error as { context?: { body?: unknown; status?: number } })?.context;
-  const body = context?.body;
-
-  if (typeof body === 'string') {
-    try {
-      const parsed = JSON.parse(body) as { error?: string; message?: string };
-      return parsed.error || parsed.message || body;
-    } catch {
-      return body;
-    }
-  }
-
-  if (body && typeof body === 'object') {
-    const parsed = body as { error?: string; message?: string };
-    if (parsed.error || parsed.message) {
-      return parsed.error || parsed.message;
-    }
-  }
-
-  const base = (error as { message?: string })?.message;
-  return base || (context?.status ? `Error HTTP ${context.status}` : 'Error desconocido');
-};
 
 export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   const { createQuickEntry, isLoading } = useQuickEntry();
@@ -66,97 +39,6 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
     notes: '',
   });
   const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [lastExtractedPath, setLastExtractedPath] = useState<string | null>(null);
-  const [receiptExtraction, setReceiptExtraction] = useState<any | null>(null);
-
-  const applyExtractionResult = (data: any) => {
-    setReceiptExtraction(data || null);
-
-    const extractedDate = data?.date || undefined;
-    const extractedTotal = typeof data?.totals?.total === 'number' ? data.totals.total : undefined;
-    const vendorName = (data?.vendorName || '').trim();
-    const docType = (data?.documentType || '').trim();
-    const docNumber = (data?.documentNumber || '').trim();
-
-    const suggestedDescriptionParts = [vendorName, docType && docNumber ? `${docType} ${docNumber}` : ''].filter(Boolean);
-    const suggestedDescription = suggestedDescriptionParts.join(' · ');
-    const suggestedNotes = (data?.notes || '').trim();
-
-    setFormData(prev => ({
-      ...prev,
-      date: extractedDate || prev.date,
-      amount: extractedTotal ?? prev.amount,
-      description: suggestedDescription || prev.description,
-      notes: suggestedNotes || prev.notes,
-      data: {
-        ...(prev.data || {}),
-        receipt_extraction: data || null,
-      },
-    }));
-  };
-
-  useEffect(() => {
-    const first = photos[0];
-    if (formData.type !== 'cost') return;
-    if (!first?.signedUrl || !first?.path) {
-      setLastExtractedPath(null);
-      setReceiptExtraction(null);
-      return;
-    }
-    if (first.path === lastExtractedPath) return;
-
-    const run = async () => {
-      setIsExtracting(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('parse-receipt-image', {
-          body: { imageUrl: first.signedUrl },
-        });
-        if (error) {
-          throw new Error(getFunctionErrorMessage(error));
-        }
-
-        applyExtractionResult(data);
-        setLastExtractedPath(first.path);
-        toast.success('Comprobante analizado');
-      } catch (error) {
-        console.error('Error extracting receipt data:', error);
-
-        try {
-          const fallbackData = await extractReceiptDataLocally(first.file ?? first.signedUrl);
-          console.log('[QuickEntry] Fallback OCR resultado:', fallbackData);
-          const hasUsefulData = Boolean(
-            fallbackData.date ||
-            fallbackData.totals?.total ||
-            fallbackData.vendorName ||
-            fallbackData.notes,
-          );
-
-          if (!hasUsefulData) {
-            throw new Error('No se pudo detectar texto útil en la imagen');
-          }
-
-          applyExtractionResult(fallbackData);
-          setLastExtractedPath(first.path);
-          toast.success('Comprobante analizado con respaldo local');
-        } catch (fallbackError) {
-          console.error('[QuickEntry] Local OCR fallback failed:', fallbackError);
-          const primaryMessage = (error as any)?.message || 'Error desconocido';
-          const fallbackMessage = fallbackError instanceof Error
-            ? `${fallbackError.message}${fallbackError.stack ? ` | Stack: ${fallbackError.stack.slice(0, 200)}` : ''}`
-            : 'Falló el análisis local';
-          console.error('[QuickEntry] Primary error:', primaryMessage, '| Fallback error:', fallbackMessage);
-          toast.error('No se pudo leer el comprobante', {
-            description: `Respaldo local: ${fallbackMessage.slice(0, 120)}`,
-          });
-        }
-      } finally {
-        setIsExtracting(false);
-      }
-    };
-
-    run();
-  }, [formData.type, lastExtractedPath, photos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +49,6 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         data: {
           ...(formData.data || {}),
           photos,
-          receipt_extraction: receiptExtraction,
         },
       });
       triggerRefresh(); // Trigger refresh for PendingEntriesView
@@ -180,9 +61,6 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         notes: '',
       });
       setPhotos([]);
-      setIsExtracting(false);
-      setLastExtractedPath(null);
-      setReceiptExtraction(null);
     } catch (error) {
       // Error handled in hook
     }
@@ -285,11 +163,6 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
             <div className="space-y-2">
               <Label>Evidencia (Fotos)</Label>
               <QuickPhotoCapture onPhotosChange={setPhotos} maxPhotos={3} />
-              {isExtracting && (
-                <div className="text-xs text-muted-foreground">
-                  Analizando comprobante...
-                </div>
-              )}
             </div>
           )}
 
