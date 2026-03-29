@@ -37,8 +37,6 @@ export function QuickEntryPreview({
   onComplete, 
   onDiscard 
 }: QuickEntryPreviewProps) {
-  const [showTechnicalData, setShowTechnicalData] = useState(false);
-
   const rawPhotos = useMemo(() => {
     const photos = (entry.data as any)?.photos as Array<{ path?: string; signedUrl?: string }> | undefined;
     return Array.isArray(photos) ? photos : [];
@@ -46,24 +44,6 @@ export function QuickEntryPreview({
 
   const [photoUrls, setPhotoUrls] = useState<Array<{ path: string | undefined; url: string }>>([]);
   const [failedPhotoKeys, setFailedPhotoKeys] = useState<Record<string, true>>({});
-
-  const sanitizedData = useMemo(() => {
-    const data = (entry.data as any) ?? null;
-    if (!data || typeof data !== 'object') return null;
-
-    const cloned = JSON.parse(JSON.stringify(data)) as Record<string, unknown>;
-    const photos = cloned.photos as Array<Record<string, unknown>> | undefined;
-    if (Array.isArray(photos)) {
-      cloned.photos = photos.map((photo) => ({
-        path: typeof photo?.path === 'string' ? photo.path : undefined,
-      }));
-    }
-    if ('receipt_extraction' in cloned) {
-      cloned.receipt_extraction = undefined;
-    }
-
-    return cloned;
-  }, [entry.data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,28 +175,6 @@ export function QuickEntryPreview({
                   </a>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Data Section */}
-          {sanitizedData && Object.keys(sanitizedData).length > 0 && (
-            <div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTechnicalData((prev) => !prev)}
-              >
-                {showTechnicalData ? 'Ocultar datos técnicos' : 'Ver datos técnicos'}
-              </Button>
-
-              {showTechnicalData && (
-                <div className="mt-3 bg-muted p-3 rounded-md">
-                  <pre className="text-xs overflow-x-auto">
-                    {JSON.stringify(sanitizedData, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           )}
 
