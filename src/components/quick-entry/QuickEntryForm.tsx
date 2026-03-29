@@ -14,6 +14,7 @@ import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { extractReceiptDataLocally } from '@/utils/localReceiptOcr';
 
 interface QuickEntryFormProps {
   isOpen: boolean;
@@ -69,6 +70,32 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   const [lastExtractedPath, setLastExtractedPath] = useState<string | null>(null);
   const [receiptExtraction, setReceiptExtraction] = useState<any | null>(null);
 
+  const applyExtractionResult = (data: any) => {
+    setReceiptExtraction(data || null);
+
+    const extractedDate = data?.date || undefined;
+    const extractedTotal = typeof data?.totals?.total === 'number' ? data.totals.total : undefined;
+    const vendorName = (data?.vendorName || '').trim();
+    const docType = (data?.documentType || '').trim();
+    const docNumber = (data?.documentNumber || '').trim();
+
+    const suggestedDescriptionParts = [vendorName, docType && docNumber ? `${docType} ${docNumber}` : ''].filter(Boolean);
+    const suggestedDescription = suggestedDescriptionParts.join(' · ');
+    const suggestedNotes = (data?.notes || '').trim();
+
+    setFormData(prev => ({
+      ...prev,
+      date: extractedDate || prev.date,
+      amount: extractedTotal ?? prev.amount,
+      description: suggestedDescription || prev.description,
+      notes: suggestedNotes || prev.notes,
+      data: {
+        ...(prev.data || {}),
+        receipt_extraction: data || null,
+      },
+    }));
+  };
+
   useEffect(() => {
     const first = photos[0];
     if (formData.type !== 'cost') return;
@@ -89,35 +116,36 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           throw new Error(getFunctionErrorMessage(error));
         }
 
-        setReceiptExtraction(data || null);
+        applyExtractionResult(data);
         setLastExtractedPath(first.path);
-
-        const extractedDate = data?.date || undefined;
-        const extractedTotal = typeof data?.totals?.total === 'number' ? data.totals.total : undefined;
-        const vendorName = (data?.vendorName || '').trim();
-        const docType = (data?.documentType || '').trim();
-        const docNumber = (data?.documentNumber || '').trim();
-
-        const suggestedDescriptionParts = [vendorName, docType && docNumber ? `${docType} ${docNumber}` : ''].filter(Boolean);
-        const suggestedDescription = suggestedDescriptionParts.join(' · ');
-        const suggestedNotes = (data?.notes || '').trim();
-
-        setFormData(prev => ({
-          ...prev,
-          date: extractedDate || prev.date,
-          amount: extractedTotal ?? prev.amount,
-          description: suggestedDescription || prev.description,
-          notes: suggestedNotes || prev.notes,
-          data: {
-            ...(prev.data || {}),
-            receipt_extraction: data || null,
-          },
-        }));
         toast.success('Comprobante analizado');
       } catch (error) {
         console.error('Error extracting receipt data:', error);
-        const message = (error as any)?.message || 'Error desconocido';
-        toast.error('No se pudo leer el comprobante', { description: message });
+
+        try {
+          const fallbackData = await extractReceiptDataLocally(first.signedUrl);
+          const hasUsefulData = Boolean(
+            fallbackData.date ||
+            fallbackData.totals?.total ||
+            fallbackData.vendorName ||
+            fallbackData.notes,
+          );
+
+          if (!hasUsefulData) {
+            throw new Error('No se pudo detectar texto útil en la imagen');
+          }
+
+          applyExtractionResult(fallbackData);
+          setLastExtractedPath(first.path);
+          toast.success('Comprobante analizado con respaldo local');
+        } catch (fallbackError) {
+          console.error('Local OCR fallback failed:', fallbackError);
+          const primaryMessage = (error as any)?.message || 'Error desconocido';
+          const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : 'Falló el análisis local';
+          toast.error('No se pudo leer el comprobante', {
+            description: `${primaryMessage}. Respaldo local: ${fallbackMessage}`,
+          });
+        }
       } finally {
         setIsExtracting(false);
       }
