@@ -405,8 +405,8 @@ export const useLinkInvoiceToCost = () => {
           currency: invoiceData.currency || 'CLP',
           status: isPaid ? 'paid' : 'pending',
           paid_amount: isPaid ? invoiceData.amount : 0,
-          balance: isPaid ? 0 : invoiceData.amount,
-        })
+        }])
+
         .select()
         .single();
 
