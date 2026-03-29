@@ -402,6 +402,7 @@ export const useLinkInvoiceToCost = () => {
           net_amount: invoiceData.netAmount,
           tax_amount: invoiceData.taxAmount,
           description: invoiceData.description,
+          product_service_description: invoiceData.description,
           currency: invoiceData.currency || 'CLP',
           status: isPaid ? 'paid' : 'pending',
           paid_amount: isPaid ? invoiceData.amount : 0,
