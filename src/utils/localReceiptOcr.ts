@@ -170,11 +170,28 @@ const buildNotes = (rawText: string, vendorName: string, documentType: string, d
     .slice(0, 160);
 };
 
-export const extractReceiptDataLocally = async (imageUrl: string): Promise<LocalReceiptExtractionResult> => {
-  const worker = await createWorker('spa+eng');
+const resolveImageSource = async (imageSource: string | Blob) => {
+  if (typeof imageSource !== 'string') {
+    const objectUrl = URL.createObjectURL(imageSource);
+    return { source: objectUrl, revoke: () => URL.revokeObjectURL(objectUrl) };
+  }
+
+  const response = await fetch(imageSource);
+  if (!response.ok) {
+    throw new Error(`No se pudo cargar la imagen localmente (HTTP ${response.status})`);
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  return { source: objectUrl, revoke: () => URL.revokeObjectURL(objectUrl) };
+};
+
+export const extractReceiptDataLocally = async (imageSource: string | Blob): Promise<LocalReceiptExtractionResult> => {
+  const worker = await createWorker(['spa', 'eng']);
+  const { source, revoke } = await resolveImageSource(imageSource);
 
   try {
-    const result = await worker.recognize(imageUrl);
+    const result = await worker.recognize(source);
     const rawText = result.data.text || '';
     const normalizedText = cleanText(rawText);
 
@@ -204,6 +221,7 @@ export const extractReceiptDataLocally = async (imageUrl: string): Promise<Local
       source: 'local-ocr',
     };
   } finally {
+    revoke();
     await worker.terminate();
   }
 };

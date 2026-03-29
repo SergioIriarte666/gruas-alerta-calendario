@@ -65,7 +65,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
     date: new Date().toISOString().split('T')[0],
     notes: '',
   });
-  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string }>>([]);
+  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [lastExtractedPath, setLastExtractedPath] = useState<string | null>(null);
   const [receiptExtraction, setReceiptExtraction] = useState<any | null>(null);
@@ -123,7 +123,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         console.error('Error extracting receipt data:', error);
 
         try {
-          const fallbackData = await extractReceiptDataLocally(first.signedUrl);
+          const fallbackData = await extractReceiptDataLocally(first.file ?? first.signedUrl);
           const hasUsefulData = Boolean(
             fallbackData.date ||
             fallbackData.totals?.total ||
