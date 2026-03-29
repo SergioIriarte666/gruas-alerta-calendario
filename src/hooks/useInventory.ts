@@ -69,7 +69,7 @@ export interface InventoryMovement {
   created_at: string;
   created_by?: string;
   cost_id?: string;
-  item?: InventoryItem;
+  item?: Pick<InventoryItem, 'id' | 'name'> & Partial<InventoryItem>;
   location?: {
     id: string;
     name: string;
