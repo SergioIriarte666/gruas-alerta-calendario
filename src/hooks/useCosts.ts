@@ -394,8 +394,7 @@ export const useLinkInvoiceToCost = () => {
       const isPaid = invoiceData.status === 'paid';
       const { data: invoice, error: invoiceError } = await supabase
         .from('supplier_invoices')
-        .insert({
-          supplier_id: supplierId,
+        .insert([{
           invoice_number: invoiceData.folio,
           issue_date: invoiceData.issueDate,
           due_date: invoiceData.dueDate,
