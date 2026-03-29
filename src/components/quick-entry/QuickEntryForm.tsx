@@ -27,6 +27,30 @@ const ENTRY_TYPES = [
   { value: 'maintenance', label: 'Mantenimiento' },
 ] as const;
 
+const getFunctionErrorMessage = (error: unknown) => {
+  const context = (error as { context?: { body?: unknown; status?: number } })?.context;
+  const body = context?.body;
+
+  if (typeof body === 'string') {
+    try {
+      const parsed = JSON.parse(body) as { error?: string; message?: string };
+      return parsed.error || parsed.message || body;
+    } catch {
+      return body;
+    }
+  }
+
+  if (body && typeof body === 'object') {
+    const parsed = body as { error?: string; message?: string };
+    if (parsed.error || parsed.message) {
+      return parsed.error || parsed.message;
+    }
+  }
+
+  const base = (error as { message?: string })?.message;
+  return base || (context?.status ? `Error HTTP ${context.status}` : 'Error desconocido');
+};
+
 export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   const { createQuickEntry, isLoading } = useQuickEntry();
   const { isMobile } = useDeviceType();
@@ -62,13 +86,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           body: { imageUrl: first.signedUrl },
         });
         if (error) {
-          const status = (error as any)?.context?.status;
-          const body = (error as any)?.context?.body;
-          const details =
-            typeof body === 'string' ? body : body ? JSON.stringify(body) : '';
-          const base = (error as any)?.message || 'Error desconocido';
-          const message = status ? `${base} (HTTP ${status})` : base;
-          throw new Error(details ? `${message}: ${details}` : message);
+          throw new Error(getFunctionErrorMessage(error));
         }
 
         setReceiptExtraction(data || null);

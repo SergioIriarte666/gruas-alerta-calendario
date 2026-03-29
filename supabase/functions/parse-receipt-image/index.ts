@@ -8,6 +8,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const parseGatewayError = (raw: string) => {
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.error === "string") return parsed.error;
+    if (typeof parsed?.message === "string") return parsed.message;
+    if (typeof parsed?.error?.message === "string") return parsed.error.message;
+  } catch {
+    // Ignore JSON parse issues and fall back to raw text
+  }
+
+  return raw;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,10 +38,7 @@ serve(async (req) => {
     // 1. Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No autorizado" }, 401);
     }
 
     const supabase = createClient(
@@ -31,33 +49,28 @@ serve(async (req) => {
 
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No autorizado" }, 401);
     }
 
     // 2. Parse body
-    const body = await req.json().catch(() => ({}));
-    const imageUrl = body?.imageUrl as string | undefined;
-    const imageBase64 = body?.imageBase64 as string | undefined;
-    const imageMimeType = (body?.imageMimeType as string | undefined) || "image/jpeg";
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return jsonResponse({ error: "Body inválido" }, 400);
+    }
+
+    const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl : undefined;
+    const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : undefined;
+    const imageMimeType = typeof body.imageMimeType === "string" ? body.imageMimeType : "image/jpeg";
 
     if (!imageUrl && !imageBase64) {
-      return new Response(JSON.stringify({ error: "Se requiere imageUrl o imageBase64" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Se requiere imageUrl o imageBase64" }, 400);
     }
 
     // 3. Check API key
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const gatewayApiKey = Deno.env.get("AI_GATEWAY_KEY") || Deno.env.get("LOVABLE_API_KEY");
+    if (!gatewayApiKey) {
+      console.error("AI gateway key is not configured");
+      return jsonResponse({ error: "Falta configurar la clave del gateway de IA" }, 500);
     }
 
     // 4. Download image and convert to data URL
@@ -69,20 +82,15 @@ serve(async (req) => {
         const res = await fetch(imageUrl!);
         if (!res.ok) {
           console.error(`Failed to download image: HTTP ${res.status}`);
-          return new Response(JSON.stringify({ error: "No se pudo descargar la imagen" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return jsonResponse({ error: `No se pudo descargar la imagen (HTTP ${res.status})` }, 400);
         }
         const mime = res.headers.get("content-type") || "image/jpeg";
         const buf = new Uint8Array(await res.arrayBuffer());
         dataUrl = `data:${mime};base64,${base64Encode(buf)}`;
       } catch (downloadErr) {
         console.error("Image download error:", downloadErr);
-        return new Response(JSON.stringify({ error: "No se pudo descargar la imagen" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const message = downloadErr instanceof Error ? downloadErr.message : "No se pudo descargar la imagen";
+        return jsonResponse({ error: message }, 400);
       }
     }
 
@@ -92,7 +100,7 @@ serve(async (req) => {
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${gatewayApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -165,30 +173,19 @@ Reglas:
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errorText);
+      const gatewayMessage = parseGatewayError(errorText);
+      console.error("AI gateway error:", aiResponse.status, gatewayMessage || errorText);
 
       if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Límite de solicitudes excedido, intenta más tarde" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Límite de solicitudes excedido, intenta más tarde" }, 429);
       }
       if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Créditos de IA insuficientes" }, 402);
       }
       if (aiResponse.status === 401) {
-        return new Response(JSON.stringify({ error: "Error de autenticación con el gateway de IA. Verifique LOVABLE_API_KEY." }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: gatewayMessage || "Error de autenticación con el gateway de IA" }, 500);
       }
-      return new Response(JSON.stringify({ error: `Error del gateway de IA (HTTP ${aiResponse.status})` }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${aiResponse.status})` }, 500);
     }
 
     // 6. Parse AI response
@@ -196,13 +193,17 @@ Reglas:
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
       console.error("No tool call in AI response:", JSON.stringify(aiData));
-      return new Response(JSON.stringify({ error: "No se pudo extraer datos del comprobante" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No se pudo extraer datos del comprobante" }, 500);
     }
 
-    const parsed = JSON.parse(toolCall.function.arguments);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(toolCall.function.arguments);
+    } catch (parseError) {
+      console.error("Failed to parse tool arguments:", toolCall.function.arguments, parseError);
+      return jsonResponse({ error: "La IA devolvió una respuesta inválida" }, 500);
+    }
+
     const result = {
       vendorName: parsed.vendorName || "",
       vendorRut: parsed.vendorRut || "",
@@ -216,15 +217,10 @@ Reglas:
       confidence: parsed.confidence || {},
     };
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(result);
   } catch (error) {
     console.error("Error processing receipt image:", error);
     const message = error instanceof Error ? error.message : "Error procesando la imagen. Intente nuevamente.";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: message }, 500);
   }
 });
