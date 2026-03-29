@@ -124,6 +124,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
 
         try {
           const fallbackData = await extractReceiptDataLocally(first.file ?? first.signedUrl);
+          console.log('[QuickEntry] Fallback OCR resultado:', fallbackData);
           const hasUsefulData = Boolean(
             fallbackData.date ||
             fallbackData.totals?.total ||
@@ -139,11 +140,14 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           setLastExtractedPath(first.path);
           toast.success('Comprobante analizado con respaldo local');
         } catch (fallbackError) {
-          console.error('Local OCR fallback failed:', fallbackError);
+          console.error('[QuickEntry] Local OCR fallback failed:', fallbackError);
           const primaryMessage = (error as any)?.message || 'Error desconocido';
-          const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : 'Falló el análisis local';
+          const fallbackMessage = fallbackError instanceof Error
+            ? `${fallbackError.message}${fallbackError.stack ? ` | Stack: ${fallbackError.stack.slice(0, 200)}` : ''}`
+            : 'Falló el análisis local';
+          console.error('[QuickEntry] Primary error:', primaryMessage, '| Fallback error:', fallbackMessage);
           toast.error('No se pudo leer el comprobante', {
-            description: `${primaryMessage}. Respaldo local: ${fallbackMessage}`,
+            description: `Respaldo local: ${fallbackMessage.slice(0, 120)}`,
           });
         }
       } finally {
