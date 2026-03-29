@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CostList } from '@/components/costs/CostList';
 import { EnhancedCostsTable } from '@/components/costs/EnhancedCostsTable';
@@ -36,6 +36,8 @@ import {
 const CostsPage = () => {
     const isMobile = useIsMobile();
     const [searchParams] = useSearchParams();
+    const location = useLocation() as { state?: { prefilledData?: any } } | any;
+    const navigate = useNavigate();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -82,6 +84,14 @@ const CostsPage = () => {
     const baseCosts = costs;
 
     // Cache is managed by React Query staleTime — no forced invalidation on mount
+
+    useEffect(() => {
+        const statePrefill = (location?.state as any)?.prefilledData;
+        if (!statePrefill) return;
+        setPrefilledDataForDuplication(statePrefill);
+        setIsFormOpen(true);
+        navigate(location.pathname, { replace: true });
+    }, [location?.state, location.pathname, navigate]);
 
     // Efecto para manejar el parámetro costId de la URL
     useEffect(() => {

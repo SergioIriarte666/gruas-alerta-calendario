@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Dialog } from '@/components/ui/dialog';
 import { CraneForm } from '@/components/cranes/CraneForm';
 import { CraneDetailsModal } from '@/components/cranes/CraneDetailsModal';
@@ -10,10 +11,15 @@ import { CranesHeader } from '@/components/cranes/CranesHeader';
 import { CranesFilters } from '@/components/cranes/CranesFilters';
 import { CranesTable, CraneSortField, SortDirection } from '@/components/cranes/CranesTable';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { MaintenanceForm } from '@/components/cranes/forms/MaintenanceForm';
 
 
 const Cranes = () => {
   const { cranes, loading, createCrane, updateCrane, deleteCrane, toggleCraneStatus } = useCranes();
+  const location = useLocation() as any;
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -24,6 +30,10 @@ const Cranes = () => {
   const [sortField, setSortField] = useState<CraneSortField>('licensePlate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const ITEMS_PER_PAGE = 10;
+  const [quickMaintenancePrefill, setQuickMaintenancePrefill] = useState<any | null>(location?.state?.prefilledData || null);
+  const [intakeOpen, setIntakeOpen] = useState<boolean>(!!quickMaintenancePrefill);
+  const [intakeCraneId, setIntakeCraneId] = useState<string>('');
+  const [maintenanceOpen, setMaintenanceOpen] = useState<boolean>(false);
 
   const handleSort = (field: CraneSortField) => {
     if (sortField === field) {
@@ -145,6 +155,72 @@ const Cranes = () => {
 
   return (
     <div className="space-y-6 cranes-scope">
+      <Dialog open={intakeOpen} onOpenChange={(open) => {
+        setIntakeOpen(open);
+        if (!open) {
+          if (navigate) navigate(location.pathname, { replace: true });
+          setQuickMaintenancePrefill(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear mantenimiento desde Registro Rápido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm">Seleccione Grúa</label>
+              <select
+                className="w-full border rounded px-3 py-2 bg-background"
+                value={intakeCraneId}
+                onChange={(e) => setIntakeCraneId(e.target.value)}
+              >
+                <option value="">Seleccionar</option>
+                {cranes.map(c => (
+                  <option key={c.id} value={c.id}>{c.licensePlate || `${c.brand} ${c.model}`}</option>
+                ))}
+              </select>
+            </div>
+            <div className="text-sm">
+              <div><span className="text-muted-foreground">Descripción:</span> {quickMaintenancePrefill?.description || '-'}</div>
+              <div><span className="text-muted-foreground">Costo:</span> {quickMaintenancePrefill?.amount ?? quickMaintenancePrefill?.cost ?? 0}</div>
+              <div><span className="text-muted-foreground">Fecha:</span> {quickMaintenancePrefill?.date || '-'}</div>
+              {quickMaintenancePrefill?.notes && <div><span className="text-muted-foreground">Notas:</span> {quickMaintenancePrefill.notes}</div>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setIntakeOpen(false); setQuickMaintenancePrefill(null); }}>Cancelar</Button>
+              <Button
+                disabled={!intakeCraneId}
+                onClick={() => {
+                  setIntakeOpen(false);
+                  setMaintenanceOpen(true);
+                }}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {maintenanceOpen && intakeCraneId && (
+        <MaintenanceForm
+          isOpen={maintenanceOpen}
+          onClose={() => setMaintenanceOpen(false)}
+          craneId={intakeCraneId}
+          prefill={{
+            description: quickMaintenancePrefill?.description,
+            cost: quickMaintenancePrefill?.amount ?? quickMaintenancePrefill?.cost ?? 0,
+            notes: quickMaintenancePrefill?.notes,
+            status: 'scheduled',
+            maintenance_type: 'preventive',
+            date: quickMaintenancePrefill?.date || undefined,
+          }}
+          receiptPhotoPaths={quickMaintenancePrefill?.receipt_photo_paths || null}
+          quickEntryId={quickMaintenancePrefill?.quickEntryId || null}
+          onCreated={() => {
+            setQuickMaintenancePrefill(null);
+          }}
+        />
+      )}
       <CranesHeader onNewCrane={handleCreate} />
 
       <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />

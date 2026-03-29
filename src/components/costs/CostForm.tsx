@@ -26,6 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
 import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuickEntry } from '@/hooks/useQuickEntry';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -45,6 +46,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     const queryClient = useQueryClient();
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
+    const { deleteEntry } = useQuickEntry();
     
     const [currentStep, setCurrentStep] = useState(1);
     const [showServiceExpenseModals, setShowServiceExpenseModals] = useState(false);
@@ -444,6 +446,26 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
+                        
+                        const quickEntryId = (prefilledData as any)?.quickEntryId;
+                        const receiptPhotoPaths = (prefilledData as any)?.receipt_photo_paths as string[] | undefined;
+                        if (receiptPhotoPaths?.length && data?.[0]?.id) {
+                            try {
+                                await supabase
+                                    .from('costs')
+                                    .update({ receipt_photo_paths: receiptPhotoPaths } as any)
+                                    .eq('id', data[0].id);
+                            } catch (error) {
+                                console.error('Error saving receipt photos to cost:', error);
+                            }
+                        }
+                        if (quickEntryId) {
+                            try {
+                                await deleteEntry(quickEntryId);
+                            } catch (error) {
+                                console.error('Error deleting quick entry after cost creation:', error);
+                            }
+                        }
                         
                         const isInventoryPurchase = submissionData.purchase_quantity && 
                                                    submissionData.purchase_quantity > 0 &&

@@ -94,12 +94,15 @@ export function useQuickEntry() {
 
   // Prepare prefilled data for forms
   const prepareDataForForm = (entry: QuickEntry) => {
+    const photos = (entry.data as any)?.photos as Array<{ path?: string; signedUrl?: string }> | undefined;
+    const receiptPhotoPaths = photos?.map(p => p.path).filter(Boolean) as string[] | undefined;
     const baseData = {
       quickEntryId: entry.id,
       date: entry.date,
       description: entry.description,
       notes: entry.notes || '',
       amount: entry.amount,
+      receipt_photo_paths: receiptPhotoPaths,
     };
 
     switch (entry.type) {
@@ -150,11 +153,26 @@ export function useQuickEntry() {
     }
   };
 
+  const deleteEntryWithPhotos = async (entry: QuickEntry) => {
+    if (!entry.id) return;
+    const photos = (entry.data as any)?.photos as Array<{ path?: string }> | undefined;
+    const paths = (photos || []).map(p => p.path).filter(Boolean) as string[];
+    if (paths.length > 0) {
+      try {
+        await supabase.storage.from('quick-entry-photos').remove(paths);
+      } catch (error) {
+        console.error('Error deleting quick entry photos:', error);
+      }
+    }
+    await deleteEntry(entry.id);
+  };
+
   return {
     createQuickEntry,
     getPendingEntries,
     updateEntryStatus,
     deleteEntry,
+    deleteEntryWithPhotos,
     prepareDataForForm,
     isLoading
   };

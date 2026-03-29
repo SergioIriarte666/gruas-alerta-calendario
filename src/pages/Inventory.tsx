@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,12 +14,20 @@ import { InventoryStockView } from '@/components/inventory/InventoryStockView';
 import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTable';
 import { InventoryReportsPage } from '@/components/inventory/reports/InventoryReportsPage';
 import { format } from 'date-fns';
+import { InventoryMovementForm } from '@/components/inventory/InventoryMovementForm';
+import { useQuickEntry } from '@/hooks/useQuickEntry';
+import { supabase } from '@/integrations/supabase/client';
 
 const Inventory = () => {
   // Activar watcher de sincronización global (todas las grúas)
   useInventorySyncWatcher();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const location = useLocation() as any;
+  const navigate = useNavigate();
+  const { deleteEntry } = useQuickEntry();
+  const [intakeOpen, setIntakeOpen] = useState<boolean>(!!location?.state?.prefilledData);
+  const [prefill, setPrefill] = useState<any | null>(location?.state?.prefilledData || null);
 
   // Real data from hooks
   const { data: stats, isLoading: statsLoading } = useInventoryStats();
@@ -30,6 +38,58 @@ const Inventory = () => {
 
   return (
     <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+      <Dialog open={intakeOpen} onOpenChange={(open) => {
+        setIntakeOpen(open);
+        if (!open) {
+          if (navigate) navigate(location.pathname, { replace: true });
+          setPrefill(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar entrada de inventario desde Registro Rápido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm">
+              <div><span className="text-muted-foreground">Descripción:</span> {prefill?.description || '-'}</div>
+              <div><span className="text-muted-foreground">Fecha:</span> {prefill?.date || '-'}</div>
+              <div><span className="text-muted-foreground">Monto sugerido (unitario):</span> {prefill?.amount ?? 0}</div>
+              {prefill?.notes && <div><span className="text-muted-foreground">Notas:</span> {prefill.notes}</div>}
+            </div>
+            <InventoryMovementForm
+              onCreated={async (movement) => {
+                const receiptPhotoPaths = prefill?.receipt_photo_paths as string[] | undefined;
+                if (receiptPhotoPaths?.length && movement?.id) {
+                  try {
+                    await supabase
+                      .from('inventory_movements')
+                      .update({ receipt_photo_paths: receiptPhotoPaths } as any)
+                      .eq('id', movement.id);
+                  } catch (error) {
+                    console.error('Error saving receipt photos to inventory movement:', error);
+                  }
+                }
+                if (prefill?.quickEntryId) {
+                  try {
+                    await deleteEntry(prefill.quickEntryId);
+                  } catch (error) {
+                    console.error('Error deleting quick entry after inventory movement:', error);
+                  }
+                }
+                setIntakeOpen(false);
+                setPrefill(null);
+              }}
+              defaultMovementType="entry"
+              prefill={{
+                unit_cost: prefill?.amount ?? undefined,
+                observations: prefill?.notes || undefined,
+                reason: prefill?.description || undefined,
+                movement_date: prefill?.date ? new Date(prefill.date + 'T00:00:00') : undefined,
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

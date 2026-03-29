@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,9 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
+import { QuickPhotoCapture } from './QuickPhotoCapture';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface QuickEntryFormProps {
   isOpen: boolean;
@@ -37,11 +40,86 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
     date: new Date().toISOString().split('T')[0],
     notes: '',
   });
+  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string }>>([]);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [lastExtractedPath, setLastExtractedPath] = useState<string | null>(null);
+  const [receiptExtraction, setReceiptExtraction] = useState<any | null>(null);
+
+  useEffect(() => {
+    const first = photos[0];
+    if (formData.type !== 'cost') return;
+    if (!first?.signedUrl || !first?.path) {
+      setLastExtractedPath(null);
+      setReceiptExtraction(null);
+      return;
+    }
+    if (first.path === lastExtractedPath) return;
+
+    const run = async () => {
+      setIsExtracting(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('parse-receipt-image', {
+          body: { imageUrl: first.signedUrl },
+        });
+        if (error) {
+          const status = (error as any)?.context?.status;
+          const body = (error as any)?.context?.body;
+          const details =
+            typeof body === 'string' ? body : body ? JSON.stringify(body) : '';
+          const base = (error as any)?.message || 'Error desconocido';
+          const message = status ? `${base} (HTTP ${status})` : base;
+          throw new Error(details ? `${message}: ${details}` : message);
+        }
+
+        setReceiptExtraction(data || null);
+        setLastExtractedPath(first.path);
+
+        const extractedDate = data?.date || undefined;
+        const extractedTotal = typeof data?.totals?.total === 'number' ? data.totals.total : undefined;
+        const vendorName = (data?.vendorName || '').trim();
+        const docType = (data?.documentType || '').trim();
+        const docNumber = (data?.documentNumber || '').trim();
+
+        const suggestedDescriptionParts = [vendorName, docType && docNumber ? `${docType} ${docNumber}` : ''].filter(Boolean);
+        const suggestedDescription = suggestedDescriptionParts.join(' · ');
+        const suggestedNotes = (data?.notes || '').trim();
+
+        setFormData(prev => ({
+          ...prev,
+          date: extractedDate || prev.date,
+          amount: extractedTotal ?? prev.amount,
+          description: suggestedDescription || prev.description,
+          notes: suggestedNotes || prev.notes,
+          data: {
+            ...(prev.data || {}),
+            receipt_extraction: data || null,
+          },
+        }));
+        toast.success('Comprobante analizado');
+      } catch (error) {
+        console.error('Error extracting receipt data:', error);
+        const message = (error as any)?.message || 'Error desconocido';
+        toast.error('No se pudo leer el comprobante', { description: message });
+      } finally {
+        setIsExtracting(false);
+      }
+    };
+
+    run();
+  }, [formData.type, lastExtractedPath, photos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createQuickEntry(formData);
+      await createQuickEntry({
+        ...formData,
+        photo_url: photos[0]?.signedUrl,
+        data: {
+          ...(formData.data || {}),
+          photos,
+          receipt_extraction: receiptExtraction,
+        },
+      });
       triggerRefresh(); // Trigger refresh for PendingEntriesView
       onClose();
       setFormData({
@@ -51,6 +129,10 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         date: new Date().toISOString().split('T')[0],
         notes: '',
       });
+      setPhotos([]);
+      setIsExtracting(false);
+      setLastExtractedPath(null);
+      setReceiptExtraction(null);
     } catch (error) {
       // Error handled in hook
     }
@@ -147,6 +229,19 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
               rows={3}
             />
           </div>
+
+          {/* Photo capture for cost entries */}
+          {formData.type === 'cost' && (
+            <div className="space-y-2">
+              <Label>Evidencia (Fotos)</Label>
+              <QuickPhotoCapture onPhotosChange={setPhotos} maxPhotos={3} />
+              {isExtracting && (
+                <div className="text-xs text-muted-foreground">
+                  Analizando comprobante...
+                </div>
+              )}
+            </div>
+          )}
 
 
           {/* Submit Button */}

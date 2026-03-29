@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 import { CostTraceabilityPanel } from './CostTraceabilityPanel';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -71,6 +72,32 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
 );
 
 export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
+  const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
+  const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!isOpen || receiptPhotoPaths.length === 0) {
+        setReceiptUrls([]);
+        return;
+      }
+      const results = await Promise.all(
+        receiptPhotoPaths.map(async (path) => {
+          const { data } = await supabase.storage
+            .from('quick-entry-photos')
+            .createSignedUrl(path, 60 * 60 * 24 * 7);
+          return data?.signedUrl || '';
+        })
+      );
+      if (!cancelled) setReceiptUrls(results.filter(Boolean));
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, receiptPhotoPaths.join('|')]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -181,6 +208,23 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
                   </div>
                 </div>
               </DetailSection>
+
+              {receiptUrls.length > 0 && (
+                <>
+                  <Separator className="border-border"/>
+                  <DetailSection title="Comprobante" icon={FileText}>
+                    <div className="col-span-1 md:col-span-2">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {receiptUrls.map((url, idx) => (
+                          <a key={idx} href={url} target="_blank" rel="noreferrer" className="block">
+                            <img src={url} alt={`Comprobante ${idx + 1}`} className="w-full h-40 object-cover rounded-md border border-border" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </DetailSection>
+                </>
+              )}
 
               {cost.cost_categories?.description && (
                 <>

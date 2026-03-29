@@ -12,13 +12,26 @@ import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateMaintenance, useUpdateMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
+import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { formatForDatabase, parseFromDatabase, formatForDisplayLong } from '@/utils/timezoneUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaintenanceFormProps {
   isOpen: boolean;
   onClose: () => void;
   craneId: string;
   editingRecord?: MaintenanceRecord | null;
+  prefill?: {
+    description?: string;
+    cost?: number;
+    notes?: string;
+    status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+    maintenance_type?: 'preventive' | 'corrective' | 'emergency';
+    date?: string;
+  } | null;
+  receiptPhotoPaths?: string[] | null;
+  quickEntryId?: string | null;
+  onCreated?: () => void;
 }
 
 type FormData = {
@@ -31,7 +44,7 @@ type FormData = {
   kilometraje?: number;
 };
 
-export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: MaintenanceFormProps) => {
+export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefill, receiptPhotoPaths, quickEntryId, onCreated }: MaintenanceFormProps) => {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
     editingRecord?.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : new Date()
   );
@@ -44,6 +57,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
   
   const createMutation = useCreateMaintenance();
   const updateMutation = useUpdateMaintenance();
+  const { deleteEntry } = useQuickEntry();
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: {
@@ -78,19 +92,19 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
     } else {
       // Reset to defaults for new records
       reset({
-        description: '',
-        maintenance_type: 'preventive',
-        status: 'scheduled',
-        cost: 0,
+        description: prefill?.description || '',
+        maintenance_type: prefill?.maintenance_type || 'preventive',
+        status: prefill?.status || 'scheduled',
+        cost: prefill?.cost || 0,
         provider: '',
-        notes: '',
+        notes: prefill?.notes || '',
         kilometraje: undefined,
       });
-      setScheduledDate(new Date());
+      setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : new Date());
       setCompletedDate(undefined);
       setNextMaintenanceDate(undefined);
     }
-  }, [editingRecord, reset]);
+  }, [editingRecord, reset, prefill]);
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -111,7 +125,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
           ...(data.kilometraje && { kilometraje: data.kilometraje })
         } as any);
       } else {
-        await createMutation.mutateAsync({
+        const created = await createMutation.mutateAsync({
           description: data.description,
           maintenanceType: data.maintenance_type,
           status: data.status,
@@ -124,6 +138,24 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
           nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
           kilometraje: data.kilometraje,
         } as any);
+        if (receiptPhotoPaths?.length && (created as any)?.id) {
+          try {
+            await supabase
+              .from('crane_maintenance')
+              .update({ receipt_photo_paths: receiptPhotoPaths } as any)
+              .eq('id', (created as any).id);
+          } catch (error) {
+            console.error('Error saving receipt photos to maintenance:', error);
+          }
+        }
+        if (quickEntryId) {
+          try {
+            await deleteEntry(quickEntryId);
+          } catch (error) {
+            console.error('Error deleting quick entry after maintenance creation:', error);
+          }
+        }
+        if (onCreated) onCreated();
       }
       handleClose();
     } catch (error) {

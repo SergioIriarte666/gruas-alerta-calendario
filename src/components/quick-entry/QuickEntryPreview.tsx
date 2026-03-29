@@ -26,7 +26,7 @@ interface QuickEntryPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete: (entry: QuickEntry) => void;
-  onDiscard: (id: string) => void;
+  onDiscard: (entry: QuickEntry) => void;
 }
 
 export function QuickEntryPreview({ 
@@ -114,7 +114,7 @@ export function QuickEntryPreview({
             </Button>
             <Button
               variant="outline"
-              onClick={() => onDiscard(entry.id!)}
+              onClick={() => onDiscard(entry)}
               className="flex-1"
             >
               Descartar

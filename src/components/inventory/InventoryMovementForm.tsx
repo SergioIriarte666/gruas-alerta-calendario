@@ -57,11 +57,24 @@ type MovementFormData = z.infer<typeof movementSchema>;
 interface InventoryMovementFormProps {
   onSuccess?: () => void;
   defaultMovementType?: 'entry' | 'exit' | 'transfer' | 'adjustment';
+  prefill?: Partial<{
+    item_id: string;
+    location_id: string;
+    movement_type: 'entry' | 'exit' | 'transfer' | 'adjustment';
+    quantity: number;
+    unit_cost: number;
+    reason: string;
+    observations: string;
+    movement_date: Date;
+  }>;
+  onCreated?: (movement: any) => void;
 }
 
 export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   onSuccess,
-  defaultMovementType = 'entry'
+  defaultMovementType = 'entry',
+  prefill,
+  onCreated
 }) => {
   const { data: items } = useInventoryItems();
   const { data: locations } = useInventoryLocations();
@@ -83,6 +96,18 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
     },
   });
 
+  React.useEffect(() => {
+    if (prefill) {
+      if (prefill.item_id) form.setValue('item_id', prefill.item_id);
+      if (prefill.location_id) form.setValue('location_id', prefill.location_id);
+      if (prefill.movement_type) form.setValue('movement_type', prefill.movement_type);
+      if (prefill.quantity !== undefined) form.setValue('quantity', prefill.quantity);
+      if (prefill.unit_cost !== undefined) form.setValue('unit_cost', prefill.unit_cost);
+      if (prefill.reason) form.setValue('reason', prefill.reason);
+      if (prefill.observations) form.setValue('observations', prefill.observations);
+      if (prefill.movement_date) form.setValue('movement_date', prefill.movement_date);
+    }
+  }, [prefill, form]);
   const watchedMovementType = form.watch('movement_type');
   const watchedItemId = form.watch('item_id');
   const watchedLocationId = form.watch('location_id');
@@ -125,7 +150,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         generateCost: data.generate_cost,
       });
       
-      await createMovement.mutateAsync({
+      const created = await createMovement.mutateAsync({
         item_id: data.item_id,
         location_id: data.location_id,
         movement_type: data.movement_type,
@@ -143,6 +168,8 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         movement_date: data.movement_date.toISOString(),
         generateCost: data.generate_cost,
       });
+      
+      if (onCreated) onCreated(created);
       
       toast.success('Movimiento registrado correctamente');
       form.reset({

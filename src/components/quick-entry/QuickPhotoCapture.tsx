@@ -5,12 +5,12 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface QuickPhotoCaptureProps {
-  onPhotosChange: (photoUrls: string[]) => void;
+  onPhotosChange: (photos: Array<{ path: string; signedUrl: string }>) => void;
   maxPhotos?: number;
 }
 
 export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoCaptureProps) {
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string }>>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,7 +24,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
 
     setIsUploading(true);
     try {
-      const newPhotoUrls: string[] = [];
+      const newPhotos: Array<{ path: string; signedUrl: string }> = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -67,15 +67,15 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           continue;
         }
 
-        newPhotoUrls.push(signedUrlData.signedUrl);
+        newPhotos.push({ path: data.path, signedUrl: signedUrlData.signedUrl });
       }
 
-      const updatedPhotos = [...photos, ...newPhotoUrls];
+      const updatedPhotos = [...photos, ...newPhotos];
       setPhotos(updatedPhotos);
       onPhotosChange(updatedPhotos);
 
-      if (newPhotoUrls.length > 0) {
-        toast.success(`${newPhotoUrls.length} foto(s) agregada(s)`);
+      if (newPhotos.length > 0) {
+        toast.success(`${newPhotos.length} foto(s) agregada(s)`);
       }
     } catch (error) {
       console.error('Error processing photos:', error);
@@ -88,14 +88,11 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
   const removePhoto = async (index: number) => {
     const photoToRemove = photos[index];
     
-    // If it's a Supabase URL, try to delete it from storage
-    if (photoToRemove && photoToRemove.includes('quick-entry-photos')) {
+    if (photoToRemove?.path) {
       try {
-        const pathParts = photoToRemove.split('/');
-        const fileName = pathParts[pathParts.length - 1];
         await supabase.storage
           .from('quick-entry-photos')
-          .remove([fileName]);
+          .remove([photoToRemove.path]);
       } catch (error) {
         console.error('Error deleting photo from storage:', error);
       }
@@ -149,7 +146,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           {photos.map((photo, index) => (
             <div key={index} className="relative group">
               <img
-                src={photo}
+                src={photo.signedUrl}
                 alt={`Foto ${index + 1}`}
                 className="w-full h-20 object-cover rounded-md border border-border"
               />

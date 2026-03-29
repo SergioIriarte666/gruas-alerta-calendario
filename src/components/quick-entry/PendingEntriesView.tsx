@@ -34,7 +34,7 @@ export function PendingEntriesView() {
   const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewEntry, setPreviewEntry] = useState<QuickEntry | null>(null);
-  const { getPendingEntries, updateEntryStatus, deleteEntry } = useQuickEntry();
+  const { getPendingEntries, updateEntryStatus, deleteEntry, deleteEntryWithPhotos } = useQuickEntry();
   const { refreshTrigger } = useQuickEntryContext();
   const navigate = useNavigate();
 
@@ -63,12 +63,17 @@ export function PendingEntriesView() {
 
   // Helper function to prepare data for forms
   const prepareDataForForm = (entry: QuickEntry) => {
+    const photos = (entry.data as any)?.photos as Array<{ path?: string; signedUrl?: string }> | undefined;
+    const receiptPhotoPaths = photos?.map(p => p.path).filter(Boolean) as string[] | undefined;
+    const receiptExtraction = (entry.data as any)?.receipt_extraction as any | undefined;
     const baseData = {
       quickEntryId: entry.id,
       date: entry.date,
       description: entry.description,
       notes: entry.notes,
       amount: entry.amount,
+      receipt_photo_paths: receiptPhotoPaths,
+      receipt_extraction: receiptExtraction,
     };
 
     switch (entry.type) {
@@ -80,14 +85,19 @@ export function PendingEntriesView() {
           serviceDate: entry.date,
           observations: `${entry.description}${entry.notes ? '\nNotas: ' + entry.notes : ''}`,
         };
-      case 'cost':
+      case 'cost': {
+        const document_type = (receiptExtraction?.documentType as string | undefined) || 'none';
+        const document_number = (receiptExtraction?.documentNumber as string | undefined) || '';
         return {
           ...baseData,
           amount: entry.amount || 0,
           date: entry.date,
           description: entry.description,
           notes: entry.notes,
+          document_type,
+          document_number,
         };
+      }
       default:
         return baseData;
     }
@@ -104,10 +114,11 @@ export function PendingEntriesView() {
     handleComplete(entry);
   };
 
-  const handlePreviewDiscard = (id: string) => {
+  const handlePreviewDiscard = async (entry: QuickEntry) => {
     setIsPreviewOpen(false);
     setPreviewEntry(null);
-    handleStatusUpdate(id, 'discarded');
+    await deleteEntryWithPhotos(entry);
+    loadEntries();
   };
 
   const handleComplete = async (entry: QuickEntry) => {
@@ -119,25 +130,13 @@ export function PendingEntriesView() {
           setIsServiceFormOpen(true);
           break;
         case 'cost':
-          // Navigate to costs page with prefilled data
           navigate('/costs', { state: { prefilledData: prepareDataForForm(entry) } });
-          // Delete the quick entry after successful navigation
-          await deleteEntry(entry.id!);
-          loadEntries();
           break;
         case 'maintenance':
-          // Navigate to cranes page where maintenance functionality is implemented
           navigate('/cranes', { state: { prefilledData: prepareDataForForm(entry) } });
-          // Delete the quick entry after successful navigation
-          await deleteEntry(entry.id!);
-          loadEntries();
           break;
         case 'inventory':
-          // Navigate to inventory page with prefilled data
           navigate('/inventory', { state: { prefilledData: prepareDataForForm(entry) } });
-          // Delete the quick entry after successful navigation
-          await deleteEntry(entry.id!);
-          loadEntries();
           break;
         default:
           // Fallback to direct completion
@@ -287,7 +286,10 @@ export function PendingEntriesView() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleStatusUpdate(entry.id!, 'discarded')}
+                    onClick={async () => {
+                      await deleteEntryWithPhotos(entry);
+                      loadEntries();
+                    }}
                     className="flex-1"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
