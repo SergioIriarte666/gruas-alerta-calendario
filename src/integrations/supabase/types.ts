@@ -483,7 +483,15 @@ export type Database = {
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cost_categories_default_cost_center_id_fkey"
+            columns: ["default_cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cost_centers: {
         Row: {
@@ -579,6 +587,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cost_inventory_items_cost_id_fkey"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
+          },
+          {
             foreignKeyName: "cost_inventory_items_inventory_item_id_fkey"
             columns: ["inventory_item_id"]
             isOneToOne: false
@@ -670,15 +685,16 @@ export type Database = {
           id: string
           immediate_consumption: boolean | null
           inventory_movement_id: string | null
-          maintenance_id: string | null
           location_text: string | null
+          maintenance_id: string | null
           notes: string | null
-          other_reason: string | null
           operator_id: string | null
+          other_reason: string | null
           payment_batch_id: string | null
           payment_date: string | null
           purchase_quantity: number | null
           purchase_unit_cost: number | null
+          receipt_photo_paths: string[] | null
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
@@ -700,15 +716,16 @@ export type Database = {
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
-          maintenance_id?: string | null
           location_text?: string | null
+          maintenance_id?: string | null
           notes?: string | null
-          other_reason?: string | null
           operator_id?: string | null
+          other_reason?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null
           purchase_quantity?: number | null
           purchase_unit_cost?: number | null
+          receipt_photo_paths?: string[] | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
@@ -730,15 +747,16 @@ export type Database = {
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
-          maintenance_id?: string | null
           location_text?: string | null
+          maintenance_id?: string | null
           notes?: string | null
-          other_reason?: string | null
           operator_id?: string | null
+          other_reason?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null
           purchase_quantity?: number | null
           purchase_unit_cost?: number | null
+          receipt_photo_paths?: string[] | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
@@ -939,6 +957,7 @@ export type Database = {
           next_maintenance_date: string | null
           notes: string | null
           provider: string | null
+          receipt_photo_paths: string[] | null
           scheduled_date: string | null
           status: string
           updated_at: string | null
@@ -956,6 +975,7 @@ export type Database = {
           next_maintenance_date?: string | null
           notes?: string | null
           provider?: string | null
+          receipt_photo_paths?: string[] | null
           scheduled_date?: string | null
           status?: string
           updated_at?: string | null
@@ -973,6 +993,7 @@ export type Database = {
           next_maintenance_date?: string | null
           notes?: string | null
           provider?: string | null
+          receipt_photo_paths?: string[] | null
           scheduled_date?: string | null
           status?: string
           updated_at?: string | null
@@ -1087,6 +1108,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "costs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_crane_parts_cost_id"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
           },
         ]
       }
@@ -2096,6 +2124,7 @@ export type Database = {
           operator_id: string | null
           quantity: number
           reason: string | null
+          receipt_photo_paths: string[] | null
           reference_document: string | null
           status: string
           supplier_id: string | null
@@ -2120,6 +2149,7 @@ export type Database = {
           operator_id?: string | null
           quantity: number
           reason?: string | null
+          receipt_photo_paths?: string[] | null
           reference_document?: string | null
           status?: string
           supplier_id?: string | null
@@ -2144,6 +2174,7 @@ export type Database = {
           operator_id?: string | null
           quantity?: number
           reason?: string | null
+          receipt_photo_paths?: string[] | null
           reference_document?: string | null
           status?: string
           supplier_id?: string | null
@@ -2158,6 +2189,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "costs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_cost_id_fkey"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
           },
           {
             foreignKeyName: "inventory_movements_crane_id_fkey"
@@ -3827,10 +3865,10 @@ export type Database = {
       }
       services: {
         Row: {
-          company_name: string | null
-          company_rut: string | null
           client_covered_amount: number | null
           client_id: string
+          company_name: string | null
+          company_rut: string | null
           crane_id: string | null
           crane_mileage: number | null
           created_at: string | null
@@ -3879,10 +3917,10 @@ export type Database = {
           vehicle_model: string | null
         }
         Insert: {
-          company_name?: string | null
-          company_rut?: string | null
           client_covered_amount?: number | null
           client_id: string
+          company_name?: string | null
+          company_rut?: string | null
           crane_id?: string | null
           crane_mileage?: number | null
           created_at?: string | null
@@ -3931,10 +3969,10 @@ export type Database = {
           vehicle_model?: string | null
         }
         Update: {
-          company_name?: string | null
-          company_rut?: string | null
           client_covered_amount?: number | null
           client_id?: string
+          company_name?: string | null
+          company_rut?: string | null
           crane_id?: string | null
           crane_mileage?: number | null
           created_at?: string | null
@@ -4239,6 +4277,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "costs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_cost_id_fkey"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
           },
           {
             foreignKeyName: "supplier_payments_crane_id_fkey"
@@ -4749,6 +4794,38 @@ export type Database = {
       }
     }
     Views: {
+      orphan_crane_parts_candidates: {
+        Row: {
+          candidate_cost_id: string | null
+          candidate_payment_id: string | null
+          cost_amount: number | null
+          cost_date: string | null
+          cost_desc: string | null
+          cost_id: string | null
+          created_at: string | null
+          paid_date: string | null
+          part_id: string | null
+          part_name: string | null
+          payment_amount: number | null
+          payment_desc: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_crane_parts_cost_id"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_crane_parts_cost_id"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
+          },
+        ]
+      }
       services_with_excess_summary: {
         Row: {
           calculated_excess_amount: number | null
@@ -4771,14 +4848,14 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["client_id"]
+            columns: ["related_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["related_client_id"]
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -5548,6 +5625,10 @@ export type Database = {
         Returns: boolean
       }
       validate_payment_system_integrity: { Args: never; Returns: Json }
+      validate_product_service_description: {
+        Args: { p_text: string }
+        Returns: string
+      }
       validate_rls_policies: { Args: never; Returns: undefined }
       validate_service_update_data: {
         Args: { p_service_data: Json; p_service_id: string }
