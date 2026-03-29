@@ -5,12 +5,12 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface QuickPhotoCaptureProps {
-  onPhotosChange: (photos: Array<{ path: string; signedUrl: string }>) => void;
+  onPhotosChange: (photos: Array<{ path: string; signedUrl: string; file?: File }>) => void;
   maxPhotos?: number;
 }
 
 export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoCaptureProps) {
-  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string }>>([]);
+  const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,7 +24,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
 
     setIsUploading(true);
     try {
-      const newPhotos: Array<{ path: string; signedUrl: string }> = [];
+      const newPhotos: Array<{ path: string; signedUrl: string; file?: File }> = [];
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -67,7 +67,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           continue;
         }
 
-        newPhotos.push({ path: data.path, signedUrl: signedUrlData.signedUrl });
+        newPhotos.push({ path: data.path, signedUrl: signedUrlData.signedUrl, file });
       }
 
       const updatedPhotos = [...photos, ...newPhotos];
