@@ -187,11 +187,20 @@ const resolveImageSource = async (imageSource: string | Blob) => {
 };
 
 export const extractReceiptDataLocally = async (imageSource: string | Blob): Promise<LocalReceiptExtractionResult> => {
-  const worker = await createWorker(['spa', 'eng']);
-  const { source, revoke } = await resolveImageSource(imageSource);
+  console.log('[LocalOCR] Iniciando extracción local...');
+  let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+  let revoke: (() => void) | null = null;
 
   try {
-    const result = await worker.recognize(source);
+    const resolved = await resolveImageSource(imageSource);
+    revoke = resolved.revoke;
+    console.log('[LocalOCR] Imagen resuelta, creando worker OCR...');
+
+    worker = await createWorker('eng');
+    console.log('[LocalOCR] Worker creado, ejecutando reconocimiento...');
+
+    const result = await worker.recognize(resolved.source);
+    console.log('[LocalOCR] Reconocimiento completado. Confianza:', result.data.confidence);
     const rawText = result.data.text || '';
     const normalizedText = cleanText(rawText);
 
@@ -221,7 +230,9 @@ export const extractReceiptDataLocally = async (imageSource: string | Blob): Pro
       source: 'local-ocr',
     };
   } finally {
-    revoke();
-    await worker.terminate();
+    if (revoke) revoke();
+    if (worker) {
+      try { await worker.terminate(); } catch { /* ignore */ }
+    }
   }
 };
