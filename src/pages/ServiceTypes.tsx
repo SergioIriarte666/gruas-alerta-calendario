@@ -33,12 +33,9 @@ const ServiceTypes = () => {
     }
   }, []);
 
-  console.log('ServiceTypes: Current user role:', user?.role);
-
   const isAdmin = user?.role === 'admin';
 
   if (!isAdmin) {
-    console.log('ServiceTypes: Access denied - user is not admin');
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -49,8 +46,6 @@ const ServiceTypes = () => {
       </div>
     );
   }
-
-  console.log('ServiceTypes: Admin access granted, showing page');
 
   const handleRefresh = async () => {
     setRefreshing(true);

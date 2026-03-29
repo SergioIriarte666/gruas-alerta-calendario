@@ -3,6 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { InvoiceAlertSettings, OverdueInvoice, InvoiceDueSoon } from '@/types/notifications';
 
+const INVOICE_ALERT_SETTINGS_SELECT = `
+  id,
+  user_id,
+  overdue_alerts_enabled,
+  due_soon_alerts_enabled,
+  due_soon_days,
+  email_notifications,
+  push_notifications,
+  created_at,
+  updated_at
+`;
+
 export const useInvoiceAlerts = () => {
   const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
@@ -35,7 +47,7 @@ export const useInvoiceAlerts = () => {
     queryFn: async (): Promise<InvoiceAlertSettings | null> => {
       const { data, error } = await supabase
         .from('invoice_alert_settings')
-        .select('*')
+        .select(INVOICE_ALERT_SETTINGS_SELECT)
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
@@ -56,7 +68,7 @@ export const useInvoiceAlerts = () => {
           .from('invoice_alert_settings')
           .update({ ...settings, updated_at: new Date().toISOString() })
           .eq('id', existingSettings.id)
-          .select()
+          .select(INVOICE_ALERT_SETTINGS_SELECT)
           .single();
         
         if (error) throw error;
@@ -65,7 +77,7 @@ export const useInvoiceAlerts = () => {
         const { data, error } = await supabase
           .from('invoice_alert_settings')
           .insert([{ ...settings, user_id: (await supabase.auth.getUser()).data.user?.id }])
-          .select()
+          .select(INVOICE_ALERT_SETTINGS_SELECT)
           .single();
         
         if (error) throw error;

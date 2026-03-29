@@ -2,6 +2,44 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 
+const INVENTORY_ALERTS_SELECT = `
+  id,
+  alert_type,
+  item_id,
+  location_id,
+  threshold_value,
+  is_active,
+  last_triggered,
+  created_at,
+  updated_at,
+  created_by,
+  item:inventory_items(
+    id, name, sku, minimum_stock, maximum_stock, unit_of_measure,
+    category:inventory_categories(id, name)
+  ),
+  location:inventory_locations(id, name, code)
+`;
+
+const INVENTORY_ALERT_CONFIG_SELECT = 'alert_type, item_id, location_id, threshold_value';
+
+const STOCK_FOR_ALERTS_SELECT = `
+  item_id,
+  location_id,
+  current_quantity,
+  last_movement_date,
+  item:inventory_items(id, name, minimum_stock, maximum_stock, safety_stock),
+  location:inventory_locations(id, name, code)
+`;
+
+const EXPIRING_MOVEMENTS_SELECT = `
+  id,
+  item_id,
+  location_id,
+  expiration_date,
+  item:inventory_items(id, name),
+  location:inventory_locations(id, name, code)
+`;
+
 export interface InventoryAlert {
   id: string;
   alert_type: string;
@@ -61,14 +99,7 @@ export const useInventoryAlerts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_alerts')
-        .select(`
-          *,
-          item:inventory_items(
-            id, name, sku, minimum_stock, maximum_stock, unit_of_measure,
-            category:inventory_categories(id, name)
-          ),
-          location:inventory_locations(id, name, code)
-        `)
+        .select(INVENTORY_ALERTS_SELECT)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -82,13 +113,12 @@ export const useActiveAlerts = () => {
   return useQuery({
     queryKey: ['active-alerts'],
     queryFn: async () => {
-      console.log('🔍 useActiveAlerts: Starting query...');
       const activeAlerts: ActiveAlert[] = [];
 
       // Get alert configurations
       const { data: alertConfigs, error: configError } = await supabase
         .from('inventory_alerts')
-        .select('*')
+        .select(INVENTORY_ALERT_CONFIG_SELECT)
         .eq('is_active', true);
 
       if (configError) {
@@ -99,11 +129,7 @@ export const useActiveAlerts = () => {
       // Obtener stock data
       const { data: stockData, error: stockError } = await supabase
         .from('inventory_stock')
-        .select(`
-          *,
-          item:inventory_items(id, name, minimum_stock, maximum_stock, safety_stock),
-          location:inventory_locations(id, name, code)
-        `);
+        .select(STOCK_FOR_ALERTS_SELECT);
 
       if (stockError) {
         console.error('❌ useActiveAlerts: Error fetching stock data:', stockError);
@@ -201,11 +227,7 @@ export const useActiveAlerts = () => {
       if (expiringConfigs && expiringConfigs.length > 0) {
         const { data: expiringData, error: expiringError } = await supabase
           .from('inventory_movements')
-          .select(`
-            *,
-            item:inventory_items(id, name),
-            location:inventory_locations(id, name, code)
-          `)
+          .select(EXPIRING_MOVEMENTS_SELECT)
           .not('expiration_date', 'is', null)
           .gte('expiration_date', new Date().toISOString().split('T')[0]);
 
@@ -243,8 +265,6 @@ export const useActiveAlerts = () => {
         });
       }
 
-      console.log('✅ useActiveAlerts: Final alerts count:', activeAlerts.length);
-      console.log('📋 useActiveAlerts: Active alerts:', activeAlerts);
       return activeAlerts;
     },
     refetchInterval: 5 * 60 * 1000, // Refrescar cada 5 minutos
@@ -258,11 +278,8 @@ export const useCreateAlert = () => {
 
   return useMutation({
     mutationFn: async (config: AlertConfiguration) => {
-      console.log('🚀 Creating alert with config:', config);
-      
       // Verify session is valid
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('📋 Current session:', !!session, 'Session user ID:', session?.user?.id);
       
       if (sessionError || !session || !session.user) {
         console.error('❌ Session error:', sessionError);
@@ -271,7 +288,6 @@ export const useCreateAlert = () => {
 
       // Double check with getUser
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('👤 Auth user check:', !!user, 'User ID:', user?.id);
       
       if (authError || !user) {
         console.error('❌ Authentication error:', authError);
@@ -304,13 +320,10 @@ export const useCreateAlert = () => {
         created_by: user.id
       };
 
-      console.log('Insert data:', insertData);
-      console.log('User role:', profile.role);
-
       const { data, error } = await supabase
         .from('inventory_alerts')
         .insert(insertData)
-        .select()
+        .select('id, alert_type, item_id, location_id, threshold_value, is_active')
         .single();
 
       if (error) {
@@ -340,7 +353,6 @@ export const useCreateAlert = () => {
         throw new Error(`Error en la base de datos: ${error.message}`);
       }
       
-      console.log('Alert created successfully:', data);
       return data;
     },
     onSuccess: () => {

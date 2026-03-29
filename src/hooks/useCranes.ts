@@ -3,17 +3,51 @@ import { Crane } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const CRANES_SELECT = `
+  id,
+  license_plate,
+  brand,
+  model,
+  type,
+  toll_vehicle_category,
+  owner_company_rut,
+  owner_company_name,
+  circulation_permit_expiry,
+  insurance_expiry,
+  technical_review_expiry,
+  is_active,
+  created_at,
+  updated_at,
+  created_by,
+  creator:profiles!cranes_created_by_fkey (
+    id,
+    full_name,
+    email
+  )
+`;
+
+const CRANES_ROW_SELECT = `
+  id,
+  license_plate,
+  brand,
+  model,
+  type,
+  toll_vehicle_category,
+  owner_company_rut,
+  owner_company_name,
+  circulation_permit_expiry,
+  insurance_expiry,
+  technical_review_expiry,
+  is_active,
+  created_at,
+  updated_at,
+  created_by
+`;
+
 const fetchCranes = async (): Promise<Crane[]> => {
   const { data, error } = await supabase
     .from('cranes')
-    .select(`
-      *,
-      creator:profiles!cranes_created_by_fkey (
-        id,
-        full_name,
-        email
-      )
-    `)
+    .select(CRANES_SELECT)
     .order('license_plate', { ascending: true });
 
   if (error) throw error;
@@ -69,7 +103,7 @@ export const useCranes = () => {
           is_active: craneData.isActive,
           created_by: user?.id || null
         })
-        .select()
+        .select(CRANES_ROW_SELECT)
         .single();
       if (error) throw error;
       const newCrane: Crane = {
@@ -118,36 +152,12 @@ export const useCranes = () => {
 
   const updateCraneMutation = useMutation({
     mutationFn: async ({ id, craneData }: { id: string, craneData: Partial<Crane> }) => {
-      console.log('🔧 INICIANDO ACTUALIZACIÓN DE GRÚA');
-      console.log('ID de grúa:', id);
-      console.log('Datos a actualizar:', craneData);
-      
       // Verificar autenticación
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
         console.error('❌ Error de autenticación:', authError);
         throw new Error('Usuario no autenticado');
       }
-      console.log('✅ Usuario autenticado:', user.id);
-
-      // Verificar que la grúa existe antes de actualizar
-      const { data: existingCrane, error: fetchError } = await supabase
-        .from('cranes')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('❌ Error al buscar grúa existente:', fetchError);
-        throw fetchError;
-      }
-
-      if (!existingCrane) {
-        console.error('❌ Grúa no encontrada con ID:', id);
-        throw new Error('Grúa no encontrada');
-      }
-
-      console.log('✅ Grúa existente encontrada:', existingCrane);
 
       const updateData: any = {};
       if (craneData.licensePlate !== undefined) updateData.license_plate = craneData.licensePlate;
@@ -162,57 +172,31 @@ export const useCranes = () => {
       if (craneData.isActive !== undefined) updateData.is_active = craneData.isActive;
       if (craneData.tollVehicleCategory !== undefined) updateData.toll_vehicle_category = craneData.tollVehicleCategory;
 
-      console.log('📝 Datos de actualización preparados:', updateData);
-
       // Realizar la actualización
       const { data: updatedData, error: updateError } = await supabase
         .from('cranes')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(CRANES_ROW_SELECT)
         .single();
 
       if (updateError) {
         console.error('❌ Error en la actualización:', updateError);
-        console.error('Código de error:', updateError.code);
-        console.error('Mensaje:', updateError.message);
-        console.error('Detalles:', updateError.details);
         throw updateError;
       }
 
       if (!updatedData) {
-        console.error('❌ No se recibieron datos actualizados');
         throw new Error('No se recibieron datos actualizados');
-      }
-
-      console.log('✅ Actualización exitosa. Datos recibidos:', updatedData);
-
-      // Verificar que la actualización se aplicó correctamente
-      const { data: verificationData, error: verifyError } = await supabase
-        .from('cranes')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (verifyError) {
-        console.error('❌ Error al verificar actualización:', verifyError);
-      } else {
-        console.log('🔍 Verificación post-actualización:', verificationData);
       }
 
       return updatedData;
     },
     onSuccess: (updatedData) => {
-      console.log('🎉 Actualización completada exitosamente');
-      console.log('Datos actualizados:', updatedData);
-      
       // Invalidar y refrescar caches
-      console.log('🔄 Invalidando caches...');
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
       
       // Forzar refetch inmediato
-      console.log('🔄 Forzando refetch de servicios...');
       queryClient.refetchQueries({ queryKey: ['services'] });
       
       toast.success("Grúa actualizada", {
@@ -221,8 +205,6 @@ export const useCranes = () => {
     },
     onError: (error: any) => {
       console.error('💥 Error en updateCraneMutation:', error);
-      console.error('Tipo de error:', typeof error);
-      console.error('Error completo:', JSON.stringify(error, null, 2));
       
       let errorMessage = "No se pudo actualizar la grúa.";
       
@@ -265,11 +247,11 @@ export const useCranes = () => {
       const crane = cranes.find(c => c.id === id);
       if (!crane) throw new Error('Crane not found');
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('cranes')
         .update({ is_active: !crane.isActive })
         .eq('id', id)
-        .select()
+        .select('id')
         .single();
 
       if (error) throw error;

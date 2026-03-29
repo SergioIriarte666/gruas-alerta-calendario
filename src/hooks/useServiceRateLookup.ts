@@ -2,6 +2,20 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceRate } from '@/types/serviceRates';
 
+const SERVICE_RATE_SELECT = `
+  id,
+  client_id,
+  service_type_id,
+  origin,
+  destination,
+  value,
+  notes,
+  is_active,
+  created_at,
+  created_by,
+  updated_at
+`;
+
 interface LookupParams {
   clientId: string;
   origin: string;
@@ -28,7 +42,7 @@ export const useServiceRateLookup = () => {
         if (serviceTypeId) {
           const { data: exactMatch, error: exactError } = await supabase
             .from('service_rates')
-            .select('*')
+            .select(SERVICE_RATE_SELECT)
             .eq('client_id', clientId)
             .eq('service_type_id', serviceTypeId)
             .ilike('origin', origin.trim())
@@ -44,7 +58,7 @@ export const useServiceRateLookup = () => {
         // 2. Generic rate: client + origin + NO service type
         const { data: genericMatch, error: genericError } = await supabase
           .from('service_rates')
-          .select('*')
+          .select(SERVICE_RATE_SELECT)
           .eq('client_id', clientId)
           .is('service_type_id', null)
           .ilike('origin', origin.trim())
@@ -59,7 +73,7 @@ export const useServiceRateLookup = () => {
         // 3. Any rate: client + origin (ignore service type)
         const { data: anyMatch, error: anyError } = await supabase
           .from('service_rates')
-          .select('*')
+          .select(SERVICE_RATE_SELECT)
           .eq('client_id', clientId)
           .ilike('origin', origin.trim())
           .eq('is_active', true)
@@ -76,7 +90,7 @@ export const useServiceRateLookup = () => {
       if (serviceTypeId) {
         const { data: typeMatch, error: typeError } = await supabase
           .from('service_rates')
-          .select('*')
+          .select(SERVICE_RATE_SELECT)
           .eq('client_id', clientId)
           .eq('service_type_id', serviceTypeId)
           .is('origin', null)
@@ -92,7 +106,7 @@ export const useServiceRateLookup = () => {
       // 5. Final fallback: client-only rate (no origin, no service type)
       const { data: clientOnlyMatch, error: clientOnlyError } = await supabase
         .from('service_rates')
-        .select('*')
+        .select(SERVICE_RATE_SELECT)
         .eq('client_id', clientId)
         .is('origin', null)
         .is('service_type_id', null)

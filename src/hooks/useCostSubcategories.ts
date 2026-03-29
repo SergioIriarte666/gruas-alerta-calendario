@@ -3,6 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CostSubcategory } from "@/types/costs";
 
+const COST_SUBCATEGORIES_SELECT = `
+  id,
+  category_id,
+  name,
+  description,
+  is_active,
+  display_order,
+  requires_crane,
+  requires_operator,
+  requires_supplier,
+  requires_document,
+  requires_location,
+  requires_other_reason,
+  routes_to_inventory,
+  other_reasons,
+  created_at,
+  created_by,
+  updated_at
+`;
+
 export interface CostSubcategoryFormData {
   category_id: string;
   name: string;
@@ -36,7 +56,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       
       const { data, error } = await supabase
         .from('cost_subcategories')
-        .select('*')
+        .select(COST_SUBCATEGORIES_SELECT)
         .eq('category_id', categoryId)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
@@ -58,7 +78,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       
       const { data, error } = await supabase
         .from('cost_subcategories')
-        .select('*')
+        .select(COST_SUBCATEGORIES_SELECT)
         .eq('category_id', categoryId)
         .order('display_order', { ascending: true });
 
@@ -74,7 +94,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       const { data, error } = await supabase
         .from('cost_subcategories')
         .insert([formData])
-        .select()
+        .select(COST_SUBCATEGORIES_SELECT)
         .single();
 
       if (error) throw error;
@@ -98,7 +118,7 @@ export const useCostSubcategories = (categoryId?: string) => {
         .from('cost_subcategories')
         .update(formData)
         .eq('id', id)
-        .select()
+        .select(COST_SUBCATEGORIES_SELECT)
         .single();
 
       if (error) throw error;
@@ -154,7 +174,7 @@ export const useCostSubcategories = (categoryId?: string) => {
         .from('cost_subcategories')
         .update({ is_active: !current.is_active })
         .eq('id', id)
-        .select()
+        .select(COST_SUBCATEGORIES_SELECT)
         .single();
 
       if (error) throw error;

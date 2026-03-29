@@ -1,6 +1,50 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+const SUPPLIER_PAYMENTS_SELECT = `
+  id,
+  description,
+  reference_number,
+  amount,
+  due_date,
+  paid_date,
+  status,
+  category
+`;
+
+const SUPPLIER_INVOICES_SELECT = `
+  id,
+  invoice_number,
+  issue_date,
+  due_date,
+  amount,
+  paid_amount,
+  balance,
+  status
+`;
+
+const SUPPLIER_INVENTORY_MOVEMENTS_SELECT = `
+  id,
+  movement_date,
+  movement_type,
+  quantity,
+  total_cost,
+  reference_document,
+  inventory_items(name, sku, unit_of_measure),
+  inventory_locations(name)
+`;
+
+const SUPPLIER_CRANE_PARTS_SELECT = `
+  id,
+  date,
+  part_name,
+  quantity,
+  unit_price,
+  total_value,
+  notes,
+  cranes(license_plate, brand, model)
+`;
+
 interface SupplierDetailStats {
   totalPending: number;
   totalPaid: number;
@@ -22,7 +66,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
       if (!supplierId) return [];
       const { data, error } = await supabase
         .from('supplier_payments')
-        .select('*')
+        .select(SUPPLIER_PAYMENTS_SELECT)
         .eq('supplier_id', supplierId)
         .order('due_date', { ascending: false });
       
@@ -39,7 +83,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
       if (!supplierId) return [];
       const { data, error } = await supabase
         .from('supplier_invoices')
-        .select('*')
+        .select(SUPPLIER_INVOICES_SELECT)
         .eq('supplier_id', supplierId)
         .order('due_date', { ascending: false });
       
@@ -56,11 +100,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
       if (!supplierId) return [];
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          inventory_items(name, sku, unit_of_measure),
-          inventory_locations(name)
-        `)
+        .select(SUPPLIER_INVENTORY_MOVEMENTS_SELECT)
         .eq('supplier_id', supplierId)
         .eq('status', 'active')
         .order('movement_date', { ascending: false });
@@ -78,10 +118,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
       if (!supplierId) return [];
       const { data, error } = await supabase
         .from('crane_parts')
-        .select(`
-          *,
-          cranes(license_plate, brand, model)
-        `)
+        .select(SUPPLIER_CRANE_PARTS_SELECT)
         .eq('supplier_id', supplierId)
         .order('date', { ascending: false });
       

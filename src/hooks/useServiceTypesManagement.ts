@@ -22,6 +22,26 @@ interface CreateServiceTypeData {
   license_plate_required?: boolean;
 }
 
+const SERVICE_TYPE_SELECT = `
+  id,
+  name,
+  description,
+  base_price,
+  is_active,
+  vehicle_info_optional,
+  is_outsourced,
+  purchase_order_required,
+  origin_required,
+  destination_required,
+  crane_required,
+  operator_required,
+  vehicle_brand_required,
+  vehicle_model_required,
+  license_plate_required,
+  created_at,
+  updated_at
+`;
+
 // Función para transformar datos del frontend al formato de la DB
 const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData => {
   return {
@@ -50,7 +70,7 @@ export const useServiceTypesManagement = () => {
     queryFn: async (): Promise<ServiceTypeConfig[]> => {
       const { data, error } = await supabase
         .from('service_types')
-        .select('*')
+        .select(SERVICE_TYPE_SELECT)
         .order('name');
 
       if (error) {
@@ -83,7 +103,6 @@ export const useServiceTypesManagement = () => {
   const createMutation = useMutation({
     mutationFn: async (data: ServiceTypeFormData) => {
       const dbData = transformToDbFormat(data);
-      console.log('Creating service type with data:', dbData);
       
       const { error } = await supabase
         .from('service_types')
@@ -108,7 +127,6 @@ export const useServiceTypesManagement = () => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: ServiceTypeFormData }) => {
       const dbData = transformToDbFormat(data);
-      console.log('Updating service type with data:', dbData);
       
       const { error } = await supabase
         .from('service_types')

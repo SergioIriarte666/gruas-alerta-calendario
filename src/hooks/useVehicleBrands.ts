@@ -9,6 +9,15 @@ type VehicleBrandUpdate = TablesUpdate<'vehicle_brands'>;
 
 const QUERY_KEY = ['vehicle-brands'];
 
+const VEHICLE_BRANDS_SELECT = `
+  id,
+  name,
+  is_active,
+  created_at,
+  updated_at,
+  created_by
+`;
+
 export const useVehicleBrands = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -18,7 +27,7 @@ export const useVehicleBrands = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicle_brands')
-        .select('*')
+        .select(VEHICLE_BRANDS_SELECT)
         .eq('is_active', true)
         .order('name');
 
@@ -32,7 +41,7 @@ export const useVehicleBrands = () => {
       const { data, error } = await supabase
         .from('vehicle_brands')
         .insert(brand)
-        .select()
+        .select(VEHICLE_BRANDS_SELECT)
         .single();
 
       if (error) throw error;
@@ -62,7 +71,7 @@ export const useVehicleBrands = () => {
         .from('vehicle_brands')
         .update(data)
         .eq('id', id)
-        .select()
+        .select(VEHICLE_BRANDS_SELECT)
         .single();
 
       if (error) throw error;

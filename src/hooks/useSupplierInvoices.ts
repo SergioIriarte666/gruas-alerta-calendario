@@ -28,6 +28,26 @@ export interface SupplierInvoiceWithSupplier extends SupplierInvoice {
   } | null;
 }
 
+const SUPPLIER_INVOICES_SELECT = `
+  id,
+  supplier_id,
+  invoice_number,
+  issue_date,
+  due_date,
+  amount,
+  currency,
+  status,
+  description,
+  tax_amount,
+  net_amount,
+  payment_terms,
+  paid_amount,
+  balance,
+  created_at,
+  updated_at,
+  product_service_description
+`;
+
 export const useSupplierInvoices = (supplierId?: string) => {
   const queryClient = useQueryClient();
 
@@ -37,7 +57,7 @@ export const useSupplierInvoices = (supplierId?: string) => {
     queryFn: async (): Promise<SupplierInvoice[]> => {
       let query = supabase
         .from('supplier_invoices')
-        .select('*')
+        .select(SUPPLIER_INVOICES_SELECT)
         .order('due_date', { ascending: true });
 
       if (supplierId) {
@@ -59,7 +79,7 @@ export const useSupplierInvoices = (supplierId?: string) => {
       // Get invoices that are not fully paid (balance > 0 or status != paid)
       const { data, error } = await supabase
         .from('supplier_invoices')
-        .select('*')
+        .select(SUPPLIER_INVOICES_SELECT)
         .eq('supplier_id', supplierId)
         .neq('status', 'paid')
         .order('due_date', { ascending: true });
@@ -99,7 +119,7 @@ export const useSupplierInvoices = (supplierId?: string) => {
           updated_at: new Date().toISOString()
         })
         .eq('id', invoiceId)
-        .select()
+        .select('id, supplier_id, paid_amount, amount, status, balance, updated_at')
         .single();
 
       if (error) throw error;

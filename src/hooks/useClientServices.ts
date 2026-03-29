@@ -5,6 +5,34 @@ import { Service } from '@/types';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
+const CLIENT_SERVICE_SELECT = `
+  id,
+  folio,
+  request_date,
+  service_date,
+  purchase_order,
+  purchase_order_number,
+  quote_number,
+  invoice_folio,
+  invoice_numero_fiscal,
+  vehicle_brand,
+  vehicle_model,
+  license_plate,
+  origin,
+  destination,
+  value,
+  custody_total_amount,
+  custody_mode,
+  operator_commission,
+  status,
+  observations,
+  created_at,
+  updated_at,
+  cranes(id, license_plate, brand, model, type, is_active),
+  operators(id, name, rut, phone, license_number, is_active),
+  service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
+`;
+
 export const useClientServices = (clientId: string | null) => {
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
@@ -12,17 +40,9 @@ export const useClientServices = (clientId: string | null) => {
     const fetchServicesByClient = useCallback(async (id: string) => {
         setLoading(true);
         try {
-            console.log('Fetching services for client ID:', id);
-            
-            // First, get basic service data
             const { data, error } = await supabase
                 .from('services')
-                .select(`
-                    *,
-                    cranes(id, license_plate, brand, model, type, is_active),
-                    operators(id, name, rut, phone, license_number, is_active),
-                    service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
-                `)
+                .select(CLIENT_SERVICE_SELECT)
                 .eq('client_id', id)
                 .order('service_date', { ascending: false });
 
@@ -32,12 +52,9 @@ export const useClientServices = (clientId: string | null) => {
             }
 
             if (!data) {
-                console.log('No services found for client:', id);
                 setServices([]);
                 return;
             }
-
-            console.log('Services fetched:', data.length);
 
             // Get client data separately for more robust error handling
             const { data: clientData, error: clientError } = await supabase

@@ -14,6 +14,19 @@ export interface FuelPrice {
   updated_by: string | null;
 }
 
+const FUEL_PRICES_SELECT = `
+  id,
+  fuel_type,
+  price_per_liter,
+  price_date,
+  region,
+  source,
+  is_current,
+  currency,
+  created_at,
+  updated_by
+`;
+
 const FUEL_TYPE_LABELS: Record<string, string> = {
   diesel: 'Diesel',
   gasolina_93: 'Gasolina 93',
@@ -38,7 +51,7 @@ export function useCurrentFuelPrices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('fuel_prices')
-        .select('*')
+        .select(FUEL_PRICES_SELECT)
         .eq('is_current', true)
         .order('fuel_type');
       if (error) throw error;
@@ -53,7 +66,7 @@ export function useFuelPriceHistory(fuelType?: string, region?: string) {
     queryFn: async () => {
       let query = supabase
         .from('fuel_prices')
-        .select('*')
+        .select(FUEL_PRICES_SELECT)
         .order('price_date', { ascending: false })
         .order('fuel_type');
 
@@ -97,7 +110,7 @@ export function useAddFuelPrice() {
           is_current: true,
           currency: 'CLP',
         })
-        .select()
+        .select(FUEL_PRICES_SELECT)
         .single();
 
       if (error) throw error;
@@ -121,7 +134,7 @@ export function useUpdateFuelPrice() {
         .from('fuel_prices')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select(FUEL_PRICES_SELECT)
         .single();
       if (error) throw error;
       return data;

@@ -10,6 +10,8 @@ export interface SavedLocation {
   created_at: string;
 }
 
+const SAVED_LOCATIONS_SELECT = 'id, name, latitude, longitude, created_by, created_at';
+
 export function useSavedLocations() {
   const queryClient = useQueryClient();
 
@@ -18,7 +20,7 @@ export function useSavedLocations() {
     queryFn: async (): Promise<SavedLocation[]> => {
       const { data, error } = await supabase
         .from('saved_locations')
-        .select('*')
+        .select(SAVED_LOCATIONS_SELECT)
         .order('name');
       if (error) throw error;
       return (data ?? []) as SavedLocation[];

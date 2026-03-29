@@ -3,10 +3,30 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceType } from '@/types';
 
+const SERVICE_TYPE_SELECT = `
+  id,
+  name,
+  description,
+  base_price,
+  is_active,
+  vehicle_info_optional,
+  is_outsourced,
+  purchase_order_required,
+  origin_required,
+  destination_required,
+  crane_required,
+  operator_required,
+  vehicle_brand_required,
+  vehicle_model_required,
+  license_plate_required,
+  created_at,
+  updated_at
+`;
+
 const fetchServiceTypes = async (): Promise<ServiceType[]> => {
   const { data, error } = await supabase
     .from('service_types')
-    .select('*')
+    .select(SERVICE_TYPE_SELECT)
     .eq('is_active', true)
     .order('name');
 

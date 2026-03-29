@@ -4,6 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
 import { sanitizeEventData } from '@/utils/calendarValidation';
 
+const CALENDAR_EVENTS_SELECT = `
+  id,
+  title,
+  description,
+  date,
+  start_time,
+  end_time,
+  type,
+  status,
+  service_id,
+  client_id,
+  operator_id,
+  crane_id,
+  created_at,
+  updated_at
+`;
+
 export const useCalendarEvents = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,7 +33,7 @@ export const useCalendarEvents = () => {
       const [calendarRes, servicesRes, maintenanceRes] = await Promise.all([
         supabase
           .from('calendar_events')
-          .select('*')
+          .select(CALENDAR_EVENTS_SELECT)
           .order('date', { ascending: true }),
         supabase
           .from('services')
@@ -128,7 +145,7 @@ export const useCalendarEvents = () => {
           operator_id: eventData.operatorId || null,
           crane_id: eventData.craneId || null
         })
-        .select()
+        .select(CALENDAR_EVENTS_SELECT)
         .single();
 
       if (error) {
@@ -168,7 +185,7 @@ export const useCalendarEvents = () => {
           crane_id: eventData.craneId || null
         })
         .eq('id', id)
-        .select()
+        .select(CALENDAR_EVENTS_SELECT)
         .single();
 
       if (error) {

@@ -45,6 +45,16 @@ interface UserInvitation {
   created_at: string;
 }
 
+const USER_INVITATIONS_SELECT = `
+  id,
+  user_id,
+  email,
+  status,
+  sent_at,
+  accepted_at,
+  created_at
+`;
+
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -75,7 +85,7 @@ export const useUserManagement = () => {
     try {
       const { data, error } = await supabase
         .from('user_invitations')
-        .select('*')
+        .select(USER_INVITATIONS_SELECT)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -133,8 +143,6 @@ export const useUserManagement = () => {
   const createUser = async (userData: CreateUserData) => {
     try {
       setCreating(true);
-      console.log('📧 Creating and inviting user via edge function:', userData);
-      
       // Call the edge function which handles everything:
       // 1. Creates user in Supabase Auth via admin.inviteUserByEmail
       // 2. Creates profile with matching ID
@@ -151,8 +159,6 @@ export const useUserManagement = () => {
         }
       });
 
-      console.log('Invitation result:', { data: invitationData, error: invitationError });
-
       if (invitationError) {
         console.error('Error in invitation function:', invitationError);
         throw new Error(invitationError.message || 'Error al crear usuario');
@@ -163,7 +169,6 @@ export const useUserManagement = () => {
         throw new Error(invitationData.error);
       }
 
-      console.log('✅ Usuario creado e invitación enviada:', invitationData);
       toast.success('Usuario creado e invitación enviada por email');
 
       await fetchUsers();
@@ -182,7 +187,6 @@ export const useUserManagement = () => {
   const resendInvitation = async (userId: string) => {
     try {
       setSendingInvitation(userId);
-      console.log('📧 Reenviando invitación para usuario:', userId);
       
       const user = users.find(u => u.id === userId);
       if (!user) {
@@ -192,14 +196,6 @@ export const useUserManagement = () => {
 
       const clientName = user.client_id ? 
         clients.find(c => c.id === user.client_id)?.name : undefined;
-
-      console.log('Resending invitation with data:', {
-        userId: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        role: user.role,
-        clientName
-      });
 
       const { data, error } = await supabase.functions.invoke('send-user-invitation', {
         body: {
@@ -211,14 +207,11 @@ export const useUserManagement = () => {
         }
       });
 
-      console.log('Resend invitation result:', { data, error });
-
       if (error) {
         throw error;
       } else if (data?.error) {
         throw new Error(data.error);
       } else {
-        console.log('✅ Invitación reenviada exitosamente');
         toast.success('Invitación reenviada correctamente');
       }
 

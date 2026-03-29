@@ -14,13 +14,26 @@ export interface ConsumptionRate {
   updated_at: string;
 }
 
+const CONSUMPTION_RATES_SELECT = `
+  id,
+  crane_type,
+  fuel_type,
+  base_consumption_per_km,
+  loaded_consumption_factor,
+  towing_consumption_factor,
+  toll_vehicle_category,
+  is_active,
+  created_at,
+  updated_at
+`;
+
 export function useConsumptionRates() {
   return useQuery({
     queryKey: ['consumption-rates'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('crane_consumption_rates')
-        .select('*')
+        .select(CONSUMPTION_RATES_SELECT)
         .eq('is_active', true)
         .order('crane_type');
       if (error) throw error;
@@ -36,7 +49,7 @@ export function useAddConsumptionRate() {
       const { data, error } = await supabase
         .from('crane_consumption_rates')
         .insert(rate)
-        .select()
+        .select(CONSUMPTION_RATES_SELECT)
         .single();
       if (error) throw error;
       return data;
@@ -55,7 +68,7 @@ export function useUpdateConsumptionRate() {
         .from('crane_consumption_rates')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select(CONSUMPTION_RATES_SELECT)
         .single();
       if (error) throw error;
       return data;

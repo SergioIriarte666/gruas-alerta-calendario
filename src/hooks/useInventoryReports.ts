@@ -2,6 +2,64 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, subMonths } from 'date-fns';
 
+const STOCK_REPORT_SELECT = `
+  current_quantity,
+  inventory_items (
+    name,
+    unit_cost,
+    minimum_stock,
+    category_id,
+    inventory_categories (name)
+  ),
+  inventory_locations (name)
+`;
+
+const MOVEMENT_REPORT_SELECT = `
+  id,
+  item_id,
+  location_id,
+  movement_type,
+  movement_date,
+  quantity,
+  total_cost,
+  supplier_name,
+  inventory_items (
+    name,
+    unit_cost,
+    category_id,
+    inventory_categories (name)
+  ),
+  inventory_locations (name)
+`;
+
+const COST_ANALYSIS_SELECT = `
+  movement_date,
+  total_cost,
+  supplier_name,
+  inventory_items (
+    name,
+    unit_cost,
+    category_id,
+    inventory_categories (name)
+  )
+`;
+
+const PREDICTIVE_MOVEMENTS_SELECT = `
+  movement_date,
+  quantity,
+  inventory_items (
+    name,
+    category_id,
+    inventory_categories (name)
+  ),
+  cranes (license_plate)
+`;
+
+const PREDICTIVE_STOCK_SELECT = `
+  current_quantity,
+  inventory_items (name)
+`;
+
 export interface InventoryReportFilters {
   dateFrom?: string;
   dateTo?: string;
@@ -119,17 +177,7 @@ export const useStockReport = (filters?: InventoryReportFilters) => {
       // Get stock data with items and categories
       const { data: stockData, error: stockError } = await supabase
         .from('inventory_stock')
-        .select(`
-          *,
-          inventory_items (
-            name,
-            unit_cost,
-            minimum_stock,
-            category_id,
-            inventory_categories (name)
-          ),
-          inventory_locations (name)
-        `);
+        .select(STOCK_REPORT_SELECT);
 
       if (stockError) throw stockError;
 
@@ -207,9 +255,7 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
       let query = supabase
         .from('inventory_movements')
         .select(`
-          *,
-          inventory_items (name, unit_cost),
-          inventory_locations (name)
+          ${MOVEMENT_REPORT_SELECT}
         `);
 
       // Apply filters
@@ -333,15 +379,7 @@ export const useCostAnalysisReport = (filters?: InventoryReportFilters) => {
       // Get movements with cost data
       let query = supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          inventory_items (
-            name,
-            unit_cost,
-            category_id,
-            inventory_categories (name)
-          )
-        `)
+        .select(COST_ANALYSIS_SELECT)
         .not('total_cost', 'is', null)
         .eq('status', 'active');
 
@@ -431,15 +469,7 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
       
       const { data: movements, error } = await supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          inventory_items (
-            name,
-            category_id,
-            inventory_categories (name)
-          ),
-          cranes (license_plate)
-        `)
+        .select(PREDICTIVE_MOVEMENTS_SELECT)
         .eq('movement_type', 'exit')
         .gte('movement_date', sixMonthsAgo)
         .eq('status', 'active');
@@ -449,10 +479,7 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
       // Get current stock
       const { data: stockData, error: stockError } = await supabase
         .from('inventory_stock')
-        .select(`
-          *,
-          inventory_items (name)
-        `);
+        .select(PREDICTIVE_STOCK_SELECT);
 
       if (stockError) throw stockError;
 

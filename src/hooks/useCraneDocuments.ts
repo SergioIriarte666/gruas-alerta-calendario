@@ -23,6 +23,19 @@ interface UploadDocumentData {
   expiryDate?: string;
 }
 
+const CRANE_DOCUMENTS_SELECT = `
+  id,
+  crane_id,
+  document_type,
+  file_url,
+  file_name,
+  file_size,
+  content_type,
+  expiry_date,
+  uploaded_at,
+  uploaded_by
+`;
+
 export const useCraneDocuments = (craneId: string) => {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -33,7 +46,7 @@ export const useCraneDocuments = (craneId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('crane_documents')
-        .select('*')
+        .select(CRANE_DOCUMENTS_SELECT)
         .eq('crane_id', craneId);
 
       if (error) throw error;
@@ -101,7 +114,7 @@ export const useCraneDocuments = (craneId: string) => {
           }, {
             onConflict: 'crane_id,document_type'
           })
-          .select()
+          .select(CRANE_DOCUMENTS_SELECT)
           .single();
 
         if (error) throw error;

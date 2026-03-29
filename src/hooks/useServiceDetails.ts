@@ -8,8 +8,6 @@ import { useEnhancedServiceDetails } from './useEnhancedServiceDetails';
 const fetchServiceById = async (serviceId: string, transformRawServiceData: (data: any[]) => Service[]): Promise<Service | null> => {
   if (!serviceId) return null;
 
-  console.log('Fetching service details for:', serviceId);
-
   const { data, error } = await supabase
     .from('services')
     .select(`
@@ -41,10 +39,7 @@ export const useServiceDetails = (serviceId: string | null) => {
     queryKey: ['serviceDetails', serviceId],
     queryFn: () => fetchServiceById(serviceId!, transformRawServiceData),
     enabled: !!serviceId,
-    retry: (failureCount, error) => {
-      console.log(`Service details query retry attempt ${failureCount}:`, error.message);
-      return failureCount < 2;
-    },
+    retry: (failureCount) => failureCount < 2,
     retryDelay: 1000,
   });
 

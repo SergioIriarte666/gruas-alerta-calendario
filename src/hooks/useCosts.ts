@@ -178,8 +178,6 @@ const addCost = async (costData: CostFormData) => {
       payment_date: costData.payment_date || null,
     };
     
-    console.log('[useCosts - addCost] Validated cost data (only costs fields):', validCostFields);
-    
     // Verificar si es un costo de piezas y repuestos para sincronización
     const isPartsExpense = costData.subcategory === 'Piezas y Repuestos';
     
@@ -202,7 +200,6 @@ const addCost = async (costData: CostFormData) => {
     }
 
   const createdCost = costResult[0];
-  console.log('[useCosts - addCost] Cost created successfully:', createdCost);
 
     // Si es un costo de piezas y repuestos, crear también el registro en crane_parts
     if (isPartsExpense && costData.crane_id) {

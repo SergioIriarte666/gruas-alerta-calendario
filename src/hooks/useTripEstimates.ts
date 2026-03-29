@@ -20,13 +20,32 @@ export interface TripEstimate {
   created_at: string;
 }
 
+const TRIP_ESTIMATES_SELECT = `
+  id,
+  route_name,
+  origin,
+  destination,
+  distance_km,
+  estimated_time_hours,
+  crane_type,
+  vehicle_config,
+  fuel_cost,
+  toll_cost,
+  additional_costs,
+  total_estimate,
+  calculation_details,
+  service_id,
+  created_by,
+  created_at
+`;
+
 export function useTripEstimates() {
   return useQuery({
     queryKey: ['trip-estimates'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('trip_estimates')
-        .select('*')
+        .select(TRIP_ESTIMATES_SELECT)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as TripEstimate[];
@@ -43,7 +62,7 @@ export function useAddTripEstimate() {
       const { data, error } = await supabase
         .from('trip_estimates')
         .insert(insertData)
-        .select()
+        .select(TRIP_ESTIMATES_SELECT)
         .single();
       if (error) throw error;
       return data;

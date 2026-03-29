@@ -19,8 +19,6 @@ export interface ClientHistoryEntry {
 const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[]> => {
   if (!clientId) return [];
 
-  console.log('Fetching client history for client ID:', clientId);
-
   const { data, error } = await supabase
     .from('services')
     .select(`
@@ -41,8 +39,6 @@ const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[
     console.error('Error fetching client history:', error);
     throw new Error('Could not fetch client history');
   }
-
-  console.log(`Found ${data?.length || 0} services for client ${clientId}:`, data);
 
   return (data || []).map((item: any) => ({
     id: item.id,

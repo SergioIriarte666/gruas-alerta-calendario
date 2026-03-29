@@ -4,20 +4,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Settings, defaultSettings } from '@/types/settings';
 
+const COMPANY_DATA_SELECT = `
+  business_name,
+  address,
+  phone,
+  email,
+  rut,
+  logo_url,
+  folio_format,
+  next_service_folio_number
+`;
+
 export const useSettingsFetcher = () => {
   const fetchSettings = useCallback(async (): Promise<Settings> => {
-    console.log('Fetching settings...');
     try {
       const { data: companyData, error: companyError } = await supabase
         .from('company_data')
-        .select('*')
+        .select(COMPANY_DATA_SELECT)
         .limit(1)
         .maybeSingle();
 
       if (companyError) {
         throw companyError;
       }
-      console.log('Fetched company data from Supabase:', companyData);
 
       // Otros settings desde local storage
       const savedOtherSettings = localStorage.getItem('tms-settings-others');

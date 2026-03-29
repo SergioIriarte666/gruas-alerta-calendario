@@ -4,6 +4,32 @@ import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 
+const SUPPLIER_PAYMENTS_SELECT = `
+  id,
+  supplier_id,
+  supplier_invoice_id,
+  amount,
+  category,
+  subcategory,
+  description,
+  reference_number,
+  notes,
+  status,
+  due_date,
+  paid_date,
+  paid_amount,
+  part_name,
+  part_quantity,
+  part_unit_price,
+  crane_id,
+  add_to_inventory,
+  cost_id,
+  created_at,
+  created_by,
+  updated_at,
+  updated_by
+`;
+
 export const getStatusLabel = (status: SupplierPaymentStatus): string => {
   const labels = {
     pending: 'Pendiente',
@@ -89,7 +115,7 @@ export const useSupplierPayments = () => {
           payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
         })
         .eq('id', paymentWithCost.cost_id)
-        .select()
+        .select('id')
         .single();
 
       if (updateError) throw updateError;
@@ -115,7 +141,7 @@ export const useSupplierPayments = () => {
           supplier_id: paymentData.supplier_id,
           created_by: (await supabase.auth.getUser()).data.user?.id
         })
-        .select()
+        .select('id')
         .single();
 
       if (costError) throw costError;
@@ -146,7 +172,7 @@ export const useSupplierPayments = () => {
             unit_cost: partDetails.part_unit_price,
             created_by: (await supabase.auth.getUser()).data.user?.id
           })
-          .select()
+          .select('id')
           .single();
 
         if (itemError) throw itemError;
@@ -301,12 +327,6 @@ export const useSupplierPayments = () => {
             .from('costs')
             .update({ inventory_movement_id: exitId })
             .eq('id', costId);
-
-          await supabase
-            .from('crane_parts')
-            .select('id')
-            .eq('inventory_movement_id', exitId)
-            .maybeSingle();
         }
       } else {
         await supabase
@@ -322,7 +342,7 @@ export const useSupplierPayments = () => {
     queryFn: async (): Promise<SupplierPayment[]> => {
       const { data, error } = await supabase
         .from('supplier_payments')
-        .select('*')
+        .select(SUPPLIER_PAYMENTS_SELECT)
         .order('due_date', { ascending: false });
 
       if (error) throw error;
@@ -357,7 +377,7 @@ export const useSupplierPayments = () => {
           supplier_invoice_id: data.supplier_invoice_id || null,
           created_by: userId
         } as any)
-        .select()
+        .select(SUPPLIER_PAYMENTS_SELECT)
         .single();
 
       if (error) throw error;
@@ -461,7 +481,7 @@ export const useSupplierPayments = () => {
         .from('supplier_payments')
         .update(cleanedData)
         .eq('id', id)
-        .select()
+        .select(SUPPLIER_PAYMENTS_SELECT)
         .single();
 
       if (error) throw error;
@@ -522,7 +542,7 @@ export const useSupplierPayments = () => {
           paid_amount
         })
         .eq('id', id)
-        .select()
+        .select(SUPPLIER_PAYMENTS_SELECT)
         .single();
 
       if (paymentError) throw paymentError;

@@ -21,6 +21,61 @@ export type EnhancedCranePart = CranePart & {
   };
 };
 
+const CRANE_PARTS_SELECT = `
+  id,
+  crane_id,
+  cost_id,
+  inventory_movement_id,
+  part_name,
+  supplier,
+  supplier_id,
+  phone,
+  quantity,
+  unit_price,
+  total_value,
+  date,
+  notes,
+  kilometraje,
+  created_at,
+  updated_at,
+  created_by
+`;
+
+const COST_PARTS_SELECT = `
+  id,
+  crane_id,
+  date,
+  description,
+  notes,
+  amount,
+  inventory_movement_id,
+  created_at,
+  updated_at,
+  created_by
+`;
+
+const INVENTORY_CONSUMPTION_SELECT = `
+  id,
+  crane_id,
+  movement_date,
+  movement_type,
+  status,
+  quantity,
+  unit_cost,
+  total_cost,
+  observations,
+  reference_document,
+  created_at,
+  created_by,
+  inventory_items (
+    name,
+    unit_of_measure
+  ),
+  operators (
+    name
+  )
+`;
+
 // Hook to fetch crane parts for a specific crane
 export const useCraneParts = (craneId: string, options?: { source?: 'direct' | 'combined' }) => {
   const queryClient = useQueryClient();
@@ -54,7 +109,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
       // Obtener piezas directas (creadas en crane_parts)
       const { data: directPartsRaw, error: directError } = await supabase
         .from('crane_parts')
-        .select('*')
+        .select(CRANE_PARTS_SELECT)
         .eq('crane_id', craneId)
         .order('date', { ascending: false });
 
@@ -165,10 +220,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
       // Obtener piezas que vienen de costos de mantenimiento NO vinculados
       let costPartsQuery = supabase
         .from('costs')
-        .select(`
-          *,
-          cost_categories (*)
-        `)
+        .select(COST_PARTS_SELECT)
         .eq('crane_id', craneId)
         .eq('subcategory', 'Piezas y Repuestos')
         .order('date', { ascending: false });
@@ -191,16 +243,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
       // EXCLUYENDO aquellos que ya están vinculados a un registro de crane_parts
       let consumptionQuery = supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          inventory_items (
-            name,
-            unit_of_measure
-          ),
-          operators (
-            name
-          )
-        `)
+        .select(INVENTORY_CONSUMPTION_SELECT)
         .eq('crane_id', craneId)
         .eq('movement_type', 'exit')
         .eq('status', 'active')
@@ -323,7 +366,7 @@ export const useCreateCranePart = () => {
       const { data: result, error } = await supabase
         .from('crane_parts')
         .insert([data])
-        .select()
+        .select(CRANE_PARTS_SELECT)
         .single();
 
       if (error) throw error;
@@ -351,7 +394,7 @@ export const useUpdateCranePart = () => {
         .from('crane_parts')
         .update(data)
         .eq('id', id)
-        .select()
+        .select(CRANE_PARTS_SELECT)
         .single();
 
       if (error) throw error;
@@ -404,7 +447,7 @@ export const useCranePartsStats = (craneId: string) => {
       // Get direct parts data
       const { data: directParts, error: directPartsError } = await supabase
         .from('crane_parts')
-        .select('*')
+        .select('id, supplier, total_value, date')
         .eq('crane_id', craneId);
 
       if (directPartsError) throw directPartsError;
@@ -412,10 +455,7 @@ export const useCranePartsStats = (craneId: string) => {
       // Get parts from costs (maintenance category with subcategory "Piezas y Repuestos")
       const { data: costParts, error: costPartsError } = await supabase
         .from('costs')
-        .select(`
-          *,
-          cost_categories!inner(name)
-        `)
+        .select('id, amount, date, description')
         .eq('crane_id', craneId)
         .eq('subcategory', 'Piezas y Repuestos');
 
@@ -424,7 +464,7 @@ export const useCranePartsStats = (craneId: string) => {
       // Get inventory consumptions
       const { data: consumptions, error: consumptionsError } = await supabase
         .from('inventory_movements')
-        .select('*')
+        .select('id, movement_date, total_cost')
         .eq('crane_id', craneId)
         .eq('movement_type', 'exit')
         .eq('status', 'active');

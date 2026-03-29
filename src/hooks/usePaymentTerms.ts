@@ -3,6 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { PaymentTerm } from '@/types';
 import { toast } from 'sonner';
 
+const PAYMENT_TERMS_SELECT = `
+  id,
+  name,
+  code,
+  days,
+  description,
+  is_active,
+  display_order,
+  created_at,
+  created_by
+`;
+
 export const usePaymentTerms = () => {
   const [paymentTerms, setPaymentTerms] = useState<PaymentTerm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +23,7 @@ export const usePaymentTerms = () => {
     try {
       const { data, error } = await supabase
         .from('payment_terms')
-        .select('*')
+        .select(PAYMENT_TERMS_SELECT)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -34,7 +46,7 @@ export const usePaymentTerms = () => {
       const { data, error } = await supabase
         .from('payment_terms')
         .insert(term)
-        .select()
+        .select(PAYMENT_TERMS_SELECT)
         .single();
 
       if (error) throw error;
@@ -54,7 +66,7 @@ export const usePaymentTerms = () => {
         .from('payment_terms')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select(PAYMENT_TERMS_SELECT)
         .single();
 
       if (error) throw error;

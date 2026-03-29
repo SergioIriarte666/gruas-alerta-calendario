@@ -124,6 +124,131 @@ export interface InventorySupplier {
   created_by?: string;
 }
 
+const INVENTORY_ITEM_SELECT = `
+  id,
+  name,
+  description,
+  sku,
+  barcode,
+  category_id,
+  unit_of_measure,
+  minimum_stock,
+  maximum_stock,
+  safety_stock,
+  unit_cost,
+  is_active,
+  is_critical,
+  has_expiration,
+  created_at,
+  updated_at,
+  created_by,
+  category:inventory_categories(id, name, code)
+`;
+
+const INVENTORY_ITEM_EMBED_SELECT = `
+  id,
+  name,
+  description,
+  sku,
+  barcode,
+  category_id,
+  unit_of_measure,
+  minimum_stock,
+  maximum_stock,
+  safety_stock,
+  unit_cost,
+  is_active,
+  is_critical,
+  has_expiration,
+  created_at,
+  updated_at,
+  created_by
+`;
+
+const INVENTORY_STOCK_SELECT = `
+  id,
+  item_id,
+  location_id,
+  current_quantity,
+  reserved_quantity,
+  available_quantity,
+  last_movement_date,
+  item:inventory_items(${INVENTORY_ITEM_EMBED_SELECT}),
+  location:inventory_locations(id, name, code)
+`;
+
+const INVENTORY_MOVEMENT_SELECT = `
+  id,
+  item_id,
+  location_id,
+  movement_type,
+  quantity,
+  unit_cost,
+  total_cost,
+  reference_document,
+  batch_number,
+  expiration_date,
+  supplier_id,
+  supplier_name,
+  crane_id,
+  operator_id,
+  maintenance_id,
+  reason,
+  observations,
+  status,
+  movement_date,
+  created_at,
+  created_by,
+  cost_id,
+  item:inventory_items(id, name),
+  location:inventory_locations(id, name, code),
+  supplier:inventory_suppliers(id, name),
+  crane:cranes(id, license_plate)
+`;
+
+const INVENTORY_MOVEMENT_REFERENCE_SELECT = `
+  id,
+  item_id,
+  location_id,
+  movement_type,
+  quantity,
+  unit_cost,
+  total_cost,
+  reference_document,
+  batch_number,
+  expiration_date,
+  supplier_id,
+  supplier_name,
+  crane_id,
+  operator_id,
+  maintenance_id,
+  reason,
+  observations,
+  status,
+  movement_date,
+  created_at,
+  created_by,
+  cost_id,
+  item:inventory_items(id, name, sku, code),
+  location:inventory_locations(id, name, code)
+`;
+
+const INVENTORY_SUPPLIER_SELECT = `
+  id,
+  name,
+  contact_person,
+  email,
+  phone,
+  address,
+  rut,
+  payment_terms,
+  delivery_time_days,
+  is_active,
+  created_at,
+  updated_at,
+  created_by
+`;
+
 // Hooks for inventory items
 export const useInventoryItems = () => {
   return useQuery({
@@ -131,10 +256,7 @@ export const useInventoryItems = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_items')
-        .select(`
-          *,
-          category:inventory_categories(id, name, code)
-        `)
+        .select(INVENTORY_ITEM_SELECT)
         .eq('is_active', true)
         .order('name');
 
@@ -154,10 +276,7 @@ export const usePagedInventoryItems = (page: number, pageSize: number) => {
       const { data, error, count } = await supabase
         .from('inventory_items')
         .select(
-          `
-          *,
-          category:inventory_categories(id, name, code)
-        `,
+          INVENTORY_ITEM_SELECT,
           { count: 'exact' }
         )
         .eq('is_active', true)
@@ -186,11 +305,7 @@ export const useInventoryStock = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_stock')
-        .select(`
-          *,
-          item:inventory_items(*),
-          location:inventory_locations(id, name, code)
-        `)
+        .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
 
       if (error) throw error;
@@ -207,11 +322,7 @@ export const useLowStockItems = () => {
       // Get all stock data with item info
       const { data, error } = await supabase
         .from('inventory_stock')
-        .select(`
-          *,
-          item:inventory_items(*),
-          location:inventory_locations(id, name, code)
-        `)
+        .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
 
       if (error) throw error;
@@ -233,13 +344,7 @@ export const useInventoryMovements = (limit = 50) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          item:inventory_items(id, name),
-          location:inventory_locations(id, name, code),
-          supplier:inventory_suppliers(id, name),
-          crane:cranes(id, license_plate)
-        `)
+        .select(INVENTORY_MOVEMENT_SELECT)
         .eq('status', 'active')
         .order('movement_date', { ascending: false })
         .limit(limit);
@@ -258,11 +363,7 @@ export const useInventoryMovementsByReference = (reference: string | null) => {
       
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select(`
-          *,
-          item:inventory_items(id, name, sku, code),
-          location:inventory_locations(id, name, code)
-        `)
+        .select(INVENTORY_MOVEMENT_REFERENCE_SELECT)
         .eq('reference_document', reference)
         .eq('movement_type', 'entry')
         .eq('status', 'active')
@@ -285,13 +386,7 @@ export const usePagedInventoryMovements = (page: number, pageSize: number) => {
       const { data, error, count } = await supabase
         .from('inventory_movements')
         .select(
-          `
-          *,
-          item:inventory_items(id, name),
-          location:inventory_locations(id, name, code),
-          supplier:inventory_suppliers(id, name),
-          crane:cranes(id, license_plate)
-        `,
+          INVENTORY_MOVEMENT_SELECT,
           { count: 'exact' }
         )
         .eq('status', 'active')
@@ -320,7 +415,7 @@ export const useInventoryCategories = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_categories')
-        .select('*')
+        .select('id, name, description, code, is_active, created_at, updated_at, created_by')
         .eq('is_active', true)
         .order('name');
 
@@ -337,7 +432,7 @@ export const useInventoryLocations = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_locations')
-        .select('*')
+        .select('id, name, code, description, address, is_active, created_at, updated_at, created_by')
         .eq('is_active', true)
         .order('name');
 
@@ -354,7 +449,7 @@ export const useInventorySuppliers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('inventory_suppliers')
-        .select('*')
+        .select(INVENTORY_SUPPLIER_SELECT)
         .eq('is_active', true)
         .order('name');
 
@@ -372,7 +467,7 @@ export const useInventoryStats = () => {
       // Get total items count
       const { count: totalItems } = await supabase
         .from('inventory_items')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('is_active', true);
 
       // Get low stock count (need to implement this with a better query)

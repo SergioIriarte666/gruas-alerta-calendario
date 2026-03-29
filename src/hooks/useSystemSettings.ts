@@ -20,6 +20,20 @@ interface SystemSettingsFromDB {
   report_column_config?: any;
 }
 
+const SYSTEM_SETTINGS_SELECT = `
+  id,
+  auto_backup,
+  backup_frequency,
+  data_retention,
+  maintenance_mode,
+  email_notifications,
+  service_reminders,
+  invoice_alerts,
+  overdue_notifications,
+  system_updates,
+  report_column_config
+`;
+
 export const useSystemSettings = () => {
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     autoBackup: true,
@@ -45,7 +59,7 @@ export const useSystemSettings = () => {
     try {
       const { data, error } = await supabase
         .from('system_settings')
-        .select('*')
+        .select(SYSTEM_SETTINGS_SELECT)
         .limit(1)
         .maybeSingle();
 

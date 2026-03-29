@@ -20,11 +20,21 @@ export interface ExpiryAlert {
   daysUntilExpiry: number;
 }
 
+const DOCUMENT_ALERTS_SELECT = `
+  id,
+  crane_id,
+  document_type,
+  alert_days,
+  email_notifications,
+  push_notifications,
+  is_active
+`;
+
 export const useDocumentAlerts = (craneId?: string) => {
   return useQuery({
     queryKey: ['document-alerts', craneId],
     queryFn: async (): Promise<DocumentAlert[]> => {
-      let query = supabase.from('document_alerts').select('*');
+      let query = supabase.from('document_alerts').select(DOCUMENT_ALERTS_SELECT);
       
       if (craneId) {
         query = query.eq('crane_id', craneId);
@@ -87,7 +97,7 @@ export const useCreateDocumentAlert = () => {
           push_notifications: alert.pushNotifications,
           is_active: alert.isActive
         })
-        .select()
+        .select(DOCUMENT_ALERTS_SELECT)
         .single();
 
       if (error) throw error;
@@ -118,7 +128,7 @@ export const useUpdateDocumentAlert = () => {
           is_active: updates.isActive
         })
         .eq('id', id)
-        .select()
+        .select(DOCUMENT_ALERTS_SELECT)
         .single();
 
       if (error) throw error;

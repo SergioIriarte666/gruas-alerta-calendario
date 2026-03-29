@@ -2,6 +2,130 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 
+const CLIENT_SELECT = `
+  id,
+  name,
+  rut,
+  phone,
+  email,
+  address,
+  department,
+  is_active,
+  created_at,
+  updated_at
+`;
+
+const CRANE_SELECT = `
+  id,
+  license_plate,
+  brand,
+  model,
+  type,
+  is_active,
+  circulation_permit_expiry,
+  insurance_expiry,
+  technical_review_expiry,
+  owner_company_rut,
+  owner_company_name,
+  created_at,
+  updated_at
+`;
+
+const OPERATOR_SELECT = `
+  id,
+  name,
+  rut,
+  phone,
+  operator_type,
+  department,
+  position,
+  license_number,
+  is_active,
+  exam_expiry,
+  created_at,
+  updated_at
+`;
+
+const SERVICE_TYPE_SELECT = `
+  id,
+  name,
+  description,
+  base_price,
+  is_active,
+  vehicle_info_optional,
+  purchase_order_required,
+  origin_required,
+  destination_required,
+  crane_required,
+  operator_required,
+  vehicle_brand_required,
+  vehicle_model_required,
+  license_plate_required,
+  created_at,
+  updated_at
+`;
+
+const SERVICE_SELECT = `
+  id,
+  folio,
+  request_date,
+  service_date,
+  purchase_order,
+  purchase_order_number,
+  quote_number,
+  vehicle_brand,
+  vehicle_model,
+  license_plate,
+  origin,
+  destination,
+  value,
+  operator_commission,
+  status,
+  observations,
+  has_excess,
+  client_covered_amount,
+  excess_amount,
+  invoice_folio,
+  invoice_numero_fiscal,
+  insured_name,
+  start_time,
+  end_time,
+  crane_mileage,
+  outsourced_provider_id,
+  outsourced_cost,
+  outsourced_notes,
+  custody_mode,
+  custody_days,
+  custody_daily_rate,
+  custody_total_amount,
+  custody_start_date,
+  custody_end_date,
+  custody_vehicle_type,
+  created_by,
+  created_at,
+  updated_at
+`;
+
+const SERVICE_WITH_RELATIONS_SELECT = `
+  ${SERVICE_SELECT},
+  client:clients!services_client_id_fkey(${CLIENT_SELECT}),
+  third_party_client:clients!services_third_party_client_id_fkey(${CLIENT_SELECT}),
+  crane:cranes(${CRANE_SELECT}),
+  operator:operators(${OPERATOR_SELECT}),
+  serviceType:service_types(${SERVICE_TYPE_SELECT}),
+  service_resources!service_resources_service_id_fkey(
+    id,
+    resource_type,
+    operator_id,
+    crane_id,
+    is_primary,
+    commission_amount,
+    role,
+    operator:operators(${OPERATOR_SELECT}),
+    crane:cranes(${CRANE_SELECT})
+  )
+`;
+
 // Función para transformar datos de Supabase a Service
 const transformCrane = (raw: any) => {
   if (!raw) return null;
@@ -170,25 +294,7 @@ export const useServiceQueries = () => {
         
         const { data, error } = await supabase
           .from('services')
-          .select(`
-            *,
-            client:clients!services_client_id_fkey(*),
-            third_party_client:clients!services_third_party_client_id_fkey(*),
-            crane:cranes(*),
-            operator:operators(*),
-            serviceType:service_types(*),
-            service_resources!service_resources_service_id_fkey(
-              id,
-              resource_type,
-              operator_id,
-              crane_id,
-              is_primary,
-              commission_amount,
-              role,
-              operator:operators(*),
-              crane:cranes(*)
-            )
-          `)
+          .select(SERVICE_WITH_RELATIONS_SELECT)
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -212,25 +318,7 @@ export const useServiceQueries = () => {
         
         const { data, error } = await supabase
           .from('services')
-          .select(`
-            *,
-            client:clients!services_client_id_fkey(*),
-            third_party_client:clients!services_third_party_client_id_fkey(*),
-            crane:cranes(*),
-            operator:operators(*),
-            serviceType:service_types(*),
-            service_resources!service_resources_service_id_fkey(
-              id,
-              resource_type,
-              operator_id,
-              crane_id,
-              is_primary,
-              commission_amount,
-              role,
-              operator:operators(*),
-              crane:cranes(*)
-            )
-          `)
+          .select(SERVICE_WITH_RELATIONS_SELECT)
           .eq('id', id)
           .single();
 
@@ -256,14 +344,7 @@ export const useServiceQueries = () => {
         
         const { data, error } = await supabase
           .from('services')
-          .select(`
-            *,
-            client:clients!services_client_id_fkey(*),
-            third_party_client:clients!services_third_party_client_id_fkey(*),
-            crane:cranes(*),
-            operator:operators(*),
-            serviceType:service_types(*)
-          `)
+          .select(SERVICE_WITH_RELATIONS_SELECT)
           .eq('operator_id', operatorId)
           .order('created_at', { ascending: false });
 
@@ -289,28 +370,7 @@ export const useServiceQueries = () => {
 
         const { data, error, count } = await supabase
           .from('services')
-          .select(
-            `
-            *,
-            client:clients!services_client_id_fkey(*),
-            third_party_client:clients!services_third_party_client_id_fkey(*),
-            crane:cranes(*),
-            operator:operators(*),
-            serviceType:service_types(*),
-            service_resources!service_resources_service_id_fkey(
-              id,
-              resource_type,
-              operator_id,
-              crane_id,
-              is_primary,
-              commission_amount,
-              role,
-              operator:operators(*),
-              crane:cranes(*)
-            )
-          `,
-            { count: 'exact' }
-          )
+          .select(SERVICE_WITH_RELATIONS_SELECT, { count: 'exact' })
           .order('created_at', { ascending: false })
           .range(from, to);
 

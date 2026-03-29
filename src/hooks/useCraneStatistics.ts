@@ -27,7 +27,7 @@ export const useCraneStatistics = (craneId: string) => {
       // Obtener servicios de la grúa
       const { data: services, error: servicesError } = await supabase
         .from('services')
-        .select('*')
+        .select('service_date, status, value, custody_total_amount')
         .eq('crane_id', craneId);
 
       if (servicesError) throw servicesError;

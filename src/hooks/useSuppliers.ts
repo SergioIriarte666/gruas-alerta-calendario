@@ -8,6 +8,28 @@ import { dedupeSuppliersByIdentity, findSupplierByIdentity, normalizeSupplierRut
  * Unified suppliers hook - reads from inventory_suppliers (single source of truth)
  */
 
+const SUPPLIERS_SELECT = `
+  id,
+  name,
+  rut,
+  email,
+  phone,
+  address,
+  contact_person,
+  category,
+  subcategory,
+  notes,
+  payment_terms,
+  default_payment_term_id,
+  credit_date,
+  delivery_time_days,
+  is_active,
+  created_at,
+  updated_at,
+  created_by,
+  updated_by
+`;
+
 const mapRowToSupplier = (row: any): Supplier => ({
   ...row,
   contact_name: row.contact_person,
@@ -45,7 +67,7 @@ const sortSuppliers = (suppliers: Supplier[]) => suppliers.sort((a, b) => a.name
 const fetchSuppliers = async (): Promise<Supplier[]> => {
   const { data, error } = await (supabase as any)
     .from('inventory_suppliers')
-    .select('*')
+    .select(SUPPLIERS_SELECT)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -89,7 +111,7 @@ export const useSuppliers = () => {
           is_active: data.is_active ?? true,
           created_by: userId,
         }])
-        .select()
+        .select(SUPPLIERS_SELECT)
         .single();
 
       if (error) throw error;
@@ -139,7 +161,7 @@ export const useSuppliers = () => {
         .from('inventory_suppliers')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(SUPPLIERS_SELECT)
         .single();
 
       if (error) throw error;
@@ -193,7 +215,7 @@ export const useSuppliers = () => {
           updated_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .eq('id', id)
-        .select()
+        .select(SUPPLIERS_SELECT)
         .single();
 
       if (error) throw error;

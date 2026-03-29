@@ -3,6 +3,18 @@ import { UserSettings, UserDatabaseSettings } from '@/types/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const USER_SETTINGS_SELECT = `
+  id,
+  user_id,
+  timezone,
+  use_system_timezone,
+  date_format,
+  language,
+  currency,
+  created_at,
+  updated_at
+`;
+
 export const useUserSettings = () => {
   const [userSettings, setUserSettings] = useState<UserSettings>({
     language: 'es',
@@ -28,7 +40,7 @@ export const useUserSettings = () => {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('*')
+        .select(USER_SETTINGS_SELECT)
         .eq('user_id', user.id)
         .single();
 

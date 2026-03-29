@@ -2,6 +2,21 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 
+const QUICK_ENTRY_SELECT = `
+  id,
+  type,
+  description,
+  amount,
+  date,
+  notes,
+  status,
+  data,
+  photo_url,
+  created_at,
+  updated_at,
+  created_by
+`;
+
 export interface QuickEntry {
   id?: string;
   type: 'service' | 'cost' | 'inventory' | 'maintenance';
@@ -27,7 +42,7 @@ export function useQuickEntry() {
       const { data, error } = await supabase
         .from('quick_entries')
         .insert([entry])
-        .select()
+        .select(QUICK_ENTRY_SELECT)
         .single();
 
       if (error) throw error;
@@ -56,7 +71,7 @@ export function useQuickEntry() {
     try {
       const { data, error } = await supabase
         .from('quick_entries')
-        .select('*')
+        .select(QUICK_ENTRY_SELECT)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 

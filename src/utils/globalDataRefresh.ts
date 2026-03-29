@@ -6,8 +6,6 @@ import { useEffect } from 'react';
  * Útil después de cambios importantes en la base de datos
  */
 export const refreshAllServiceData = async (queryClient: QueryClient) => {
-  console.log('🔄 GLOBAL REFRESH: Iniciando actualización global de datos de servicios...');
-  
   try {
     // Invalidar todas las queries relacionadas con servicios
     await Promise.all([
@@ -37,13 +35,10 @@ export const refreshAllServiceData = async (queryClient: QueryClient) => {
     ]);
     
     // FORCE REFETCH of critical queries immediately
-    console.log('🚀 GLOBAL REFRESH: Force refetching critical queries...');
     await Promise.all([
       queryClient.refetchQueries({ queryKey: ['services'] }),
       queryClient.refetchQueries({ queryKey: ['costs'] }),
     ]);
-    
-    console.log('✅ GLOBAL REFRESH: Actualización global completada exitosamente');
     
     // Disparar evento personalizado para componentes que no usan React Query
     window.dispatchEvent(new CustomEvent('global-data-refresh', { 
@@ -53,10 +48,11 @@ export const refreshAllServiceData = async (queryClient: QueryClient) => {
     return { success: true };
   } catch (error) {
     console.error('❌ GLOBAL REFRESH: Error durante actualización global:', error);
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     
     // Disparar evento de error
     window.dispatchEvent(new CustomEvent('global-data-refresh-error', { 
-      detail: { timestamp: Date.now(), error: error.message } 
+      detail: { timestamp: Date.now(), error: message } 
     }));
     
     throw error;
@@ -69,7 +65,6 @@ export const refreshAllServiceData = async (queryClient: QueryClient) => {
 export const useGlobalDataRefresh = (callback: () => void) => {
   useEffect(() => {
     const handleGlobalRefresh = () => {
-      console.log('🎯 Recibido evento de refresh global, ejecutando callback...');
       callback();
     };
     

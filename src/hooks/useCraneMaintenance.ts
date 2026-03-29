@@ -19,13 +19,32 @@ export interface MaintenanceRecord {
   createdAt: string;
 }
 
+const CRANE_MAINTENANCE_SELECT = `
+  id,
+  crane_id,
+  maintenance_type,
+  description,
+  cost,
+  provider,
+  scheduled_date,
+  completed_date,
+  status,
+  next_maintenance_date,
+  notes,
+  kilometraje,
+  receipt_photo_paths,
+  created_at,
+  created_by,
+  updated_at
+`;
+
 export const useCraneMaintenance = (craneId: string) => {
   return useQuery({
     queryKey: ['crane-maintenance', craneId],
     queryFn: async (): Promise<MaintenanceRecord[]> => {
       const { data, error } = await supabase
         .from('crane_maintenance')
-        .select('*')
+        .select(CRANE_MAINTENANCE_SELECT)
         .eq('crane_id', craneId)
         .order('scheduled_date', { ascending: false });
 
@@ -75,7 +94,7 @@ export const useCreateMaintenance = () => {
           notes: maintenance.notes || null,
           kilometraje: maintenance.kilometraje || null,
         })
-        .select()
+        .select(CRANE_MAINTENANCE_SELECT)
         .single();
 
       if (error) throw error;
@@ -115,7 +134,7 @@ export const useUpdateMaintenance = () => {
           notes: updates.notes
         })
         .eq('id', id)
-        .select()
+        .select(CRANE_MAINTENANCE_SELECT)
         .single();
 
       if (error) throw error;

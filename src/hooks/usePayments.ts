@@ -5,6 +5,35 @@ import { toast } from 'sonner';
 import { Payment, PaymentWithDetails, ManualApplication, PaymentStatus } from '@/types/payments';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
+const PAYMENTS_SELECT = `
+  id,
+  client_id,
+  amount,
+  payment_date,
+  bank_reference,
+  payment_method,
+  notes,
+  status,
+  applied_amount,
+  remaining_amount,
+  created_at,
+  updated_at
+`;
+
+const UNPAID_INVOICES_SELECT = `
+  id,
+  folio,
+  issue_date,
+  due_date,
+  subtotal,
+  vat,
+  total,
+  status,
+  paid_amount,
+  remaining_amount,
+  numero_fiscal
+`;
+
 export const usePayments = () => {
   const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +57,7 @@ export const usePayments = () => {
       const { data, error } = await supabase
         .from('payments')
         .select(`
-          *,
+          ${PAYMENTS_SELECT},
           client:clients(id, name),
           payment_applications(
             invoice:invoices(numero_fiscal)
@@ -80,8 +109,6 @@ export const usePayments = () => {
     autoApply: boolean = false // Compatibilidad: la aplicación automática está deshabilitada
   ) => {
     try {
-      console.log('🔍 Creating payment:', payment);
-      
       // Verificar pagos duplicados antes de crear
       const duplicateCheck = await checkForDuplicatePayment(
         payment.client_id, 
@@ -104,17 +131,13 @@ export const usePayments = () => {
       const { data, error } = await supabase
         .from('payments')
         .insert(payment) // remaining_amount se calcula automáticamente como (amount - applied_amount)
-        .select()
+        .select(PAYMENTS_SELECT)
         .single();
-
-      console.log('🔍 Payment creation response:', { data, error });
 
       if (error) {
         console.error('🚨 Payment creation error:', error);
         throw error;
       }
-      
-      console.log('✅ Payment created successfully:', data);
       
       // Compatibilidad: mantener parámetro sin aplicación automática
       if (autoApply && data?.id) {
@@ -199,14 +222,10 @@ export const usePayments = () => {
 
   const applyPaymentManual = async (paymentId: string, applications: ManualApplication[]) => {
     try {
-      console.log('🔍 Applying payment manually:', { paymentId, applications });
-      
       const { data, error } = await supabase.rpc('apply_payment_manual', {
         p_payment_id: paymentId,
         p_applications: applications as any
       });
-
-      console.log('🔍 RPC Response:', { data, error });
 
       if (error) {
         console.error('🚨 Supabase RPC Error:', error);
@@ -214,7 +233,6 @@ export const usePayments = () => {
       }
       
       const result = data as any;
-      console.log('✅ Payment application successful:', result);
       
       toast.success(`Pago aplicado manualmente a ${result.applications_made} facturas.`);
       await fetchPayments();
@@ -234,7 +252,7 @@ export const usePayments = () => {
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select(UNPAID_INVOICES_SELECT)
         .eq('client_id', clientId)
         .in('status', ['draft', 'sent', 'overdue', 'partial'])
         .not('folio', 'like', 'HIST-%')
@@ -557,25 +575,23 @@ export const usePayments = () => {
       // Verificar facturas pagadas sin registros de pago
       const { data: unpaidInvoices } = await supabase
         .from('invoices')
-        .select('*')
+        .select('id, folio, remaining_amount')
         .eq('status', 'paid')
         .gt('remaining_amount', 0);
 
       // Verificar pagos sin aplicar
       const { data: unappliedPayments } = await supabase
         .from('payments')
-        .select('*')
+        .select('id, bank_reference, remaining_amount')
         .gt('remaining_amount', 0);
 
       const hasInconsistencies = (unpaidInvoices?.length || 0) > 0 || (unappliedPayments?.length || 0) > 0;
 
       if (!hasInconsistencies) {
-        console.log('Sistema de pagos validado correctamente');
         return { status: 'valid', issues: [] };
       }
 
       // Si hay inconsistencias, ejecutar corrección automática
-      console.log('Inconsistencias detectadas, ejecutando corrección automática...');
       await silentFixInconsistencies();
 
       return {
@@ -688,17 +704,11 @@ export const usePayments = () => {
 
   const performBackgroundMaintenance = async () => {
     try {
-      console.log('Iniciando mantenimiento automático en segundo plano...');
-      
       const diagnosis = await getComprehensiveDiagnosis();
       
       if (diagnosis.system_health === 'NEEDS_REPAIR' && diagnosis.total_issues > 0) {
-        console.log(`Detectados ${diagnosis.total_issues} problemas, ejecutando correcciones...`);
         await fixSystemInconsistencies();
         await removeDuplicateApplications();
-        console.log('Correcciones automáticas completadas');
-      } else {
-        console.log('Sistema saludable, no requiere mantenimiento');
       }
     } catch (error) {
       console.error('Error en mantenimiento automático:', error);
@@ -744,9 +754,6 @@ export const usePayments = () => {
         return diagnosis;
       }
 
-      // Mostrar detalles del diagnóstico en consola
-      console.log('Diagnóstico de conflictos:', diagnosis);
-      
       // Resolver conflictos
       const resolution = await resolvePaymentConflicts();
       

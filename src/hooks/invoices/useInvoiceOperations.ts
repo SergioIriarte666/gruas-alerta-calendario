@@ -5,13 +5,33 @@ import { toast } from 'sonner';
 import { formatInvoiceData, generateInvoiceFolio } from '@/utils/invoiceUtils';
 import { useQueryClient } from '@tanstack/react-query';
 
+const INVOICE_SELECT = `
+  id,
+  client_id,
+  folio,
+  issue_date,
+  due_date,
+  subtotal,
+  vat,
+  total,
+  status,
+  payment_date,
+  numero_fiscal,
+  payment_term_id,
+  paid_amount,
+  remaining_amount,
+  notes,
+  product_service_description,
+  created_at,
+  updated_at,
+  created_by
+`;
+
 export const useInvoiceOperations = () => {
   const queryClient = useQueryClient();
 
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>): Promise<Invoice> => {
     try {
-      console.log('🚀 Starting invoice creation with transaction:', invoiceData);
-
       if (!invoiceData.closureId) {
         throw new Error('closureId es requerido para crear una factura');
       }
@@ -37,7 +57,6 @@ export const useInvoiceOperations = () => {
       }
 
       const serviceIds = closureServices.map(cs => cs.service_id);
-      console.log('📋 Servicios a facturar:', serviceIds);
 
       const trimmedDescription = (invoiceData.productServiceDescription || '').trim();
       if (trimmedDescription.length < 10 || trimmedDescription.length > 500) {
@@ -81,12 +100,10 @@ export const useInvoiceOperations = () => {
         throw new Error('Error en la transacción de factura: datos incompletos');
       }
 
-      console.log('✅ Transacción de factura exitosa:', result);
-
       // Obtener la factura creada
       const { data: newInvoice, error: fetchError } = await supabase
         .from('invoices')
-        .select('*')
+        .select(INVOICE_SELECT)
         .eq('id', result.invoice_id)
         .single();
 
@@ -107,8 +124,6 @@ export const useInvoiceOperations = () => {
         throw new Error('Error al relacionar factura con cierre');
       }
 
-      console.log('🔗 Relación invoice_closures creada');
-
       // NUEVO: Actualizar estado del cierre a 'invoiced'
       const { error: closureUpdateError } = await supabase
         .from('service_closures')
@@ -123,8 +138,6 @@ export const useInvoiceOperations = () => {
         toast.warning("Advertencia", {
           description: "La factura se creó correctamente, pero no se pudo actualizar el estado del cierre.",
         });
-      } else {
-        console.log('✅ Estado del cierre actualizado a "invoiced"');
       }
 
       // Actualizar servicios a estado 'invoiced' con folio y número fiscal
@@ -145,8 +158,6 @@ export const useInvoiceOperations = () => {
         const failed = results.filter(r => r.error);
         if (failed.length > 0) {
           console.warn(`⚠️ ${failed.length} servicios no se pudieron actualizar a invoiced`);
-        } else {
-          console.log(`✅ ${serviceIds.length} servicios actualizados a "invoiced"`);
         }
       } catch (servicesError) {
         console.error('❌ Error actualizando servicios a invoiced:', servicesError);
@@ -169,8 +180,6 @@ export const useInvoiceOperations = () => {
       window.dispatchEvent(new CustomEvent('invoice-created', { 
         detail: { invoiceId: newInvoice.id, serviceIds } 
       }));
-
-      console.log('🎉 Factura creada exitosamente con folios consecutivos');
       
       toast.success("Factura creada", {
         description: `Factura ${result.invoice_folio} creada exitosamente.`,
@@ -197,12 +206,10 @@ export const useInvoiceOperations = () => {
     let originalState: any = null;
     
     try {
-      console.log('useInvoiceOperations - Starting invoice update transaction for:', id);
-      
       // Step 1: Get current state for validation and rollback purposes
       const { data: currentInvoice, error: getCurrentError } = await supabase
         .from('invoices')
-        .select('*')
+        .select(INVOICE_SELECT)
         .eq('id', id)
         .single();
 
@@ -307,14 +314,12 @@ export const useInvoiceOperations = () => {
         updateData.client_id = invoiceData.clientId;
       }
 
-      console.log('useInvoiceOperations - Validated update data:', updateData);
-
       // Step 4: Execute main invoice update
       const { data: updateResult, error: updateError } = await supabase
         .from('invoices')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select('id, folio, numero_fiscal')
         .single();
 
       if (updateError) {
@@ -331,8 +336,6 @@ export const useInvoiceOperations = () => {
 
       // Step 5: Handle closure relationship changes with atomic operations
       if (invoiceData.closureId !== undefined && invoiceData.closureId !== currentClosure?.closure_id) {
-        console.log('Processing closure relationship change');
-        
         try {
           if (currentClosure?.closure_id) {
             // Get old closure services for cleanup
@@ -450,7 +453,6 @@ export const useInvoiceOperations = () => {
           });
 
           const results = await Promise.all(updatePromises);
-          console.log('✅ Todos los servicios actualizados correctamente:', results);
         }
       } catch (servicesError) {
         console.error('Error updating services, but invoice update succeeded:', servicesError);
@@ -467,7 +469,6 @@ export const useInvoiceOperations = () => {
       queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
       queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
 
-      console.log('✅ Invoice update transaction completed successfully');
       toast.success("Factura actualizada", {
         description: "La factura ha sido actualizada exitosamente.",
       });
@@ -487,8 +488,6 @@ export const useInvoiceOperations = () => {
 
   const deleteInvoice = async (id: string, options: { force?: boolean } = {}) => {
     try {
-      console.log('Iniciando eliminación de factura con reversión de estados:', id);
-
       // Guard: verificar si es factura protegida (no histórica)
       const { data: invoiceCheck, error: checkError } = await supabase
         .from('invoices')
@@ -536,8 +535,6 @@ export const useInvoiceOperations = () => {
             .eq('status', 'invoiced');
 
           if (checkError) throw checkError;
-          
-          console.log('Servicios encontrados para revertir:', servicesToRevert?.length || 0);
 
           if (servicesToRevert && servicesToRevert.length > 0) {
             const { error: revertError } = await supabase
@@ -551,7 +548,6 @@ export const useInvoiceOperations = () => {
               .in('id', servicesToRevert.map(s => s.id));
 
             if (revertError) throw revertError;
-            console.log('Revertidos', servicesToRevert.length, 'servicios a estado completed (folio/fiscal limpiados)');
           }
         }
 
@@ -563,7 +559,6 @@ export const useInvoiceOperations = () => {
           .eq('status', 'invoiced');
 
         if (closureRevertError) throw closureRevertError;
-        console.log('Revertidos', closureIds.length, 'cierres a estado closed');
       }
 
       // 4b. También revertir servicios vinculados directamente via invoice_services
@@ -588,7 +583,6 @@ export const useInvoiceOperations = () => {
           .eq('status', 'invoiced');
 
         if (revertDirectError) throw revertDirectError;
-        console.log('Revertidos', directServiceIds.length, 'servicios directos (invoice_services)');
 
         // Eliminar relaciones invoice_services
         const { error: deleteDirectError } = await supabase
@@ -650,8 +644,6 @@ export const useInvoiceOperations = () => {
 
   const markAsPaid = async (id: string, paymentDate?: string) => {
     try {
-      console.log('Marcando factura como pagada:', id, 'fecha:', paymentDate);
-      
       const rpcParams: any = { p_invoice_id: id };
       if (paymentDate) {
         rpcParams.p_payment_date = paymentDate;
@@ -664,8 +656,6 @@ export const useInvoiceOperations = () => {
         throw error;
       }
 
-      console.log('Pago automático creado y aplicado:', data);
-
       // Dispatch event for real-time updates
       const result = data as any;
       window.dispatchEvent(new CustomEvent('invoice-paid', { 
@@ -676,7 +666,6 @@ export const useInvoiceOperations = () => {
         description: "La factura ha sido marcada como pagada y el pago registrado automáticamente.",
       });
 
-      console.log('Factura marcada como pagada exitosamente');
       return { status: 'paid' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error marking invoice as paid:', error);
