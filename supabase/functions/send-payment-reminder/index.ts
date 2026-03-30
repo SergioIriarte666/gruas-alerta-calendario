@@ -200,8 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error enviando recordatorio de pago:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: "Error en el servicio de recordatorio de pago"
+        error: "Error en el servicio de recordatorio de pago"
       }),
       {
         status: 500,

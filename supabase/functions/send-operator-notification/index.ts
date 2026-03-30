@@ -195,8 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error enviando notificación al operador:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: "Error en el servicio de notificación de operador"
+        error: "Error en el servicio de notificación de operador"
       }),
       {
         status: 500,

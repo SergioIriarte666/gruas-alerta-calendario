@@ -214,8 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error enviando factura por email:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: "Error en el servicio de envío de facturas"
+        error: "Error en el servicio de envío de facturas"
       }),
       {
         status: 500,

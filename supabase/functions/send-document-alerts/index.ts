@@ -108,7 +108,7 @@ serve(async (req) => {
     console.error('Error in send-document-alerts function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: "Error en el servicio de alertas de documentos",
         success: false 
       }),
       {

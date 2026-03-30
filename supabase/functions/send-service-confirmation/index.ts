@@ -192,8 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error enviando email de confirmación:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: "Error en el servicio de envío de emails"
+        error: "Error en el servicio de envío de emails"
       }),
       {
         status: 500,

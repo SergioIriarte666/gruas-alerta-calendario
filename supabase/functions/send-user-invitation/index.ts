@@ -199,8 +199,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Error enviando invitación',
-        timestamp: new Date().toISOString()
+        error: 'Error enviando invitación'
       }),
       {
         status: 500,

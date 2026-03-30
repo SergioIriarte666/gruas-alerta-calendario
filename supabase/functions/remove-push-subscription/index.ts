@@ -51,8 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error removing push subscription:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: 'Error en el servicio de desuscripción push'
+        error: 'Error en el servicio de desuscripción push'
       }),
       {
         status: 500,
