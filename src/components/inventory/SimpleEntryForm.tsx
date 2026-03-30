@@ -14,7 +14,6 @@ import { useInventoryItems, useInventoryLocations, useCreateInventoryItem, useIn
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { useUnifiedPurchase } from '@/hooks/useUnifiedPurchase';
-import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
 import { Building2, Truck } from 'lucide-react';
 import { CalendarIcon, Package, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -22,6 +21,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 const entrySchema = z.object({
   item_id: z.string().optional(),
@@ -55,7 +55,6 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
   const createItem = useCreateInventoryItem();
   
   const [showNewProductForm, setShowNewProductForm] = useState(false);
-  const [showQuickSupplierModal, setShowQuickSupplierModal] = useState(false);
   const [newProductData, setNewProductData] = useState({
     name: '',
     unit_of_measure: 'unidad',
@@ -503,41 +502,13 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
               <Building2 className="w-4 h-4" />
               Proveedor
             </Label>
-            <Select
-              value={watchedValues.supplier_id || 'none'}
-              onValueChange={(value) => {
-                if (value === 'new_supplier') {
-                  setShowQuickSupplierModal(true);
-                } else if (value === 'none') {
-                  setValue('supplier_id', undefined);
-                } else {
-                  setValue('supplier_id', value);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar proveedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sin proveedor</SelectItem>
-                {suppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{supplier.name}</span>
-                      {supplier.rut && (
-                        <span className="text-xs text-muted-foreground">RUT: {supplier.rut}</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-                <SelectItem value="new_supplier">
-                  <div className="flex items-center gap-2 text-primary font-medium">
-                    <Plus className="h-4 w-4" />
-                    Crear nuevo proveedor...
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <SupplierCombobox
+              value={watchedValues.supplier_id ?? null}
+              onValueChange={(value) => setValue('supplier_id', value ?? undefined)}
+              placeholder="Seleccionar proveedor"
+              noneLabel="Sin proveedor"
+              allowCreate
+            />
           </div>
 
           {/* Documento de Referencia */}
@@ -583,14 +554,6 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         </Button>
       </div>
 
-      <QuickSupplierModal
-        isOpen={showQuickSupplierModal}
-        onClose={() => setShowQuickSupplierModal(false)}
-        onSuccess={(supplierId) => {
-          setValue('supplier_id', supplierId);
-          setShowQuickSupplierModal(false);
-        }}
-      />
     </form>
   );
 };

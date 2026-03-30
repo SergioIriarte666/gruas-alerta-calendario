@@ -19,8 +19,8 @@ import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentCostDescriptions } from '@/hooks/useFrequentFormData';
 import { useQuery } from '@tanstack/react-query';
 import { CostSubcategory } from '@/types/costs';
-import { useSuppliers } from '@/hooks/useSuppliers';
 import { useOperators } from '@/hooks/useOperators';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 interface ServiceCostDetail {
   id: string;
@@ -70,7 +70,6 @@ export const ServiceCostDetailsSection = ({
   const { mutate: addCost } = useAddCost();
   const { mutate: updateCost } = useUpdateCost();
   const { mutate: deleteCost } = useDeleteCost();
-  const { suppliers = [] } = useSuppliers();
   const { operators = [] } = useOperators();
 
   const { data: serviceMeta } = useQuery({
@@ -614,23 +613,14 @@ export const ServiceCostDetailsSection = ({
                     {shouldShowSupplier && (
                       <div className="space-y-2">
                         <Label>Proveedor *</Label>
-                        <Select
-                          value={cost.supplier_id || 'none'}
-                          onValueChange={(value) => updateCostDetail(cost.id, 'supplier_id', value === 'none' ? undefined : value)}
+                        <SupplierCombobox
+                          value={cost.supplier_id ?? null}
+                          onValueChange={(value) => updateCostDetail(cost.id, 'supplier_id', value ?? undefined)}
+                          placeholder="Seleccionar proveedor"
+                          noneLabel="Sin proveedor"
+                          allowCreate
                           disabled={disabled}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar proveedor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Sin proveedor</SelectItem>
-                            {suppliers.map((supplier) => (
-                              <SelectItem key={supplier.id} value={supplier.id}>
-                                {supplier.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        />
                       </div>
                     )}
 

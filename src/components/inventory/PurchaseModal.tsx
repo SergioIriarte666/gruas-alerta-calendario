@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreateInventoryMovement, useInventoryLocations, useInventorySuppliers, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 const purchaseSchema = z.object({
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
@@ -188,24 +189,18 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="supplier_id">Proveedor</Label>
-              <Select onValueChange={(value) => {
-                setValue('supplier_id', value);
-                const supplier = suppliers.find(s => s.id === value);
-                if (supplier) {
-                  setValue('supplier_name', supplier.name);
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar proveedor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SupplierCombobox
+                value={watchedValues.supplier_id ?? null}
+                onValueChange={(value) => {
+                  setValue('supplier_id', value ?? undefined);
+                  if (!value) return;
+                  const supplier = suppliers.find(s => s.id === value);
+                  if (supplier) setValue('supplier_name', supplier.name);
+                }}
+                placeholder="Seleccionar proveedor"
+                noneLabel="Sin proveedor"
+                allowCreate
+              />
             </div>
 
             <div>

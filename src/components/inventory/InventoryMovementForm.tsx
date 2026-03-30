@@ -18,9 +18,8 @@ import { cn } from '@/lib/utils';
 import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useInventoryStock, useCreateInventoryMovement } from '@/hooks/useInventory';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
-import { useSuppliers } from '@/hooks/useSuppliers';
-import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
 import { toast } from 'sonner';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 const movementSchema = z.object({
   item_id: z.string().min(1, 'Seleccione un producto'),
@@ -78,14 +77,10 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
 }) => {
   const { data: items } = useInventoryItems();
   const { data: locations } = useInventoryLocations();
-  const { data: suppliers } = useInventorySuppliers();
   const { data: stockData } = useInventoryStock();
   const { cranes } = useCranes();
   const { operators } = useOperators();
-  const { suppliers: suppliersList, isLoading: isSuppliersLoading } = useSuppliers();
   const createMovement = useCreateInventoryMovement();
-
-  const [showQuickModal, setShowQuickModal] = React.useState(false);
 
   const form = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
@@ -455,42 +450,13 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               {/* Supplier Selector */}
               <div className="space-y-2">
                 <Label htmlFor="supplier_id">Proveedor (Opcional)</Label>
-                <Select
-                  value={form.watch('supplier_id') || 'none'}
-                  onValueChange={(value) => {
-                    if (value === 'new_supplier') {
-                      setShowQuickModal(true);
-                    } else if (value === 'none') {
-                      form.setValue('supplier_id', undefined);
-                    } else {
-                      form.setValue('supplier_id', value);
-                    }
-                  }}
-                  disabled={isSuppliersLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar proveedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sin proveedor</SelectItem>
-                    {suppliersList.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{supplier.name}</span>
-                          {supplier.rut && (
-                            <span className="text-xs text-muted-foreground">RUT: {supplier.rut}</span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="new_supplier">
-                      <div className="flex items-center gap-2 text-primary font-medium">
-                        <Plus className="h-4 w-4" />
-                        Crear nuevo proveedor...
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <SupplierCombobox
+                  value={form.watch('supplier_id') ?? null}
+                  onValueChange={(value) => form.setValue('supplier_id', value ?? undefined)}
+                  placeholder="Seleccionar proveedor"
+                  noneLabel="Sin proveedor"
+                  allowCreate
+                />
               </div>
 
               {/* Reference Document - Enhanced for Multi-Product Purchases */}
@@ -602,14 +568,6 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         </form>
       </CardContent>
 
-      <QuickSupplierModal
-        isOpen={showQuickModal}
-        onClose={() => setShowQuickModal(false)}
-        onSuccess={(supplierId) => {
-          form.setValue('supplier_id', supplierId);
-          setShowQuickModal(false);
-        }}
-      />
     </Card>
   );
 };

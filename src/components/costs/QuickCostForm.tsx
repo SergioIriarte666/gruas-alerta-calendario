@@ -16,12 +16,12 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCranes } from '@/hooks/useCranes';
-import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useAddCost } from '@/hooks/useCosts';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 const quickCostSchema = z.object({
   date: z.string().min(1, 'La fecha es requerida'),
@@ -53,7 +53,6 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
   const { data: categories = [] } = useCostCategories();
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
-  const { suppliers = [] } = useSuppliers();
   const { data: costCenters = [] } = useCostCenters();
   
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -333,22 +332,16 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-sm">Proveedor</Label>
-                  <Select
-                    value={watch('supplier_id') || 'none'}
-                    onValueChange={(value) => setValue('supplier_id', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sin asignar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin asignar</SelectItem>
-                      {suppliers.map((sup) => (
-                        <SelectItem key={sup.id} value={sup.id}>
-                          {sup.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SupplierCombobox
+                    value={(() => {
+                      const current = watch('supplier_id');
+                      return current && current !== 'none' ? current : null;
+                    })()}
+                    onValueChange={(value) => setValue('supplier_id', value ?? 'none')}
+                    placeholder="Sin asignar"
+                    noneLabel="Sin asignar"
+                    allowCreate
+                  />
                 </div>
 
                 <div className="space-y-2">
