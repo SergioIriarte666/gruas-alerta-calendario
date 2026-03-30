@@ -220,7 +220,6 @@ Reglas:
     return jsonResponse(result);
   } catch (error) {
     console.error("Error processing receipt image:", error);
-    const message = error instanceof Error ? error.message : "Error procesando la imagen. Intente nuevamente.";
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: "Error procesando la imagen. Intente nuevamente." }, 500);
   }
 });

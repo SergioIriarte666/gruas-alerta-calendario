@@ -82,8 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error saving push subscription:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: 'Error en el servicio de suscripción push'
+        error: 'Error en el servicio de suscripción push'
       }),
       {
         status: 500,

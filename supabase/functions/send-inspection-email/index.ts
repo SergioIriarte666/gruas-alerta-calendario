@@ -158,7 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "Error desconocido al enviar email" 
+        error: "Error al enviar email de inspección" 
       }),
       {
         status: 500,
