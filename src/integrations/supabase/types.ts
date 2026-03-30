@@ -3369,6 +3369,74 @@ export type Database = {
           },
         ]
       }
+      service_cash_receipts: {
+        Row: {
+          created_at: string
+          created_by: string
+          folio: string
+          id: string
+          notes: string | null
+          paid_amount: number
+          paid_date: string
+          payment_method: string
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          folio?: string
+          id?: string
+          notes?: string | null
+          paid_amount: number
+          paid_date: string
+          payment_method: string
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          folio?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          paid_date?: string
+          payment_method?: string
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_cash_receipts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cash_receipts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cash_receipts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cash_receipts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_change_history: {
         Row: {
           change_context: string | null
@@ -5225,6 +5293,7 @@ export type Database = {
       generate_database_backup: { Args: never; Returns: string }
       generate_excess_folio: { Args: never; Returns: string }
       generate_quick_backup: { Args: never; Returns: Json }
+      generate_service_cash_receipt_folio: { Args: never; Returns: string }
       generate_service_folio: { Args: never; Returns: string }
       generate_simple_invoice_folio: { Args: never; Returns: string }
       get_all_users: {

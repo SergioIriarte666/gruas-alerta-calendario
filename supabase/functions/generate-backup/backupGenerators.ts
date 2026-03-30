@@ -62,7 +62,7 @@ export class BackupGenerators {
         }
       } catch (e) {
         console.error(`Exception fetching ${table}:`, e);
-        backupData.data[table] = { error: e.message, count: 0 };
+        backupData.data[table] = { error: (e as Error).message, count: 0 };
       }
     }
 
