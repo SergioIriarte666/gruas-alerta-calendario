@@ -104,7 +104,7 @@ serve(async (req) => {
 
     // Extract basic vehicle information from the correct structure
     const vehicleInfo = data.data;
-    const vehicleData: VehicleData = {
+    const vehicleData: { marca: string; modelo: string; año: number | null; color: string | null } = {
       marca: vehicleInfo.model?.brand?.name || 'No disponible',
       modelo: vehicleInfo.model?.name || 'No disponible',
       año: vehicleInfo.year || null,

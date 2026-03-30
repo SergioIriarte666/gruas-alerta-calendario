@@ -92,23 +92,23 @@ serve(async (req) => {
         }
       );
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating backup:', error);
       
       // Log error
       if (logId) {
-        await logger.failLog(logId, error.message || 'Error desconocido');
+        await logger.failLog(logId, (error as Error).message || 'Error desconocido');
       }
 
       throw error;
     }
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Backup function error:', error);
     
-    const errorMessage = error.message || 'Error interno del servidor';
-    const statusCode = error.message?.includes('administrador') ? 403 : 
-                      error.message?.includes('autenticado') ? 401 : 500;
+    const errorMessage = (error as Error).message || 'Error interno del servidor';
+    const statusCode = (error as Error).message?.includes('administrador') ? 403 : 
+                      (error as Error).message?.includes('autenticado') ? 401 : 500;
 
     return new Response(
       JSON.stringify({
