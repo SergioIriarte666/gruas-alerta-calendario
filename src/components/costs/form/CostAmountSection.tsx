@@ -41,8 +41,8 @@ export const CostAmountSection = ({
                 type="number" 
                 step="0.01" 
                 min="0"
-                {...field} 
-                disabled={isServiceExpense && showServiceButton}
+                {...field}
+                disabled={isServiceExpense && showServiceButton && calculatedTotal > 0}
                 className={`text-lg h-12 pr-16 ${
                   isServiceExpense && showServiceButton 
                       ? 'bg-accent/40 border-border' 

@@ -51,6 +51,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     const [currentStep, setCurrentStep] = useState(1);
     const [showServiceExpenseModals, setShowServiceExpenseModals] = useState(false);
     const [calculatedServiceTotal, setCalculatedServiceTotal] = useState(0);
+    const [receiptUrls, setReceiptUrls] = useState<string[]>([]);
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
@@ -60,6 +61,40 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     const { data: costCenters = [] } = useCostCenters();
 
     const servicesForCosts = getServicesForCosts();
+    const isQuickEntryPrefill = Boolean((prefilledData as any)?.quickEntryId);
+    const receiptPhotoPaths = useMemo(
+        () => ((((prefilledData as any)?.receipt_photo_paths as string[] | undefined) || []).filter(Boolean)),
+        [prefilledData],
+    );
+    const receiptPhotoPathsKey = useMemo(() => receiptPhotoPaths.join('|'), [receiptPhotoPaths]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const load = async () => {
+            if (!isOpen || !isQuickEntryPrefill || receiptPhotoPaths.length === 0) {
+                setReceiptUrls([]);
+                return;
+            }
+
+            const results = await Promise.all(
+                receiptPhotoPaths.map(async (path) => {
+                    const { data } = await supabase.storage
+                        .from('quick-entry-photos')
+                        .createSignedUrl(path, 60 * 60 * 24 * 7);
+                    return data?.signedUrl || '';
+                }),
+            );
+
+            if (!cancelled) setReceiptUrls(results.filter(Boolean));
+        };
+
+        load();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, isQuickEntryPrefill, receiptPhotoPathsKey]);
 
     const form = useForm<CostFormValues>({
         resolver: zodResolver(costSchema),
@@ -223,26 +258,30 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 is_paid: !!cost.payment_date,
             });
         } else if (prefilledData) {
+            const dateValue = (prefilledData as any)?.date
+                ? formatForInput((prefilledData as any).date)
+                : getCurrentChileDateString();
             reset({
-                date: prefilledData.date,
-                description: prefilledData.description,
-                amount: prefilledData.amount,
-                category_id: prefilledData.category_id,
-                crane_id: prefilledData.crane_id,
-                operator_id: prefilledData.operator_id,
-                service_id: prefilledData.service_id,
-                service_folio: prefilledData.service_folio,
-                subcategory: prefilledData.subcategory,
-                notes: prefilledData.notes,
+                date: dateValue,
+                description: prefilledData.description || '',
+                amount: Number(prefilledData.amount) || 0,
+                category_id: prefilledData.category_id || '',
+                crane_id: prefilledData.crane_id || 'none',
+                operator_id: prefilledData.operator_id || 'none',
+                service_id: prefilledData.service_id || 'none',
+                service_folio: prefilledData.service_folio || '',
+                subcategory: prefilledData.subcategory || '',
+                notes: prefilledData.notes || '',
                 document_type: (prefilledData as any).document_type || 'none',
                 document_number: (prefilledData as any).document_number || '',
                 location_text: (prefilledData as any).location_text || '',
                 other_reason: (prefilledData as any).other_reason || '',
-                cost_center_id: prefilledData.cost_center_id,
-                purchase_quantity: prefilledData.purchase_quantity,
-                purchase_unit_cost: prefilledData.purchase_unit_cost,
-                immediate_consumption: prefilledData.immediate_consumption,
-                supplier_id: prefilledData.supplier_id,
+                cost_center_id: prefilledData.cost_center_id || 'none',
+                purchase_quantity: prefilledData.purchase_quantity ?? null,
+                purchase_unit_cost: prefilledData.purchase_unit_cost ?? null,
+                immediate_consumption: Boolean(prefilledData.immediate_consumption),
+                supplier_id: prefilledData.supplier_id || 'none',
+                is_paid: false,
             });
             setCalculatedServiceTotal(0);
         } else {
@@ -539,10 +578,16 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         {/* Header */}
                         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
                             <DialogTitle className="text-2xl font-bold text-foreground">
-                                {cost ? 'Editar Costo' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
+                                {cost ? 'Editar Costo' : isQuickEntryPrefill ? 'Completar Registro Rápido' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
                             </DialogTitle>
                             <p className="text-muted-foreground">
-                                {cost ? 'Modifica los datos del costo existente' : prefilledData ? 'Se ha pre-cargado la información del costo original.' : 'Completa la información del nuevo costo'}
+                                {cost
+                                    ? 'Modifica los datos del costo existente'
+                                    : isQuickEntryPrefill
+                                    ? 'Se ha pre-cargado la información del registro rápido.'
+                                    : prefilledData
+                                    ? 'Se ha pre-cargado la información del costo original.'
+                                    : 'Completa la información del nuevo costo'}
                             </p>
                         </DialogHeader>
 
@@ -598,7 +643,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                     />
                                                 )}
                                                 {currentStep === 4 && (
-                                                    <CostFormStep4 form={form} />
+                                                    <CostFormStep4 form={form} receiptUrls={receiptUrls} />
                                                 )}
                                             </div>
 

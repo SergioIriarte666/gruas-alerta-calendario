@@ -69,7 +69,10 @@ export const CostFormStep1 = ({
                     }
                     
                     if (category?.name === 'Gastos de Servicios' && isNewCost && onServiceExpenseSelect) {
-                      form.setValue('amount', 0);
+                      const currentAmount = Number(form.getValues('amount') || 0);
+                      if (!currentAmount || isNaN(currentAmount)) {
+                        form.setValue('amount', 0);
+                      }
                     }
                   }}
                   value={field.value} 
