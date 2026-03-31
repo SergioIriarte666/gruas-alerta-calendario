@@ -158,7 +158,9 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       } catch (err: any) {
         console.error(`Error processing ${file.name}:`, err);
         lastErrorMessage = err?.message || 'No se pudo procesar el PDF';
-        toast.error(`Error procesando ${file.name}: ${err.message}`);
+        toast.error(`Error procesando ${file.name}`, {
+          description: err?.message || 'No se pudo procesar el PDF',
+        });
       }
     }
 
