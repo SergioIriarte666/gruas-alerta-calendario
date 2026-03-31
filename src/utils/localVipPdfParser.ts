@@ -202,8 +202,10 @@ const extractQuoteReference = (text: string) => {
 const extractPdfLines = async (file: File) => {
   const pdfjsLib = await loadPdfJsCompat();
   const buffer = await file.arrayBuffer();
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
+    disableWorker: true,
     disableAutoFetch: true,
     disableFontFace: true,
     disableStream: true,
@@ -219,8 +221,10 @@ const extractPdfLines = async (file: File) => {
     const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
     const rows: Array<{ y: number; chunks: Array<{ x: number; text: string }> }> = [];
+    const items = Array.isArray(textContent.items) ? textContent.items : Array.from(textContent.items || []);
 
-    for (const item of textContent.items as any[]) {
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index] as any;
       const text = normalizeSpaces(item?.str || '');
       if (!text) continue;
 
