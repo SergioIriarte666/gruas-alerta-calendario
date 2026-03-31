@@ -31,8 +31,8 @@ const normalizeGatewayApiKey = (raw: string) => {
 };
 
 const getGatewayApiKeys = () => {
-  const primaryRaw = Deno.env.get('LOVABLE_API_KEY');
-  const fallbackRaw = Deno.env.get('AI_GATEWAY_KEY');
+  const primaryRaw = Deno.env.get('AI_GATEWAY_KEY');
+  const fallbackRaw = Deno.env.get('LOVABLE_API_KEY');
 
   const primary = primaryRaw ? normalizeGatewayApiKey(primaryRaw) : null;
   const fallback = fallbackRaw ? normalizeGatewayApiKey(fallbackRaw) : null;
@@ -213,7 +213,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
         return jsonResponse({ error: 'Créditos de IA insuficientes' }, 402);
       }
       if (lastStatus === 401) {
-        return jsonResponse({ error: gatewayMessage || 'Error de autenticación con el gateway de IA' }, 500);
+        return jsonResponse({ error: gatewayMessage || 'Error de autenticación con el gateway de IA' }, 401);
       }
       return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${lastStatus})` }, 500);
     }
