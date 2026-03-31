@@ -23,12 +23,9 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const normalizeGatewayApiKey = () => {
-  const candidates = [Deno.env.get('AI_GATEWAY_KEY'), Deno.env.get('LOVABLE_API_KEY')]
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    .map((value) => value.trim().replace(/^['"]|['"]$/g, '').replace(/^Bearer\s+/i, ''));
-
-  return candidates.find((value) => value.startsWith('sk_')) || null;
+const getGatewayApiKey = () => {
+  const key = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('AI_GATEWAY_KEY');
+  return key ? key.trim() : null;
 };
 
 serve(async (req) => {
@@ -63,7 +60,7 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = normalizeGatewayApiKey();
+    const gatewayApiKey = getGatewayApiKey();
     if (!gatewayApiKey) {
       console.error('AI gateway key is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
