@@ -49,7 +49,16 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   };
   
   // Marcar comisiones como pagadas usando la fecha seleccionada por el usuario
-  const paymentDateFormatted = formatForDatabase(data.payment_date);
+  let paymentDateFormatted: string;
+  try {
+    paymentDateFormatted = formatForDatabase(data.payment_date);
+    if (!paymentDateFormatted || paymentDateFormatted.length < 10) {
+      throw new Error(`Fecha inválida: "${paymentDateFormatted}"`);
+    }
+  } catch (dateError: any) {
+    console.error('❌ [usePaymentBatches] Error formateando fecha:', dateError);
+    throw new Error(`Fecha de pago inválida: ${dateError.message}`);
+  }
   console.log('📅 [usePaymentBatches] Fecha formateada:', paymentDateFormatted, 'desde:', data.payment_date);
   
   const { data: rpcResult, error: updateError } = await supabase.rpc('update_commission_payment_date', {
