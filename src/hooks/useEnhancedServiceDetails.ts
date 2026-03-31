@@ -135,69 +135,101 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   console.log('📊 [ENHANCED_SERVICE] Commission costs found:', commissionCosts.length);
   console.log('📊 [ENHANCED_SERVICE] Service costs found:', serviceCosts.length);
 
-  // 4. Construir array de operadores evitando duplicaciones
+  // 4. Construir array de operadores desde service_resources (fuente de verdad)
   const operators: ServiceOperator[] = [];
-  const processedOperatorIds = new Set<string>();
-  
-  // Agregar operador principal si existe (independientemente de la comisión)
-  console.log('🔍 [ENHANCED_SERVICE] Service data operators:', serviceData.operators);
-  console.log('🔍 [ENHANCED_SERVICE] Service data operator_id:', serviceData.operator_id);
-  console.log('🔍 [ENHANCED_SERVICE] Service operator_commission:', serviceData.operator_commission);
-  
-  if (serviceData.operators && serviceData.operator_id) {
-    operators.push({
-      id: 'main-operator',
-      operatorId: serviceData.operator_id,
-      operator: {
-        id: serviceData.operators.id,
-        name: serviceData.operators.name,
-        rut: serviceData.operators.rut,
-        phone: serviceData.operators.phone,
-        operatorType: (serviceData.operators.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
-        department: serviceData.operators.department,
-        position: serviceData.operators.position,
-        licenseNumber: serviceData.operators.license_number,
-        examExpiry: serviceData.operators.exam_expiry,
-        isActive: serviceData.operators.is_active,
-        createdAt: serviceData.operators.created_at,
-        updatedAt: serviceData.operators.updated_at
-      },
-      commission: serviceData.operator_commission || 0,
-      role: 'Principal',
-      hours: 8
-    });
-    
-    // Marcar este operador como procesado para evitar duplicados
-    processedOperatorIds.add(serviceData.operator_id);
-  }
 
-  // Agregar operadores adicionales desde costos de comisiones (solo si no están ya procesados y tienen comisión > 0)
-  commissionCosts.forEach((cost, index) => {
-    if (cost.operator_id && cost.operators && !processedOperatorIds.has(cost.operator_id) && (cost.amount || 0) > 0) {
+  // Intentar leer desde service_resources primero
+  const { data: resourcesData } = await supabase
+    .from('service_resources')
+    .select('id, operator_id, role, commission_amount, is_primary, operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, created_at, updated_at)')
+    .eq('service_id', serviceId)
+    .eq('resource_type', 'operator');
+
+  console.log('🔍 [ENHANCED_SERVICE] service_resources found:', resourcesData?.length || 0);
+
+  if (resourcesData && resourcesData.length > 0) {
+    // Fuente primaria: service_resources con roles y comisiones reales
+    resourcesData.forEach((resource: any) => {
+      if (resource.operator_id && resource.operators) {
+        operators.push({
+          id: resource.id,
+          operatorId: resource.operator_id,
+          operator: {
+            id: resource.operators.id,
+            name: resource.operators.name,
+            rut: resource.operators.rut,
+            phone: resource.operators.phone || '',
+            operatorType: (resource.operators.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+            department: resource.operators.department || '',
+            position: resource.operators.position || '',
+            licenseNumber: resource.operators.license_number || '',
+            examExpiry: resource.operators.exam_expiry || '',
+            isActive: resource.operators.is_active ?? true,
+            createdAt: resource.operators.created_at || '',
+            updatedAt: resource.operators.updated_at || ''
+          },
+          commission: resource.commission_amount || 0,
+          role: resource.role || (resource.is_primary ? 'Principal' : 'Adicional'),
+          hours: undefined
+        });
+      }
+    });
+    console.log('✅ [ENHANCED_SERVICE] Operators loaded from service_resources:', operators.map(o => ({ name: o.operator?.name, role: o.role, commission: o.commission })));
+  } else {
+    // Fallback para servicios legacy sin service_resources
+    console.log('⚠️ [ENHANCED_SERVICE] No service_resources found, using legacy fallback');
+    const processedOperatorIds = new Set<string>();
+
+    if (serviceData.operators && serviceData.operator_id) {
       operators.push({
-        id: `additional-${cost.id}`,
-        operatorId: cost.operator_id,
+        id: 'main-operator',
+        operatorId: serviceData.operator_id,
         operator: {
-          id: cost.operators.id,
-          name: cost.operators.name,
-          rut: cost.operators.rut,
-          phone: '',
-          operatorType: 'crane_operator',
-          licenseNumber: '',
-          examExpiry: '',
-          isActive: true,
-          createdAt: '',
-          updatedAt: ''
+          id: serviceData.operators.id,
+          name: serviceData.operators.name,
+          rut: serviceData.operators.rut,
+          phone: serviceData.operators.phone,
+          operatorType: (serviceData.operators.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+          department: serviceData.operators.department,
+          position: serviceData.operators.position,
+          licenseNumber: serviceData.operators.license_number,
+          examExpiry: serviceData.operators.exam_expiry,
+          isActive: serviceData.operators.is_active,
+          createdAt: serviceData.operators.created_at,
+          updatedAt: serviceData.operators.updated_at
         },
-        commission: cost.amount || 0,
-        role: 'Adicional',
-        hours: cost.notes?.match(/(\d+)\s*horas?/i)?.[1] ? parseInt(cost.notes.match(/(\d+)\s*horas?/i)![1]) : undefined
+        commission: serviceData.operator_commission || 0,
+        role: 'Principal',
+        hours: 8
       });
-      
-      // Marcar este operador como procesado
-      processedOperatorIds.add(cost.operator_id);
+      processedOperatorIds.add(serviceData.operator_id);
     }
-  });
+
+    commissionCosts.forEach((cost) => {
+      if (cost.operator_id && cost.operators && !processedOperatorIds.has(cost.operator_id) && (cost.amount || 0) > 0) {
+        operators.push({
+          id: `additional-${cost.id}`,
+          operatorId: cost.operator_id,
+          operator: {
+            id: cost.operators.id,
+            name: cost.operators.name,
+            rut: cost.operators.rut,
+            phone: '',
+            operatorType: 'crane_operator',
+            licenseNumber: '',
+            examExpiry: '',
+            isActive: true,
+            createdAt: '',
+            updatedAt: ''
+          },
+          commission: cost.amount || 0,
+          role: 'Adicional',
+          hours: undefined
+        });
+        processedOperatorIds.add(cost.operator_id);
+      }
+    });
+  }
 
   // 5. Calcular totales
   const totalCommissions = operators.reduce((sum, op) => sum + (op.commission || 0), 0);
