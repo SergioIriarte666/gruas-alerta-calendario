@@ -136,19 +136,17 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
         let parsed: Omit<ParsedQuote, 'fileName'>;
 
         try {
-          parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
-            pdfBase64: base64,
-          });
-        } catch (remoteError: unknown) {
+          const localParsed = await extractQuoteDataLocally(file);
+          if (!localParsed.items.length) {
+            throw new Error('No se encontraron ítems utilizables en el PDF');
+          }
+          parsed = localParsed;
+        } catch (localError: unknown) {
           try {
-            const localParsed = await extractQuoteDataLocally(file);
-            if (!localParsed.items.length) {
-              throw new Error('No se encontraron ítems utilizables en el PDF');
-            }
-
-            toast.warning(`${file.name}: se usó lectura local de respaldo`);
-            parsed = localParsed;
-          } catch (localError) {
+            parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
+              pdfBase64: base64,
+            });
+          } catch (remoteError: unknown) {
             throw new Error(buildVipPdfImportError(remoteError, localError));
           }
         }

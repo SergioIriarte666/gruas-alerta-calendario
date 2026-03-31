@@ -139,19 +139,17 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
         let parsed: Omit<ParsedOC, 'fileName'>;
 
         try {
-          parsed = await invokeEdgeFunctionJson<Omit<ParsedOC, 'fileName'>>('parse-purchase-order-pdf', {
-            pdfBase64: base64,
-          });
-        } catch (remoteError: unknown) {
+          const localParsed = await extractPurchaseOrderDataLocally(file);
+          if (!localParsed.items.length) {
+            throw new Error('No se encontraron ítems utilizables en el PDF');
+          }
+          parsed = localParsed;
+        } catch (localError: unknown) {
           try {
-            const localParsed = await extractPurchaseOrderDataLocally(file);
-            if (!localParsed.items.length) {
-              throw new Error('No se encontraron ítems utilizables en el PDF');
-            }
-
-            toast.warning(`${file.name}: se usó lectura local de respaldo`);
-            parsed = localParsed;
-          } catch (localError) {
+            parsed = await invokeEdgeFunctionJson<Omit<ParsedOC, 'fileName'>>('parse-purchase-order-pdf', {
+              pdfBase64: base64,
+            });
+          } catch (remoteError: unknown) {
             throw new Error(buildVipPdfImportError(remoteError, localError));
           }
         }

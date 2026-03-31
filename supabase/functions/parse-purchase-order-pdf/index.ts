@@ -23,9 +23,25 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const getGatewayApiKey = () => {
-  const key = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('AI_GATEWAY_KEY');
-  return key ? key.trim() : null;
+const normalizeGatewayApiKey = (raw: string) => {
+  let value = raw.trim();
+  value = value.replace(/^['"`]\s*/, '').replace(/\s*['"`]$/, '').trim();
+  value = value.replace(/^Bearer\s+/i, '').trim();
+  return value;
+};
+
+const getGatewayApiKeys = () => {
+  const primaryRaw = Deno.env.get('LOVABLE_API_KEY');
+  const fallbackRaw = Deno.env.get('AI_GATEWAY_KEY');
+
+  const primary = primaryRaw ? normalizeGatewayApiKey(primaryRaw) : null;
+  const fallback = fallbackRaw ? normalizeGatewayApiKey(fallbackRaw) : null;
+
+  const keys = [primary, fallback]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .filter((value, index, arr) => arr.indexOf(value) === index);
+
+  return keys;
 };
 
 serve(async (req) => {
@@ -60,24 +76,29 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = getGatewayApiKey();
-    if (!gatewayApiKey) {
+    const gatewayApiKeys = getGatewayApiKeys();
+    if (gatewayApiKeys.length === 0) {
       console.error('AI gateway key is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${gatewayApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres un extractor de datos de Órdenes de Compra (OC) chilenas en formato PDF.
+    let aiResponse: Response | null = null;
+    let lastErrorText = '';
+    let lastStatus = 0;
+
+    for (const gatewayApiKey of gatewayApiKeys) {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${gatewayApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `Eres un extractor de datos de Órdenes de Compra (OC) chilenas en formato PDF.
 Debes extraer la información estructurada del documento usando la herramienta extract_purchase_order.
 
 *** LEE EL DOCUMENTO COMPLETO: encabezado, tabla de items, observaciones, notas al pie, glosas, y CUALQUIER otro texto visible en el PDF. No omitas NINGUNA sección. ***
@@ -111,96 +132,103 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - NUNCA devuelvas quoteReference vacío si hay una referencia a cotización o presupuesto en CUALQUIER parte del documento.
 - Extrae SOLO el número (ej: "4100", "4090").
 - Extrae el RUT de la empresa/entidad que EMITE la orden de compra (el comprador). Busca en campos como "RUT", "R.U.T.", encabezado de la empresa emisora. Formato XX.XXX.XXX-X o similar. Si no lo encuentras, devuelve string vacío.`
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, totales, Y MUY IMPORTANTE busca en TODO el documento (especialmente en observaciones, notas, glosas y descripciones de items) cualquier referencia a cotizaciones o presupuestos y extrae el número como quoteReference.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, totales, Y MUY IMPORTANTE busca en TODO el documento (especialmente en observaciones, notas, glosas y descripciones de items) cualquier referencia a cotizaciones o presupuestos y extrae el número como quoteReference.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:application/pdf;base64,${pdfBase64}`
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'extract_purchase_order',
-              description: 'Extraer datos estructurados de una orden de compra',
-              parameters: {
-                type: 'object',
-                properties: {
-                  ocNumber: {
-                    type: 'string',
-                    description: 'Número de la orden de compra'
-                  },
-                  date: {
-                    type: 'string',
-                    description: 'Fecha del documento en formato YYYY-MM-DD, o null si no se encuentra'
-                  },
-                  items: {
-                    type: 'array',
+              ]
+            }
+          ],
+          tools: [
+            {
+              type: 'function',
+              function: {
+                name: 'extract_purchase_order',
+                description: 'Extraer datos estructurados de una orden de compra',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    ocNumber: {
+                      type: 'string',
+                      description: 'Número de la orden de compra'
+                    },
+                    date: {
+                      type: 'string',
+                      description: 'Fecha del documento en formato YYYY-MM-DD, o null si no se encuentra'
+                    },
                     items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          patente: { type: 'string', description: 'Patente/placa del vehículo' },
+                          detail: { type: 'string', description: 'Descripción del servicio' },
+                          amount: { type: 'number', description: 'Monto total en CLP (cantidad x precio unitario)' },
+                          quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
+                        },
+                        required: ['patente', 'detail', 'amount']
+                      },
+                      description: 'Lista de items/líneas de la OC con patentes'
+                    },
+                    totals: {
                       type: 'object',
                       properties: {
-                        patente: { type: 'string', description: 'Patente/placa del vehículo' },
-                        detail: { type: 'string', description: 'Descripción del servicio' },
-                        amount: { type: 'number', description: 'Monto total en CLP (cantidad x precio unitario)' },
-                        quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
+                        neto: { type: 'number', description: 'Monto neto' },
+                        iva: { type: 'number', description: 'IVA' },
+                        total: { type: 'number', description: 'Total' }
                       },
-                      required: ['patente', 'detail', 'amount']
+                      required: ['neto', 'iva', 'total']
                     },
-                    description: 'Lista de items/líneas de la OC con patentes'
-                  },
-                  totals: {
-                    type: 'object',
-                    properties: {
-                      neto: { type: 'number', description: 'Monto neto' },
-                      iva: { type: 'number', description: 'IVA' },
-                      total: { type: 'number', description: 'Total' }
+                    quoteReference: {
+                      type: 'string',
+                      description: 'Número de referencia de presupuesto/cotización encontrado en observaciones (solo el número, ej: "4090")'
                     },
-                    required: ['neto', 'iva', 'total']
+                    clientRut: {
+                      type: 'string',
+                      description: 'RUT de la empresa/entidad que emite la orden de compra (ej: 76.XXX.XXX-X)'
+                    }
                   },
-                  quoteReference: {
-                    type: 'string',
-                    description: 'Número de referencia de presupuesto/cotización encontrado en observaciones (solo el número, ej: "4090")'
-                  },
-                  clientRut: {
-                    type: 'string',
-                    description: 'RUT de la empresa/entidad que emite la orden de compra (ej: 76.XXX.XXX-X)'
-                  }
-                },
-                required: ['ocNumber', 'items', 'totals']
+                  required: ['ocNumber', 'items', 'totals']
+                }
               }
             }
-          }
-        ],
-        tool_choice: { type: 'function', function: { name: 'extract_purchase_order' } }
-      }),
-    });
+          ],
+          tool_choice: { type: 'function', function: { name: 'extract_purchase_order' } }
+        }),
+      });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      const gatewayMessage = parseGatewayError(errorText);
-      console.error('AI gateway error:', aiResponse.status, gatewayMessage || errorText);
+      if (aiResponse.ok) break;
 
-      if (aiResponse.status === 429) {
+      lastStatus = aiResponse.status;
+      lastErrorText = await aiResponse.text().catch(() => '');
+
+      if (aiResponse.status !== 401) break;
+    }
+
+    if (!aiResponse?.ok) {
+      const gatewayMessage = parseGatewayError(lastErrorText);
+      console.error('AI gateway error:', lastStatus, gatewayMessage || lastErrorText);
+
+      if (lastStatus === 429) {
         return jsonResponse({ error: 'Límite de solicitudes excedido, intenta más tarde' }, 429);
       }
-      if (aiResponse.status === 402) {
+      if (lastStatus === 402) {
         return jsonResponse({ error: 'Créditos de IA insuficientes' }, 402);
       }
-      if (aiResponse.status === 401) {
+      if (lastStatus === 401) {
         return jsonResponse({ error: gatewayMessage || 'Error de autenticación con el gateway de IA' }, 500);
       }
-      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${aiResponse.status})` }, 500);
+      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${lastStatus})` }, 500);
     }
 
     const aiData = await aiResponse.json();

@@ -23,9 +23,25 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const getGatewayApiKey = () => {
-  const key = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('AI_GATEWAY_KEY');
-  return key ? key.trim() : null;
+const normalizeGatewayApiKey = (raw: string) => {
+  let value = raw.trim();
+  value = value.replace(/^['"`]\s*/, '').replace(/\s*['"`]$/, '').trim();
+  value = value.replace(/^Bearer\s+/i, '').trim();
+  return value;
+};
+
+const getGatewayApiKeys = () => {
+  const primaryRaw = Deno.env.get('LOVABLE_API_KEY');
+  const fallbackRaw = Deno.env.get('AI_GATEWAY_KEY');
+
+  const primary = primaryRaw ? normalizeGatewayApiKey(primaryRaw) : null;
+  const fallback = fallbackRaw ? normalizeGatewayApiKey(fallbackRaw) : null;
+
+  const keys = [primary, fallback]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    .filter((value, index, arr) => arr.indexOf(value) === index);
+
+  return keys;
 };
 
 serve(async (req) => {
@@ -60,24 +76,29 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = getGatewayApiKey();
-    if (!gatewayApiKey) {
+    const gatewayApiKeys = getGatewayApiKeys();
+    if (gatewayApiKeys.length === 0) {
       console.error('AI gateway key is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${gatewayApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `Eres un extractor de datos de Cotizaciones chilenas en formato PDF.
+    let aiResponse: Response | null = null;
+    let lastErrorText = '';
+    let lastStatus = 0;
+
+    for (const gatewayApiKey of gatewayApiKeys) {
+      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${gatewayApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `Eres un extractor de datos de Cotizaciones chilenas en formato PDF.
 Debes extraer la información estructurada del documento usando la herramienta extract_quote.
 
 *** LEE EL DOCUMENTO COMPLETO: encabezado, tabla de items, observaciones, notas al pie, glosas, y CUALQUIER otro texto visible en el PDF. No omitas NINGUNA sección. ***
@@ -102,92 +123,99 @@ Debes extraer la información estructurada del documento usando la herramienta e
   Ejemplo: "GrooveLZWADAGA3TN041614" -> patente="LZWADAGA3TN041614"
   NUNCA incluyas letras del nombre del modelo como parte del VIN. NUNCA cortes el primer digito del VIN.
   Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.`
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Extrae todos los datos de esta Cotización: número de cotización, fecha, lista de items con patente/detalle/monto/cantidad, totales, y lee TODO el documento completo incluyendo observaciones, notas y glosas.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extrae todos los datos de esta Cotización: número de cotización, fecha, lista de items con patente/detalle/monto/cantidad, totales, y lee TODO el documento completo incluyendo observaciones, notas y glosas.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:application/pdf;base64,${pdfBase64}`
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'extract_quote',
-              description: 'Extraer datos estructurados de una cotización',
-              parameters: {
-                type: 'object',
-                properties: {
-                  quoteNumber: {
-                    type: 'string',
-                    description: 'Número de la cotización/presupuesto'
-                  },
-                  date: {
-                    type: 'string',
-                    description: 'Fecha del documento en formato YYYY-MM-DD, o null si no se encuentra'
-                  },
-                  items: {
-                    type: 'array',
+              ]
+            }
+          ],
+          tools: [
+            {
+              type: 'function',
+              function: {
+                name: 'extract_quote',
+                description: 'Extraer datos estructurados de una cotización',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    quoteNumber: {
+                      type: 'string',
+                      description: 'Número de la cotización/presupuesto'
+                    },
+                    date: {
+                      type: 'string',
+                      description: 'Fecha del documento en formato YYYY-MM-DD, o null si no se encuentra'
+                    },
                     items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          patente: { type: 'string', description: 'Patente/placa del vehículo encontrada en la descripción' },
+                          detail: { type: 'string', description: 'Descripción del servicio' },
+                          amount: { type: 'number', description: 'Valor total del ítem en CLP' },
+                          quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
+                        },
+                        required: ['patente', 'detail', 'amount']
+                      },
+                      description: 'Lista de items/líneas de la cotización con patentes'
+                    },
+                    clientRut: {
+                      type: 'string',
+                      description: 'RUT del cliente/empresa destinatario de la cotización (ej: 76.XXX.XXX-X)'
+                    },
+                    totals: {
                       type: 'object',
                       properties: {
-                        patente: { type: 'string', description: 'Patente/placa del vehículo encontrada en la descripción' },
-                        detail: { type: 'string', description: 'Descripción del servicio' },
-                        amount: { type: 'number', description: 'Valor total del ítem en CLP' },
-                        quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
+                        neto: { type: 'number', description: 'Monto neto' },
+                        iva: { type: 'number', description: 'IVA' },
+                        total: { type: 'number', description: 'Total' }
                       },
-                      required: ['patente', 'detail', 'amount']
-                    },
-                    description: 'Lista de items/líneas de la cotización con patentes'
+                      required: ['neto', 'iva', 'total']
+                    }
                   },
-                  clientRut: {
-                    type: 'string',
-                    description: 'RUT del cliente/empresa destinatario de la cotización (ej: 76.XXX.XXX-X)'
-                  },
-                  totals: {
-                    type: 'object',
-                    properties: {
-                      neto: { type: 'number', description: 'Monto neto' },
-                      iva: { type: 'number', description: 'IVA' },
-                      total: { type: 'number', description: 'Total' }
-                    },
-                    required: ['neto', 'iva', 'total']
-                  }
-                },
-                required: ['quoteNumber', 'items', 'totals']
+                  required: ['quoteNumber', 'items', 'totals']
+                }
               }
             }
-          }
-        ],
-        tool_choice: { type: 'function', function: { name: 'extract_quote' } }
-      }),
-    });
+          ],
+          tool_choice: { type: 'function', function: { name: 'extract_quote' } }
+        }),
+      });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      const gatewayMessage = parseGatewayError(errorText);
-      console.error('AI gateway error:', aiResponse.status, gatewayMessage || errorText);
+      if (aiResponse.ok) break;
 
-      if (aiResponse.status === 429) {
+      lastStatus = aiResponse.status;
+      lastErrorText = await aiResponse.text().catch(() => '');
+
+      if (aiResponse.status !== 401) break;
+    }
+
+    if (!aiResponse?.ok) {
+      const gatewayMessage = parseGatewayError(lastErrorText);
+      console.error('AI gateway error:', lastStatus, gatewayMessage || lastErrorText);
+
+      if (lastStatus === 429) {
         return jsonResponse({ error: 'Límite de solicitudes excedido, intenta más tarde' }, 429);
       }
-      if (aiResponse.status === 402) {
+      if (lastStatus === 402) {
         return jsonResponse({ error: 'Créditos de IA insuficientes' }, 402);
       }
-      if (aiResponse.status === 401) {
+      if (lastStatus === 401) {
         return jsonResponse({ error: gatewayMessage || 'Error de autenticación con el gateway de IA' }, 500);
       }
-      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${aiResponse.status})` }, 500);
+      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${lastStatus})` }, 500);
     }
 
     const aiData = await aiResponse.json();

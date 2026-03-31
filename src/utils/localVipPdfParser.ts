@@ -1,4 +1,5 @@
 import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+import { createWorker } from 'tesseract.js';
 
 export interface LocalVipPdfItem {
   patente: string;
@@ -62,7 +63,7 @@ const formatIsoDate = (day: string, month: string, year: string) => {
 };
 
 const extractDate = (text: string) => {
-  const matches = collectMatches(text, /\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g);
+  const matches = collectMatches(text, /\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/g);
   for (const match of matches) {
     const date = formatIsoDate(match[1], match[2], match[3]);
     if (date) return date;
@@ -199,10 +200,46 @@ const extractQuoteReference = (text: string) => {
   return candidates[0] || '';
 };
 
+const renderPdfPageToDataUrl = async (page: any, scale: number) => {
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.ceil(viewport.width));
+  canvas.height = Math.max(1, Math.ceil(viewport.height));
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  await page.render({ canvasContext: context, viewport }).promise;
+  return canvas.toDataURL('image/png');
+};
+
+const extractPdfTextWithOcr = async (pdf: any) => {
+  const maxPages = Math.min(2, Number(pdf?.numPages || 0) || 0);
+  if (maxPages === 0) return '';
+
+  let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+  try {
+    worker = await createWorker('eng');
+    const chunks: string[] = [];
+
+    for (let pageNumber = 1; pageNumber <= maxPages; pageNumber += 1) {
+      const page = await pdf.getPage(pageNumber);
+      const dataUrl = await renderPdfPageToDataUrl(page, 2);
+      if (!dataUrl) continue;
+      const result = await worker.recognize(dataUrl);
+      const rawText = result?.data?.text || '';
+      if (rawText.trim()) chunks.push(rawText);
+    }
+
+    return chunks.join('\n');
+  } finally {
+    if (worker) {
+      try { await worker.terminate(); } catch (error) { void error; }
+    }
+  }
+};
+
 const extractPdfLines = async (file: File) => {
   const pdfjsLib = await loadPdfJsCompat();
   const buffer = await file.arrayBuffer();
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),
     disableWorker: true,
@@ -253,7 +290,22 @@ const extractPdfLines = async (file: File) => {
       });
   }
 
-  return { lines, text: lines.join('\n') };
+  let text = lines.join('\n');
+
+  if (extractItems(lines).length === 0) {
+    const ocrText = await extractPdfTextWithOcr(pdf);
+    const normalizedOcrText = ocrText.trim();
+    if (normalizedOcrText) {
+      const ocrLines = normalizedOcrText
+        .split(/\r?\n/)
+        .map((line) => normalizeSpaces(line))
+        .filter(Boolean);
+      text = normalizedOcrText;
+      return { lines: ocrLines, text };
+    }
+  }
+
+  return { lines, text };
 };
 
 export const extractQuoteDataLocally = async (file: File): Promise<LocalQuotePdfResult> => {

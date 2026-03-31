@@ -1,3 +1,5 @@
+import pdfJsWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+
 type PromiseWithResolversResult<T> = {
   promise: Promise<T>;
   resolve: (value: T | PromiseLike<T>) => void;
@@ -94,7 +96,7 @@ export const loadPdfJsCompat = async (): Promise<PdfJsModule> => {
 
     pdfJsPromise = import('pdfjs-dist/legacy/build/pdf.mjs')
       .then((module) => {
-        module.GlobalWorkerOptions.workerSrc = '';
+        module.GlobalWorkerOptions.workerSrc = pdfJsWorkerUrl;
 
         return module;
       })

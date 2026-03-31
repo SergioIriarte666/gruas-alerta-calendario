@@ -8,9 +8,5 @@ export const buildVipPdfImportError = (remoteError: unknown, localError?: unknow
   const remoteMessage = getErrorMessage(remoteError);
   const localMessage = getErrorMessage(localError);
 
-  if (remoteMessage && localMessage) {
-    return `Lectura IA: ${remoteMessage}. Respaldo local: ${localMessage}`;
-  }
-
   return localMessage || remoteMessage || 'No se pudo procesar el PDF';
 };
