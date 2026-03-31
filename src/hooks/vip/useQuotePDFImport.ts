@@ -6,6 +6,20 @@ import { toast } from 'sonner';
 import { disableVipPdfAiForSession, invokeEdgeFunctionJson, isVipPdfAiDisabled } from '@/utils/vipPdfImportClient';
 import { extractQuoteDataLocally } from '@/utils/localVipPdfParser';
 import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
+import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+
+const extractPdfText = async (buffer: ArrayBuffer): Promise<string> => {
+  const pdfJs = await loadPdfJsCompat();
+  const pdf = await pdfJs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const items = content.items as Array<{ str: string }>;
+    fullText += items.map(item => item.str).join(' ') + '\n';
+  }
+  return fullText;
+};
 
 export interface ParsedQuoteItem {
   patente: string;
