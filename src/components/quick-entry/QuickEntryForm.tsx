@@ -223,10 +223,15 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !formData.description}
+              disabled={isLoading || isExtracting || !formData.description}
               className="flex-1"
             >
-              {isLoading ? 'Guardando...' : 'Guardar'}
+              {isExtracting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Extrayendo datos...
+                </>
+              ) : isLoading ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
         </form>
