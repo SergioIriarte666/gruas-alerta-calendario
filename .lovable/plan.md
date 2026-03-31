@@ -1,54 +1,47 @@
 
 
-# Plan: Corregir Roles de Operadores y Comisiones Perdidas en Servicios Multi-Operador
+# Plan: Corregir Importación de PDFs — Enviar Texto en vez de Imagen
 
-## Problema Raíz
+## Problema
 
-El hook `useEnhancedServiceDetails.ts` (líneas 138-200) **no lee `service_resources`** para construir la lista de operadores. En su lugar:
-
-1. Toma el operador principal desde `services.operator_id` y le asigna `role: 'Principal'` hardcodeado
-2. Busca operadores adicionales en la tabla `costs` (comisiones) y les asigna `role: 'Adicional'` hardcodeado
-
-Esto causa:
-- **Roles perdidos**: Los roles reales guardados en `service_resources` (Principal, Auxiliar, Supervisor, Apoyo) se ignoran completamente al editar
-- **Comisiones perdidas**: Si un operador secundario no tiene comisión en `costs`, simplemente no aparece al editar, y al guardar se elimina de `service_resources`
-- **Datos inconsistentes**: Al re-guardar un servicio, los roles se sobrescriben con "Principal" / "Adicional" genéricos
+OpenAI rechaza PDFs enviados como `image_url` con error "Invalid MIME type. Only image types are supported." El gateway anterior de Lovable convertía PDFs a imágenes internamente; la API directa de OpenAI no lo hace.
 
 ## Solución
 
-### Paso 1: Modificar `useEnhancedServiceDetails.ts` — Leer desde `service_resources`
+Extraer el texto del PDF en el cliente con `pdfjs-dist` (ya instalado) y enviar texto plano a la Edge Function en lugar del archivo binario.
 
-Agregar una consulta a `service_resources` como fuente primaria de operadores:
+## Cambios
 
-```typescript
-// NUEVA consulta - obtener operadores reales desde service_resources
-const { data: resourcesData } = await supabase
-  .from('service_resources')
-  .select('id, operator_id, role, commission_amount, is_primary, operators(id, name, rut, phone, ...)')
-  .eq('service_id', serviceId)
-  .eq('resource_type', 'operator');
+### 1. Hooks del cliente — extraer texto antes de llamar al servidor
+
+**Archivos:** `src/hooks/vip/useQuotePDFImport.ts`, `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+
+- Usar `pdfjs-dist` para extraer todo el texto del PDF página por página
+- Enviar `{ pdfText: textoExtraido }` a la Edge Function en lugar de `{ pdfBase64: ... }`
+
+### 2. Edge Functions — recibir texto en vez de imagen
+
+**Archivos:** `supabase/functions/parse-quote-pdf/index.ts`, `supabase/functions/parse-purchase-order-pdf/index.ts`
+
+- Aceptar parámetro `pdfText` (string) en el body
+- Reemplazar el bloque `image_url` por un mensaje de texto plano:
+```text
+ANTES (roto):
+  { type: 'image_url', image_url: { url: 'data:application/pdf;base64,...' } }
+
+DESPUÉS (funciona):
+  { type: 'text', text: 'Contenido del PDF:\n\n[texto extraído]' }
 ```
 
-Reemplazar la lógica actual (líneas 138-200) que construye operadores desde `services.operator_id` + `costs`:
+### 3. Sin cambios en
 
-- Si hay registros en `service_resources` → usarlos como fuente primaria (con roles y comisiones reales)
-- Si no hay registros en `service_resources` (servicios legacy) → fallback al método actual (`services.operator_id` + costs)
-
-Esto preserva los roles reales (Auxiliar, Supervisor, etc.) y garantiza que todos los operadores aparezcan al editar.
-
-### Paso 2: No se requieren cambios en el formulario ni en `useServiceManager.ts`
-
-El formulario (`MultipleOperatorsSection.tsx`) ya captura roles correctamente. El `useServiceManager.ts` ya guarda roles en `service_resources` correctamente (líneas 926-966). El problema es únicamente la **lectura** en `useEnhancedServiceDetails.ts`.
-
-## Archivos a Modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/hooks/useEnhancedServiceDetails.ts` | Agregar consulta a `service_resources`, reemplazar lógica de construcción de operadores (líneas 138-200) |
+- `parse-receipt-image` — ya envía imágenes correctamente (JPEG/PNG)
+- Prompts de extracción y schemas de herramientas — se mantienen idénticos
+- Fallback local con regex — sigue funcionando como respaldo
 
 ## Impacto
-- **Cero riesgo**: Solo cambia la lectura, no la escritura
-- **No afecta costos**: La separación de costos vs comisiones sigue igual
-- **No afecta triggers**: El trigger de generación de comisiones no se modifica
-- **Backward compatible**: El fallback a `services.operator_id` mantiene compatibilidad con servicios antiguos sin `service_resources`
+
+- Elimina el error de MIME type por completo
+- Costo similar (~$0.01–$0.03 por documento con gpt-4o-mini)
+- Cero riesgo para otros módulos (costos, comisiones, etc.)
 
