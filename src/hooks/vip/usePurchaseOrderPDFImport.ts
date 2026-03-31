@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServices } from '@/hooks/useServices';
 import { toast } from 'sonner';
+import { invokeEdgeFunctionJson } from '@/utils/vipPdfImportClient';
+import { extractPurchaseOrderDataLocally } from '@/utils/localVipPdfParser';
 
 export interface ParsedOCItem {
   patente: string;
@@ -39,12 +41,17 @@ interface ImportState {
 }
 
 const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
+const normalizeOC = (oc: string | null | undefined) => (oc || '').replace(/^OC-/i, '').trim();
+const normalizeText = (text: string | null | undefined) =>
+  (text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const normalizeRut = (rut: string | null | undefined) => (rut || '').replace(/[.\s-]/g, '').toUpperCase();
 
-// Levenshtein distance for fuzzy VIN matching (tolerates OCR errors)
 const levenshtein = (a: string, b: string): number => {
-  const m = a.length, n = b.length;
+  const m = a.length;
+  const n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
+
   let prev = Array.from({ length: n + 1 }, (_, i) => i);
   for (let i = 1; i <= m; i++) {
     const curr = [i];
@@ -59,27 +66,27 @@ const levenshtein = (a: string, b: string): number => {
 const findFuzzyVinMatch = (
   patenteNorm: string,
   candidates: Service[],
-  usedIds: Set<string>
+  usedIds: Set<string>,
 ): Service | null => {
   if (patenteNorm.length < 16) return null;
+
   let bestMatch: Service | null = null;
-  let bestDist = 3; // threshold: max 2
-  for (const s of candidates) {
-    if (usedIds.has(s.id)) continue;
-    const sNorm = normalizePatente(s.licensePlate);
-    if (sNorm.length < 16) continue;
-    const d = levenshtein(patenteNorm, sNorm);
-    if (d > 0 && d < bestDist) {
-      bestDist = d;
-      bestMatch = s;
+  let bestDist = 3;
+
+  for (const service of candidates) {
+    if (usedIds.has(service.id)) continue;
+    const serviceNorm = normalizePatente(service.licensePlate);
+    if (serviceNorm.length < 16) continue;
+
+    const distance = levenshtein(patenteNorm, serviceNorm);
+    if (distance > 0 && distance < bestDist) {
+      bestDist = distance;
+      bestMatch = service;
     }
   }
+
   return bestMatch;
 };
-const normalizeOC = (oc: string | null | undefined) => (oc || '').replace(/^OC-/i, '').trim();
-const normalizeText = (t: string | null | undefined) =>
-  (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-const normalizeRut = (r: string | null | undefined) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
 
 export function usePurchaseOrderPDFImport(clientId: string | null, services: Service[]) {
   const { updateService } = useServices();
@@ -104,37 +111,45 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
   const processFiles = useCallback(async (files: File[]) => {
     if (!clientId) return;
 
-    setState(prev => ({ ...prev, step: 'uploading', error: null, progress: { current: 0, total: files.length, fileName: '' } }));
+    setState((prev) => ({
+      ...prev,
+      step: 'uploading',
+      error: null,
+      progress: { current: 0, total: files.length, fileName: '' },
+    }));
 
     const parsedOCs: ParsedOC[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      setState(prev => ({ ...prev, progress: { current: i + 1, total: files.length, fileName: file.name } }));
+      setState((prev) => ({
+        ...prev,
+        progress: { current: i + 1, total: files.length, fileName: file.name },
+      }));
 
       try {
-        // Convert file to base64
         const buffer = await file.arrayBuffer();
         const bytes = new Uint8Array(buffer);
         let binary = '';
-        for (let j = 0; j < bytes.length; j++) {
-          binary += String.fromCharCode(bytes[j]);
-        }
+        for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
         const base64 = btoa(binary);
 
-        // Call edge function
-        const { data, error } = await supabase.functions.invoke('parse-purchase-order-pdf', {
-          body: { pdfBase64: base64 },
-        });
+        let parsed: Omit<ParsedOC, 'fileName'>;
 
-        if (error) {
-          const serverMsg = (data as any)?.error || error.message || 'Error del servidor';
-          throw new Error(serverMsg);
+        try {
+          parsed = await invokeEdgeFunctionJson<Omit<ParsedOC, 'fileName'>>('parse-purchase-order-pdf', {
+            pdfBase64: base64,
+          });
+        } catch (remoteError: any) {
+          const localParsed = await extractPurchaseOrderDataLocally(file);
+          if (!localParsed.items.length) {
+            throw new Error(remoteError?.message || 'No se pudo procesar el PDF');
+          }
+          toast.warning(`${file.name}: se usó lectura local de respaldo`);
+          parsed = localParsed;
         }
-        if (!data) throw new Error('Sin respuesta del servidor');
-        if ((data as any).error) throw new Error((data as any).error);
 
-        parsedOCs.push({ ...data, fileName: file.name });
+        parsedOCs.push({ ...parsed, fileName: file.name });
       } catch (err: any) {
         console.error(`Error processing ${file.name}:`, err);
         toast.error(`Error procesando ${file.name}: ${err.message}`);
@@ -142,11 +157,10 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     }
 
     if (parsedOCs.length === 0) {
-      setState(prev => ({ ...prev, step: 'idle', error: 'No se pudo procesar ningún PDF' }));
+      setState((prev) => ({ ...prev, step: 'idle', error: 'No se pudo procesar ningún PDF' }));
       return;
     }
 
-    // Fetch client data for RUT validation
     const { data: clientData } = await supabase
       .from('clients')
       .select('id, name, rut')
@@ -155,27 +169,22 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
     const clientRut = normalizeRut(clientData?.rut);
 
-    // Validate RUT: filter out PDFs that belong to a different client
-    const validOCs = parsedOCs.filter(doc => {
+    const validOCs = parsedOCs.filter((doc) => {
       const docRut = normalizeRut(doc.clientRut);
       if (docRut && clientRut && docRut !== clientRut) {
-        toast.error(
-          `${doc.fileName}: La OC pertenece a otro cliente (RUT: ${doc.clientRut}). El cliente actual tiene RUT: ${clientData?.rut}`
-        );
+        toast.error(`${doc.fileName}: La OC pertenece a otro cliente (RUT: ${doc.clientRut}). El cliente actual tiene RUT: ${clientData?.rut}`);
         return false;
       }
       return true;
     });
 
     if (validOCs.length === 0) {
-      setState(prev => ({ ...prev, step: 'idle', error: 'Ningún PDF corresponde a este cliente' }));
+      setState((prev) => ({ ...prev, step: 'idle', error: 'Ningún PDF corresponde a este cliente' }));
       return;
     }
 
-    // Now match against existing services - fetch fresh data from DB
-    setState(prev => ({ ...prev, step: 'matching', parsedOCs: validOCs }));
+    setState((prev) => ({ ...prev, step: 'matching', parsedOCs: validOCs }));
 
-    // Fresh fetch to avoid stale cache after OC deletions
     let clientServices: Service[] = [];
     try {
       const { data: freshData, error: freshError } = await supabase
@@ -202,21 +211,33 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
         folio: service.folio,
         requestDate: service.request_date,
         serviceDate: service.service_date,
-        client: clientDataFresh ? {
-          id: clientDataFresh.id, name: clientDataFresh.name, rut: clientDataFresh.rut,
-          phone: clientDataFresh.phone || '', email: clientDataFresh.email || '',
-          address: clientDataFresh.address || '', department: clientDataFresh.department || 'General',
-          isActive: clientDataFresh.is_active, createdAt: '', updatedAt: ''
-        } : null,
+        client: clientDataFresh
+          ? {
+              id: clientDataFresh.id,
+              name: clientDataFresh.name,
+              rut: clientDataFresh.rut,
+              phone: clientDataFresh.phone || '',
+              email: clientDataFresh.email || '',
+              address: clientDataFresh.address || '',
+              department: clientDataFresh.department || 'General',
+              isActive: clientDataFresh.is_active,
+              createdAt: '',
+              updatedAt: '',
+            }
+          : null,
         purchaseOrder: service.purchase_order,
         purchaseOrderNumber: service.purchase_order_number || '',
         quoteNumber: service.quote_number || '',
         licensePlate: service.license_plate,
-        serviceType: service.service_types ? {
-          id: service.service_types.id, name: service.service_types.name,
-          description: service.service_types.description || '',
-          basePrice: service.service_types.base_price, isActive: service.service_types.is_active,
-        } : null,
+        serviceType: service.service_types
+          ? {
+              id: service.service_types.id,
+              name: service.service_types.name,
+              description: service.service_types.description || '',
+              basePrice: service.service_types.base_price,
+              isActive: service.service_types.is_active,
+            }
+          : null,
         value: Number(service.value),
         crane: service.cranes ? { id: service.cranes.id, licensePlate: service.cranes.license_plate } : null,
         operator: service.operators ? { id: service.operators.id, name: service.operators.name } : null,
@@ -225,27 +246,26 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
         createdAt: service.created_at,
         updatedAt: service.updated_at,
       })) as Service[];
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching fresh services:', err);
-      // Fallback to prop services if fresh fetch fails
-      clientServices = services.filter(s => s.client?.id === clientId);
+      clientServices = services.filter((service) => service.client?.id === clientId);
     }
-    // Solo servicios completados o con OC son candidatos (excluir pending, in_progress, quoted, invoiced, etc.)
-    clientServices = clientServices.filter(s => 
-      s.status === 'quoted' || 
-      s.status === 'purchase_order_pending' || 
-      s.status === 'completed' || 
-      s.status === 'with_purchase_order' ||
-      s.status === 'invoiced'
+
+    clientServices = clientServices.filter((service) =>
+      service.status === 'quoted' ||
+      service.status === 'purchase_order_pending' ||
+      service.status === 'completed' ||
+      service.status === 'with_purchase_order' ||
+      service.status === 'invoiced',
     );
 
     const matches: MatchedService[] = [];
     const usedServiceIds = new Set<string>();
 
-    // Collect all items into a flat list and sort: items WITH patente/VIN first
-    const allItems = validOCs.flatMap(oc => 
-      oc.items.map(item => ({ item, ocNumber: oc.ocNumber, fileName: oc.fileName, quoteReference: oc.quoteReference }))
+    const allItems = validOCs.flatMap((oc) =>
+      oc.items.map((item) => ({ item, ocNumber: oc.ocNumber, fileName: oc.fileName, quoteReference: oc.quoteReference })),
     );
+
     allItems.sort((a, b) => {
       const aHas = normalizePatente(a.item.patente) ? 0 : 1;
       const bHas = normalizePatente(b.item.patente) ? 0 : 1;
@@ -253,208 +273,155 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     });
 
     for (const { item, ocNumber, fileName, quoteReference } of allItems) {
-        const patenteNorm = normalizePatente(item.patente);
+      const patenteNorm = normalizePatente(item.patente);
 
-        // If patente is empty, use fallback matching
-        if (!patenteNorm) {
-          const ocNorm = normalizeOC(ocNumber);
-          
-          // Fallback 1: Find services with the same OC already assigned
-          const serviceWithSameOC = clientServices.find(s => 
-            !usedServiceIds.has(s.id) && (normalizeOC(s.purchaseOrder) === ocNorm || normalizeOC(s.purchaseOrderNumber) === ocNorm)
-          );
-          
-          if (serviceWithSameOC) {
-            usedServiceIds.add(serviceWithSameOC.id);
-            matches.push({
-              parsedItem: item,
-              service: serviceWithSameOC,
-              ocNumber,
-              fileName,
-              status: 'same_oc',
-            });
-            continue;
-          }
+      if (!patenteNorm) {
+        const ocNorm = normalizeOC(ocNumber);
+        const serviceWithSameOC = clientServices.find((service) =>
+          !usedServiceIds.has(service.id) &&
+          (normalizeOC(service.purchaseOrder) === ocNorm || normalizeOC(service.purchaseOrderNumber) === ocNorm),
+        );
 
-          // Fallback 2: Match by quote reference from OC observations
-          if (quoteReference) {
-            const quoteRef = quoteReference.replace(/\D/g, '');
-            if (quoteRef) {
-              const servicesByQuote = clientServices.filter(s =>
-                !usedServiceIds.has(s.id) &&
-                s.quoteNumber &&
-                s.quoteNumber.replace(/\D/g, '') === quoteRef
-              );
-              
-              if (servicesByQuote.length > 0) {
-                for (const svc of servicesByQuote) {
-                  usedServiceIds.add(svc.id);
-                  matches.push({
-                    parsedItem: item,
-                    service: svc,
-                    ocNumber,
-                    fileName,
-                    status: 'matched',
-                  });
-                }
-                continue;
-              }
-            }
-          }
-
-          // Fallback 3: Match by glosa/description against service type name
-          const glosaNorm = normalizeText(item.detail);
-          if (glosaNorm) {
-            const candidatesByGlosa = clientServices.filter(s =>
-              !usedServiceIds.has(s.id) &&
-              !s.purchaseOrder && !s.purchaseOrderNumber &&
-              s.serviceType?.name &&
-              (normalizeText(s.serviceType.name).includes(glosaNorm) ||
-               glosaNorm.includes(normalizeText(s.serviceType.name)))
-            );
-            if (candidatesByGlosa.length > 0) {
-              const best = item.amount > 0
-                ? candidatesByGlosa.sort((a, b) => Math.abs(a.value - item.amount) - Math.abs(b.value - item.amount))[0]
-                : candidatesByGlosa[0];
-              usedServiceIds.add(best.id);
-              matches.push({
-                parsedItem: item,
-                service: best,
-                ocNumber,
-                fileName,
-                status: 'matched',
-              });
-              continue;
-            }
-          }
-
-          // Fallback 4: Match by amount
-          if (item.amount > 0) {
-            const unitPrice = (item.quantity && item.quantity > 1) ? item.amount / item.quantity : null;
-            const serviceByAmount = clientServices.find(s => 
-              !usedServiceIds.has(s.id) && !s.purchaseOrder && !s.purchaseOrderNumber && (
-                Math.abs(s.value - item.amount) < 1 ||
-                (unitPrice !== null && Math.abs(s.value - unitPrice) < 1)
-              )
-            );
-            if (serviceByAmount) {
-              usedServiceIds.add(serviceByAmount.id);
-              matches.push({
-                parsedItem: item,
-                service: serviceByAmount,
-                ocNumber,
-                fileName,
-                status: 'matched',
-              });
-              continue;
-            }
-          }
-
-          // No fallback match found
-          matches.push({
-            parsedItem: item,
-            service: null,
-            ocNumber,
-            fileName,
-            status: 'no_match',
-          });
+        if (serviceWithSameOC) {
+          usedServiceIds.add(serviceWithSameOC.id);
+          matches.push({ parsedItem: item, service: serviceWithSameOC, ocNumber, fileName, status: 'same_oc' });
           continue;
         }
 
-        // Find services matching this license plate (normalized comparison)
-        const matchingServices = clientServices
-          .filter(s => normalizePatente(s.licensePlate) === patenteNorm && !usedServiceIds.has(s.id))
-          .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+        if (quoteReference) {
+          const quoteRef = quoteReference.replace(/\D/g, '');
+          if (quoteRef) {
+            const servicesByQuote = clientServices.filter((service) =>
+              !usedServiceIds.has(service.id) &&
+              service.quoteNumber &&
+              service.quoteNumber.replace(/\D/g, '') === quoteRef,
+            );
 
-        if (matchingServices.length === 0) {
-          // Fuzzy VIN matching (tolerates 1-2 OCR digit errors)
-          const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
-          if (fuzzyMatch) {
-            const hasOC = fuzzyMatch.purchaseOrderNumber || fuzzyMatch.purchaseOrder;
-            usedServiceIds.add(fuzzyMatch.id);
-            matches.push({
-              parsedItem: item,
-              service: fuzzyMatch,
-              ocNumber,
-              fileName,
-              status: hasOC ? 'already_has_oc' : 'matched',
-            });
-          } else {
-            matches.push({
-              parsedItem: item,
-              service: null,
-              ocNumber,
-              fileName,
-              status: 'no_match',
-            });
-          }
-        } else {
-          const serviceWithoutOC = matchingServices.find(
-            s => !s.purchaseOrderNumber && !s.purchaseOrder
-          );
-
-          if (serviceWithoutOC) {
-            usedServiceIds.add(serviceWithoutOC.id);
-            matches.push({
-              parsedItem: item,
-              service: serviceWithoutOC,
-              ocNumber,
-              fileName,
-              status: 'matched',
-            });
-          } else {
-            const topService = matchingServices[0];
-            const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(ocNumber);
-            usedServiceIds.add(topService.id);
-            matches.push({
-              parsedItem: item,
-              service: topService,
-              ocNumber,
-              fileName,
-              status: hasSameOC ? 'same_oc' : 'already_has_oc',
-            });
+            if (servicesByQuote.length > 0) {
+              for (const service of servicesByQuote) {
+                usedServiceIds.add(service.id);
+                matches.push({ parsedItem: item, service, ocNumber, fileName, status: 'matched' });
+              }
+              continue;
+            }
           }
         }
+
+        const glosaNorm = normalizeText(item.detail);
+        if (glosaNorm) {
+          const candidatesByGlosa = clientServices.filter((service) =>
+            !usedServiceIds.has(service.id) &&
+            !service.purchaseOrder &&
+            !service.purchaseOrderNumber &&
+            service.serviceType?.name &&
+            (normalizeText(service.serviceType.name).includes(glosaNorm) || glosaNorm.includes(normalizeText(service.serviceType.name))),
+          );
+
+          if (candidatesByGlosa.length > 0) {
+            const best = item.amount > 0
+              ? candidatesByGlosa.sort((a, b) => Math.abs(a.value - item.amount) - Math.abs(b.value - item.amount))[0]
+              : candidatesByGlosa[0];
+            usedServiceIds.add(best.id);
+            matches.push({ parsedItem: item, service: best, ocNumber, fileName, status: 'matched' });
+            continue;
+          }
+        }
+
+        if (item.amount > 0) {
+          const unitPrice = item.quantity && item.quantity > 1 ? item.amount / item.quantity : null;
+          const serviceByAmount = clientServices.find((service) =>
+            !usedServiceIds.has(service.id) &&
+            !service.purchaseOrder &&
+            !service.purchaseOrderNumber &&
+            (Math.abs(service.value - item.amount) < 1 ||
+              (unitPrice !== null && Math.abs(service.value - unitPrice) < 1)),
+          );
+
+          if (serviceByAmount) {
+            usedServiceIds.add(serviceByAmount.id);
+            matches.push({ parsedItem: item, service: serviceByAmount, ocNumber, fileName, status: 'matched' });
+            continue;
+          }
+        }
+
+        matches.push({ parsedItem: item, service: null, ocNumber, fileName, status: 'no_match' });
+        continue;
+      }
+
+      const matchingServices = clientServices
+        .filter((service) => normalizePatente(service.licensePlate) === patenteNorm && !usedServiceIds.has(service.id))
+        .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+
+      if (matchingServices.length === 0) {
+        const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
+        if (fuzzyMatch) {
+          const hasOC = fuzzyMatch.purchaseOrderNumber || fuzzyMatch.purchaseOrder;
+          usedServiceIds.add(fuzzyMatch.id);
+          matches.push({
+            parsedItem: item,
+            service: fuzzyMatch,
+            ocNumber,
+            fileName,
+            status: hasOC ? 'already_has_oc' : 'matched',
+          });
+        } else {
+          matches.push({ parsedItem: item, service: null, ocNumber, fileName, status: 'no_match' });
+        }
+      } else {
+        const serviceWithoutOC = matchingServices.find((service) => !service.purchaseOrderNumber && !service.purchaseOrder);
+
+        if (serviceWithoutOC) {
+          usedServiceIds.add(serviceWithoutOC.id);
+          matches.push({ parsedItem: item, service: serviceWithoutOC, ocNumber, fileName, status: 'matched' });
+        } else {
+          const topService = matchingServices[0];
+          const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(ocNumber);
+          usedServiceIds.add(topService.id);
+          matches.push({
+            parsedItem: item,
+            service: topService,
+            ocNumber,
+            fileName,
+            status: hasSameOC ? 'same_oc' : 'already_has_oc',
+          });
+        }
+      }
     }
 
-    setState(prev => ({ ...prev, step: 'preview', matches }));
+    setState((prev) => ({ ...prev, step: 'preview', matches }));
   }, [clientId, services]);
 
   const applyMatches = useCallback(async (selectedMatches: MatchedService[]) => {
-    const validMatches = selectedMatches.filter(m => (m.status === 'matched' || m.status === 'already_has_oc') && m.service);
+    const validMatches = selectedMatches.filter((match) => (match.status === 'matched' || match.status === 'already_has_oc') && match.service);
     if (validMatches.length === 0) {
       toast.error('No hay servicios válidos para actualizar');
       return;
     }
 
-    setState(prev => ({ ...prev, step: 'applying', progress: { current: 0, total: validMatches.length, fileName: '' } }));
+    setState((prev) => ({ ...prev, step: 'applying', progress: { current: 0, total: validMatches.length, fileName: '' } }));
 
     let successCount = 0;
     for (let i = 0; i < validMatches.length; i++) {
       const match = validMatches[i];
       try {
-        const formattedOC = match.ocNumber.startsWith('OC-') 
-          ? match.ocNumber 
-          : `OC-${match.ocNumber}`;
+        const formattedOC = match.ocNumber.startsWith('OC-') ? match.ocNumber : `OC-${match.ocNumber}`;
         await updateService(match.service!.id, {
           purchaseOrder: formattedOC,
           status: 'with_purchase_order' as any,
         });
-        successCount++;
-        setState(prev => ({ ...prev, progress: { current: i + 1, total: validMatches.length, fileName: match.parsedItem.patente } }));
-      } catch (err: any) {
+        successCount += 1;
+        setState((prev) => ({
+          ...prev,
+          progress: { current: i + 1, total: validMatches.length, fileName: match.parsedItem.patente },
+        }));
+      } catch (err) {
         console.error(`Error updating service ${match.service!.folio}:`, err);
       }
     }
 
-    setState(prev => ({ ...prev, step: 'done' }));
+    setState((prev) => ({ ...prev, step: 'done' }));
     toast.success(`${successCount} de ${validMatches.length} servicios actualizados con OC`);
   }, [updateService]);
 
-  return {
-    state,
-    processFiles,
-    applyMatches,
-    reset,
-  };
+  return { state, processFiles, applyMatches, reset };
 }
