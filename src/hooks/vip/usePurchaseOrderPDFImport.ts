@@ -6,6 +6,21 @@ import { toast } from 'sonner';
 import { disableVipPdfAiForSession, invokeEdgeFunctionJson, isVipPdfAiDisabled } from '@/utils/vipPdfImportClient';
 import { extractPurchaseOrderDataLocally } from '@/utils/localVipPdfParser';
 import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
+import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+
+const extractPdfText = async (buffer: ArrayBuffer): Promise<string> => {
+  const pdfJs = await loadPdfJsCompat();
+  const pdf = await pdfJs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const items = content.items as Array<{ str: string }>;
+    fullText += items.map(item => item.str).join(' ') + '\n';
+  }
+  return fullText;
+};
+
 
 export interface ParsedOCItem {
   patente: string;
@@ -207,10 +222,6 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
       try {
         const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
-        const base64 = btoa(binary);
 
         let parsed: Omit<ParsedOC, 'fileName'>;
 
@@ -218,8 +229,9 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           if (isVipPdfAiDisabled()) {
             throw new Error('Lectura IA deshabilitada');
           }
+          const pdfText = await extractPdfText(buffer);
           parsed = await invokeEdgeFunctionJson<Omit<ParsedOC, 'fileName'>>('parse-purchase-order-pdf', {
-            pdfBase64: base64,
+            pdfText,
           });
           if (!parsed.items?.length) {
             throw new Error('No se encontraron ítems utilizables en el PDF');
