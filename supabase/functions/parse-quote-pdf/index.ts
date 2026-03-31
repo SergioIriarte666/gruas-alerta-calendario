@@ -24,22 +24,31 @@ const parseGatewayError = (raw: string) => {
 };
 
 const getGatewayAuthConfig = () => {
-  const rawKey = Deno.env.get('LOVABLE_API_KEY');
-  if (!rawKey) return null;
+  const candidates = ['AI_GATEWAY_KEY', 'LOVABLE_API_KEY']
+    .map((name) => {
+      const rawKey = Deno.env.get(name);
+      if (!rawKey) return null;
 
-  const trimmedKey = rawKey.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
-  const normalizedKey = trimmedKey.replace(/^Bearer\s+/i, '').trim();
+      const trimmedKey = rawKey.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
+      const normalizedKey = trimmedKey.replace(/^Bearer\s+/i, '').trim();
 
-  return {
-    apiKey: normalizedKey || trimmedKey,
-    debug: {
-      rawStartsWithBearer: /^Bearer\s+/i.test(trimmedKey),
-      rawStartsWithSk: trimmedKey.startsWith('sk_'),
-      normalizedStartsWithSk: normalizedKey.startsWith('sk_'),
-      rawLength: trimmedKey.length,
-      normalizedLength: normalizedKey.length,
-    },
-  };
+      return {
+        source: name,
+        apiKey: normalizedKey || trimmedKey,
+        debug: {
+          source: name,
+          rawStartsWithBearer: /^Bearer\s+/i.test(trimmedKey),
+          rawStartsWithSk: trimmedKey.startsWith('sk_'),
+          normalizedStartsWithSk: normalizedKey.startsWith('sk_'),
+          rawLength: trimmedKey.length,
+          normalizedLength: normalizedKey.length,
+        },
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => Number(right!.apiKey.startsWith('sk_')) - Number(left!.apiKey.startsWith('sk_')));
+
+  return candidates[0] ?? null;
 };
 
 serve(async (req) => {
@@ -76,7 +85,7 @@ serve(async (req) => {
 
     const gatewayAuth = getGatewayAuthConfig();
     if (!gatewayAuth?.apiKey) {
-      console.error('LOVABLE_API_KEY is not configured');
+      console.error('AI gateway key is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
     const gatewayApiKey = gatewayAuth.apiKey;
