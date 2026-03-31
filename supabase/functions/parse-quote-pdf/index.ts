@@ -178,12 +178,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
         }),
       });
 
-      if (aiResponse.ok) break;
-
       lastStatus = aiResponse.status;
-      lastErrorText = await aiResponse.text().catch(() => '');
-
-      if (aiResponse.status !== 401) break;
+      if (!aiResponse.ok) {
+        lastErrorText = await aiResponse.text().catch(() => '');
+      }
     }
 
     if (!aiResponse?.ok) {
