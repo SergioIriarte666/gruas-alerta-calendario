@@ -253,7 +253,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Busca en TODO el documento frases que referencien cotizaciones o presupuestos.
 - Patrones: "SEGUN COTIZACION", "SEGÚN COTIZACIÓN", "COTIZACION N", "PRESUPUESTO", "COT-", "PPTO", etc.
 - Extrae SOLO el número (ej: "4100", "4090").
-- Extrae el RUT de la empresa/entidad que EMITE la orden de compra.`
+- CRÍTICO SOBRE clientRut: Extrae el RUT de la empresa/entidad que EMITE la orden de compra (el comprador/cliente).
+  NO extraigas el RUT de la empresa PROVEEDORA/DESTINATARIA de la OC (ej: la empresa de grúas que recibe la OC).
+  El RUT del emisor aparece en el encabezado de la OC como "Empresa emisora", "Comprador", etc.
+  Si solo ves el RUT del proveedor/destinatario, devuelve string vacío.`
             },
             {
               role: 'user',
