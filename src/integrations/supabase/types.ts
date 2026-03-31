@@ -5638,7 +5638,7 @@ export type Database = {
         Args: {
           p_commission_ids: string[]
           p_payment_batch_id?: string
-          p_payment_date: string
+          p_payment_date?: string
         }
         Returns: Json
       }
