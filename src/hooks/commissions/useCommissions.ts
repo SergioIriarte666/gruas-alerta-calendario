@@ -55,93 +55,17 @@ const fetchCommissionCategoryIds = async (): Promise<string[]> => {
     .filter(Boolean);
 };
 
-const fetchMainOperatorCommissionsFromServices = async ({
-  operatorId,
-  sinceDate,
-}: {
-  operatorId?: string;
-  sinceDate?: string;
-}): Promise<Commission[]> => {
-  const base = supabase
-    .from('services')
-    .select('id, folio, service_date, value, operator_id, operator_commission, client_id, created_at, updated_at, status')
-    .gt('operator_commission', 0)
-    .not('operator_id', 'is', null);
-
-  let query: any = base;
-  if (operatorId) query = query.eq('operator_id', operatorId);
-  if (sinceDate) query = query.gte('service_date', sinceDate);
-  query = query.in('status', ['completed', 'invoiced']).order('service_date', { ascending: false });
-
-  const { data: servicesData, error } = await query;
-  if (error) {
-    console.error('❌ Error fetching main operator commissions from services:', error);
-    return [];
-  }
-
-  if (!servicesData || servicesData.length === 0) return [];
-
-  const operatorIds = [...new Set(servicesData.map((s: any) => s.operator_id).filter(Boolean))] as string[];
-  const clientIds = [...new Set(servicesData.map((s: any) => s.client_id).filter(Boolean))] as string[];
-
-  const [operatorsRes, clientsRes] = await Promise.all([
-    operatorIds.length > 0
-      ? supabase.from('operators').select('id, name, rut').in('id', operatorIds)
-      : Promise.resolve({ data: [] as any[], error: null as any }),
-    clientIds.length > 0
-      ? supabase.from('clients').select('id, name').in('id', clientIds)
-      : Promise.resolve({ data: [] as any[], error: null as any }),
-  ]);
-
-  const operators = operatorsRes.data || [];
-  const clients = clientsRes.data || [];
-
-  const operatorById = new Map<string, any>(operators.map((o: any) => [o.id, o]));
-  const clientById = new Map<string, any>(clients.map((c: any) => [c.id, c]));
-
-  return servicesData.map((s: any) => {
-    const op = operatorById.get(s.operator_id);
-    const client = clientById.get(s.client_id);
-    const serviceValue = s.value || 0;
-    const commissionAmount = Number(s.operator_commission || 0);
-    const commissionPercentage = serviceValue > 0 ? (commissionAmount / serviceValue) * 100 : 0;
-    const clientName = client?.name || 'Cliente no disponible';
-
-    return {
-      id: `service-main-${s.id}`,
-      date: s.service_date,
-      description: `Comisión operador - Servicio ${s.folio}`,
-      amount: commissionAmount,
-      operator_id: s.operator_id,
-      service_id: s.id,
-      service_folio: s.folio,
-      subcategory: 'comisiones',
-      created_at: s.created_at || new Date().toISOString(),
-      updated_at: s.updated_at || new Date().toISOString(),
-      status: 'pending',
-      commission_percentage: Math.round(commissionPercentage * 100) / 100,
-      service_value: serviceValue,
-      client_name: clientName,
-      services: {
-        id: s.id,
-        folio: s.folio,
-        service_date: s.service_date,
-        value: serviceValue,
-        clients: { name: clientName },
-      },
-      operators: op
-        ? { id: op.id, name: op.name, rut: op.rut }
-        : undefined,
-    };
-  });
-};
-
+/**
+ * Fuente de verdad ÚNICA: tabla costs.
+ * Se usa como fallback cuando el RPC falla.
+ */
 const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
   console.log('🔁 Falling back to costs-based commissions query...');
 
   const commissionCategoryIds = await fetchCommissionCategoryIds();
   const categoryIdsToUse = [...new Set([COMMISSION_CATEGORY_ID, ...commissionCategoryIds])];
 
+  // Buscar por todas las variantes posibles para no perder comisiones históricas
   const [byCategoryRes, bySubcategoryRes, byDesc1Res, byDesc2Res] = await Promise.all([
     supabase
       .from('costs')
@@ -151,7 +75,7 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
     supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
-      .in('subcategory', ['comisiones', 'comisiones_pagadas'])
+      .in('subcategory', ['comisiones', 'comisiones_pagadas', 'Comisión Operador'])
       .order('date', { ascending: false }),
     supabase
       .from('costs')
@@ -186,11 +110,9 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
   const serviceIds = [...new Set(costsData.map(c => c.service_id).filter(Boolean))] as string[];
   const operatorIdsFromCosts = [...new Set(costsData.map(c => c.operator_id).filter(Boolean))] as string[];
 
-  const [servicesRes] = await Promise.all([
-    serviceIds.length > 0
-      ? supabase.from('services').select('id, folio, service_date, value, client_id, operator_id').in('id', serviceIds)
-      : Promise.resolve({ data: [] as any[], error: null as any }),
-  ]);
+  const servicesRes = serviceIds.length > 0
+    ? await supabase.from('services').select('id, folio, service_date, value, client_id, operator_id').in('id', serviceIds)
+    : { data: [] as any[], error: null as any };
 
   if (servicesRes.error) {
     throw new Error(`Error fetching services for commissions: ${servicesRes.error.message}`);
@@ -297,18 +219,19 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
   });
 };
 
+/**
+ * fetchCommissions: fuente de verdad ÚNICA = tabla costs
+ * 
+ * Se eliminó fetchMainOperatorCommissionsFromServices que generaba
+ * comisiones fantasma con IDs sintéticos (service-main-{id}).
+ * Ahora solo: RPC + fallback costs, deduplicados por id.
+ */
 const fetchCommissions = async (): Promise<Commission[]> => {
-  console.log('🔍 Fetching commissions with new function...');
+  console.log('🔍 Fetching commissions (single source: costs table)...');
   
-  const [rpcRes, costsRes, mainRes] = await Promise.allSettled<Commission[] | any>([
+  const [rpcRes, costsRes] = await Promise.allSettled([
     supabase.rpc('get_commissions_with_details'),
-    (async () => fetchCommissionsFromCosts())(),
-    (async () => {
-      const since = new Date();
-      since.setMonth(since.getMonth() - 6); // limitar a últimos 6 meses para evitar historiales antiguos ya pagados
-      const sinceDate = since.toISOString().slice(0, 10);
-      return fetchMainOperatorCommissionsFromServices({ sinceDate });
-    })(),
+    fetchCommissionsFromCosts(),
   ]);
 
   let rpcData: any[] = [];
@@ -330,50 +253,20 @@ const fetchCommissions = async (): Promise<Commission[]> => {
     console.warn('⚠️ Costs fallback request failed:', costsRes.reason);
   }
 
-  let mainData: Commission[] = [];
-  if (mainRes.status === 'fulfilled') {
-    mainData = mainRes.value as Commission[];
-  } else {
-    console.warn('⚠️ Main commissions request failed:', mainRes.reason);
-  }
-
+  // Merge: RPC tiene prioridad, costs como complemento
   const mappedRpc = rpcData.map(mapRawCommissionToCommission);
   const mergedById = new Map<string, Commission>();
   for (const c of mappedRpc) mergedById.set(c.id, c);
-  for (const c of costsData) mergedById.set(c.id, c);
-
-  const costsPairs = new Set<string>();
-  const paidServiceIds = new Set<string>();
   for (const c of costsData) {
-    if (c.service_id && c.payment_date) paidServiceIds.add(c.service_id);
-  }
-  for (const c of [...mappedRpc, ...costsData]) {
-    if (c.service_id && c.operator_id) costsPairs.add(`${c.service_id}::${c.operator_id}`);
-  }
-  for (let c of mainData) {
-    if (c.service_id && c.operator_id) {
-      // Si ya hay cualquier comisión en costs para ese servicio y operador, saltar
-      if (costsPairs.has(`${c.service_id}::${c.operator_id}`)) continue;
-      // Si el servicio tiene alguna comisión con payment_date, marcar esta como pagada para no contaminar "pendientes"
-      if (paidServiceIds.has(c.service_id)) {
-        c = { ...c, status: 'paid', payment_date: c.payment_date || new Date().toISOString().slice(0, 10) };
-      }
-      // Evitar incluir si el servicio tiene comisiones en costs (cualquier operador) y esta es solo una proyección
-      const serviceHasAnyCost = costsData.some(k => k.service_id === c.service_id);
-      if (serviceHasAnyCost && c.status !== 'pending') {
-        // Permitir si lo marcamos como pagado para mantener trazabilidad, pero no duplicar si ya existe par
-        mergedById.set(c.id, c);
-        continue;
-      }
+    if (!mergedById.has(c.id)) {
+      mergedById.set(c.id, c);
     }
-    mergedById.set(c.id, c);
   }
 
   const merged = Array.from(mergedById.values());
-  console.log('✅ Commissions merged result:', {
+  console.log('✅ Commissions result:', {
     rpc: mappedRpc.length,
     costs: costsData.length,
-    main: mainData.length,
     merged: merged.length
   });
 
@@ -390,32 +283,10 @@ export const useCommissions = () => {
 export const useCommissionsByOperator = (operatorId: string) => {
   return useQuery<Commission[], Error>({
     queryKey: ['commissions', 'by-operator', operatorId],
-    queryFn: () => fetchCommissionsByOperator(operatorId),
+    queryFn: async () => {
+      const all = await fetchCommissions();
+      return all.filter(c => c.operator_id === operatorId);
+    },
     enabled: !!operatorId,
   });
-};
-
-const fetchCommissionsByOperator = async (operatorId: string): Promise<Commission[]> => {
-  console.log('🔍 Fetching commissions for operator with new function:', operatorId);
-  
-  const [all, main] = await Promise.all([
-    fetchCommissions(),
-    fetchMainOperatorCommissionsFromServices({ operatorId }),
-  ]);
-
-  const costsPairs = new Set<string>();
-  for (const c of all) {
-    if (c.service_id && c.operator_id) costsPairs.add(`${c.service_id}::${c.operator_id}`);
-  }
-
-  const combined = [
-    ...all,
-    ...main.filter(c => !(c.service_id && c.operator_id && costsPairs.has(`${c.service_id}::${c.operator_id}`))),
-  ];
-
-  const operatorCommissions = combined.filter((commission: any) => commission.operator_id === operatorId);
-
-  console.log('✅ Operator commissions loaded successfully:', operatorCommissions.length);
-
-  return operatorCommissions;
 };
