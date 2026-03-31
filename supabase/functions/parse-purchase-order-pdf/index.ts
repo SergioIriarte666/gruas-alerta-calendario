@@ -6,6 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+
+const parseGatewayError = (raw: string) => {
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.message === "string") return parsed.message;
+    if (typeof parsed?.error === "string") return parsed.error;
+    if (typeof parsed?.error?.message === "string") return parsed.error.message;
+  } catch { /* ignore */ }
+  return raw;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,48 +31,40 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ error: 'No autorizado' }, 401);
     }
 
-    // Validate JWT claims
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: 'No autorizado' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      return jsonResponse({ error: 'No autorizado' }, 401);
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return jsonResponse({ error: 'Body inválido' }, 400);
+    }
+
     const { pdfBase64 } = body;
-
     if (!pdfBase64) {
-      return new Response(
-        JSON.stringify({ error: 'Se requiere el PDF en base64' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const gatewayApiKey = Deno.env.get('AI_GATEWAY_KEY') || Deno.env.get('LOVABLE_API_KEY');
+    if (!gatewayApiKey) {
+      console.error('AI gateway key is not configured');
+      return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
 
-    // Call Lovable AI with the PDF as a base64 image (Gemini supports PDF via data URI)
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${gatewayApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -174,41 +183,42 @@ Debes extraer la información estructurada del documento usando la herramienta e
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI gateway error:', aiResponse.status, errorText);
-      
+      const gatewayMessage = parseGatewayError(errorText);
+      console.error('AI gateway error:', aiResponse.status, gatewayMessage || errorText);
+
       if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Límite de solicitudes excedido, intenta más tarde' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ error: 'Límite de solicitudes excedido, intenta más tarde' }, 429);
       }
       if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos de IA insuficientes' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ error: 'Créditos de IA insuficientes' }, 402);
       }
-      throw new Error(`AI gateway error: ${aiResponse.status}`);
+      if (aiResponse.status === 401) {
+        return jsonResponse({ error: gatewayMessage || 'Error de autenticación con el gateway de IA' }, 500);
+      }
+      return jsonResponse({ error: gatewayMessage || `Error del gateway de IA (HTTP ${aiResponse.status})` }, 500);
     }
 
     const aiData = await aiResponse.json();
     console.log('AI response:', JSON.stringify(aiData).substring(0, 500));
 
-    // Extract tool call result
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
-      // Fallback: try to parse from content
-      const content = aiData.choices?.[0]?.message?.content || '';
-      console.error('No tool call in response, content:', content);
-      throw new Error('No se pudo extraer datos del PDF');
+      console.error('No tool call in AI response:', JSON.stringify(aiData));
+      return jsonResponse({ error: 'No se pudo extraer datos del PDF' }, 500);
     }
 
-    const parsed = JSON.parse(toolCall.function.arguments);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(toolCall.function.arguments);
+    } catch (parseError) {
+      console.error('Failed to parse tool arguments:', toolCall.function.arguments, parseError);
+      return jsonResponse({ error: 'La IA devolvió una respuesta inválida' }, 500);
+    }
     
     console.log('Parsed OC:', JSON.stringify({
       ocNumber: parsed.ocNumber,
-      itemCount: parsed.items?.length || 0,
-      patentes: parsed.items?.map((i: any) => i.patente) || []
+      itemCount: (parsed.items as any[])?.length || 0,
+      patentes: (parsed.items as any[])?.map((i: any) => i.patente) || []
     }));
 
     const result = {
@@ -218,19 +228,12 @@ Debes extraer la información estructurada del documento usando la herramienta e
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
       quoteReference: parsed.quoteReference || '',
       clientRut: parsed.clientRut || '',
-      rawText: `Extraído con IA - ${parsed.items?.length || 0} items encontrados`,
+      rawText: `Extraído con IA - ${(parsed.items as any[])?.length || 0} items encontrados`,
     };
 
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return jsonResponse(result);
   } catch (error) {
     console.error('Error processing PDF:', error);
-    return new Response(
-      JSON.stringify({ error: 'Error procesando el PDF. Intente nuevamente.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ error: 'Error procesando el PDF. Intente nuevamente.' }, 500);
   }
 });
