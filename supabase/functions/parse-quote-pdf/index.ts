@@ -23,17 +23,23 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const getGatewayApiKey = () => {
+const getGatewayAuthConfig = () => {
   const rawKey = Deno.env.get('LOVABLE_API_KEY');
   if (!rawKey) return null;
 
-  const normalizedKey = rawKey
-    .trim()
-    .replace(/^['"`]+|['"`]+$/g, '')
-    .replace(/^Bearer\s+/i, '')
-    .trim();
+  const trimmedKey = rawKey.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
+  const normalizedKey = trimmedKey.replace(/^Bearer\s+/i, '').trim();
 
-  return normalizedKey || null;
+  return {
+    apiKey: normalizedKey || trimmedKey,
+    debug: {
+      rawStartsWithBearer: /^Bearer\s+/i.test(trimmedKey),
+      rawStartsWithSk: trimmedKey.startsWith('sk_'),
+      normalizedStartsWithSk: normalizedKey.startsWith('sk_'),
+      rawLength: trimmedKey.length,
+      normalizedLength: normalizedKey.length,
+    },
+  };
 };
 
 serve(async (req) => {
