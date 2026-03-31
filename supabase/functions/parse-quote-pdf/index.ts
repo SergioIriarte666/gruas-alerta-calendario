@@ -23,17 +23,23 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const getGatewayApiKey = () => {
+const getGatewayAuthConfig = () => {
   const rawKey = Deno.env.get('LOVABLE_API_KEY');
   if (!rawKey) return null;
 
-  const normalizedKey = rawKey
-    .trim()
-    .replace(/^['"`]+|['"`]+$/g, '')
-    .replace(/^Bearer\s+/i, '')
-    .trim();
+  const trimmedKey = rawKey.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
+  const normalizedKey = trimmedKey.replace(/^Bearer\s+/i, '').trim();
 
-  return normalizedKey || null;
+  return {
+    apiKey: normalizedKey || trimmedKey,
+    debug: {
+      rawStartsWithBearer: /^Bearer\s+/i.test(trimmedKey),
+      rawStartsWithSk: trimmedKey.startsWith('sk_'),
+      normalizedStartsWithSk: normalizedKey.startsWith('sk_'),
+      rawLength: trimmedKey.length,
+      normalizedLength: normalizedKey.length,
+    },
+  };
 };
 
 serve(async (req) => {
@@ -68,11 +74,12 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = getGatewayApiKey();
-    if (!gatewayApiKey) {
+    const gatewayAuth = getGatewayAuthConfig();
+    if (!gatewayAuth?.apiKey) {
       console.error('LOVABLE_API_KEY is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
+    const gatewayApiKey = gatewayAuth.apiKey;
 
     let aiResponse: Response | null = null;
     let lastErrorText = '';
