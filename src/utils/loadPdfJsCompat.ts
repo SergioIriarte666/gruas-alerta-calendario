@@ -67,10 +67,12 @@ const installStructuredClonePolyfill = () => {
 
     if (ArrayBuffer.isView(value)) {
       if (value instanceof DataView) {
-        return new DataView(value.buffer.slice(0), value.byteOffset, value.byteLength);
+        const copiedBuffer = value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength);
+        return new DataView(copiedBuffer);
       }
 
-      return value.slice();
+      const typedArray = value as any;
+      return new typedArray.constructor(typedArray);
     }
 
     if (value instanceof Date) return new Date(value.getTime());
