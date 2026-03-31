@@ -60,9 +60,9 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKeys = getGatewayApiKeys();
-    if (gatewayApiKeys.length === 0) {
-      console.error('AI gateway key is not configured');
+    const gatewayApiKey = getGatewayApiKey();
+    if (!gatewayApiKey) {
+      console.error('LOVABLE_API_KEY is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
 
@@ -70,7 +70,7 @@ serve(async (req) => {
     let lastErrorText = '';
     let lastStatus = 0;
 
-    for (const gatewayApiKey of gatewayApiKeys) {
+    {
       aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
