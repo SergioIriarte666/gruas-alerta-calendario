@@ -111,6 +111,8 @@ export const useServicesPage = () => {
         normalizeSearchTerm(service.client?.name || '').includes(normalizedSearchTerm) ||
         normalizeSearchTerm(service.licensePlate || '').includes(normalizedSearchTerm) ||
         normalizeSearchTerm(service.vehicleBrand || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.origin || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.destination || '').includes(normalizedSearchTerm) ||
         normalizeSearchTerm(service.quoteNumber || '').includes(normalizedSearchTerm) ||
         normalizeSearchTerm(service.purchaseOrder || '').includes(normalizedSearchTerm) ||
         normalizeSearchTerm(service.purchaseOrderNumber || '').includes(normalizedSearchTerm) ||

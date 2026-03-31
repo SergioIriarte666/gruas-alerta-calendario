@@ -23,32 +23,31 @@ const detectExistingCommissions = async (serviceId: string, newOperators: any[])
 
   
   
-  // Filtrar operadores adicionales (excluyendo el principal)
-  const mainOperator = newOperators.find(op => op.role === 'Principal') || newOperators[0];
-  const additionalOperators = newOperators.filter(op => 
-    op.role !== 'Principal' && 
-    op !== mainOperator &&
-    op.operatorId && 
-    op.operatorId.trim() !== ''
-  );
+  const desiredOperators = (newOperators || [])
+    .filter(op => op?.operatorId && String(op.operatorId).trim() !== '')
+    .map(op => ({
+      operator_id: String(op.operatorId),
+      amount: Number(op.commission || 0),
+      hours: op.hours,
+    }))
+    .filter(op => op.amount > 0);
 
   const toCreate = [];
   const toUpdate = [];
   const toDelete = [...existingCommissions]; // Start with all existing, remove those that still exist
 
-  // Comparar cada operador adicional con las comisiones existentes
-  for (const operator of additionalOperators) {
+  for (const operator of desiredOperators) {
     const existingCommission = existingCommissions.find(
-      comm => comm.operator_id === operator.operatorId
+      comm => comm.operator_id === operator.operator_id
     );
 
     if (existingCommission) {
       // Verificar si el monto cambió
-      if (existingCommission.amount !== (operator.commission || 0)) {
+      if (Number(existingCommission.amount) !== operator.amount) {
         toUpdate.push({
           id: existingCommission.id,
-          operator_id: operator.operatorId,
-          amount: operator.commission || 0,
+          operator_id: operator.operator_id,
+          amount: operator.amount,
           hours: operator.hours
         });
       }
@@ -60,8 +59,8 @@ const detectExistingCommissions = async (serviceId: string, newOperators: any[])
     } else {
       // Nueva comisión a crear
       toCreate.push({
-        operator_id: operator.operatorId,
-        amount: operator.commission || 0,
+        operator_id: operator.operator_id,
+        amount: operator.amount,
         hours: operator.hours
       });
     }
@@ -857,7 +856,7 @@ export const useServiceManager = () => {
             service_folio: currentService?.folio || 'Unknown',
             date: currentService?.service_date || serviceData.serviceDate || new Date().toISOString().split('T')[0],
             description: `Comisión operador - Servicio ${currentService?.folio || id}`,
-            subcategory: 'Comisiones',
+            subcategory: 'comisiones',
             notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
             operator_id: operator.operator_id,
             crane_id: currentService?.crane_id,

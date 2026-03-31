@@ -127,6 +127,7 @@ export const MultipleOperatorsSection = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Principal">Principal</SelectItem>
+                    <SelectItem value="Adicional">Adicional</SelectItem>
                     <SelectItem value="Auxiliar">Auxiliar</SelectItem>
                     <SelectItem value="Supervisor">Supervisor</SelectItem>
                     <SelectItem value="Apoyo">Apoyo</SelectItem>

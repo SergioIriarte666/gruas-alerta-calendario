@@ -36,11 +36,22 @@ const Commissions = () => {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
-  const { data: commissions, isLoading, refetch } = useCommissions();
+  const { data: commissions, isLoading, isFetching, isError, error, refetch } = useCommissions();
   const createPaymentBatch = useCreatePaymentBatch();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isError && error) {
+      toast({
+        type: 'error',
+        title: 'No se pudieron cargar comisiones',
+        description: error.message,
+        priority: 'high',
+      });
+    }
+  }, [isError, error?.message, toast]);
 
   // Cache is managed by React Query staleTime — no forced invalidation on mount
 
@@ -333,6 +344,22 @@ const Commissions = () => {
         </div>
       </div>
 
+      {isError && (
+        <Card className="border-red-500/40 bg-red-500/10">
+          <CardContent className="py-4">
+            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'} gap-3`}>
+              <div className="text-sm">
+                <div className="font-semibold">Error cargando comisiones</div>
+                <div className="text-muted-foreground break-words">{error?.message}</div>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRefreshData} disabled={isFetching}>
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -419,9 +446,9 @@ const Commissions = () => {
               variant="outline"
               size="sm"
               onClick={handleRefreshData}
-              disabled={isLoading}
+              disabled={isFetching}
             >
-              <RefreshCw className={`h-4 w-4 ${isMobile ? '' : 'mr-2'} ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isMobile ? '' : 'mr-2'} ${isFetching ? 'animate-spin' : ''}`} />
               {!isMobile && 'Actualizar'}
             </Button>
             

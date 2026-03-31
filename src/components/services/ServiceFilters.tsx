@@ -48,7 +48,7 @@ export const ServiceFilters = ({
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar por folio, cliente, patente, marca, cotización, orden de compra..."
+                  placeholder="Buscar por folio, cliente, patente, marca, origen, destino, cotización, orden de compra..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:border-tms-green focus:outline-none"
