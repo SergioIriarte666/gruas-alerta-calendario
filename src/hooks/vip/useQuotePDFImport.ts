@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServices } from '@/hooks/useServices';
 import { toast } from 'sonner';
-import { invokeEdgeFunctionJson } from '@/utils/vipPdfImportClient';
+import { disableVipPdfAiForSession, invokeEdgeFunctionJson, isVipPdfAiDisabled } from '@/utils/vipPdfImportClient';
 import { extractQuoteDataLocally } from '@/utils/localVipPdfParser';
 import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
 
@@ -43,6 +43,82 @@ interface ImportState {
 const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
 const normalizeQuote = (q: string | null | undefined) => (q || '').trim().toUpperCase().replace(/^COT[-\s]*/, '').trim();
 const normalizeRut = (r: string | null | undefined) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
+
+const normalizeSpaces = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+const sanitizeParsedQuote = (doc: Omit<ParsedQuote, 'fileName'>): Omit<ParsedQuote, 'fileName'> => {
+  const items = Array.isArray(doc.items) ? doc.items : [];
+
+  const cleaned = items
+    .map((item) => ({
+      patente: (item.patente || '').trim(),
+      detail: normalizeSpaces(item.detail || ''),
+      amount: Number.isFinite(item.amount) ? Math.max(0, Math.round(item.amount)) : 0,
+      quantity: item.quantity && item.quantity > 0 ? item.quantity : 1,
+    }))
+    .filter((item) => item.patente || item.detail || item.amount > 0);
+
+  const grouped = new Map<string, ParsedQuoteItem[]>();
+  for (const item of cleaned) {
+    const key = (item.patente || '').replace(/[-\s]/g, '').toUpperCase();
+    if (!key) continue;
+    const current = grouped.get(key) ?? [];
+    current.push(item);
+    grouped.set(key, current);
+  }
+
+  const deduped: ParsedQuoteItem[] = [];
+  for (const [patenteKey, group] of grouped.entries()) {
+    const hasPositive = group.some((i) => (i.amount || 0) > 0);
+    const filtered = hasPositive ? group.filter((i) => (i.amount || 0) > 0) : group;
+    const hasStrongDetail = filtered.some((i) => {
+      const d = (i.detail || '').replace(/[-\s]/g, '').toUpperCase();
+      return d.length >= 8 && d !== patenteKey;
+    });
+    const filteredByDetail = hasStrongDetail
+      ? filtered.filter((i) => {
+          const d = (i.detail || '').replace(/[-\s]/g, '').toUpperCase();
+          return d.length >= 8 && d !== patenteKey;
+        })
+      : filtered;
+
+    const best = filteredByDetail.reduce<ParsedQuoteItem | null>((acc, current) => {
+      if (!acc) return current;
+      const accAmount = acc.amount || 0;
+      const curAmount = current.amount || 0;
+      if (curAmount !== accAmount) return curAmount > accAmount ? current : acc;
+      return (current.detail || '').length > (acc.detail || '').length ? current : acc;
+    }, null);
+
+    if (best) deduped.push(best);
+  }
+
+  const totals = doc.totals || { neto: 0, iva: 0, total: 0 };
+  const neto = Number.isFinite(totals.neto) ? Math.max(0, Math.round(totals.neto)) : 0;
+  const total = Number.isFinite(totals.total) ? Math.max(0, Math.round(totals.total)) : 0;
+  const target = total > 0 ? total : neto > 0 ? neto : 0;
+
+  const sumItems = deduped.reduce((sum, item) => sum + (Number.isFinite(item.amount) ? (item.amount || 0) : 0), 0);
+  if (target > 0 && sumItems > target * 5) {
+    const ratio = sumItems / target;
+    const candidates = [10, 100, 1000];
+    const factor = candidates.find((c) => Math.abs(ratio - c) / c < 0.15);
+    if (factor) {
+      for (const item of deduped) {
+        item.amount = Math.max(0, Math.round((item.amount || 0) / factor));
+      }
+    }
+  }
+
+  return {
+    ...doc,
+    quoteNumber: (doc.quoteNumber || '').trim(),
+    clientRut: doc.clientRut || '',
+    rawText: doc.rawText || '',
+    items: deduped,
+    totals: { ...totals, neto, total },
+  };
+};
 
 const levenshtein = (a: string, b: string): number => {
   const m = a.length;
@@ -136,21 +212,32 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
         let parsed: Omit<ParsedQuote, 'fileName'>;
 
         try {
-          const localParsed = await extractQuoteDataLocally(file);
-          if (!localParsed.items.length) {
+          if (isVipPdfAiDisabled()) {
+            throw new Error('Lectura IA deshabilitada');
+          }
+          parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
+            pdfBase64: base64,
+          });
+          if (!parsed.items?.length) {
             throw new Error('No se encontraron ítems utilizables en el PDF');
           }
-          parsed = localParsed;
-        } catch (localError: unknown) {
+        } catch (remoteError: unknown) {
+          const remoteMessage = remoteError instanceof Error ? remoteError.message : String(remoteError || '');
+          if (/Falta configurar la clave del gateway de IA|Invalid API key format|Error de autenticación con el gateway de IA/i.test(remoteMessage)) {
+            disableVipPdfAiForSession();
+          }
           try {
-            parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
-              pdfBase64: base64,
-            });
-          } catch (remoteError: unknown) {
+            const localParsed = await extractQuoteDataLocally(file);
+            if (!localParsed.items.length) {
+              throw new Error('No se encontraron ítems utilizables en el PDF');
+            }
+            parsed = localParsed;
+          } catch (localError: unknown) {
             throw new Error(buildVipPdfImportError(remoteError, localError));
           }
         }
 
+        parsed = sanitizeParsedQuote(parsed);
         parsedQuotes.push({ ...parsed, fileName: file.name });
       } catch (err: any) {
         console.error(`Error processing ${file.name}:`, err);

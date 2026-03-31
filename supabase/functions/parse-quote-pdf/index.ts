@@ -23,32 +23,161 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
+const normalizeSpaces = (value: string) => value.replace(/\s+/g, " ").trim();
+const parseClpNumber = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return 0;
+  const raw = value.trim();
+  if (!raw) return 0;
+
+  const normalized = raw.replace(/[^\d.,-]/g, "");
+
+  if (/,(\d{2})$/.test(normalized)) {
+    const integerPart = normalized.split(",")[0] ?? "";
+    const digits = integerPart.replace(/[^\d-]/g, "").replace(/\./g, "");
+    return digits ? Number.parseInt(digits, 10) : 0;
+  }
+
+  if (/\.(\d{2})$/.test(normalized)) {
+    const integerPart = normalized.split(".")[0] ?? "";
+    const digits = integerPart.replace(/[^\d-]/g, "").replace(/,/g, "");
+    return digits ? Number.parseInt(digits, 10) : 0;
+  }
+
+  const digits = normalized.replace(/[^\d-]/g, "");
+  return digits ? Number.parseInt(digits, 10) : 0;
+};
+
+type SanitizedVipItem = { patente: string; detail: string; amount: number; quantity: number };
+
+const sanitizeQuoteResult = (parsed: Record<string, unknown>) => {
+  const rawItems = Array.isArray((parsed as any).items) ? (parsed as any).items : [];
+
+  const mappedItems: SanitizedVipItem[] = rawItems.map((raw: any) => {
+      const patente = typeof raw?.patente === "string" ? raw.patente.trim() : "";
+      const detail = typeof raw?.detail === "string" ? normalizeSpaces(raw.detail) : "";
+      const amount = parseClpNumber(raw?.amount);
+      const quantity = typeof raw?.quantity === "number" && Number.isFinite(raw.quantity) && raw.quantity > 0
+        ? raw.quantity
+        : 1;
+
+      return { patente, detail, amount: Math.max(0, Math.round(amount)), quantity };
+    });
+
+  const sanitizedItems = mappedItems.filter((item) => item.patente || item.detail || item.amount > 0);
+
+  const dedupedByKey = new Map<string, { patente: string; detail: string; amount: number; quantity: number; score: number }>();
+  for (const item of sanitizedItems) {
+    const key = `${item.patente.toUpperCase()}|${item.detail.toUpperCase()}|${item.amount}|${item.quantity}`;
+    const score = (item.amount > 0 ? 100 : 0) + Math.min(item.detail.length, 40);
+    const existing = dedupedByKey.get(key);
+    if (!existing || score > existing.score) {
+      dedupedByKey.set(key, { ...item, score });
+    }
+  }
+
+  const dedupedItems = Array.from(dedupedByKey.values()).map(({ score, ...rest }) => rest);
+
+  const cleanedItems: SanitizedVipItem[] = [];
+  const groupedByPatente = new Map<string, SanitizedVipItem[]>();
+
+  for (const item of dedupedItems) {
+    const patenteKey = item.patente.replace(/[-\s]/g, "").toUpperCase();
+    if (!patenteKey) {
+      cleanedItems.push(item);
+      continue;
+    }
+    const current = groupedByPatente.get(patenteKey) ?? [];
+    current.push(item);
+    groupedByPatente.set(patenteKey, current);
+  }
+
+  for (const [patenteKey, group] of groupedByPatente.entries()) {
+    const hasPositive = group.some((item) => item.amount > 0);
+    const filtered = hasPositive ? group.filter((item) => item.amount > 0) : group;
+    const hasStrongDetail = filtered.some((item) => {
+      const detailKey = item.detail.replace(/[-\s]/g, "").toUpperCase();
+      return detailKey.length >= 8 && detailKey !== patenteKey;
+    });
+    const filteredByDetail = hasStrongDetail
+      ? filtered.filter((item) => {
+          const detailKey = item.detail.replace(/[-\s]/g, "").toUpperCase();
+          return detailKey.length >= 8 && detailKey !== patenteKey;
+        })
+      : filtered;
+    const bestByDetail = new Map<string, SanitizedVipItem>();
+
+    for (const item of filteredByDetail) {
+      const detailKey = item.detail.toUpperCase();
+      const existing = bestByDetail.get(detailKey);
+      if (!existing || item.amount > existing.amount || (item.amount === existing.amount && item.detail.length > existing.detail.length)) {
+        bestByDetail.set(detailKey, item);
+      }
+    }
+
+    cleanedItems.push(...bestByDetail.values());
+  }
+
+  const items = cleanedItems;
+
+  const totalsRaw = (parsed as any).totals ?? {};
+  const neto = parseClpNumber(totalsRaw?.neto);
+  const iva = parseClpNumber(totalsRaw?.iva);
+  let total = parseClpNumber(totalsRaw?.total);
+
+  const sumItems = items.reduce((sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0), 0);
+
+  const target = total > 0 ? total : neto > 0 ? neto : sumItems;
+  if (total === 0 && neto === 0 && sumItems > 0) {
+    total = sumItems;
+  }
+
+  if (target >= 10_000 && sumItems > target * 5) {
+    const ratio = sumItems / target;
+    const candidates = [10, 100, 1000];
+    let factor: number | null = null;
+    for (const candidate of candidates) {
+      if (Math.abs(ratio - candidate) / candidate < 0.15) {
+        factor = candidate;
+        break;
+      }
+    }
+
+    if (factor) {
+      for (const item of items) {
+        item.amount = Math.max(0, Math.round(item.amount / factor));
+      }
+    }
+  } else if (target > 0 && target < 10_000 && sumItems >= 10_000) {
+    total = sumItems;
+  }
+
+  (parsed as any).items = items;
+  (parsed as any).totals = { neto: Math.max(0, Math.round(neto)), iva: Math.max(0, Math.round(iva)), total: Math.max(0, Math.round(total)) };
+};
+
+const normalizeGatewayApiKey = (raw: string) =>
+  raw
+    .trim()
+    .replace(/^['"`]+|['"`]+$/g, "")
+    .trim()
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+
 const getGatewayAuthConfig = () => {
-  const candidates = ['AI_GATEWAY_KEY', 'LOVABLE_API_KEY']
-    .map((name) => {
-      const rawKey = Deno.env.get(name);
-      if (!rawKey) return null;
+  const primary = Deno.env.get("LOVABLE_API_KEY");
+  if (primary) {
+    const apiKey = normalizeGatewayApiKey(primary);
+    if (apiKey) return { source: "LOVABLE_API_KEY", apiKey };
+  }
 
-      const trimmedKey = rawKey.trim().replace(/^['"`]+|['"`]+$/g, '').trim();
-      const normalizedKey = trimmedKey.replace(/^Bearer\s+/i, '').trim();
+  const fallback = Deno.env.get("AI_GATEWAY_KEY");
+  if (fallback) {
+    const apiKey = normalizeGatewayApiKey(fallback);
+    if (apiKey) return { source: "AI_GATEWAY_KEY", apiKey };
+  }
 
-      return {
-        source: name,
-        apiKey: normalizedKey || trimmedKey,
-        debug: {
-          source: name,
-          rawStartsWithBearer: /^Bearer\s+/i.test(trimmedKey),
-          rawStartsWithSk: trimmedKey.startsWith('sk_'),
-          normalizedStartsWithSk: normalizedKey.startsWith('sk_'),
-          rawLength: trimmedKey.length,
-          normalizedLength: normalizedKey.length,
-        },
-      };
-    })
-    .filter(Boolean)
-    .sort((left, right) => Number(right!.apiKey.startsWith('sk_')) - Number(left!.apiKey.startsWith('sk_')));
-
-  return candidates[0] ?? null;
+  return null;
 };
 
 serve(async (req) => {
@@ -86,7 +215,7 @@ serve(async (req) => {
     const gatewayAuth = getGatewayAuthConfig();
     if (!gatewayAuth?.apiKey) {
       console.error('AI gateway key is not configured');
-      return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
+      return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 503);
     }
     const gatewayApiKey = gatewayAuth.apiKey;
 
@@ -240,6 +369,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
       console.error('Failed to parse tool arguments:', toolCall.function.arguments, parseError);
       return jsonResponse({ error: 'La IA devolvió una respuesta inválida' }, 500);
     }
+
+    sanitizeQuoteResult(parsed);
     
     console.log('Parsed Quote:', JSON.stringify({
       quoteNumber: parsed.quoteNumber,

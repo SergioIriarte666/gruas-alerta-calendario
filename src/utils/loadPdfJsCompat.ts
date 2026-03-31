@@ -22,6 +22,8 @@ export type PdfJsModule = typeof import('pdfjs-dist/legacy/build/pdf.mjs');
 
 let pdfJsPromise: Promise<PdfJsModule> | null = null;
 
+export const pdfJsWorkerSrc = pdfJsWorkerUrl;
+
 const installPromiseWithResolversPolyfill = () => {
   const promiseConstructor = Promise as PromiseWithResolversConstructor;
 
@@ -96,7 +98,9 @@ export const loadPdfJsCompat = async (): Promise<PdfJsModule> => {
 
     pdfJsPromise = import('pdfjs-dist/legacy/build/pdf.mjs')
       .then((module) => {
-        module.GlobalWorkerOptions.workerSrc = pdfJsWorkerUrl;
+        if (!module.GlobalWorkerOptions.workerSrc) {
+          module.GlobalWorkerOptions.workerSrc = pdfJsWorkerUrl;
+        }
 
         return module;
       })

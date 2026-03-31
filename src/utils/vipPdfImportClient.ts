@@ -3,6 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 const getFunctionUrl = (functionName: string) =>
   `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
 
+let vipPdfAiDisabledForSession = false;
+
+export const isVipPdfAiDisabled = () => vipPdfAiDisabledForSession;
+
+export const disableVipPdfAiForSession = () => {
+  vipPdfAiDisabledForSession = true;
+};
+
 export const invokeEdgeFunctionJson = async <T>(functionName: string, body: Record<string, unknown>): Promise<T> => {
   const {
     data: { session },

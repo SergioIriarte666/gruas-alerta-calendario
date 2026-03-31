@@ -1,4 +1,4 @@
-import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+import { loadPdfJsCompat, pdfJsWorkerSrc } from '@/utils/loadPdfJsCompat';
 import { createWorker } from 'tesseract.js';
 
 export interface LocalVipPdfItem {
@@ -33,7 +33,24 @@ const normalizeSpaces = (value: string) => value.replace(/\s+/g, ' ').trim();
 const normalizeRut = (value: string) => value.replace(/[.\s-]/g, '').toUpperCase();
 const normalizeIdentifier = (value: string) => value.replace(/\s+/g, '').toUpperCase();
 const parseAmount = (value: string) => {
-  const digits = value.replace(/[^\d]/g, '');
+  const raw = value.trim();
+  if (!raw) return 0;
+
+  const normalized = raw.replace(/[^\d.,-]/g, '');
+
+  if (/,(\d{2})$/.test(normalized)) {
+    const integerPart = normalized.split(',')[0] ?? '';
+    const digits = integerPart.replace(/[^\d-]/g, '').replace(/\./g, '');
+    return digits ? Number.parseInt(digits, 10) : 0;
+  }
+
+  if (/\.(\d{2})$/.test(normalized)) {
+    const integerPart = normalized.split('.')[0] ?? '';
+    const digits = integerPart.replace(/[^\d-]/g, '').replace(/,/g, '');
+    return digits ? Number.parseInt(digits, 10) : 0;
+  }
+
+  const digits = normalized.replace(/[^\d-]/g, '');
   return digits ? Number.parseInt(digits, 10) : 0;
 };
 
@@ -367,10 +384,13 @@ const extractPdfTextWithOcr = async (pdf: any) => {
 
 const extractPdfLines = async (file: File) => {
   const pdfjsLib = await loadPdfJsCompat();
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfJsWorkerSrc;
+  }
   const buffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-    disableWorker: true,
+  const data = new Uint8Array(buffer);
+  const baseParams = {
+    data,
     disableAutoFetch: true,
     disableFontFace: true,
     disableStream: true,
@@ -378,8 +398,14 @@ const extractPdfLines = async (file: File) => {
     isOffscreenCanvasSupported: false,
     useWorkerFetch: false,
     useWasm: false,
-  } as any);
-  const pdf = await loadingTask.promise;
+  } as any;
+
+  let pdf: any;
+  try {
+    pdf = await pdfjsLib.getDocument({ ...baseParams, disableWorker: false }).promise;
+  } catch (error) {
+    pdf = await pdfjsLib.getDocument({ ...baseParams, disableWorker: true }).promise;
+  }
   const lines: string[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
