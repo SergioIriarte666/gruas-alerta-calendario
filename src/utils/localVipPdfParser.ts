@@ -213,7 +213,7 @@ const extractPdfLines = async (file: File) => {
     isOffscreenCanvasSupported: false,
     useWorkerFetch: false,
     useWasm: false,
-  });
+  } as any);
   const pdf = await loadingTask.promise;
   const lines: string[] = [];
 
