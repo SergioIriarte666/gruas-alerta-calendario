@@ -40,19 +40,62 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
     notes: '',
   });
   const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
+  const [isExtracting, setIsExtracting] = useState(false);
+
+  const extractReceiptData = async (imageUrl: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('parse-receipt-image', {
+        body: { imageUrl },
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Receipt extraction failed:', err);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let receiptExtraction = null;
+
+      // Si hay fotos y es tipo costo, extraer datos con IA
+      if (photos.length > 0 && formData.type === 'cost') {
+        setIsExtracting(true);
+        try {
+          receiptExtraction = await extractReceiptData(photos[0].signedUrl);
+        } catch {
+          // Continuar sin extracción
+        } finally {
+          setIsExtracting(false);
+        }
+      }
+
+      // Pre-llenar campos desde la extracción si el usuario no los completó
+      const finalData = { ...formData };
+      if (receiptExtraction) {
+        if (!finalData.amount && receiptExtraction.totals?.total) {
+          finalData.amount = receiptExtraction.totals.total;
+        }
+        if (!finalData.description && receiptExtraction.notes) {
+          finalData.description = receiptExtraction.notes;
+        }
+        if (receiptExtraction.date && !finalData.date) {
+          finalData.date = receiptExtraction.date;
+        }
+      }
+
       await createQuickEntry({
-        ...formData,
+        ...finalData,
         photo_url: photos[0]?.signedUrl,
         data: {
-          ...(formData.data || {}),
+          ...(finalData.data || {}),
           photos,
+          receipt_extraction: receiptExtraction,
         },
       });
-      triggerRefresh(); // Trigger refresh for PendingEntriesView
+      triggerRefresh();
       onClose();
       setFormData({
         type: 'service',
