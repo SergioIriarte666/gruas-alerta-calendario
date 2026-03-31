@@ -67,7 +67,7 @@ serve(async (req) => {
     }
 
     // 3. Check API key
-    const gatewayApiKey = Deno.env.get("AI_GATEWAY_KEY") || Deno.env.get("LOVABLE_API_KEY");
+    const gatewayApiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!gatewayApiKey) {
       console.error("AI gateway key is not configured");
       return jsonResponse({ error: "Falta configurar la clave del gateway de IA" }, 500);

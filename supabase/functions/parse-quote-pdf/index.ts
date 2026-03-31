@@ -23,25 +23,9 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const normalizeGatewayApiKey = (raw: string) => {
-  let value = raw.trim();
-  value = value.replace(/^['"`]\s*/, '').replace(/\s*['"`]$/, '').trim();
-  value = value.replace(/^Bearer\s+/i, '').trim();
-  return value;
-};
-
-const getGatewayApiKeys = () => {
-  const primaryRaw = Deno.env.get('AI_GATEWAY_KEY');
-  const fallbackRaw = Deno.env.get('LOVABLE_API_KEY');
-
-  const primary = primaryRaw ? normalizeGatewayApiKey(primaryRaw) : null;
-  const fallback = fallbackRaw ? normalizeGatewayApiKey(fallbackRaw) : null;
-
-  const keys = [primary, fallback]
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    .filter((value, index, arr) => arr.indexOf(value) === index);
-
-  return keys;
+const getGatewayApiKey = () => {
+  const key = Deno.env.get('LOVABLE_API_KEY');
+  return key?.trim() || null;
 };
 
 serve(async (req) => {
@@ -76,9 +60,9 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKeys = getGatewayApiKeys();
-    if (gatewayApiKeys.length === 0) {
-      console.error('AI gateway key is not configured');
+    const gatewayApiKey = getGatewayApiKey();
+    if (!gatewayApiKey) {
+      console.error('LOVABLE_API_KEY is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
 
@@ -86,7 +70,7 @@ serve(async (req) => {
     let lastErrorText = '';
     let lastStatus = 0;
 
-    for (const gatewayApiKey of gatewayApiKeys) {
+    {
       aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -194,12 +178,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
         }),
       });
 
-      if (aiResponse.ok) break;
-
       lastStatus = aiResponse.status;
-      lastErrorText = await aiResponse.text().catch(() => '');
-
-      if (aiResponse.status !== 401) break;
+      if (!aiResponse.ok) {
+        lastErrorText = await aiResponse.text().catch(() => '');
+      }
     }
 
     if (!aiResponse?.ok) {
