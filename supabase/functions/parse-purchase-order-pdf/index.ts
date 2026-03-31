@@ -23,25 +23,9 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-const normalizeGatewayApiKey = (raw: string) => {
-  let value = raw.trim();
-  value = value.replace(/^['"`]\s*/, '').replace(/\s*['"`]$/, '').trim();
-  value = value.replace(/^Bearer\s+/i, '').trim();
-  return value;
-};
-
-const getGatewayApiKeys = () => {
-  const primaryRaw = Deno.env.get('LOVABLE_API_KEY');
-  const fallbackRaw = Deno.env.get('AI_GATEWAY_KEY');
-
-  const primary = primaryRaw ? normalizeGatewayApiKey(primaryRaw) : null;
-  const fallback = fallbackRaw ? normalizeGatewayApiKey(fallbackRaw) : null;
-
-  const keys = [primary, fallback]
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-    .filter((value, index, arr) => arr.indexOf(value) === index);
-
-  return keys;
+const getGatewayApiKey = () => {
+  const key = Deno.env.get('LOVABLE_API_KEY');
+  return key?.trim() || null;
 };
 
 serve(async (req) => {
