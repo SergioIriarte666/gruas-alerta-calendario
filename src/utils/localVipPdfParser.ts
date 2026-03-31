@@ -35,6 +35,23 @@ const parseAmount = (value: string) => {
   return digits ? Number.parseInt(digits, 10) : 0;
 };
 
+const collectMatches = (text: string, pattern: RegExp) => {
+  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`;
+  const regex = new RegExp(pattern.source, flags);
+  const matches: RegExpExecArray[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    matches.push(match);
+
+    if (match[0] === '') {
+      regex.lastIndex += 1;
+    }
+  }
+
+  return matches;
+};
+
 const formatIsoDate = (day: string, month: string, year: string) => {
   const normalizedYear = year.length === 2 ? `20${year}` : year;
   const normalizedMonth = month.padStart(2, '0');
@@ -45,7 +62,7 @@ const formatIsoDate = (day: string, month: string, year: string) => {
 };
 
 const extractDate = (text: string) => {
-  const matches = [...text.matchAll(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g)];
+  const matches = collectMatches(text, /\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b/g);
   for (const match of matches) {
     const date = formatIsoDate(match[1], match[2], match[3]);
     if (date) return date;
@@ -85,7 +102,7 @@ const extractTotals = (text: string) => {
   const iva = text.match(/IVA\D{0,20}(\$?\s?[\d.]{3,})/i)?.[1];
   const total = text.match(/(?:TOTAL\s*(?:A\s*PAGAR|GENERAL)?|MONTO\s*TOTAL)\D{0,20}(\$?\s?[\d.]{3,})/i)?.[1];
 
-  const amounts = [...text.matchAll(AMOUNT_REGEX)]
+  const amounts = collectMatches(text, AMOUNT_REGEX)
     .map((match) => parseAmount(match[0]))
     .filter((value) => value > 0)
     .sort((a, b) => b - a);
@@ -133,7 +150,7 @@ const extractItems = (lines: string[]): LocalVipPdfItem[] => {
     const identifiers = extractIdentifiers(line);
     if (identifiers.length === 0) continue;
 
-    const amounts = [...line.matchAll(AMOUNT_REGEX)]
+    const amounts = collectMatches(line, AMOUNT_REGEX)
       .map((match) => parseAmount(match[0]))
       .filter((value) => value > 0);
 
@@ -174,9 +191,10 @@ const extractOcNumber = (text: string) => {
 };
 
 const extractQuoteReference = (text: string) => {
-  const candidates = [
-    ...text.matchAll(/(?:SEGUN|SEGÚN|REF\.?|COTIZACI[ÓO]N|PRESUPUESTO|PPTO|COT-)\D{0,20}(\d{3,10})/gi),
-  ].map((match) => match[1]);
+  const candidates = collectMatches(
+    text,
+    /(?:SEGUN|SEGÚN|REF\.?|COTIZACI[ÓO]N|PRESUPUESTO|PPTO|COT-)\D{0,20}(\d{3,10})/gi,
+  ).map((match) => match[1]);
 
   return candidates[0] || '';
 };
