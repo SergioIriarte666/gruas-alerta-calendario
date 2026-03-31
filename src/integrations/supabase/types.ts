@@ -5320,7 +5320,6 @@ export type Database = {
         Returns: {
           amount: number
           client_name: string
-          commission_percentage: number
           created_at: string
           date: string
           description: string
