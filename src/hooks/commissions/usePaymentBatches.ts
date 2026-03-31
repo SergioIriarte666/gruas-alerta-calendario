@@ -12,6 +12,8 @@ interface CreatePaymentBatchData {
 }
 
 const createPaymentBatch = async (data: CreatePaymentBatchData) => {
+  console.log('📦 [usePaymentBatches] Datos recibidos:', JSON.stringify(data, null, 2));
+  
   // Generate batch number
   const batchNumber = `LOTE-${Date.now()}`;
   
@@ -22,12 +24,18 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
     .in('id', data.commission_ids);
     
   if (commissionsError) {
-    throw new Error(`Error fetching commissions: ${commissionsError.message}`);
+    console.error('❌ [usePaymentBatches] Error fetching commissions:', commissionsError);
+    throw new Error(`Error al obtener comisiones: ${commissionsError.message}`);
   }
+  
+  if (!commissions || commissions.length === 0) {
+    throw new Error(`No se encontraron comisiones con los IDs proporcionados (${data.commission_ids.length} IDs)`);
+  }
+  
+  console.log(`✅ [usePaymentBatches] Encontradas ${commissions.length} comisiones de ${data.commission_ids.length} solicitadas`);
   
   const totalAmount = commissions.reduce((sum, c) => sum + Number(c.amount), 0);
   
-  // Create payment batch record (you might need to create this table)
   const batchData = {
     batch_number: batchNumber,
     operator_id: data.operator_id,
@@ -42,16 +50,20 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   
   // Marcar comisiones como pagadas usando la fecha seleccionada por el usuario
   const paymentDateFormatted = formatForDatabase(data.payment_date);
+  console.log('📅 [usePaymentBatches] Fecha formateada:', paymentDateFormatted, 'desde:', data.payment_date);
   
-  const { error: updateError } = await supabase.rpc('update_commission_payment_date', {
+  const { data: rpcResult, error: updateError } = await supabase.rpc('update_commission_payment_date', {
     p_commission_ids: data.commission_ids,
     p_payment_date: paymentDateFormatted,
     p_payment_batch_id: batchNumber,
   });
     
   if (updateError) {
-    throw new Error(`Error updating commissions: ${updateError.message}`);
+    console.error('❌ [usePaymentBatches] Error RPC update_commission_payment_date:', updateError);
+    throw new Error(`Error al actualizar comisiones: ${updateError.message}`);
   }
+  
+  console.log('✅ [usePaymentBatches] RPC result:', rpcResult);
   
   return batchData;
 };

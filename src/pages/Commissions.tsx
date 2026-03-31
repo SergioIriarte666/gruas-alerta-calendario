@@ -309,6 +309,7 @@ const Commissions = () => {
 
   const handleCreatePaymentBatch = async (batchData: any) => {
     try {
+      console.log('📦 [Commissions] Creando lote de pago:', batchData);
       await createPaymentBatch.mutateAsync(batchData);
       toast({
         type: "success",
@@ -318,11 +319,13 @@ const Commissions = () => {
       // Clear selections
       setSelectedCommissions([]);
       setSelectedOperatorCommissions({});
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ [Commissions] Error creando lote:', error);
+      const errorMessage = error?.message || "No se pudo crear el lote de pago.";
       toast({
         type: "error",
-        title: "Error",
-        description: "No se pudo crear el lote de pago.",
+        title: "Error al crear lote",
+        description: errorMessage,
       });
     }
   };
