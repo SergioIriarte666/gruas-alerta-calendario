@@ -253,7 +253,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Busca en TODO el documento frases que referencien cotizaciones o presupuestos.
 - Patrones: "SEGUN COTIZACION", "SEGÚN COTIZACIÓN", "COTIZACION N", "PRESUPUESTO", "COT-", "PPTO", etc.
 - Extrae SOLO el número (ej: "4100", "4090").
-- Extrae el RUT de la empresa/entidad que EMITE la orden de compra.`
+- CRÍTICO SOBRE clientRut: Extrae el RUT de la empresa/entidad que EMITE la orden de compra (el comprador/cliente).
+  NO extraigas el RUT de la empresa PROVEEDORA/DESTINATARIA de la OC (ej: la empresa de grúas que recibe la OC).
+  El RUT del emisor aparece en el encabezado de la OC como "Empresa emisora", "Comprador", etc.
+  Si solo ves el RUT del proveedor/destinatario, devuelve string vacío.`
             },
             {
               role: 'user',
@@ -358,6 +361,27 @@ Debes extraer la información estructurada del documento usando la herramienta e
     }
 
     sanitizePurchaseOrderResult(parsed);
+
+    // Filter out company's own RUT if AI mistakenly extracted it
+    const normalizeRutForCompare = (r: string) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
+    let extractedClientRut = typeof parsed.clientRut === 'string' ? parsed.clientRut : '';
+    
+    if (extractedClientRut) {
+      try {
+        const { data: companyData } = await supabase
+          .from('company_data')
+          .select('rut')
+          .limit(1)
+          .single();
+        
+        if (companyData?.rut && normalizeRutForCompare(extractedClientRut) === normalizeRutForCompare(companyData.rut)) {
+          console.log(`Filtered out company's own RUT: ${extractedClientRut}`);
+          extractedClientRut = '';
+        }
+      } catch (e) {
+        // If company_data query fails, just proceed
+      }
+    }
     
     console.log('Parsed OC:', JSON.stringify({
       ocNumber: parsed.ocNumber,
@@ -371,7 +395,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
       quoteReference: parsed.quoteReference || '',
-      clientRut: parsed.clientRut || '',
+      clientRut: extractedClientRut,
       rawText: `Extraído con IA - ${(parsed.items as any[])?.length || 0} items encontrados`,
     };
 
