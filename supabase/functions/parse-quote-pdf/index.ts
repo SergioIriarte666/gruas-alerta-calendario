@@ -252,7 +252,11 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Extrae TODAS las patentes que aparezcan en el documento.
 - IMPORTANTE: Si un ítem tiene MÚLTIPLES patentes separadas por "/" o "," (ej: "TKFL-65/TKFL-67"), genera UN ÍTEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad de patentes.
 - Lee TODAS las secciones del documento incluyendo observaciones, notas y glosas para extraer información completa.
-- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar).
+- CRÍTICO SOBRE clientRut: Debes extraer el RUT del CLIENTE/DESTINATARIO de la cotización, NO el RUT de la empresa que EMITE la cotización.
+  La cotización es emitida por una empresa (ej: "Grúas 5 Norte") y va dirigida a un cliente (ej: "Señores: Empresa X, RUT: 77.225.200-5").
+  El RUT del emisor aparece generalmente en el membrete/encabezado junto al logo. IGNÓRALO.
+  El RUT del cliente/destinatario aparece en campos como "Señor(es)", "Cliente", "Razón Social", "Dirigido a", "Atención".
+  Si solo encuentras el RUT del emisor y no hay RUT de destinatario visible, devuelve string vacío.
 - VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN de 16-17 caracteres alfanumericos.
   CRITICO: El VIN frecuentemente aparece PEGADO al nombre del modelo sin espacio. Los VINs brasileños empiezan con "9B".
   Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.`
