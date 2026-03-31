@@ -6,7 +6,7 @@ import './index.css'
 
 // Add version logging
 console.log('%c TMS App Version: 2026-03-03.1 (Optimization Fixes)', 'background: #222; color: #bada55; font-size: 14px; padding: 4px;');
-console.log('Environment:', process.env.NODE_ENV);
+console.log('Environment:', import.meta.env.MODE);
 
 // ── Chunk-load error recovery ──────────────────────────────────
 // After a deploy, browsers may still hold a cached index.html that

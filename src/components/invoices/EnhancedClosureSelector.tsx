@@ -9,6 +9,8 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn, toTitleCase } from '@/lib/utils';
 
+const isDev = import.meta.env.DEV;
+
 interface EnhancedClosureSelectorProps {
   selectedClosureId: string;
   onClosureChange: (closureId: string) => void;
@@ -186,7 +188,9 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
         </p>}
       
       {/* Debug info in edit mode */}
-      {isEditing && process.env.NODE_ENV === 'development'}
+      {isEditing && isDev && <p className="text-xs text-primary mt-1">
+          Debug: Modo edición activo, mostrando cierres con estado 'closed' e 'invoiced'
+        </p>}
     </div>;
 };
 export default EnhancedClosureSelector;

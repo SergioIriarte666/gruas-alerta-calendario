@@ -3,6 +3,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
+const isDev = import.meta.env.DEV;
+
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
@@ -47,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <AlertTitle>Algo salió mal en {this.props.name || 'este componente'}</AlertTitle>
           <AlertDescription className="mt-2 space-y-4">
             <p>Se ha producido un error inesperado.</p>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {isDev && this.state.error && (
               <pre className="text-xs bg-black/10 p-2 rounded overflow-auto max-h-[200px]">
                 {this.state.error.toString()}
                 {this.state.errorInfo?.componentStack}
