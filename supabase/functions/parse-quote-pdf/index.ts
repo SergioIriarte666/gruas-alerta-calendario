@@ -360,6 +360,27 @@ Debes extraer la información estructurada del documento usando la herramienta e
     }
 
     sanitizeQuoteResult(parsed);
+
+    // Filter out company's own RUT if AI mistakenly extracted it
+    const normalizeRutForCompare = (r: string) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
+    let extractedClientRut = typeof parsed.clientRut === 'string' ? parsed.clientRut : '';
+    
+    if (extractedClientRut) {
+      try {
+        const { data: companyData } = await supabase
+          .from('company_data')
+          .select('rut')
+          .limit(1)
+          .single();
+        
+        if (companyData?.rut && normalizeRutForCompare(extractedClientRut) === normalizeRutForCompare(companyData.rut)) {
+          console.log(`Filtered out company's own RUT: ${extractedClientRut}`);
+          extractedClientRut = '';
+        }
+      } catch (e) {
+        // If company_data query fails, just proceed
+      }
+    }
     
     console.log('Parsed Quote:', JSON.stringify({
       quoteNumber: parsed.quoteNumber,
@@ -372,7 +393,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       date: parsed.date || null,
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
-      clientRut: parsed.clientRut || '',
+      clientRut: extractedClientRut,
       rawText: `Extraído con IA - ${(parsed.items as any[])?.length || 0} items encontrados`,
     };
 
