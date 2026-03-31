@@ -299,7 +299,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
                     },
                     clientRut: {
                       type: 'string',
-                      description: 'RUT del cliente/empresa destinatario de la cotización (ej: 76.XXX.XXX-X)'
+                      description: 'RUT del CLIENTE/DESTINATARIO de la cotización (a quien va dirigida), NO el RUT de la empresa que la emite'
                     },
                     totals: {
                       type: 'object',
