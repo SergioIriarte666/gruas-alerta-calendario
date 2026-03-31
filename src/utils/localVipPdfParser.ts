@@ -31,6 +31,7 @@ export interface LocalPurchaseOrderPdfResult {
 
 const normalizeSpaces = (value: string) => value.replace(/\s+/g, ' ').trim();
 const normalizeRut = (value: string) => value.replace(/[.\s-]/g, '').toUpperCase();
+const normalizeIdentifier = (value: string) => value.replace(/\s+/g, '').toUpperCase();
 const parseAmount = (value: string) => {
   const digits = value.replace(/[^\d]/g, '');
   return digits ? Number.parseInt(digits, 10) : 0;
@@ -71,19 +72,136 @@ const extractDate = (text: string) => {
   return null;
 };
 
-const PLATE_REGEX = /\b(?:[A-Z]{4}-?\d{2}|[A-Z]{2}-?\d{4})\b/g;
-const VIN_REGEX = /\b[A-HJ-NPR-Z0-9]{16,17}\b/g;
+const PLATE_REGEX = /(?:^|[^A-Z0-9])([A-Z]{4}-?\d{2}|[A-Z]{2}-?\d{4})(?=$|[^A-Z0-9])/g;
+const VIN_REGEX = /(?:^|[^A-Z0-9])([A-HJ-NPR-Z0-9]{16,17})(?=$|[^A-Z0-9])/g;
+const EMBEDDED_VIN_REGEX = /(?:^|[^A-Z0-9])(?:[A-Z]{2,20})?([A-HJ-NPR-Z0-9]{16,17})(?=$|[^A-Z0-9])/g;
 const AMOUNT_REGEX = /\$?\s?\d{1,3}(?:\.\d{3})+(?:,\d+)?|\$?\s?\d{4,}/g;
 const RUT_REGEX = /\b\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]\b/g;
+const SERVICE_KEYWORDS = [
+  'SERVICIO',
+  'GRUA',
+  'GRÚA',
+  'REMOLQUE',
+  'TRASLADO',
+  'ASISTENCIA',
+  'RESCATE',
+  'RETIRO',
+  'INGRESO',
+  'SALIDA',
+  'VEHICULO',
+  'VEHÍCULO',
+  'AUTO',
+  'CAMION',
+  'CAMIÓN',
+  'CAMIONETA',
+  'TOWING',
+  'MOVE',
+];
+
+const normalizeDetailForCompare = (value: string) =>
+  normalizeSpaces(value)
+    .toUpperCase()
+    .replace(/[.,;:()]/g, ' ')
+    .replace(/\b(?:PATENTE|PLACA|PPU|VIN|CHASIS)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const hasServiceKeyword = (value: string) => {
+  const upper = value.toUpperCase();
+  for (let index = 0; index < SERVICE_KEYWORDS.length; index += 1) {
+    if (upper.includes(SERVICE_KEYWORDS[index])) return true;
+  }
+  return false;
+};
+
+const isWeakDetail = (detail: string, patente: string) => {
+  const normalizedDetail = normalizeDetailForCompare(detail).replace(/[-\s]/g, '');
+  const normalizedPatente = normalizeIdentifier(patente).replace(/-/g, '');
+  return !normalizedDetail || normalizedDetail === normalizedPatente || normalizedDetail.length < 8;
+};
+
+const getItemScore = (item: LocalVipPdfItem) => {
+  let score = 0;
+  if (item.amount > 0) score += 100;
+  if (hasServiceKeyword(item.detail)) score += 20;
+  if (!isWeakDetail(item.detail, item.patente)) score += 10;
+  score += Math.min(item.detail.length, 40);
+  return score;
+};
+
+const areItemsMergeable = (left: LocalVipPdfItem, right: LocalVipPdfItem) => {
+  const leftPatente = normalizeIdentifier(left.patente).replace(/-/g, '');
+  const rightPatente = normalizeIdentifier(right.patente).replace(/-/g, '');
+  if (leftPatente !== rightPatente) return false;
+  if (left.amount !== right.amount) return false;
+
+  const leftDetail = normalizeDetailForCompare(left.detail);
+  const rightDetail = normalizeDetailForCompare(right.detail);
+  if (leftDetail === rightDetail) return true;
+  if (isWeakDetail(left.detail, left.patente) || isWeakDetail(right.detail, right.patente)) return true;
+  return leftDetail.includes(rightDetail) || rightDetail.includes(leftDetail);
+};
+
+const finalizeItems = (items: LocalVipPdfItem[]) => {
+  const normalizedItems = items
+    .map((item) => ({
+      ...item,
+      patente: normalizeIdentifier(item.patente),
+      detail: normalizeSpaces(item.detail),
+    }))
+    .filter((item) => item.patente);
+
+  const positiveAmountsByPatente = new Set(
+    normalizedItems
+      .filter((item) => item.amount > 0)
+      .map((item) => item.patente.replace(/-/g, '')),
+  );
+
+  const filteredItems = normalizedItems.filter((item) => {
+    const normalizedPatente = item.patente.replace(/-/g, '');
+    if (item.amount <= 0 && positiveAmountsByPatente.has(normalizedPatente)) {
+      return hasServiceKeyword(item.detail) && !isWeakDetail(item.detail, item.patente);
+    }
+
+    if (item.amount <= 0 && !hasServiceKeyword(item.detail)) return false;
+    return true;
+  });
+
+  const deduped: LocalVipPdfItem[] = [];
+
+  for (let index = 0; index < filteredItems.length; index += 1) {
+    const item = filteredItems[index];
+    const existingIndex = deduped.findIndex((existing) => areItemsMergeable(existing, item));
+
+    if (existingIndex === -1) {
+      deduped.push(item);
+      continue;
+    }
+
+    if (getItemScore(item) > getItemScore(deduped[existingIndex])) {
+      deduped[existingIndex] = item;
+    }
+  }
+
+  return deduped;
+};
 
 const extractIdentifiers = (line: string) => {
   const upper = line.toUpperCase();
-  const matches = [
-    ...(upper.match(PLATE_REGEX) || []),
-    ...(upper.match(VIN_REGEX) || []),
-  ];
+  const values = new Set<string>();
+  const patterns = [PLATE_REGEX, VIN_REGEX, EMBEDDED_VIN_REGEX];
 
-  return Array.from(new Set(matches.map((match) => match.replace(/\s+/g, '').toUpperCase())));
+  for (let patternIndex = 0; patternIndex < patterns.length; patternIndex += 1) {
+    const matches = collectMatches(upper, patterns[patternIndex]);
+    for (let matchIndex = 0; matchIndex < matches.length; matchIndex += 1) {
+      const identifier = normalizeIdentifier(matches[matchIndex][1] || matches[matchIndex][0] || '');
+      if (!identifier) continue;
+      if (identifier.length >= 16 && !/[A-Z]/.test(identifier)) continue;
+      values.add(identifier);
+    }
+  }
+
+  return Array.from(values);
 };
 
 const pickClientRut = (text: string, labels: string[]) => {
@@ -162,6 +280,7 @@ const extractItems = (lines: string[]): LocalVipPdfItem[] => {
     const amount = amounts.length > 0 ? amounts[amounts.length - 1] : 0;
     const detailSource = amount > 0 ? mergedLine : line;
     const detail = cleanDetail(detailSource) || normalizeSpaces(detailSource);
+    if (amount <= 0 && !hasServiceKeyword(detail)) continue;
     const distributedAmount = identifiers.length > 1 && amount > 0 ? Math.round(amount / identifiers.length) : amount;
 
     for (const patente of identifiers) {
@@ -179,7 +298,7 @@ const extractItems = (lines: string[]): LocalVipPdfItem[] => {
     }
   }
 
-  return items;
+  return finalizeItems(items);
 };
 
 const extractQuoteNumber = (text: string) => {
@@ -221,7 +340,7 @@ const renderPdfPageToDataUrl = async (page: any, scale: number) => {
 };
 
 const extractPdfTextWithOcr = async (pdf: any) => {
-  const maxPages = Math.min(2, Number(pdf?.numPages || 0) || 0);
+  const maxPages = Math.min(4, Number(pdf?.numPages || 0) || 0);
   if (maxPages === 0) return '';
 
   let worker: Awaited<ReturnType<typeof createWorker>> | null = null;

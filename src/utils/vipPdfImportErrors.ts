@@ -7,6 +7,10 @@ const getErrorMessage = (error: unknown) => {
 export const buildVipPdfImportError = (remoteError: unknown, localError?: unknown) => {
   const remoteMessage = getErrorMessage(remoteError);
   const localMessage = getErrorMessage(localError);
+  const isGatewayCredentialError = /Invalid API key format|Error de autenticación con el gateway de IA/i.test(remoteMessage);
 
-  return localMessage || remoteMessage || 'No se pudo procesar el PDF';
+  if (localMessage) return localMessage;
+  if (localError) return 'No se pudo leer el PDF localmente.';
+  if (isGatewayCredentialError) return 'El análisis asistido no está disponible en este momento.';
+  return remoteMessage || 'No se pudo procesar el PDF';
 };
