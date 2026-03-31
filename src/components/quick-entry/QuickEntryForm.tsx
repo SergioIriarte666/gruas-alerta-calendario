@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
+import { supabase } from '@/integrations/supabase/client';
 
 interface QuickEntryFormProps {
   isOpen: boolean;
