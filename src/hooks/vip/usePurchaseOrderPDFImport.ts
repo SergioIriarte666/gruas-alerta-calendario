@@ -222,10 +222,6 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
       try {
         const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
-        const base64 = btoa(binary);
 
         let parsed: Omit<ParsedOC, 'fileName'>;
 
@@ -233,8 +229,9 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           if (isVipPdfAiDisabled()) {
             throw new Error('Lectura IA deshabilitada');
           }
+          const pdfText = await extractPdfText(buffer);
           parsed = await invokeEdgeFunctionJson<Omit<ParsedOC, 'fileName'>>('parse-purchase-order-pdf', {
-            pdfBase64: base64,
+            pdfText,
           });
           if (!parsed.items?.length) {
             throw new Error('No se encontraron ítems utilizables en el PDF');

@@ -188,9 +188,10 @@ serve(async (req) => {
       return jsonResponse({ error: 'Body inválido' }, 400);
     }
 
-    const { pdfBase64 } = body;
-    if (!pdfBase64) {
-      return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
+    const { pdfText, pdfBase64 } = body;
+    const textContent = pdfText || pdfBase64;
+    if (!textContent) {
+      return jsonResponse({ error: 'Se requiere pdfText o pdfBase64' }, 400);
     }
 
     const openaiApiKey = getOpenAiApiKey();
@@ -204,6 +205,26 @@ serve(async (req) => {
     let lastStatus = 0;
 
     {
+      const userContent = pdfText
+        ? [
+            {
+              type: 'text',
+              text: `Extrae todos los datos de esta Cotización: número de cotización, fecha, lista de items con patente/detalle/monto/cantidad, totales, y lee TODO el documento completo incluyendo observaciones, notas y glosas.\n\nContenido del PDF:\n\n${pdfText}`
+            }
+          ]
+        : [
+            {
+              type: 'text',
+              text: 'Extrae todos los datos de esta Cotización: número de cotización, fecha, lista de items con patente/detalle/monto/cantidad, totales, y lee TODO el documento completo incluyendo observaciones, notas y glosas.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:application/pdf;base64,${pdfBase64}`
+              }
+            }
+          ];
+
       aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -230,31 +251,15 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
 - Extrae TODAS las patentes que aparezcan en el documento.
 - IMPORTANTE: Si un ítem tiene MÚLTIPLES patentes separadas por "/" o "," (ej: "TKFL-65/TKFL-67"), genera UN ÍTEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad de patentes.
-- Ejemplo: "Remolque Toyota Hilux TKFL-65/TKFL-67" con valor $100.000 debe generar 2 items: uno con patente "TKFL-65" y monto $50.000, otro con patente "TKFL-67" y monto $50.000.
 - Lee TODAS las secciones del documento incluyendo observaciones, notas y glosas para extraer información completa.
-- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar). Busca en campos como "Señor(es)", "Cliente", "Razón Social", "RUT", "R.U.T.". Si no lo encuentras, devuelve string vacío.
-- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN (Vehicle Identification Number) de 16-17 caracteres alfanumericos en lugar de patente chilena.
-  CRITICO: El VIN frecuentemente aparece PEGADO al nombre del modelo sin espacio. Los VINs brasileños empiezan con "9B" (ej: 9BG, 9BD).
-  Ejemplo: "Colorado9BG148K0TC427662" -> modelo="Colorado", patente="9BG148K0TC427662" (el VIN empieza en "9BG", NO en "BG")
-  Ejemplo: "Sail LZWADAGA9SF003022" -> patente="LZWADAGA9SF003022"
-  Ejemplo: "GrooveLZWADAGA3TN041614" -> patente="LZWADAGA3TN041614"
-  NUNCA incluyas letras del nombre del modelo como parte del VIN. NUNCA cortes el primer digito del VIN.
+- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar).
+- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN de 16-17 caracteres alfanumericos.
+  CRITICO: El VIN frecuentemente aparece PEGADO al nombre del modelo sin espacio. Los VINs brasileños empiezan con "9B".
   Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.`
             },
             {
               role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Extrae todos los datos de esta Cotización: número de cotización, fecha, lista de items con patente/detalle/monto/cantidad, totales, y lee TODO el documento completo incluyendo observaciones, notas y glosas.'
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:application/pdf;base64,${pdfBase64}`
-                  }
-                }
-              ]
+              content: userContent
             }
           ],
           tools: [

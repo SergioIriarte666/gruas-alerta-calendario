@@ -218,10 +218,6 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
 
       try {
         const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let j = 0; j < bytes.length; j++) binary += String.fromCharCode(bytes[j]);
-        const base64 = btoa(binary);
 
         let parsed: Omit<ParsedQuote, 'fileName'>;
 
@@ -229,8 +225,9 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           if (isVipPdfAiDisabled()) {
             throw new Error('Lectura IA deshabilitada');
           }
+          const pdfText = await extractPdfText(buffer);
           parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
-            pdfBase64: base64,
+            pdfText,
           });
           if (!parsed.items?.length) {
             throw new Error('No se encontraron ítems utilizables en el PDF');
