@@ -1,70 +1,54 @@
 
 
-# Plan: Reparación del Módulo de Comisiones
+# Plan: Corregir Roles de Operadores y Comisiones Perdidas en Servicios Multi-Operador
 
-## Problemas Identificados
+## Problema Raíz
 
-### 1. Comisiones pagadas aparecen como pendientes
-**Causa raíz**: La función `get_commissions_with_details()` filtra por `cc.name = 'Comisión Operador' OR c.subcategory IN ('comisiones', 'comisiones_pagadas')`. Sin embargo, la migración `20260104` normalizó todas las subcategorías a `'Comisión Operador'`, así que las comisiones antiguas ya no coinciden con `'comisiones_pagadas'`. El estado `paid/pending` se determina correctamente por `payment_date`, pero el frontend tiene un flujo paralelo (`fetchMainOperatorCommissionsFromServices`) que genera comisiones "fantasma" con `status: 'pending'` leyendo directamente de la tabla `services` — sin consultar si ya existe un registro pagado en `costs`.
+El hook `useEnhancedServiceDetails.ts` (líneas 138-200) **no lee `service_resources`** para construir la lista de operadores. En su lugar:
 
-### 2. Comisiones que no aparecen
-**Causa raíz**: El trigger `generate_commission_on_service_completion` solo busca operadores con `role = 'Principal'` en `service_resources`. Si un servicio tiene 2 operadores (ej: Principal + Auxiliar), solo se genera comisión para el Principal. Además, el índice único `idx_costs_unique_commission` (`service_id, operator_id, category_id`) **es correcto** para evitar duplicados, pero el trigger ignora operadores auxiliares.
+1. Toma el operador principal desde `services.operator_id` y le asigna `role: 'Principal'` hardcodeado
+2. Busca operadores adicionales en la tabla `costs` (comisiones) y les asigna `role: 'Adicional'` hardcodeado
 
-### 3. Duplicados fantasma por `fetchMainOperatorCommissionsFromServices`
-**Causa raíz**: Esta función lee `services.operator_commission` y genera IDs sintéticos (`service-main-{id}`) que NO existen en `costs`. La lógica de deduplicación intenta filtrarlos si ya hay un par `service_id::operator_id` en costs, pero falla cuando: (a) el `operator_id` en `services` difiere del `operator_id` en `costs` (por cambios de operador), o (b) la comisión en costs fue pagada pero la proyección desde services sigue mostrándose como pendiente.
+Esto causa:
+- **Roles perdidos**: Los roles reales guardados en `service_resources` (Principal, Auxiliar, Supervisor, Apoyo) se ignoran completamente al editar
+- **Comisiones perdidas**: Si un operador secundario no tiene comisión en `costs`, simplemente no aparece al editar, y al guardar se elimina de `service_resources`
+- **Datos inconsistentes**: Al re-guardar un servicio, los roles se sobrescriben con "Principal" / "Adicional" genéricos
 
----
+## Solución
 
-## Solución Propuesta
+### Paso 1: Modificar `useEnhancedServiceDetails.ts` — Leer desde `service_resources`
 
-### Paso 1: Simplificar `useCommissions.ts` — Eliminar fuente de datos redundante
-Eliminar completamente `fetchMainOperatorCommissionsFromServices`. La **única fuente de verdad** para comisiones es la tabla `costs`. Los datos de `services.operator_commission` son solo un campo de referencia, no la fuente real.
+Agregar una consulta a `service_resources` como fuente primaria de operadores:
 
-- Mantener `fetchCommissionsFromCosts` como fallback del RPC
-- Eliminar la tercera fuente (`mainRes`) del `fetchCommissions`
-- Simplificar la lógica de merge: solo RPC + fallback costs, deduplicados por `id`
-
-### Paso 2: Actualizar `get_commissions_with_details()` (migración SQL)
-Ampliar el WHERE para capturar todas las variantes de subcategoría históricas:
-```sql
-WHERE (
-  cc.name = 'Comisión Operador' 
-  OR c.category_id = '440296d4-09c2-4f3a-b02b-835f861df4c4'
-  OR c.subcategory IN ('comisiones', 'comisiones_pagadas', 'Comisión Operador')
-)
+```typescript
+// NUEVA consulta - obtener operadores reales desde service_resources
+const { data: resourcesData } = await supabase
+  .from('service_resources')
+  .select('id, operator_id, role, commission_amount, is_primary, operators(id, name, rut, phone, ...)')
+  .eq('service_id', serviceId)
+  .eq('resource_type', 'operator');
 ```
-Esto garantiza que ninguna comisión quede excluida por inconsistencias en nombres de categoría o subcategoría.
 
-### Paso 3: Actualizar trigger para múltiples operadores (migración SQL)
-Modificar `generate_commission_on_service_completion` para iterar sobre **todos** los operadores en `service_resources` que tengan `commission_amount > 0`, no solo el `role = 'Principal'`:
-```sql
-FOR v_record IN
-  SELECT sr.operator_id, o.name, sr.commission_amount
-  FROM service_resources sr
-  JOIN operators o ON o.id = sr.operator_id
-  WHERE sr.service_id = NEW.id
-    AND sr.commission_amount > 0
-LOOP
-  -- Verificar duplicados y crear comisión por cada operador
-END LOOP;
-```
-El índice único existente ya protege contra duplicados por par `(service_id, operator_id, category_id)`.
+Reemplazar la lógica actual (líneas 138-200) que construye operadores desde `services.operator_id` + `costs`:
 
-### Paso 4: Sincronizar comisiones históricas faltantes (migración SQL)
-Script de reconciliación one-time que busca servicios completados/facturados con operadores en `service_resources` que tengan `commission_amount > 0` pero sin registro correspondiente en `costs`.
+- Si hay registros en `service_resources` → usarlos como fuente primaria (con roles y comisiones reales)
+- Si no hay registros en `service_resources` (servicios legacy) → fallback al método actual (`services.operator_id` + costs)
 
----
+Esto preserva los roles reales (Auxiliar, Supervisor, etc.) y garantiza que todos los operadores aparezcan al editar.
+
+### Paso 2: No se requieren cambios en el formulario ni en `useServiceManager.ts`
+
+El formulario (`MultipleOperatorsSection.tsx`) ya captura roles correctamente. El `useServiceManager.ts` ya guarda roles en `service_resources` correctamente (líneas 926-966). El problema es únicamente la **lectura** en `useEnhancedServiceDetails.ts`.
 
 ## Archivos a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/hooks/commissions/useCommissions.ts` | Eliminar `fetchMainOperatorCommissionsFromServices`, simplificar `fetchCommissions` |
-| Nueva migración SQL | Actualizar `get_commissions_with_details`, trigger multi-operador, reconciliación |
+| `src/hooks/useEnhancedServiceDetails.ts` | Agregar consulta a `service_resources`, reemplazar lógica de construcción de operadores (líneas 138-200) |
 
-## Riesgos y Mitigación
-- **No se toca la tabla `costs`** directamente (solo se agregan registros faltantes)
-- **No se modifica la lógica de pagos** (`payment_date`, `payment_batch_id`)
-- **No se altera la cascada costos-pagos-inventario** (triggers existentes intactos)
-- El índice único previene cualquier duplicado accidental
+## Impacto
+- **Cero riesgo**: Solo cambia la lectura, no la escritura
+- **No afecta costos**: La separación de costos vs comisiones sigue igual
+- **No afecta triggers**: El trigger de generación de comisiones no se modifica
+- **Backward compatible**: El fallback a `services.operator_id` mantiene compatibilidad con servicios antiguos sin `service_resources`
 
