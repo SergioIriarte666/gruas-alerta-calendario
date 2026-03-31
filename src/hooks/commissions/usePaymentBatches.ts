@@ -83,8 +83,8 @@ export const useCreatePaymentBatch = () => {
   return useMutation({
     mutationFn: createPaymentBatch,
     onSuccess: () => {
-      // Invalidate commissions query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
     },
   });
 };
