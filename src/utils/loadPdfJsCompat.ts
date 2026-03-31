@@ -94,10 +94,7 @@ export const loadPdfJsCompat = async (): Promise<PdfJsModule> => {
 
     pdfJsPromise = import('pdfjs-dist/legacy/build/pdf.mjs')
       .then((module) => {
-        module.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-          import.meta.url,
-        ).toString();
+        module.GlobalWorkerOptions.workerSrc = '';
 
         return module;
       })
