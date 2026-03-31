@@ -122,8 +122,13 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           body: { pdfBase64: base64 },
         });
 
-        if (error) throw new Error(error.message);
+        if (error) {
+          // Extract server error message if available
+          const serverMsg = (data as any)?.error || error.message || 'Error del servidor';
+          throw new Error(serverMsg);
+        }
         if (!data) throw new Error('Sin respuesta del servidor');
+        if ((data as any).error) throw new Error((data as any).error);
 
         parsedQuotes.push({ ...data, fileName: file.name });
       } catch (err: any) {

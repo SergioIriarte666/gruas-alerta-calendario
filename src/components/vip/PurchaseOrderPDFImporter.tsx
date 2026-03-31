@@ -318,9 +318,16 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
 
         {/* Error */}
         {state.error && (
-          <div className="flex items-center gap-2 text-sm text-destructive">
-            <XCircle className="w-4 h-4" />
-            {state.error}
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+            <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+              <XCircle className="w-4 h-4 shrink-0" />
+              Error al importar OC
+            </div>
+            <p className="text-xs text-muted-foreground ml-6">{state.error}</p>
+            <Button variant="outline" size="sm" className="ml-6 mt-1" onClick={reset}>
+              <RotateCcw className="w-3 h-3 mr-2" />
+              Reintentar
+            </Button>
           </div>
         )}
       </CardContent>

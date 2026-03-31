@@ -127,8 +127,12 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           body: { pdfBase64: base64 },
         });
 
-        if (error) throw new Error(error.message);
+        if (error) {
+          const serverMsg = (data as any)?.error || error.message || 'Error del servidor';
+          throw new Error(serverMsg);
+        }
         if (!data) throw new Error('Sin respuesta del servidor');
+        if ((data as any).error) throw new Error((data as any).error);
 
         parsedOCs.push({ ...data, fileName: file.name });
       } catch (err: any) {
