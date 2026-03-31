@@ -74,11 +74,12 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = getGatewayApiKey();
-    if (!gatewayApiKey) {
+    const gatewayAuth = getGatewayAuthConfig();
+    if (!gatewayAuth?.apiKey) {
       console.error('LOVABLE_API_KEY is not configured');
       return jsonResponse({ error: 'Falta configurar la clave del gateway de IA' }, 500);
     }
+    const gatewayApiKey = gatewayAuth.apiKey;
 
     let aiResponse: Response | null = null;
     let lastErrorText = '';
