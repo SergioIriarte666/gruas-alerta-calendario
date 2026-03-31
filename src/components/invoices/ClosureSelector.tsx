@@ -8,6 +8,8 @@ import { useClients } from '@/hooks/useClients';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import './ClosureSelector.css';
 
+const isDev = import.meta.env.DEV;
+
 interface ClosureSelectorProps {
   selectedClosureId: string;
   onClosureChange: (closureId: string) => void;
@@ -101,7 +103,7 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
       )}
       
       {/* Debug info in edit mode */}
-      {isEditing && process.env.NODE_ENV === 'development' && (
+      {isEditing && isDev && (
         <p className="text-xs text-blue-400 mt-1">
           Debug: Modo edición activo, mostrando cierres con estado 'closed' e 'invoiced'
         </p>
