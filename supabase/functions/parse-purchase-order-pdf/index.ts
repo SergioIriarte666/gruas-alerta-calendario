@@ -156,28 +156,9 @@ const sanitizePurchaseOrderResult = (parsed: Record<string, unknown>) => {
   (parsed as any).totals = { neto: Math.max(0, Math.round(neto)), iva: Math.max(0, Math.round(iva)), total: Math.max(0, Math.round(total)) };
 };
 
-const normalizeGatewayApiKey = (raw: string) =>
-  raw
-    .trim()
-    .replace(/^['"`]+|['"`]+$/g, "")
-    .trim()
-    .replace(/^Bearer\s+/i, "")
-    .trim();
-
-const getGatewayApiKey = () => {
-  const primary = Deno.env.get("LOVABLE_API_KEY");
-  if (primary) {
-    const apiKey = normalizeGatewayApiKey(primary);
-    if (apiKey) return apiKey;
-  }
-
-  const fallback = Deno.env.get("AI_GATEWAY_KEY");
-  if (fallback) {
-    const apiKey = normalizeGatewayApiKey(fallback);
-    if (apiKey) return apiKey;
-  }
-
-  return null;
+const getOpenAiApiKey = () => {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  return key?.trim() || null;
 };
 
 serve(async (req) => {
@@ -212,10 +193,10 @@ serve(async (req) => {
       return jsonResponse({ error: 'Se requiere el PDF en base64' }, 400);
     }
 
-    const gatewayApiKey = getGatewayApiKey();
-    if (!gatewayApiKey) {
-      console.error("AI gateway key is not configured");
-      return jsonResponse({ error: "Falta configurar la clave del gateway de IA" }, 503);
+    const openaiApiKey = getOpenAiApiKey();
+    if (!openaiApiKey) {
+      console.error('OPENAI_API_KEY is not configured');
+      return jsonResponse({ error: 'Falta configurar la clave de OpenAI (OPENAI_API_KEY)' }, 503);
     }
 
     let aiResponse: Response | null = null;
@@ -223,14 +204,14 @@ serve(async (req) => {
     let lastStatus = 0;
 
     {
-      aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${gatewayApiKey}`,
+          'Authorization': `Bearer ${openaiApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
