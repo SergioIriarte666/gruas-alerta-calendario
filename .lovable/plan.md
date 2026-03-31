@@ -1,68 +1,70 @@
 
-Objetivo: restaurar la carga de Cotizaciones y OCs en Pipeline VIP corrigiendo el fallo real del backend y alineando la UX con el módulo de Costos.
 
-Qué encontré
-- El error no está en el matching del Pipeline VIP ni en la UI principal.
-- Ambos importadores llaman Edge Functions:
-  - `src/hooks/vip/useQuotePDFImport.ts` → `parse-quote-pdf`
-  - `src/hooks/vip/usePurchaseOrderPDFImport.ts` → `parse-purchase-order-pdf`
-- La evidencia disponible confirma que `parse-quote-pdf` está fallando en el gateway de IA con:
-  - `401 Invalid API key format. Key must start with 'sk_' prefix`
-- `parse-purchase-order-pdf` tiene la misma implementación insegura/pasada de fecha que `parse-quote-pdf`, así que debe corregirse igual.
-- Ya existe un patrón corregido en `supabase/functions/parse-receipt-image/index.ts`: usa `AI_GATEWAY_KEY || LOVABLE_API_KEY` y devuelve errores más claros.
+# Plan: Reparación del Módulo de Comisiones
 
-Plan de implementación
+## Problemas Identificados
 
-1. Unificar la autenticación del gateway de IA en ambas Edge Functions
-- Actualizar `supabase/functions/parse-quote-pdf/index.ts`
-- Actualizar `supabase/functions/parse-purchase-order-pdf/index.ts`
-- Cambiar la lectura de credenciales a:
-  - priorizar `AI_GATEWAY_KEY`
-  - fallback a `LOVABLE_API_KEY`
-- Mantener validación JWT y CORS existentes.
+### 1. Comisiones pagadas aparecen como pendientes
+**Causa raíz**: La función `get_commissions_with_details()` filtra por `cc.name = 'Comisión Operador' OR c.subcategory IN ('comisiones', 'comisiones_pagadas')`. Sin embargo, la migración `20260104` normalizó todas las subcategorías a `'Comisión Operador'`, así que las comisiones antiguas ya no coinciden con `'comisiones_pagadas'`. El estado `paid/pending` se determina correctamente por `payment_date`, pero el frontend tiene un flujo paralelo (`fetchMainOperatorCommissionsFromServices`) que genera comisiones "fantasma" con `status: 'pending'` leyendo directamente de la tabla `services` — sin consultar si ya existe un registro pagado en `costs`.
 
-2. Mejorar el manejo de errores del gateway
-- Replicar el enfoque de `parse-receipt-image`:
-  - helper para respuestas JSON consistentes
-  - parseo del body de error del gateway
-  - mensajes específicos para `401`, `402`, `429`
-- Evitar el error genérico actual `AI gateway error: 401` que hoy termina como 500 opaco.
-- Resultado esperado:
-  - si el secreto sigue malo, el usuario verá un mensaje claro y no un fallo ambiguo.
-  - si `AI_GATEWAY_KEY` ya está disponible/correcto, la importación vuelve a funcionar sin depender del secreto viejo.
+### 2. Comisiones que no aparecen
+**Causa raíz**: El trigger `generate_commission_on_service_completion` solo busca operadores con `role = 'Principal'` en `service_resources`. Si un servicio tiene 2 operadores (ej: Principal + Auxiliar), solo se genera comisión para el Principal. Además, el índice único `idx_costs_unique_commission` (`service_id, operator_id, category_id`) **es correcto** para evitar duplicados, pero el trigger ignora operadores auxiliares.
 
-3. Mantener intacta la lógica VIP de matching
-- No tocar la lógica de emparejamiento de servicios salvo que aparezca un segundo problema tras restaurar el parseo.
-- Conservar:
-  - validación por RUT
-  - fuzzy matching VIN
-  - expansión de múltiples patentes
-  - estados `matched / same_* / already_has_* / no_match`
+### 3. Duplicados fantasma por `fetchMainOperatorCommissionsFromServices`
+**Causa raíz**: Esta función lee `services.operator_commission` y genera IDs sintéticos (`service-main-{id}`) que NO existen en `costs`. La lógica de deduplicación intenta filtrarlos si ya hay un par `service_id::operator_id` en costs, pero falla cuando: (a) el `operator_id` en `services` difiere del `operator_id` en `costs` (por cambios de operador), o (b) la comisión en costs fue pagada pero la proyección desde services sigue mostrándose como pendiente.
 
-4. Mejorar la UX de error en los importadores, siguiendo el estilo del módulo de Costos
-- Ajustar `src/components/vip/QuotePDFImporter.tsx`
-- Ajustar `src/components/vip/PurchaseOrderPDFImporter.tsx`
-- Reemplazar el error final simple por un bloque más visible y consistente con patrones del módulo Costos:
-  - mensaje principal claro
-  - detalle accionable cuando venga desde la Edge Function
-- Mantener tipografía, badges, espaciado y tono visual del módulo de Costos.
+---
 
-5. Validación final
-- Verificar el flujo completo de:
-  - importar cotización PDF
-  - importar OC PDF
-- Confirmar que:
-  - ya no aparece `Edge Function returned a non-2xx status code`
-  - los PDFs pasan a preview cuando el secreto válido está disponible
-  - los errores visibles sean entendibles si el gateway vuelve a fallar
+## Solución Propuesta
 
-Archivos a intervenir
-- `supabase/functions/parse-quote-pdf/index.ts`
-- `supabase/functions/parse-purchase-order-pdf/index.ts`
-- `src/components/vip/QuotePDFImporter.tsx`
-- `src/components/vip/PurchaseOrderPDFImporter.tsx`
+### Paso 1: Simplificar `useCommissions.ts` — Eliminar fuente de datos redundante
+Eliminar completamente `fetchMainOperatorCommissionsFromServices`. La **única fuente de verdad** para comisiones es la tabla `costs`. Los datos de `services.operator_commission` son solo un campo de referencia, no la fuente real.
 
-Notas técnicas
-- La causa principal es de infraestructura/configuración de secreto consumida por estas dos functions, no del Pipeline VIP en sí.
-- La corrección más segura es reutilizar el estándar ya aplicado en `parse-receipt-image`, en vez de inventar otra ruta.
-- Si después de esto persistiera un bloqueo, el siguiente punto a revisar sería el secreto real disponible en runtime (`AI_GATEWAY_KEY` vs `LOVABLE_API_KEY`), pero primero hay que dejar ambas functions preparadas para usar la ruta correcta.
+- Mantener `fetchCommissionsFromCosts` como fallback del RPC
+- Eliminar la tercera fuente (`mainRes`) del `fetchCommissions`
+- Simplificar la lógica de merge: solo RPC + fallback costs, deduplicados por `id`
+
+### Paso 2: Actualizar `get_commissions_with_details()` (migración SQL)
+Ampliar el WHERE para capturar todas las variantes de subcategoría históricas:
+```sql
+WHERE (
+  cc.name = 'Comisión Operador' 
+  OR c.category_id = '440296d4-09c2-4f3a-b02b-835f861df4c4'
+  OR c.subcategory IN ('comisiones', 'comisiones_pagadas', 'Comisión Operador')
+)
+```
+Esto garantiza que ninguna comisión quede excluida por inconsistencias en nombres de categoría o subcategoría.
+
+### Paso 3: Actualizar trigger para múltiples operadores (migración SQL)
+Modificar `generate_commission_on_service_completion` para iterar sobre **todos** los operadores en `service_resources` que tengan `commission_amount > 0`, no solo el `role = 'Principal'`:
+```sql
+FOR v_record IN
+  SELECT sr.operator_id, o.name, sr.commission_amount
+  FROM service_resources sr
+  JOIN operators o ON o.id = sr.operator_id
+  WHERE sr.service_id = NEW.id
+    AND sr.commission_amount > 0
+LOOP
+  -- Verificar duplicados y crear comisión por cada operador
+END LOOP;
+```
+El índice único existente ya protege contra duplicados por par `(service_id, operator_id, category_id)`.
+
+### Paso 4: Sincronizar comisiones históricas faltantes (migración SQL)
+Script de reconciliación one-time que busca servicios completados/facturados con operadores en `service_resources` que tengan `commission_amount > 0` pero sin registro correspondiente en `costs`.
+
+---
+
+## Archivos a Modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/hooks/commissions/useCommissions.ts` | Eliminar `fetchMainOperatorCommissionsFromServices`, simplificar `fetchCommissions` |
+| Nueva migración SQL | Actualizar `get_commissions_with_details`, trigger multi-operador, reconciliación |
+
+## Riesgos y Mitigación
+- **No se toca la tabla `costs`** directamente (solo se agregan registros faltantes)
+- **No se modifica la lógica de pagos** (`payment_date`, `payment_batch_id`)
+- **No se altera la cascada costos-pagos-inventario** (triggers existentes intactos)
+- El índice único previene cualquier duplicado accidental
+
