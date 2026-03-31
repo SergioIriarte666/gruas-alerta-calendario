@@ -156,28 +156,9 @@ const sanitizeQuoteResult = (parsed: Record<string, unknown>) => {
   (parsed as any).totals = { neto: Math.max(0, Math.round(neto)), iva: Math.max(0, Math.round(iva)), total: Math.max(0, Math.round(total)) };
 };
 
-const normalizeGatewayApiKey = (raw: string) =>
-  raw
-    .trim()
-    .replace(/^['"`]+|['"`]+$/g, "")
-    .trim()
-    .replace(/^Bearer\s+/i, "")
-    .trim();
-
-const getGatewayAuthConfig = () => {
-  const primary = Deno.env.get("LOVABLE_API_KEY");
-  if (primary) {
-    const apiKey = normalizeGatewayApiKey(primary);
-    if (apiKey) return { source: "LOVABLE_API_KEY", apiKey };
-  }
-
-  const fallback = Deno.env.get("AI_GATEWAY_KEY");
-  if (fallback) {
-    const apiKey = normalizeGatewayApiKey(fallback);
-    if (apiKey) return { source: "AI_GATEWAY_KEY", apiKey };
-  }
-
-  return null;
+const getOpenAiApiKey = () => {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  return key?.trim() || null;
 };
 
 serve(async (req) => {
