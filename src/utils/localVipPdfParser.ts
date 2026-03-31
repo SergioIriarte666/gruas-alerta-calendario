@@ -1,9 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/legacy/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
 
 export interface LocalVipPdfItem {
   patente: string;
@@ -187,8 +182,18 @@ const extractQuoteReference = (text: string) => {
 };
 
 const extractPdfLines = async (file: File) => {
+  const pdfjsLib = await loadPdfJsCompat();
   const buffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    disableAutoFetch: true,
+    disableFontFace: true,
+    disableStream: true,
+    isImageDecoderSupported: false,
+    isOffscreenCanvasSupported: false,
+    useWorkerFetch: false,
+    useWasm: false,
+  });
   const pdf = await loadingTask.promise;
   const lines: string[] = [];
 

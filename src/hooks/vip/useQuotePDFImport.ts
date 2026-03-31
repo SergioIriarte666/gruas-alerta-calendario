@@ -5,6 +5,7 @@ import { useServices } from '@/hooks/useServices';
 import { toast } from 'sonner';
 import { invokeEdgeFunctionJson } from '@/utils/vipPdfImportClient';
 import { extractQuoteDataLocally } from '@/utils/localVipPdfParser';
+import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
 
 export interface ParsedQuoteItem {
   patente: string;
@@ -116,6 +117,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     }));
 
     const parsedQuotes: ParsedQuote[] = [];
+    let lastErrorMessage: string | null = null;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -137,24 +139,34 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           parsed = await invokeEdgeFunctionJson<Omit<ParsedQuote, 'fileName'>>('parse-quote-pdf', {
             pdfBase64: base64,
           });
-        } catch (remoteError: any) {
-          const localParsed = await extractQuoteDataLocally(file);
-          if (!localParsed.items.length) {
-            throw new Error(remoteError?.message || 'No se pudo procesar el PDF');
+        } catch (remoteError: unknown) {
+          try {
+            const localParsed = await extractQuoteDataLocally(file);
+            if (!localParsed.items.length) {
+              throw new Error('No se encontraron ítems utilizables en el PDF');
+            }
+
+            toast.warning(`${file.name}: se usó lectura local de respaldo`);
+            parsed = localParsed;
+          } catch (localError) {
+            throw new Error(buildVipPdfImportError(remoteError, localError));
           }
-          toast.warning(`${file.name}: se usó lectura local de respaldo`);
-          parsed = localParsed;
         }
 
         parsedQuotes.push({ ...parsed, fileName: file.name });
       } catch (err: any) {
         console.error(`Error processing ${file.name}:`, err);
+        lastErrorMessage = err?.message || 'No se pudo procesar el PDF';
         toast.error(`Error procesando ${file.name}: ${err.message}`);
       }
     }
 
     if (parsedQuotes.length === 0) {
-      setState((prev) => ({ ...prev, step: 'idle', error: 'No se pudo procesar ningún PDF' }));
+      setState((prev) => ({
+        ...prev,
+        step: 'idle',
+        error: lastErrorMessage || 'No se pudo procesar ningún PDF',
+      }));
       return;
     }
 
