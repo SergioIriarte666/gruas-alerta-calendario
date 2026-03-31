@@ -145,22 +145,31 @@ const shouldSkipLine = (line: string) => {
 const extractItems = (lines: string[]): LocalVipPdfItem[] => {
   const items: LocalVipPdfItem[] = [];
 
-  for (const line of lines) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (shouldSkipLine(line)) continue;
 
-    const identifiers = extractIdentifiers(line);
+    const windowLines = [line, lines[index + 1], lines[index + 2]].filter(Boolean) as string[];
+    const mergedLine = normalizeSpaces(windowLines.join(' '));
+    const identifiers = extractIdentifiers(mergedLine);
     if (identifiers.length === 0) continue;
 
-    const amounts = collectMatches(line, AMOUNT_REGEX)
+    const amounts = collectMatches(mergedLine, AMOUNT_REGEX)
       .map((match) => parseAmount(match[0]))
       .filter((value) => value > 0);
 
-    const quantity = extractQuantity(line);
+    const quantity = extractQuantity(mergedLine);
     const amount = amounts.length > 0 ? amounts[amounts.length - 1] : 0;
-    const detail = cleanDetail(line) || normalizeSpaces(line);
+    const detailSource = amount > 0 ? mergedLine : line;
+    const detail = cleanDetail(detailSource) || normalizeSpaces(detailSource);
     const distributedAmount = identifiers.length > 1 && amount > 0 ? Math.round(amount / identifiers.length) : amount;
 
     for (const patente of identifiers) {
+      const alreadyExists = items.some(
+        (item) => item.patente === patente && item.detail === detail && item.amount === distributedAmount,
+      );
+      if (alreadyExists) continue;
+
       items.push({
         patente,
         detail,
