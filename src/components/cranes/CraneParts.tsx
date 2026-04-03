@@ -230,7 +230,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             -{m.quantity} {(m.inventory_items as any)?.unit_of_measure || 'unidad'}
                           </span>
                           <span className="text-sm text-gray-400">
-                            Unitario: ${Math.round(getDisplayUnitCost(m)).toLocaleString('es-CL')}
+                            Unitario: ${formatInt(getDisplayUnitCost(m))}
                           </span>
                           <span className="text-sm font-medium text-red-400">
                             -{Math.round(getDisplayTotalCost(m)).toLocaleString('es-CL')}
