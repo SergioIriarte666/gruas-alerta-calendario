@@ -344,7 +344,7 @@ export const InventoryStockView = () => {
                 placeholder="Buscar por nombre o SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 focus-visible:ring-violet-500"
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
