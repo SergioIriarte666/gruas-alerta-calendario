@@ -361,16 +361,22 @@ export const InventoryStockView = () => {
               </SelectContent>
             </Select>
             <Button 
-              variant={showZeroStock ? 'default' : 'secondary'} 
+              variant={showZeroStock ? 'default' : 'outline'} 
               onClick={() => setShowZeroStock(v => !v)}
-              className="whitespace-nowrap"
+              className={cn(
+                "whitespace-nowrap",
+                showZeroStock && "bg-violet-600 hover:bg-violet-700 text-white"
+              )}
             >
               {showZeroStock ? 'Mostrar todo' : 'Ocultar sin stock'}
             </Button>
             <Button 
-              variant="secondary"
+              variant="outline"
               onClick={() => setViewMode(v => (v === 'table' ? 'cards' : 'table'))}
-              className="whitespace-nowrap"
+              className={cn(
+                "whitespace-nowrap",
+                viewMode === 'cards' && "bg-violet-600 hover:bg-violet-700 text-white border-violet-600"
+              )}
             >
               {viewMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla'}
             </Button>
