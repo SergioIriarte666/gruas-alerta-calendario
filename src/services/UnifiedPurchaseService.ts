@@ -493,8 +493,11 @@ export class UnifiedPurchaseService {
           total_cost: totalCost,
           movement_date: params.date,
           reason: 'Consumo inmediato',
-          observations: `Consumo inmediato (aplicado por UPDATE)`,
+          observations: `Consumo inmediato - ${params.itemName}`,
           crane_id: params.craneId,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
           supplier_invoice_id: params.supplierInvoiceId || null,
           supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
