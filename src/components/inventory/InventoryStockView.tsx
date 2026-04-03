@@ -243,7 +243,7 @@ export const InventoryStockView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Quick Movement Panel */}
-          <div className="p-3 border rounded-md bg-muted/30 space-y-3">
+          <div className="p-3 border rounded-md bg-muted/30 space-y-3 border-l-4 border-l-violet-500">
             <div className="text-sm font-medium">Movimiento rápido</div>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
               <div className="md:col-span-2">
