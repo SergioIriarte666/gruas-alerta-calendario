@@ -34,6 +34,9 @@ export const useUniversalSync = () => {
     queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
     queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
     queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
     
     // ========== PROVEEDORES ==========
     queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
@@ -80,6 +83,9 @@ export const useUniversalSync = () => {
     queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
     queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
     queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+    queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
   };
 
   /**
@@ -92,6 +98,7 @@ export const useUniversalSync = () => {
       queryClient.refetchQueries({ queryKey: ['inventory-stock'] }),
       queryClient.refetchQueries({ queryKey: ['inventory-stats'] }),
       queryClient.refetchQueries({ queryKey: ['supplier-invoices'] }),
+      queryClient.refetchQueries({ queryKey: ['crane-consumptions'] }),
     ]);
   };
 

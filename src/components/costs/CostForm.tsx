@@ -228,6 +228,11 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             const dateValue = (cost.date && typeof cost.date === 'string')
                 ? formatForInput(cost.date)
                 : getCurrentChileDateString();
+            const hasImmediateConsumptionAssociation = Boolean(
+                cost.immediate_consumption ||
+                cost.crane_id ||
+                (cost.crane_parts && cost.crane_parts.length > 0)
+            );
 
             reset({
                 date: dateValue,
@@ -253,7 +258,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 kilometraje: cost.crane_parts?.[0]?.kilometraje || null,
                 purchase_quantity: cost.purchase_quantity || null,
                 purchase_unit_cost: cost.purchase_unit_cost || null,
-                immediate_consumption: cost.immediate_consumption || false,
+                immediate_consumption: hasImmediateConsumptionAssociation,
                 supplier_id: cost.supplier_id || 'none',
                 is_paid: !!cost.payment_date,
             });
@@ -429,11 +434,17 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 immediate_consumption: values.immediate_consumption || false,
                 payment_date: is_paid ? (cost?.payment_date || values.date) : null,
             } as CostFormData;
+
+            const previousImmediateConsumption = Boolean(
+                cost?.immediate_consumption ||
+                cost?.crane_id ||
+                (cost?.crane_parts && cost.crane_parts.length > 0)
+            );
+            const previousCraneId = cost?.crane_id || null;
         
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
                     onSuccess: async (data) => {
-                        toast.success("Costo Actualizado", { description: "El costo se ha actualizado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
@@ -446,6 +457,12 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         
                         onClose();
                         
+                        if (submissionData.purchase_quantity && submissionData.purchase_unit_cost) {
+                            if (!submissionData.immediate_consumption || hasNoCraneSelected) {
+                                await UnifiedPurchaseService.clearImmediateConsumptionForCost(cost.id);
+                            }
+                        }
+
                         if (isInventoryPurchase) {
                             if (hasNoCraneSelected && onInventoryCostCreated) {
                                 // Multi-crane distribution dialog
@@ -457,19 +474,65 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     date: submissionData.date,
                                 });
                             } else if (hasCraneSelected) {
-                                // Direct consumption to specific crane - use existing cost, no duplicate
-                                await UnifiedPurchaseService.registerForExistingCost({
-                                    costId: cost.id,
-                                    itemName: submissionData.description,
-                                    quantity: submissionData.purchase_quantity!,
-                                    unitCost: submissionData.purchase_unit_cost!,
-                                    date: submissionData.date,
-                                    supplierId: submissionData.supplier_id,
-                                    craneId: submissionData.crane_id!,
-                                });
+                                if ((cost as any).supplier_invoice_id) {
+                                    await UnifiedPurchaseService.syncImportedInvoiceConsumption({
+                                        costId: cost.id,
+                                        supplierInvoiceId: (cost as any).supplier_invoice_id,
+                                        craneId: submissionData.crane_id!,
+                                        date: submissionData.date,
+                                        supplierId: submissionData.supplier_id,
+                                    });
+                                } else {
+                                    // Direct consumption to specific crane - use existing cost, no duplicate
+                                    await UnifiedPurchaseService.registerForExistingCost({
+                                        costId: cost.id,
+                                        itemName: submissionData.description,
+                                        quantity: submissionData.purchase_quantity!,
+                                        unitCost: submissionData.purchase_unit_cost!,
+                                        date: submissionData.date,
+                                        supplierId: submissionData.supplier_id,
+                                        craneId: submissionData.crane_id!,
+                                    });
+                                }
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
                                 queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
                             }
+                        }
+
+                        const currentCraneLabel = cranes.find(crane => crane.id === submissionData.crane_id)?.licensePlate;
+                        const previousCraneLabel = cranes.find(crane => crane.id === previousCraneId)?.licensePlate;
+
+                        if (submissionData.purchase_quantity && submissionData.purchase_unit_cost) {
+                            if (submissionData.immediate_consumption && hasCraneSelected) {
+                                if (previousImmediateConsumption && previousCraneId && previousCraneId !== submissionData.crane_id) {
+                                    toast.success("Consumo inmediato reasociado", {
+                                        description: `La salida de bodega y el registro en grúa se reasociaron a ${currentCraneLabel || 'la grúa seleccionada'}.`,
+                                    });
+                                } else if (previousImmediateConsumption) {
+                                    toast.success("Consumo inmediato actualizado", {
+                                        description: `Se actualizó la asociación de consumo inmediato en ${currentCraneLabel || 'la grúa seleccionada'}.`,
+                                    });
+                                } else {
+                                    toast.success("Consumo inmediato registrado", {
+                                        description: `Se registró la salida de bodega y el consumo inmediato en ${currentCraneLabel || 'la grúa seleccionada'}.`,
+                                    });
+                                }
+                            } else if (previousImmediateConsumption && (!submissionData.immediate_consumption || hasNoCraneSelected)) {
+                                toast.success("Consumo inmediato eliminado", {
+                                    description: `Se eliminó la asociación${previousCraneLabel ? ` con ${previousCraneLabel}` : ''} y el costo quedó sin consumo inmediato.`,
+                                });
+                            } else {
+                                toast.success("Costo Actualizado", {
+                                    description: "El costo se actualizó correctamente.",
+                                });
+                            }
+                        } else {
+                            toast.success("Costo Actualizado", {
+                                description: "El costo se actualizó correctamente.",
+                            });
                         }
                     },
                     onError: (error) => {
@@ -482,7 +545,6 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             } else {
                 addCost(submissionData, {
                     onSuccess: async (data) => {
-                        toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
@@ -536,7 +598,25 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                 });
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
                                 queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
                             }
+                        }
+
+                        if (isInventoryPurchase && hasCraneSelected) {
+                            const currentCraneLabel = cranes.find(crane => crane.id === submissionData.crane_id)?.licensePlate;
+                            toast.success("Compra registrada con consumo inmediato", {
+                                description: `Se registró la entrada a bodega y la salida inmediata hacia ${currentCraneLabel || 'la grúa seleccionada'}.`,
+                            });
+                        } else if (submissionData.purchase_quantity && submissionData.purchase_unit_cost) {
+                            toast.success("Compra registrada", {
+                                description: "Se registró la compra y el ingreso a bodega correctamente.",
+                            });
+                        } else {
+                            toast.success("Costo Agregado", {
+                                description: "El nuevo costo se registró correctamente.",
+                            });
                         }
                         
                         onClose();

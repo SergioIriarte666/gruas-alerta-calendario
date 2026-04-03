@@ -153,6 +153,26 @@ const buildCostDescription = (doc: XMLDocumentData, supplierName: string) => {
   return (description || `Factura XML Bodega ${doc.folio}`).slice(0, 255);
 };
 
+const buildImportSuccessMessage = (params: {
+  importedCount: number;
+  hasImmediateConsumption: boolean;
+  craneLabel?: string | null;
+}) => {
+  const documentsLabel = `${params.importedCount} factura(s) XML`;
+
+  if (params.hasImmediateConsumption) {
+    return {
+      title: `${documentsLabel} importada(s) correctamente`,
+      description: `Se registró la entrada a bodega y la salida inmediata hacia ${params.craneLabel || 'la grúa seleccionada'}.`,
+    };
+  }
+
+  return {
+    title: `${documentsLabel} importada(s) correctamente`,
+    description: 'Se registró el ingreso a bodega y la trazabilidad en Costos y Proveedores.',
+  };
+};
+
 const getLineKey = (folio: string, lineNumber: number) => `${folio}-${lineNumber}`;
 
 export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
@@ -198,6 +218,26 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const selectedService = useMemo(
     () => servicesForCosts.find((service) => service.id === selectedServiceId) || null,
     [selectedServiceId, servicesForCosts]
+  );
+  const selectedLocation = useMemo(
+    () => locations.find((location) => location.id === selectedLocationId) || null,
+    [locations, selectedLocationId]
+  );
+  const selectedCostCategory = useMemo(
+    () => costCategories.find((category) => category.id === selectedCostCategoryId) || null,
+    [costCategories, selectedCostCategoryId]
+  );
+  const selectedCostCenter = useMemo(
+    () => costCenters.find((center) => center.id === selectedCostCenterId) || null,
+    [costCenters, selectedCostCenterId]
+  );
+  const selectedCrane = useMemo(
+    () => cranes.find((crane) => crane.id === selectedCraneId) || null,
+    [cranes, selectedCraneId]
+  );
+  const selectedOperator = useMemo(
+    () => operators.find((operator) => operator.id === selectedOperatorId) || null,
+    [operators, selectedOperatorId]
   );
   const serviceSearchResults = useMemo<ServiceSearchResult[]>(() => {
     const query = normalizeText(serviceSearchQuery);
@@ -612,6 +652,72 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     return created.id;
   };
 
+  const cleanupStaleInventoryXMLInvoice = async (supplierInvoiceId: string) => {
+    const { data: linkedCosts, error: linkedCostsError } = await supabase
+      .from('costs')
+      .select('id')
+      .eq('supplier_invoice_id', supplierInvoiceId);
+
+    if (linkedCostsError) {
+      throw new Error(`No se pudo validar costos vinculados: ${linkedCostsError.message}`);
+    }
+
+    if ((linkedCosts || []).length > 0) {
+      return false;
+    }
+
+    const { data: linkedMovements, error: linkedMovementsError } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('supplier_invoice_id', supplierInvoiceId);
+
+    if (linkedMovementsError) {
+      throw new Error(`No se pudo validar movimientos vinculados: ${linkedMovementsError.message}`);
+    }
+
+    const movementIds = (linkedMovements || []).map((movement) => movement.id);
+
+    if (movementIds.length > 0) {
+      const { error: deleteCranePartsError } = await supabase
+        .from('crane_parts')
+        .delete()
+        .in('inventory_movement_id', movementIds);
+
+      if (deleteCranePartsError) {
+        throw new Error(`No se pudieron limpiar piezas de grúa huérfanas: ${deleteCranePartsError.message}`);
+      }
+
+      const { error: deleteMovementsError } = await supabase
+        .from('inventory_movements')
+        .delete()
+        .in('id', movementIds);
+
+      if (deleteMovementsError) {
+        throw new Error(`No se pudieron limpiar movimientos huérfanos: ${deleteMovementsError.message}`);
+      }
+    }
+
+    const { error: deletePaymentsError } = await supabase
+      .from('supplier_payments')
+      .delete()
+      .eq('supplier_invoice_id', supplierInvoiceId);
+
+    if (deletePaymentsError) {
+      throw new Error(`No se pudieron limpiar pagos huérfanos: ${deletePaymentsError.message}`);
+    }
+
+    const { error: deleteInvoiceError } = await supabase
+      .from('supplier_invoices')
+      .delete()
+      .eq('id', supplierInvoiceId);
+
+    if (deleteInvoiceError) {
+      throw new Error(`No se pudo limpiar la factura huérfana: ${deleteInvoiceError.message}`);
+    }
+
+    return true;
+  };
+
   const handleImport = async () => {
     if (!selectedLocationId) {
       toast.error('Selecciona una ubicación de bodega');
@@ -648,7 +754,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
         const { data: existingInvoice, error: existingInvoiceError } = await supabase
           .from('supplier_invoices')
-          .select('id')
+          .select('id, source_module')
           .eq('supplier_id', supplierId)
           .eq('invoice_number', doc.folio)
           .maybeSingle();
@@ -658,7 +764,16 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         }
 
         if (existingInvoice?.id) {
-          throw new Error(`La factura ${doc.folio} ya existe para ese proveedor.`);
+          if (existingInvoice.source_module === 'inventory_xml') {
+            const cleaned = await cleanupStaleInventoryXMLInvoice(existingInvoice.id);
+            if (cleaned) {
+              toast.info(`Se limpió una factura XML huérfana para volver a importar el folio ${doc.folio}.`);
+            } else {
+              throw new Error(`La factura ${doc.folio} ya existe para ese proveedor.`);
+            }
+          } else {
+            throw new Error(`La factura ${doc.folio} ya existe para ese proveedor.`);
+          }
         }
 
         const productServiceDescription = buildProductDescription(doc);
@@ -688,7 +803,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             product_service_description: productServiceDescription,
             status: isPaid ? 'paid' : 'pending',
             paid_amount: isPaid ? doc.total_amount : 0,
-            balance: isPaid ? 0 : doc.total_amount,
             source_module: 'inventory_xml',
             xml_file_name: selectedFile?.name || null,
           })
@@ -711,6 +825,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             document_number: doc.folio,
             crane_id: selectedCraneId || null,
             operator_id: selectedOperatorId || null,
+            immediate_consumption: Boolean(selectedCraneId),
             payment_date: isPaid ? doc.issue_date : null,
             service_id: selectedServiceId || null,
             supplier_id: supplierId,
@@ -839,6 +954,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           }
 
           if (selectedCraneId) {
+            const movementTotalWithTax = computeLineTotal(validatedLine.item);
+            const displayUnitPrice = movementQuantity > 0 ? movementTotalWithTax / movementQuantity : movementTotalWithTax;
             const { data: exitMovement, error: exitMovementError } = await supabase
               .from('inventory_movements')
               .insert({
@@ -880,8 +997,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 supplier: supplierName,
                 supplier_id: supplierId,
                 quantity: movementQuantity,
-                unit_price: Number(validatedLine.item.unit_price) || 0,
-                total_value: movementSubtotal,
+                unit_price: displayUnitPrice,
+                total_value: movementTotalWithTax,
                 date: doc.issue_date,
                 notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
               });
@@ -915,7 +1032,12 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
       invalidateAll();
       await refetchCritical();
-      toast.success(`${importedCount} factura(s) XML importada(s) a bodega correctamente`);
+      const importSuccessMessage = buildImportSuccessMessage({
+        importedCount,
+        hasImmediateConsumption: Boolean(selectedCraneId),
+        craneLabel: selectedCrane?.licensePlate || null,
+      });
+      toast.success(importSuccessMessage.title, { description: importSuccessMessage.description });
       onSuccess(importedCount);
       handleClose();
     } catch (error) {
@@ -959,8 +1081,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col px-6 pb-6">
-          <div className="space-y-4 py-4">
+        <div className="grid min-h-0 flex-1 gap-4 px-6 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-h-0 space-y-4 lg:flex lg:flex-col">
             <div
               {...getRootProps()}
               className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
@@ -1033,10 +1155,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 </CardContent>
               </Card>
             </div>
-          </div>
 
-          <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <ScrollArea className="min-h-0 rounded-2xl border border-border/60 bg-background/90 shadow-sm backdrop-blur">
+            <ScrollArea className="min-h-0 flex-1 rounded-2xl border border-border/60 bg-background/90 shadow-sm backdrop-blur">
               <div className="space-y-4 p-4">
                 {parseResult?.errors?.length ? (
                   <Alert variant="destructive">
@@ -1207,34 +1327,35 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 ))}
               </div>
             </ScrollArea>
+          </div>
 
-            <Card className="min-h-0 overflow-hidden border-border/70 bg-background/95 shadow-sm lg:h-full lg:flex lg:flex-col">
-              <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white pb-4 dark:from-slate-950/40 dark:to-background">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <span className="rounded-lg bg-primary/10 p-2 text-primary">
-                        <Package className="h-4 w-4" />
-                      </span>
-                      Parametros de Ingreso
-                    </CardTitle>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant={selectedLocationId ? 'default' : 'outline'} className="px-2.5 py-1">
-                      {selectedLocationId ? 'Bodega configurada' : 'Falta bodega'}
-                    </Badge>
-                    <Badge variant={selectedCostCategoryId ? 'secondary' : 'outline'} className="px-2.5 py-1">
-                      {selectedCostCategoryId ? 'Costo configurado' : 'Falta categoría'}
-                    </Badge>
-                    <Badge variant={selectedCraneId ? 'secondary' : 'outline'} className="px-2.5 py-1">
-                      {selectedCraneId ? 'Consumo inmediato' : 'Solo ingreso a bodega'}
-                    </Badge>
-                  </div>
+          <Card className="min-h-0 overflow-hidden border-border/70 bg-background/95 shadow-sm lg:h-full lg:flex lg:flex-col">
+            <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white pb-4 dark:from-slate-950/40 dark:to-background">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                      <Package className="h-4 w-4" />
+                    </span>
+                    Parametros de Ingreso
+                  </CardTitle>
                 </div>
-              </CardHeader>
-              <CardContent className="min-h-0 space-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
-                <ScrollArea className="lg:h-full lg:pr-3">
-                  <div className="space-y-4 pb-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant={selectedLocationId ? 'default' : 'outline'} className="px-2.5 py-1">
+                    {selectedLocationId ? 'Bodega configurada' : 'Falta bodega'}
+                  </Badge>
+                  <Badge variant={selectedCostCategoryId ? 'secondary' : 'outline'} className="px-2.5 py-1">
+                    {selectedCostCategoryId ? 'Costo configurado' : 'Falta categoría'}
+                  </Badge>
+                  <Badge variant={selectedCraneId ? 'secondary' : 'outline'} className="px-2.5 py-1">
+                    {selectedCraneId ? 'Consumo inmediato' : 'Solo ingreso a bodega'}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="min-h-0 space-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
+              <ScrollArea className="h-full pr-3">
+                <div className="space-y-4 pb-4">
                     <div className="space-y-2">
                       <Label>Ubicación de Bodega</Label>
                       <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
@@ -1512,6 +1633,74 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                       {selectedCraneId && <p>- Salida inmediata a grúa y registro en piezas/consumos</p>}
                     </div>
 
+                    <Collapsible>
+                      <div className="rounded-xl border border-border/60 bg-background/95 shadow-sm">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="flex h-auto w-full items-center justify-between px-3 py-3 hover:bg-muted/30"
+                          >
+                            <div className="flex items-center gap-2 text-left">
+                              <span className="rounded-md bg-primary/10 p-1.5 text-primary">
+                                <Receipt className="h-4 w-4" />
+                              </span>
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">Resumen activo</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Ver configuración aplicada a {selectedValidatedDocuments.length || 0} documento(s)
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="border-t px-3 py-3">
+                          <div className="grid grid-cols-1 gap-2 text-xs">
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Bodega</span>
+                              <span className="font-medium text-foreground">
+                                {selectedLocation ? `${selectedLocation.name} (${selectedLocation.code})` : 'Sin seleccionar'}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Costo</span>
+                              <span className="font-medium text-foreground">
+                                {selectedCostCategory?.name || 'Sin categoría'}
+                                {selectedCostSubcategory ? ` · ${selectedCostSubcategory}` : ''}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Centro de costo</span>
+                              <span className="font-medium text-foreground">
+                                {selectedCostCenter ? `${selectedCostCenter.code} - ${selectedCostCenter.name}` : 'Sin asignar'}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Destino</span>
+                              <span className="font-medium text-foreground">
+                                {selectedCrane
+                                  ? `Grúa ${selectedCrane.licensePlate}${selectedOperator ? ` · ${selectedOperator.name}` : ''}`
+                                  : 'Solo ingreso a bodega'}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Servicio</span>
+                              <span className="font-medium text-foreground">
+                                {selectedService ? `${selectedService.folio} - ${toTitleCase(selectedService.client.name)}` : 'Sin asociar'}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 px-3 py-2">
+                              <span className="block text-[11px] uppercase tracking-wide text-muted-foreground">Pago</span>
+                              <span className="font-medium text-foreground">
+                                {isPaid ? 'Compra marcada como pagada' : 'Compra pendiente de pago'}
+                              </span>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+
                     {(isAnalyzing || isImporting) && (
                       <div className="space-y-2">
                         <Progress value={progress} />
@@ -1520,31 +1709,30 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                         </p>
                       </div>
                     )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-              <div className="border-t bg-muted/20 p-4 space-y-2">
-                <Button
-                  className="w-full h-11 text-sm font-semibold shadow-sm"
-                  onClick={handleImport}
-                  disabled={isAnalyzing || isImporting || selectedValidatedDocuments.length === 0 || !selectedLocationId}
-                >
-                  {isImporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Importando...
-                    </>
-                  ) : (
-                    'Importar a Bodega'
-                  )}
-                </Button>
+                </div>
+              </ScrollArea>
+            </CardContent>
+            <div className="border-t bg-muted/20 p-4 space-y-2">
+              <Button
+                className="w-full h-11 text-sm font-semibold shadow-sm"
+                onClick={handleImport}
+                disabled={isAnalyzing || isImporting || selectedValidatedDocuments.length === 0 || !selectedLocationId}
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importando...
+                  </>
+                ) : (
+                  'Importar a Bodega'
+                )}
+              </Button>
 
-                <Button variant="outline" className="w-full h-11" onClick={handleClose} disabled={isAnalyzing || isImporting}>
-                  Cerrar
-                </Button>
-              </div>
-            </Card>
-          </div>
+              <Button variant="outline" className="w-full h-11" onClick={handleClose} disabled={isAnalyzing || isImporting}>
+                Cerrar
+              </Button>
+            </div>
+          </Card>
         </div>
       </DialogContent>
     </Dialog>

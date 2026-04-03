@@ -19,6 +19,11 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
   const [isExitOpen, setIsExitOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  const getFirstRelationRow = (value: any) => {
+    if (Array.isArray(value)) return value[0] || null;
+    return value || null;
+  };
+
   const { data: consumptions = [], isLoading } = useQuery({
     queryKey: ['crane-consumptions', crane.id],
     queryFn: async () => {
@@ -27,6 +32,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
         .select(
           `
           id,
+          item_id,
           movement_date,
           quantity,
           unit_cost,
@@ -34,6 +40,25 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           reason,
           observations,
           reference_document,
+          crane_part:crane_parts!crane_parts_inventory_movement_id_fkey (
+            unit_price,
+            total_value
+          ),
+          supplier_invoice_item:supplier_invoice_items!inventory_movements_supplier_invoice_item_id_fkey (
+            quantity,
+            unit_price,
+            subtotal,
+            tax_amount,
+            total_amount
+          ),
+          supplier_invoice:supplier_invoices!inventory_movements_supplier_invoice_id_fkey (
+            items:supplier_invoice_items (
+              inventory_item_id,
+              quantity,
+              unit_price,
+              total_amount
+            )
+          ),
           inventory_items (
             name,
             unit_of_measure
@@ -50,7 +75,51 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     enabled: !!crane.id,
   });
 
-  const totalConsumed = consumptions.reduce((sum: number, m: any) => sum + (m.total_cost || (m.unit_cost || 0) * (m.quantity || 0)), 0);
+  const getDisplayUnitCost = (movement: any) => {
+    const invoiceItem = getFirstRelationRow(movement.supplier_invoice_item);
+    if (invoiceItem?.total_amount && invoiceItem?.quantity) {
+      return Number(invoiceItem.total_amount) / Math.max(Number(invoiceItem.quantity), 1);
+    }
+    const invoice = getFirstRelationRow(movement.supplier_invoice);
+    const fallbackInvoiceItem = Array.isArray(invoice?.items)
+      ? invoice.items.find((item: any) =>
+          item.inventory_item_id === movement.item_id &&
+          Number(item.quantity || 0) === Number(movement.quantity || 0)
+        ) || invoice.items.find((item: any) => item.inventory_item_id === movement.item_id) || invoice.items[0]
+      : null;
+    if (fallbackInvoiceItem?.total_amount && fallbackInvoiceItem?.quantity) {
+      return Number(fallbackInvoiceItem.total_amount) / Math.max(Number(fallbackInvoiceItem.quantity), 1);
+    }
+    const cranePart = getFirstRelationRow(movement.crane_part);
+    if (cranePart?.unit_price) {
+      return Number(cranePart.unit_price);
+    }
+    return movement.unit_cost || 0;
+  };
+
+  const getDisplayTotalCost = (movement: any) => {
+    const invoiceItem = getFirstRelationRow(movement.supplier_invoice_item);
+    if (invoiceItem?.total_amount) {
+      return Number(invoiceItem.total_amount);
+    }
+    const invoice = getFirstRelationRow(movement.supplier_invoice);
+    const fallbackInvoiceItem = Array.isArray(invoice?.items)
+      ? invoice.items.find((item: any) =>
+          item.inventory_item_id === movement.item_id &&
+          Number(item.quantity || 0) === Number(movement.quantity || 0)
+        ) || invoice.items.find((item: any) => item.inventory_item_id === movement.item_id) || invoice.items[0]
+      : null;
+    if (fallbackInvoiceItem?.total_amount) {
+      return Number(fallbackInvoiceItem.total_amount);
+    }
+    const cranePart = getFirstRelationRow(movement.crane_part);
+    if (cranePart?.total_value) {
+      return Number(cranePart.total_value);
+    }
+    return movement.total_cost || (movement.unit_cost || 0) * (movement.quantity || 0);
+  };
+
+  const totalConsumed = consumptions.reduce((sum: number, m: any) => sum + getDisplayTotalCost(m), 0);
   const lastDate = consumptions[0]?.movement_date ? new Date(consumptions[0].movement_date) : null;
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -159,10 +228,10 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             -{m.quantity} {(m.inventory_items as any)?.unit_of_measure || 'unidad'}
                           </span>
                           <span className="text-sm text-gray-400">
-                            Unitario: ${(m.unit_cost || 0).toLocaleString('es-CL')}
+                            Unitario: ${getDisplayUnitCost(m).toLocaleString('es-CL')}
                           </span>
                           <span className="text-sm font-medium text-red-400">
-                            -{(m.total_cost || (m.unit_cost || 0) * (m.quantity || 0)).toLocaleString('es-CL')}
+                            -{getDisplayTotalCost(m).toLocaleString('es-CL')}
                           </span>
                         </div>
                       </div>

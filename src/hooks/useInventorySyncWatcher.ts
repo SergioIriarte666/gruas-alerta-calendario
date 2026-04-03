@@ -21,6 +21,8 @@ export const useInventorySyncWatcher = (craneId?: string) => {
           console.log('🔄 Real-time: Cambio en crane_parts', payload);
           queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
           queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+          queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
           queryClient.invalidateQueries({ queryKey: ['inventory-sync-stats'] });
           queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
           queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
@@ -43,6 +45,8 @@ export const useInventorySyncWatcher = (craneId?: string) => {
           console.log('🔄 Real-time: Cambio en inventory_movements', payload);
           queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
           queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+          queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+          queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
           queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
           queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
         }

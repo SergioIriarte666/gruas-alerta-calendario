@@ -411,17 +411,76 @@ export class UnifiedPurchaseService {
     itemName: string;
     supplierId?: string | null;
     supplierName?: string | null;
+    supplierInvoiceId?: string | null;
+    supplierInvoiceItemId?: string | null;
+    displayUnitCost?: number | null;
+    displayTotalCost?: number | null;
   }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
     const totalCost = params.quantity * params.unitCost;
 
-    const { data: existing } = await supabase
+    let existingQuery = supabase
       .from('inventory_movements')
       .select('id')
       .eq('cost_id', params.costId)
       .eq('movement_type', 'exit')
-      .eq('status', 'active')
-      .eq('crane_id', params.craneId)
-      .maybeSingle();
+      .eq('status', 'active');
+
+    existingQuery = params.supplierInvoiceItemId
+      ? existingQuery.eq('supplier_invoice_item_id', params.supplierInvoiceItemId)
+      : existingQuery.limit(1);
+
+    const { data: existing } = await existingQuery.maybeSingle();
+
+    const upsertCranePart = async (exitMovementId: string): Promise<string | null> => {
+      const cranePartPayload = {
+        crane_id: params.craneId,
+        part_name: params.itemName,
+        quantity: params.quantity,
+        unit_price: params.displayUnitCost ?? params.unitCost,
+        total_value: params.displayTotalCost ?? totalCost,
+        date: params.date,
+        supplier: params.supplierName || 'Desde inventario',
+        supplier_id: params.supplierId || null,
+        cost_id: params.costId,
+        inventory_movement_id: exitMovementId,
+        notes: params.supplierInvoiceId
+          ? `Consumo inmediato desde factura XML ${params.supplierInvoiceId}`
+          : 'Consumo inmediato desde costo',
+      };
+
+      const { data: existingCranePart } = await supabase
+        .from('crane_parts')
+        .select('id')
+        .eq('inventory_movement_id', exitMovementId)
+        .maybeSingle();
+
+      if (existingCranePart?.id) {
+        const { error: updateCranePartError } = await supabase
+          .from('crane_parts')
+          .update(cranePartPayload)
+          .eq('id', existingCranePart.id);
+
+        if (updateCranePartError) {
+          console.warn('[UnifiedPurchase] Warning: Could not update crane_part:', updateCranePartError.message);
+          return null;
+        }
+
+        return existingCranePart.id;
+      }
+
+      const { data: cranePart, error: cranePartError } = await supabase
+        .from('crane_parts')
+        .insert(cranePartPayload)
+        .select('id')
+        .single();
+
+      if (cranePartError) {
+        console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
+        return null;
+      }
+
+      return cranePart?.id || null;
+    };
 
     if (existing?.id) {
       const { error: updateError } = await supabase
@@ -435,6 +494,9 @@ export class UnifiedPurchaseService {
           movement_date: params.date,
           reason: 'Consumo inmediato',
           observations: `Consumo inmediato (aplicado por UPDATE)`,
+          crane_id: params.craneId,
+          supplier_invoice_id: params.supplierInvoiceId || null,
+          supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
         .eq('id', existing.id);
 
@@ -442,10 +504,11 @@ export class UnifiedPurchaseService {
         throw new Error(`No se pudo actualizar el movimiento de salida: ${updateError.message}`);
       }
 
-      return { exitMovementId: existing.id, cranePartId: null };
+      const cranePartId = await upsertCranePart(existing.id);
+      return { exitMovementId: existing.id, cranePartId };
     }
 
-    const { data: similarExit } = await supabase
+    let similarQuery = supabase
       .from('inventory_movements')
       .select('id')
       .eq('movement_type', 'exit')
@@ -455,8 +518,13 @@ export class UnifiedPurchaseService {
       .eq('crane_id', params.craneId)
       .eq('quantity', params.quantity)
       .eq('unit_cost', params.unitCost)
-      .eq('movement_date', params.date)
-      .maybeSingle();
+      .eq('movement_date', params.date);
+
+    similarQuery = params.supplierInvoiceItemId
+      ? similarQuery.eq('supplier_invoice_item_id', params.supplierInvoiceItemId)
+      : similarQuery.limit(1);
+
+    const { data: similarExit } = await similarQuery.maybeSingle();
 
     if (similarExit?.id) {
       const { error: updSimilarExitErr } = await supabase
@@ -466,12 +534,15 @@ export class UnifiedPurchaseService {
           total_cost: totalCost,
           reason: 'Consumo inmediato',
           observations: `Consumo inmediato (backfill)`,
+          supplier_invoice_id: params.supplierInvoiceId || null,
+          supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
         .eq('id', similarExit.id);
       if (updSimilarExitErr) {
         throw new Error(`No se pudo actualizar el movimiento de salida (similar): ${updSimilarExitErr.message}`);
       }
-      return { exitMovementId: similarExit.id, cranePartId: null };
+      const cranePartId = await upsertCranePart(similarExit.id);
+      return { exitMovementId: similarExit.id, cranePartId };
     }
     
     // Create exit movement
@@ -490,6 +561,8 @@ export class UnifiedPurchaseService {
         status: 'active',
         crane_id: params.craneId,
         cost_id: params.costId,
+        supplier_invoice_id: params.supplierInvoiceId || null,
+        supplier_invoice_item_id: params.supplierInvoiceItemId || null,
       })
       .select('id')
       .single();
@@ -498,7 +571,111 @@ export class UnifiedPurchaseService {
       throw new Error(`No se pudo crear el movimiento de salida: ${exitError?.message || 'Error desconocido'}`);
     }
 
-    return { exitMovementId: exitMovement.id, cranePartId: null };
+    const cranePartId = await upsertCranePart(exitMovement.id);
+    return { exitMovementId: exitMovement.id, cranePartId };
+  }
+
+  static async clearImmediateConsumptionForCost(costId: string): Promise<void> {
+    const { data: exitMovements, error: exitMovementsError } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('cost_id', costId)
+      .eq('movement_type', 'exit')
+      .eq('status', 'active');
+
+    if (exitMovementsError) {
+      throw new Error(`No se pudieron consultar salidas asociadas al costo: ${exitMovementsError.message}`);
+    }
+
+    const exitMovementIds = (exitMovements || []).map((movement) => movement.id);
+
+    if (exitMovementIds.length > 0) {
+      const { error: deleteCranePartsError } = await supabase
+        .from('crane_parts')
+        .delete()
+        .in('inventory_movement_id', exitMovementIds);
+
+      if (deleteCranePartsError) {
+        throw new Error(`No se pudieron limpiar piezas de grúa: ${deleteCranePartsError.message}`);
+      }
+
+      const { error: deleteExitMovementsError } = await supabase
+        .from('inventory_movements')
+        .delete()
+        .in('id', exitMovementIds);
+
+      if (deleteExitMovementsError) {
+        throw new Error(`No se pudieron limpiar consumos inmediatos: ${deleteExitMovementsError.message}`);
+      }
+    }
+  }
+
+  static async syncImportedInvoiceConsumption(params: {
+    costId: string;
+    supplierInvoiceId: string;
+    craneId: string;
+    date: string;
+    supplierId?: string | null;
+    supplierName?: string | null;
+  }): Promise<void> {
+    const { data: invoiceItems, error: invoiceItemsError } = await supabase
+      .from('supplier_invoice_items')
+      .select('id, description, quantity, unit_price, total_amount, inventory_item_id, movement_id')
+      .eq('supplier_invoice_id', params.supplierInvoiceId)
+      .order('line_number', { ascending: true });
+
+    if (invoiceItemsError) {
+      throw new Error(`No se pudieron cargar las líneas de la factura: ${invoiceItemsError.message}`);
+    }
+
+    if (!invoiceItems?.length) {
+      throw new Error('La factura no tiene líneas para consumo inmediato');
+    }
+
+    let firstExitMovementId: string | null = null;
+
+    for (const item of invoiceItems) {
+      const { data: entryMovement, error: entryMovementError } = await supabase
+        .from('inventory_movements')
+        .select('id, item_id, location_id, supplier_invoice_id, supplier_invoice_item_id')
+        .eq('supplier_invoice_item_id', item.id)
+        .eq('movement_type', 'entry')
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (entryMovementError) {
+        throw new Error(`No se pudo validar la entrada de inventario para la línea ${item.id}: ${entryMovementError.message}`);
+      }
+
+      if (!entryMovement?.item_id || !entryMovement?.location_id) {
+        throw new Error(`La línea ${item.description} no tiene una entrada de inventario válida para consumir`);
+      }
+
+      const consumption = await this.createDirectConsumption({
+        inventoryItemId: entryMovement.item_id,
+        locationId: entryMovement.location_id,
+        costId: params.costId,
+        craneId: params.craneId,
+        quantity: item.quantity,
+        unitCost: Number(item.unit_price || 0),
+        date: params.date,
+        itemName: item.description,
+        supplierId: params.supplierId,
+        supplierName: params.supplierName,
+        supplierInvoiceId: params.supplierInvoiceId,
+        supplierInvoiceItemId: item.id,
+        displayUnitCost: item.total_amount ? Number(item.total_amount) / Math.max(Number(item.quantity), 1) : Number(item.unit_price || 0),
+        displayTotalCost: item.total_amount ? Number(item.total_amount) : Number(item.unit_price || 0) * Number(item.quantity || 0),
+      });
+
+      if (!firstExitMovementId) {
+        firstExitMovementId = consumption.exitMovementId;
+      }
+    }
+
+    if (firstExitMovementId) {
+      await this.linkCostToMovement(params.costId, firstExitMovementId);
+    }
   }
 
   /**
