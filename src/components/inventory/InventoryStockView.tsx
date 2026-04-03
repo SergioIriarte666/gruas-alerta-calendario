@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, AlertTriangle, Package, Plus, Minus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useInventoryItems, useInventoryStock, useInventoryCategories, useInventoryLocations, useCreateInventoryMovement } from '@/hooks/useInventory';
 import { ProductDrawer } from './ProductDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -156,11 +157,11 @@ export const InventoryStockView = () => {
     const totalStock = getItemStock(item.id);
     
     if (totalStock === 0) {
-      return { label: 'Sin Stock', variant: 'destructive' as const, icon: AlertTriangle };
+      return { label: 'Sin Stock', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200', icon: AlertTriangle };
     } else if (totalStock <= item.minimum_stock) {
-      return { label: 'Stock Bajo', variant: 'secondary' as const, icon: AlertTriangle };
+      return { label: 'Stock Bajo', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200', icon: AlertTriangle };
     } else {
-      return { label: 'Normal', variant: 'default' as const, icon: Package };
+      return { label: 'Normal', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200', icon: Package };
     }
   };
 
@@ -208,7 +209,7 @@ export const InventoryStockView = () => {
                 <Button 
                   size="sm" 
                   onClick={() => setShowEntryForm(true)}
-                  className="gap-2"
+                  className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                 >
                   <Plus className="w-4 h-4" />
                   Nueva Entrada
@@ -243,7 +244,7 @@ export const InventoryStockView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Quick Movement Panel */}
-          <div className="p-3 border rounded-md bg-muted/30 space-y-3">
+          <div className="p-3 border rounded-md bg-muted/30 space-y-3 border-l-4 border-l-violet-500">
             <div className="text-sm font-medium">Movimiento rápido</div>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
               <div className="md:col-span-2">
@@ -344,7 +345,7 @@ export const InventoryStockView = () => {
                 placeholder="Buscar por nombre o SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 focus-visible:ring-violet-500"
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -361,16 +362,22 @@ export const InventoryStockView = () => {
               </SelectContent>
             </Select>
             <Button 
-              variant={showZeroStock ? 'default' : 'secondary'} 
+              variant={showZeroStock ? 'default' : 'outline'} 
               onClick={() => setShowZeroStock(v => !v)}
-              className="whitespace-nowrap"
+              className={cn(
+                "whitespace-nowrap",
+                showZeroStock && "bg-violet-600 hover:bg-violet-700 text-white"
+              )}
             >
               {showZeroStock ? 'Mostrar todo' : 'Ocultar sin stock'}
             </Button>
             <Button 
-              variant="secondary"
+              variant="outline"
               onClick={() => setViewMode(v => (v === 'table' ? 'cards' : 'table'))}
-              className="whitespace-nowrap"
+              className={cn(
+                "whitespace-nowrap",
+                viewMode === 'cards' && "bg-violet-600 hover:bg-violet-700 text-white border-violet-600"
+              )}
             >
               {viewMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla'}
             </Button>
@@ -418,7 +425,7 @@ export const InventoryStockView = () => {
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-2">
                                 <StatusIcon className="w-4 h-4" />
-                                <Badge variant={status.variant} className="text-2xs">{status.label}</Badge>
+                                <Badge variant="outline" className={cn("text-2xs font-semibold", status.className)}>{status.label}</Badge>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-right">
@@ -472,7 +479,7 @@ export const InventoryStockView = () => {
                               {item.unit_of_measure}
                             </span>
                           </div>
-                          <Badge variant={status.variant} className="text-xs mt-1">
+                          <Badge variant="outline" className={cn("text-xs mt-1 font-semibold", status.className)}>
                             {status.label}
                           </Badge>
                           <div className="mt-2">
@@ -507,8 +514,12 @@ export const InventoryStockView = () => {
             );
           })()}
 
-          <div className="text-sm text-muted-foreground pt-2">
-            Mostrando {filteredItems.filter(i => showZeroStock ? true : getItemStock(i.id) > 0).length} de {items.filter(i => i.is_active).length} productos
+          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+            Mostrando 
+            <Badge variant="outline" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 font-semibold">
+              {filteredItems.filter(i => showZeroStock ? true : getItemStock(i.id) > 0).length}
+            </Badge>
+            de {items.filter(i => i.is_active).length} productos
           </div>
         </CardContent>
       </Card>
