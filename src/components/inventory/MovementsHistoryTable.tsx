@@ -185,7 +185,7 @@ export const MovementsHistoryTable = () => {
                   <SelectItem value="exit">Salidas</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={handleExportData}>
+              <Button variant="outline" size="sm" onClick={handleExportData} className="border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20">
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
