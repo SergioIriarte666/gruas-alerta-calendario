@@ -172,7 +172,7 @@ export const MovementsHistoryTable = () => {
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 focus-visible:ring-violet-500"
                 />
               </div>
               <Select value={typeFilter} onValueChange={setTypeFilter}>

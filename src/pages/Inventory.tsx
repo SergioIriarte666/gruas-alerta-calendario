@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Download, Upload } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Download, Upload, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
@@ -20,7 +20,6 @@ import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { supabase } from '@/integrations/supabase/client';
 
 const Inventory = () => {
-  // Activar watcher de sincronización global (todas las grúas)
   useInventorySyncWatcher();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +30,6 @@ const Inventory = () => {
   const [prefill, setPrefill] = useState<any | null>(location?.state?.prefilledData || null);
   const [isXMLImportOpen, setIsXMLImportOpen] = useState(false);
 
-  // Real data from hooks
   const { data: stats, isLoading: statsLoading } = useInventoryStats();
   const { data: recentMovements, isLoading: movementsLoading } = useInventoryMovements(5);
   const { data: lowStockData, isLoading: lowStockLoading } = useLowStockItems();
@@ -92,13 +90,17 @@ const Inventory = () => {
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Gestión de Bodega</h1>
           {!isMobile && <p className="text-muted-foreground">Control de inventario y stock de repuestos</p>}
         </div>
-        <Button onClick={() => setIsXMLImportOpen(true)} className="flex items-center gap-2">
+        <Button 
+          onClick={() => setIsXMLImportOpen(true)} 
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+        >
           <Upload className="h-4 w-4" />
           <span>{isMobile ? 'XML' : 'Importar XML'}</span>
         </Button>
@@ -112,13 +114,15 @@ const Inventory = () => {
 
       {/* Stats Cards */}
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
-        <Card>
+        <Card className="border-l-4 border-l-violet-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <Package className="h-4 w-4 text-violet-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-violet-600">
               {statsLoading ? '...' : (stats?.totalItems || 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -127,10 +131,12 @@ const Inventory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
@@ -142,10 +148,12 @@ const Inventory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -157,13 +165,15 @@ const Inventory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-violet-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-violet-600" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-violet-600">
               ${statsLoading ? '...' : (stats?.totalValue || 0).toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -175,10 +185,19 @@ const Inventory = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="stock" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
-          <TabsTrigger value="stock" className="text-xs sm:text-sm">📦 <span className="hidden sm:inline ml-1">Stock</span></TabsTrigger>
-          <TabsTrigger value="movements" className="text-xs sm:text-sm">📝 <span className="hidden sm:inline ml-1">Movimientos</span></TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs sm:text-sm">📊 <span className="hidden sm:inline ml-1">Reportes</span></TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex bg-muted/50">
+          <TabsTrigger value="stock" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+            <Package className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Stock</span>
+          </TabsTrigger>
+          <TabsTrigger value="movements" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+            <ArrowUpDown className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Movimientos</span>
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Reportes</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="space-y-4">
