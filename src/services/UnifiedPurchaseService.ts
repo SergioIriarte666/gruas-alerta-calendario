@@ -536,7 +536,10 @@ export class UnifiedPurchaseService {
           cost_id: params.costId,
           total_cost: totalCost,
           reason: 'Consumo inmediato',
-          observations: `Consumo inmediato (backfill)`,
+          observations: `Consumo inmediato - ${params.itemName}`,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
           supplier_invoice_id: params.supplierInvoiceId || null,
           supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
