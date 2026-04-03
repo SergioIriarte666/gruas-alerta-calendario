@@ -1467,8 +1467,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                             </tr>
                           </thead>
                           <tbody>
-                            {validatedDoc.lines.map((line) => (
-                              <tr key={line.key} className="border-b last:border-0 align-top">
+                            {validatedDoc.lines.map((line) => {
+                              const isDiscarded = discardedLines.has(line.key);
+                              return (
+                              <tr key={line.key} className={cn("border-b last:border-0 align-top transition-opacity", isDiscarded && "opacity-40")}>
                                 <td className="py-2 pr-3">{line.lineNumber}</td>
                                 <td className="py-2 pr-3 font-mono text-xs">{line.item.product_code || '-'}</td>
                                 <td className="py-2 pr-3 min-w-[280px]">
