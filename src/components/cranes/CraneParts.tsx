@@ -75,6 +75,8 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     enabled: !!crane.id,
   });
 
+  const formatInt = (n: number) => Math.round(n).toLocaleString('es-CL', { maximumFractionDigits: 0 });
+
   const getDisplayUnitCost = (movement: any) => {
     const invoiceItem = getFirstRelationRow(movement.supplier_invoice_item);
     if (invoiceItem?.total_amount && invoiceItem?.quantity) {
