@@ -78,10 +78,11 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select('id, unit_cost, quantity, movement_date')
+        .select('id, unit_cost, quantity, movement_date, supplier_invoice_id, supplier_invoice_item_id')
         .eq('item_id', watchedValues.item_id)
         .eq('location_id', watchedValues.location_id)
         .eq('movement_type', 'entry')
+        .eq('status', 'active')
         .order('movement_date', { ascending: false })
         .limit(5);
       
