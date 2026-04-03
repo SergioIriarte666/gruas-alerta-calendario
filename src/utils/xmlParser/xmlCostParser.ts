@@ -269,9 +269,9 @@ export class XMLCostParser {
     if (!costData.descripcion && costData.proveedor) {
       const giroEmis = this.getNestedElement(documentElement, 'Encabezado/Emisor/GiroEmis');
       if (giroEmis) {
-        costData.descripcion = giroEmis.textContent?.trim() || `Servicio de ${costData.proveedor}`;
+        costData.descripcion = giroEmis.textContent?.trim() || costData.proveedor;
       } else {
-        costData.descripcion = `Factura de ${costData.proveedor}`;
+        costData.descripcion = costData.proveedor;
       }
     }
 
