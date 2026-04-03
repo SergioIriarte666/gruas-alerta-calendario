@@ -450,9 +450,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const summary = useMemo(() => {
     const totalDocs = validatedDocuments.length;
     const validDocs = validatedDocuments.filter((item) => item.isValid).length;
-    const totalLines = validatedDocuments.reduce((sum, item) => sum + item.lines.length, 0);
+    const totalLines = validatedDocuments.reduce((sum, item) => sum + item.lines.filter(l => !discardedLines.has(l.key)).length, 0);
     const invalidLines = validatedDocuments.reduce(
-      (sum, item) => sum + item.lines.filter((line) => line.error).length,
+      (sum, item) => sum + item.lines.filter((line) => !discardedLines.has(line.key) && line.error).length,
       0
     );
 
