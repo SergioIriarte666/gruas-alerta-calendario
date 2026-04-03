@@ -222,9 +222,21 @@ export const MovementsHistoryTable = () => {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead>Ubicación</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
+                    Tipo <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
+                    Producto <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
+                    Ubicación <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -245,7 +257,11 @@ export const MovementsHistoryTable = () => {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>Documento</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
+                    Documento <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
