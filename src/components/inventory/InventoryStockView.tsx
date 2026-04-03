@@ -478,7 +478,7 @@ export const InventoryStockView = () => {
                               {item.unit_of_measure}
                             </span>
                           </div>
-                          <Badge variant={status.variant} className="text-xs mt-1">
+                          <Badge variant="outline" className={cn("text-xs mt-1 font-semibold", status.className)}>
                             {status.label}
                           </Badge>
                           <div className="mt-2">
