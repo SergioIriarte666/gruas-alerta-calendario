@@ -647,7 +647,7 @@ export class UnifiedPurchaseService {
     for (const item of invoiceItems) {
       const { data: entryMovement, error: entryMovementError } = await supabase
         .from('inventory_movements')
-        .select('id, item_id, location_id, supplier_invoice_id, supplier_invoice_item_id')
+        .select('id, item_id, location_id, movement_date, supplier_invoice_id, supplier_invoice_item_id')
         .eq('supplier_invoice_item_id', item.id)
         .eq('movement_type', 'entry')
         .eq('status', 'active')
@@ -668,7 +668,7 @@ export class UnifiedPurchaseService {
         craneId: params.craneId,
         quantity: item.quantity,
         unitCost: Number(item.unit_price || 0),
-        date: entryMovement.id ? params.date : params.date,
+        date: entryMovement.movement_date || params.date,
         itemName: item.description,
         supplierId: params.supplierId,
         supplierName: params.supplierName,
