@@ -1428,7 +1428,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                             {validatedDoc.isValid ? 'Lista para importar' : 'Con errores'}
                           </Badge>
                           <Badge variant="outline">
-                            {validatedDoc.lines.length} línea(s)
+                            {validatedDoc.lines.filter(l => !discardedLines.has(l.key)).length} línea(s)
                           </Badge>
                           <Badge variant="secondary">
                             {formatCurrency(validatedDoc.doc.total_amount)}
