@@ -208,7 +208,7 @@ export const InventoryStockView = () => {
                 <Button 
                   size="sm" 
                   onClick={() => setShowEntryForm(true)}
-                  className="gap-2"
+                  className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                 >
                   <Plus className="w-4 h-4" />
                   Nueva Entrada
