@@ -1148,6 +1148,33 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
           try {
             const movementIdsToRollback = new Set(createdMovementIds);
+            const supplierPaymentIdsToRollback = new Set<string>();
+
+            if (createdSupplierPaymentId) {
+              supplierPaymentIdsToRollback.add(createdSupplierPaymentId);
+            }
+
+            if (createdCostId || createdInvoiceId) {
+              const paymentRollbackFilters = [
+                createdCostId ? `cost_id.eq.${createdCostId}` : null,
+                createdInvoiceId ? `supplier_invoice_id.eq.${createdInvoiceId}` : null,
+              ]
+                .filter(Boolean)
+                .join(',');
+
+              if (paymentRollbackFilters) {
+                const { data: rollbackPayments, error: rollbackPaymentsError } = await supabase
+                  .from('supplier_payments')
+                  .select('id')
+                  .or(paymentRollbackFilters);
+
+                if (rollbackPaymentsError) {
+                  throw rollbackPaymentsError;
+                }
+
+                (rollbackPayments || []).forEach((payment) => supplierPaymentIdsToRollback.add(payment.id));
+              }
+            }
 
             if (createdInvoiceId || createdCostId) {
               const movementRollbackQuery = supabase
@@ -1184,8 +1211,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             if (createdInvoiceLineIds.length > 0) {
               await supabase.from('supplier_invoice_items').delete().in('id', createdInvoiceLineIds);
             }
-            if (createdSupplierPaymentId) {
-              await supabase.from('supplier_payments').delete().eq('id', createdSupplierPaymentId);
+            if (supplierPaymentIdsToRollback.size > 0) {
+              await supabase.from('supplier_payments').delete().in('id', Array.from(supplierPaymentIdsToRollback));
             }
             if (createdCostId) {
               await supabase.from('costs').delete().eq('id', createdCostId);
