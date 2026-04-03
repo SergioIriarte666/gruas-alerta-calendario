@@ -4,6 +4,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/f
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Tag, FileText } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
 import { CostCombobox } from './CostCombobox';
