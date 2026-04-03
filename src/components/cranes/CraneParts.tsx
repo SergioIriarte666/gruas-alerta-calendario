@@ -146,7 +146,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
               <DollarSign className="w-8 h-8 text-red-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Consumido</p>
-                <p className="text-2xl font-bold text-red-400">-${totalConsumed.toLocaleString('es-CL')}</p>
+                <p className="text-2xl font-bold text-red-400">-${Math.round(totalConsumed).toLocaleString('es-CL')}</p>
               </div>
             </div>
           </CardContent>
@@ -228,10 +228,10 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             -{m.quantity} {(m.inventory_items as any)?.unit_of_measure || 'unidad'}
                           </span>
                           <span className="text-sm text-gray-400">
-                            Unitario: ${getDisplayUnitCost(m).toLocaleString('es-CL')}
+                            Unitario: ${Math.round(getDisplayUnitCost(m)).toLocaleString('es-CL')}
                           </span>
                           <span className="text-sm font-medium text-red-400">
-                            -{getDisplayTotalCost(m).toLocaleString('es-CL')}
+                            -{Math.round(getDisplayTotalCost(m)).toLocaleString('es-CL')}
                           </span>
                         </div>
                       </div>
