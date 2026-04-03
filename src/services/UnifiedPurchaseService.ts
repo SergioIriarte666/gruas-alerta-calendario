@@ -626,6 +626,7 @@ export class UnifiedPurchaseService {
     date: string;
     supplierId?: string | null;
     supplierName?: string | null;
+    referenceDocument?: string | null;
   }): Promise<void> {
     const { data: invoiceItems, error: invoiceItemsError } = await supabase
       .from('supplier_invoice_items')
