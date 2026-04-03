@@ -139,17 +139,19 @@ const buildProductDescription = (doc: XMLDocumentData) => {
 };
 
 const buildCostDescription = (doc: XMLDocumentData, supplierName: string) => {
-  const primaryLine = (doc.items || [])
+  const itemDescriptions = (doc.items || [])
     .map((item) => item.description?.trim())
-    .find((description) => description && description.length > 0);
+    .filter((d) => d && d.length > 0);
 
-  const segments = [
-    supplierName?.trim(),
-    doc.folio ? `Factura ${doc.folio}` : null,
-    primaryLine || doc.description?.trim() || null,
-  ].filter(Boolean);
+  const isSingleItem = itemDescriptions.length <= 1;
 
-  const description = segments.join(' - ').trim();
+  // Single item: "Proveedor ItemName" | Multiple items: just "Proveedor"
+  const segments = [supplierName?.trim()];
+  if (isSingleItem && itemDescriptions.length === 1) {
+    segments.push(itemDescriptions[0]!);
+  }
+
+  const description = segments.filter(Boolean).join(' ').trim();
   return (description || `Factura XML Bodega ${doc.folio}`).slice(0, 255);
 };
 
