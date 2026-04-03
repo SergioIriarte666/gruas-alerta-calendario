@@ -928,6 +928,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
           const movementQuantity = Math.trunc(Number(validatedLine.item.quantity));
           const movementSubtotal = computeLineSubtotal(validatedLine.item);
+          const entryCostId = createdMovementIds.some((movementId) => movementId) ? null : cost.id;
 
           const { data: movement, error: movementError } = await supabase
             .from('inventory_movements')
@@ -944,7 +945,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
               observations: `Ingreso XML Bodega - ${validatedLine.item.description || ''}`,
               supplier_invoice_id: invoice.id,
               supplier_invoice_item_id: insertedLine.id,
-              cost_id: cost.id,
+              cost_id: entryCostId,
               status: 'active',
             })
             .select('id')
