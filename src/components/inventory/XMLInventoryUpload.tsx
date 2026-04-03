@@ -12,6 +12,7 @@ import { useCostCenters } from '@/hooks/useCostCenters';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useServices } from '@/hooks/useServices';
+import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -720,6 +721,158 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     return true;
   };
 
+  const cleanupStaleIncompleteCostAttempt = async (supplierId: string, folio: string) => {
+    const { data: candidateCosts, error: candidateCostsError } = await supabase
+      .from('costs')
+      .select('id, supplier_invoice_id, supplier_payment_id, inventory_movement_id')
+      .eq('supplier_id', supplierId)
+      .eq('document_number', folio);
+
+    if (candidateCostsError) {
+      throw new Error(`No se pudieron validar costos previos del folio ${folio}: ${candidateCostsError.message}`);
+    }
+
+    for (const candidateCost of candidateCosts || []) {
+      const [paymentResult, movementResult, cranePartResult] = await Promise.all([
+        supabase
+          .from('supplier_payments')
+          .select('id, reference_number, supplier_invoice_id')
+          .eq('cost_id', candidateCost.id)
+          .maybeSingle(),
+        supabase
+          .from('inventory_movements')
+          .select('id', { count: 'exact', head: true })
+          .eq('cost_id', candidateCost.id),
+        supabase
+          .from('crane_parts')
+          .select('id', { count: 'exact', head: true })
+          .eq('cost_id', candidateCost.id),
+      ]);
+
+      if (paymentResult.error) {
+        throw new Error(`No se pudo validar el pago previo del folio ${folio}: ${paymentResult.error.message}`);
+      }
+
+      if (movementResult.error) {
+        throw new Error(`No se pudieron validar movimientos previos del folio ${folio}: ${movementResult.error.message}`);
+      }
+
+      if (cranePartResult.error) {
+        throw new Error(`No se pudieron validar consumos previos del folio ${folio}: ${cranePartResult.error.message}`);
+      }
+
+      const existingPayment = paymentResult.data;
+      const movementCount = movementResult.count || 0;
+      const cranePartCount = cranePartResult.count || 0;
+
+      const isStaleAttempt = Boolean(
+        !candidateCost.supplier_invoice_id &&
+          !candidateCost.inventory_movement_id &&
+          movementCount === 0 &&
+          cranePartCount === 0 &&
+          existingPayment?.id &&
+          !existingPayment.reference_number &&
+          !existingPayment.supplier_invoice_id
+      );
+
+      if (!isStaleAttempt) {
+        continue;
+      }
+
+      const { error: deletePaymentError } = await supabase
+        .from('supplier_payments')
+        .delete()
+        .eq('cost_id', candidateCost.id);
+
+      if (deletePaymentError) {
+        throw new Error(`No se pudo limpiar el pago huérfano del folio ${folio}: ${deletePaymentError.message}`);
+      }
+
+      const { error: deleteCostError } = await supabase
+        .from('costs')
+        .delete()
+        .eq('id', candidateCost.id);
+
+      if (deleteCostError) {
+        throw new Error(`No se pudo limpiar el costo huérfano del folio ${folio}: ${deleteCostError.message}`);
+      }
+
+      toast.info(`Se limpió un intento incompleto previo para el folio ${folio}.`);
+    }
+  };
+
+  const ensureSupplierPaymentLink = async (params: {
+    costId: string;
+    supplierId: string;
+    supplierInvoiceId: string;
+    amount: number;
+    dueDate: string;
+    description: string;
+    referenceNumber: string;
+    notes: string;
+    status: 'paid' | 'pending';
+    paidAmount: number;
+    paidDate: string | null;
+    craneId: string | null;
+    partName: string;
+  }) => {
+    const paymentPayload = {
+      supplier_id: params.supplierId,
+      supplier_invoice_id: params.supplierInvoiceId,
+      cost_id: params.costId,
+      amount: params.amount,
+      due_date: params.dueDate,
+      description: params.description,
+      category: selectedCostCategory?.name || 'Costos',
+      subcategory: selectedCostSubcategory || 'Importación XML Bodega',
+      reference_number: params.referenceNumber,
+      notes: params.notes,
+      status: params.status,
+      paid_amount: params.paidAmount,
+      paid_date: params.paidDate,
+      crane_id: params.craneId,
+      add_to_inventory: false,
+      part_name: params.partName,
+    };
+
+    const { data: existingPayment, error: existingPaymentError } = await supabase
+      .from('supplier_payments')
+      .select('id')
+      .eq('cost_id', params.costId)
+      .maybeSingle();
+
+    if (existingPaymentError) {
+      throw new Error(`No se pudo validar el pago del proveedor para el costo ${params.referenceNumber}: ${existingPaymentError.message}`);
+    }
+
+    if (existingPayment?.id) {
+      const { error: updatePaymentError } = await supabase
+        .from('supplier_payments')
+        .update(paymentPayload)
+        .eq('id', existingPayment.id);
+
+      if (updatePaymentError) {
+        throw new Error(`No se pudo actualizar el pago del proveedor para la factura ${params.referenceNumber}: ${updatePaymentError.message}`);
+      }
+
+      return existingPayment.id;
+    }
+
+    const { data: createdPayment, error: createPaymentError } = await supabase
+      .from('supplier_payments')
+      .insert(paymentPayload)
+      .select('id')
+      .single();
+
+    if (createPaymentError || !createdPayment) {
+      throw new Error(
+        `No se pudo crear el registro de proveedor para la factura ${params.referenceNumber}: ${createPaymentError?.message || 'Error desconocido'}`
+      );
+    }
+
+    return createdPayment.id;
+  };
+
   const handleImport = async () => {
     if (!selectedLocationId) {
       toast.error('Selecciona una ubicación de bodega');
@@ -762,6 +915,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
         try {
         const supplierId = await ensureSupplier(doc, supplier);
+
+        await cleanupStaleIncompleteCostAttempt(supplierId, doc.folio);
 
         const { data: existingInvoice, error: existingInvoiceError } = await supabase
           .from('supplier_invoices')
@@ -854,39 +1009,26 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         }
         createdCostId = cost.id;
 
-        const { data: supplierPayment, error: supplierPaymentError } = await supabase
-          .from('supplier_payments')
-          .insert({
-            supplier_id: supplierId,
-            supplier_invoice_id: invoice.id,
-            cost_id: cost.id,
-            amount: doc.total_amount,
-            due_date: doc.due_date || doc.issue_date,
-            description: costDescription,
-            category: selectedCostCategoryId,
-            subcategory: selectedCostSubcategory || 'Importación XML Bodega',
-            reference_number: doc.folio,
-            notes: sharedNotes,
-            status: isPaid ? 'paid' : 'pending',
-            paid_amount: isPaid ? doc.total_amount : 0,
-            paid_date: isPaid ? doc.issue_date : null,
-            crane_id: selectedCraneId || null,
-            add_to_inventory: false,
-            part_name: primaryLineDescription,
-          })
-          .select('id')
-          .single();
-
-        if (supplierPaymentError || !supplierPayment) {
-          throw new Error(
-            `No se pudo crear el registro de proveedor para la factura ${doc.folio}: ${supplierPaymentError?.message || 'Error desconocido'}`
-          );
-        }
-        createdSupplierPaymentId = supplierPayment.id;
+        const supplierPaymentId = await ensureSupplierPaymentLink({
+          costId: cost.id,
+          supplierId,
+          supplierInvoiceId: invoice.id,
+          amount: doc.total_amount,
+          dueDate: doc.due_date || doc.issue_date,
+          description: costDescription,
+          referenceNumber: doc.folio,
+          notes: sharedNotes,
+          status: isPaid ? 'paid' : 'pending',
+          paidAmount: isPaid ? doc.total_amount : 0,
+          paidDate: isPaid ? doc.issue_date : null,
+          craneId: selectedCraneId || null,
+          partName: primaryLineDescription,
+        });
+        createdSupplierPaymentId = supplierPaymentId;
 
         const { error: linkCostPaymentError } = await supabase
           .from('costs')
-          .update({ supplier_payment_id: supplierPayment.id })
+          .update({ supplier_payment_id: supplierPaymentId })
           .eq('id', cost.id);
 
         if (linkCostPaymentError) {
@@ -920,7 +1062,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         const insertedLines = insertedLinesData as InsertedInvoiceLine[];
         insertedLines.forEach((l) => createdInvoiceLineIds.push(l.id));
         const lineByNumber = new Map(insertedLines.map((line) => [line.line_number, line]));
-        let firstExitMovementId: string | null = null;
+        let firstEntryMovementId: string | null = null;
 
         for (const validatedLine of validatedDoc.lines) {
           const insertedLine = lineByNumber.get(validatedLine.lineNumber);
@@ -960,50 +1102,40 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           }
           createdMovementIds.push(movement.id);
 
-          if (selectedCraneId) {
-            const { data: exitMovement, error: exitMovementError } = await supabase
-              .from('inventory_movements')
-              .insert({
-                item_id: validatedLine.matchedItem!.id,
-                location_id: selectedLocationId,
-                movement_type: 'exit',
-                quantity: movementQuantity,
-                unit_cost: movementSubtotal / movementQuantity,
-                total_cost: movementSubtotal,
-                crane_id: selectedCraneId,
-                observations: `Consumo inmediato factura ${doc.folio} - ${validatedLine.item.description || ''}`,
-                reference_document: doc.folio,
-                supplier_invoice_id: invoice.id,
-                supplier_invoice_item_id: insertedLine.id,
-                cost_id: cost.id,
-                status: 'active',
-              })
-              .select('id')
-              .single();
-
-            if (exitMovementError || !exitMovement) {
-              throw new Error(
-                `No se pudo crear el consumo inmediato para la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${exitMovementError?.message || 'Error desconocido'}`
-              );
-            }
-            createdMovementIds.push(exitMovement.id);
-
-            // No crear crane_parts manualmente aquí: el trigger de inventory_movements
-            // ya genera el registro técnico vinculado al movement de salida.
-            if (!firstExitMovementId) {
-              firstExitMovementId = exitMovement.id;
-            }
+          if (!firstEntryMovementId) {
+            firstEntryMovementId = movement.id;
           }
+
+          const { error: linkInvoiceItemMovementError } = await supabase
+            .from('supplier_invoice_items')
+            .update({ movement_id: movement.id })
+            .eq('id', insertedLine.id);
+
+          if (linkInvoiceItemMovementError) {
+            throw new Error(
+              `No se pudo enlazar la línea ${validatedLine.lineNumber} con su movimiento de bodega en la factura ${doc.folio}: ${linkInvoiceItemMovementError.message}`
+            );
+          }
+
         }
 
-        if (firstExitMovementId) {
+        if (selectedCraneId) {
+          await UnifiedPurchaseService.syncImportedInvoiceConsumption({
+            costId: cost.id,
+            supplierInvoiceId: invoice.id,
+            craneId: selectedCraneId,
+            date: doc.issue_date,
+            supplierId,
+            supplierName: supplier?.name || supplierName,
+          });
+        } else if (firstEntryMovementId) {
           const { error: updateCostMovementError } = await supabase
             .from('costs')
-            .update({ inventory_movement_id: firstExitMovementId })
+            .update({ inventory_movement_id: firstEntryMovementId })
             .eq('id', cost.id);
 
           if (updateCostMovementError) {
-            throw new Error(`No se pudo enlazar el costo al consumo inmediato de la factura ${doc.folio}: ${updateCostMovementError.message}`);
+            throw new Error(`No se pudo enlazar el costo al movimiento de bodega de la factura ${doc.folio}: ${updateCostMovementError.message}`);
           }
         }
 
@@ -1015,17 +1147,72 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           console.error(`Error importando factura ${doc.folio}, ejecutando rollback:`, docError);
 
           try {
+            const movementIdsToRollback = new Set(createdMovementIds);
+            const supplierPaymentIdsToRollback = new Set<string>();
+
+            if (createdSupplierPaymentId) {
+              supplierPaymentIdsToRollback.add(createdSupplierPaymentId);
+            }
+
+            if (createdCostId || createdInvoiceId) {
+              const paymentRollbackFilters = [
+                createdCostId ? `cost_id.eq.${createdCostId}` : null,
+                createdInvoiceId ? `supplier_invoice_id.eq.${createdInvoiceId}` : null,
+              ]
+                .filter(Boolean)
+                .join(',');
+
+              if (paymentRollbackFilters) {
+                const { data: rollbackPayments, error: rollbackPaymentsError } = await supabase
+                  .from('supplier_payments')
+                  .select('id')
+                  .or(paymentRollbackFilters);
+
+                if (rollbackPaymentsError) {
+                  throw rollbackPaymentsError;
+                }
+
+                (rollbackPayments || []).forEach((payment) => supplierPaymentIdsToRollback.add(payment.id));
+              }
+            }
+
+            if (createdInvoiceId || createdCostId) {
+              const movementRollbackQuery = supabase
+                .from('inventory_movements')
+                .select('id')
+                .or(
+                  [
+                    createdInvoiceId ? `supplier_invoice_id.eq.${createdInvoiceId}` : null,
+                    createdCostId ? `cost_id.eq.${createdCostId}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(',')
+                );
+
+              const { data: rollbackMovements, error: rollbackMovementsError } = await movementRollbackQuery;
+
+              if (rollbackMovementsError) {
+                throw rollbackMovementsError;
+              }
+
+              (rollbackMovements || []).forEach((movement) => movementIdsToRollback.add(movement.id));
+            }
+
+            const movementIds = Array.from(movementIdsToRollback);
+
             if (createdCranePartIds.length > 0) {
               await supabase.from('crane_parts').delete().in('id', createdCranePartIds);
             }
-            if (createdMovementIds.length > 0) {
-              await supabase.from('inventory_movements').delete().in('id', createdMovementIds);
+
+            if (movementIds.length > 0) {
+              await supabase.from('crane_parts').delete().in('inventory_movement_id', movementIds);
+              await supabase.from('inventory_movements').delete().in('id', movementIds);
             }
             if (createdInvoiceLineIds.length > 0) {
               await supabase.from('supplier_invoice_items').delete().in('id', createdInvoiceLineIds);
             }
-            if (createdSupplierPaymentId) {
-              await supabase.from('supplier_payments').delete().eq('id', createdSupplierPaymentId);
+            if (supplierPaymentIdsToRollback.size > 0) {
+              await supabase.from('supplier_payments').delete().in('id', Array.from(supplierPaymentIdsToRollback));
             }
             if (createdCostId) {
               await supabase.from('costs').delete().eq('id', createdCostId);
