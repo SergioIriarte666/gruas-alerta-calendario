@@ -78,10 +78,11 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select('id, unit_cost, quantity, movement_date')
+        .select('id, unit_cost, quantity, movement_date, supplier_invoice_id, supplier_invoice_item_id')
         .eq('item_id', watchedValues.item_id)
         .eq('location_id', watchedValues.location_id)
         .eq('movement_type', 'entry')
+        .eq('status', 'active')
         .order('movement_date', { ascending: false })
         .limit(5);
       
@@ -129,9 +130,17 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
         movementData.crane_id = data.crane_id;
       }
 
-      // Use real cost from FIFO
+      // Use real cost from FIFO and propagate invoice link
       movementData.unit_cost = realUnitCost;
       movementData.total_cost = realUnitCost * data.quantity;
+      
+      // Propagate supplier invoice from the source entry movement
+      if (recentEntries[0]?.supplier_invoice_id) {
+        movementData.supplier_invoice_id = recentEntries[0].supplier_invoice_id;
+      }
+      if (recentEntries[0]?.supplier_invoice_item_id) {
+        movementData.supplier_invoice_item_id = recentEntries[0].supplier_invoice_item_id;
+      }
 
       await createMovement.mutateAsync(movementData);
 
