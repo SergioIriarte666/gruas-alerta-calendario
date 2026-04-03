@@ -943,9 +943,11 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           }
         }
 
-        const productServiceDescription = buildProductDescription(doc);
-        const supplierName = supplier?.name || doc.description?.split(' - ').pop()?.trim() || 'Proveedor XML';
-        const costDescription = buildCostDescription(doc, supplierName);
+        const editedDesc = editedDescriptions.get(doc.folio);
+        const docWithEditedDesc = editedDesc ? { ...doc, description: editedDesc } : doc;
+        const productServiceDescription = buildProductDescription(docWithEditedDesc);
+        const supplierName = supplier?.name || docWithEditedDesc.description?.split(' - ').pop()?.trim() || 'Proveedor XML';
+        const costDescription = buildCostDescription(docWithEditedDesc, supplierName);
         const primaryLineDescription =
           (doc.items || []).map((item) => item.description?.trim()).find(Boolean) || doc.description || 'N/A';
         const sharedNotes = [
