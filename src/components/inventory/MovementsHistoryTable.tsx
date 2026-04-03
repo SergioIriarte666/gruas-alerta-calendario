@@ -34,7 +34,7 @@ export const MovementsHistoryTable = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
-  const [sortBy, setSortBy] = useState<'date' | 'quantity' | 'cost'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'type' | 'product' | 'location' | 'quantity' | 'cost' | 'document'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedMovement, setSelectedMovement] = useState<InventoryMovement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -70,12 +70,24 @@ export const MovementsHistoryTable = () => {
 
   // Sort movements
   const sortedMovements = [...filteredMovements].sort((a, b) => {
-    let aValue, bValue;
+    let aValue: any, bValue: any;
     
     switch (sortBy) {
       case 'date':
         aValue = new Date(a.movement_date).getTime();
         bValue = new Date(b.movement_date).getTime();
+        break;
+      case 'type':
+        aValue = a.movement_type || '';
+        bValue = b.movement_type || '';
+        break;
+      case 'product':
+        aValue = (a.item?.name || '').toLowerCase();
+        bValue = (b.item?.name || '').toLowerCase();
+        break;
+      case 'location':
+        aValue = (a.location?.name || '').toLowerCase();
+        bValue = (b.location?.name || '').toLowerCase();
         break;
       case 'quantity':
         aValue = a.quantity;
@@ -84,6 +96,10 @@ export const MovementsHistoryTable = () => {
       case 'cost':
         aValue = a.total_cost || 0;
         bValue = b.total_cost || 0;
+        break;
+      case 'document':
+        aValue = (a.reference_document || '').toLowerCase();
+        bValue = (b.reference_document || '').toLowerCase();
         break;
       default:
         return 0;
@@ -115,7 +131,7 @@ export const MovementsHistoryTable = () => {
     );
   };
 
-  const handleSort = (field: 'date' | 'quantity' | 'cost') => {
+  const handleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -206,9 +222,21 @@ export const MovementsHistoryTable = () => {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Producto</TableHead>
-                <TableHead>Ubicación</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
+                    Tipo <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
+                    Producto <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
+                    Ubicación <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -229,7 +257,11 @@ export const MovementsHistoryTable = () => {
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>Documento</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
+                    Documento <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
