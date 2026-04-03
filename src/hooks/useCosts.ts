@@ -99,6 +99,10 @@ export const usePagedCosts = (page: number, pageSize: number) => {
             id,
             full_name,
             email
+          ),
+          supplier_invoices!costs_supplier_invoice_id_fkey (
+            id,
+            supplier_invoice_items (id)
           )
         `,
           { count: 'exact' }

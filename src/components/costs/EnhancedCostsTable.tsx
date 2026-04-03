@@ -285,8 +285,19 @@ export const EnhancedCostsTable = ({
         {format(new Date(cost.date + 'T00:00:00'), 'dd/MM/yyyy')}
       </TableCell>
       <TableCell className="max-w-xs">
-        <div className="truncate" title={cost.description}>
-          {cost.description}
+        <div className="flex items-center gap-1.5">
+          <span className="truncate" title={cost.description}>
+            {cost.description}
+          </span>
+          {(() => {
+            const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
+            return itemsCount > 1 ? (
+              <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+                <Layers className="h-3 w-3 mr-0.5" />
+                {itemsCount}
+              </Badge>
+            ) : null;
+          })()}
         </div>
       </TableCell>
       <TableCell>

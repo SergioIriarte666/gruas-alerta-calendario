@@ -295,8 +295,19 @@ export const CostsTableView = ({
                         {new Date(cost.date + 'T00:00:00').toLocaleDateString('es-ES')}
                       </TableCell>
                       <TableCell className="max-w-xs">
-                        <div className="truncate" title={cost.description}>
-                          {cost.description}
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate" title={cost.description}>
+                            {cost.description}
+                          </span>
+                          {(() => {
+                            const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
+                            return itemsCount > 1 ? (
+                              <span className="shrink-0 inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+                                <Layers className="h-3 w-3 mr-0.5" />
+                                {itemsCount}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </TableCell>
                       <TableCell>
