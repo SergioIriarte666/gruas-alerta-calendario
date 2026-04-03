@@ -96,23 +96,35 @@ export const CostFormStep1 = ({
             )} />
           </div>
 
-          <FormField name="description" control={form.control} render={({ field }) => (
-            <FormItem>
-              <Label className="flex items-center gap-2 text-foreground">
-                <FileText className="w-4 h-4" />
-                Descripción *
-              </Label>
-              <FormControl>
-                <CostCombobox
-                  value={field.value || ''}
-                  onValueChange={field.onChange}
-                  placeholder="Describe el costo o gasto..."
-                  type="description"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
+          <FormField name="description" control={form.control} render={({ field }) => {
+            const isLongText = (field.value || '').length > 80;
+            return (
+              <FormItem>
+                <Label className="flex items-center gap-2 text-foreground">
+                  <FileText className="w-4 h-4" />
+                  Descripción *
+                </Label>
+                <FormControl>
+                  {isLongText ? (
+                    <Textarea
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="Describe el costo o gasto..."
+                      className="min-h-[60px] resize-y"
+                    />
+                  ) : (
+                    <CostCombobox
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                      placeholder="Describe el costo o gasto..."
+                      type="description"
+                    />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }} />
         </div>
       </ColoredSectionCard>
     </div>
