@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Download } from 'lucide-react';
+import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Download, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
@@ -15,6 +15,7 @@ import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTa
 import { InventoryReportsPage } from '@/components/inventory/reports/InventoryReportsPage';
 import { format } from 'date-fns';
 import { InventoryMovementForm } from '@/components/inventory/InventoryMovementForm';
+import { XMLInventoryUpload } from '@/components/inventory/XMLInventoryUpload';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,6 +29,7 @@ const Inventory = () => {
   const { deleteEntry } = useQuickEntry();
   const [intakeOpen, setIntakeOpen] = useState<boolean>(!!location?.state?.prefilledData);
   const [prefill, setPrefill] = useState<any | null>(location?.state?.prefilledData || null);
+  const [isXMLImportOpen, setIsXMLImportOpen] = useState(false);
 
   // Real data from hooks
   const { data: stats, isLoading: statsLoading } = useInventoryStats();
@@ -96,7 +98,17 @@ const Inventory = () => {
           <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Gestión de Bodega</h1>
           {!isMobile && <p className="text-muted-foreground">Control de inventario y stock de repuestos</p>}
         </div>
+        <Button onClick={() => setIsXMLImportOpen(true)} className="flex items-center gap-2">
+          <Upload className="h-4 w-4" />
+          <span>{isMobile ? 'XML' : 'Importar XML'}</span>
+        </Button>
       </div>
+
+      <XMLInventoryUpload
+        isOpen={isXMLImportOpen}
+        onClose={() => setIsXMLImportOpen(false)}
+        onSuccess={() => setIsXMLImportOpen(false)}
+      />
 
       {/* Stats Cards */}
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>

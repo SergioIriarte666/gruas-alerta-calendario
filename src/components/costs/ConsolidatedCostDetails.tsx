@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import {
   Calendar,
   DollarSign,
   FileText,
-  Tag,
   Truck,
   User,
   Wrench,
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ConsolidatedCostDetailsProps {
   cost: Cost;
@@ -58,17 +58,70 @@ export const ConsolidatedCostDetails = ({
 
   const hasAssociations = cost.cranes || cost.operators || cost.services;
   const hasNotes = cost.notes && cost.notes.trim().length > 0;
+  const shouldLoadInvoiceDetails = Boolean((cost as any).supplier_invoice_id || (cost.service_folio && cost.supplier_id));
+
+  const { data: supplierInvoiceDetails } = useQuery({
+    queryKey: ['supplier-invoice-details', (cost as any).supplier_invoice_id || `${cost.supplier_id}-${cost.service_folio}`],
+    queryFn: async () => {
+      let invoiceQuery = supabase
+        .from('supplier_invoices')
+        .select(`
+          id,
+          invoice_number,
+          issue_date,
+          due_date,
+          amount,
+          net_amount,
+          tax_amount,
+          currency,
+          status,
+          source_module,
+          xml_file_name,
+          items:supplier_invoice_items(
+            id,
+            line_number,
+            product_code,
+            product_name,
+            description,
+            quantity,
+            unit_price,
+            subtotal,
+            tax_rate,
+            tax_amount,
+            total_amount,
+            movement_id,
+            inventory_item:inventory_items(id, name, sku, barcode)
+          )
+        `);
+
+      if ((cost as any).supplier_invoice_id) {
+        invoiceQuery = invoiceQuery.eq('id', (cost as any).supplier_invoice_id);
+      } else {
+        invoiceQuery = invoiceQuery
+          .eq('supplier_id', cost.supplier_id)
+          .eq('invoice_number', cost.service_folio);
+      }
+
+      const { data, error } = await invoiceQuery.maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen && shouldLoadInvoiceDetails,
+  });
+
+  const invoiceItems = ((supplierInvoiceDetails as any)?.items || []) as Array<any>;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[min(96vw,1100px)] max-w-5xl max-h-[92vh] overflow-y-auto overflow-x-hidden pr-10">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div className="flex flex-col gap-4 pr-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="text-xl font-bold text-foreground">
                 {cost.description}
               </DialogTitle>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
                   {cost.cost_categories?.name || 'Sin categoría'}
                 </Badge>
@@ -79,8 +132,8 @@ export const ConsolidatedCostDetails = ({
                 )}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-violet-600">
+            <div className="shrink-0 text-left sm:text-right">
+              <p className="break-words text-2xl font-bold text-violet-600 sm:text-3xl">
                 {formatCurrency(Number(cost.amount))}
               </p>
             </div>
@@ -90,7 +143,7 @@ export const ConsolidatedCostDetails = ({
         <div className="space-y-4 mt-4">
           {/* Información principal */}
           <div className="bg-muted/50 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex items-center gap-3">
                 <div className="bg-violet-100 dark:bg-violet-900/30 p-2 rounded-lg">
                   <Calendar className="w-4 h-4 text-violet-600 dark:text-violet-400" />
@@ -273,10 +326,93 @@ export const ConsolidatedCostDetails = ({
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
                 <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
-                  <p className="text-foreground whitespace-pre-wrap">{cost.notes}</p>
+                  <p className="text-foreground whitespace-pre-wrap break-words">{cost.notes}</p>
                 </div>
               </CollapsibleContent>
             </Collapsible>
+          )}
+
+          {supplierInvoiceDetails && (
+            <div className="space-y-3">
+              <Separator />
+              <div className="space-y-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Detalle de Factura</p>
+                    <p className="text-xs text-muted-foreground break-words">
+                      Factura {(supplierInvoiceDetails as any).invoice_number}
+                      {(supplierInvoiceDetails as any).xml_file_name ? ` · XML ${(supplierInvoiceDetails as any).xml_file_name}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">
+                      Neto {formatCurrency(Number((supplierInvoiceDetails as any).net_amount || 0))}
+                    </Badge>
+                    <Badge variant="outline">
+                      Impuestos {formatCurrency(Number((supplierInvoiceDetails as any).tax_amount || 0))}
+                    </Badge>
+                    <Badge variant="default">
+                      Total {formatCurrency(Number((supplierInvoiceDetails as any).amount || 0))}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Fecha emisión</p>
+                    <p className="font-medium text-foreground">
+                      {format(parseFromDatabase((supplierInvoiceDetails as any).issue_date), "dd 'de' MMMM, yyyy", { locale: es })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Estado</p>
+                    <p className="font-medium text-foreground">
+                      {(supplierInvoiceDetails as any).status || 'pending'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="min-w-[760px] w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="text-left">
+                        <th className="px-3 py-2">Codigo</th>
+                        <th className="px-3 py-2">Descripcion</th>
+                        <th className="px-3 py-2">Cantidad</th>
+                        <th className="px-3 py-2">Unitario</th>
+                        <th className="px-3 py-2">Subtotal</th>
+                        <th className="px-3 py-2">Impuestos</th>
+                        <th className="px-3 py-2">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoiceItems.map((item) => (
+                        <tr key={item.id} className="border-t border-border align-top">
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            {item.product_code || item.inventory_item?.sku || item.inventory_item?.barcode || '-'}
+                          </td>
+                          <td className="px-3 py-2 min-w-[220px]">
+                            <div className="font-medium text-foreground">{item.description}</div>
+                            {item.inventory_item?.name && item.inventory_item.name !== item.description && (
+                              <div className="text-xs text-muted-foreground">
+                                Catalogo: {item.inventory_item.name}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">{item.quantity}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(Number(item.unit_price || 0))}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(Number(item.subtotal || 0))}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">{formatCurrency(Number(item.tax_amount || 0))}</td>
+                          <td className="px-3 py-2 font-medium text-foreground whitespace-nowrap">
+                            {formatCurrency(Number(item.total_amount || 0))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Acciones */}
@@ -311,7 +447,7 @@ export const ConsolidatedCostDetails = ({
 
           {/* Footer con auditoría */}
           <Separator />
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:justify-between">
             <span>
               Creado: {formatForDisplayWithTime(cost.created_at)}
               {cost.creator && ` por ${getCreatorDisplayName(cost.creator)}`}

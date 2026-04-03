@@ -478,17 +478,32 @@ export class XMLSupplierParser {
       const detalleElements = documentoElement.querySelectorAll('Detalle');
       detalleElements.forEach(detalle => {
         const descripcion = detalle.querySelector('NmbItem')?.textContent?.trim() || '';
+        const productCode =
+          detalle.querySelector('CdgItem VlrCodigo')?.textContent?.trim() ||
+          detalle.querySelector('CdgItem VlrCodigo')?.textContent?.trim() ||
+          detalle.querySelector('CdgItem > VlrCodigo')?.textContent?.trim() ||
+          detalle.querySelector('VlrCodigo')?.textContent?.trim() ||
+          detalle.querySelector('CdgItem > CdgItem')?.textContent?.trim() ||
+          '';
+        const productName = detalle.querySelector('NmbItem')?.textContent?.trim() || descripcion;
         const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
         const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
-        const total = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
+        const subtotal = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
+        const taxRate = detalle.querySelector('IndExe')?.textContent?.trim() === '1' ? 0 : 19;
+        const taxAmount = subtotal > 0 ? subtotal * (taxRate / 100) : 0;
+        const total = subtotal + taxAmount;
         
         if (descripcion) {
           items.push({
+            product_code: productCode || undefined,
+            product_name: productName || undefined,
             description: descripcion,
             quantity: cantidad,
             unit_price: precio,
+            subtotal,
+            tax_amount: taxAmount,
             total: total,
-            tax_rate: 19 // IVA estándar en Chile
+            tax_rate: taxRate
           });
         }
       });
@@ -531,6 +546,7 @@ export class XMLSupplierParser {
     const rutProveedor = getValue('rut_proveedor, supplier_rut, tax_id');
     const nombreProveedor = getValue('proveedor, supplier_name, vendor_name, razon_social');
     const descripcion = getValue('descripcion, description, concepto');
+    const items = this.extractItemsFromGenericInvoice(facturaElement, iva, total);
 
     if (!folio && !total) return null;
 
@@ -545,8 +561,64 @@ export class XMLSupplierParser {
       currency: 'CLP',
       description: descripcion || `Factura ${folio} - ${nombreProveedor}`,
       supplier_rut: rutProveedor ? this.formatRUT(rutProveedor) : '',
-      status: 'emitido'
+      status: 'emitido',
+      items: items.length > 0 ? items : undefined
     };
+  }
+
+  private extractItemsFromGenericInvoice(
+    facturaElement: Element,
+    invoiceTaxAmount: number,
+    invoiceTotal: number
+  ): XMLDocumentItem[] {
+    const lineSelectors = [
+      'detalle',
+      'item',
+      'linea',
+      'line',
+      'detalle_item',
+      'producto'
+    ];
+
+    const lineElements = lineSelectors.flatMap((selector) => Array.from(facturaElement.querySelectorAll(selector)));
+    const uniqueLineElements = Array.from(new Set(lineElements));
+
+    if (uniqueLineElements.length === 0) return [];
+
+    const estimatedRate = invoiceTotal > 0 && invoiceTaxAmount > 0
+      ? (invoiceTaxAmount / Math.max(invoiceTotal - invoiceTaxAmount, 1)) * 100
+      : 19;
+
+    return uniqueLineElements.map((line, index) => {
+      const getValue = (selector: string) => line.querySelector(selector)?.textContent?.trim() || '';
+      const getNumber = (selector: string) => {
+        const value = getValue(selector);
+        return value ? parseFloat(value.replace(/[^\d.-]/g, '')) || 0 : 0;
+      };
+
+      const description = getValue('descripcion, description, nombre, item_name, producto, name');
+      const quantity = getNumber('cantidad, quantity, qty') || 1;
+      const unitPrice = getNumber('precio_unitario, unit_price, price, valor_unitario');
+      const subtotal = getNumber('subtotal, neto, monto, line_total, total_linea') || (quantity * unitPrice);
+      const taxRate = getNumber('porcentaje_impuesto, tax_rate, iva_rate') || estimatedRate;
+      const taxAmount = getNumber('impuesto, tax_amount, iva') || (subtotal * (taxRate / 100));
+      const totalAmount = getNumber('total, amount, monto_total') || (subtotal + taxAmount);
+      const productCode =
+        getValue('codigo, sku, product_code, item_code, codigo_producto, barcode') || undefined;
+      const productName = getValue('nombre, item_name, product_name, producto, description') || undefined;
+
+      return {
+        product_code: productCode,
+        product_name: productName,
+        description: description || productName || `Línea ${index + 1}`,
+        quantity,
+        unit_price: unitPrice || (quantity > 0 ? subtotal / quantity : 0),
+        subtotal,
+        tax_amount: taxAmount,
+        total: totalAmount,
+        tax_rate: taxRate,
+      };
+    }).filter((item) => item.description.trim().length > 0);
   }
 
   private getDocumentTypeLabel(tipoDTE: string): string {

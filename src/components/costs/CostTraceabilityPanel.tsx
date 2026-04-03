@@ -20,7 +20,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
       const { data: cost, error } = await supabase
         .from('costs')
         .select(`
-          id, amount, description, date, supplier_id, supplier_payment_id, inventory_movement_id,
+          id, amount, description, date, supplier_id, supplier_payment_id, supplier_invoice_id, inventory_movement_id,
           crane_parts(id, part_name, quantity, unit_price, crane_id, cranes(license_plate))
         `)
         .eq('id', costId)
@@ -39,8 +39,9 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         payment = p;
       }
 
-      // Fetch linked inventory movement
+      // Fetch linked inventory movement(s)
       let movement = null;
+      let invoiceMovements: any[] = [];
       if (cost.inventory_movement_id) {
         const { data: m } = await supabase
           .from('inventory_movements')
@@ -48,6 +49,15 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
           .eq('id', cost.inventory_movement_id)
           .single();
         movement = m;
+      }
+
+      if (cost.supplier_invoice_id) {
+        const { data: movements } = await supabase
+          .from('inventory_movements')
+          .select('id, movement_type, quantity, unit_cost, inventory_items(name)')
+          .eq('supplier_invoice_id', cost.supplier_invoice_id)
+          .eq('status', 'active');
+        invoiceMovements = movements || [];
       }
 
       // Fetch supplier name
@@ -61,7 +71,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         supplierName = s?.name;
       }
 
-      return { cost, payment, movement, supplierName };
+      return { cost, payment, movement, invoiceMovements, supplierName };
     },
     enabled: !!costId,
   });
@@ -77,9 +87,9 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
 
   if (!data) return null;
 
-  const { cost, payment, movement, supplierName } = data;
+  const { cost, payment, movement, invoiceMovements, supplierName } = data;
   const parts = (cost as any).crane_parts || [];
-  const hasLinks = payment || movement || parts.length > 0;
+  const hasLinks = payment || movement || invoiceMovements.length > 0 || parts.length > 0;
 
   if (!hasLinks) {
     return (
@@ -122,6 +132,16 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
             <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
               <Package className="h-3 w-3" />
               Inventario: {(movement as any).inventory_items?.name || 'Item'} ({(movement as any).quantity} uds)
+            </Badge>
+          </>
+        )}
+
+        {!movement && invoiceMovements.length > 0 && (
+          <>
+            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
+              <Package className="h-3 w-3" />
+              Inventario: {invoiceMovements.length} movimiento(s) de factura
             </Badge>
           </>
         )}

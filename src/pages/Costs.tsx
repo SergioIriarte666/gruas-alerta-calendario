@@ -16,6 +16,7 @@ import { DistributionAssistantDialog } from '@/components/costs/dialogs/Distribu
 import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
+import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
@@ -34,6 +35,7 @@ import {
 } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
+    useInventorySyncWatcher();
     const isMobile = useIsMobile();
     const [searchParams] = useSearchParams();
     const location = useLocation() as { state?: { prefilledData?: any } } | any;

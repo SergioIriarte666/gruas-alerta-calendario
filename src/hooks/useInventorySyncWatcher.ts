@@ -67,10 +67,48 @@ export const useInventorySyncWatcher = (craneId?: string) => {
       )
       .subscribe();
 
+    const supplierInvoicesChannel = supabase
+      .channel(`supplier-invoices-sync-${craneId || 'all'}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'supplier_invoices'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
+          queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
+          queryClient.invalidateQueries({ queryKey: ['costs'] });
+        }
+      )
+      .subscribe();
+
+    const supplierInvoiceItemsChannel = supabase
+      .channel(`supplier-invoice-items-sync-${craneId || 'all'}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'supplier_invoice_items'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['purchase-invoice-items'] });
+          queryClient.invalidateQueries({ queryKey: ['supplier-invoice-details'] });
+          queryClient.invalidateQueries({ queryKey: ['costs'] });
+          queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+          queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(partsChannel);
       supabase.removeChannel(movementsChannel);
       supabase.removeChannel(itemsChannel);
+      supabase.removeChannel(supplierInvoicesChannel);
+      supabase.removeChannel(supplierInvoiceItemsChannel);
     };
   }, [craneId, queryClient]);
 };

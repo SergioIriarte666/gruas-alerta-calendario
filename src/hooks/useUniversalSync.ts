@@ -40,6 +40,10 @@ export const useUniversalSync = () => {
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
     queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
+    queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
+    queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
+    queryClient.invalidateQueries({ queryKey: ['purchase-invoice-items'] });
+    queryClient.invalidateQueries({ queryKey: ['supplier-invoice-details'] });
     
     // ========== SERVICIOS (por si hay comisiones o costos de servicio) ==========
     queryClient.invalidateQueries({ queryKey: ['services'] });
@@ -87,6 +91,7 @@ export const useUniversalSync = () => {
       queryClient.refetchQueries({ queryKey: ['costs'] }),
       queryClient.refetchQueries({ queryKey: ['inventory-stock'] }),
       queryClient.refetchQueries({ queryKey: ['inventory-stats'] }),
+      queryClient.refetchQueries({ queryKey: ['supplier-invoices'] }),
     ]);
   };
 

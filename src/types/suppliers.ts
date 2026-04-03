@@ -51,10 +51,38 @@ export interface SupplierInvoice {
   balance: number | null;
   created_at: string | null;
   updated_at: string | null;
+  source_module?: string;
+  xml_file_name?: string | null;
 }
 
 export interface SupplierInvoiceWithDetails extends SupplierInvoice {
   supplier?: Supplier;
+  items?: SupplierInvoiceItem[];
+}
+
+export interface SupplierInvoiceItem {
+  id: string;
+  supplier_invoice_id: string;
+  inventory_item_id: string;
+  movement_id?: string | null;
+  line_number: number;
+  product_code?: string | null;
+  product_name?: string | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  tax_rate?: number | null;
+  tax_amount: number;
+  total_amount: number;
+  created_at?: string;
+  updated_at?: string;
+  inventory_item?: {
+    id: string;
+    name: string;
+    sku?: string | null;
+    barcode?: string | null;
+  } | null;
 }
 
 // Stats type (computed/aggregated data not from a single table)
@@ -144,9 +172,13 @@ export interface XMLDocumentData {
 }
 
 export interface XMLDocumentItem {
+  product_code?: string;
+  product_name?: string;
   description: string;
   quantity: number;
   unit_price: number;
+  subtotal?: number;
+  tax_amount?: number;
   total: number;
   tax_rate?: number;
 }
