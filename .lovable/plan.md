@@ -1,47 +1,32 @@
 
 
-# Plan: Corregir Importación de PDFs — Enviar Texto en vez de Imagen
+# Plan: Corregir valores de consumo de inventario y errores de build
 
-## Problema
+## Problema Principal
+En la vista "Consumos de Inventario" de una grúa, los valores se muestran **sin IVA** (neto: $10.916) mientras que el costo asociado muestra el valor **con IVA** ($12.990). Esto confunde al usuario porque ambos registros corresponden al mismo ítem pero muestran montos distintos.
 
-OpenAI rechaza PDFs enviados como `image_url` con error "Invalid MIME type. Only image types are supported." El gateway anterior de Lovable convertía PDFs a imágenes internamente; la API directa de OpenAI no lo hace.
+**Causa raíz**: Los movimientos de inventario (`inventory_movements`) almacenan `unit_cost` y `total_cost` como valores **netos**. El formulario de salida (`SimpleExitForm`) toma el costo de la última entrada (también neto). Las funciones `getDisplayUnitCost` y `getDisplayTotalCost` intentan leer primero de `supplier_invoice_items.total_amount` (que sí incluye IVA), pero cuando no hay vínculo a una factura, caen al fallback de `movement.unit_cost` (neto).
 
 ## Solución
 
-Extraer el texto del PDF en el cliente con `pdfjs-dist` (ya instalado) y enviar texto plano a la Edge Function en lugar del archivo binario.
+### 1. Corregir display en CraneParts.tsx
+**Archivo**: `src/components/cranes/CraneParts.tsx`
 
-## Cambios
+Modificar `getDisplayUnitCost` y `getDisplayTotalCost` para que, cuando caigan al fallback de `movement.unit_cost`/`total_cost`, multipliquen por 1.19 (IVA 19%) para mostrar el valor total consistente con lo que muestra el módulo de costos.
 
-### 1. Hooks del cliente — extraer texto antes de llamar al servidor
-
-**Archivos:** `src/hooks/vip/useQuotePDFImport.ts`, `src/hooks/vip/usePurchaseOrderPDFImport.ts`
-
-- Usar `pdfjs-dist` para extraer todo el texto del PDF página por página
-- Enviar `{ pdfText: textoExtraido }` a la Edge Function en lugar de `{ pdfBase64: ... }`
-
-### 2. Edge Functions — recibir texto en vez de imagen
-
-**Archivos:** `supabase/functions/parse-quote-pdf/index.ts`, `supabase/functions/parse-purchase-order-pdf/index.ts`
-
-- Aceptar parámetro `pdfText` (string) en el body
-- Reemplazar el bloque `image_url` por un mensaje de texto plano:
-```text
-ANTES (roto):
-  { type: 'image_url', image_url: { url: 'data:application/pdf;base64,...' } }
-
-DESPUÉS (funciona):
-  { type: 'text', text: 'Contenido del PDF:\n\n[texto extraído]' }
+```
+// Fallback final: aplicar IVA al valor neto almacenado
+const netCost = movement.unit_cost || 0;
+return Math.round(netCost * 1.19);
 ```
 
-### 3. Sin cambios en
+### 2. Corregir error de build en send-daily-pending-report
+**Archivo**: `supabase/functions/send-daily-pending-report/index.ts`
 
-- `parse-receipt-image` — ya envía imágenes correctamente (JPEG/PNG)
-- Prompts de extracción y schemas de herramientas — se mantienen idénticos
-- Fallback local con regex — sigue funcionando como respaldo
+Cambiar `content_type` por el nombre de propiedad correcto del SDK Resend para adjuntos. La propiedad `content_type` no existe en el tipo `Attachment` de Resend.
 
 ## Impacto
-
-- Elimina el error de MIME type por completo
-- Costo similar (~$0.01–$0.03 por documento con gpt-4o-mini)
-- Cero riesgo para otros módulos (costos, comisiones, etc.)
+- Solo cambia la **capa de visualización**, no se modifican datos almacenados
+- No afecta costos, comisiones ni otros módulos
+- Los valores mostrados serán consistentes entre "Detalle de Costos" y "Consumos de Inventario"
 
