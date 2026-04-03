@@ -5111,6 +5111,7 @@ export type Database = {
       apply_pending_payments_to_invoices: { Args: never; Returns: Json }
       audit_commission_system: { Args: never; Returns: Json }
       backfill_maintenance_costs: { Args: never; Returns: Json }
+      backfill_supplier_payments_from_costs: { Args: never; Returns: number }
       build_import_batch_summary: {
         Args: { p_batch_id: string }
         Returns: Json
