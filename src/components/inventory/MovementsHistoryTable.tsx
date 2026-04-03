@@ -98,17 +98,17 @@ export const MovementsHistoryTable = () => {
 
   const getMovementBadge = (type: string) => {
     const badges = {
-      entry: { variant: 'default' as const, label: 'Entrada', icon: TrendingUp },
-      exit: { variant: 'destructive' as const, label: 'Salida', icon: TrendingDown },
-      transfer: { variant: 'secondary' as const, label: 'Transferencia', icon: ArrowUpDown },
-      adjustment: { variant: 'outline' as const, label: 'Ajuste', icon: ArrowUpDown },
+      entry: { label: 'Entrada', icon: TrendingUp, className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200' },
+      exit: { label: 'Salida', icon: TrendingDown, className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200' },
+      transfer: { label: 'Transferencia', icon: ArrowUpDown, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200' },
+      adjustment: { label: 'Ajuste', icon: ArrowUpDown, className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200' },
     };
     
     const config = badges[type as keyof typeof badges] || badges.adjustment;
     const Icon = config.icon;
     
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
+      <Badge variant="outline" className={cn("flex items-center gap-1 font-semibold", config.className)}>
         <Icon className="w-3 h-3" />
         {config.label}
       </Badge>
