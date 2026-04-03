@@ -70,12 +70,24 @@ export const MovementsHistoryTable = () => {
 
   // Sort movements
   const sortedMovements = [...filteredMovements].sort((a, b) => {
-    let aValue, bValue;
+    let aValue: any, bValue: any;
     
     switch (sortBy) {
       case 'date':
         aValue = new Date(a.movement_date).getTime();
         bValue = new Date(b.movement_date).getTime();
+        break;
+      case 'type':
+        aValue = a.movement_type || '';
+        bValue = b.movement_type || '';
+        break;
+      case 'product':
+        aValue = (a.item?.name || '').toLowerCase();
+        bValue = (b.item?.name || '').toLowerCase();
+        break;
+      case 'location':
+        aValue = (a.location?.name || '').toLowerCase();
+        bValue = (b.location?.name || '').toLowerCase();
         break;
       case 'quantity':
         aValue = a.quantity;
@@ -84,6 +96,10 @@ export const MovementsHistoryTable = () => {
       case 'cost':
         aValue = a.total_cost || 0;
         bValue = b.total_cost || 0;
+        break;
+      case 'document':
+        aValue = (a.reference_document || '').toLowerCase();
+        bValue = (b.reference_document || '').toLowerCase();
         break;
       default:
         return 0;
