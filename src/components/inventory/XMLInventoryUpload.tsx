@@ -201,6 +201,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [lineDescriptionOverrides, setLineDescriptionOverrides] = useState<Record<string, string>>({});
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
+  const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
   const [selectedCostSubcategory, setSelectedCostSubcategory] = useState<string>('');
