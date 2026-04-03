@@ -233,7 +233,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             Unitario: ${formatInt(getDisplayUnitCost(m))}
                           </span>
                           <span className="text-sm font-medium text-red-400">
-                            -{Math.round(getDisplayTotalCost(m)).toLocaleString('es-CL')}
+                            -{formatInt(getDisplayTotalCost(m))}
                           </span>
                         </div>
                       </div>
