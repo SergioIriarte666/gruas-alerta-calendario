@@ -464,6 +464,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     setParseResult(null);
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
+    setDiscardedLines(new Set());
+    setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
     setSelectedCostSubcategory('');
