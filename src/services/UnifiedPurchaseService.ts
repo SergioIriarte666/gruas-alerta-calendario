@@ -768,7 +768,6 @@ export class UnifiedPurchaseService {
         part_name: params.itemName,
         quantity: params.quantity,
         unit_price: params.unitCost,
-        total_value: totalCost,
         date: params.date,
         supplier: 'Desde inventario',
         supplier_id: params.supplierId || null,

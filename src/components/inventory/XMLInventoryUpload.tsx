@@ -998,7 +998,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 supplier_id: supplierId,
                 quantity: movementQuantity,
                 unit_price: displayUnitPrice,
-                total_value: movementTotalWithTax,
                 date: doc.issue_date,
                 notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
               });
