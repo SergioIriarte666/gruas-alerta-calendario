@@ -958,8 +958,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           createdMovementIds.push(movement.id);
 
           if (selectedCraneId) {
-            const displayUnitPrice = computeLineTotal(validatedLine.item) / movementQuantity;
-
             const { data: exitMovement, error: exitMovementError } = await supabase
               .from('inventory_movements')
               .insert({
@@ -987,55 +985,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             }
             createdMovementIds.push(exitMovement.id);
 
-            // Upsert: si ya existe un crane_part para este movement, actualizarlo
-            const { data: existingCranePart } = await supabase
-              .from('crane_parts')
-              .select('id')
-              .eq('inventory_movement_id', exitMovement.id)
-              .maybeSingle();
-
-            let cranePartData: { id: string } | null = null;
-            let cranePartError: any = null;
-
-            const cranePartPayload = {
-              crane_id: selectedCraneId,
-              cost_id: cost.id,
-              inventory_movement_id: exitMovement.id,
-              part_name: validatedLine.item.description,
-              supplier: supplierName,
-              supplier_id: supplierId,
-              quantity: movementQuantity,
-              unit_price: displayUnitPrice,
-              date: doc.issue_date,
-              notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
-            };
-
-            if (existingCranePart?.id) {
-              const result = await supabase
-                .from('crane_parts')
-                .update(cranePartPayload)
-                .eq('id', existingCranePart.id)
-                .select('id')
-                .single();
-              cranePartData = result.data;
-              cranePartError = result.error;
-            } else {
-              const result = await supabase
-                .from('crane_parts')
-                .insert(cranePartPayload)
-                .select('id')
-                .single();
-              cranePartData = result.data;
-              cranePartError = result.error;
-            }
-
-            if (cranePartError) {
-              throw new Error(
-                `No se pudo registrar la pieza para la grúa en la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${cranePartError.message}`
-              );
-            }
-            if (cranePartData) createdCranePartIds.push(cranePartData.id);
-
+            // No crear crane_parts manualmente aquí: el trigger de inventory_movements
+            // ya genera el registro técnico vinculado al movement de salida.
             if (!firstExitMovementId) {
               firstExitMovementId = exitMovement.id;
             }
