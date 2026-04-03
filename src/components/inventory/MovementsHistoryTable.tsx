@@ -285,8 +285,8 @@ export const MovementsHistoryTable = () => {
                     <TableCell>
                       {movement.total_cost ? (
                         <span className={cn(
-                          "font-medium",
-                          movement.movement_type === 'entry' ? "text-green-600" : "text-red-600"
+                          "font-bold",
+                          movement.movement_type === 'entry' ? "text-violet-600" : "text-red-600"
                         )}>
                           {movement.movement_type === 'entry' ? '+' : '-'}${movement.total_cost.toLocaleString()}
                         </span>
