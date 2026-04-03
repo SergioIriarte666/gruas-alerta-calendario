@@ -131,7 +131,7 @@ export const MovementsHistoryTable = () => {
     );
   };
 
-  const handleSort = (field: 'date' | 'quantity' | 'cost') => {
+  const handleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
