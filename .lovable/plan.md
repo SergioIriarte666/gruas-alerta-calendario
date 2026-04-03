@@ -1,57 +1,34 @@
 
-# Plan: Corregir error al importar XML a Bodega y dejar seguro el segundo intento
 
-## Diagnóstico confirmado
-El problema no parece ser el XML. En `src/components/inventory/XMLInventoryUpload.tsx`, cuando la importación tiene “consumo inmediato”, se inserta un registro en `crane_parts` enviando `total_value`.
+# Plan: Corregir descripción larga en costos y verificar visibilidad de salidas en bodega
 
-Pero en la base de datos `crane_parts.total_value` está tratado como columna calculada/generada, por eso Postgres rechaza cualquier valor explícito con este error:
+## Diagnóstico
 
-```text
-cannot insert a non-DEFAULT value into column "total_value"
-```
+Verificado en base de datos:
+- Los **movimientos de salida SÍ existen** (8 registros activos con `movement_type='exit'`, `crane_id` asignado, `status='active'`). Deberían ser visibles en el historial de movimientos de bodega al refrescar la página.
+- Los **crane_parts también existen** (8 registros vinculados a los exit movements). Deberían verse en la pestaña de piezas de la grúa.
+- El **stock en 0** es correcto: entrada + salida inmediata = 0 stock disponible.
+- El problema real es la **descripción del costo**: contiene todos los ítems concatenados ("MGS Repuestos y Cia. Ltda. SILENCIADOR 5" REFORZADO U.S.A., ABRAZADERA PREF.5"...") porque fue creado ANTES de la corrección de `buildCostDescription`. Lo mismo ocurre en el campo `notes`.
 
-Además, el flujo actual inserta factura, costo, pago y movimientos antes de llegar a `crane_parts`, y si falla en esa etapa no hay rollback real. Por eso un segundo intento puede quedar sucio o inconsistente.
+## Cambios
 
-## Qué voy a implementar
-1. Eliminar `total_value` de los `insert` y `update` hacia `crane_parts` en el flujo XML.
-2. Revisar y corregir otros puntos del proyecto que escriben en `crane_parts` con el mismo patrón, para que el error no reaparezca en otros módulos.
-3. Agregar limpieza compensatoria por documento importado cuando una importación falle a mitad de proceso, para que el reintento quede limpio.
+### 1. Reparar descripción y notas del costo existente (SQL migration)
+- Actualizar `costs.description` de la factura 389111 a simplemente **"MGS Repuestos y Cia. Ltda."** (formato correcto multi-ítem: solo proveedor).
+- Limpiar `costs.notes` para que muestre solo la referencia útil: `"Factura: 389111 | Archivo XML: 389111.xml"` sin repetir los nombres de todos los ítems.
 
-## Archivos principales a corregir
-- `src/components/inventory/XMLInventoryUpload.tsx`
-  - quitar `total_value` del insert de `crane_parts`
-  - mantener el valor visual vía `unit_price`/`quantity`, dejando que la BD calcule `total_value`
-  - encapsular la importación por documento con rollback manual si falla una línea
-- `src/services/UnifiedPurchaseService.ts`
-  - quitar `total_value` de payloads de `crane_parts` en `insert` y `update`
+### 2. Asegurar que la `description` en el formulario de edición de costos no quede bloqueada
+- Revisar el componente `CostCombobox` para confirmar que textos largos no impidan la edición.
+- Si el campo trunca o bloquea con textos extensos, ajustar para que use un `textarea` cuando el valor exceda cierta longitud, permitiendo edición libre.
 
-## Diseño del reintento
-El flujo quedará conceptualmente así:
+### 3. Prevención futura en `buildCostDescription`
+- Verificar (ya corregido) que para facturas multi-ítem la descripción sea solo el nombre del proveedor, sin concatenar ítems.
+- Confirmar que el campo `notes` también sigue un formato limpio y no repite la lista completa de ítems.
 
-```text
-crear factura
-crear costo
-crear pago proveedor
-crear líneas de factura
-crear movimientos de inventario
-crear crane_parts
-si algo falla:
-  borrar en orden inverso lo creado para ese documento
-```
+## Archivos a modificar
+- `supabase/migrations/` — Nueva migración para reparar descripción y notas del costo 389111
+- `src/components/costs/form/CostFormStep1.tsx` — Si es necesario, hacer el campo description editable con textarea para textos largos
+- `src/components/inventory/XMLInventoryUpload.tsx` — Limpiar el contenido de `notes` para no concatenar todos los ítems
 
-Eso evita:
-- documentos a medio crear
-- bloqueo del segundo intento
-- duplicidad de costos/movimientos por reintentos fallidos
+## Nota
+Los movimientos de salida y crane_parts ya están correctamente creados en la base de datos. Si no aparecen en la UI, basta con refrescar la página (F5). No hay bug de código en la visualización.
 
-## Detalles técnicos
-- La causa raíz está en la inserción actual de `XMLInventoryUpload.tsx`, donde se manda:
-  - `unit_price: displayUnitPrice`
-  - `total_value: movementTotalWithTax`
-- También detecté el mismo riesgo en `UnifiedPurchaseService.ts`, donde `cranePartPayload` incluye `total_value` y luego se usa tanto en `insert` como en `update`.
-- No hace falta rediseñar la UI; la corrección es de persistencia y consistencia del flujo.
-
-## Resultado esperado
-- La importación XML a bodega con consumo inmediato vuelve a funcionar.
-- Si el primer intento falla, el segundo ya no queda contaminado por datos parciales.
-- La trazabilidad con Costos, Proveedores e Inventario se mantiene intacta.
