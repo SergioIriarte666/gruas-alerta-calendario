@@ -1,32 +1,57 @@
 
+# Plan: Corregir error al importar XML a Bodega y dejar seguro el segundo intento
 
-# Plan: Corregir valores de consumo de inventario y errores de build
+## Diagnóstico confirmado
+El problema no parece ser el XML. En `src/components/inventory/XMLInventoryUpload.tsx`, cuando la importación tiene “consumo inmediato”, se inserta un registro en `crane_parts` enviando `total_value`.
 
-## Problema Principal
-En la vista "Consumos de Inventario" de una grúa, los valores se muestran **sin IVA** (neto: $10.916) mientras que el costo asociado muestra el valor **con IVA** ($12.990). Esto confunde al usuario porque ambos registros corresponden al mismo ítem pero muestran montos distintos.
+Pero en la base de datos `crane_parts.total_value` está tratado como columna calculada/generada, por eso Postgres rechaza cualquier valor explícito con este error:
 
-**Causa raíz**: Los movimientos de inventario (`inventory_movements`) almacenan `unit_cost` y `total_cost` como valores **netos**. El formulario de salida (`SimpleExitForm`) toma el costo de la última entrada (también neto). Las funciones `getDisplayUnitCost` y `getDisplayTotalCost` intentan leer primero de `supplier_invoice_items.total_amount` (que sí incluye IVA), pero cuando no hay vínculo a una factura, caen al fallback de `movement.unit_cost` (neto).
-
-## Solución
-
-### 1. Corregir display en CraneParts.tsx
-**Archivo**: `src/components/cranes/CraneParts.tsx`
-
-Modificar `getDisplayUnitCost` y `getDisplayTotalCost` para que, cuando caigan al fallback de `movement.unit_cost`/`total_cost`, multipliquen por 1.19 (IVA 19%) para mostrar el valor total consistente con lo que muestra el módulo de costos.
-
-```
-// Fallback final: aplicar IVA al valor neto almacenado
-const netCost = movement.unit_cost || 0;
-return Math.round(netCost * 1.19);
+```text
+cannot insert a non-DEFAULT value into column "total_value"
 ```
 
-### 2. Corregir error de build en send-daily-pending-report
-**Archivo**: `supabase/functions/send-daily-pending-report/index.ts`
+Además, el flujo actual inserta factura, costo, pago y movimientos antes de llegar a `crane_parts`, y si falla en esa etapa no hay rollback real. Por eso un segundo intento puede quedar sucio o inconsistente.
 
-Cambiar `content_type` por el nombre de propiedad correcto del SDK Resend para adjuntos. La propiedad `content_type` no existe en el tipo `Attachment` de Resend.
+## Qué voy a implementar
+1. Eliminar `total_value` de los `insert` y `update` hacia `crane_parts` en el flujo XML.
+2. Revisar y corregir otros puntos del proyecto que escriben en `crane_parts` con el mismo patrón, para que el error no reaparezca en otros módulos.
+3. Agregar limpieza compensatoria por documento importado cuando una importación falle a mitad de proceso, para que el reintento quede limpio.
 
-## Impacto
-- Solo cambia la **capa de visualización**, no se modifican datos almacenados
-- No afecta costos, comisiones ni otros módulos
-- Los valores mostrados serán consistentes entre "Detalle de Costos" y "Consumos de Inventario"
+## Archivos principales a corregir
+- `src/components/inventory/XMLInventoryUpload.tsx`
+  - quitar `total_value` del insert de `crane_parts`
+  - mantener el valor visual vía `unit_price`/`quantity`, dejando que la BD calcule `total_value`
+  - encapsular la importación por documento con rollback manual si falla una línea
+- `src/services/UnifiedPurchaseService.ts`
+  - quitar `total_value` de payloads de `crane_parts` en `insert` y `update`
 
+## Diseño del reintento
+El flujo quedará conceptualmente así:
+
+```text
+crear factura
+crear costo
+crear pago proveedor
+crear líneas de factura
+crear movimientos de inventario
+crear crane_parts
+si algo falla:
+  borrar en orden inverso lo creado para ese documento
+```
+
+Eso evita:
+- documentos a medio crear
+- bloqueo del segundo intento
+- duplicidad de costos/movimientos por reintentos fallidos
+
+## Detalles técnicos
+- La causa raíz está en la inserción actual de `XMLInventoryUpload.tsx`, donde se manda:
+  - `unit_price: displayUnitPrice`
+  - `total_value: movementTotalWithTax`
+- También detecté el mismo riesgo en `UnifiedPurchaseService.ts`, donde `cranePartPayload` incluye `total_value` y luego se usa tanto en `insert` como en `update`.
+- No hace falta rediseñar la UI; la corrección es de persistencia y consistencia del flujo.
+
+## Resultado esperado
+- La importación XML a bodega con consumo inmediato vuelve a funcionar.
+- Si el primer intento falla, el segundo ya no queda contaminado por datos parciales.
+- La trazabilidad con Costos, Proveedores e Inventario se mantiene intacta.
