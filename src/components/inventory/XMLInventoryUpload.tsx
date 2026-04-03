@@ -1042,7 +1042,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           throw new Error(`No se pudo enlazar el pago del proveedor al costo ${doc.folio}: ${linkCostPaymentError.message}`);
         }
 
-        const linesPayload = validatedDoc.lines.map((line) => ({
+        const activeLines = validatedDoc.lines.filter((line) => !discardedLines.has(line.key));
+        const linesPayload = activeLines.map((line) => ({
           supplier_invoice_id: invoice.id,
           inventory_item_id: line.matchedItem!.id,
           line_number: line.lineNumber,
