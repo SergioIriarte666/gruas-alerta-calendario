@@ -413,6 +413,7 @@ export class UnifiedPurchaseService {
     supplierName?: string | null;
     supplierInvoiceId?: string | null;
     supplierInvoiceItemId?: string | null;
+    referenceDocument?: string | null;
     displayUnitCost?: number | null;
     displayTotalCost?: number | null;
   }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
