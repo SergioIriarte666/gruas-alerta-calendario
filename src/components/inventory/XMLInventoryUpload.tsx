@@ -1127,6 +1127,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             date: doc.issue_date,
             supplierId,
             supplierName: supplier?.name || supplierName,
+            referenceDocument: doc.folio,
           });
         } else if (firstEntryMovementId) {
           const { error: updateCostMovementError } = await supabase

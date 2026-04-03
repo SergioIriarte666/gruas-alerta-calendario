@@ -413,6 +413,7 @@ export class UnifiedPurchaseService {
     supplierName?: string | null;
     supplierInvoiceId?: string | null;
     supplierInvoiceItemId?: string | null;
+    referenceDocument?: string | null;
     displayUnitCost?: number | null;
     displayTotalCost?: number | null;
   }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
@@ -492,8 +493,11 @@ export class UnifiedPurchaseService {
           total_cost: totalCost,
           movement_date: params.date,
           reason: 'Consumo inmediato',
-          observations: `Consumo inmediato (aplicado por UPDATE)`,
+          observations: `Consumo inmediato - ${params.itemName}`,
           crane_id: params.craneId,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
           supplier_invoice_id: params.supplierInvoiceId || null,
           supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
@@ -532,7 +536,10 @@ export class UnifiedPurchaseService {
           cost_id: params.costId,
           total_cost: totalCost,
           reason: 'Consumo inmediato',
-          observations: `Consumo inmediato (backfill)`,
+          observations: `Consumo inmediato - ${params.itemName}`,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
           supplier_invoice_id: params.supplierInvoiceId || null,
           supplier_invoice_item_id: params.supplierInvoiceItemId || null,
         })
@@ -556,10 +563,13 @@ export class UnifiedPurchaseService {
         total_cost: totalCost,
         movement_date: params.date,
         reason: 'Consumo inmediato',
-        observations: `Consumo directo a grúa desde costo ID: ${params.costId}`,
+        observations: `Consumo inmediato - ${params.itemName}`,
         status: 'active',
         crane_id: params.craneId,
         cost_id: params.costId,
+        supplier_id: params.supplierId || null,
+        supplier_name: params.supplierName || null,
+        reference_document: params.referenceDocument || null,
         supplier_invoice_id: params.supplierInvoiceId || null,
         supplier_invoice_item_id: params.supplierInvoiceItemId || null,
       })
@@ -616,6 +626,7 @@ export class UnifiedPurchaseService {
     date: string;
     supplierId?: string | null;
     supplierName?: string | null;
+    referenceDocument?: string | null;
   }): Promise<void> {
     const { data: invoiceItems, error: invoiceItemsError } = await supabase
       .from('supplier_invoice_items')
@@ -636,7 +647,7 @@ export class UnifiedPurchaseService {
     for (const item of invoiceItems) {
       const { data: entryMovement, error: entryMovementError } = await supabase
         .from('inventory_movements')
-        .select('id, item_id, location_id, supplier_invoice_id, supplier_invoice_item_id')
+        .select('id, item_id, location_id, movement_date, supplier_invoice_id, supplier_invoice_item_id')
         .eq('supplier_invoice_item_id', item.id)
         .eq('movement_type', 'entry')
         .eq('status', 'active')
@@ -657,12 +668,13 @@ export class UnifiedPurchaseService {
         craneId: params.craneId,
         quantity: item.quantity,
         unitCost: Number(item.unit_price || 0),
-        date: params.date,
+        date: entryMovement.movement_date || params.date,
         itemName: item.description,
         supplierId: params.supplierId,
         supplierName: params.supplierName,
         supplierInvoiceId: params.supplierInvoiceId,
         supplierInvoiceItemId: item.id,
+        referenceDocument: params.referenceDocument,
         displayUnitCost: item.total_amount ? Number(item.total_amount) / Math.max(Number(item.quantity), 1) : Number(item.unit_price || 0),
         displayTotalCost: item.total_amount ? Number(item.total_amount) : Number(item.unit_price || 0) * Number(item.quantity || 0),
       });
