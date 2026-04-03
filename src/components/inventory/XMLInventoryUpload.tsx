@@ -1462,7 +1462,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                               <th className="pb-2 pr-3">Unitario</th>
                               <th className="pb-2 pr-3">Total</th>
                               <th className="pb-2 pr-3">Producto</th>
-                              <th className="pb-2">Estado</th>
+                              <th className="pb-2 pr-3">Estado</th>
+                              <th className="pb-2 text-center">Acción</th>
                             </tr>
                           </thead>
                           <tbody>
