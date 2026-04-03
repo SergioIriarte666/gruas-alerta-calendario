@@ -698,8 +698,8 @@ export type Database = {
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
-          supplier_invoice_id: string | null
           supplier_id: string | null
+          supplier_invoice_id: string | null
           supplier_payment_id: string | null
           updated_at: string
         }
@@ -730,8 +730,8 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
-          supplier_invoice_id?: string | null
           supplier_id?: string | null
+          supplier_invoice_id?: string | null
           supplier_payment_id?: string | null
           updated_at?: string
         }
@@ -762,8 +762,8 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
-          supplier_invoice_id?: string | null
           supplier_id?: string | null
+          supplier_invoice_id?: string | null
           supplier_payment_id?: string | null
           updated_at?: string
         }
@@ -801,13 +801,6 @@ export type Database = {
             columns: ["inventory_movement_id"]
             isOneToOne: false
             referencedRelation: "inventory_movements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "costs_supplier_invoice_id_fkey"
-            columns: ["supplier_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_invoices"
             referencedColumns: ["id"]
           },
           {
@@ -850,6 +843,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "inventory_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_supplier_invoice_id_fkey"
+            columns: ["supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -2137,9 +2137,9 @@ export type Database = {
           receipt_photo_paths: string[] | null
           reference_document: string | null
           status: string
+          supplier_id: string | null
           supplier_invoice_id: string | null
           supplier_invoice_item_id: string | null
-          supplier_id: string | null
           supplier_name: string | null
           total_cost: number | null
           unit_cost: number | null
@@ -2164,9 +2164,9 @@ export type Database = {
           receipt_photo_paths?: string[] | null
           reference_document?: string | null
           status?: string
+          supplier_id?: string | null
           supplier_invoice_id?: string | null
           supplier_invoice_item_id?: string | null
-          supplier_id?: string | null
           supplier_name?: string | null
           total_cost?: number | null
           unit_cost?: number | null
@@ -2191,9 +2191,9 @@ export type Database = {
           receipt_photo_paths?: string[] | null
           reference_document?: string | null
           status?: string
+          supplier_id?: string | null
           supplier_invoice_id?: string | null
           supplier_invoice_item_id?: string | null
-          supplier_id?: string | null
           supplier_name?: string | null
           total_cost?: number | null
           unit_cost?: number | null
@@ -2256,6 +2256,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inventory_movements_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "inventory_movements_supplier_invoice_id_fkey"
             columns: ["supplier_invoice_id"]
             isOneToOne: false
@@ -2267,13 +2274,6 @@ export type Database = {
             columns: ["supplier_invoice_item_id"]
             isOneToOne: false
             referencedRelation: "supplier_invoice_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "inventory_movements_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -4224,6 +4224,95 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_invoice_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          inventory_item_id: string
+          line_number: number
+          movement_id: string | null
+          product_code: string | null
+          product_name: string | null
+          quantity: number
+          subtotal: number
+          supplier_invoice_id: string
+          tax_amount: number
+          tax_rate: number | null
+          total_amount: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          inventory_item_id: string
+          line_number: number
+          movement_id?: string | null
+          product_code?: string | null
+          product_name?: string | null
+          quantity: number
+          subtotal?: number
+          supplier_invoice_id: string
+          tax_amount?: number
+          tax_rate?: number | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          inventory_item_id?: string
+          line_number?: number
+          movement_id?: string | null
+          product_code?: string | null
+          product_name?: string | null
+          quantity?: number
+          subtotal?: number
+          supplier_invoice_id?: string
+          tax_amount?: number
+          tax_rate?: number | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invoice_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invoice_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invoice_items_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_invoice_items_supplier_invoice_id_fkey"
+            columns: ["supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_invoices: {
         Row: {
           amount: number
@@ -4294,88 +4383,6 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "inventory_suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      supplier_invoice_items: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string
-          id: string
-          inventory_item_id: string
-          line_number: number
-          movement_id: string | null
-          product_code: string | null
-          product_name: string | null
-          quantity: number
-          subtotal: number
-          supplier_invoice_id: string
-          tax_amount: number
-          tax_rate: number | null
-          total_amount: number
-          unit_price: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description: string
-          id?: string
-          inventory_item_id: string
-          line_number: number
-          movement_id?: string | null
-          product_code?: string | null
-          product_name?: string | null
-          quantity: number
-          subtotal?: number
-          supplier_invoice_id: string
-          tax_amount?: number
-          tax_rate?: number | null
-          total_amount?: number
-          unit_price?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string
-          id?: string
-          inventory_item_id?: string
-          line_number?: number
-          movement_id?: string | null
-          product_code?: string | null
-          product_name?: string | null
-          quantity?: number
-          subtotal?: number
-          supplier_invoice_id?: string
-          tax_amount?: number
-          tax_rate?: number | null
-          total_amount?: number
-          unit_price?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_invoice_items_inventory_item_id_fkey"
-            columns: ["inventory_item_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_invoice_items_movement_id_fkey"
-            columns: ["movement_id"]
-            isOneToOne: false
-            referencedRelation: "inventory_movements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_invoice_items_supplier_invoice_id_fkey"
-            columns: ["supplier_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_invoices"
             referencedColumns: ["id"]
           },
         ]

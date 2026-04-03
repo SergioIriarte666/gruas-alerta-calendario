@@ -94,7 +94,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     if (cranePart?.unit_price) {
       return Number(cranePart.unit_price);
     }
-    return movement.unit_cost || 0;
+    return Math.round((movement.unit_cost || 0) * 1.19);
   };
 
   const getDisplayTotalCost = (movement: any) => {
@@ -116,7 +116,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     if (cranePart?.total_value) {
       return Number(cranePart.total_value);
     }
-    return movement.total_cost || (movement.unit_cost || 0) * (movement.quantity || 0);
+    return Math.round((movement.total_cost || (movement.unit_cost || 0) * (movement.quantity || 0)) * 1.19);
   };
 
   const totalConsumed = consumptions.reduce((sum: number, m: any) => sum + getDisplayTotalCost(m), 0);
