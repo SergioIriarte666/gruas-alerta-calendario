@@ -94,7 +94,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     if (cranePart?.unit_price) {
       return Number(cranePart.unit_price);
     }
-    return movement.unit_cost || 0;
+    return Math.round((movement.unit_cost || 0) * 1.19);
   };
 
   const getDisplayTotalCost = (movement: any) => {
