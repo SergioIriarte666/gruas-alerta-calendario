@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Copy } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Copy, Layers } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
