@@ -520,7 +520,9 @@ export class XMLSupplierParser {
       vat_amount: iva,
       total_amount: montoTotal,
       currency: 'CLP',
-      description: `${this.getDocumentTypeLabel(tipoDTE)} N° ${folio} - ${razonSocial}`,
+      description: items.length > 0 
+        ? `${razonSocial} ${items.map(i => i.product_name || i.description).join(', ')}`
+        : razonSocial,
       supplier_rut: this.formatRUT(rutEmisor),
       status: 'emitido',
       items: items.length > 0 ? items : undefined
