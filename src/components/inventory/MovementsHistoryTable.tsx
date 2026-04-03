@@ -34,7 +34,7 @@ export const MovementsHistoryTable = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
-  const [sortBy, setSortBy] = useState<'date' | 'quantity' | 'cost'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'type' | 'product' | 'location' | 'quantity' | 'cost' | 'document'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedMovement, setSelectedMovement] = useState<InventoryMovement | null>(null);
   const [showDetails, setShowDetails] = useState(false);
