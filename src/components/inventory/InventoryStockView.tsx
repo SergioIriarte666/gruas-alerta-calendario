@@ -513,8 +513,12 @@ export const InventoryStockView = () => {
             );
           })()}
 
-          <div className="text-sm text-muted-foreground pt-2">
-            Mostrando {filteredItems.filter(i => showZeroStock ? true : getItemStock(i.id) > 0).length} de {items.filter(i => i.is_active).length} productos
+          <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
+            Mostrando 
+            <Badge variant="outline" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 font-semibold">
+              {filteredItems.filter(i => showZeroStock ? true : getItemStock(i.id) > 0).length}
+            </Badge>
+            de {items.filter(i => i.is_active).length} productos
           </div>
         </CardContent>
       </Card>
