@@ -260,7 +260,6 @@ export const useUnifiedPartsPurchase = () => {
           supplier: purchaseData.supplier.trim(),
           quantity: purchaseData.quantity,
           unit_price: purchaseData.unit_price,
-          total_value,
           date: purchaseData.date,
           notes: purchaseData.notes ? `${purchaseData.notes.trim()} - frontend-unified` : 'Compra unificada desde frontend - frontend-unified',
           phone: purchaseData.phone?.trim() || null,

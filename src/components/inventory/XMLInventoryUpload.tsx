@@ -750,6 +750,15 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         const validatedDoc = selectedValidatedDocuments[index];
         const { doc, supplier } = validatedDoc;
 
+        // Track created IDs for compensatory rollback
+        let createdInvoiceId: string | null = null;
+        let createdCostId: string | null = null;
+        let createdSupplierPaymentId: string | null = null;
+        const createdMovementIds: string[] = [];
+        const createdCranePartIds: string[] = [];
+        const createdInvoiceLineIds: string[] = [];
+
+        try {
         const supplierId = await ensureSupplier(doc, supplier);
 
         const { data: existingInvoice, error: existingInvoiceError } = await supabase
@@ -812,6 +821,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         if (invoiceError || !invoice) {
           throw new Error(`No se pudo crear la factura ${doc.folio}: ${invoiceError?.message || 'Error desconocido'}`);
         }
+        createdInvoiceId = invoice.id;
 
         const { data: cost, error: costError } = await supabase
           .from('costs')
@@ -840,6 +850,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         if (costError || !cost) {
           throw new Error(`No se pudo crear el costo para la factura ${doc.folio}: ${costError?.message || 'Error desconocido'}`);
         }
+        createdCostId = cost.id;
 
         const { data: supplierPayment, error: supplierPaymentError } = await supabase
           .from('supplier_payments')
@@ -869,6 +880,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             `No se pudo crear el registro de proveedor para la factura ${doc.folio}: ${supplierPaymentError?.message || 'Error desconocido'}`
           );
         }
+        createdSupplierPaymentId = supplierPayment.id;
 
         const { error: linkCostPaymentError } = await supabase
           .from('costs')
@@ -904,6 +916,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         }
 
         const insertedLines = insertedLinesData as InsertedInvoiceLine[];
+        insertedLines.forEach((l) => createdInvoiceLineIds.push(l.id));
         const lineByNumber = new Map(insertedLines.map((line) => [line.line_number, line]));
         let firstExitMovementId: string | null = null;
 
@@ -919,64 +932,50 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           const { data: movement, error: movementError } = await supabase
             .from('inventory_movements')
             .insert({
-              item_id: insertedLine.inventory_item_id,
+              item_id: validatedLine.matchedItem!.id,
               location_id: selectedLocationId,
               movement_type: 'entry',
               quantity: movementQuantity,
-              unit_cost: Number(validatedLine.item.unit_price) || 0,
+              unit_cost: movementSubtotal / movementQuantity,
               total_cost: movementSubtotal,
-              movement_date: doc.issue_date,
-              reason: 'Importación XML de inventario',
-              observations: `Factura ${doc.folio} - Línea ${validatedLine.lineNumber}`,
-              status: 'active',
               supplier_id: supplierId,
-              supplier_name: supplierName,
+              supplier_name: supplier?.name || doc.description || '',
               reference_document: doc.folio,
+              observations: `Ingreso XML Bodega - ${validatedLine.item.description || ''}`,
               supplier_invoice_id: invoice.id,
               supplier_invoice_item_id: insertedLine.id,
+              cost_id: cost.id,
+              status: 'active',
             })
             .select('id')
             .single();
 
           if (movementError || !movement) {
             throw new Error(
-              `No se pudo crear el movimiento para la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${movementError?.message || 'Error desconocido'}`
+              `No se pudo crear el movimiento de inventario para la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${movementError?.message || 'Error desconocido'}`
             );
           }
-
-          const { error: updateLineError } = await supabase
-            .from('supplier_invoice_items')
-            .update({ movement_id: movement.id })
-            .eq('id', insertedLine.id);
-
-          if (updateLineError) {
-            throw new Error(`No se pudo enlazar la línea ${validatedLine.lineNumber} con su movimiento: ${updateLineError.message}`);
-          }
+          createdMovementIds.push(movement.id);
 
           if (selectedCraneId) {
-            const movementTotalWithTax = computeLineTotal(validatedLine.item);
-            const displayUnitPrice = movementQuantity > 0 ? movementTotalWithTax / movementQuantity : movementTotalWithTax;
+            const displayUnitPrice = computeLineTotal(validatedLine.item) / movementQuantity;
+
             const { data: exitMovement, error: exitMovementError } = await supabase
               .from('inventory_movements')
               .insert({
-                item_id: insertedLine.inventory_item_id,
+                item_id: validatedLine.matchedItem!.id,
                 location_id: selectedLocationId,
                 movement_type: 'exit',
                 quantity: movementQuantity,
-                unit_cost: Number(validatedLine.item.unit_price) || 0,
+                unit_cost: movementSubtotal / movementQuantity,
                 total_cost: movementSubtotal,
-                movement_date: doc.issue_date,
-                reason: 'Consumo inmediato desde importación XML',
-                observations: `Factura ${doc.folio} - Línea ${validatedLine.lineNumber} - Consumo inmediato`,
-                status: 'active',
                 crane_id: selectedCraneId,
-                operator_id: selectedOperatorId || null,
-                supplier_id: supplierId,
-                supplier_name: supplierName,
+                observations: `Consumo inmediato factura ${doc.folio} - ${validatedLine.item.description || ''}`,
                 reference_document: doc.folio,
-                cost_id: cost.id,
                 supplier_invoice_id: invoice.id,
                 supplier_invoice_item_id: insertedLine.id,
+                cost_id: cost.id,
+                status: 'active',
               })
               .select('id')
               .single();
@@ -986,8 +985,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 `No se pudo crear el consumo inmediato para la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${exitMovementError?.message || 'Error desconocido'}`
               );
             }
+            createdMovementIds.push(exitMovement.id);
 
-            const { error: cranePartError } = await supabase
+            const { data: cranePartData, error: cranePartError } = await supabase
               .from('crane_parts')
               .insert({
                 crane_id: selectedCraneId,
@@ -998,16 +998,18 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 supplier_id: supplierId,
                 quantity: movementQuantity,
                 unit_price: displayUnitPrice,
-                total_value: movementTotalWithTax,
                 date: doc.issue_date,
                 notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
-              });
+              })
+              .select('id')
+              .single();
 
             if (cranePartError) {
               throw new Error(
                 `No se pudo registrar la pieza para la grúa en la línea ${validatedLine.lineNumber} de la factura ${doc.folio}: ${cranePartError.message}`
               );
             }
+            if (cranePartData) createdCranePartIds.push(cranePartData.id);
 
             if (!firstExitMovementId) {
               firstExitMovementId = exitMovement.id;
@@ -1028,6 +1030,37 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
         importedCount += 1;
         setProgress(Math.round(((index + 1) / selectedValidatedDocuments.length) * 100));
+
+        } catch (docError) {
+          // Compensatory rollback: delete created records in reverse order
+          console.error(`Error importando factura ${doc.folio}, ejecutando rollback:`, docError);
+
+          try {
+            if (createdCranePartIds.length > 0) {
+              await supabase.from('crane_parts').delete().in('id', createdCranePartIds);
+            }
+            if (createdMovementIds.length > 0) {
+              await supabase.from('inventory_movements').delete().in('id', createdMovementIds);
+            }
+            if (createdInvoiceLineIds.length > 0) {
+              await supabase.from('supplier_invoice_items').delete().in('id', createdInvoiceLineIds);
+            }
+            if (createdSupplierPaymentId) {
+              await supabase.from('supplier_payments').delete().eq('id', createdSupplierPaymentId);
+            }
+            if (createdCostId) {
+              await supabase.from('costs').delete().eq('id', createdCostId);
+            }
+            if (createdInvoiceId) {
+              await supabase.from('supplier_invoices').delete().eq('id', createdInvoiceId);
+            }
+            console.log(`Rollback completado para factura ${doc.folio}`);
+          } catch (rollbackError) {
+            console.error(`Error durante rollback de factura ${doc.folio}:`, rollbackError);
+          }
+
+          throw docError;
+        }
       }
 
       invalidateAll();
