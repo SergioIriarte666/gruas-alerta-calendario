@@ -148,7 +148,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
               <DollarSign className="w-8 h-8 text-red-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Consumido</p>
-                <p className="text-2xl font-bold text-red-400">-${Math.round(totalConsumed).toLocaleString('es-CL')}</p>
+                <p className="text-2xl font-bold text-red-400">-${formatInt(totalConsumed)}</p>
               </div>
             </div>
           </CardContent>
