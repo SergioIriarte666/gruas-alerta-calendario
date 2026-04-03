@@ -272,8 +272,8 @@ export const MovementsHistoryTable = () => {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span className={cn(
-                          "font-medium",
-                          movement.movement_type === 'entry' ? "text-green-600" : "text-red-600"
+                          "font-bold",
+                          movement.movement_type === 'entry' ? "text-violet-600" : "text-red-600"
                         )}>
                           {movement.movement_type === 'entry' ? '+' : '-'}{movement.quantity}
                         </span>
