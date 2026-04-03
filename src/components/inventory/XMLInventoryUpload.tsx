@@ -429,10 +429,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         lines,
         errors,
         warnings,
-        isValid: errors.length === 0,
+        isValid: errors.length === 0 && activeLines.length > 0,
       };
     });
-  }, [findMatchedInventoryItem, lineDescriptionOverrides, parseResult, suppliers]);
+  }, [discardedLines, findMatchedInventoryItem, lineDescriptionOverrides, parseResult, suppliers]);
 
   const selectedValidatedDocuments = useMemo(
     () => validatedDocuments.filter((item) => selectedDocuments.has(item.doc.folio)),
