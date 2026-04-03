@@ -406,13 +406,14 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         warnings.push('El proveedor no existe aún y se creará durante la importación.');
       }
 
-      const lineErrors = lines.filter((line) => line.error).map((line) => `Línea ${line.lineNumber}: ${line.error}`);
-      const lineWarnings = lines.filter((line) => line.warning).map((line) => `Línea ${line.lineNumber}: ${line.warning}`);
+      const activeLines = lines.filter((line) => !discardedLines.has(line.key));
+      const lineErrors = activeLines.filter((line) => line.error).map((line) => `Línea ${line.lineNumber}: ${line.error}`);
+      const lineWarnings = activeLines.filter((line) => line.warning).map((line) => `Línea ${line.lineNumber}: ${line.warning}`);
 
       errors.push(...lineErrors);
       warnings.push(...lineWarnings);
 
-      const totalByLines = lines.reduce((sum, line) => sum + computeLineTotal(line.item), 0);
+      const totalByLines = activeLines.reduce((sum, line) => sum + computeLineTotal(line.item), 0);
       if (doc.total_amount > 0 && Math.abs(totalByLines - doc.total_amount) > 5) {
         warnings.push('La suma de las líneas no coincide exactamente con el total del documento.');
       }
