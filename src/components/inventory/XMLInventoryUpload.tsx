@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2, X, RotateCcw } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { XMLCompleteParseResult, XMLDocumentData, XMLDocumentItem, Supplier } from '@/types/suppliers';
 import { useCreateInventoryItem, useInventoryCategories, useInventoryItems, useInventoryLocations } from '@/hooks/useInventory';
@@ -201,6 +201,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [lineDescriptionOverrides, setLineDescriptionOverrides] = useState<Record<string, string>>({});
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
+  const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
   const [selectedCostSubcategory, setSelectedCostSubcategory] = useState<string>('');
@@ -405,13 +406,14 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         warnings.push('El proveedor no existe aún y se creará durante la importación.');
       }
 
-      const lineErrors = lines.filter((line) => line.error).map((line) => `Línea ${line.lineNumber}: ${line.error}`);
-      const lineWarnings = lines.filter((line) => line.warning).map((line) => `Línea ${line.lineNumber}: ${line.warning}`);
+      const activeLines = lines.filter((line) => !discardedLines.has(line.key));
+      const lineErrors = activeLines.filter((line) => line.error).map((line) => `Línea ${line.lineNumber}: ${line.error}`);
+      const lineWarnings = activeLines.filter((line) => line.warning).map((line) => `Línea ${line.lineNumber}: ${line.warning}`);
 
       errors.push(...lineErrors);
       warnings.push(...lineWarnings);
 
-      const totalByLines = lines.reduce((sum, line) => sum + computeLineTotal(line.item), 0);
+      const totalByLines = activeLines.reduce((sum, line) => sum + computeLineTotal(line.item), 0);
       if (doc.total_amount > 0 && Math.abs(totalByLines - doc.total_amount) > 5) {
         warnings.push('La suma de las líneas no coincide exactamente con el total del documento.');
       }
@@ -427,10 +429,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         lines,
         errors,
         warnings,
-        isValid: errors.length === 0,
+        isValid: errors.length === 0 && activeLines.length > 0,
       };
     });
-  }, [findMatchedInventoryItem, lineDescriptionOverrides, parseResult, suppliers]);
+  }, [discardedLines, findMatchedInventoryItem, lineDescriptionOverrides, parseResult, suppliers]);
 
   const selectedValidatedDocuments = useMemo(
     () => validatedDocuments.filter((item) => selectedDocuments.has(item.doc.folio)),
@@ -448,9 +450,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const summary = useMemo(() => {
     const totalDocs = validatedDocuments.length;
     const validDocs = validatedDocuments.filter((item) => item.isValid).length;
-    const totalLines = validatedDocuments.reduce((sum, item) => sum + item.lines.length, 0);
+    const totalLines = validatedDocuments.reduce((sum, item) => sum + item.lines.filter(l => !discardedLines.has(l.key)).length, 0);
     const invalidLines = validatedDocuments.reduce(
-      (sum, item) => sum + item.lines.filter((line) => line.error).length,
+      (sum, item) => sum + item.lines.filter((line) => !discardedLines.has(line.key) && line.error).length,
       0
     );
 
@@ -462,6 +464,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     setParseResult(null);
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
+    setDiscardedLines(new Set());
+    setEditedDescriptions(new Map());
     setSelectedLocationId('');
     setSelectedCostCategoryId('');
     setSelectedCostSubcategory('');
@@ -1038,7 +1042,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           throw new Error(`No se pudo enlazar el pago del proveedor al costo ${doc.folio}: ${linkCostPaymentError.message}`);
         }
 
-        const linesPayload = validatedDoc.lines.map((line) => ({
+        const activeLines = validatedDoc.lines.filter((line) => !discardedLines.has(line.key));
+        const linesPayload = activeLines.map((line) => ({
           supplier_invoice_id: invoice.id,
           inventory_item_id: line.matchedItem!.id,
           line_number: line.lineNumber,
@@ -1067,7 +1072,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         const lineByNumber = new Map(insertedLines.map((line) => [line.line_number, line]));
         let firstEntryMovementId: string | null = null;
 
-        for (const validatedLine of validatedDoc.lines) {
+        for (const validatedLine of activeLines) {
           const insertedLine = lineByNumber.get(validatedLine.lineNumber);
           if (!insertedLine) {
             throw new Error(`No se pudo resolver la línea ${validatedLine.lineNumber} de la factura ${doc.folio}`);
@@ -1423,7 +1428,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                             {validatedDoc.isValid ? 'Lista para importar' : 'Con errores'}
                           </Badge>
                           <Badge variant="outline">
-                            {validatedDoc.lines.length} línea(s)
+                            {validatedDoc.lines.filter(l => !discardedLines.has(l.key)).length} línea(s)
                           </Badge>
                           <Badge variant="secondary">
                             {formatCurrency(validatedDoc.doc.total_amount)}
@@ -1457,12 +1462,15 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                               <th className="pb-2 pr-3">Unitario</th>
                               <th className="pb-2 pr-3">Total</th>
                               <th className="pb-2 pr-3">Producto</th>
-                              <th className="pb-2">Estado</th>
+                              <th className="pb-2 pr-3">Estado</th>
+                              <th className="pb-2 text-center">Acción</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {validatedDoc.lines.map((line) => (
-                              <tr key={line.key} className="border-b last:border-0 align-top">
+                            {validatedDoc.lines.map((line) => {
+                              const isDiscarded = discardedLines.has(line.key);
+                              return (
+                              <tr key={line.key} className={cn("border-b last:border-0 align-top transition-opacity", isDiscarded && "opacity-40")}>
                                 <td className="py-2 pr-3">{line.lineNumber}</td>
                                 <td className="py-2 pr-3 font-mono text-xs">{line.item.product_code || '-'}</td>
                                 <td className="py-2 pr-3 min-w-[280px]">
@@ -1530,8 +1538,36 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                     </Badge>
                                   )}
                                 </td>
+                                <td className="py-2 text-center">
+                                  {isDiscarded ? (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                      onClick={() => setDiscardedLines(prev => { const next = new Set(prev); next.delete(line.key); return next; })}
+                                      disabled={isImporting}
+                                      title="Restaurar línea"
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => setDiscardedLines(prev => new Set(prev).add(line.key))}
+                                      disabled={isImporting}
+                                      title="Descartar línea"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                                </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
