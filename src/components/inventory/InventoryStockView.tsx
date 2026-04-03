@@ -156,11 +156,11 @@ export const InventoryStockView = () => {
     const totalStock = getItemStock(item.id);
     
     if (totalStock === 0) {
-      return { label: 'Sin Stock', variant: 'destructive' as const, icon: AlertTriangle };
+      return { label: 'Sin Stock', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200', icon: AlertTriangle };
     } else if (totalStock <= item.minimum_stock) {
-      return { label: 'Stock Bajo', variant: 'secondary' as const, icon: AlertTriangle };
+      return { label: 'Stock Bajo', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200', icon: AlertTriangle };
     } else {
-      return { label: 'Normal', variant: 'default' as const, icon: Package };
+      return { label: 'Normal', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200', icon: Package };
     }
   };
 
