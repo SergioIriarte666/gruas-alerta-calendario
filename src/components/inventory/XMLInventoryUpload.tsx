@@ -1072,7 +1072,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         const lineByNumber = new Map(insertedLines.map((line) => [line.line_number, line]));
         let firstEntryMovementId: string | null = null;
 
-        for (const validatedLine of validatedDoc.lines) {
+        for (const validatedLine of activeLines) {
           const insertedLine = lineByNumber.get(validatedLine.lineNumber);
           if (!insertedLine) {
             throw new Error(`No se pudo resolver la línea ${validatedLine.lineNumber} de la factura ${doc.folio}`);
