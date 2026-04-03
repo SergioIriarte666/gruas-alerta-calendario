@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2, X, RotateCcw } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { XMLCompleteParseResult, XMLDocumentData, XMLDocumentItem, Supplier } from '@/types/suppliers';
 import { useCreateInventoryItem, useInventoryCategories, useInventoryItems, useInventoryLocations } from '@/hooks/useInventory';
