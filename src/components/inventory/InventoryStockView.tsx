@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, AlertTriangle, Package, Plus, Minus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useInventoryItems, useInventoryStock, useInventoryCategories, useInventoryLocations, useCreateInventoryMovement } from '@/hooks/useInventory';
 import { ProductDrawer } from './ProductDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
