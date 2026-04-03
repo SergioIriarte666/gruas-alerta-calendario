@@ -1401,9 +1401,19 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                               <FileText className="h-4 w-4" />
                               {validatedDoc.doc.folio}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {validatedDoc.doc.description}
-                            </p>
+                            <Textarea
+                              rows={2}
+                              className="mt-1 text-sm resize-y"
+                              value={editedDescriptions.get(validatedDoc.doc.folio) ?? validatedDoc.doc.description ?? ''}
+                              onChange={(e) => {
+                                setEditedDescriptions(prev => {
+                                  const next = new Map(prev);
+                                  next.set(validatedDoc.doc.folio, e.target.value);
+                                  return next;
+                                });
+                              }}
+                              disabled={isImporting}
+                            />
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
