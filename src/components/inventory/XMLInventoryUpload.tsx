@@ -1538,8 +1538,36 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                     </Badge>
                                   )}
                                 </td>
+                                <td className="py-2 text-center">
+                                  {isDiscarded ? (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                      onClick={() => setDiscardedLines(prev => { const next = new Set(prev); next.delete(line.key); return next; })}
+                                      disabled={isImporting}
+                                      title="Restaurar línea"
+                                    >
+                                      <RotateCcw className="h-3.5 w-3.5" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => setDiscardedLines(prev => new Set(prev).add(line.key))}
+                                      disabled={isImporting}
+                                      title="Descartar línea"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                                </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
