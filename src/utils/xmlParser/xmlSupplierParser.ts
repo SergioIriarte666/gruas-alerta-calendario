@@ -561,7 +561,7 @@ export class XMLSupplierParser {
       vat_amount: iva || (total * 0.19), // Si no hay IVA, calcularlo aproximado
       total_amount: total,
       currency: 'CLP',
-      description: descripcion || `Factura ${folio} - ${nombreProveedor}`,
+      description: descripcion ? `${nombreProveedor} ${descripcion}` : nombreProveedor,
       supplier_rut: rutProveedor ? this.formatRUT(rutProveedor) : '',
       status: 'emitido',
       items: items.length > 0 ? items : undefined

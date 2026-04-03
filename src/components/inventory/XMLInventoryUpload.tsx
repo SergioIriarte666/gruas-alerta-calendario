@@ -799,7 +799,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             net_amount: doc.net_amount || validatedDoc.lines.reduce((sum, line) => sum + computeLineSubtotal(line.item), 0),
             tax_amount: doc.vat_amount || validatedDoc.lines.reduce((sum, line) => sum + computeLineTaxAmount(line.item), 0),
             currency: doc.currency || 'CLP',
-            description: `Factura de bodega ${doc.folio} - ${supplierName}`,
+            description: `${supplierName} ${productServiceDescription || ''}`.trim(),
             product_service_description: productServiceDescription,
             status: isPaid ? 'paid' : 'pending',
             paid_amount: isPaid ? doc.total_amount : 0,
