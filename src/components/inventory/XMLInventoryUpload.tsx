@@ -987,22 +987,47 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             }
             createdMovementIds.push(exitMovement.id);
 
-            const { data: cranePartData, error: cranePartError } = await supabase
+            // Upsert: si ya existe un crane_part para este movement, actualizarlo
+            const { data: existingCranePart } = await supabase
               .from('crane_parts')
-              .insert({
-                crane_id: selectedCraneId,
-                cost_id: cost.id,
-                inventory_movement_id: exitMovement.id,
-                part_name: validatedLine.item.description,
-                supplier: supplierName,
-                supplier_id: supplierId,
-                quantity: movementQuantity,
-                unit_price: displayUnitPrice,
-                date: doc.issue_date,
-                notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
-              })
               .select('id')
-              .single();
+              .eq('inventory_movement_id', exitMovement.id)
+              .maybeSingle();
+
+            let cranePartData: { id: string } | null = null;
+            let cranePartError: any = null;
+
+            const cranePartPayload = {
+              crane_id: selectedCraneId,
+              cost_id: cost.id,
+              inventory_movement_id: exitMovement.id,
+              part_name: validatedLine.item.description,
+              supplier: supplierName,
+              supplier_id: supplierId,
+              quantity: movementQuantity,
+              unit_price: displayUnitPrice,
+              date: doc.issue_date,
+              notes: `Compra de bodega con consumo inmediato. Factura ${doc.folio}.`,
+            };
+
+            if (existingCranePart?.id) {
+              const result = await supabase
+                .from('crane_parts')
+                .update(cranePartPayload)
+                .eq('id', existingCranePart.id)
+                .select('id')
+                .single();
+              cranePartData = result.data;
+              cranePartError = result.error;
+            } else {
+              const result = await supabase
+                .from('crane_parts')
+                .insert(cranePartPayload)
+                .select('id')
+                .single();
+              cranePartData = result.data;
+              cranePartError = result.error;
+            }
 
             if (cranePartError) {
               throw new Error(
