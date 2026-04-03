@@ -594,7 +594,7 @@ const handler = async (req: Request): Promise<Response> => {
         {
           filename: `Reporte_Pendientes_${todayStr}.pdf`,
           content: pdfBase64,
-          content_type: "application/pdf",
+          type: "application/pdf",
         },
       ],
     });
