@@ -424,7 +424,7 @@ export const InventoryStockView = () => {
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-2">
                                 <StatusIcon className="w-4 h-4" />
-                                <Badge variant={status.variant} className="text-2xs">{status.label}</Badge>
+                                <Badge variant="outline" className={cn("text-2xs font-semibold", status.className)}>{status.label}</Badge>
                               </div>
                             </td>
                             <td className="py-2 px-3 text-right">
