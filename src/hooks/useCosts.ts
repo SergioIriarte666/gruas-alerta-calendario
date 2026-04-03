@@ -36,6 +36,10 @@ const fetchCosts = async (): Promise<Cost[]> => {
         id,
         full_name,
         email
+      ),
+      supplier_invoices!costs_supplier_invoice_id_fkey (
+        id,
+        supplier_invoice_items (id)
       )
     `)
     .order('payment_date', { ascending: false, nullsFirst: false })
