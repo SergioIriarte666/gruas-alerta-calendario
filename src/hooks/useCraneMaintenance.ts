@@ -16,6 +16,7 @@ export interface MaintenanceRecord {
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   nextMaintenanceDate?: string;
   notes?: string;
+  kilometraje?: number;
   createdAt: string;
 }
 
