@@ -82,7 +82,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         cost: editingRecord.cost,
         provider: editingRecord.provider || '',
         notes: editingRecord.notes || '',
-        kilometraje: (editingRecord as any).kilometraje || undefined,
+        kilometraje: editingRecord.kilometraje || undefined,
       });
 
       // Update date states
