@@ -219,6 +219,12 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                           <span>Próximo: {formatForDisplayLong(record.nextMaintenanceDate)}</span>
                         </div>
                       )}
+                      {record.kilometraje && (
+                        <div className="flex items-center gap-2">
+                          <Gauge className="w-4 h-4 text-blue-400" />
+                          <span>Km: {record.kilometraje.toLocaleString('es-CL')}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Cost with Integration Status */}
