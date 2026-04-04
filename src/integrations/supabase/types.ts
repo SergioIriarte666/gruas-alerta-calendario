@@ -5286,14 +5286,6 @@ export type Database = {
         Returns: Json
       }
       current_user_role: { Args: never; Returns: string }
-      merge_inventory_items: {
-        Args: {
-          p_duplicate_item_ids: string[]
-          p_master_item_id: string
-          p_master_name?: string
-        }
-        Returns: Json
-      }
       debug_service_states: {
         Args: never
         Returns: {
@@ -5696,6 +5688,14 @@ export type Database = {
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }
         Returns: boolean
+      }
+      merge_inventory_items: {
+        Args: {
+          p_duplicate_item_ids: string[]
+          p_master_item_id: string
+          p_master_name?: string
+        }
+        Returns: Json
       }
       merge_suppliers: {
         Args: { p_keep_id: string; p_remove_id: string }

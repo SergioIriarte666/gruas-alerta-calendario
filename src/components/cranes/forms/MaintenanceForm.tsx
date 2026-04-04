@@ -121,8 +121,8 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             scheduledDate: scheduledDate ? formatForDatabase(scheduledDate) : null,
             completedDate: completedDate ? formatForDatabase(completedDate) : null,
             nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
+            kilometraje: data.kilometraje || undefined,
           },
-          ...(data.kilometraje && { kilometraje: data.kilometraje })
         } as any);
       } else {
         const created = await createMutation.mutateAsync({

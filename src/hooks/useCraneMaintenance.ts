@@ -119,7 +119,7 @@ export const useUpdateMaintenance = () => {
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<MaintenanceRecord> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<MaintenanceRecord> & { kilometraje?: number } }) => {
       const { data, error } = await supabase
         .from('crane_maintenance')
         .update({
@@ -131,7 +131,8 @@ export const useUpdateMaintenance = () => {
           completed_date: updates.completedDate,
           status: updates.status,
           next_maintenance_date: updates.nextMaintenanceDate,
-          notes: updates.notes
+          notes: updates.notes,
+          kilometraje: updates.kilometraje ?? null,
         })
         .eq('id', id)
         .select(CRANE_MAINTENANCE_SELECT)
