@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink } from 'lucide-react';
+import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink, Gauge } from 'lucide-react';
 import { useCraneMaintenance, useDeleteMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
 import { useMaintenanceCostStatus } from '@/hooks/useMaintenanceCostStatus';
 import { MaintenanceForm } from './forms/MaintenanceForm';
@@ -217,6 +217,12 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-yellow-400" />
                           <span>Próximo: {formatForDisplayLong(record.nextMaintenanceDate)}</span>
+                        </div>
+                      )}
+                      {record.kilometraje && (
+                        <div className="flex items-center gap-2">
+                          <Gauge className="w-4 h-4 text-blue-400" />
+                          <span>Km: {record.kilometraje.toLocaleString('es-CL')}</span>
                         </div>
                       )}
                     </div>

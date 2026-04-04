@@ -16,6 +16,7 @@ export interface MaintenanceRecord {
   status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   nextMaintenanceDate?: string;
   notes?: string;
+  kilometraje?: number;
   createdAt: string;
 }
 
@@ -65,6 +66,7 @@ export const useCraneMaintenance = (craneId: string) => {
         status: record.status as MaintenanceRecord['status'],
         nextMaintenanceDate: record.next_maintenance_date,
         notes: record.notes,
+        kilometraje: record.kilometraje,
         createdAt: record.created_at
       }));
     },
