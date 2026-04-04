@@ -229,48 +229,34 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
 const fetchCommissions = async (): Promise<Commission[]> => {
   console.log('🔍 Fetching commissions (single source: costs table)...');
   
-  const [rpcRes, costsRes] = await Promise.allSettled([
-    supabase.rpc('get_commissions_with_details'),
-    fetchCommissionsFromCosts(),
-  ]);
-
-  let rpcData: any[] = [];
-  if (rpcRes.status === 'fulfilled') {
-    const { data, error } = rpcRes.value as any;
-    if (!error && Array.isArray(data)) {
-      rpcData = data;
+  // Try RPC first
+  try {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_commissions_with_details');
+    
+    if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+      const mapped = rpcData.map(mapRawCommissionToCommission);
+      console.log('✅ Commissions from RPC:', mapped.length);
+      return mapped;
+    }
+    
+    if (rpcError) {
+      console.warn('⚠️ RPC error:', rpcError.message, rpcError.code, rpcError.details);
     } else {
-      console.warn('⚠️ RPC returned error or invalid data, will rely on costs fallback');
+      console.warn('⚠️ RPC returned empty/invalid data, trying costs fallback');
     }
-  } else {
-    console.warn('⚠️ RPC request failed:', rpcRes.reason);
+  } catch (e) {
+    console.error('❌ RPC exception:', e);
   }
 
-  let costsData: Commission[] = [];
-  if (costsRes.status === 'fulfilled') {
-    costsData = costsRes.value as Commission[];
-  } else {
-    console.warn('⚠️ Costs fallback request failed:', costsRes.reason);
+  // Fallback to costs table
+  try {
+    const costsData = await fetchCommissionsFromCosts();
+    console.log('✅ Commissions from costs fallback:', costsData.length);
+    return costsData;
+  } catch (e) {
+    console.error('❌ Costs fallback failed:', e);
+    throw e;
   }
-
-  // Merge: RPC tiene prioridad, costs como complemento
-  const mappedRpc = rpcData.map(mapRawCommissionToCommission);
-  const mergedById = new Map<string, Commission>();
-  for (const c of mappedRpc) mergedById.set(c.id, c);
-  for (const c of costsData) {
-    if (!mergedById.has(c.id)) {
-      mergedById.set(c.id, c);
-    }
-  }
-
-  const merged = Array.from(mergedById.values());
-  console.log('✅ Commissions result:', {
-    rpc: mappedRpc.length,
-    costs: costsData.length,
-    merged: merged.length
-  });
-
-  return merged;
 };
 
 export const useCommissions = () => {
