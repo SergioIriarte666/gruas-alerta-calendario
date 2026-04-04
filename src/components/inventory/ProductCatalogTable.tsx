@@ -145,7 +145,10 @@ export const ProductCatalogTable = () => {
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Producto</DialogTitle>
             </DialogHeader>
-            <ProductFormModal onSuccess={() => setShowCreateForm(false)} />
+            <ProductFormModal
+              onSuccess={() => setShowCreateForm(false)}
+              onClose={() => setShowCreateForm(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -296,7 +299,8 @@ export const ProductCatalogTable = () => {
           {selectedProduct && (
             <ProductFormModal 
               product={selectedProduct}
-              onSuccess={() => setShowEditForm(false)} 
+              onSuccess={() => setShowEditForm(false)}
+              onClose={() => setShowEditForm(false)}
             />
           )}
         </DialogContent>

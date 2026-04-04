@@ -33,6 +33,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
+import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
+import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
+import { findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
 
 interface XMLInventoryUploadProps {
   isOpen: boolean;
@@ -82,6 +85,12 @@ interface ServiceSearchResult {
   operatorLabel: string;
   searchValue: string;
   score: number;
+}
+
+interface PendingProductSuggestion {
+  doc: XMLDocumentData;
+  line: ValidatedInvoiceLine;
+  similarityResult: SimilarityResult;
 }
 
 const normalizeText = (value: string | null | undefined) =>
@@ -200,6 +209,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [parseResult, setParseResult] = useState<XMLCompleteParseResult | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [lineDescriptionOverrides, setLineDescriptionOverrides] = useState<Record<string, string>>({});
+  const [manualMatchedItems, setManualMatchedItems] = useState<Record<string, InventoryCatalogItem>>({});
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
   const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
@@ -218,6 +228,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [pendingProductSuggestion, setPendingProductSuggestion] = useState<PendingProductSuggestion | null>(null);
+  const [suggestedProductDetails, setSuggestedProductDetails] = useState<SimilarItem | null>(null);
   const { subcategories: costSubcategories = [] } = useCostSubcategories(selectedCostCategoryId || undefined);
   const servicesForCosts = useMemo(() => getServicesForCosts(), [getServicesForCosts]);
   const selectedService = useMemo(
@@ -370,7 +382,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           ...line,
           description: typeof editedDescription === 'string' ? editedDescription : line.description,
         };
-        const matchedItem = findMatchedInventoryItem(effectiveLine);
+        const lineKey = getLineKey(doc.folio, lineNumber);
+        const matchedItem = manualMatchedItems[lineKey] || findMatchedInventoryItem(effectiveLine);
         const quantity = Number(line.quantity);
         const subtotal = computeLineSubtotal(effectiveLine);
         const total = computeLineTotal(effectiveLine);
@@ -393,7 +406,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         }
 
         return {
-          key: getLineKey(doc.folio, lineNumber),
+          key: lineKey,
           lineNumber,
           item: effectiveLine,
           matchedItem,
@@ -432,7 +445,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         isValid: errors.length === 0 && activeLines.length > 0,
       };
     });
-  }, [discardedLines, findMatchedInventoryItem, lineDescriptionOverrides, parseResult, suppliers]);
+  }, [discardedLines, findMatchedInventoryItem, lineDescriptionOverrides, manualMatchedItems, parseResult, suppliers]);
 
   const selectedValidatedDocuments = useMemo(
     () => validatedDocuments.filter((item) => selectedDocuments.has(item.doc.folio)),
@@ -464,6 +477,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     setParseResult(null);
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
+    setManualMatchedItems({});
     setDiscardedLines(new Set());
     setEditedDescriptions(new Map());
     setSelectedLocationId('');
@@ -481,6 +495,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     setIsAnalyzing(false);
     setIsImporting(false);
     setProgress(0);
+    setPendingProductSuggestion(null);
+    setSuggestedProductDetails(null);
   };
 
   useEffect(() => {
@@ -593,20 +609,13 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     }));
   };
 
-  const handleCreateMissingProduct = async (doc: XMLDocumentData, line: ValidatedInvoiceLine) => {
-    const lineKey = getLineKey(doc.folio, line.lineNumber);
+  const createMissingProductDirect = async (doc: XMLDocumentData, line: ValidatedInvoiceLine, lineKey: string) => {
     const name = line.item.description?.trim();
 
     if (!name) {
       toast.error('La glosa es obligatoria para crear el producto');
       return;
     }
-
-    setCreatingProductKeys((prev) => {
-      const next = new Set(prev);
-      next.add(lineKey);
-      return next;
-    });
 
     try {
       const normalizedCode = line.item.product_code?.trim() || null;
@@ -636,12 +645,81 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     } catch (error) {
       console.error('Error creating missing inventory product:', error);
     } finally {
+      setPendingProductSuggestion(null);
       setCreatingProductKeys((prev) => {
         const next = new Set(prev);
         next.delete(lineKey);
         return next;
       });
     }
+  };
+
+  const handleCreateMissingProduct = async (doc: XMLDocumentData, line: ValidatedInvoiceLine) => {
+    const lineKey = getLineKey(doc.folio, line.lineNumber);
+    const name = line.item.description?.trim();
+
+    if (!name) {
+      toast.error('La glosa es obligatoria para crear el producto');
+      return;
+    }
+
+    setCreatingProductKeys((prev) => {
+      const next = new Set(prev);
+      next.add(lineKey);
+      return next;
+    });
+
+    try {
+      const similarityResult = await findSimilarItems(name);
+
+      if (similarityResult.shouldAlert) {
+        setPendingProductSuggestion({ doc, line, similarityResult });
+        return;
+      }
+
+      await createMissingProductDirect(doc, line, lineKey);
+    } catch (error) {
+      console.error('Error validating similar products before creation:', error);
+      toast.error('No se pudo validar productos similares antes de crear el item');
+    } finally {
+      setCreatingProductKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(lineKey);
+        return next;
+      });
+    }
+  };
+
+  const handleUseSuggestedProduct = (item: SimilarItem) => {
+    const pending = pendingProductSuggestion;
+    if (!pending) return;
+
+    const inventoryItem = inventoryCatalog.find((catalogItem) => catalogItem.id === item.id);
+    if (!inventoryItem) {
+      toast.error('No se encontró el producto sugerido en el catálogo actual');
+      return;
+    }
+
+    setManualMatchedItems((prev) => ({
+      ...prev,
+      [pending.line.key]: inventoryItem,
+    }));
+
+    setPendingProductSuggestion(null);
+    toast.success(`Se usará "${inventoryItem.name}" para la línea ${pending.line.lineNumber}`);
+  };
+
+  const handleCreateSuggestedNew = async () => {
+    const pending = pendingProductSuggestion;
+    if (!pending) return;
+
+    setCreatingProductKeys((prev) => {
+      const next = new Set(prev);
+      next.add(pending.line.key);
+      return next;
+    });
+
+    await createMissingProductDirect(pending.doc, pending.line, pending.line.key);
   };
 
   const ensureSupplier = async (doc: XMLDocumentData, supplier: Supplier | undefined) => {
@@ -1257,8 +1335,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[min(98vw,1400px)] max-w-7xl h-[92vh] overflow-hidden border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
+    <>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="w-[min(98vw,1400px)] max-w-7xl h-[92vh] overflow-hidden border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
         <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
@@ -1983,7 +2062,52 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             </div>
           </Card>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!pendingProductSuggestion}
+        onOpenChange={(open) => {
+          if (!open) setPendingProductSuggestion(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Validación de producto antes de crear
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Se detectaron productos similares en el catálogo. Para no afectar el flujo actual de importación,
+              puedes reutilizar uno existente o confirmar conscientemente la creación de uno nuevo.
+            </p>
+
+            {pendingProductSuggestion && (
+              <>
+                <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                  <div><strong>Factura:</strong> {pendingProductSuggestion.doc.folio}</div>
+                  <div><strong>Línea:</strong> {pendingProductSuggestion.line.lineNumber}</div>
+                  <div><strong>Descripción XML:</strong> {pendingProductSuggestion.line.item.description}</div>
+                </div>
+
+                <SimilarProductAlert
+                  similarityResult={pendingProductSuggestion.similarityResult}
+                  onUseExisting={handleUseSuggestedProduct}
+                  onCreateNew={() => void handleCreateSuggestedNew()}
+                  onViewDetails={setSuggestedProductDetails}
+                />
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ProductDetailsModal
+        isOpen={!!suggestedProductDetails}
+        onClose={() => setSuggestedProductDetails(null)}
+        product={suggestedProductDetails}
+      />
+    </>
   );
 };

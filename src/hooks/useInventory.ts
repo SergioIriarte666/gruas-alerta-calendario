@@ -69,6 +69,8 @@ export interface InventoryMovement {
   created_at: string;
   created_by?: string;
   cost_id?: string;
+  supplier_invoice_id?: string | null;
+  supplier_invoice_item_id?: string | null;
   item?: Pick<InventoryItem, 'id' | 'name'> & Partial<InventoryItem>;
   location?: {
     id: string;
@@ -83,6 +85,18 @@ export interface InventoryMovement {
     id: string;
     license_plate: string;
   };
+}
+
+export interface MergeInventoryItemsResult {
+  success: boolean;
+  master_item_id: string;
+  duplicate_items_merged: number;
+  movements_reassigned: number;
+  alerts_reassigned: number;
+  cost_links_reassigned: number;
+  supplier_invoice_links_reassigned: number;
+  stock_rows_rebuilt: number;
+  master_name: string;
 }
 
 export interface InventoryCategory {
@@ -200,6 +214,8 @@ const INVENTORY_MOVEMENT_SELECT = `
   created_at,
   created_by,
   cost_id,
+  supplier_invoice_id,
+  supplier_invoice_item_id,
   item:inventory_items(id, name),
   location:inventory_locations(id, name, code),
   supplier:inventory_suppliers(id, name),
@@ -229,6 +245,8 @@ const INVENTORY_MOVEMENT_REFERENCE_SELECT = `
   created_at,
   created_by,
   cost_id,
+  supplier_invoice_id,
+  supplier_invoice_item_id,
   item:inventory_items(id, name, sku, code),
   location:inventory_locations(id, name, code)
 `;
@@ -685,6 +703,46 @@ export const useUpdateInventoryItem = () => {
     onError: createMutationErrorHandler({
       title: 'Error al Actualizar Producto',
       context: 'useInventory - updateItem'
+    }),
+  });
+};
+
+export const useMergeInventoryItems = () => {
+  const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
+
+  return useMutation({
+    mutationFn: async ({
+      masterItemId,
+      duplicateItemIds,
+      masterName,
+    }: {
+      masterItemId: string;
+      duplicateItemIds: string[];
+      masterName?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('merge_inventory_items', {
+        p_master_item_id: masterItemId,
+        p_duplicate_item_ids: duplicateItemIds,
+        p_master_name: masterName || null,
+      });
+
+      if (error) throw error;
+      return data as unknown as MergeInventoryItemsResult;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      toast.success('Productos fusionados correctamente', {
+        description: `${result.duplicate_items_merged} duplicado(s) consolidados en "${result.master_name}"`,
+      });
+    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Fusionar Productos',
+      context: 'useInventory - mergeItems',
     }),
   });
 };

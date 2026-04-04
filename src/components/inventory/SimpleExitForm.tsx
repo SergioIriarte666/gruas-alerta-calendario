@@ -26,6 +26,7 @@ const exitSchema = z.object({
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   movement_date: z.date(),
   destination_type: z.enum(['crane', 'sale', 'adjustment', 'other']),
+  source_entry_id: z.string().optional(),
   crane_id: z.string().optional(),
   reason: z.string().min(1, 'El motivo es requerido'),
   observations: z.string().optional(),
@@ -78,7 +79,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       
       const { data, error } = await supabase
         .from('inventory_movements')
-        .select('id, unit_cost, quantity, movement_date, supplier_invoice_id, supplier_invoice_item_id')
+        .select('id, unit_cost, quantity, movement_date, supplier_id, reference_document, batch_number, supplier_invoice_id, supplier_invoice_item_id')
         .eq('item_id', watchedValues.item_id)
         .eq('location_id', watchedValues.location_id)
         .eq('movement_type', 'entry')
@@ -92,12 +93,28 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
     enabled: !!watchedValues.item_id && !!watchedValues.location_id,
   });
 
-  // Calculate real cost using FIFO (most recent entry)
+  React.useEffect(() => {
+    if (!recentEntries.length) {
+      if (watchedValues.source_entry_id) {
+        setValue('source_entry_id', undefined);
+      }
+      return;
+    }
+
+    const selectedEntryStillExists = recentEntries.some((entry) => entry.id === watchedValues.source_entry_id);
+    if (!watchedValues.source_entry_id || !selectedEntryStillExists) {
+      setValue('source_entry_id', recentEntries[0].id);
+    }
+  }, [recentEntries, setValue, watchedValues.source_entry_id]);
+
+  const selectedSourceEntry = recentEntries.find((entry) => entry.id === watchedValues.source_entry_id) || recentEntries[0];
+
+  // Calculate cost from the selected source entry when available
   const calculateRealCost = () => {
-    if (!recentEntries || recentEntries.length === 0) {
+    if (!selectedSourceEntry) {
       return selectedItem?.unit_cost || 0;
     }
-    return recentEntries[0].unit_cost;
+    return selectedSourceEntry.unit_cost || 0;
   };
 
   const realUnitCost = calculateRealCost();
@@ -134,12 +151,21 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       movementData.unit_cost = realUnitCost;
       movementData.total_cost = realUnitCost * data.quantity;
       
-      // Propagate supplier invoice from the source entry movement
-      if (recentEntries[0]?.supplier_invoice_id) {
-        movementData.supplier_invoice_id = recentEntries[0].supplier_invoice_id;
+      // Preserve the traceable origin chosen by the user.
+      if (selectedSourceEntry?.supplier_id) {
+        movementData.supplier_id = selectedSourceEntry.supplier_id;
       }
-      if (recentEntries[0]?.supplier_invoice_item_id) {
-        movementData.supplier_invoice_item_id = recentEntries[0].supplier_invoice_item_id;
+      if (selectedSourceEntry?.reference_document) {
+        movementData.reference_document = selectedSourceEntry.reference_document;
+      }
+      if (selectedSourceEntry?.batch_number) {
+        movementData.batch_number = selectedSourceEntry.batch_number;
+      }
+      if (selectedSourceEntry?.supplier_invoice_id) {
+        movementData.supplier_invoice_id = selectedSourceEntry.supplier_invoice_id;
+      }
+      if (selectedSourceEntry?.supplier_invoice_item_id) {
+        movementData.supplier_invoice_item_id = selectedSourceEntry.supplier_invoice_item_id;
       }
 
       await createMovement.mutateAsync(movementData);
@@ -228,16 +254,60 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
               <div className="text-lg font-semibold text-primary">
                 ${realUnitCost.toLocaleString('es-CL')}
               </div>
-              {recentEntries[0] && (
+              {selectedSourceEntry && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  Basado en última compra: {format(new Date(recentEntries[0].movement_date), 'dd/MM/yyyy', { locale: es })}
+                  Basado en origen seleccionado: {format(new Date(selectedSourceEntry.movement_date), 'dd/MM/yyyy', { locale: es })}
                 </div>
               )}
-              {!recentEntries[0] && (
+              {!selectedSourceEntry && (
                 <div className="text-xs text-muted-foreground mt-1">
                   Basado en costo de catálogo (sin compras recientes)
                 </div>
               )}
+            </div>
+          )}
+
+          {watchedValues.item_id && watchedValues.location_id && recentEntries.length > 0 && (
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="source_entry_id">Origen para trazabilidad</Label>
+              <Select
+                value={watchedValues.source_entry_id}
+                onValueChange={(value) => setValue('source_entry_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar entrada de origen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {recentEntries.map((entry) => {
+                    const parts = [
+                      format(new Date(entry.movement_date), 'dd/MM/yyyy', { locale: es }),
+                      entry.reference_document ? `Doc ${entry.reference_document}` : null,
+                      entry.batch_number ? `Lote ${entry.batch_number}` : null,
+                      `Costo $${Number(entry.unit_cost || 0).toLocaleString('es-CL')}`
+                    ].filter(Boolean);
+
+                    return (
+                      <SelectItem key={entry.id} value={entry.id}>
+                        {parts.join(' | ')}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Esta entrada se usa para copiar documento, lote y vínculo de factura a la salida.
+              </p>
+            </div>
+          )}
+
+          {watchedValues.item_id && watchedValues.location_id && recentEntries.length === 0 && (
+            <div className="md:col-span-2">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No hay entradas activas recientes para copiar trazabilidad; la salida se registrará sin origen documental.
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { useInventoryCategories, useCreateInventoryItem, useUpdateInventoryItem, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
 import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } from '@/utils/validationUtils';
+import { useSimilarItemsSearch, type SimilarItem } from '@/utils/inventoryHelper';
+import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
+import { ProductDetailsModal } from './ProductDetailsModal';
 
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -46,6 +49,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   const { data: categories = [] } = useInventoryCategories();
   const createProduct = useCreateInventoryItem();
   const updateProduct = useUpdateInventoryItem();
+  const [confirmCreateNew, setConfirmCreateNew] = React.useState(false);
+  const [selectedProductForDetails, setSelectedProductForDetails] = React.useState<SimilarItem | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = React.useState(false);
 
   const {
     register,
@@ -73,10 +79,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   });
 
   const watchedValues = watch();
+  const productName = watchedValues.name || '';
+  const { exactMatch, similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
+    productName,
+    !product && productName.trim().length > 2
+  );
+
+  React.useEffect(() => {
+    if (product) return;
+    setConfirmCreateNew(false);
+  }, [productName, product]);
 
   const onSubmit = async (data: ProductFormData) => {
-    
     try {
+      if (!product && shouldAlert && !confirmCreateNew) {
+        toast.warning('Revisa los productos sugeridos antes de crear uno nuevo');
+        return;
+      }
+
       const productData = {
         name: data.name,
         description: data.description || null,
@@ -122,6 +142,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
     }
   };
 
+  const handleUseExisting = (item: SimilarItem) => {
+    toast.info(`Ya existe "${item.name}". Usa el producto existente para evitar duplicados.`);
+    onClose?.();
+  };
+
+  const handleCreateNew = () => {
+    setConfirmCreateNew(true);
+    handleSubmit(onSubmit)();
+  };
+
+  const handleViewDetails = (item: SimilarItem) => {
+    setSelectedProductForDetails(item);
+    setShowDetailsModal(true);
+  };
+
   const unitOptions = [
     'unidad',
     'litro',
@@ -148,6 +183,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
             />
             {errors.name && (
               <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+            )}
+            {!product && productName.trim().length > 2 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {isLoading ? 'Buscando productos similares...' : 'El sistema revisa similitudes para prevenir duplicados.'}
+              </p>
+            )}
+            {!product && shouldAlert && (
+              <div className="mt-3">
+                <SimilarProductAlert
+                  similarityResult={{
+                    exactMatch,
+                    similarItems,
+                    shouldAlert,
+                    alertMessage
+                  }}
+                  onUseExisting={handleUseExisting}
+                  onCreateNew={handleCreateNew}
+                  onViewDetails={handleViewDetails}
+                />
+              </div>
             )}
           </div>
 
@@ -325,6 +380,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
           {isSubmitting ? 'Guardando...' : product ? 'Actualizar' : 'Crear Producto'}
         </Button>
       </div>
+
+      <ProductDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        product={selectedProductForDetails}
+      />
     </form>
   );
 };

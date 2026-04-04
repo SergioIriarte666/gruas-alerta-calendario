@@ -12,9 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { SimpleEntryForm } from './SimpleEntryForm';
 import { SimpleExitForm } from './SimpleExitForm';
 import { ProductFormModal } from './ProductFormModal';
+import { DuplicateProductsPanel } from './DuplicateProductsPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 export const InventoryStockView = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +29,7 @@ export const InventoryStockView = () => {
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const [showZeroStock, setShowZeroStock] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
+  const [showDuplicateMerge, setShowDuplicateMerge] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [orphans, setOrphans] = useState<Array<{ id: string; name: string; stock: number }>>([]);
@@ -36,6 +39,7 @@ export const InventoryStockView = () => {
   const { data: categories = [] } = useInventoryCategories();
   const { data: allStock = [] } = useInventoryStock();
   const queryClient = useQueryClient();
+  const { isAdmin } = useUserPermissions();
   const { data: locations = [] } = useInventoryLocations();
   const createMovement = useCreateInventoryMovement();
 
@@ -391,6 +395,15 @@ export const InventoryStockView = () => {
             >
               Limpiar huérfanos
             </Button>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDuplicateMerge(true)}
+                className="whitespace-nowrap"
+              >
+                Fusionar duplicados
+              </Button>
+            )}
           </div>
 
           {/* Products List */}
@@ -592,6 +605,15 @@ export const InventoryStockView = () => {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDuplicateMerge} onOpenChange={setShowDuplicateMerge}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Administrar Productos Duplicados</DialogTitle>
+          </DialogHeader>
+          <DuplicateProductsPanel onMerged={() => setShowDuplicateMerge(false)} />
         </DialogContent>
       </Dialog>
     </>

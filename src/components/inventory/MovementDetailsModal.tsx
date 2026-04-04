@@ -220,7 +220,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
       </div>
 
       {/* Additional Information */}
-      {(movement.supplier || movement.crane || movement.reference_document || movement.reason || movement.observations) && (
+      {(movement.supplier || movement.crane || movement.reference_document || movement.supplier_invoice_id || movement.supplier_invoice_item_id || movement.reason || movement.observations) && (
         <Card>
           <CardHeader>
             <CardTitle>Información Adicional</CardTitle>
@@ -255,6 +255,23 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
                 <code className="text-sm bg-muted px-2 py-1 rounded ml-6">
                   {movement.reference_document}
                 </code>
+              </div>
+            )}
+
+            {(movement.supplier_invoice_id || movement.supplier_invoice_item_id) && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Trazabilidad de Factura:</span>
+                </div>
+                <div className="ml-6 space-y-1 text-sm">
+                  {movement.supplier_invoice_id && (
+                    <p>Factura de proveedor vinculada</p>
+                  )}
+                  {movement.supplier_invoice_item_id && (
+                    <p>Linea de factura vinculada al movimiento</p>
+                  )}
+                </div>
               </div>
             )}
 

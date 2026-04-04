@@ -5286,6 +5286,14 @@ export type Database = {
         Returns: Json
       }
       current_user_role: { Args: never; Returns: string }
+      merge_inventory_items: {
+        Args: {
+          p_duplicate_item_ids: string[]
+          p_master_item_id: string
+          p_master_name?: string
+        }
+        Returns: Json
+      }
       debug_service_states: {
         Args: never
         Returns: {
