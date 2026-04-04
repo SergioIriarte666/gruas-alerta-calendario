@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink } from 'lucide-react';
+import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink, Gauge } from 'lucide-react';
 import { useCraneMaintenance, useDeleteMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
 import { useMaintenanceCostStatus } from '@/hooks/useMaintenanceCostStatus';
 import { MaintenanceForm } from './forms/MaintenanceForm';
