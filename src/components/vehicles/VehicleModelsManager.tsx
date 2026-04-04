@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, LayoutList, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -172,75 +173,90 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
         placeholder="Buscar por marca o modelo..."
       />
       
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Modelos de Vehículos</h2>
-        <div className="flex items-center gap-3">
-          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grouped')}>
-            <ToggleGroupItem value="grouped" aria-label="Vista agrupada">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight">Modelos de Vehículos</h2>
+            <Badge className="border-0 bg-violet-100 text-violet-800 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-200">
+              {sortedModels.length}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Alterna entre una vista agrupada por marca o una tabla compacta para administración rápida.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => value && setViewMode(value as 'table' | 'grouped')}
+            className="rounded-xl border border-violet-100 bg-violet-50/60 p-1 dark:border-violet-900/40 dark:bg-violet-950/10"
+          >
+            <ToggleGroupItem value="grouped" aria-label="Vista agrupada" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
               <LayoutGrid className="h-4 w-4 mr-2" />
               Agrupada
             </ToggleGroupItem>
-            <ToggleGroupItem value="table" aria-label="Vista lista">
+            <ToggleGroupItem value="table" aria-label="Vista lista" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
               <LayoutList className="h-4 w-4 mr-2" />
               Lista
             </ToggleGroupItem>
           </ToggleGroup>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Modelo
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Modelo</DialogTitle>
-              <DialogDescription>
-                Agrega un nuevo modelo de vehículo al sistema.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="brand">Marca</Label>
-                <Select value={formData.brand_id} onValueChange={(value) => setFormData({ ...formData, brand_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una marca" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <DialogTrigger asChild>
+              <Button className="bg-violet-600 shadow-sm hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500">
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Modelo
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Crear Nuevo Modelo</DialogTitle>
+                <DialogDescription>
+                  Agrega un nuevo modelo de vehículo al sistema.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="brand">Marca</Label>
+                  <Select value={formData.brand_id} onValueChange={(value) => setFormData({ ...formData, brand_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una marca" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="name">Nombre del Modelo</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Ej: Corolla, F-150, Silverado..."
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleCreate}
+                    disabled={!formData.name.trim() || !formData.brand_id || isCreating}
+                  >
+                    {isCreating ? 'Creando...' : 'Crear'}
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="name">Nombre del Modelo</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ej: Corolla, F-150, Silverado..."
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleCreate}
-                  disabled={!formData.name.trim() || !formData.brand_id || isCreating}
-                >
-                  {isCreating ? 'Creando...' : 'Crear'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -253,10 +269,10 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
           isDeleting={isDeleting}
         />
       ) : (
-        <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
+        <div className="overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/70 to-background shadow-sm dark:border-violet-900/30 dark:from-violet-950/10 dark:to-background">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-violet-100/60 hover:bg-violet-100/60 dark:bg-violet-950/20 dark:hover:bg-violet-950/20">
               <TableHead 
                 className="cursor-pointer hover:bg-muted/50 transition-colors" 
                 onClick={() => handleSort('brand')}
@@ -287,9 +303,9 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {sortedModels.map((model) => (
-              <TableRow key={model.id}>
+            <TableBody>
+              {sortedModels.map((model) => (
+                <TableRow key={model.id} className="hover:bg-violet-50/60 dark:hover:bg-violet-950/10">
                 <TableCell>{model.vehicle_brands?.name}</TableCell>
                 <TableCell className="font-medium">{model.name}</TableCell>
                 <TableCell>
@@ -336,15 +352,15 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                 </TableCell>
               </TableRow>
             ))}
-            {sortedModels.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  {searchTerm.trim() ? 'No se encontraron resultados para tu búsqueda' : 'No hay modelos registrados'}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              {sortedModels.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                    {searchTerm.trim() ? 'No se encontraron resultados para tu búsqueda' : 'No hay modelos registrados'}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
 

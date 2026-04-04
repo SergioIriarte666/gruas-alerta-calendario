@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -145,11 +146,21 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         placeholder="Buscar por nombre de marca..."
       />
       
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Marcas de Vehículos</h2>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight">Marcas de Vehículos</h2>
+            <Badge className="border-0 bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-200">
+              {sortedBrands.length}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Mantiene ordenado el catálogo base de marcas disponibles para el sistema.
+          </p>
+        </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-amber-600 shadow-sm hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500">
               <Plus className="w-4 h-4 mr-2" />
               Nueva Marca
             </Button>
@@ -190,10 +201,10 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         </Dialog>
       </div>
 
-      <div className="border rounded-lg">
+      <div className="overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/70 to-background shadow-sm dark:border-amber-900/30 dark:from-amber-950/10 dark:to-background">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-amber-100/60 hover:bg-amber-100/60 dark:bg-amber-950/20 dark:hover:bg-amber-950/20">
               <TableHead 
                 className="cursor-pointer hover:bg-muted/50 transition-colors" 
                 onClick={() => handleSort('name')}
@@ -217,7 +228,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
           </TableHeader>
           <TableBody>
             {sortedBrands.map((brand) => (
-              <TableRow key={brand.id}>
+              <TableRow key={brand.id} className="hover:bg-amber-50/60 dark:hover:bg-amber-950/10">
                 <TableCell className="font-medium">{brand.name}</TableCell>
                 <TableCell>
                   {new Date(brand.created_at).toLocaleDateString('es-CL')}
@@ -266,7 +277,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
             ))}
             {sortedBrands.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                <TableCell colSpan={3} className="py-10 text-center text-muted-foreground">
                   {searchTerm.trim() ? 'No se encontraron resultados para tu búsqueda' : 'No hay marcas registradas'}
                 </TableCell>
               </TableRow>

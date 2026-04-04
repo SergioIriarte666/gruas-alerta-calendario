@@ -26,10 +26,12 @@ export const PatentLookup: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 via-background to-cyan-50/70 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/15 dark:via-background dark:to-cyan-950/15">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Car className="h-5 w-5" />
+            <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 text-white shadow-sm">
+              <Car className="h-5 w-5" />
+            </div>
             Consulta de Patentes
           </CardTitle>
           <CardDescription>
@@ -38,16 +40,16 @@ export const PatentLookup: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 md:flex-row">
               <Input
                 placeholder="Ingresa patente (ej: LGKF-63 o LGKF63)"
                 value={licensePlate}
                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
                 disabled={loading}
-                className="flex-1"
+                className="h-11 flex-1 rounded-xl border-border/70 bg-background/90 shadow-sm"
                 maxLength={20}
               />
-              <Button type="submit" disabled={loading || !licensePlate.trim()}>
+              <Button type="submit" disabled={loading || !licensePlate.trim()} className="h-11 bg-emerald-600 shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -61,7 +63,7 @@ export const PatentLookup: React.FC = () => {
                 )}
               </Button>
               {(data || error) && (
-                <Button type="button" variant="outline" onClick={handleReset}>
+                <Button type="button" variant="outline" onClick={handleReset} className="h-11">
                   Limpiar
                 </Button>
               )}
@@ -71,7 +73,7 @@ export const PatentLookup: React.FC = () => {
       </Card>
 
       {data && (
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-cyan-50/70 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/15 dark:to-cyan-950/10">
           <CardHeader>
             <CardTitle className="text-lg">Información del Vehículo</CardTitle>
             <CardDescription>Datos obtenidos del registro chileno</CardDescription>
@@ -104,7 +106,7 @@ export const PatentLookup: React.FC = () => {
             </div>
             
             <div className="mt-4 pt-4 border-t">
-              <Badge variant="secondary" className="text-xs">
+              <Badge className="border-0 bg-emerald-100 text-xs text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-200">
                 Plan gratuito: 5 consultas/día
               </Badge>
             </div>
@@ -113,7 +115,7 @@ export const PatentLookup: React.FC = () => {
       )}
 
       {!data && !error && !loading && (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/40 to-cyan-50/30 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/10 dark:to-cyan-950/10">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Car className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
@@ -124,7 +126,7 @@ export const PatentLookup: React.FC = () => {
       )}
 
       {history.length > 0 && (
-        <Card>
+        <Card className="border-cyan-100 bg-gradient-to-br from-cyan-50/50 to-background shadow-sm dark:border-cyan-900/30 dark:from-cyan-950/10 dark:to-background">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
