@@ -1160,6 +1160,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           const movementSubtotal = computeLineSubtotal(validatedLine.item);
           const entryCostId = createdMovementIds.some((movementId) => movementId) ? null : cost.id;
 
+          const currentUserId = (await supabase.auth.getUser()).data.user?.id || null;
           const { data: movement, error: movementError } = await supabase
             .from('inventory_movements')
             .insert({
@@ -1177,6 +1178,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
               supplier_invoice_item_id: insertedLine.id,
               cost_id: entryCostId,
               status: 'active',
+              created_by: currentUserId,
             })
             .select('id')
             .single();
