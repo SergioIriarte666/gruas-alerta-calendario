@@ -171,6 +171,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           `
           )
           .eq('crane_id', crane.id)
+          .eq('status', 'active')
           .gte('movement_date', startIso)
           .lte('movement_date', endIso)
           .order('movement_date', { ascending: true }),
