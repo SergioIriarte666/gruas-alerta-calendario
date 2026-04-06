@@ -20,9 +20,7 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
   
   console.log('Filtering services by date range:', { dateFrom, dateTo });
   
-  let query = supabase
-    .from('services')
-    .select(`
+  const selectFields = `
       id,
       folio,
       service_date,
@@ -67,9 +65,22 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
         id,
         name
       )
-    `)
+    `;
+
+  // Query 1: services whose service_date falls in range
+  let query1 = supabase
+    .from('services')
+    .select(selectFields)
     .gte('service_date', dateFrom)
     .lte('service_date', dateTo);
+
+  // Query 2: services whose custody period overlaps with the date range
+  // (service_date is before dateFrom but custody extends into the range)
+  let query2 = supabase
+    .from('services')
+    .select(selectFields)
+    .lt('service_date', dateFrom)
+    .gte('custody_end_date', dateFrom);
 
   if (clientId) {
     query = query.eq('client_id', clientId);
