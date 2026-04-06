@@ -567,6 +567,7 @@ export class UnifiedPurchaseService {
     }
     
     // Create exit movement
+    const currentUserId = await this.getCurrentUserId();
     const { data: exitMovement, error: exitError } = await supabase
       .from('inventory_movements')
       .insert({
@@ -587,6 +588,7 @@ export class UnifiedPurchaseService {
         reference_document: params.referenceDocument || null,
         supplier_invoice_id: params.supplierInvoiceId || null,
         supplier_invoice_item_id: params.supplierInvoiceItemId || null,
+        created_by: currentUserId,
       })
       .select('id')
       .single();
