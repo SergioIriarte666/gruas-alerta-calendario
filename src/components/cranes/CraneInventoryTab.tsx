@@ -171,6 +171,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           `
           )
           .eq('crane_id', crane.id)
+          .eq('status', 'active')
           .gte('movement_date', startIso)
           .lte('movement_date', endIso)
           .order('movement_date', { ascending: true }),
@@ -380,15 +381,22 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
                 ? `Operador ${m.operator.name}`
                 : '-';
 
-        const notes = [m.reason, m.observations].filter(Boolean).join(' · ') || '-';
-        const statusLabel = m.status || '-';
+        // Build observations: replace cost IDs with formatted amounts
+        let rawNotes = [m.reason, m.observations].filter(Boolean).join(' · ') || '-';
+        // Replace "costo ID: <uuid>" with formatted cost amount
+        rawNotes = rawNotes.replace(/costo ID:\s*[a-f0-9-]{36}/gi, () => {
+          const totalCost = typeof m.total_cost === 'number' ? m.total_cost : (typeof m.unit_cost === 'number' && typeof m.quantity === 'number' ? m.unit_cost * m.quantity : null);
+          return totalCost !== null ? `Costo: $${totalCost.toLocaleString('es-CL')}` : 'Costo vinculado';
+        });
+        // Clean up "[Costo eliminado]" references
+        rawNotes = rawNotes.replace(/\[Costo eliminado\]/gi, '').trim() || '-';
 
-        return [dateLabel, typeLabel, userLabel, productLabel, qtyLabel, origin, destination, notes, statusLabel];
+        return [dateLabel, typeLabel, userLabel, productLabel, qtyLabel, origin, destination, rawNotes];
       });
 
       autoTable(doc, {
-        head: [['Fecha', 'Tipo', 'Usuario', 'Producto', 'Cantidad', 'Origen', 'Destino', 'Observaciones', 'Estado']],
-        body: inventoryRows.length > 0 ? inventoryRows : [['-', '-', '-', '-', '-', '-', '-', '-', '-']],
+        head: [['Fecha', 'Tipo', 'Usuario', 'Producto', 'Cantidad', 'Origen', 'Destino', 'Observaciones']],
+        body: inventoryRows.length > 0 ? inventoryRows : [['-', '-', '-', '-', '-', '-', '-', '-']],
         startY: cursorY,
         theme: 'striped',
         styles: { fontSize: 7.8, cellPadding: 2 },
@@ -396,15 +404,14 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         alternateRowStyles: { fillColor: [248, 250, 252] },
         didDrawPage: () => drawHeader(),
         columnStyles: {
-          0: { cellWidth: 24 },
-          1: { cellWidth: 18 },
-          2: { cellWidth: 28 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 24 },
-          6: { cellWidth: 24 },
-          7: { cellWidth: 60 },
-          8: { cellWidth: 16 },
+          0: { cellWidth: 26 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 34 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 26 },
+          6: { cellWidth: 26 },
+          7: { cellWidth: 70 },
         },
         margin: { left: 14, right: 14, top: 26, bottom: 14 },
       });
