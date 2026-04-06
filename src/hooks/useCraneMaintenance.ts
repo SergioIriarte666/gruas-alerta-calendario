@@ -18,6 +18,8 @@ export interface MaintenanceRecord {
   notes?: string;
   kilometraje?: number;
   createdAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 const CRANE_MAINTENANCE_SELECT = `
@@ -36,7 +38,8 @@ const CRANE_MAINTENANCE_SELECT = `
   receipt_photo_paths,
   created_at,
   created_by,
-  updated_at
+  updated_at,
+  creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)
 `;
 
 export const useCraneMaintenance = (craneId: string) => {
@@ -54,7 +57,7 @@ export const useCraneMaintenance = (craneId: string) => {
         throw error;
       }
 
-      return (data || []).map(record => ({
+      return (data || []).map((record: any) => ({
         id: record.id,
         craneId: record.crane_id,
         maintenanceType: record.maintenance_type as MaintenanceRecord['maintenanceType'],
@@ -67,7 +70,9 @@ export const useCraneMaintenance = (craneId: string) => {
         nextMaintenanceDate: record.next_maintenance_date,
         notes: record.notes,
         kilometraje: record.kilometraje,
-        createdAt: record.created_at
+        createdAt: record.created_at,
+        createdBy: record.created_by,
+        creatorName: record.creator?.full_name || record.creator?.email || null,
       }));
     },
     enabled: !!craneId

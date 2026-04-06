@@ -193,8 +193,14 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       <h4 className="text-lg font-semibold text-white">{record.description}</h4>
                       {record.provider && (
                         <div className="flex items-center gap-2 mt-1">
+                          <Wrench className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">Proveedor: {record.provider}</span>
+                        </div>
+                      )}
+                      {record.creatorName && (
+                        <div className="flex items-center gap-2 mt-1">
                           <User className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-300">{record.provider}</span>
+                          <span className="text-gray-300">Registrado por: {record.creatorName}</span>
                         </div>
                       )}
                     </div>

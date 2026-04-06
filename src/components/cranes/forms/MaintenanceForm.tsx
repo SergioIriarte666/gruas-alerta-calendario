@@ -376,9 +376,24 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             </div>
           </div>
 
+          {/* Registered by (read-only) */}
+          {editingRecord?.creatorName && (
+            <div className="space-y-2">
+              <Label className="text-foreground flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Registrado por
+              </Label>
+              <Input
+                value={editingRecord.creatorName}
+                disabled
+                className="bg-muted border-border text-muted-foreground"
+              />
+            </div>
+          )}
+
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-white flex items-center gap-2">
+            <Label htmlFor="notes" className="text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Notas (Opcional)
             </Label>
