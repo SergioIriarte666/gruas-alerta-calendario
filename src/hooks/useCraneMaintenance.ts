@@ -57,7 +57,7 @@ export const useCraneMaintenance = (craneId: string) => {
         throw error;
       }
 
-      return (data || []).map(record => ({
+      return (data || []).map((record: any) => ({
         id: record.id,
         craneId: record.crane_id,
         maintenanceType: record.maintenance_type as MaintenanceRecord['maintenanceType'],
@@ -70,7 +70,9 @@ export const useCraneMaintenance = (craneId: string) => {
         nextMaintenanceDate: record.next_maintenance_date,
         notes: record.notes,
         kilometraje: record.kilometraje,
-        createdAt: record.created_at
+        createdAt: record.created_at,
+        createdBy: record.created_by,
+        creatorName: record.creator?.full_name || record.creator?.email || null,
       }));
     },
     enabled: !!craneId
