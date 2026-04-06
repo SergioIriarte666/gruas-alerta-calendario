@@ -57,6 +57,18 @@ export interface UnifiedPurchaseResult {
  *    - If no craneId → Return flag for multi-crane distribution dialog
  */
 export class UnifiedPurchaseService {
+
+  /**
+   * Get current authenticated user ID
+   */
+  private static async getCurrentUserId(): Promise<string | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.id || null;
+    } catch {
+      return null;
+    }
+  }
   
   /**
    * Main method to register a purchase
@@ -352,6 +364,8 @@ export class UnifiedPurchaseService {
       return similar.id;
     }
     
+    const currentUserId = await this.getCurrentUserId();
+
     const { data: movement, error } = await supabase
       .from('inventory_movements')
       .insert({
@@ -371,6 +385,7 @@ export class UnifiedPurchaseService {
         reference_document: params.referenceDocument || null,
         batch_number: params.batchNumber || null,
         expiration_date: params.expirationDate || null,
+        created_by: currentUserId,
       })
       .select('id')
       .single();
@@ -552,6 +567,7 @@ export class UnifiedPurchaseService {
     }
     
     // Create exit movement
+    const currentUserId = await this.getCurrentUserId();
     const { data: exitMovement, error: exitError } = await supabase
       .from('inventory_movements')
       .insert({
@@ -572,6 +588,7 @@ export class UnifiedPurchaseService {
         reference_document: params.referenceDocument || null,
         supplier_invoice_id: params.supplierInvoiceId || null,
         supplier_invoice_item_id: params.supplierInvoiceItemId || null,
+        created_by: currentUserId,
       })
       .select('id')
       .single();
@@ -749,6 +766,7 @@ export class UnifiedPurchaseService {
     }
     
     // Create exit movement
+    const currentUserId = await this.getCurrentUserId();
     const { data: exitMovement, error: exitError } = await supabase
       .from('inventory_movements')
       .insert({
@@ -764,6 +782,7 @@ export class UnifiedPurchaseService {
         status: 'active',
         crane_id: params.craneId,
         cost_id: params.costId || null,
+        created_by: currentUserId,
       })
       .select('id')
       .single();
