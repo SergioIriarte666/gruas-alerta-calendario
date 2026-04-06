@@ -204,7 +204,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-foreground">Tipo de Mantenimiento</Label>
-              <Select onValueChange={(value) => setValue('maintenance_type', value as FormData['maintenance_type'])} defaultValue={watch('maintenance_type')}>
+              <Select onValueChange={(value) => setValue('maintenance_type', value as FormData['maintenance_type'])} value={watch('maintenance_type')}>
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
@@ -218,7 +218,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label className="text-foreground">Estado</Label>
-              <Select onValueChange={(value) => setValue('status', value as FormData['status'])} defaultValue={watch('status')}>
+              <Select onValueChange={(value) => setValue('status', value as FormData['status'])} value={watch('status')}>
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
