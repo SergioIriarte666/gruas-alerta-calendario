@@ -218,7 +218,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label className="text-foreground">Estado</Label>
-              <Select onValueChange={(value) => setValue('status', value as FormData['status'])} defaultValue={watch('status')}>
+              <Select onValueChange={(value) => setValue('status', value as FormData['status'])} value={watch('status')}>
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
