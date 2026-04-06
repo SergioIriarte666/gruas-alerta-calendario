@@ -1,28 +1,30 @@
 
 
-# Plan: Agregar boton para descartar items individuales en importacion XML
+# Plan: Refinar reporte de movimientos de grúa
 
-## Problema
-Items con valor $0 o sin coincidencia bloquean la importacion completa del documento. No hay forma de descartarlos individualmente.
+## Problemas identificados
 
-## Solucion
+1. **Movimientos cancelados aparecen en el reporte** — La query no filtra por `status = 'active'`, mostrando registros cancelled que confunden.
+2. **Observaciones muestran IDs de costo** — El texto dice "costo ID: 874040de-..." en vez de mostrar el monto del costo.
 
-### Archivo: `src/components/inventory/XMLInventoryUpload.tsx`
+## Cambios
 
-1. **Nuevo estado** `discardedLines`: Un `Set<string>` que almacena las keys de lineas descartadas (usando el `line.key` existente).
+### Archivo: `src/components/cranes/CraneInventoryTab.tsx`
 
-2. **Boton "Descartar" por fila**: Agregar una columna "Acciones" a la tabla con un boton `X` (icono Trash2 o X) que agrega la key al set de descartados. Si ya esta descartada, mostrar boton "Restaurar".
+1. **Filtrar movimientos cancelados en la query** (línea ~173): Agregar `.eq('status', 'active')` a la query de `inventory_movements` para que solo traiga movimientos activos.
 
-3. **Visual de linea descartada**: Aplicar `opacity-40 line-through` al `<tr>` cuando la linea esta descartada, para que sea obvio visualmente.
+2. **Eliminar columna "Estado"**: Ya no tiene sentido mostrarla si todos serán `active`. Se remueve del `head` y del array de cada fila.
 
-4. **Filtrar lineas descartadas en la validacion**: En el `useMemo` de `validatedDocuments` (linea ~408-430), excluir las lineas descartadas del calculo de `errors` y de `lines` efectivas. Asi el documento puede pasar a `isValid: true` sin las lineas problematicas.
+3. **Reemplazar IDs de costo por montos en Observaciones** (línea ~383): En la construcción de `notes`, detectar el patrón `costo ID: <uuid>` y reemplazarlo con el monto real del costo. Para esto:
+   - Incluir `amount` en la query de `costs` referenciada, o bien usar el `total_cost` / `unit_cost` ya disponible en el movimiento.
+   - Dado que el movimiento ya tiene `unit_cost` y `quantity` (y `total_cost`), se puede reemplazar la referencia al ID por el valor formateado: `"Costo: $XX.XXX"`.
+   - Limpiar también textos como `[Costo eliminado]` que ya no aplican (esos movimientos cancelled ya no aparecerán).
 
-5. **Filtrar en la importacion**: En la funcion de importacion (~linea 1041-1070), filtrar `validatedDoc.lines` para excluir las descartadas antes de crear los payloads.
+4. **Ajuste en deduplicación**: La lógica `inventoryMovementsDeduped` ya no necesita manejar cancelled porque no llegarán de la query.
 
-6. **Recalcular totales**: Los badges de cantidad de lineas y monto total deben reflejar solo las lineas activas (no descartadas).
-
-## Lo que NO se toca
-- Logica de matching, creacion de productos, movimientos de bodega
+### Lo que NO se toca
+- Lógica de mantenciones
 - Hooks, servicios, base de datos
-- Otros modulos
+- Otros módulos
+- Funcionalidad existente de importación XML, costos, bodega
 
