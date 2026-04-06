@@ -1,31 +1,29 @@
 
-
-# Plan: Mostrar usuario en movimientos de bodega del reporte de grúas
+# Plan: Agregar campo "Realizado por" en mantenimiento (modal + tarjetas + informe)
 
 ## Problema
-El campo "Usuario" aparece como "-" porque los movimientos de inventario creados automáticamente (importación XML, consumo inmediato desde costos) no asignan `created_by` al insertar. Solo 4 de 66 salidas tienen usuario registrado.
+El modal de mantenimiento y las tarjetas no muestran quién realizó/registró la mantención. El informe PDF ya tiene la columna "Usuario" pero depende de que el dato llegue correctamente.
 
-## Solución
+## Cambios
 
-### 1. `src/services/UnifiedPurchaseService.ts`
-- En las funciones que crean movimientos de entrada y salida, obtener el usuario actual con `supabase.auth.getUser()` y agregar `created_by: user?.id` al payload de insert.
-- Aplica tanto para `createExitMovementAndCranePart` como para los inserts de movimientos de entrada.
+### 1. `src/hooks/useCraneMaintenance.ts`
+- Modificar `CRANE_MAINTENANCE_SELECT` para incluir join con profiles: agregar `creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)`.
+- Agregar `createdBy` y `creatorName` al interface `MaintenanceRecord`.
+- Mapear `record.created_by` y `record.creator?.full_name || record.creator?.email` en el return.
 
-### 2. `src/components/inventory/XMLInventoryUpload.tsx`
-- En la función de importación que crea movimientos (entrada y salida), agregar `created_by: user?.id` al payload. El usuario ya se obtiene al inicio del proceso de importación.
+### 2. `src/components/cranes/CraneMaintenance.tsx`
+- En cada tarjeta de mantenimiento, agregar una línea con icono `User` mostrando el nombre del creador (similar a como se muestra el proveedor).
 
-### 3. `src/hooks/useInventory.ts`
-- En la función `createMovement`, verificar que `created_by` se esté incluyendo en el insert (probablemente ya lo hace, pero confirmar).
-
-### 4. Datos históricos (SQL)
-- Ejecutar un UPDATE para asignar `created_by` a los movimientos históricos que tengan `created_by IS NULL`, usando el usuario del costo vinculado (`costs.created_by`) o un usuario por defecto.
+### 3. `src/components/cranes/forms/MaintenanceForm.tsx`
+- En modo edición, mostrar un campo de solo lectura "Realizado por" con el nombre del creador del registro (usando `editingRecord.creatorName`).
+- En modo creación, mostrar el nombre del usuario actual (ya se obtiene auth en el componente).
 
 ## Archivos a modificar
-- `src/services/UnifiedPurchaseService.ts`
-- `src/components/inventory/XMLInventoryUpload.tsx`
-- `src/hooks/useInventory.ts` (verificar)
+- `src/hooks/useCraneMaintenance.ts`
+- `src/components/cranes/CraneMaintenance.tsx`
+- `src/components/cranes/forms/MaintenanceForm.tsx`
 
 ## Lo que NO se toca
-- Lógica de sincronización existente
-- Reportes, UI de bodega, hooks de grúas
-
+- Lógica de creación/actualización/eliminación
+- Informe PDF (ya tiene la columna Usuario)
+- Otros módulos
