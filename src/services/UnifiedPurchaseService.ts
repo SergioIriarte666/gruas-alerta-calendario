@@ -57,6 +57,18 @@ export interface UnifiedPurchaseResult {
  *    - If no craneId → Return flag for multi-crane distribution dialog
  */
 export class UnifiedPurchaseService {
+
+  /**
+   * Get current authenticated user ID
+   */
+  private static async getCurrentUserId(): Promise<string | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user?.id || null;
+    } catch {
+      return null;
+    }
+  }
   
   /**
    * Main method to register a purchase
