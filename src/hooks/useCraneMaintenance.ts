@@ -18,6 +18,8 @@ export interface MaintenanceRecord {
   notes?: string;
   kilometraje?: number;
   createdAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 const CRANE_MAINTENANCE_SELECT = `
