@@ -38,7 +38,8 @@ const CRANE_MAINTENANCE_SELECT = `
   receipt_photo_paths,
   created_at,
   created_by,
-  updated_at
+  updated_at,
+  creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)
 `;
 
 export const useCraneMaintenance = (craneId: string) => {
