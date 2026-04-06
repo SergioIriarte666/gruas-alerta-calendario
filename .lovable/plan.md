@@ -1,30 +1,31 @@
 
 
-# Plan: Refinar reporte de movimientos de grúa
+# Plan: Mostrar usuario en movimientos de bodega del reporte de grúas
 
-## Problemas identificados
+## Problema
+El campo "Usuario" aparece como "-" porque los movimientos de inventario creados automáticamente (importación XML, consumo inmediato desde costos) no asignan `created_by` al insertar. Solo 4 de 66 salidas tienen usuario registrado.
 
-1. **Movimientos cancelados aparecen en el reporte** — La query no filtra por `status = 'active'`, mostrando registros cancelled que confunden.
-2. **Observaciones muestran IDs de costo** — El texto dice "costo ID: 874040de-..." en vez de mostrar el monto del costo.
+## Solución
 
-## Cambios
+### 1. `src/services/UnifiedPurchaseService.ts`
+- En las funciones que crean movimientos de entrada y salida, obtener el usuario actual con `supabase.auth.getUser()` y agregar `created_by: user?.id` al payload de insert.
+- Aplica tanto para `createExitMovementAndCranePart` como para los inserts de movimientos de entrada.
 
-### Archivo: `src/components/cranes/CraneInventoryTab.tsx`
+### 2. `src/components/inventory/XMLInventoryUpload.tsx`
+- En la función de importación que crea movimientos (entrada y salida), agregar `created_by: user?.id` al payload. El usuario ya se obtiene al inicio del proceso de importación.
 
-1. **Filtrar movimientos cancelados en la query** (línea ~173): Agregar `.eq('status', 'active')` a la query de `inventory_movements` para que solo traiga movimientos activos.
+### 3. `src/hooks/useInventory.ts`
+- En la función `createMovement`, verificar que `created_by` se esté incluyendo en el insert (probablemente ya lo hace, pero confirmar).
 
-2. **Eliminar columna "Estado"**: Ya no tiene sentido mostrarla si todos serán `active`. Se remueve del `head` y del array de cada fila.
+### 4. Datos históricos (SQL)
+- Ejecutar un UPDATE para asignar `created_by` a los movimientos históricos que tengan `created_by IS NULL`, usando el usuario del costo vinculado (`costs.created_by`) o un usuario por defecto.
 
-3. **Reemplazar IDs de costo por montos en Observaciones** (línea ~383): En la construcción de `notes`, detectar el patrón `costo ID: <uuid>` y reemplazarlo con el monto real del costo. Para esto:
-   - Incluir `amount` en la query de `costs` referenciada, o bien usar el `total_cost` / `unit_cost` ya disponible en el movimiento.
-   - Dado que el movimiento ya tiene `unit_cost` y `quantity` (y `total_cost`), se puede reemplazar la referencia al ID por el valor formateado: `"Costo: $XX.XXX"`.
-   - Limpiar también textos como `[Costo eliminado]` que ya no aplican (esos movimientos cancelled ya no aparecerán).
+## Archivos a modificar
+- `src/services/UnifiedPurchaseService.ts`
+- `src/components/inventory/XMLInventoryUpload.tsx`
+- `src/hooks/useInventory.ts` (verificar)
 
-4. **Ajuste en deduplicación**: La lógica `inventoryMovementsDeduped` ya no necesita manejar cancelled porque no llegarán de la query.
-
-### Lo que NO se toca
-- Lógica de mantenciones
-- Hooks, servicios, base de datos
-- Otros módulos
-- Funcionalidad existente de importación XML, costos, bodega
+## Lo que NO se toca
+- Lógica de sincronización existente
+- Reportes, UI de bodega, hooks de grúas
 
