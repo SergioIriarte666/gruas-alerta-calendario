@@ -364,6 +364,8 @@ export class UnifiedPurchaseService {
       return similar.id;
     }
     
+    const currentUserId = await this.getCurrentUserId();
+
     const { data: movement, error } = await supabase
       .from('inventory_movements')
       .insert({
@@ -383,6 +385,7 @@ export class UnifiedPurchaseService {
         reference_document: params.referenceDocument || null,
         batch_number: params.batchNumber || null,
         expiration_date: params.expirationDate || null,
+        created_by: currentUserId,
       })
       .select('id')
       .single();
