@@ -56,6 +56,7 @@ interface ValidatedInvoiceLine {
   lineNumber: number;
   item: XMLDocumentItem;
   matchedItem: InventoryCatalogItem | null;
+  candidates: InventoryCatalogItem[];
   error: string | null;
   warning: string | null;
 }
@@ -327,7 +328,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   );
 
   const findMatchedInventoryItem = useCallback(
-    (line: XMLDocumentItem) => {
+    (line: XMLDocumentItem): { match: InventoryCatalogItem | null; candidates: InventoryCatalogItem[] } => {
       const codeCandidates = [
         normalizeCode(line.product_code),
         normalizeCode(line.product_name),
@@ -341,12 +342,12 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             normalizeCode(item.barcode) === code ||
             normalizeCode(item.name) === code
         );
-        if (exactCodeMatch) return exactCodeMatch;
+        if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
       }
 
       const normalizedDescription = normalizeText(line.description);
       const exactNameMatch = inventoryCatalog.find((item) => normalizeText(item.name) === normalizedDescription);
-      if (exactNameMatch) return exactNameMatch;
+      if (exactNameMatch) return { match: exactNameMatch, candidates: [] };
 
       const partialMatches = inventoryCatalog.filter((item) => {
         const itemName = normalizeText(item.name);
@@ -356,8 +357,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         );
       });
 
-      if (partialMatches.length === 1) return partialMatches[0];
-      return null;
+      if (partialMatches.length === 1) return { match: partialMatches[0], candidates: [] };
+      return { match: null, candidates: partialMatches };
     },
     [inventoryCatalog]
   );
