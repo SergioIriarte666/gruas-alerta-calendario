@@ -95,6 +95,7 @@ const syncMaintenanceCost = async (params: {
         description: `Mantenimiento: ${params.description}`,
         date: costDate,
         subcategory: params.maintenanceType,
+        payment_date: paymentDate,
       })
       .eq('id', existingCost.id);
     if (updateErr) {
@@ -116,6 +117,7 @@ const syncMaintenanceCost = async (params: {
         date: costDate,
         subcategory: params.maintenanceType,
         created_by: user?.id || null,
+        payment_date: paymentDate,
       });
     if (insertErr) {
       console.error('Error creating maintenance cost:', insertErr);
