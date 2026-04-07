@@ -389,9 +389,13 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         const finderResult = findMatchedInventoryItem(effectiveLine);
         const matchedItem = manualMatch || finderResult.match;
         const candidates = manualMatch ? [] : (finderResult.match ? [] : finderResult.candidates);
+        const resolvedLine: XMLDocumentItem =
+          matchedItem && !effectiveLine.description?.trim()
+            ? { ...effectiveLine, description: matchedItem.name }
+            : effectiveLine;
         const quantity = Number(line.quantity);
-        const subtotal = computeLineSubtotal(effectiveLine);
-        const total = computeLineTotal(effectiveLine);
+        const subtotal = computeLineSubtotal(resolvedLine);
+        const total = computeLineTotal(resolvedLine);
 
         let error: string | null = null;
         let warning: string | null = null;
@@ -412,14 +416,14 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           error = 'La línea no tiene monto válido.';
         } else if (!effectiveLine.description?.trim()) {
           warning = 'Sin descripción, se usará el nombre del producto.';
-        } else if (!effectiveLine.product_code && normalizeText(matchedItem.name) !== normalizeText(effectiveLine.description)) {
+        } else if (!effectiveLine.product_code && normalizeText(matchedItem.name) !== normalizeText(resolvedLine.description)) {
           warning = 'Coincidencia realizada por descripción aproximada.';
         }
 
         return {
           key: lineKey,
           lineNumber,
-          item: effectiveLine,
+          item: resolvedLine,
           matchedItem,
           candidates,
           error,
