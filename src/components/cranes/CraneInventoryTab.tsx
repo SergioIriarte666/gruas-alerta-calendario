@@ -189,6 +189,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
             notes,
             cost,
             provider,
+            performed_by,
             created_by,
             crane:cranes(id, license_plate),
             creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)
