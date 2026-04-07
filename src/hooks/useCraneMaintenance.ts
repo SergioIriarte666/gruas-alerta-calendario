@@ -44,6 +44,74 @@ const CRANE_MAINTENANCE_SELECT = `
   creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)
 `;
 
+// Helper: find or fetch the "Mantenimiento" category id
+const getMaintenanceCategoryId = async (): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from('cost_categories')
+    .select('id')
+    .ilike('name', '%mantenimiento%')
+    .limit(1)
+    .single();
+  if (error || !data) {
+    console.error('Could not find Mantenimiento category:', error);
+    return null;
+  }
+  return data.id;
+};
+
+// Helper: create or update cost linked to a maintenance record
+const syncMaintenanceCost = async (params: {
+  maintenanceId: string;
+  craneId: string;
+  amount: number;
+  description: string;
+  maintenanceType: string;
+  completedDate?: string | null;
+  scheduledDate?: string | null;
+  provider?: string | null;
+}) => {
+  const categoryId = await getMaintenanceCategoryId();
+  if (!categoryId) {
+    console.warn('Skipping cost sync: no Mantenimiento category found');
+    return;
+  }
+
+  const costDate = params.completedDate || params.scheduledDate || new Date().toISOString().split('T')[0];
+
+  // Check if a cost already exists for this maintenance
+  const { data: existingCost } = await supabase
+    .from('costs')
+    .select('id')
+    .eq('maintenance_id', params.maintenanceId)
+    .maybeSingle();
+
+  if (existingCost) {
+    // Update existing cost
+    await supabase
+      .from('costs')
+      .update({
+        amount: params.amount,
+        description: `Mantenimiento: ${params.description}`,
+        date: costDate,
+        subcategory: params.maintenanceType,
+      })
+      .eq('id', existingCost.id);
+  } else {
+    // Create new cost
+    await supabase
+      .from('costs')
+      .insert({
+        maintenance_id: params.maintenanceId,
+        crane_id: params.craneId,
+        category_id: categoryId,
+        amount: params.amount,
+        description: `Mantenimiento: ${params.description}`,
+        date: costDate,
+        subcategory: params.maintenanceType,
+      });
+  }
+};
+
 export const useCraneMaintenance = (craneId: string) => {
   return useQuery({
     queryKey: ['crane-maintenance', craneId],
@@ -109,11 +177,32 @@ export const useCreateMaintenance = () => {
         .single();
 
       if (error) throw error;
+
+      // Auto-create cost if completed with cost > 0
+      if (maintenance.status === 'completed' && maintenance.cost > 0) {
+        try {
+          await syncMaintenanceCost({
+            maintenanceId: data.id,
+            craneId: maintenance.craneId,
+            amount: maintenance.cost,
+            description: maintenance.description,
+            maintenanceType: maintenance.maintenanceType,
+            completedDate: maintenance.completedDate,
+            scheduledDate: maintenance.scheduledDate,
+            provider: maintenance.provider,
+          });
+        } catch (e) {
+          console.error('Error syncing maintenance cost:', e);
+        }
+      }
+
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs', data.crane_id] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance-cost-status'] });
       invalidateAll();
       toast.success('Registro de mantenimiento creado exitosamente');
     },
@@ -151,14 +240,47 @@ export const useUpdateMaintenance = () => {
         .single();
 
       if (error) throw error;
+
+      // Sync cost based on status
+      const finalStatus = updates.status || data.status;
+      const finalCost = updates.cost ?? data.cost;
+
+      if (finalStatus === 'completed' && finalCost > 0) {
+        try {
+          await syncMaintenanceCost({
+            maintenanceId: id,
+            craneId: data.crane_id,
+            amount: finalCost,
+            description: updates.description || data.description,
+            maintenanceType: updates.maintenanceType || data.maintenance_type,
+            completedDate: updates.completedDate || data.completed_date,
+            scheduledDate: updates.scheduledDate || data.scheduled_date,
+            provider: updates.provider || data.provider,
+          });
+        } catch (e) {
+          console.error('Error syncing maintenance cost:', e);
+        }
+      } else if (finalStatus !== 'completed') {
+        // If no longer completed, remove associated cost
+        try {
+          await supabase
+            .from('costs')
+            .delete()
+            .eq('maintenance_id', id);
+        } catch (e) {
+          console.error('Error removing maintenance cost:', e);
+        }
+      }
+
       return data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs', data.crane_id] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance-cost-status'] });
       invalidateAll();
       
-      // If maintenance was completed, show specific message about cost generation
       if (variables.updates.status === 'completed' && variables.updates.cost && variables.updates.cost > 0) {
         toast.success('Mantenimiento completado - Costo generado automáticamente');
       } else {
@@ -172,7 +294,6 @@ export const useUpdateMaintenance = () => {
   });
 };
 
-// Hook to delete a maintenance record
 export const useDeleteMaintenance = () => {
   const queryClient = useQueryClient();
   const { invalidateAll } = useUniversalSync();
@@ -180,6 +301,12 @@ export const useDeleteMaintenance = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Delete associated cost first
+      await supabase
+        .from('costs')
+        .delete()
+        .eq('maintenance_id', id);
+
       const { error } = await supabase
         .from('crane_maintenance')
         .delete()
@@ -191,6 +318,8 @@ export const useDeleteMaintenance = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance-cost-status'] });
       invalidateAll();
       toast.success('Registro de mantenimiento eliminado exitosamente');
     },
