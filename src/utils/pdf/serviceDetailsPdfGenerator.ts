@@ -65,6 +65,12 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
     yPosition = addCustodySection(doc, service, yPosition);
   }
   
+  // 7.5. Sección Servicio Tercerizado (si aplica)
+  if (service.outsourcedProviderId) {
+    yPosition = checkPageBreak(doc, yPosition, 40);
+    yPosition = addOutsourcedSection(doc, service, yPosition);
+  }
+  
   // 8. Sección Recursos Asignados
   yPosition = checkPageBreak(doc, yPosition, 40);
   yPosition = addResourcesSection(doc, service, yPosition);
@@ -257,6 +263,37 @@ const addCustodySection = (doc: jsPDF, service: any, yPosition: number): number 
   autoTable(doc, {
     startY: yPosition,
     body: custodyData,
+    theme: 'grid',
+    columnStyles: {
+      0: { cellWidth: 50, fontStyle: 'bold', fillColor: LIGHT_GRAY },
+      1: { cellWidth: 120 }
+    },
+    styles: { 
+      fontSize: 9, 
+      cellPadding: 3,
+      textColor: [0, 0, 0]
+    },
+    margin: { left: 20, right: 20 }
+  });
+  
+  return (doc as any).lastAutoTable.finalY + 10;
+};
+
+const addOutsourcedSection = (doc: jsPDF, service: any, yPosition: number): number => {
+  yPosition = addSectionTitle(doc, 'SERVICIO TERCERIZADO', yPosition);
+  
+  const outsourcedData: Array<[string, string]> = [
+    ['Proveedor Tercero:', service.outsourcedProviderName || service.outsourcedProviderId || 'N/A'],
+    ['Costo del Tercero:', formatCurrency(service.outsourcedCost || 0)]
+  ];
+  
+  if (service.outsourcedNotes) {
+    outsourcedData.push(['Notas:', service.outsourcedNotes]);
+  }
+  
+  autoTable(doc, {
+    startY: yPosition,
+    body: outsourcedData,
     theme: 'grid',
     columnStyles: {
       0: { cellWidth: 50, fontStyle: 'bold', fillColor: LIGHT_GRAY },

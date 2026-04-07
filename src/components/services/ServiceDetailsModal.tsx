@@ -397,6 +397,29 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                     </>
                   )}
                   
+                  {/* Sección Servicio Tercerizado */}
+                  {serviceData.outsourcedProviderId && (
+                    <>
+                       <Separator className="border-border"/>
+                      <DetailSection title="Servicio Tercerizado" icon={Building}>
+                        <DetailItem 
+                          icon={Building} 
+                          label="Proveedor Tercero" 
+                          value={enhancedService?.outsourcedProviderName || serviceData.outsourcedProviderId} 
+                        />
+                        <DetailItem 
+                          icon={DollarSign} 
+                          label="Costo del Tercero" 
+                          value={formatCurrency(serviceData.outsourcedCost || 0)} 
+                          valueClass="text-lg text-destructive font-bold" 
+                        />
+                        {serviceData.outsourcedNotes && (
+                          <DetailItem icon={FileText} label="Notas" value={serviceData.outsourcedNotes} isFullWidth={true} />
+                        )}
+                      </DetailSection>
+                    </>
+                  )}
+                  
                    <Separator className="border-border"/>
                   <DetailSection title="Recursos Asignados" icon={Truck}>
                       <DetailItem 
