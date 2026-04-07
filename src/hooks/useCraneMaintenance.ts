@@ -69,6 +69,7 @@ const syncMaintenanceCost = async (params: {
   completedDate?: string | null;
   scheduledDate?: string | null;
   provider?: string | null;
+  markAsPaid?: boolean;
 }) => {
   const categoryId = await getMaintenanceCategoryId();
   if (!categoryId) {
@@ -77,6 +78,7 @@ const syncMaintenanceCost = async (params: {
   }
 
   const costDate = params.completedDate || params.scheduledDate || new Date().toISOString().split('T')[0];
+  const paymentDate = params.markAsPaid ? costDate : null;
 
   // Check if a cost already exists for this maintenance
   const { data: existingCost } = await supabase
@@ -93,6 +95,7 @@ const syncMaintenanceCost = async (params: {
         description: `Mantenimiento: ${params.description}`,
         date: costDate,
         subcategory: params.maintenanceType,
+        payment_date: paymentDate,
       })
       .eq('id', existingCost.id);
     if (updateErr) {
@@ -114,6 +117,7 @@ const syncMaintenanceCost = async (params: {
         date: costDate,
         subcategory: params.maintenanceType,
         created_by: user?.id || null,
+        payment_date: paymentDate,
       });
     if (insertErr) {
       console.error('Error creating maintenance cost:', insertErr);
@@ -166,7 +170,7 @@ export const useCreateMaintenance = () => {
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
-    mutationFn: async (maintenance: Omit<MaintenanceRecord, 'id' | 'createdAt'> & { kilometraje?: number }) => {
+    mutationFn: async (maintenance: Omit<MaintenanceRecord, 'id' | 'createdAt'> & { kilometraje?: number; markAsPaid?: boolean }) => {
       const { data, error } = await supabase
         .from('crane_maintenance')
         .insert({
@@ -200,6 +204,7 @@ export const useCreateMaintenance = () => {
             completedDate: maintenance.completedDate,
             scheduledDate: maintenance.scheduledDate,
             provider: maintenance.provider,
+            markAsPaid: maintenance.markAsPaid,
           });
         } catch (e: any) {
           console.error('Error syncing maintenance cost:', e);
@@ -230,7 +235,7 @@ export const useUpdateMaintenance = () => {
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<MaintenanceRecord> & { kilometraje?: number } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<MaintenanceRecord> & { kilometraje?: number; markAsPaid?: boolean } }) => {
       const { data, error } = await supabase
         .from('crane_maintenance')
         .update({
@@ -267,6 +272,7 @@ export const useUpdateMaintenance = () => {
             completedDate: updates.completedDate || data.completed_date,
             scheduledDate: updates.scheduledDate || data.scheduled_date,
             provider: updates.provider || data.provider,
+            markAsPaid: updates.markAsPaid,
           });
         } catch (e: any) {
           console.error('Error syncing maintenance cost:', e);

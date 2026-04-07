@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CalendarIcon, Wrench, DollarSign, FileText, User, Calendar as CalendarComponent, Gauge } from 'lucide-react';
@@ -55,6 +56,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
   const [nextMaintenanceDate, setNextMaintenanceDate] = useState<Date | undefined>(
     editingRecord?.nextMaintenanceDate ? parseFromDatabase(editingRecord.nextMaintenanceDate) : undefined
   );
+  const [markAsPaid, setMarkAsPaid] = useState(false);
   
   const createMutation = useCreateMaintenance();
   const updateMutation = useUpdateMaintenance();
@@ -127,6 +129,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
             kilometraje: data.kilometraje || undefined,
             performedBy: data.performed_by || undefined,
+            markAsPaid: markAsPaid,
           },
         } as any);
       } else {
@@ -143,6 +146,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
           kilometraje: data.kilometraje,
           performedBy: data.performed_by || undefined,
+          markAsPaid: markAsPaid,
         } as any);
         if (receiptPhotoPaths?.length && (created as any)?.id) {
           try {
@@ -260,6 +264,18 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
               />
               {errors.cost && (
                 <span className="text-red-400 text-sm">{errors.cost.message}</span>
+              )}
+              {watch('status') === 'completed' && watch('cost') > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id="mark-as-paid"
+                    checked={markAsPaid}
+                    onCheckedChange={(checked) => setMarkAsPaid(!!checked)}
+                  />
+                  <label htmlFor="mark-as-paid" className="text-sm text-muted-foreground cursor-pointer">
+                    Marcar como pagado
+                  </label>
+                </div>
               )}
             </div>
 
