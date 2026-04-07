@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface MaintenanceCostStatus {
   maintenanceId: string;
@@ -8,6 +9,7 @@ interface MaintenanceCostStatus {
   costAmount?: number;
   costDescription?: string;
   costDate?: string;
+  paymentDate?: string | null;
 }
 
 export const useMaintenanceCostStatus = (maintenanceIds: string[]) => {
@@ -16,10 +18,9 @@ export const useMaintenanceCostStatus = (maintenanceIds: string[]) => {
     queryFn: async (): Promise<MaintenanceCostStatus[]> => {
       if (maintenanceIds.length === 0) return [];
 
-      // Check which maintenances have associated costs
       const { data, error } = await supabase
         .from('costs')
-        .select('id, amount, description, date, maintenance_id')
+        .select('id, amount, description, date, maintenance_id, payment_date')
         .in('maintenance_id', maintenanceIds)
         .not('maintenance_id', 'is', null);
 
@@ -28,19 +29,44 @@ export const useMaintenanceCostStatus = (maintenanceIds: string[]) => {
         throw error;
       }
 
-      // Create a map of maintenance costs
       const costMap = new Map(data.map(cost => [cost.maintenance_id!, cost]));
 
-      // Return status for each maintenance
       return maintenanceIds.map(id => ({
         maintenanceId: id,
         hasCost: costMap.has(id),
         costId: costMap.get(id)?.id,
         costAmount: costMap.get(id)?.amount,
         costDescription: costMap.get(id)?.description,
-        costDate: costMap.get(id)?.date
+        costDate: costMap.get(id)?.date,
+        paymentDate: costMap.get(id)?.payment_date,
       }));
     },
     enabled: maintenanceIds.length > 0
+  });
+};
+
+export const useToggleMaintenanceCostPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ costId, isPaid }: { costId: string; isPaid: boolean }) => {
+      const { error } = await supabase
+        .from('costs')
+        .update({
+          payment_date: isPaid ? new Date().toISOString().split('T')[0] : null,
+        })
+        .eq('id', costId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-cost-status'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      toast.success('Estado de pago actualizado');
+    },
+    onError: (error: any) => {
+      console.error('Error toggling payment:', error);
+      toast.error('Error al actualizar estado de pago');
+    },
   });
 };
