@@ -17,6 +17,7 @@ export interface MaintenanceRecord {
   nextMaintenanceDate?: string;
   notes?: string;
   kilometraje?: number;
+  performedBy?: string;
   createdAt: string;
   createdBy?: string;
   creatorName?: string;
@@ -35,6 +36,7 @@ const CRANE_MAINTENANCE_SELECT = `
   next_maintenance_date,
   notes,
   kilometraje,
+  performed_by,
   receipt_photo_paths,
   created_at,
   created_by,
@@ -70,6 +72,7 @@ export const useCraneMaintenance = (craneId: string) => {
         nextMaintenanceDate: record.next_maintenance_date,
         notes: record.notes,
         kilometraje: record.kilometraje,
+        performedBy: record.performed_by,
         createdAt: record.created_at,
         createdBy: record.created_by,
         creatorName: record.creator?.full_name || record.creator?.email || null,
@@ -100,6 +103,7 @@ export const useCreateMaintenance = () => {
           next_maintenance_date: maintenance.nextMaintenanceDate || null,
           notes: maintenance.notes || null,
           kilometraje: maintenance.kilometraje || null,
+          performed_by: maintenance.performedBy || null,
         })
         .select(CRANE_MAINTENANCE_SELECT)
         .single();
@@ -140,6 +144,7 @@ export const useUpdateMaintenance = () => {
           next_maintenance_date: updates.nextMaintenanceDate,
           notes: updates.notes,
           kilometraje: updates.kilometraje ?? null,
+          performed_by: updates.performedBy ?? null,
         })
         .eq('id', id)
         .select(CRANE_MAINTENANCE_SELECT)

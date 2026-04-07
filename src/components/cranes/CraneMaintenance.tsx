@@ -197,6 +197,12 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                           <span className="text-gray-300">Proveedor: {record.provider}</span>
                         </div>
                       )}
+                      {record.performedBy && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-300">Realizado por: {record.performedBy}</span>
+                        </div>
+                      )}
                       {record.creatorName && (
                         <div className="flex items-center gap-2 mt-1">
                           <User className="w-4 h-4 text-gray-400" />

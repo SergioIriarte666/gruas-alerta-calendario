@@ -189,6 +189,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
             notes,
             cost,
             provider,
+            performed_by,
             created_by,
             crane:cranes(id, license_plate),
             creator:profiles!crane_maintenance_created_by_fkey(id, full_name, email)
@@ -428,19 +429,18 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         const dateSource = m.completed_date || m.scheduled_date || m.created_at;
         const dateLabel = dateSource ? format(new Date(dateSource), 'dd/MM/yyyy', { locale: es }) : '-';
         const typeLabel = getMaintenanceTypeLabel(m.maintenance_type || '');
+        const performedByLabel = (m as any).performed_by || '-';
         const userLabel = m.creator?.full_name || m.creator?.email || m.created_by || '-';
         const equipmentLabel = m.crane?.license_plate ? `Grúa ${m.crane.license_plate}` : 'Grúa -';
-        const qtyLabel = '-';
         const origin = m.provider || '-';
-        const destination = '-';
         const notes = [m.description, m.notes].filter(Boolean).join(' · ') || '-';
         const statusLabel = m.status || '-';
-        return [dateLabel, typeLabel, userLabel, equipmentLabel, qtyLabel, origin, destination, notes, statusLabel];
+        return [dateLabel, typeLabel, performedByLabel, userLabel, equipmentLabel, origin, notes, statusLabel];
       });
 
       autoTable(doc, {
-        head: [['Fecha', 'Tipo', 'Usuario', 'Equipo', 'Cantidad', 'Origen', 'Destino', 'Observaciones', 'Estado']],
-        body: maintenanceRows.length > 0 ? maintenanceRows : [['-', '-', '-', '-', '-', '-', '-', '-', '-']],
+        head: [['Fecha', 'Tipo', 'Realizado por', 'Registrado por', 'Equipo', 'Proveedor', 'Observaciones', 'Estado']],
+        body: maintenanceRows.length > 0 ? maintenanceRows : [['-', '-', '-', '-', '-', '-', '-', '-']],
         startY: cursorY,
         theme: 'striped',
         styles: { fontSize: 7.8, cellPadding: 2 },
@@ -452,11 +452,10 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           1: { cellWidth: 20 },
           2: { cellWidth: 28 },
           3: { cellWidth: 28 },
-          4: { cellWidth: 20 },
+          4: { cellWidth: 28 },
           5: { cellWidth: 24 },
-          6: { cellWidth: 24 },
-          7: { cellWidth: 72 },
-          8: { cellWidth: 16 },
+          6: { cellWidth: 66 },
+          7: { cellWidth: 18 },
         },
         margin: { left: 14, right: 14, top: 26, bottom: 14 },
       });
