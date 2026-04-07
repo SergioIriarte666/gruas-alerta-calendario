@@ -14,7 +14,7 @@ import { useSupplierStats } from '@/hooks/useSupplierStats';
 import { formatCurrency } from '@/lib/utils';
 
 export const Suppliers: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('suppliers');
+  const [activeTab, setActiveTab] = useState('payments');
   const [showXMLUpload, setShowXMLUpload] = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [showRegisterPayment, setShowRegisterPayment] = useState(false);
@@ -147,13 +147,13 @@ export const Suppliers: React.FC = () => {
         {/* Main Content - Tabs */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
           <CustomTabsList className="grid w-full grid-cols-3 gap-1">
-            <CustomTabsTrigger value="suppliers">
-              <Building2 className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Proveedores</span>
-            </CustomTabsTrigger>
             <CustomTabsTrigger value="payments">
               <CreditCard className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Pagos</span>
+            </CustomTabsTrigger>
+            <CustomTabsTrigger value="suppliers">
+              <Building2 className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Proveedores</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
               <Calendar className="w-4 h-4 sm:mr-2" />
@@ -161,12 +161,12 @@ export const Suppliers: React.FC = () => {
             </CustomTabsTrigger>
           </CustomTabsList>
 
-          <CustomTabsContent value="suppliers" className="mt-6">
-            <SupplierList />
-          </CustomTabsContent>
-
           <CustomTabsContent value="payments" className="mt-6">
             <PaymentList />
+          </CustomTabsContent>
+
+          <CustomTabsContent value="suppliers" className="mt-6">
+            <SupplierList />
           </CustomTabsContent>
 
           <CustomTabsContent value="calendar" className="mt-6">
