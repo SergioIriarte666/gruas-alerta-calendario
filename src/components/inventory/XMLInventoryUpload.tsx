@@ -1647,7 +1647,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                         <span className="text-muted-foreground block text-xs">Sin coincidencia</span>
                                       )}
                                       {/* Manual search combobox */}
-                                      <Popover>
+                                      <Popover
+                                        open={catalogSearchOpen[line.key] || false}
+                                        onOpenChange={(open) => setCatalogSearchOpen(prev => ({ ...prev, [line.key]: open }))}
+                                      >
                                         <PopoverTrigger asChild>
                                           <Button
                                             type="button"
@@ -1675,6 +1678,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                                         ...prev,
                                                         [line.key]: catalogItem,
                                                       }));
+                                                      setCatalogSearchOpen(prev => ({ ...prev, [line.key]: false }));
                                                     }}
                                                   >
                                                     <div className="flex flex-col">
