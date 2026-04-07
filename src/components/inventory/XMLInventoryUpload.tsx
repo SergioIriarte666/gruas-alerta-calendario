@@ -213,6 +213,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [manualMatchedItems, setManualMatchedItems] = useState<Record<string, InventoryCatalogItem>>({});
   const [editedDescriptions, setEditedDescriptions] = useState<Map<string, string>>(new Map());
   const [discardedLines, setDiscardedLines] = useState<Set<string>>(new Set());
+  const [catalogSearchOpen, setCatalogSearchOpen] = useState<Record<string, boolean>>({});
   const [creatingProductKeys, setCreatingProductKeys] = useState<Set<string>>(new Set());
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('');
   const [selectedCostSubcategory, setSelectedCostSubcategory] = useState<string>('');
@@ -1646,7 +1647,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                         <span className="text-muted-foreground block text-xs">Sin coincidencia</span>
                                       )}
                                       {/* Manual search combobox */}
-                                      <Popover>
+                                      <Popover
+                                        open={catalogSearchOpen[line.key] || false}
+                                        onOpenChange={(open) => setCatalogSearchOpen(prev => ({ ...prev, [line.key]: open }))}
+                                      >
                                         <PopoverTrigger asChild>
                                           <Button
                                             type="button"
@@ -1674,6 +1678,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                                         ...prev,
                                                         [line.key]: catalogItem,
                                                       }));
+                                                      setCatalogSearchOpen(prev => ({ ...prev, [line.key]: false }));
                                                     }}
                                                   >
                                                     <div className="flex flex-col">
