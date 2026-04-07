@@ -263,7 +263,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
               {errors.cost && (
                 <span className="text-red-400 text-sm">{errors.cost.message}</span>
               )}
-              {watchedStatus === 'completed' && watchedCost > 0 && (
+              {watch('status') === 'completed' && watch('cost') > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <Checkbox
                     id="mark-as-paid"
