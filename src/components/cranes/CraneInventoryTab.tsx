@@ -429,7 +429,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         const dateSource = m.completed_date || m.scheduled_date || m.created_at;
         const dateLabel = dateSource ? format(new Date(dateSource), 'dd/MM/yyyy', { locale: es }) : '-';
         const typeLabel = getMaintenanceTypeLabel(m.maintenance_type || '');
-        const performedByLabel = m.performed_by || '-';
+        const performedByLabel = (m as any).performed_by || '-';
         const userLabel = m.creator?.full_name || m.creator?.email || m.created_by || '-';
         const equipmentLabel = m.crane?.license_plate ? `Grúa ${m.crane.license_plate}` : 'Grúa -';
         const origin = m.provider || '-';
