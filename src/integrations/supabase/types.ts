@@ -4154,7 +4154,7 @@ export type Database = {
             foreignKeyName: "services_outsourced_provider_id_fkey"
             columns: ["outsourced_provider_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
           {
