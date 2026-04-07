@@ -129,6 +129,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
             kilometraje: data.kilometraje || undefined,
             performedBy: data.performed_by || undefined,
+            markAsPaid: markAsPaid,
           },
         } as any);
       } else {
