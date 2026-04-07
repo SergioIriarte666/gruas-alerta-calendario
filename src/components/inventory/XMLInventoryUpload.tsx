@@ -56,6 +56,7 @@ interface ValidatedInvoiceLine {
   lineNumber: number;
   item: XMLDocumentItem;
   matchedItem: InventoryCatalogItem | null;
+  candidates: InventoryCatalogItem[];
   error: string | null;
   warning: string | null;
 }
@@ -327,7 +328,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   );
 
   const findMatchedInventoryItem = useCallback(
-    (line: XMLDocumentItem) => {
+    (line: XMLDocumentItem): { match: InventoryCatalogItem | null; candidates: InventoryCatalogItem[] } => {
       const codeCandidates = [
         normalizeCode(line.product_code),
         normalizeCode(line.product_name),
@@ -341,12 +342,12 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             normalizeCode(item.barcode) === code ||
             normalizeCode(item.name) === code
         );
-        if (exactCodeMatch) return exactCodeMatch;
+        if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
       }
 
       const normalizedDescription = normalizeText(line.description);
       const exactNameMatch = inventoryCatalog.find((item) => normalizeText(item.name) === normalizedDescription);
-      if (exactNameMatch) return exactNameMatch;
+      if (exactNameMatch) return { match: exactNameMatch, candidates: [] };
 
       const partialMatches = inventoryCatalog.filter((item) => {
         const itemName = normalizeText(item.name);
@@ -356,8 +357,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         );
       });
 
-      if (partialMatches.length === 1) return partialMatches[0];
-      return null;
+      if (partialMatches.length === 1) return { match: partialMatches[0], candidates: [] };
+      return { match: null, candidates: partialMatches };
     },
     [inventoryCatalog]
   );
@@ -383,7 +384,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           description: typeof editedDescription === 'string' ? editedDescription : line.description,
         };
         const lineKey = getLineKey(doc.folio, lineNumber);
-        const matchedItem = manualMatchedItems[lineKey] || findMatchedInventoryItem(effectiveLine);
+        const manualMatch = manualMatchedItems[lineKey];
+        const finderResult = findMatchedInventoryItem(effectiveLine);
+        const matchedItem = manualMatch || finderResult.match;
+        const candidates = manualMatch ? [] : (finderResult.match ? [] : finderResult.candidates);
         const quantity = Number(line.quantity);
         const subtotal = computeLineSubtotal(effectiveLine);
         const total = computeLineTotal(effectiveLine);
@@ -398,7 +402,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         } else if (!Number.isInteger(quantity)) {
           error = 'La cantidad debe ser un número entero para el inventario.';
         } else if (!matchedItem) {
-          error = 'No se encontró coincidencia en el catálogo de productos.';
+          error = candidates.length > 0
+            ? `${candidates.length} coincidencia(s) parcial(es) encontrada(s). Seleccione una.`
+            : 'No se encontró coincidencia en el catálogo de productos.';
         } else if (subtotal <= 0 && total <= 0) {
           error = 'La línea no tiene monto válido.';
         } else if (!effectiveLine.product_code && matchedItem && normalizeText(matchedItem.name) !== normalizeText(effectiveLine.description)) {
@@ -410,6 +416,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           lineNumber,
           item: effectiveLine,
           matchedItem,
+          candidates,
           error,
           warning,
         };
@@ -1574,21 +1581,119 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                 <td className="py-2 pr-3">{line.item.quantity}</td>
                                 <td className="py-2 pr-3">{formatCurrency(line.item.unit_price)}</td>
                                 <td className="py-2 pr-3">{formatCurrency(computeLineTotal(line.item))}</td>
-                                <td className="py-2 pr-3">
+                                <td className="py-2 pr-3 min-w-[220px]">
                                   {line.matchedItem ? (
                                     <div>
                                       <div className="font-medium">{line.matchedItem.name}</div>
                                       <div className="text-xs text-muted-foreground">
                                         {line.matchedItem.sku || line.matchedItem.barcode || 'Sin SKU'}
                                       </div>
+                                      {manualMatchedItems[line.key] && (
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-5 px-1 text-xs text-muted-foreground hover:text-destructive mt-1"
+                                          onClick={() => setManualMatchedItems(prev => {
+                                            const next = { ...prev };
+                                            delete next[line.key];
+                                            return next;
+                                          })}
+                                          disabled={isImporting}
+                                        >
+                                          <X className="h-3 w-3 mr-0.5" />
+                                          Quitar selección
+                                        </Button>
+                                      )}
                                     </div>
                                   ) : (
                                     <div className="space-y-2">
-                                      <span className="text-muted-foreground block">Sin coincidencia</span>
+                                      {line.candidates.length > 0 && (
+                                        <div className="space-y-1">
+                                          <span className="text-xs font-medium text-muted-foreground block">
+                                            {line.candidates.length} sugerencia(s):
+                                          </span>
+                                          <div className="space-y-1 max-h-[120px] overflow-y-auto">
+                                            {line.candidates.slice(0, 5).map((candidate) => (
+                                              <div
+                                                key={candidate.id}
+                                                className="flex items-center justify-between gap-1 p-1.5 rounded border bg-muted/50 text-xs"
+                                              >
+                                                <div className="min-w-0 flex-1">
+                                                  <div className="font-medium truncate">{candidate.name}</div>
+                                                  <div className="text-muted-foreground">{candidate.sku || 'Sin SKU'}</div>
+                                                </div>
+                                                <Button
+                                                  type="button"
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className="h-6 px-2 text-xs shrink-0"
+                                                  disabled={isImporting}
+                                                  onClick={() => setManualMatchedItems(prev => ({
+                                                    ...prev,
+                                                    [line.key]: candidate,
+                                                  }))}
+                                                >
+                                                  <Check className="h-3 w-3 mr-0.5" />
+                                                  Usar
+                                                </Button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {line.candidates.length === 0 && (
+                                        <span className="text-muted-foreground block text-xs">Sin coincidencia</span>
+                                      )}
+                                      {/* Manual search combobox */}
+                                      <Popover>
+                                        <PopoverTrigger asChild>
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="w-full justify-between text-xs h-7"
+                                            disabled={isImporting}
+                                          >
+                                            <span>Buscar en catálogo...</span>
+                                            <ChevronsUpDown className="h-3 w-3 opacity-50" />
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="p-0 w-[280px]" align="start">
+                                          <Command>
+                                            <CommandInput placeholder="Buscar por nombre o SKU..." />
+                                            <CommandList>
+                                              <CommandEmpty>No se encontró producto.</CommandEmpty>
+                                              <CommandGroup>
+                                                {inventoryCatalog.map((catalogItem) => (
+                                                  <CommandItem
+                                                    key={catalogItem.id}
+                                                    value={`${catalogItem.name} ${catalogItem.sku || ''}`}
+                                                    onSelect={() => {
+                                                      setManualMatchedItems(prev => ({
+                                                        ...prev,
+                                                        [line.key]: catalogItem,
+                                                      }));
+                                                    }}
+                                                  >
+                                                    <div className="flex flex-col">
+                                                      <span className="text-sm">{catalogItem.name}</span>
+                                                      <span className="text-xs text-muted-foreground">
+                                                        {catalogItem.sku || 'Sin SKU'}
+                                                      </span>
+                                                    </div>
+                                                  </CommandItem>
+                                                ))}
+                                              </CommandGroup>
+                                            </CommandList>
+                                          </Command>
+                                        </PopoverContent>
+                                      </Popover>
                                       <Button
                                         type="button"
                                         size="sm"
                                         variant="outline"
+                                        className="w-full text-xs h-7"
                                         disabled={isImporting || creatingProductKeys.has(line.key)}
                                         onClick={() => void handleCreateMissingProduct(validatedDoc.doc, line)}
                                       >
