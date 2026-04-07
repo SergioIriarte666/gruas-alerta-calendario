@@ -201,8 +201,9 @@ export const useCreateMaintenance = () => {
             scheduledDate: maintenance.scheduledDate,
             provider: maintenance.provider,
           });
-        } catch (e) {
+        } catch (e: any) {
           console.error('Error syncing maintenance cost:', e);
+          toast.error('Mantenimiento creado, pero hubo un error al registrar el costo: ' + (e?.message || 'Error desconocido'));
         }
       }
 
