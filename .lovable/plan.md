@@ -1,38 +1,21 @@
 
-
-# Plan: Agregar campo "Realizado por" en mantenimiento
+# Plan: Corregir error FK en servicios tercerizados
 
 ## Problema
-El formulario de mantenimiento no tiene un campo para indicar quién realizó físicamente la mantención (distinto de quién la registró en el sistema). El informe PDF tampoco lo muestra.
+El campo `services.outsourced_provider_id` tiene una FK que apunta a la tabla `suppliers`, pero el selector `SupplierCombobox` obtiene los proveedores de la tabla `inventory_suppliers`. Son tablas distintas con IDs distintos, por lo que al guardar un servicio tercerizado se viola la FK.
+
+## Solución
+Cambiar la FK para que apunte a `inventory_suppliers` en lugar de `suppliers`, ya que `inventory_suppliers` es la tabla que el sistema usa activamente para la gestión de proveedores.
 
 ## Cambios
 
-### 1. Migración SQL: agregar columna `performed_by`
-- `ALTER TABLE crane_maintenance ADD COLUMN performed_by TEXT;`
-- Campo de texto libre (no vinculado a users, ya que puede ser un técnico externo).
+### 1. Migración SQL
+- `ALTER TABLE services DROP CONSTRAINT services_outsourced_provider_id_fkey;`
+- `ALTER TABLE services ADD CONSTRAINT services_outsourced_provider_id_fkey FOREIGN KEY (outsourced_provider_id) REFERENCES inventory_suppliers(id) ON DELETE SET NULL;`
 
-### 2. `src/hooks/useCraneMaintenance.ts`
-- Agregar `performed_by` al `CRANE_MAINTENANCE_SELECT`.
-- Agregar `performedBy` al tipo `MaintenanceRecord`.
-- Mapear en las queries de lectura, creación y actualización.
-
-### 3. `src/components/cranes/forms/MaintenanceForm.tsx`
-- Agregar campo `performed_by` al `FormData`.
-- Agregar input de texto "Realizado por" con icono `User` en la fila de Costo/Kilometraje/Proveedor (convertir a grid de 4 columnas o agregar nueva fila).
-- Incluirlo en `onSubmit` para creación y actualización.
-- Pre-llenar en modo edición.
-
-### 4. `src/components/cranes/CraneMaintenance.tsx`
-- Mostrar "Realizado por: {record.performedBy}" en las tarjetas, junto a "Registrado por".
-
-### 5. `src/components/cranes/CraneInventoryTab.tsx` (informe PDF)
-- En la sección "Movimientos de Mantenciones" (~línea 427-438), agregar columna "Realizado por" usando `m.performed_by`.
-- Ajustar anchos de columnas para acomodar la nueva columna.
+### 2. `src/integrations/supabase/types.ts`
+- Actualizar la referencia de la FK de `suppliers` a `inventory_suppliers` en el tipo generado.
 
 ## Archivos a modificar
 - Nueva migración SQL
-- `src/hooks/useCraneMaintenance.ts`
-- `src/components/cranes/forms/MaintenanceForm.tsx`
-- `src/components/cranes/CraneMaintenance.tsx`
-- `src/components/cranes/CraneInventoryTab.tsx`
-
+- `src/integrations/supabase/types.ts`
