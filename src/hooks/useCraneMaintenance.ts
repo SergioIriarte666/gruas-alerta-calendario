@@ -69,6 +69,7 @@ const syncMaintenanceCost = async (params: {
   completedDate?: string | null;
   scheduledDate?: string | null;
   provider?: string | null;
+  markAsPaid?: boolean;
 }) => {
   const categoryId = await getMaintenanceCategoryId();
   if (!categoryId) {
@@ -77,6 +78,7 @@ const syncMaintenanceCost = async (params: {
   }
 
   const costDate = params.completedDate || params.scheduledDate || new Date().toISOString().split('T')[0];
+  const paymentDate = params.markAsPaid ? costDate : null;
 
   // Check if a cost already exists for this maintenance
   const { data: existingCost } = await supabase
