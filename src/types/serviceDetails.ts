@@ -22,6 +22,8 @@ export interface EnhancedService extends Omit<Service, 'operator' | 'operatorCom
   resolvedInvoiceFolio: string | null;
   resolvedInvoiceNumeroFiscal: string | null;
   resolvedClosureFolio: string | null;
+  // Outsourced provider resolved name
+  outsourcedProviderName?: string | null;
 }
 
 // Tipos para el formulario
