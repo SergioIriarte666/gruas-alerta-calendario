@@ -42,6 +42,7 @@ type FormData = {
   provider?: string;
   notes?: string;
   kilometraje?: number;
+  performed_by?: string;
 };
 
 export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefill, receiptPhotoPaths, quickEntryId, onCreated }: MaintenanceFormProps) => {
@@ -68,6 +69,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
       provider: '',
       notes: '',
       kilometraje: undefined,
+      performed_by: '',
     }
   });
 
@@ -83,6 +85,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         provider: editingRecord.provider || '',
         notes: editingRecord.notes || '',
         kilometraje: editingRecord.kilometraje || undefined,
+        performed_by: editingRecord.performedBy || '',
       });
 
       // Update date states
@@ -99,6 +102,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         provider: '',
         notes: prefill?.notes || '',
         kilometraje: undefined,
+        performed_by: '',
       });
       setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : new Date());
       setCompletedDate(undefined);
@@ -122,6 +126,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             completedDate: completedDate ? formatForDatabase(completedDate) : null,
             nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
             kilometraje: data.kilometraje || undefined,
+            performedBy: data.performed_by || undefined,
           },
         } as any);
       } else {
@@ -137,6 +142,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           completedDate: completedDate ? formatForDatabase(completedDate) : null,
           nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
           kilometraje: data.kilometraje,
+          performedBy: data.performed_by || undefined,
         } as any);
         if (receiptPhotoPaths?.length && (created as any)?.id) {
           try {
@@ -232,8 +238,8 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             </div>
           </div>
 
-          {/* Cost, Kilometraje and Provider */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Cost, Kilometraje, Provider and Performed By */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cost" className="text-foreground flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -280,7 +286,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label htmlFor="provider" className="text-foreground flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <Wrench className="w-4 h-4" />
                 Proveedor (Opcional)
               </Label>
               <Input
@@ -288,6 +294,19 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                 {...register('provider')}
                 className="bg-background border-border text-foreground"
                 placeholder="Nombre del proveedor"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="performed_by" className="text-foreground flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Realizado por (Opcional)
+              </Label>
+              <Input
+                id="performed_by"
+                {...register('performed_by')}
+                className="bg-background border-border text-foreground"
+                placeholder="Nombre de quien realizó la mantención"
               />
             </div>
           </div>
