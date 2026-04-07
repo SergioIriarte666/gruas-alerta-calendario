@@ -86,8 +86,7 @@ const syncMaintenanceCost = async (params: {
     .maybeSingle();
 
   if (existingCost) {
-    // Update existing cost
-    await supabase
+    const { error: updateErr } = await supabase
       .from('costs')
       .update({
         amount: params.amount,
@@ -96,9 +95,15 @@ const syncMaintenanceCost = async (params: {
         subcategory: params.maintenanceType,
       })
       .eq('id', existingCost.id);
+    if (updateErr) {
+      console.error('Error updating maintenance cost:', updateErr);
+      throw updateErr;
+    }
   } else {
-    // Create new cost
-    await supabase
+    // Get current user for created_by
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const { error: insertErr } = await supabase
       .from('costs')
       .insert({
         maintenance_id: params.maintenanceId,
@@ -108,7 +113,12 @@ const syncMaintenanceCost = async (params: {
         description: `Mantenimiento: ${params.description}`,
         date: costDate,
         subcategory: params.maintenanceType,
+        created_by: user?.id || null,
       });
+    if (insertErr) {
+      console.error('Error creating maintenance cost:', insertErr);
+      throw insertErr;
+    }
   }
 };
 
