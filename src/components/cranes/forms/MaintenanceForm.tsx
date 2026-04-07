@@ -145,6 +145,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           nextMaintenanceDate: nextMaintenanceDate ? formatForDatabase(nextMaintenanceDate) : null,
           kilometraje: data.kilometraje,
           performedBy: data.performed_by || undefined,
+          markAsPaid: markAsPaid,
         } as any);
         if (receiptPhotoPaths?.length && (created as any)?.id) {
           try {
