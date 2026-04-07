@@ -268,8 +268,9 @@ export const useUpdateMaintenance = () => {
             scheduledDate: updates.scheduledDate || data.scheduled_date,
             provider: updates.provider || data.provider,
           });
-        } catch (e) {
+        } catch (e: any) {
           console.error('Error syncing maintenance cost:', e);
+          toast.error('Mantenimiento actualizado, pero hubo un error al sincronizar el costo: ' + (e?.message || 'Error desconocido'));
         }
       } else if (finalStatus !== 'completed') {
         // If no longer completed, remove associated cost
