@@ -279,6 +279,37 @@ const addCustodySection = (doc: jsPDF, service: any, yPosition: number): number 
   return (doc as any).lastAutoTable.finalY + 10;
 };
 
+const addOutsourcedSection = (doc: jsPDF, service: any, yPosition: number): number => {
+  yPosition = addSectionTitle(doc, 'SERVICIO TERCERIZADO', yPosition);
+  
+  const outsourcedData: Array<[string, string]> = [
+    ['Proveedor Tercero:', service.outsourcedProviderName || service.outsourcedProviderId || 'N/A'],
+    ['Costo del Tercero:', formatCurrency(service.outsourcedCost || 0)]
+  ];
+  
+  if (service.outsourcedNotes) {
+    outsourcedData.push(['Notas:', service.outsourcedNotes]);
+  }
+  
+  autoTable(doc, {
+    startY: yPosition,
+    body: outsourcedData,
+    theme: 'grid',
+    columnStyles: {
+      0: { cellWidth: 50, fontStyle: 'bold', fillColor: LIGHT_GRAY },
+      1: { cellWidth: 120 }
+    },
+    styles: { 
+      fontSize: 9, 
+      cellPadding: 3,
+      textColor: [0, 0, 0]
+    },
+    margin: { left: 20, right: 20 }
+  });
+  
+  return (doc as any).lastAutoTable.finalY + 10;
+};
+
 const addResourcesSection = (doc: jsPDF, service: any, yPosition: number): number => {
   yPosition = addSectionTitle(doc, 'RECURSOS ASIGNADOS', yPosition);
   
