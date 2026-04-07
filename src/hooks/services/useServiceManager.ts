@@ -1007,7 +1007,7 @@ export const useServiceManager = () => {
       }
 
       // ✅ SINCRONIZACIÓN DE COSTO OUTSOURCED Y SUPPLIER_PAYMENTS
-      // Si el servicio tiene proveedor tercerizado, actualizar el costo y el pago asociado
+      // Si el servicio tiene proveedor tercerizado, actualizar/crear el costo y el pago asociado
       if (serviceData.outsourcedProviderId !== undefined) {
         
         
@@ -1063,6 +1063,60 @@ export const useServiceManager = () => {
               if (updatePaymentError) {
                 console.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
               }
+            }
+          }
+        } else if (
+          serviceData.outsourcedProviderId && 
+          serviceData.outsourcedProviderId.trim() !== '' && 
+          serviceData.outsourcedCost && 
+          serviceData.outsourcedCost > 0
+        ) {
+          // ✅ NUEVO: Si no existe el costo pero el servicio tiene proveedor + monto > 0, CREARLO
+          console.log('[OUTSOURCED SYNC] Costo no encontrado, creando nuevo costo outsourced...');
+          
+          let categoryId: string | null = null;
+          const { data: existingCategory } = await supabase
+            .from('cost_categories')
+            .select('id')
+            .eq('name', 'Subcontrataciones')
+            .single();
+
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            const { data: fallbackCategory } = await supabase
+              .from('cost_categories')
+              .select('id')
+              .eq('name', 'Gastos de Servicios')
+              .single();
+            categoryId = fallbackCategory?.id || null;
+          }
+
+          if (categoryId) {
+            const { data: svcData } = await supabase
+              .from('services')
+              .select('folio, service_date')
+              .eq('id', id)
+              .single();
+
+            const { error: createCostError } = await supabase
+              .from('costs')
+              .insert({
+                service_id: id,
+                amount: serviceData.outsourcedCost,
+                description: `Servicio tercerizado: ${svcData?.folio || id}`,
+                date: svcData?.service_date || new Date().toISOString().split('T')[0],
+                notes: serviceData.outsourcedNotes || 'Costo de proveedor tercero creado automáticamente',
+                category_id: categoryId,
+                subcategory: 'Servicios Terceros',
+                supplier_id: serviceData.outsourcedProviderId,
+                service_folio: svcData?.folio || id
+              });
+
+            if (createCostError) {
+              console.error('[OUTSOURCED SYNC] Error creando costo outsourced:', createCostError);
+            } else {
+              console.log('[OUTSOURCED SYNC] ✅ Costo outsourced creado exitosamente');
             }
           }
         }

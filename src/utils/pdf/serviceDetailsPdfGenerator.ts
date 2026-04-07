@@ -65,6 +65,12 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
     yPosition = addCustodySection(doc, service, yPosition);
   }
   
+  // 7.5. Sección Servicio Tercerizado (si aplica)
+  if (service.outsourcedProviderId) {
+    yPosition = checkPageBreak(doc, yPosition, 40);
+    yPosition = addOutsourcedSection(doc, service, yPosition);
+  }
+  
   // 8. Sección Recursos Asignados
   yPosition = checkPageBreak(doc, yPosition, 40);
   yPosition = addResourcesSection(doc, service, yPosition);
