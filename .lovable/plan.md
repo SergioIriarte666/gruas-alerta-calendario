@@ -1,44 +1,55 @@
 
+# Plan: Auto-crear registro de Costo al completar un Mantenimiento
 
-# Plan: Corregir validación de descripción y mejorar visualización
+## Análisis
 
-## Problema
-Dos issues identificados en el código:
+### Situación actual
+- La tabla `costs` ya tiene `maintenance_id` (FK a `crane_maintenance`) — la infraestructura existe.
+- El hook `useMaintenanceCostStatus` ya verifica si un mantenimiento tiene costo asociado.
+- La UI muestra "Sincronizando..." cuando un mantenimiento completado con monto > 0 no tiene costo — pero nada lo crea realmente.
+- No existe trigger ni lógica frontend que genere el costo automáticamente.
 
-1. **La validación de descripción bloquea líneas con producto seleccionado**: En la lógica de validación (línea 399), el chequeo `!effectiveLine.description?.trim()` es lo PRIMERO que se evalúa. Si el usuario borra/edita la descripción para buscar coincidencia y luego selecciona un producto manualmente, la línea queda con error "no tiene descripción" aunque ya tenga producto asociado. El match manual queda invisible porque el error tiene prioridad.
+### Pro de automatizarlo
+- Toda salida de dinero queda reflejada en Costos sin doble digitación.
+- Los reportes financieros y de grúa serán consistentes.
+- El badge "Sincronizando..." dejará de ser engañoso y mostrará "Costo Registrado".
+- La FK `maintenance_id` ya existe, solo hay que usarla.
 
-2. **El modal ya es grande (98vw/1400px, 92vh)** pero la tabla interna tiene columnas con `min-w-[280px]` para descripción y `min-w-[220px]` para producto que comprimen las demás. Se puede mejorar el layout.
+### Contra / Riesgo
+- Se necesita asignar una `category_id` (obligatoria en `costs`). Solución: buscar o crear la categoría "Mantenimiento".
+- Se necesita una `date` para el costo. Solución: usar `completed_date` o `scheduled_date`.
+- Si el usuario edita el monto del mantenimiento después, el costo debe actualizarse. Solución: hacerlo desde el frontend al actualizar.
+- Complejidad: **baja** — es agregar un `insert` a `costs` después del insert/update de mantenimiento.
 
-## Cambios en `src/components/inventory/XMLInventoryUpload.tsx`
+### Decisión: hacerlo desde el frontend (no trigger)
+Un trigger SQL añadiría complejidad y posibles conflictos con los triggers de sincronización de costos existentes. Hacerlo en el hook `useCreateMaintenance` / `useUpdateMaintenance` es más seguro, controlado y fácil de depurar.
 
-### 1. Relajar validación cuando hay match manual
-En la lógica de validación (~línea 396-413):
-- Mover el chequeo de descripción vacía DESPUÉS del chequeo de `matchedItem`
-- Si hay `matchedItem` (manual o automático), permitir descripción vacía con un **warning** en vez de error
-- Solo bloquear con error si NO hay descripción Y NO hay producto asociado
+## Cambios
 
-Cambio concreto:
+### 1. Consultar la categoría "Mantenimiento" en `cost_categories`
+En el hook, antes de insertar el costo, buscar `cost_categories` con nombre "Mantenimiento" (o similar). Si no existe, la migración la creará.
+
+### 2. Migración SQL (si es necesario)
+Verificar si existe la categoría "Mantenimiento" en `cost_categories`. Si no:
+```sql
+INSERT INTO cost_categories (name) VALUES ('Mantenimiento') ON CONFLICT DO NOTHING;
 ```
-if (!matchedItem) {
-  if (!effectiveLine.description?.trim()) {
-    error = 'La línea no tiene descripción.';
-  } else {
-    error = candidates.length > 0
-      ? `${candidates.length} coincidencia(s)...`
-      : 'No se encontró coincidencia...';
-  }
-} else if (!effectiveLine.description?.trim()) {
-  warning = 'La línea no tiene descripción, se usará el nombre del producto.';
-} else if (subtotal <= 0 && total <= 0) {
-  ...
-}
-```
 
-### 2. Agrandar modal y mejorar tabla
-- Cambiar el modal a `w-[min(99vw,1600px)] max-w-[1600px]` para aprovechar más espacio en pantallas grandes
-- Aumentar `h-[92vh]` a `h-[95vh]`
-- Ajustar anchos mínimos de columnas para distribuir mejor
+### 3. `src/hooks/useCraneMaintenance.ts` — `useCreateMaintenance`
+Después del insert exitoso en `crane_maintenance`, si `status === 'completed'` y `cost > 0`:
+- Buscar `category_id` de "Mantenimiento"
+- Insertar en `costs` con: `crane_id`, `category_id`, `maintenance_id`, `amount = cost`, `description`, `date = completed_date`, `subcategory = maintenanceType`
+- Invalidar queries de costos
 
-## Archivo a modificar
-- `src/components/inventory/XMLInventoryUpload.tsx`
+### 4. `src/hooks/useCraneMaintenance.ts` — `useUpdateMaintenance`
+Al actualizar un mantenimiento:
+- Si pasa a `completed` con `cost > 0` y no tiene costo asociado → crear el costo
+- Si ya tiene costo y cambia el monto/descripción → actualizar el costo existente
+- Si cambia de `completed` a otro estado → opcionalmente eliminar el costo
 
+### 5. Invalidar queries de costos
+En `onSuccess` de ambas mutaciones, agregar invalidación de `['crane-costs']` y `['maintenance-cost-status']`.
+
+## Archivos a modificar
+- Nueva migración SQL (asegurar categoría "Mantenimiento")
+- `src/hooks/useCraneMaintenance.ts` — agregar lógica de creación/actualización de costo en las mutaciones
