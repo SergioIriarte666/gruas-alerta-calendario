@@ -56,6 +56,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
   const [nextMaintenanceDate, setNextMaintenanceDate] = useState<Date | undefined>(
     editingRecord?.nextMaintenanceDate ? parseFromDatabase(editingRecord.nextMaintenanceDate) : undefined
   );
+  const [markAsPaid, setMarkAsPaid] = useState(false);
   
   const createMutation = useCreateMaintenance();
   const updateMutation = useUpdateMaintenance();
