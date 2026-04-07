@@ -384,7 +384,10 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           description: typeof editedDescription === 'string' ? editedDescription : line.description,
         };
         const lineKey = getLineKey(doc.folio, lineNumber);
-        const matchedItem = manualMatchedItems[lineKey] || findMatchedInventoryItem(effectiveLine);
+        const manualMatch = manualMatchedItems[lineKey];
+        const finderResult = findMatchedInventoryItem(effectiveLine);
+        const matchedItem = manualMatch || finderResult.match;
+        const candidates = manualMatch ? [] : (finderResult.match ? [] : finderResult.candidates);
         const quantity = Number(line.quantity);
         const subtotal = computeLineSubtotal(effectiveLine);
         const total = computeLineTotal(effectiveLine);
@@ -399,7 +402,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         } else if (!Number.isInteger(quantity)) {
           error = 'La cantidad debe ser un número entero para el inventario.';
         } else if (!matchedItem) {
-          error = 'No se encontró coincidencia en el catálogo de productos.';
+          error = candidates.length > 0
+            ? `${candidates.length} coincidencia(s) parcial(es) encontrada(s). Seleccione una.`
+            : 'No se encontró coincidencia en el catálogo de productos.';
         } else if (subtotal <= 0 && total <= 0) {
           error = 'La línea no tiene monto válido.';
         } else if (!effectiveLine.product_code && matchedItem && normalizeText(matchedItem.name) !== normalizeText(effectiveLine.description)) {
@@ -411,6 +416,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           lineNumber,
           item: effectiveLine,
           matchedItem,
+          candidates,
           error,
           warning,
         };
