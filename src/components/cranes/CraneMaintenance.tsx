@@ -35,6 +35,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
   const { data: maintenanceRecords = [], isLoading } = useCraneMaintenance(crane.id);
   const { data: costStatusData = [] } = useMaintenanceCostStatus(maintenanceRecords.map(r => r.id));
   const deleteMutation = useDeleteMaintenance();
+  const togglePayment = useToggleMaintenanceCostPayment();
 
   const handleEdit = (record: MaintenanceRecord) => {
     setEditingRecord(record);
