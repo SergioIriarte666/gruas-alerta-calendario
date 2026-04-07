@@ -263,6 +263,18 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
               {errors.cost && (
                 <span className="text-red-400 text-sm">{errors.cost.message}</span>
               )}
+              {watchedStatus === 'completed' && watchedCost > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id="mark-as-paid"
+                    checked={markAsPaid}
+                    onCheckedChange={(checked) => setMarkAsPaid(!!checked)}
+                  />
+                  <label htmlFor="mark-as-paid" className="text-sm text-muted-foreground cursor-pointer">
+                    Marcar como pagado
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
