@@ -1,0 +1,1 @@
+ALTER TABLE public.crane_maintenance ADD COLUMN performed_by TEXT;

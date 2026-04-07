@@ -966,6 +966,7 @@ export type Database = {
           maintenance_type: string
           next_maintenance_date: string | null
           notes: string | null
+          performed_by: string | null
           provider: string | null
           receipt_photo_paths: string[] | null
           scheduled_date: string | null
@@ -984,6 +985,7 @@ export type Database = {
           maintenance_type: string
           next_maintenance_date?: string | null
           notes?: string | null
+          performed_by?: string | null
           provider?: string | null
           receipt_photo_paths?: string[] | null
           scheduled_date?: string | null
@@ -1002,6 +1004,7 @@ export type Database = {
           maintenance_type?: string
           next_maintenance_date?: string | null
           notes?: string | null
+          performed_by?: string | null
           provider?: string | null
           receipt_photo_paths?: string[] | null
           scheduled_date?: string | null
