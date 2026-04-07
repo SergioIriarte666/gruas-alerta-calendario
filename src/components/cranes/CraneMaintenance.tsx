@@ -242,7 +242,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                     </div>
 
                     {/* Cost with Integration Status */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-tms-green" />
                         <span className="text-tms-green font-semibold">
@@ -250,13 +250,39 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                         </span>
                       </div>
                       
-                      {/* Show associated cost info if available */}
-                      {getCostStatus(record.id)?.hasCost && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                          <ExternalLink className="w-3 h-3" />
-                          <span>Vinculado a costos</span>
-                        </div>
-                      )}
+                      {/* Show associated cost info + payment toggle */}
+                      {(() => {
+                        const cs = getCostStatus(record.id);
+                        if (!cs?.hasCost || !cs.costId) return null;
+                        const isPaid = !!cs.paymentDate;
+                        return (
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Vinculado a costos</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id={`paid-${record.id}`}
+                                checked={isPaid}
+                                onCheckedChange={(checked) => {
+                                  togglePayment.mutate({
+                                    costId: cs.costId!,
+                                    isPaid: !!checked,
+                                  });
+                                }}
+                                disabled={togglePayment.isPending}
+                              />
+                              <label
+                                htmlFor={`paid-${record.id}`}
+                                className={`text-sm cursor-pointer ${isPaid ? 'text-green-400' : 'text-gray-400'}`}
+                              >
+                                {isPaid ? 'Pagado' : 'Marcar como pagado'}
+                              </label>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Notes */}
