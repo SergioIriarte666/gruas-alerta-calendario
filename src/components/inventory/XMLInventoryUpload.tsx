@@ -396,19 +396,23 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         let error: string | null = null;
         let warning: string | null = null;
 
-        if (!effectiveLine.description?.trim()) {
-          error = 'La línea no tiene descripción.';
-        } else if (!Number.isFinite(quantity) || quantity <= 0) {
+        if (!Number.isFinite(quantity) || quantity <= 0) {
           error = 'La cantidad debe ser mayor a 0.';
         } else if (!Number.isInteger(quantity)) {
           error = 'La cantidad debe ser un número entero para el inventario.';
         } else if (!matchedItem) {
-          error = candidates.length > 0
-            ? `${candidates.length} coincidencia(s) parcial(es) encontrada(s). Seleccione una.`
-            : 'No se encontró coincidencia en el catálogo de productos.';
+          if (!effectiveLine.description?.trim()) {
+            error = 'La línea no tiene descripción.';
+          } else {
+            error = candidates.length > 0
+              ? `${candidates.length} coincidencia(s) parcial(es) encontrada(s). Seleccione una.`
+              : 'No se encontró coincidencia en el catálogo de productos.';
+          }
         } else if (subtotal <= 0 && total <= 0) {
           error = 'La línea no tiene monto válido.';
-        } else if (!effectiveLine.product_code && matchedItem && normalizeText(matchedItem.name) !== normalizeText(effectiveLine.description)) {
+        } else if (!effectiveLine.description?.trim()) {
+          warning = 'Sin descripción, se usará el nombre del producto.';
+        } else if (!effectiveLine.product_code && normalizeText(matchedItem.name) !== normalizeText(effectiveLine.description)) {
           warning = 'Coincidencia realizada por descripción aproximada.';
         }
 
@@ -1347,7 +1351,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[min(98vw,1400px)] max-w-7xl h-[92vh] overflow-hidden border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
+        <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] h-[95vh] overflow-hidden border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
         <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-1">
@@ -1562,7 +1566,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                               <tr key={line.key} className={cn("border-b last:border-0 align-top transition-opacity", isDiscarded && "opacity-40")}>
                                 <td className="py-2 pr-3">{line.lineNumber}</td>
                                 <td className="py-2 pr-3 font-mono text-xs">{line.item.product_code || '-'}</td>
-                                <td className="py-2 pr-3 min-w-[280px]">
+                                <td className="py-2 pr-3 min-w-[320px]">
                                   <div className="space-y-1">
                                     <Textarea
                                       value={line.item.description}
@@ -1582,7 +1586,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                 <td className="py-2 pr-3">{line.item.quantity}</td>
                                 <td className="py-2 pr-3">{formatCurrency(line.item.unit_price)}</td>
                                 <td className="py-2 pr-3">{formatCurrency(computeLineTotal(line.item))}</td>
-                                <td className="py-2 pr-3 min-w-[220px]">
+                                <td className="py-2 pr-3 min-w-[280px]">
                                   {line.matchedItem ? (
                                     <div>
                                       <div className="font-medium">{line.matchedItem.name}</div>
