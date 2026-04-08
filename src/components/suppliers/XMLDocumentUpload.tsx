@@ -1328,15 +1328,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </Card>}
 
               {/* Actions */}
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={reset} disabled={isUploading}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0} variant="default">
-                  {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                  Importar {selectedSuppliers.size} Proveedores
-                  {createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
-                </Button>
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {selectedSuppliers.size > 0 && (
+                    <span>{selectedSuppliers.size} proveedor(es) · {selectedDocuments.size} documento(s)</span>
+                  )}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={reset} disabled={isUploading}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0} variant="default">
+                    {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                    Importar {selectedSuppliers.size} Proveedores
+                    {createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
+                  </Button>
+                </div>
               </div>
             </div>}
         </div>
