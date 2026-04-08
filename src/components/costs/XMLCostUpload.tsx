@@ -866,42 +866,65 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-card border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <Code className="w-5 h-5 text-tms-green" />
-            Cargar Gastos desde XML
-          </DialogTitle>
+      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
+        <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                  <Code className="h-5 w-5" />
+                </span>
+                Cargar Gastos desde XML
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Analiza documentos XML, detecta duplicados y registra gastos con categorización automática.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedFile ? (
+                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
+                  Archivo: {selectedFile.name}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
+                  Esperando XML
+                </Badge>
+              )}
+              {parseResult && (
+                <Badge variant="secondary" className="px-3 py-1 text-xs">
+                  {parseResult.totalDocuments} doc(s)
+                </Badge>
+              )}
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 pb-6 pt-4">
           {/* Upload Area */}
           {!selectedFile && (
             <div
               {...getRootProps()}
               className={cn(
-                'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
-                isDragActive ? 'border-primary bg-primary/10' : 'border-muted hover:border-border'
+                'relative overflow-hidden border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
+                isDragActive
+                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                  : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
               )}
             >
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
               <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML aquí'}
-              </h3>
-              <p className="text-muted-foreground mb-4">o haz clic para seleccionar un archivo</p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.xml';
-                  input.onchange = handleFileSelect;
-                  input.click();
-                }}
-              >
-                Seleccionar Archivo
-              </Button>
+              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+                <Upload className="h-8 w-8" />
+              </div>
+              <p className="relative font-semibold text-base">
+                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
+              </p>
+              <p className="relative mt-1 text-sm text-muted-foreground">o haz clic para seleccionar un archivo</p>
+              <div className="relative mt-4 flex flex-wrap justify-center gap-2">
+                <Badge variant="secondary" className="bg-background/80">Detección de duplicados</Badge>
+                <Badge variant="secondary" className="bg-background/80">Sync con Bodega</Badge>
+                <Badge variant="secondary" className="bg-background/80">Categorización</Badge>
+              </div>
             </div>
           )}
 
@@ -951,57 +974,51 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           {parseResult && (
             <div className="space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Proveedores</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {parseResult.validSuppliers}/{parseResult.totalSuppliers}
-                        </p>
-                      </div>
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                <Card className="border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:from-background dark:to-muted/20">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Proveedores</p>
+                      <div className="text-2xl font-semibold">{parseResult.validSuppliers}/{parseResult.totalSuppliers}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Receipt className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Documentos</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {parseResult.validDocuments}/{parseResult.totalDocuments}
-                        </p>
-                      </div>
+                <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm dark:from-emerald-950/30 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Documentos</p>
+                      <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{parseResult.validDocuments}/{parseResult.totalDocuments}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertCircle className="h-5 w-5 text-destructive" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Errores</p>
-                        <p className="text-xl font-bold text-foreground">{parseResult.errors.length}</p>
-                      </div>
+                <Card className="border-red-200/80 bg-gradient-to-br from-red-50 to-white shadow-sm dark:from-red-950/20 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-red-100 p-3 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                      <AlertCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Errores</p>
+                      <div className="text-2xl font-semibold text-red-600 dark:text-red-400">{parseResult.errors.length}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-5 w-5 text-yellow-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Selec.</p>
-                        <p className="text-xl font-bold text-foreground">
-                          ${selectedTotal.toLocaleString('es-CL')}
-                        </p>
-                      </div>
+                <Card className="border-blue-200/80 bg-gradient-to-br from-blue-50 to-white shadow-sm dark:from-blue-950/20 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                      <DollarSign className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Selec.</p>
+                      <div className="text-2xl font-semibold">${selectedTotal.toLocaleString('es-CL')}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1043,7 +1060,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Duplicate Warning Banner */}
               {duplicateResults.length > 0 && showDuplicateWarning && (
-                <Alert className="border-amber-300 bg-amber-50">
+                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                   <ShieldAlert className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
                     <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados.</strong>
@@ -1078,7 +1095,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Checking duplicates indicator */}
               {isCheckingDuplicates && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
                 </div>
@@ -1086,7 +1103,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Searching cost matches indicator */}
               {isSearchingMatches && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Buscando costos existentes que coincidan...</span>
                 </div>
@@ -1094,7 +1111,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Cost matching summary */}
               {Object.keys(matchedCosts).length > 0 && (
-                <Alert className="border-blue-300 bg-blue-50">
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
                   <Link2 className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-800">
                     <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
@@ -1144,9 +1161,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Suppliers Preview */}
               {parseResult.suppliers.length > 0 && (
-                <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Building className="h-5 w-5" />
                       Proveedores Encontrados ({parseResult.suppliers.length})
                     </CardTitle>
@@ -1154,15 +1171,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                       {parseResult.suppliers.map((supplier, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                        <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={selectedSuppliers.has(supplier.rut)}
                               onCheckedChange={() => toggleSupplierSelection(supplier.rut)}
                             />
                             <div className="min-w-0 flex-1">
-                              <p className="text-foreground font-medium truncate">{supplier.name}</p>
-                              <p className="text-sm text-muted-foreground">{supplier.rut}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-foreground font-medium truncate">{supplier.name}</p>
+                                <Badge variant="outline" className="text-xs">{supplier.rut}</Badge>
+                              </div>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
@@ -1251,9 +1270,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Documents Preview */}
               {parseResult.documents.length > 0 && (
-                <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Receipt className="h-5 w-5" />
                       Documentos Encontrados ({parseResult.documents.length})
                     </CardTitle>
@@ -1285,14 +1304,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                           <div
                             key={index}
                             className={cn(
-                              'flex flex-col p-3 rounded gap-2',
+                              'flex flex-col p-3 rounded-lg gap-2 shadow-sm border',
                               hasMatches && currentDecision !== 'new'
-                                ? 'bg-blue-50 border border-blue-200'
+                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800'
                                 : isDuplicate && (duplicateInfo.matchType === 'exact' || duplicateInfo.matchType === 'folio')
-                                ? 'bg-red-50 border border-red-200'
+                                ? 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800'
                                 : isDuplicate && duplicateInfo.matchType === 'similar'
-                                ? 'bg-yellow-50 border border-yellow-200'
-                                : 'bg-muted/50'
+                                ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800'
+                                : 'bg-muted/30 border-border/60'
                             )}
                           >
                             {/* Matched cost selector */}
@@ -1427,22 +1446,28 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               )}
 
               {/* Actions */}
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={reset} disabled={isUploading}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleUploadCosts}
-                  disabled={isUploading || selectedDocuments.size === 0}
-                  className="bg-tms-green hover:bg-tms-green/80"
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Database className="h-4 w-4 mr-2" />
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {selectedDocuments.size > 0 && (
+                    <span>{selectedDocuments.size} documento(s) · <strong>${selectedTotal.toLocaleString('es-CL')}</strong></span>
                   )}
-                  Cargar {selectedDocuments.size} Gastos
-                </Button>
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={reset} disabled={isUploading}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleUploadCosts}
+                    disabled={isUploading || selectedDocuments.size === 0}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    Cargar {selectedDocuments.size} Gastos
+                  </Button>
+                </div>
               </div>
             </div>
           )}
