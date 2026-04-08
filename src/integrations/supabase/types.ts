@@ -4560,6 +4560,7 @@ export type Database = {
       }
       system_settings: {
         Row: {
+          ai_chat_enabled: boolean
           auto_backup: boolean
           backup_frequency: string
           created_at: string
@@ -4578,6 +4579,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_chat_enabled?: boolean
           auto_backup?: boolean
           backup_frequency?: string
           created_at?: string
@@ -4596,6 +4598,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_chat_enabled?: boolean
           auto_backup?: boolean
           backup_frequency?: string
           created_at?: string
