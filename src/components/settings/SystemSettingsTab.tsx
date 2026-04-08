@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Database, Save, AlertTriangle, FileText, Mail, Clock, Send, Bot } from 'lucide-react';
+import { Database, Save, AlertTriangle, FileText, Mail, Clock, Send } from 'lucide-react';
 import type { SystemSettings } from '@/types/settings';
 import { BackupManagementSection } from './BackupManagementSection';
 import { ReportColumnsSettings } from './ReportColumnsSettings';
