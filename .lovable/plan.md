@@ -1,63 +1,57 @@
 
 
-# Plan: Mejora Estética de Importadores XML (Costos y Proveedores)
+# Plan: Corregir Fecha de Pago en Importador XML de Costos
 
-Usar el importador XML de Bodega como referencia visual para elevar los importadores de Costos y Proveedores al mismo nivel estético. Solo cambios de CSS/JSX, sin modificar logica.
+## Problema
+Cuando se importa un XML con condición de crédito (pago a futuro), el sistema **siempre** asigna un `payment_date` al costo — incluso cuando la fecha es futura. Esto causa:
+1. El trigger `create_supplier_payment_from_cost` marca el pago como `status: 'paid'` (porque `payment_date IS NOT NULL`), cuando debería ser `pending`
+2. El costo aparece como "programado" en la tabla, pero en proveedores aparece como "pagado"
 
-## Cambios en `src/components/costs/XMLCostUpload.tsx`
+Además, el importador **no aprovecha** la fecha de vencimiento (`FchVenc`) ni la forma de pago (`FmaPago`) que vienen en el XML del SII.
 
-### 1. Dialog y Header
-- Ampliar modal a `w-[min(99vw,1600px)]` con layout de dos columnas como Bodega
-- Header con gradiente (`bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:...`)
-- Icono dentro de `rounded-lg bg-primary/10 p-2`
-- Subtitulo descriptivo y Badge con nombre del archivo cargado
+## Cambios
 
-### 2. Drop Zone
-- Borde `rounded-2xl` con efecto radial gradient de fondo
-- Icono grande dentro de contenedor `rounded-2xl bg-primary/10 p-4`
-- Badges descriptivos debajo ("Detección de duplicados", "Sync con Bodega", "Categorización")
+### 1. Modificar `src/components/costs/XMLCostUpload.tsx` — Lógica de payment_date
+En la función de upload (línea ~719), cambiar la lógica para que:
+- **Condición "Contado"** (`none`): `payment_date = emissionDate` (pagado al contado)
+- **Condición "Crédito"** (fecha futura): `payment_date = null` (no está pagado aún)
 
-### 3. Stats Cards (4 tarjetas de resumen)
-- Reemplazar las cards planas por gradient cards con bordes de color:
-  - Proveedores: `border-slate-200/80 bg-gradient-to-br from-white to-slate-50`
-  - Documentos: `border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white`
-  - Errores: `border-red-200/80 bg-gradient-to-br from-red-50 to-white`
-  - Total: `border-blue-200/80 bg-gradient-to-br from-blue-50 to-white`
-- Iconos dentro de `rounded-xl bg-{color}-100 p-3`
-- Labels en `text-xs font-medium uppercase tracking-wide`
+Esto respeta la semántica: `payment_date` = "fecha en que se pagó", no "fecha en que se debería pagar".
 
-### 4. Sección Proveedores
-- Cada proveedor como mini-card con `border-l-4 border-l-violet-400 rounded-lg shadow-sm`
-- Nombre prominente con Badge del RUT al lado
-- Grid de selectores con mejor espaciado
+### 2. Modificar `src/utils/xmlParser/xmlSupplierParser.ts` — Extraer FmaPago y FchVenc
+Agregar extracción del campo `FmaPago` del XML del SII:
+- `FmaPago = 1` → Contado
+- `FmaPago = 2` → Crédito
+- `FmaPago = 3` → Sin costo
 
-### 5. Sección Documentos
-- Cards individuales con `overflow-hidden border-border/70 shadow-sm` (igual que Bodega)
-- Folio con icono `FileText` y badges de estado/monto alineados
+Mapear `payment_terms` en el resultado del parser para que el importador pueda auto-detectar si es crédito.
 
-### 6. Alertas dark mode
-- Agregar clases `dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-200` a alertas de duplicados
-- Lo mismo para alertas de coincidencia (`dark:bg-blue-950/20`)
+### 3. Modificar `src/components/costs/XMLCostUpload.tsx` — Auto-detectar condición desde XML
+Cuando el XML trae `FmaPago = 2` (crédito) y tiene `FchVenc`, auto-configurar:
+- Condición del proveedor: `'credit'`
+- Fecha de vencimiento: `FchVenc` del XML
+- `payment_date` del costo: `null` (pendiente)
 
-### 7. Panel lateral (columna derecha)
-- Mover opciones de importacion y boton de accion a un sidebar fijo como en Bodega
-- Resumen inline: "X documentos - $X.XXX"
+Cuando `FmaPago = 1` (contado):
+- `payment_date = emissionDate` (pagado inmediatamente)
 
-## Cambios en `src/components/suppliers/XMLDocumentUpload.tsx`
+### 4. Migración SQL — Ajustar trigger para pagos futuros
+Modificar `create_supplier_payment_from_cost` para que cuando `payment_date` sea `null`, cree el pago como `pending` con `due_date` tomado de un campo adicional o calculado:
 
-Aplicar exactamente los mismos cambios que en Costos:
-- Dialog ampliado con header con gradiente
-- Drop zone con badges y gradiente radial
-- Stats cards con gradientes y bordes de color
-- Proveedores como mini-cards con borde lateral
-- Documentos como cards con sombra
-- Dark mode en alertas
-- Panel lateral con opciones y boton de accion
+```sql
+effective_status := CASE 
+  WHEN NEW.payment_date IS NOT NULL THEN 'paid' 
+  ELSE 'pending' 
+END;
+```
+Esta lógica ya existe y es correcta — el problema es que el importador siempre envía `payment_date` con valor.
 
 ## Archivos a modificar
-- `src/components/costs/XMLCostUpload.tsx` (solo clases CSS y estructura JSX)
-- `src/components/suppliers/XMLDocumentUpload.tsx` (solo clases CSS y estructura JSX)
+- `src/utils/xmlParser/xmlSupplierParser.ts` — extraer `FmaPago`
+- `src/components/costs/XMLCostUpload.tsx` — lógica de payment_date y auto-detección
+- Migración SQL (opcional) — si se necesita un campo `due_date` en costs
 
-## Sin riesgo funcional
-Todos los cambios son puramente visuales: clases de Tailwind, estructura de divs, e iconografia. No se modifica estado, logica de procesamiento, ni llamadas a base de datos.
+## Resultado esperado
+- Crédito → costo con `payment_date = null`, pago de proveedor `status: 'pending'`, icono rojo (pendiente)
+- Contado → costo con `payment_date = fecha emisión`, pago `status: 'paid'`, icono verde
 
