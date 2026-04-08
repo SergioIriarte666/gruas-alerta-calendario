@@ -254,32 +254,15 @@ Cuando necesites consultar la base de datos, usa la función query_database.`;
           signal: AbortSignal.timeout(8000),
         });
 
-        if (error) {
-          // Fallback: try direct query via PostgREST won't work, so use a simple approach
-          console.error('RPC error, trying raw:', error.message);
-          // Use the service role client to query directly
-          const pgResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/execute_readonly_query`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${supabaseServiceKey}`,
-              'apikey': supabaseServiceKey,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=representation',
-            },
-            body: JSON.stringify({ query_text: sql }),
-          });
-
-          if (!pgResponse.ok) {
-            // Last resort: tell AI the query failed
-            queryResult = { error: `Error ejecutando la consulta: ${error.message}` };
-          } else {
-            queryResult = await pgResponse.json();
-          }
+        if (!pgResponse.ok) {
+          const errText = await pgResponse.text();
+          console.error('Query execution error:', errText);
+          queryResult = { error: `Error ejecutando la consulta: ${errText.slice(0, 200)}` };
         } else {
-          queryResult = data;
+          queryResult = await pgResponse.json();
         }
       } catch (e) {
-        clearTimeout(timeout);
+        console.error('Query timeout/error:', e.message);
         queryResult = { error: `Timeout o error en la consulta: ${e.message}` };
       }
 
