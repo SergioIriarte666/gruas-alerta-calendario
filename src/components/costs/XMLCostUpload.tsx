@@ -1161,9 +1161,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Suppliers Preview */}
               {parseResult.suppliers.length > 0 && (
-                <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Building className="h-5 w-5" />
                       Proveedores Encontrados ({parseResult.suppliers.length})
                     </CardTitle>
@@ -1171,7 +1171,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                       {parseResult.suppliers.map((supplier, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                        <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={selectedSuppliers.has(supplier.rut)}
