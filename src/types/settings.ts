@@ -37,6 +37,7 @@ export interface SystemSettings {
   dataRetention: number;
   maintenanceMode: boolean;
   reportColumnConfig?: ReportColumnsConfig;
+  aiChatEnabled?: boolean;
 }
 
 export interface NotificationSettings {
