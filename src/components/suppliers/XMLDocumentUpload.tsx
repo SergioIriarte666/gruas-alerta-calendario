@@ -814,35 +814,63 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-card border suppliers-scope">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5" />
-            Importar Documentos XML
-          </DialogTitle>
-          
+      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl suppliers-scope">
+        <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <DialogTitle className="flex items-center gap-2 text-xl">
+                <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                  <FileSpreadsheet className="h-5 w-5" />
+                </span>
+                Importar Documentos XML
+              </DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Analiza documentos XML, detecta duplicados y registra pagos a proveedores.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedFile ? (
+                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
+                  Archivo: {selectedFile.name}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
+                  Esperando XML
+                </Badge>
+              )}
+              {parseResult && (
+                <Badge variant="secondary" className="px-3 py-1 text-xs">
+                  {parseResult.totalDocuments} doc(s)
+                </Badge>
+              )}
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 pb-6 pt-4">
           {/* Upload Area */}
-          {!selectedFile && <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-muted hover:border-border'}`}>
+          {!selectedFile && <div {...getRootProps()} className={cn(
+            'relative overflow-hidden border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
+            isDragActive
+              ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+              : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
+          )}>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
               <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML aquí'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
+              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+                <Upload className="h-8 w-8" />
+              </div>
+              <p className="relative font-semibold text-base">
+                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
+              </p>
+              <p className="relative mt-1 text-sm text-muted-foreground">
                 o haz clic para seleccionar un archivo
               </p>
-              <Button variant="outline" onClick={() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.xml';
-            input.onchange = handleFileSelect;
-            input.click();
-          }}>
-                Seleccionar Archivo
-              </Button>
+              <div className="relative mt-4 flex flex-wrap justify-center gap-2">
+                <Badge variant="secondary" className="bg-background/80">Detección de duplicados</Badge>
+                <Badge variant="secondary" className="bg-background/80">Pago automático</Badge>
+                <Badge variant="secondary" className="bg-background/80">Categorización</Badge>
+              </div>
             </div>}
 
           {/* File Info */}
