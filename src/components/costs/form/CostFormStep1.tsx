@@ -149,6 +149,13 @@ export const CostFormStep1 = ({
                     />
                   )}
                 </FormControl>
+                <AiCategorySuggestion
+                  categoryName={categoryName}
+                  subcategory={suggestion?.subcategory || null}
+                  isClassifying={isClassifying}
+                  onApply={handleApplySuggestion}
+                  className="mt-1"
+                />
                 <FormMessage />
               </FormItem>
             );
