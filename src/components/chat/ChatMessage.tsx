@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ role, content }) => {
         ) : (
           <div className="chat-markdown-content">
             <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 table: ({ children }) => (
                   <div className="overflow-x-auto my-2 rounded border border-border">
