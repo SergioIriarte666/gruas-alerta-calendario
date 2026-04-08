@@ -10,6 +10,8 @@ import { CostFormValues } from '@/schemas/costSchema';
 import { CostCombobox } from './CostCombobox';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
+import { useAutoClassify } from '@/hooks/useAutoClassify';
+import { AiCategorySuggestion } from './AiCategorySuggestion';
 
 interface CostFormStep1Props {
   form: UseFormReturn<CostFormValues>;
@@ -26,6 +28,31 @@ export const CostFormStep1 = ({
   isNewCost = false,
   onServiceExpenseSelect,
 }: CostFormStep1Props) => {
+  const watchedDescription = form.watch('description');
+  const watchedCategoryId = form.watch('category_id');
+
+  const { suggestion, isClassifying, categoryName, clearSuggestion } = useAutoClassify(
+    watchedDescription || '',
+    watchedCategoryId || null,
+  );
+
+  const handleApplySuggestion = () => {
+    if (!suggestion?.category_id) return;
+    form.setValue('category_id', suggestion.category_id);
+    if (suggestion.subcategory) {
+      form.setValue('subcategory', suggestion.subcategory);
+    }
+    // Set default cost center from category
+    const category = categories.find(cat => cat.id === suggestion.category_id);
+    if (category?.default_cost_center_id) {
+      const currentCostCenterId = form.getValues('cost_center_id');
+      if (!currentCostCenterId || currentCostCenterId === 'none') {
+        form.setValue('cost_center_id', category.default_cost_center_id);
+      }
+    }
+    clearSuggestion();
+  };
+
   return (
     <div className="space-y-4">
       <ColoredSectionCard
