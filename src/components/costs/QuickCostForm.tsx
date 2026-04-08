@@ -22,6 +22,8 @@ import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { useAutoClassify } from '@/hooks/useAutoClassify';
+import { AiCategorySuggestion } from '@/components/costs/form/AiCategorySuggestion';
 
 const quickCostSchema = z.object({
   date: z.string().min(1, 'La fecha es requerida'),
@@ -87,6 +89,22 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
   const watchedCategoryId = watch('category_id');
   const watchedAmount = watch('amount');
   const watchedDate = watch('date');
+  const watchedDescription = watch('description');
+
+  const { suggestion, isClassifying, categoryName, clearSuggestion } = useAutoClassify(
+    watchedDescription || '',
+    watchedCategoryId || null,
+  );
+
+  const handleApplySuggestion = () => {
+    if (!suggestion?.category_id) return;
+    setValue('category_id', suggestion.category_id);
+    setSelectedCategoryId(suggestion.category_id);
+    if (suggestion.subcategory) {
+      setValue('subcategory', suggestion.subcategory);
+    }
+    clearSuggestion();
+  };
 
   useEffect(() => {
     if (watchedCategoryId && watchedCategoryId !== selectedCategoryId) {
@@ -240,6 +258,13 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
             {errors.description && (
               <p className="text-xs text-destructive">{errors.description.message}</p>
             )}
+            <AiCategorySuggestion
+              categoryName={categoryName}
+              subcategory={suggestion?.subcategory || null}
+              isClassifying={isClassifying}
+              onApply={handleApplySuggestion}
+              className="mt-1"
+            />
           </div>
 
           <div className="space-y-2">
