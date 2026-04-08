@@ -168,6 +168,8 @@ export interface XMLDocumentData {
   supplier_rut: string;
   status?: string;
   payment_terms?: string;
+  /** FmaPago del SII: 1=Contado, 2=Crédito, 3=Sin costo */
+  payment_method_code?: number;
   items?: XMLDocumentItem[];
 }
 
