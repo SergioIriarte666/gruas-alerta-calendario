@@ -1446,22 +1446,28 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               )}
 
               {/* Actions */}
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={reset} disabled={isUploading}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleUploadCosts}
-                  disabled={isUploading || selectedDocuments.size === 0}
-                  className="bg-tms-green hover:bg-tms-green/80"
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Database className="h-4 w-4 mr-2" />
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {selectedDocuments.size > 0 && (
+                    <span>{selectedDocuments.size} documento(s) · <strong>${selectedTotal.toLocaleString('es-CL')}</strong></span>
                   )}
-                  Cargar {selectedDocuments.size} Gastos
-                </Button>
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={reset} disabled={isUploading}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleUploadCosts}
+                    disabled={isUploading || selectedDocuments.size === 0}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Database className="h-4 w-4 mr-2" />
+                    )}
+                    Cargar {selectedDocuments.size} Gastos
+                  </Button>
+                </div>
               </div>
             </div>
           )}
