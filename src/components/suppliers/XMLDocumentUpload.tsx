@@ -401,6 +401,27 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     const value = (override ?? buildSuggestedGlosa(doc)).trim();
     return value.length > 0 ? value : buildSuggestedGlosa(doc);
   };
+  // Helper: find supplier in DB by normalized RUT (fallback when in-memory list fails)
+  const findSupplierInDb = async (rut: string): Promise<string | null> => {
+    const normalizedRut = rut.replace(/[^0-9kK]/gi, '').toUpperCase();
+    if (!normalizedRut) return null;
+    
+    // Try exact match first, then normalized match
+    const { data } = await (supabase as any)
+      .from('inventory_suppliers')
+      .select('id, rut')
+      .order('created_at', { ascending: false });
+    
+    if (!data) return null;
+    
+    const match = data.find((s: any) => {
+      const dbRut = (s.rut || '').replace(/[^0-9kK]/gi, '').toUpperCase();
+      return dbRut === normalizedRut;
+    });
+    
+    return match?.id || null;
+  };
+
   const handleUploadData = async () => {
     if (!parseResult) return;
     setIsUploading(true);
@@ -408,6 +429,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     try {
       const totalItems = selectedSuppliers.size + (createPayments ? selectedDocuments.size : 0);
       let processed = 0;
+      let suppliersCreated = 0;
+      let suppliersReused = 0;
+      let suppliersFailed = 0;
+      let paymentsCreated = 0;
+      let paymentsFailed = 0;
 
       // Create suppliers first
       const createdSupplierMap = new Map<string, string>();
@@ -416,52 +442,71 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       for (const supplier of parseResult.suppliers) {
         if (!selectedSuppliers.has(supplier.rut)) continue;
         try {
-          // Check if supplier already exists
+          // Check if supplier already exists in memory
           const existingSupplier = findSupplierByIdentity(suppliers, supplier);
           if (!existingSupplier) {
-            await new Promise<void>((resolve, reject) => {
-              createSupplier({
-                ...supplier,
-                category: supplierCategoryMapping[supplier.rut] || supplier.category
-              }, {
-                onSuccess: newSupplier => {
-                  createdSupplierMap.set(supplier.rut, newSupplier.id);
-                  resolve();
-                },
-                onError: reject
+            try {
+              await new Promise<void>((resolve, reject) => {
+                createSupplier({
+                  ...supplier,
+                  category: supplierCategoryMapping[supplier.rut] || supplier.category
+                }, {
+                  onSuccess: newSupplier => {
+                    createdSupplierMap.set(supplier.rut, newSupplier.id);
+                    suppliersCreated++;
+                    resolve();
+                  },
+                  onError: reject
+                });
               });
-            });
+            } catch (createError) {
+              // Fallback: search directly in DB (handles RLS or race conditions)
+              console.warn(`Create failed for ${supplier.name}, trying DB lookup...`);
+              const dbSupplierId = await findSupplierInDb(supplier.rut);
+              if (dbSupplierId) {
+                createdSupplierMap.set(supplier.rut, dbSupplierId);
+                suppliersReused++;
+              } else {
+                console.error(`Could not find or create supplier ${supplier.name}`);
+                suppliersFailed++;
+              }
+            }
           } else {
             createdSupplierMap.set(supplier.rut, existingSupplier.id);
+            suppliersReused++;
           }
           
           // Persist supplier credit/default payment term configuration
-          const condition = getSupplierCondition(supplier.rut);
-          const updateData: Record<string, any> = {};
-          if (condition === 'credit') {
-            updateData.credit_date = supplierCreditDate[supplier.rut] || null;
-            updateData.default_payment_term_id = null;
-          } else if (condition !== 'none') {
-            updateData.default_payment_term_id = condition;
-            updateData.credit_date = null;
-          } else {
-            updateData.default_payment_term_id = null;
-            updateData.credit_date = null;
-          }
-          if (Object.keys(updateData).length > 0) {
-            try {
-              await (supabase as any)
-                .from('inventory_suppliers')
-                .update(updateData)
-                .eq('id', createdSupplierMap.get(supplier.rut));
-            } catch (e) {
-              console.error('Error actualizando configuración de crédito/condición:', e);
+          const mappedId = createdSupplierMap.get(supplier.rut);
+          if (mappedId) {
+            const condition = getSupplierCondition(supplier.rut);
+            const updateData: Record<string, any> = {};
+            if (condition === 'credit') {
+              updateData.credit_date = supplierCreditDate[supplier.rut] || null;
+              updateData.default_payment_term_id = null;
+            } else if (condition !== 'none') {
+              updateData.default_payment_term_id = condition;
+              updateData.credit_date = null;
+            } else {
+              updateData.default_payment_term_id = null;
+              updateData.credit_date = null;
+            }
+            if (Object.keys(updateData).length > 0) {
+              try {
+                await (supabase as any)
+                  .from('inventory_suppliers')
+                  .update(updateData)
+                  .eq('id', mappedId);
+              } catch (e) {
+                console.error('Error actualizando configuración de crédito/condición:', e);
+              }
             }
           }
           processed++;
           setUploadProgress(processed / totalItems * 100);
         } catch (error) {
-          console.error(`Error creating supplier ${supplier.name}:`, error);
+          console.error(`Error processing supplier ${supplier.name}:`, error);
+          suppliersFailed++;
         }
       }
 
@@ -481,8 +526,20 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
         for (const paymentData of paymentsData) {
           try {
-            const supplierId = createdSupplierMap.get(paymentData.supplier_rut);
-            if (!supplierId) continue;
+            let supplierId = createdSupplierMap.get(paymentData.supplier_rut);
+            
+            // Fallback: try DB lookup if not in map
+            if (!supplierId) {
+              const dbId = await findSupplierInDb(paymentData.supplier_rut);
+              if (dbId) {
+                supplierId = dbId;
+                createdSupplierMap.set(paymentData.supplier_rut, dbId);
+              } else {
+                console.error(`No supplier found for RUT ${paymentData.supplier_rut}, skipping payment`);
+                paymentsFailed++;
+                continue;
+              }
+            }
             
             // Determinar status y fecha de pago
             const docFolio = paymentData.reference_number || '';
@@ -615,12 +672,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               });
             });
 
+            paymentsCreated++;
             // Cost creation is handled automatically by the DB trigger
             // create_cost_from_supplier_payment on supplier_payments INSERT
             processed++;
             setUploadProgress(processed / totalItems * 100);
           } catch (error) {
             console.error(`Error creating payment:`, error);
+            paymentsFailed++;
           }
         }
 
@@ -631,9 +690,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           toast.success(`🔗 ${linkedCount} factura(s) vinculada(s) a costos existentes`);
         }
       }
-      toast.success(`Importación completada: ${selectedSuppliers.size} proveedores${createPayments ? ` y ${selectedDocuments.size} pagos` : ''} procesados`);
-      onSuccess();
-      onClose();
+
+      // Report accurate results
+      const totalSuccesses = (suppliersCreated + suppliersReused) + paymentsCreated;
+      const totalFailures = suppliersFailed + paymentsFailed;
+      
+      if (totalFailures > 0 && totalSuccesses === 0) {
+        toast.error(`Importación fallida: no se pudieron crear los registros. Verifica tu sesión e intenta nuevamente.`);
+      } else if (totalFailures > 0) {
+        toast.warning(`Importación parcial: ${paymentsCreated} pago(s) creado(s), ${totalFailures} error(es)`);
+        onSuccess();
+        onClose();
+      } else {
+        toast.success(`Importación completada: ${suppliersCreated > 0 ? `${suppliersCreated} proveedor(es) creado(s), ` : ''}${suppliersReused > 0 ? `${suppliersReused} existente(s), ` : ''}${paymentsCreated > 0 ? `${paymentsCreated} pago(s) registrado(s)` : 'sin pagos nuevos'}`);
+        onSuccess();
+        onClose();
+      }
     } catch (error) {
       console.error('Error uploading data:', error);
       toast.error('Error durante la importación');
