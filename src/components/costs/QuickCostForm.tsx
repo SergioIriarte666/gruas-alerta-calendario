@@ -258,6 +258,13 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
             {errors.description && (
               <p className="text-xs text-destructive">{errors.description.message}</p>
             )}
+            <AiCategorySuggestion
+              categoryName={categoryName}
+              subcategory={suggestion?.subcategory || null}
+              isClassifying={isClassifying}
+              onApply={handleApplySuggestion}
+              className="mt-1"
+            />
           </div>
 
           <div className="space-y-2">
