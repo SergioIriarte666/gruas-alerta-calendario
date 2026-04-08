@@ -5324,6 +5324,7 @@ export type Database = {
         Returns: Json
       }
       emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
+      execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       final_security_check: { Args: never; Returns: Json }
       find_duplicate_suppliers: {
         Args: never
