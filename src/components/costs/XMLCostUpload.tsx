@@ -974,57 +974,51 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           {parseResult && (
             <div className="space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Proveedores</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {parseResult.validSuppliers}/{parseResult.totalSuppliers}
-                        </p>
-                      </div>
+              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+                <Card className="border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:from-background dark:to-muted/20">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Proveedores</p>
+                      <div className="text-2xl font-semibold">{parseResult.validSuppliers}/{parseResult.totalSuppliers}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <Receipt className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Documentos</p>
-                        <p className="text-xl font-bold text-foreground">
-                          {parseResult.validDocuments}/{parseResult.totalDocuments}
-                        </p>
-                      </div>
+                <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm dark:from-emerald-950/30 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      <Receipt className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Documentos</p>
+                      <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{parseResult.validDocuments}/{parseResult.totalDocuments}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <AlertCircle className="h-5 w-5 text-destructive" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Errores</p>
-                        <p className="text-xl font-bold text-foreground">{parseResult.errors.length}</p>
-                      </div>
+                <Card className="border-red-200/80 bg-gradient-to-br from-red-50 to-white shadow-sm dark:from-red-950/20 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-red-100 p-3 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                      <AlertCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Errores</p>
+                      <div className="text-2xl font-semibold text-red-600 dark:text-red-400">{parseResult.errors.length}</div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-5 w-5 text-yellow-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Selec.</p>
-                        <p className="text-xl font-bold text-foreground">
-                          ${selectedTotal.toLocaleString('es-CL')}
-                        </p>
-                      </div>
+                <Card className="border-blue-200/80 bg-gradient-to-br from-blue-50 to-white shadow-sm dark:from-blue-950/20 dark:to-background">
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="rounded-xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                      <DollarSign className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Selec.</p>
+                      <div className="text-2xl font-semibold">${selectedTotal.toLocaleString('es-CL')}</div>
                     </div>
                   </CardContent>
                 </Card>
