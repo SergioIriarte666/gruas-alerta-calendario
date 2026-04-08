@@ -285,7 +285,20 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       }
 
       uniqueSuppliers.forEach(s => {
-        if (!initialSupplierCondition[s.rut]) initialSupplierCondition[s.rut] = 'none';
+        if (!initialSupplierCondition[s.rut]) {
+          // Auto-detect from XML FmaPago if available
+          const supplierDocs = result.documents.filter(d => d.supplier_rut === s.rut);
+          const firstDocWithFmaPago = supplierDocs.find(d => d.payment_method_code !== undefined);
+          if (firstDocWithFmaPago?.payment_method_code === 2) {
+            // FmaPago=2 → Crédito
+            initialSupplierCondition[s.rut] = 'credit';
+            if (firstDocWithFmaPago.due_date) {
+              initialSupplierCreditDate[s.rut] = firstDocWithFmaPago.due_date;
+            }
+          } else {
+            initialSupplierCondition[s.rut] = 'none';
+          }
+        }
       });
 
       setSupplierPaymentCondition(initialSupplierCondition);
