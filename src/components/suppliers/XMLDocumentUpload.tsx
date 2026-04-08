@@ -1167,9 +1167,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </Card>}
 
               {/* Documents Preview */}
-              {parseResult.documents.length > 0 && <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+              {parseResult.documents.length > 0 && <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Receipt className="h-5 w-5" />
                       Documentos Encontrados ({parseResult.documents.length})
                     </CardTitle>
@@ -1187,25 +1187,23 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                           })();
                         const hasCustomDate = !!dueDateOverrides[document.folio];
                         
-                        // Obtener info de duplicado
                         const duplicateInfo = getDuplicateInfoByFolio(document.folio);
                         const isDuplicate = !!duplicateInfo;
                         
-                        // Obtener costos coincidentes
                         const costsForDoc = matchedCosts[document.folio] || [];
                         const hasMatches = costsForDoc.length > 0;
                         const currentDecision = linkDecisions[document.folio] || 'new';
                         
                         return (
                           <div key={index} className={cn(
-                            "flex flex-col p-3 rounded gap-2",
+                            "flex flex-col p-3 rounded-lg gap-2 shadow-sm border",
                             hasMatches && currentDecision !== 'new'
-                              ? "bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                              ? "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
                               : isDuplicate && duplicateInfo.matchType === 'exact_folio'
-                              ? "bg-red-50 border border-red-200"
+                              ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
                               : isDuplicate && duplicateInfo.matchType === 'similar'
-                              ? "bg-yellow-50 border border-yellow-200"
-                              : "bg-muted/50"
+                              ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800"
+                              : "bg-muted/30 border-border/60"
                           )}>
                             {/* Matched cost selector */}
                             {hasMatches && (
