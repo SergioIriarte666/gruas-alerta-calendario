@@ -4560,6 +4560,7 @@ export type Database = {
       }
       system_settings: {
         Row: {
+          ai_chat_enabled: boolean
           auto_backup: boolean
           backup_frequency: string
           created_at: string
@@ -4578,6 +4579,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_chat_enabled?: boolean
           auto_backup?: boolean
           backup_frequency?: string
           created_at?: string
@@ -4596,6 +4598,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_chat_enabled?: boolean
           auto_backup?: boolean
           backup_frequency?: string
           created_at?: string
@@ -5321,6 +5324,7 @@ export type Database = {
         Returns: Json
       }
       emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
+      execute_readonly_query: { Args: { query_text: string }; Returns: Json }
       final_security_check: { Args: never; Returns: Json }
       find_duplicate_suppliers: {
         Args: never
