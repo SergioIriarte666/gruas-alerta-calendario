@@ -1178,8 +1178,10 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                               onCheckedChange={() => toggleSupplierSelection(supplier.rut)}
                             />
                             <div className="min-w-0 flex-1">
-                              <p className="text-foreground font-medium truncate">{supplier.name}</p>
-                              <p className="text-sm text-muted-foreground">{supplier.rut}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-foreground font-medium truncate">{supplier.name}</p>
+                                <Badge variant="outline" className="text-xs">{supplier.rut}</Badge>
+                              </div>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
@@ -1268,9 +1270,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Documents Preview */}
               {parseResult.documents.length > 0 && (
-                <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Receipt className="h-5 w-5" />
                       Documentos Encontrados ({parseResult.documents.length})
                     </CardTitle>
