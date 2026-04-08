@@ -279,37 +279,6 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* Asistente IA */}
-      <Card className="bg-card border">
-        <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
-            <Bot className="w-5 h-5 text-tms-green" />
-            <span>Asistente IA</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 bg-white p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-black">Chat con tus Datos</Label>
-              <p className="text-sm text-gray-600">
-                Permite consultar datos del sistema usando lenguaje natural con inteligencia artificial
-              </p>
-            </div>
-            <Switch
-              checked={settings.aiChatEnabled ?? true}
-              onCheckedChange={(checked) => onUpdateSettings({ aiChatEnabled: checked })}
-            />
-          </div>
-          <Button 
-            onClick={onSave}
-            disabled={saving}
-            className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Guardando...' : 'Guardar Configuración'}
-          </Button>
-        </CardContent>
-      </Card>
 
       {/* Gestión de Respaldos */}
       <BackupManagementSection />
