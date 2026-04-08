@@ -1,68 +1,65 @@
 
 
-# Plan: Clasificación Automática de Costos con IA
+# Plan: Chat con tus Datos + Toggle en Configuración
 
-## Qué es
-Cuando el usuario escribe la **descripción** de un costo (en el formulario principal, el QuickCostForm, o la carga masiva), el sistema sugiere automáticamente la **categoría** y **subcategoría** más probable usando IA, basándose en el texto ingresado y el catálogo real de categorías/subcategorías de la base de datos.
-
-## Cómo funciona
-
-```text
-Usuario escribe descripción
-        ↓
-  Debounce 800ms
-        ↓
-  Edge Function "classify-cost"
-  (recibe descripción + lista de categorías/subcategorías)
-        ↓
-  OpenAI gpt-4o-mini responde con category_id + subcategory
-        ↓
-  UI muestra sugerencia como chip/badge clickeable
-  "¿Sugerir: Combustible > Diesel?"
-        ↓
-  Usuario acepta (1 click) o ignora
-```
+## Resumen
+Implementar el asistente de chat IA que consulta datos del TMS en lenguaje natural, junto con un toggle en Configuración > Sistema para activar/desactivar la funcionalidad.
 
 ## Cambios
 
-### 1. Nueva Edge Function `classify-cost`
-- Recibe: `{ description: string, categories: { id, name, subcategories: string[] }[] }`
-- Prompt del sistema: "Dado este catálogo de categorías, clasifica la descripción del gasto. Responde SOLO con el JSON `{ category_id, subcategory }` o `null` si no hay confianza suficiente."
-- Usa `gpt-4o-mini` (mismo patrón que `parse-receipt-image`)
-- Responde en <1s típicamente
+### 1. Migración: agregar columna `ai_chat_enabled` a `system_settings`
+```sql
+ALTER TABLE system_settings 
+ADD COLUMN ai_chat_enabled boolean NOT NULL DEFAULT true;
+```
 
-### 2. Hook `useAutoClassify`
-- Acepta la descripción como input
-- Debounce de 800ms para no disparar en cada tecla
-- Solo dispara si la descripción tiene ≥5 caracteres
-- Retorna `{ suggestedCategoryId, suggestedSubcategory, isClassifying, confidence }`
-- Cache por descripción para no repetir llamadas
+### 2. Edge Function `chat-with-data`
+- Recibe `{ messages: [{role, content}] }` con historial de conversación
+- System prompt incluye esquema resumido de tablas principales (services, costs, invoices, clients, cranes, operators, payments, incomes, crane_maintenance, inventory_items, debts)
+- Flujo en 2 pasos: IA genera SQL (solo SELECT, whitelist de tablas) → ejecuta query → IA formatea respuesta en lenguaje natural
+- Usa `OPENAI_API_KEY` con `gpt-4o-mini` (consistente con classify-cost y parse-receipt-image)
+- Validación JWT + validación estricta de solo SELECT
+- Timeout 5s por query, max 1000 filas
 
-### 3. UI — Badge de sugerencia en los formularios
-- En `CostForm` (Step 1, debajo del campo descripción) y `QuickCostForm`
-- Muestra un badge tipo: `💡 Sugerencia: Combustible → Diesel` con botón "Aplicar"
-- Al hacer click, setea `category_id` y `subcategory` en el form
-- Si el usuario ya seleccionó categoría manualmente, no se muestra
-- Estilo consistente con los badges existentes del módulo de costos
+### 3. Componente `DataChatWidget`
+- FAB flotante (icono MessageSquare) en esquina inferior derecha, posicionado sobre el QuickEntryFAB existente
+- Panel expandible 400x600px con historial de mensajes + input
+- Renderizado con `react-markdown` para tablas y formato
+- Estado efímero (no persiste en BD)
+- Indicador de "pensando..." mientras procesa
+- Solo visible si `ai_chat_enabled` está activo en system_settings
 
-### 4. Integración con carga masiva (XMLCostUpload / Excel)
-- En la previsualización, para líneas sin categoría asignada, ejecutar clasificación en batch
-- Mostrar la sugerencia en la columna de categoría con opción de aceptar/rechazar
+### 4. Componente `ChatMessage`
+- Burbuja de mensaje con diferenciación user/assistant
+- Soporte markdown (tablas, listas, negrita)
 
-### 5. Integración con `parse-receipt-image` (ya existente)
-- Extender el prompt del receipt parser para que también devuelva `suggestedCategory` basándose en el nombre del vendor y los ítems
-- Cuando el receipt parser devuelve datos, también pre-llenar la categoría
+### 5. Hook `useAiChatEnabled`
+- Lee `ai_chat_enabled` de `system_settings` 
+- Retorna boolean para condicionar la visibilidad del widget
 
-## Archivos a crear/modificar
-- **Nuevo**: `supabase/functions/classify-cost/index.ts`
-- **Nuevo**: `src/hooks/useAutoClassify.ts`
-- **Modificar**: `src/components/costs/form/CostFormStep1.tsx` — agregar badge de sugerencia
-- **Modificar**: `src/components/costs/QuickCostForm.tsx` — agregar badge de sugerencia
-- **Opcional fase 2**: `src/components/costs/XMLCostUpload.tsx` — clasificación batch
+### 6. Toggle en `SystemSettingsTab`
+- Nueva sección "Asistente IA" con icono Bot/MessageSquare
+- Switch para activar/desactivar el chat con datos
+- Descripción: "Permite consultar datos del sistema usando lenguaje natural"
+- Se guarda junto con el resto de system settings (misma lógica existente)
 
-## Consideraciones
-- La clasificación es **sugerencia**, nunca forzada — el usuario siempre tiene control
-- Se usa el catálogo real de categorías del usuario (no hardcodeado)
-- Costo por llamada: ~0.001 USD (gpt-4o-mini con ~200 tokens)
-- Si no hay API key configurada, la feature simplemente no aparece
+### 7. Integración en `Layout.tsx`
+- Agregar `DataChatWidget` condicionado a `ai_chat_enabled`
+- Solo visible para usuarios autenticados
+
+## Archivos a crear
+- `supabase/functions/chat-with-data/index.ts`
+- `src/components/chat/DataChatWidget.tsx`
+- `src/components/chat/ChatMessage.tsx`
+- `src/hooks/useAiChatEnabled.ts`
+
+## Archivos a modificar
+- Migración SQL (nueva columna en system_settings)
+- `src/hooks/useSystemSettings.ts` — agregar `ai_chat_enabled` al fetch/save
+- `src/types/settings.ts` — agregar `aiChatEnabled` a `SystemSettings`
+- `src/components/settings/SystemSettingsTab.tsx` — agregar sección toggle IA
+- `src/components/layout/Layout.tsx` — montar widget
+
+## Dependencias
+- `react-markdown` (instalar)
 
