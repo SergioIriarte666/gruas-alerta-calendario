@@ -327,7 +327,7 @@ export const EnhancedCostsTable = ({
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   )
                 ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground/40" />
+                  <Circle className="h-5 w-5 text-red-400" />
                 )}
               </span>
             </TooltipTrigger>
