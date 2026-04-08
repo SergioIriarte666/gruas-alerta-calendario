@@ -459,6 +459,7 @@ export class XMLSupplierParser {
     const tipoDTE = getNestedValue('Documento/Encabezado/IdDoc/TipoDTE');
     const fechaEmision = getNestedValue('Documento/Encabezado/IdDoc/FchEmis');
     const fechaVencimiento = getNestedValue('Documento/Encabezado/IdDoc/FchVenc');
+    const fmaPago = getNestedValue('Documento/Encabezado/IdDoc/FmaPago');
     
     // Extraer totales
     const montoNeto = getNestedNumber('Documento/Encabezado/Totales/MntNeto');
@@ -511,6 +512,8 @@ export class XMLSupplierParser {
 
     if (!folio || !rutEmisor) return null;
 
+    const paymentMethodCode = fmaPago ? parseInt(fmaPago, 10) : undefined;
+
     return {
       folio: folio,
       document_type: this.getDocumentTypeLabel(tipoDTE),
@@ -525,6 +528,7 @@ export class XMLSupplierParser {
         : razonSocial,
       supplier_rut: this.formatRUT(rutEmisor),
       status: 'emitido',
+      payment_method_code: paymentMethodCode && !isNaN(paymentMethodCode) ? paymentMethodCode : undefined,
       items: items.length > 0 ? items : undefined
     };
   }

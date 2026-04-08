@@ -285,7 +285,20 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       }
 
       uniqueSuppliers.forEach(s => {
-        if (!initialSupplierCondition[s.rut]) initialSupplierCondition[s.rut] = 'none';
+        if (!initialSupplierCondition[s.rut]) {
+          // Auto-detect from XML FmaPago if available
+          const supplierDocs = result.documents.filter(d => d.supplier_rut === s.rut);
+          const firstDocWithFmaPago = supplierDocs.find(d => d.payment_method_code !== undefined);
+          if (firstDocWithFmaPago?.payment_method_code === 2) {
+            // FmaPago=2 → Crédito
+            initialSupplierCondition[s.rut] = 'credit';
+            if (firstDocWithFmaPago.due_date) {
+              initialSupplierCreditDate[s.rut] = firstDocWithFmaPago.due_date;
+            }
+          } else {
+            initialSupplierCondition[s.rut] = 'none';
+          }
+        }
       });
 
       setSupplierPaymentCondition(initialSupplierCondition);
@@ -715,8 +728,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         }
 
         const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
-        const computedDueDate = getComputedDueDate(doc);
-        const paymentDate = dueDateOverrides[doc.folio] || computedDueDate || format(addDays(safeParseDateOnly(emissionDate), 30), 'yyyy-MM-dd');
+        const condition = getSelectedCondition(doc.supplier_rut);
+        // Contado (none) → pagado inmediatamente con fecha de emisión
+        // Crédito → payment_date = null (pendiente, no pagado aún)
+        const paymentDate = condition === 'none' 
+          ? emissionDate 
+          : null;
 
         const costData = {
           date: emissionDate,
