@@ -105,7 +105,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                                             <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
                                                         )
                                                     ) : (
-                                                        <Circle className="h-5 w-5 text-gray-500 mx-auto" />
+                                                        <Circle className="h-5 w-5 text-red-400 mx-auto" />
                                                     )}
                                                 </TooltipTrigger>
                                                 <TooltipContent>
