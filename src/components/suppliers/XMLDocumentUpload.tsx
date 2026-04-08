@@ -1014,7 +1014,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Checking duplicates indicator */}
               {isCheckingDuplicates && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
                 </div>
@@ -1030,7 +1030,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Cost matching summary */}
               {Object.keys(matchedCosts).length > 0 && (
-                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
                   <Link2 className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-800 dark:text-blue-200">
                     <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
@@ -1064,16 +1064,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </div>}
 
               {/* Suppliers Preview */}
-              {parseResult.suppliers.length > 0 && <Card className="bg-card border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground flex items-center gap-2">
+              {parseResult.suppliers.length > 0 && <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
                       <Building className="h-5 w-5" />
                       Proveedores Encontrados ({parseResult.suppliers.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
                           <div className="flex items-center space-x-3">
                             <Checkbox checked={selectedSuppliers.has(supplier.rut)} onCheckedChange={checked => {
                       if (checked === true) {
@@ -1083,8 +1083,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       }
                     }} />
                             <div className="min-w-0 flex-1">
-                              <p className="text-foreground font-medium truncate">{supplier.name}</p>
-                              <p className="text-sm text-muted-foreground">{supplier.rut}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-foreground font-medium truncate">{supplier.name}</p>
+                                <Badge variant="outline" className="text-xs">{supplier.rut}</Badge>
+                              </div>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
