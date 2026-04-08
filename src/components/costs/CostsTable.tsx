@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Eye, CheckCircle, Circle } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, CheckCircle, Circle, CalendarClock } from 'lucide-react';
+import { format } from 'date-fns';
 import { Cost } from '@/types/costs';
 import { useDeleteCost } from '@/hooks/useCosts';
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,13 +99,21 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                             <Tooltip>
                                                 <TooltipTrigger>
                                                     {cost.payment_date ? (
-                                                        <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                                                        new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
+                                                            <CalendarClock className="h-5 w-5 text-amber-500 mx-auto" />
+                                                        ) : (
+                                                            <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                                                        )
                                                     ) : (
                                                         <Circle className="h-5 w-5 text-gray-500 mx-auto" />
                                                     )}
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    {cost.payment_date ? 'Pagado' : 'Pendiente'}
+                                                    {cost.payment_date
+                                                        ? new Date(cost.payment_date + 'T00:00:00') > new Date()
+                                                            ? `Pago programado - ${format(new Date(cost.payment_date + 'T00:00:00'), 'dd/MM/yyyy')}`
+                                                            : 'Pagado'
+                                                        : 'Pendiente'}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
