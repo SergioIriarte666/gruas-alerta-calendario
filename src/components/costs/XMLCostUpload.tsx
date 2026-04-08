@@ -727,9 +727,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           continue;
         }
 
-        const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
-        const computedDueDate = getComputedDueDate(doc);
-        const paymentDate = dueDateOverrides[doc.folio] || computedDueDate || format(addDays(safeParseDateOnly(emissionDate), 30), 'yyyy-MM-dd');
+        const condition = getSelectedCondition(doc.supplier_rut);
+        // Contado (none) → pagado inmediatamente con fecha de emisión
+        // Crédito → payment_date = null (pendiente, no pagado aún)
+        const paymentDate = condition === 'none' 
+          ? emissionDate 
+          : null;
 
         const costData = {
           date: emissionDate,
