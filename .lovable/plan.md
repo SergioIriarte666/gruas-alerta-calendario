@@ -1,55 +1,68 @@
 
-# Plan: Auto-crear registro de Costo al completar un Mantenimiento
 
-## Análisis
+# Plan: Clasificación Automática de Costos con IA
 
-### Situación actual
-- La tabla `costs` ya tiene `maintenance_id` (FK a `crane_maintenance`) — la infraestructura existe.
-- El hook `useMaintenanceCostStatus` ya verifica si un mantenimiento tiene costo asociado.
-- La UI muestra "Sincronizando..." cuando un mantenimiento completado con monto > 0 no tiene costo — pero nada lo crea realmente.
-- No existe trigger ni lógica frontend que genere el costo automáticamente.
+## Qué es
+Cuando el usuario escribe la **descripción** de un costo (en el formulario principal, el QuickCostForm, o la carga masiva), el sistema sugiere automáticamente la **categoría** y **subcategoría** más probable usando IA, basándose en el texto ingresado y el catálogo real de categorías/subcategorías de la base de datos.
 
-### Pro de automatizarlo
-- Toda salida de dinero queda reflejada en Costos sin doble digitación.
-- Los reportes financieros y de grúa serán consistentes.
-- El badge "Sincronizando..." dejará de ser engañoso y mostrará "Costo Registrado".
-- La FK `maintenance_id` ya existe, solo hay que usarla.
+## Cómo funciona
 
-### Contra / Riesgo
-- Se necesita asignar una `category_id` (obligatoria en `costs`). Solución: buscar o crear la categoría "Mantenimiento".
-- Se necesita una `date` para el costo. Solución: usar `completed_date` o `scheduled_date`.
-- Si el usuario edita el monto del mantenimiento después, el costo debe actualizarse. Solución: hacerlo desde el frontend al actualizar.
-- Complejidad: **baja** — es agregar un `insert` a `costs` después del insert/update de mantenimiento.
-
-### Decisión: hacerlo desde el frontend (no trigger)
-Un trigger SQL añadiría complejidad y posibles conflictos con los triggers de sincronización de costos existentes. Hacerlo en el hook `useCreateMaintenance` / `useUpdateMaintenance` es más seguro, controlado y fácil de depurar.
+```text
+Usuario escribe descripción
+        ↓
+  Debounce 800ms
+        ↓
+  Edge Function "classify-cost"
+  (recibe descripción + lista de categorías/subcategorías)
+        ↓
+  OpenAI gpt-4o-mini responde con category_id + subcategory
+        ↓
+  UI muestra sugerencia como chip/badge clickeable
+  "¿Sugerir: Combustible > Diesel?"
+        ↓
+  Usuario acepta (1 click) o ignora
+```
 
 ## Cambios
 
-### 1. Consultar la categoría "Mantenimiento" en `cost_categories`
-En el hook, antes de insertar el costo, buscar `cost_categories` con nombre "Mantenimiento" (o similar). Si no existe, la migración la creará.
+### 1. Nueva Edge Function `classify-cost`
+- Recibe: `{ description: string, categories: { id, name, subcategories: string[] }[] }`
+- Prompt del sistema: "Dado este catálogo de categorías, clasifica la descripción del gasto. Responde SOLO con el JSON `{ category_id, subcategory }` o `null` si no hay confianza suficiente."
+- Usa `gpt-4o-mini` (mismo patrón que `parse-receipt-image`)
+- Responde en <1s típicamente
 
-### 2. Migración SQL (si es necesario)
-Verificar si existe la categoría "Mantenimiento" en `cost_categories`. Si no:
-```sql
-INSERT INTO cost_categories (name) VALUES ('Mantenimiento') ON CONFLICT DO NOTHING;
-```
+### 2. Hook `useAutoClassify`
+- Acepta la descripción como input
+- Debounce de 800ms para no disparar en cada tecla
+- Solo dispara si la descripción tiene ≥5 caracteres
+- Retorna `{ suggestedCategoryId, suggestedSubcategory, isClassifying, confidence }`
+- Cache por descripción para no repetir llamadas
 
-### 3. `src/hooks/useCraneMaintenance.ts` — `useCreateMaintenance`
-Después del insert exitoso en `crane_maintenance`, si `status === 'completed'` y `cost > 0`:
-- Buscar `category_id` de "Mantenimiento"
-- Insertar en `costs` con: `crane_id`, `category_id`, `maintenance_id`, `amount = cost`, `description`, `date = completed_date`, `subcategory = maintenanceType`
-- Invalidar queries de costos
+### 3. UI — Badge de sugerencia en los formularios
+- En `CostForm` (Step 1, debajo del campo descripción) y `QuickCostForm`
+- Muestra un badge tipo: `💡 Sugerencia: Combustible → Diesel` con botón "Aplicar"
+- Al hacer click, setea `category_id` y `subcategory` en el form
+- Si el usuario ya seleccionó categoría manualmente, no se muestra
+- Estilo consistente con los badges existentes del módulo de costos
 
-### 4. `src/hooks/useCraneMaintenance.ts` — `useUpdateMaintenance`
-Al actualizar un mantenimiento:
-- Si pasa a `completed` con `cost > 0` y no tiene costo asociado → crear el costo
-- Si ya tiene costo y cambia el monto/descripción → actualizar el costo existente
-- Si cambia de `completed` a otro estado → opcionalmente eliminar el costo
+### 4. Integración con carga masiva (XMLCostUpload / Excel)
+- En la previsualización, para líneas sin categoría asignada, ejecutar clasificación en batch
+- Mostrar la sugerencia en la columna de categoría con opción de aceptar/rechazar
 
-### 5. Invalidar queries de costos
-En `onSuccess` de ambas mutaciones, agregar invalidación de `['crane-costs']` y `['maintenance-cost-status']`.
+### 5. Integración con `parse-receipt-image` (ya existente)
+- Extender el prompt del receipt parser para que también devuelva `suggestedCategory` basándose en el nombre del vendor y los ítems
+- Cuando el receipt parser devuelve datos, también pre-llenar la categoría
 
-## Archivos a modificar
-- Nueva migración SQL (asegurar categoría "Mantenimiento")
-- `src/hooks/useCraneMaintenance.ts` — agregar lógica de creación/actualización de costo en las mutaciones
+## Archivos a crear/modificar
+- **Nuevo**: `supabase/functions/classify-cost/index.ts`
+- **Nuevo**: `src/hooks/useAutoClassify.ts`
+- **Modificar**: `src/components/costs/form/CostFormStep1.tsx` — agregar badge de sugerencia
+- **Modificar**: `src/components/costs/QuickCostForm.tsx` — agregar badge de sugerencia
+- **Opcional fase 2**: `src/components/costs/XMLCostUpload.tsx` — clasificación batch
+
+## Consideraciones
+- La clasificación es **sugerencia**, nunca forzada — el usuario siempre tiene control
+- Se usa el catálogo real de categorías del usuario (no hardcodeado)
+- Costo por llamada: ~0.001 USD (gpt-4o-mini con ~200 tokens)
+- Si no hay API key configurada, la feature simplemente no aparece
+
