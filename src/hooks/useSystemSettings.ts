@@ -18,7 +18,6 @@ interface SystemSettingsFromDB {
   overdue_notifications: boolean;
   system_updates: boolean;
   report_column_config?: any;
-  ai_chat_enabled?: boolean;
 }
 
 const SYSTEM_SETTINGS_SELECT = `
@@ -32,8 +31,7 @@ const SYSTEM_SETTINGS_SELECT = `
   invoice_alerts,
   overdue_notifications,
   system_updates,
-  report_column_config,
-  ai_chat_enabled
+  report_column_config
 `;
 
 export const useSystemSettings = () => {
@@ -43,7 +41,6 @@ export const useSystemSettings = () => {
     dataRetention: 12,
     maintenanceMode: false,
     reportColumnConfig: defaultReportColumnConfig,
-    aiChatEnabled: true,
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -89,7 +86,6 @@ export const useSystemSettings = () => {
           dataRetention: data.data_retention,
           maintenanceMode: data.maintenance_mode,
           reportColumnConfig,
-          aiChatEnabled: (data as any).ai_chat_enabled ?? true,
         });
 
         setNotificationSettings({
@@ -136,7 +132,6 @@ export const useSystemSettings = () => {
         overdue_notifications: notificationSettings.overdueNotifications,
         system_updates: notificationSettings.systemUpdates,
         report_column_config: JSON.parse(JSON.stringify(systemSettings.reportColumnConfig)) as Json,
-        ai_chat_enabled: systemSettings.aiChatEnabled ?? true,
         updated_at: new Date().toISOString(),
       };
 

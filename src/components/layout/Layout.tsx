@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
-import { DataChatWidget } from '@/components/chat/DataChatWidget';
+
 import { QuickEntryProvider } from '@/contexts/QuickEntryContext';
 import { useServiceRequestAlerts } from '@/hooks/useServiceRequestAlerts';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -43,7 +43,7 @@ export const Layout = () => {
           </main>
         </div>
         <QuickEntryFAB />
-        <DataChatWidget />
+        
       </div>
     </QuickEntryProvider>
   );
