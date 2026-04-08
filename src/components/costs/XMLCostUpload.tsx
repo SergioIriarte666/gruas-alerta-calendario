@@ -1060,7 +1060,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Duplicate Warning Banner */}
               {duplicateResults.length > 0 && showDuplicateWarning && (
-                <Alert className="border-amber-300 bg-amber-50">
+                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                   <ShieldAlert className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
                     <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados.</strong>
