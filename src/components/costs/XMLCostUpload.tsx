@@ -1095,7 +1095,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Checking duplicates indicator */}
               {isCheckingDuplicates && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
                 </div>
@@ -1103,7 +1103,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Searching cost matches indicator */}
               {isSearchingMatches && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Buscando costos existentes que coincidan...</span>
                 </div>
@@ -1111,7 +1111,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
               {/* Cost matching summary */}
               {Object.keys(matchedCosts).length > 0 && (
-                <Alert className="border-blue-300 bg-blue-50">
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
                   <Link2 className="h-4 w-4 text-blue-600" />
                   <AlertDescription className="text-blue-800">
                     <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
