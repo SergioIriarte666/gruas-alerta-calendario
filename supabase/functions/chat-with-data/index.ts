@@ -20,47 +20,41 @@ const ALLOWED_TABLES = [
 ];
 
 const DB_SCHEMA = `
-Tablas disponibles (PostgreSQL):
+Tablas disponibles (PostgreSQL). USA EXACTAMENTE estos nombres de columna:
 
-services: id, folio, date, status (pendiente/en_proceso/completado/facturado/cancelado), service_type, origin_address, destination_address, client_id, operator_id, crane_id, amount, total_amount, notes, created_at
-costs: id, date, description, amount, category_id, subcategory, crane_id, operator_id, service_id, service_folio, payment_date, notes, created_at
+services: id, folio, request_date (date), service_date (date), client_id (uuid FK→clients), crane_id (uuid FK→cranes), operator_id (uuid FK→operators), service_type_id (uuid), status (enum: pendiente/en_proceso/completado/facturado/cancelado), value (numeric, monto del servicio), origin (text), destination (text), vehicle_brand, vehicle_model, license_plate, purchase_order, observations, has_excess (bool), excess_amount, start_time, end_time, created_at
+costs: id, date (date), description, amount (numeric), category_id (uuid FK→cost_categories), subcategory (text), crane_id (uuid FK→cranes), operator_id (uuid FK→operators), service_id (uuid FK→services), service_folio (text), payment_date (date, null si no pagado), notes, created_at
 cost_categories: id, name, description
-cost_subcategories: id, category_id, name
-invoices: id, folio, client_id, issue_date, due_date, subtotal, tax_amount, total, status (draft/sent/paid/overdue/cancelled), notes
-invoice_items: id, invoice_id, description, quantity, unit_price, amount, service_id
-clients: id, name, rut, email, phone, address, department, billing_type, is_active, contact_name
-cranes: id, license_plate, brand, model, type (pluma/plataforma/rescate_vial/portavehiculos), is_active
-operators: id, name, rut, phone, license_type, is_active, user_id
-payments: id, invoice_id, amount, payment_date, payment_method, reference_number, notes
-incomes: id, description, amount, income_date, client_id, category_id, payment_method
+cost_subcategories: id, category_id (FK→cost_categories), name
+invoices: id, folio, client_id (FK→clients), issue_date (date), due_date (date), subtotal, vat, total, status (text: draft/sent/paid/overdue/cancelled), paid_amount, remaining_amount, payment_date, notes, created_at
+clients: id, name, rut, email, phone, address, department, billing_type, is_active (bool), contact_name
+cranes: id, license_plate, brand, model, type (enum: pluma/plataforma/rescate_vial/portavehiculos), is_active (bool), toll_vehicle_category
+operators: id, name, rut, phone, license_number, is_active (bool), user_id, operator_type, department, position
+payments: id, client_id (FK→clients), amount, payment_date (date), payment_method, bank_reference, status, applied_amount, remaining_amount, notes, created_at
+incomes: id, description, amount, income_date (date), client_id (FK→clients), category_id (FK→income_categories), payment_method, subcategory, notes
 income_categories: id, name
-crane_maintenance: id, crane_id, maintenance_type, description, status (scheduled/in_progress/completed), cost, scheduled_date, completed_date, provider
-crane_parts: id, crane_id, part_name, supplier, quantity, unit_price, date
+crane_maintenance: id, crane_id (FK→cranes), maintenance_type, description, status (text: scheduled/in_progress/completed), cost (numeric), scheduled_date, completed_date, provider, notes
+crane_parts: id, crane_id (FK→cranes), part_name, supplier, quantity, unit_price, date (date), total_value
 inventory_items: id, name, sku, unit_of_measure, unit_cost, minimum_stock, is_active, category_id
-inventory_stock: id, item_id, location_id, current_quantity, reserved_quantity, available_quantity
-inventory_movements: id, item_id, location_id, movement_type (entrada/salida/ajuste/transferencia), quantity, unit_cost, reason, movement_date
-debts: id, creditor_id, description, total_amount, installments_count, status (active/paid/cancelled), currency
-debt_installments: id, debt_id, installment_number, due_date, total_amount, paid_amount, status (pending/paid/overdue)
+inventory_stock: id, item_id (FK→inventory_items), location_id, current_quantity, reserved_quantity, available_quantity
+inventory_movements: id, item_id (FK→inventory_items), location_id, movement_type (text: entrada/salida/ajuste/transferencia), quantity, unit_cost, reason, movement_date
+debts: id, creditor_id (FK→creditors), description, total_amount, installments_count, status (text: active/paid/cancelled), currency
+debt_installments: id, debt_id (FK→debts), installment_number, due_date (date), total_amount, paid_amount, status (text: pending/paid/overdue)
 creditors: id, name, type
 cost_centers: id, code, name, budget_amount, budget_period
-fuel_prices: id, fuel_type, price_per_liter, price_date, is_current
+fuel_prices: id, fuel_type, price_per_liter, price_date, is_current (bool)
 
 Relaciones clave:
-- costs.category_id → cost_categories.id
-- costs.crane_id → cranes.id
-- costs.operator_id → operators.id
-- services.client_id → clients.id
-- services.operator_id → operators.id
-- services.crane_id → cranes.id
+- services.client_id → clients.id | services.operator_id → operators.id | services.crane_id → cranes.id
+- costs.category_id → cost_categories.id | costs.crane_id → cranes.id | costs.operator_id → operators.id
 - invoices.client_id → clients.id
-- invoice_items.invoice_id → invoices.id
-- payments.invoice_id → invoices.id
+- payments.client_id → clients.id
 - crane_maintenance.crane_id → cranes.id
 - inventory_stock.item_id → inventory_items.id
-- debts.creditor_id → creditors.id
-- debt_installments.debt_id → debts.id
+- debts.creditor_id → creditors.id | debt_installments.debt_id → debts.id
 
-Moneda por defecto: CLP (pesos chilenos). Formatear montos con separador de miles.
+IMPORTANTE: La columna de fecha en services es "service_date" (NO "date"). La columna de monto en services es "value" (NO "amount").
+Moneda: CLP (pesos chilenos). Formatear con separador de miles (punto).
 Zona horaria: America/Santiago.
 `;
 
