@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { supabase } from '@/integrations/supabase/client';
@@ -366,12 +367,20 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                                   <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
                                   <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
                                     {invoice.status}
-                                  </Badge>
-                                  {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="text-orange-600 border-orange-300">
-                                      ⚠️ Pago automático
-                                    </Badge>}
-                                </div>
-                                <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
+                                   </Badge>
+                                   {invoice.due_date && (() => {
+                                     const isOverdue = new Date(invoice.due_date + 'T12:00:00') < new Date();
+                                     return (
+                                       <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                         Vence: {format(new Date(invoice.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                                       </span>
+                                     );
+                                   })()}
+                                   {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                       ⚠️ Pago automático
+                                     </Badge>}
+                                 </div>
+                                 <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
                               </div>;
                   })}
                         {clientInvoices.length > 3 && <button type="button" onClick={() => setShowAllInvoices(!showAllInvoices)} className="text-xs text-blue-600 hover:text-blue-800 text-center w-full py-1 rounded hover:bg-blue-50 transition-colors">
