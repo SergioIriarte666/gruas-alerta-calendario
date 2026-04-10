@@ -1,32 +1,27 @@
 
 
-# Plan: Agregar Fecha de Vencimiento en Modal de Conciliación
+# Plan: Hacer "Descripción de Producto o Servicio" Opcional en Facturas
 
 ## Resumen
-Mostrar la fecha de vencimiento (`due_date`) de cada factura en el listado del modal "Registrar Pago Inteligente". El dato ya se consulta desde la BD, solo falta mostrarlo.
+Eliminar la obligatoriedad del campo en el formulario de facturas y en la lógica de guardado/actualización. Si se llena, máximo 500 caracteres. Si queda vacío, se guarda vacío.
 
-## Cambio en `src/components/invoices/SmartPaymentForm.tsx`
+## Cambios
 
-En la fila de cada factura (líneas ~363-375), agregar la fecha de vencimiento formateada entre el Badge de estado y el monto:
+### 1. `src/components/invoices/form/InvoiceFormStep1.tsx`
+- Quitar `required` del `ColoredSectionCard`
+- Cambiar texto de ayuda de "Obligatorio. Entre 10 y 500 caracteres." a "Opcional. Máximo 500 caracteres."
 
-```tsx
-// Actual:
-<span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
-<Badge variant={...}>{invoice.status}</Badge>
+### 2. `src/hooks/invoices/useInvoiceOperations.ts`
+- **Creación (~líneas 61-64)**: Eliminar validación de mínimo 10 caracteres. Solo validar máximo 500 si tiene contenido.
+- **Actualización (~líneas 291-296)**: Misma lógica — solo validar máximo 500 si hay texto.
 
-// Propuesto:
-<span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
-<Badge variant={...}>{invoice.status}</Badge>
-<span className="text-xs text-muted-foreground">
-  Vence: {format(new Date(invoice.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
-</span>
-```
+### 3. `src/utils/validationUtils.ts`
+- `getProductServiceDescriptionError`: Quitar chequeo de mínimo 10. Solo validar max 500 si hay texto.
+- `normalizeProductServiceDescription`: Si está vacío, retornar string vacío en vez de "Descripción no registrada".
 
-Agregar import de `format` de `date-fns` (si no existe ya) y colorear en rojo si está vencida (fecha < hoy).
-
-## Archivos a modificar
-- `src/components/invoices/SmartPaymentForm.tsx` — solo JSX, sin cambios de lógica
+### 4. `src/components/finance/historical/EditHistoricalInvoiceModal.tsx`
+- Quitar validación de mínimo 10 caracteres (~línea 114).
 
 ## Sin riesgo funcional
-Solo se agrega un `<span>` visual con datos ya disponibles en el objeto `invoice`.
+Solo se relaja la validación del campo. No hay cambios en base de datos ni en lógica de negocio.
 
