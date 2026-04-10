@@ -89,23 +89,42 @@ const calculateDuration = (startTime: string, endTime: string): string => {
   }
 };
 
+type SectionColor = 'blue' | 'green' | 'violet' | 'orange' | 'cyan' | 'rose' | 'amber' | 'emerald';
+
+const sectionColorConfig: Record<SectionColor, { border: string; bg: string; iconBg: string; title: string }> = {
+  blue: { border: 'border-l-blue-500', bg: 'bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', title: 'text-blue-700 dark:text-blue-300' },
+  green: { border: 'border-l-green-500', bg: 'bg-green-500/5', iconBg: 'bg-green-500/10 text-green-600 dark:text-green-400', title: 'text-green-700 dark:text-green-300' },
+  violet: { border: 'border-l-violet-500', bg: 'bg-violet-500/5', iconBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', title: 'text-violet-700 dark:text-violet-300' },
+  orange: { border: 'border-l-orange-500', bg: 'bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400', title: 'text-orange-700 dark:text-orange-300' },
+  cyan: { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', title: 'text-cyan-700 dark:text-cyan-300' },
+  rose: { border: 'border-l-rose-500', bg: 'bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400', title: 'text-rose-700 dark:text-rose-300' },
+  amber: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', title: 'text-amber-700 dark:text-amber-300' },
+  emerald: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', title: 'text-emerald-700 dark:text-emerald-300' },
+};
+
 interface DetailSectionProps {
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
+  color?: SectionColor;
 }
 
-const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
-  <div>
-    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-tms-green"/>
-      {title}
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-      {children}
+const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSectionProps) => {
+  const config = sectionColorConfig[color];
+  return (
+    <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
+      <h3 className={`text-base font-semibold mb-4 flex items-center gap-2 ${config.title}`}>
+        <div className={`p-1.5 rounded-lg ${config.iconBg}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: ServiceDetailsModalProps) => {
   const queryClient = useQueryClient();
