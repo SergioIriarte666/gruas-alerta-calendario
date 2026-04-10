@@ -203,6 +203,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           </TableBody>
         </Table>
       </div>
+      </div>
     </div>
   );
 };

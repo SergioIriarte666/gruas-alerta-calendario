@@ -255,6 +255,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
           })}
         </div>
       </ScrollArea>
+      </div>
     </div>
   );
 };
