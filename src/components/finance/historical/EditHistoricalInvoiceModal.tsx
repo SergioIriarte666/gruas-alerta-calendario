@@ -110,8 +110,8 @@ export const EditHistoricalInvoiceModal = ({
     setIsSubmitting(true);
     try {
       const trimmedDescription = productServiceDescription.trim();
-      if (trimmedDescription.length < 10 || trimmedDescription.length > 500) {
-        setDescriptionError('La descripción debe tener entre 10 y 500 caracteres');
+      if (trimmedDescription.length > 500) {
+        setDescriptionError('La descripción debe tener máximo 500 caracteres');
         setIsSubmitting(false);
         return;
       }
