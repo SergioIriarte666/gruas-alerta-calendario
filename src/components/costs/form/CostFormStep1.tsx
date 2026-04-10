@@ -154,6 +154,7 @@ export const CostFormStep1 = ({
                   subcategory={suggestion?.subcategory || null}
                   isClassifying={isClassifying}
                   onApply={handleApplySuggestion}
+                  source={source}
                   className="mt-1"
                 />
                 <FormMessage />
