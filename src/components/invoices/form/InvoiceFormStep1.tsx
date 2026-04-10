@@ -97,7 +97,6 @@ export const InvoiceFormStep1 = ({
         icon={<AlignLeft className="h-5 w-5" />}
         color="green"
         hasError={!!errors.productServiceDescription}
-        required
       >
         <div className="space-y-2">
           <Label htmlFor="productServiceDescription" className="text-foreground">Descripción</Label>
@@ -112,7 +111,7 @@ export const InvoiceFormStep1 = ({
             <p className="text-sm text-destructive">{errors.productServiceDescription}</p>
           )}
           <p className="text-xs text-muted-foreground">
-            Obligatorio. Entre 10 y 500 caracteres.
+            Opcional. Máximo 500 caracteres.
           </p>
         </div>
       </ColoredSectionCard>
