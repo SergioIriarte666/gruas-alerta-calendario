@@ -1,27 +1,67 @@
 
 
-# Plan: Hacer "Descripción de Producto o Servicio" Opcional en Facturas
+# Plan: Clasificación de Costos por Historial
 
-## Resumen
-Eliminar la obligatoriedad del campo en el formulario de facturas y en la lógica de guardado/actualización. Si se llena, máximo 500 caracteres. Si queda vacío, se guarda vacío.
+## Concepto
+Crear un clasificador local que analice los costos **ya registrados** en la base de datos. Cuando el usuario escribe una descripción, el sistema busca descripciones similares en registros previos y sugiere la categoría/subcategoría que se usó más frecuentemente para esas descripciones parecidas.
 
-## Cambios
+**Ventajas vs el clasificador IA actual:**
+- Instantáneo (sin llamadas a API externa)
+- Sin costo (no consume tokens de OpenAI)
+- Aprende del comportamiento real del usuario
+- Funciona offline
 
-### 1. `src/components/invoices/form/InvoiceFormStep1.tsx`
-- Quitar `required` del `ColoredSectionCard`
-- Cambiar texto de ayuda de "Obligatorio. Entre 10 y 500 caracteres." a "Opcional. Máximo 500 caracteres."
+## Flujo
 
-### 2. `src/hooks/invoices/useInvoiceOperations.ts`
-- **Creación (~líneas 61-64)**: Eliminar validación de mínimo 10 caracteres. Solo validar máximo 500 si tiene contenido.
-- **Actualización (~líneas 291-296)**: Misma lógica — solo validar máximo 500 si hay texto.
+```text
+Usuario escribe: "combustible grúa 45"
+         │
+         ▼
+   Hook busca en costos históricos
+   descripciones que contengan palabras clave
+         │
+         ▼
+   Encuentra 12 costos con "combustible" + "grúa"
+   → 10 usaron categoría "Combustible" / subcategoría "Diesel"
+   → 2 usaron categoría "Mantenimiento"
+         │
+         ▼
+   Sugiere: "Combustible → Diesel" (confianza: 83%)
+         │
+         ▼
+   Badge violeta: "Sugerencia: Combustible → Diesel" [Aplicar]
+```
 
-### 3. `src/utils/validationUtils.ts`
-- `getProductServiceDescriptionError`: Quitar chequeo de mínimo 10. Solo validar max 500 si hay texto.
-- `normalizeProductServiceDescription`: Si está vacío, retornar string vacío en vez de "Descripción no registrada".
+## Implementación
 
-### 4. `src/components/finance/historical/EditHistoricalInvoiceModal.tsx`
-- Quitar validación de mínimo 10 caracteres (~línea 114).
+### 1. Nuevo hook `useHistoricalClassify`
+- Reutiliza los datos de `useCosts()` (ya cacheados por React Query)
+- Aplica debounce de 300ms (más rápido que el de IA porque es local)
+- Tokeniza la descripción en palabras clave (mínimo 3 caracteres cada una)
+- Busca costos históricos donde la descripción contenga al menos 1 palabra clave
+- Agrupa por `category_id + subcategory` y calcula frecuencia relativa como confianza
+- Si la combinación más frecuente tiene ≥60% de los matches, la sugiere
+- Caché en memoria para evitar recálculos
+
+### 2. Modificar `useAutoClassify`
+- Integrar el resultado histórico como **primera línea de defensa**
+- Si el historial encuentra un match con confianza ≥60%, usar esa sugerencia (instantánea)
+- Si no hay match histórico suficiente, **entonces** llamar a la IA (comportamiento actual)
+- El badge muestra un icono diferente para distinguir: historial (reloj) vs IA (sparkles)
+
+### 3. Actualizar `AiCategorySuggestion`
+- Agregar prop `source: 'history' | 'ai'` para mostrar icono correspondiente
+- Historial: icono `History` + texto "Basado en registros previos"
+- IA: icono `Sparkles` + texto "Sugerencia IA" (como está ahora)
+
+## Archivos a crear/modificar
+- **Crear**: `src/hooks/costs/useHistoricalClassify.ts` — lógica de matching por historial
+- **Modificar**: `src/hooks/useAutoClassify.ts` — integrar historial como fallback prioritario
+- **Modificar**: `src/components/costs/form/AiCategorySuggestion.tsx` — distinguir fuente visual
+- **Modificar**: `src/components/costs/form/CostFormStep1.tsx` — pasar source al badge
 
 ## Sin riesgo funcional
-Solo se relaja la validación del campo. No hay cambios en base de datos ni en lógica de negocio.
+- No modifica datos existentes
+- El clasificador IA sigue funcionando como respaldo
+- Si no hay historial suficiente, el comportamiento es idéntico al actual
 
