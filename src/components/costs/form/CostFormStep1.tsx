@@ -31,7 +31,7 @@ export const CostFormStep1 = ({
   const watchedDescription = form.watch('description');
   const watchedCategoryId = form.watch('category_id');
 
-  const { suggestion, isClassifying, categoryName, clearSuggestion } = useAutoClassify(
+  const { suggestion, isClassifying, categoryName, source, clearSuggestion } = useAutoClassify(
     watchedDescription || '',
     watchedCategoryId || null,
   );
