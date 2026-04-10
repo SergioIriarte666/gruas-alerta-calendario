@@ -91,7 +91,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
   const watchedDate = watch('date');
   const watchedDescription = watch('description');
 
-  const { suggestion, isClassifying, categoryName, clearSuggestion } = useAutoClassify(
+  const { suggestion, isClassifying, categoryName, source, clearSuggestion } = useAutoClassify(
     watchedDescription || '',
     watchedCategoryId || null,
   );
@@ -263,6 +263,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
               subcategory={suggestion?.subcategory || null}
               isClassifying={isClassifying}
               onApply={handleApplySuggestion}
+              source={source}
               className="mt-1"
             />
           </div>

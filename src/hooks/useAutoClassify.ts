@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from './useDebounce';
 import { useCostCategories } from './useCostCategories';
-import { CostCategory } from '@/types/costs';
+import { useHistoricalClassify } from './costs/useHistoricalClassify';
 
 interface ClassificationResult {
   category_id: string | null;
@@ -10,14 +10,17 @@ interface ClassificationResult {
   confidence: number;
 }
 
+export type SuggestionSource = 'history' | 'ai';
+
 interface UseAutoClassifyReturn {
   suggestion: ClassificationResult | null;
   isClassifying: boolean;
   categoryName: string | null;
+  source: SuggestionSource | null;
   clearSuggestion: () => void;
 }
 
-// Simple in-memory cache
+// Simple in-memory cache for AI results
 const classifyCache = new Map<string, ClassificationResult>();
 
 export const useAutoClassify = (
@@ -25,44 +28,64 @@ export const useAutoClassify = (
   currentCategoryId?: string | null,
   enabled: boolean = true
 ): UseAutoClassifyReturn => {
-  const [suggestion, setSuggestion] = useState<ClassificationResult | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<ClassificationResult | null>(null);
   const [isClassifying, setIsClassifying] = useState(false);
   const { data: categories = [] } = useCostCategories();
   const abortRef = useRef<AbortController | null>(null);
 
+  const { suggestion: historicalSuggestion } = useHistoricalClassify(
+    description,
+    currentCategoryId,
+    enabled
+  );
+
   const debouncedDescription = useDebounce(description, 800);
 
   const clearSuggestion = useCallback(() => {
-    setSuggestion(null);
+    setAiSuggestion(null);
   }, []);
 
+  // Determine active suggestion: historical first, then AI
+  const activeSuggestion: ClassificationResult | null = historicalSuggestion
+    ? { category_id: historicalSuggestion.category_id, subcategory: historicalSuggestion.subcategory, confidence: historicalSuggestion.confidence }
+    : aiSuggestion;
+
+  const source: SuggestionSource | null = historicalSuggestion
+    ? 'history'
+    : aiSuggestion
+    ? 'ai'
+    : null;
+
   // Get category name for display
-  const categoryName = suggestion?.category_id
-    ? categories.find(c => c.id === suggestion.category_id)?.name || null
+  const categoryName = activeSuggestion?.category_id
+    ? categories.find(c => c.id === activeSuggestion.category_id)?.name || null
     : null;
 
   useEffect(() => {
-    // Don't classify if disabled, too short, or user already selected a category
+    // Don't call AI if disabled, too short, user already selected, or historical already has a suggestion
     if (!enabled || !debouncedDescription || debouncedDescription.trim().length < 5 || categories.length === 0) {
-      setSuggestion(null);
+      setAiSuggestion(null);
       return;
     }
 
-    // If user already has a category selected, don't suggest
     if (currentCategoryId) {
-      setSuggestion(null);
+      setAiSuggestion(null);
+      return;
+    }
+
+    // If historical already found a good match, skip AI
+    if (historicalSuggestion) {
+      setAiSuggestion(null);
       return;
     }
 
     const cacheKey = debouncedDescription.trim().toLowerCase();
     
-    // Check cache
     if (classifyCache.has(cacheKey)) {
-      setSuggestion(classifyCache.get(cacheKey)!);
+      setAiSuggestion(classifyCache.get(cacheKey)!);
       return;
     }
 
-    // Cancel previous request
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -70,7 +93,6 @@ export const useAutoClassify = (
     const classify = async () => {
       setIsClassifying(true);
       try {
-        // Build categories with subcategories for the AI
         const { data: subcatsData } = await supabase
           .from('cost_subcategories')
           .select('category_id, name')
@@ -99,7 +121,7 @@ export const useAutoClassify = (
 
         if (error) {
           console.error('Classification error:', error);
-          setSuggestion(null);
+          setAiSuggestion(null);
           return;
         }
 
@@ -109,17 +131,16 @@ export const useAutoClassify = (
           confidence: data?.confidence || 0,
         };
 
-        // Only show if confidence is sufficient
         if (result.confidence >= 0.5 && result.category_id) {
           classifyCache.set(cacheKey, result);
-          setSuggestion(result);
+          setAiSuggestion(result);
         } else {
-          setSuggestion(null);
+          setAiSuggestion(null);
         }
       } catch (err) {
         if (!controller.signal.aborted) {
           console.error('Classification failed:', err);
-          setSuggestion(null);
+          setAiSuggestion(null);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -133,7 +154,13 @@ export const useAutoClassify = (
     return () => {
       controller.abort();
     };
-  }, [debouncedDescription, categories, currentCategoryId, enabled]);
+  }, [debouncedDescription, categories, currentCategoryId, enabled, historicalSuggestion]);
 
-  return { suggestion, isClassifying, categoryName, clearSuggestion };
+  return {
+    suggestion: activeSuggestion,
+    isClassifying: !historicalSuggestion && isClassifying,
+    categoryName,
+    source,
+    clearSuggestion,
+  };
 };

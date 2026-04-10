@@ -31,7 +31,7 @@ export const CostFormStep1 = ({
   const watchedDescription = form.watch('description');
   const watchedCategoryId = form.watch('category_id');
 
-  const { suggestion, isClassifying, categoryName, clearSuggestion } = useAutoClassify(
+  const { suggestion, isClassifying, categoryName, source, clearSuggestion } = useAutoClassify(
     watchedDescription || '',
     watchedCategoryId || null,
   );
@@ -154,6 +154,7 @@ export const CostFormStep1 = ({
                   subcategory={suggestion?.subcategory || null}
                   isClassifying={isClassifying}
                   onApply={handleApplySuggestion}
+                  source={source}
                   className="mt-1"
                 />
                 <FormMessage />
