@@ -293,8 +293,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
             </TabsList>
             
             <TabsContent value="general" className="mt-0">
-              <div className="space-y-6">
-                  <DetailSection title="Cliente" icon={User}>
+              <div className="space-y-4">
+                  <DetailSection title="Cliente" icon={User} color="blue">
                       <DetailItem icon={User} label="Nombre / Razón Social" value={toTitleCase(serviceData.client.name)} valueClass="text-lg" />
                       <DetailItem icon={Building} label="Departamento" value={serviceData.client.department} />
                       {serviceData.insuredName && (
@@ -305,22 +305,18 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       <DetailItem icon={Mail} label="Email" value={serviceData.client.email} />
                       <DetailItem icon={MapPin} label="Dirección" value={serviceData.client.address} isFullWidth={true} />
                   </DetailSection>
-                   <Separator className="border-border"/>
                   {shouldShowVehicleInfo(serviceData) && (
-                    <>
-                       <Separator className="border-border"/>
-                      <DetailSection title="Vehículo" icon={Truck}>
+                      <DetailSection title="Vehículo" icon={Truck} color="cyan">
                           <DetailItem icon={Wrench} label="Marca y Modelo" value={`${serviceData.vehicleBrand} ${serviceData.vehicleModel}`} />
                           <DetailItem icon={IdCard} label="Patente" value={serviceData.licensePlate} valueClass="text-lg" />
                       </DetailSection>
-                    </>
                   )}
               </div>
             </TabsContent>
             
             <TabsContent value="details" className="mt-0">
-              <div className="space-y-6">
-                   <DetailSection title="Información del Servicio" icon={FileText}>
+              <div className="space-y-4">
+                   <DetailSection title="Información del Servicio" icon={FileText} color="violet">
                        <DetailItem 
                          icon={FileText} 
                          label="Tipo de Servicio" 
@@ -367,13 +363,11 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       <DetailItem icon={MapPin} label="Destino" value={serviceData.destination} isFullWidth={true} />
                   </DetailSection>
                   
-                  {/* Sección de Custodia/Arriendo */}
                   {isCustody && custodyInfo && (
-                    <>
-                       <Separator className="border-border"/>
                       <DetailSection 
                         title={isEquipmentRental ? "Información de Arriendo" : "Información de Custodia"} 
                         icon={isEquipmentRental ? Wrench : Shield}
+                        color="amber"
                       >
                         <DetailItem 
                           icon={isEquipmentRental ? Wrench : Shield} 
@@ -413,14 +407,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           <DetailItem icon={FileText} label="Notas" value={custodyInfo.notes} isFullWidth={true} />
                         )}
                       </DetailSection>
-                    </>
                   )}
                   
-                  {/* Sección Servicio Tercerizado */}
                   {serviceData.outsourcedProviderId && (
-                    <>
-                       <Separator className="border-border"/>
-                      <DetailSection title="Servicio Tercerizado" icon={Building}>
+                      <DetailSection title="Servicio Tercerizado" icon={Building} color="rose">
                         <DetailItem 
                           icon={Building} 
                           label="Proveedor Tercero" 
@@ -436,11 +426,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           <DetailItem icon={FileText} label="Notas" value={serviceData.outsourcedNotes} isFullWidth={true} />
                         )}
                       </DetailSection>
-                    </>
                   )}
                   
-                   <Separator className="border-border"/>
-                  <DetailSection title="Recursos Asignados" icon={Truck}>
+                  <DetailSection title="Recursos Asignados" icon={Truck} color="cyan">
                       <DetailItem 
                           icon={Truck} 
                           label="Grúa" 
@@ -452,9 +440,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                            value={primaryOperator ? `${primaryOperator.name} (${primaryOperator.rut})${hasMultipleOperators ? ' (Principal)' : ''}` : 'Sin asignar'} 
                        />
                   </DetailSection>
-                    <Separator className="border-border"/>
-                    <DetailSection title="Finanzas" icon={DollarSign}>
-                        {/* Mostrar desglose si hay tanto valor base como custodia */}
+                  
+                  <DetailSection title="Finanzas" icon={DollarSign} color="emerald">
                         {serviceBreakdown.hasBothValues ? (
                           <>
                             <DetailItem 
@@ -502,17 +489,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                         )}
                          <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
-                    </DetailSection>
+                  </DetailSection>
 
                   {serviceData.observations && (
-                    <>
-                      <Separator className="border-border"/>
-                       <div className='pt-6'>
-                          <DetailSection title="Observaciones" icon={FileText}>
-                             <p className="text-muted-foreground whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
-                          </DetailSection>
-                       </div>
-                    </>
+                      <DetailSection title="Observaciones" icon={FileText} color="orange">
+                         <p className="text-muted-foreground whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
+                      </DetailSection>
                   )}
               </div>
             </TabsContent>
