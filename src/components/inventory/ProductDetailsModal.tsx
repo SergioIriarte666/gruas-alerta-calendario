@@ -6,7 +6,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Package, DollarSign, Warehouse, BarChart3 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { SimilarItem } from '@/utils/inventoryHelper';
@@ -35,10 +34,12 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Información básica */}
-          <Card className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
+          {/* Información General */}
+          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+                <BarChart3 className="h-4 w-4" />
+              </div>
               Información General
             </h3>
             
@@ -84,12 +85,14 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 </Badge>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Valor total del stock */}
-          <Card className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
+          {/* Valor del Inventario */}
+          <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+              <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+                <DollarSign className="h-4 w-4" />
+              </div>
               Valor del Inventario
             </h3>
             
@@ -108,13 +111,15 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 </Badge>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Recomendación */}
           {product.match_type === 'exact' && (
-            <Card className="p-4 bg-warning/5 border-warning">
-              <h3 className="font-semibold mb-2 text-warning flex items-center gap-2">
-                <Package className="h-4 w-4" />
+            <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
+              <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+                  <Package className="h-4 w-4" />
+                </div>
                 Recomendación
               </h3>
               <p className="text-sm">
@@ -122,7 +127,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 Se recomienda <strong>usar el existente</strong> para evitar duplicados 
                 y mantener un control de stock preciso.
               </p>
-            </Card>
+            </div>
           )}
         </div>
       </DialogContent>

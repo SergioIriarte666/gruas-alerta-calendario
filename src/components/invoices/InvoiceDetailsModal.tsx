@@ -52,23 +52,41 @@ const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = f
   </div>
 );
 
+type SectionColor = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'orange' | 'rose';
+
+const sectionColorConfig: Record<SectionColor, { border: string; bg: string; iconBg: string; title: string }> = {
+  blue: { border: 'border-l-blue-500', bg: 'bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600', title: 'text-blue-700 dark:text-blue-300' },
+  emerald: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600', title: 'text-emerald-700 dark:text-emerald-300' },
+  amber: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600', title: 'text-amber-700 dark:text-amber-300' },
+  violet: { border: 'border-l-violet-500', bg: 'bg-violet-500/5', iconBg: 'bg-violet-500/10 text-violet-600', title: 'text-violet-700 dark:text-violet-300' },
+  cyan: { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600', title: 'text-cyan-700 dark:text-cyan-300' },
+  orange: { border: 'border-l-orange-500', bg: 'bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600', title: 'text-orange-700 dark:text-orange-300' },
+  rose: { border: 'border-l-rose-500', bg: 'bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600', title: 'text-rose-700 dark:text-rose-300' },
+};
+
 interface DetailSectionProps {
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
+  color?: SectionColor;
 }
 
-const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
-  <div>
-    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-primary" />
-      {title}
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-      {children}
+const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSectionProps) => {
+  const config = sectionColorConfig[color];
+  return (
+    <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
+      <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${config.title}`}>
+        <div className={`p-1 rounded ${config.iconBg}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const formatSafeDate = (dateValue: any): string => {
   if (!dateValue) return 'Sin fecha';
@@ -135,7 +153,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   useEffect(() => {
     if (!invoice || !isOpen) return;
 
-    // Fetch payment term name
     if (invoice.paymentTermId) {
       supabase
         .from('payment_terms')
@@ -149,7 +166,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
       setPaymentTermName(null);
     }
 
-    // Fetch payment applications for this invoice
     setLoadingPayments(true);
     supabase
       .from('payment_applications')
@@ -173,7 +189,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         }
         setLoadingPayments(false);
       });
-    // Fetch services via invoice_services
+
     setLoadingServices(true);
     Promise.all([
       supabase
@@ -185,7 +201,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         .select('closure_id')
         .eq('invoice_id', invoice.id),
     ]).then(async ([servicesRes, closuresRes]) => {
-      // Fetch service details
       const serviceIds = (servicesRes.data || []).map((s: any) => s.service_id);
       if (serviceIds.length > 0) {
         const { data } = await supabase
@@ -197,7 +212,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         setServices([]);
       }
 
-      // Fetch closure details
       const closureIds = (closuresRes.data || []).map((c: any) => c.closure_id);
       if (closureIds.length > 0) {
         const { data } = await supabase
@@ -255,8 +269,8 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
           {/* Tab 1: General */}
           <TabsContent value="general" className="mt-6">
-            <div className="space-y-6">
-              <DetailSection title="Identificación" icon={FileText}>
+            <div className="space-y-4">
+              <DetailSection title="Identificación" icon={FileText} color="blue">
                 <DetailItem icon={FileText} label="Folio" value={invoice.folio} />
                 <DetailItem
                   icon={Hash}
@@ -269,9 +283,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 />
               </DetailSection>
 
-              <Separator className="border-border" />
-
-              <DetailSection title="Cliente" icon={User}>
+              <DetailSection title="Cliente" icon={User} color="emerald">
                 <DetailItem icon={User} label="Nombre" value={invoice.client?.name ? toTitleCase(invoice.client.name) : undefined} />
                 <DetailItem icon={Hash} label="RUT" value={invoice.client?.rut} />
                 {invoice.client?.email && (
@@ -282,9 +294,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
               </DetailSection>
 
-              <Separator className="border-border" />
-
-              <DetailSection title="Fechas" icon={Calendar}>
+              <DetailSection title="Fechas" icon={Calendar} color="amber">
                 <DetailItem icon={Calendar} label="Fecha de Emisión" value={formatSafeDate(invoice.issueDate)} />
                 <DetailItem icon={Calendar} label="Fecha de Vencimiento" value={formatSafeDate(invoice.dueDate)} />
                 {paymentTermName && (
@@ -336,26 +346,21 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               </DetailSection>
 
               {invoice.notes && (
-                <>
-                  <Separator className="border-border" />
-                  <DetailSection title="Notas" icon={FileText}>
-                    <div className="col-span-1 md:col-span-2">
-                      <div className="bg-muted/50 rounded-lg p-4 border">
-                        <p className="text-muted-foreground whitespace-pre-wrap min-h-[40px]">
-                          {invoice.notes}
-                        </p>
-                      </div>
-                    </div>
-                  </DetailSection>
-                </>
+                <DetailSection title="Notas" icon={FileText} color="cyan">
+                  <div className="col-span-1 md:col-span-2">
+                    <p className="text-muted-foreground whitespace-pre-wrap min-h-[40px]">
+                      {invoice.notes}
+                    </p>
+                  </div>
+                </DetailSection>
               )}
             </div>
           </TabsContent>
 
           {/* Tab 2: Financiera */}
           <TabsContent value="financial" className="mt-6">
-            <div className="space-y-6">
-              <DetailSection title="Desglose" icon={DollarSign}>
+            <div className="space-y-4">
+              <DetailSection title="Desglose" icon={DollarSign} color="violet">
                 <DetailItem icon={DollarSign} label="Subtotal" value={formatCurrency(invoice.subtotal)} />
                 <DetailItem icon={DollarSign} label="IVA" value={formatCurrency(invoice.vat)} />
                 <DetailItem
@@ -381,12 +386,11 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
               </DetailSection>
 
-              <Separator className="border-border" />
-
-              {/* Progress bar */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2 text-primary" />
+              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.emerald.border} ${sectionColorConfig.emerald.bg} p-4`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.emerald.title}`}>
+                  <div className={`p-1 rounded ${sectionColorConfig.emerald.iconBg}`}>
+                    <CreditCard className="w-4 h-4" />
+                  </div>
                   Progreso de Pago
                 </h3>
                 <div className="space-y-2">
@@ -404,9 +408,11 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
           {/* Tab 3: Pagos Aplicados */}
           <TabsContent value="payments" className="mt-6">
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground flex items-center">
-                <Receipt className="w-5 h-5 mr-2 text-primary" />
+            <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.rose.border} ${sectionColorConfig.rose.bg} p-4`}>
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.rose.title}`}>
+                <div className={`p-1 rounded ${sectionColorConfig.rose.iconBg}`}>
+                  <Receipt className="w-4 h-4" />
+                </div>
                 Historial de Pagos Aplicados
               </h3>
 
@@ -462,11 +468,12 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
           {/* Tab 4: Servicios y Cierres */}
           <TabsContent value="services" className="mt-6">
-            <div className="space-y-6">
-              {/* Cierres */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                  <Package className="w-5 h-5 mr-2 text-primary" />
+            <div className="space-y-4">
+              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.orange.border} ${sectionColorConfig.orange.bg} p-4`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.orange.title}`}>
+                  <div className={`p-1 rounded ${sectionColorConfig.orange.iconBg}`}>
+                    <Package className="w-4 h-4" />
+                  </div>
                   Cierres Asociados
                 </h3>
                 {loadingServices ? (
@@ -507,12 +514,11 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
               </div>
 
-              <Separator className="border-border" />
-
-              {/* Servicios */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-                  <Wrench className="w-5 h-5 mr-2 text-primary" />
+              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.cyan.border} ${sectionColorConfig.cyan.bg} p-4`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.cyan.title}`}>
+                  <div className={`p-1 rounded ${sectionColorConfig.cyan.iconBg}`}>
+                    <Wrench className="w-4 h-4" />
+                  </div>
                   Servicios Incluidos
                   {services.length > 0 && (
                     <Badge variant="outline" className="ml-2 text-xs">{services.length}</Badge>

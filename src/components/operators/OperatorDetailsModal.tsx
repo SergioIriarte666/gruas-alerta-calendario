@@ -33,7 +33,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Estado */}
           <div className="flex items-center gap-2">
             <Badge variant={operator.isActive ? "default" : "secondary"}>
@@ -43,33 +43,36 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </div>
 
           {/* Información de Contacto */}
-          <div className="grid grid-cols-2 gap-4">
-            {operator.phone && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">Teléfono</span>
+          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+                <Phone className="w-4 h-4" />
+              </div>
+              Información de Contacto
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {operator.phone && (
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Teléfono</span>
+                  <p className="text-sm font-medium">{operator.phone}</p>
                 </div>
-                <p className="text-sm">{operator.phone}</p>
+              )}
+              <div className="space-y-1">
+                <span className="text-sm text-muted-foreground">RUT</span>
+                <p className="text-sm font-medium">{operator.rut}</p>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">RUT</span>
-              </div>
-              <p className="text-sm">{operator.rut}</p>
             </div>
           </div>
 
           {/* Servicios del Día */}
-          <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              <span className="font-medium">Servicios del Día</span>
+          <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+              <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+                <FileText className="w-4 h-4" />
+              </div>
+              Servicios del Día
               <Badge variant="outline">{operator.services?.length || 0}</Badge>
-            </div>
+            </h3>
             
             {operator.services && operator.services.length > 0 ? (
               <div className="space-y-2">
@@ -96,24 +99,28 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </div>
 
           {/* Información de Licencias */}
-          {operator.licenseNumber && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Número de Licencia</span>
+          {(operator.licenseNumber || operator.examExpiry) && (
+            <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+                  <FileText className="w-4 h-4" />
+                </div>
+                Licencias y Exámenes
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                {operator.licenseNumber && (
+                  <div className="space-y-1">
+                    <span className="text-sm text-muted-foreground">Número de Licencia</span>
+                    <p className="text-sm font-medium">{operator.licenseNumber}</p>
+                  </div>
+                )}
+                {operator.examExpiry && (
+                  <div className="space-y-1">
+                    <span className="text-sm text-muted-foreground">Vencimiento Examen</span>
+                    <p className="text-sm font-medium">{operator.examExpiry}</p>
+                  </div>
+                )}
               </div>
-              <p className="text-sm">{operator.licenseNumber}</p>
-            </div>
-          )}
-
-          {/* Vencimiento de Examen */}
-          {operator.examExpiry && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Vencimiento Examen</span>
-              </div>
-              <p className="text-sm">{operator.examExpiry}</p>
             </div>
           )}
 
