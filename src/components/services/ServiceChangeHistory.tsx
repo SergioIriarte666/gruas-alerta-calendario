@@ -130,17 +130,20 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between px-4 pt-2">
-        <div className="flex items-center gap-2">
-          <History className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-medium text-sm">Historial de Cambios</h3>
+      <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-amber-500/10">
+              <History className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <h3 className="font-semibold text-base text-amber-700 dark:text-amber-300">Historial de Cambios</h3>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {changes.length} {changes.length === 1 ? 'cambio' : 'cambios'}
+          </Badge>
         </div>
-        <Badge variant="secondary" className="text-xs">
-          {changes.length} {changes.length === 1 ? 'cambio' : 'cambios'}
-        </Badge>
-      </div>
 
-      <ScrollArea className="h-[400px] px-4">
+      <ScrollArea className="h-[400px]">
         <div className="space-y-4 pb-4">
           {groupedChanges.map((group, groupIndex) => {
             const primaryChangeType = group.changes[0]?.changeType || 'UPDATE';
@@ -252,6 +255,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
           })}
         </div>
       </ScrollArea>
+      </div>
     </div>
   );
 };

@@ -89,23 +89,42 @@ const calculateDuration = (startTime: string, endTime: string): string => {
   }
 };
 
+type SectionColor = 'blue' | 'green' | 'violet' | 'orange' | 'cyan' | 'rose' | 'amber' | 'emerald';
+
+const sectionColorConfig: Record<SectionColor, { border: string; bg: string; iconBg: string; title: string }> = {
+  blue: { border: 'border-l-blue-500', bg: 'bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', title: 'text-blue-700 dark:text-blue-300' },
+  green: { border: 'border-l-green-500', bg: 'bg-green-500/5', iconBg: 'bg-green-500/10 text-green-600 dark:text-green-400', title: 'text-green-700 dark:text-green-300' },
+  violet: { border: 'border-l-violet-500', bg: 'bg-violet-500/5', iconBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', title: 'text-violet-700 dark:text-violet-300' },
+  orange: { border: 'border-l-orange-500', bg: 'bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400', title: 'text-orange-700 dark:text-orange-300' },
+  cyan: { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', title: 'text-cyan-700 dark:text-cyan-300' },
+  rose: { border: 'border-l-rose-500', bg: 'bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400', title: 'text-rose-700 dark:text-rose-300' },
+  amber: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', title: 'text-amber-700 dark:text-amber-300' },
+  emerald: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', title: 'text-emerald-700 dark:text-emerald-300' },
+};
+
 interface DetailSectionProps {
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
+  color?: SectionColor;
 }
 
-const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
-  <div>
-    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-tms-green"/>
-      {title}
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-      {children}
+const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSectionProps) => {
+  const config = sectionColorConfig[color];
+  return (
+    <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
+      <h3 className={`text-base font-semibold mb-4 flex items-center gap-2 ${config.title}`}>
+        <div className={`p-1.5 rounded-lg ${config.iconBg}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        {title}
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: ServiceDetailsModalProps) => {
   const queryClient = useQueryClient();
@@ -274,8 +293,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
             </TabsList>
             
             <TabsContent value="general" className="mt-0">
-              <div className="space-y-6">
-                  <DetailSection title="Cliente" icon={User}>
+              <div className="space-y-4">
+                  <DetailSection title="Cliente" icon={User} color="blue">
                       <DetailItem icon={User} label="Nombre / Razón Social" value={toTitleCase(serviceData.client.name)} valueClass="text-lg" />
                       <DetailItem icon={Building} label="Departamento" value={serviceData.client.department} />
                       {serviceData.insuredName && (
@@ -286,22 +305,18 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       <DetailItem icon={Mail} label="Email" value={serviceData.client.email} />
                       <DetailItem icon={MapPin} label="Dirección" value={serviceData.client.address} isFullWidth={true} />
                   </DetailSection>
-                   <Separator className="border-border"/>
                   {shouldShowVehicleInfo(serviceData) && (
-                    <>
-                       <Separator className="border-border"/>
-                      <DetailSection title="Vehículo" icon={Truck}>
+                      <DetailSection title="Vehículo" icon={Truck} color="cyan">
                           <DetailItem icon={Wrench} label="Marca y Modelo" value={`${serviceData.vehicleBrand} ${serviceData.vehicleModel}`} />
                           <DetailItem icon={IdCard} label="Patente" value={serviceData.licensePlate} valueClass="text-lg" />
                       </DetailSection>
-                    </>
                   )}
               </div>
             </TabsContent>
             
             <TabsContent value="details" className="mt-0">
-              <div className="space-y-6">
-                   <DetailSection title="Información del Servicio" icon={FileText}>
+              <div className="space-y-4">
+                   <DetailSection title="Información del Servicio" icon={FileText} color="violet">
                        <DetailItem 
                          icon={FileText} 
                          label="Tipo de Servicio" 
@@ -348,13 +363,11 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       <DetailItem icon={MapPin} label="Destino" value={serviceData.destination} isFullWidth={true} />
                   </DetailSection>
                   
-                  {/* Sección de Custodia/Arriendo */}
                   {isCustody && custodyInfo && (
-                    <>
-                       <Separator className="border-border"/>
                       <DetailSection 
                         title={isEquipmentRental ? "Información de Arriendo" : "Información de Custodia"} 
                         icon={isEquipmentRental ? Wrench : Shield}
+                        color="amber"
                       >
                         <DetailItem 
                           icon={isEquipmentRental ? Wrench : Shield} 
@@ -394,14 +407,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           <DetailItem icon={FileText} label="Notas" value={custodyInfo.notes} isFullWidth={true} />
                         )}
                       </DetailSection>
-                    </>
                   )}
                   
-                  {/* Sección Servicio Tercerizado */}
                   {serviceData.outsourcedProviderId && (
-                    <>
-                       <Separator className="border-border"/>
-                      <DetailSection title="Servicio Tercerizado" icon={Building}>
+                      <DetailSection title="Servicio Tercerizado" icon={Building} color="rose">
                         <DetailItem 
                           icon={Building} 
                           label="Proveedor Tercero" 
@@ -417,11 +426,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           <DetailItem icon={FileText} label="Notas" value={serviceData.outsourcedNotes} isFullWidth={true} />
                         )}
                       </DetailSection>
-                    </>
                   )}
                   
-                   <Separator className="border-border"/>
-                  <DetailSection title="Recursos Asignados" icon={Truck}>
+                  <DetailSection title="Recursos Asignados" icon={Truck} color="cyan">
                       <DetailItem 
                           icon={Truck} 
                           label="Grúa" 
@@ -433,9 +440,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                            value={primaryOperator ? `${primaryOperator.name} (${primaryOperator.rut})${hasMultipleOperators ? ' (Principal)' : ''}` : 'Sin asignar'} 
                        />
                   </DetailSection>
-                    <Separator className="border-border"/>
-                    <DetailSection title="Finanzas" icon={DollarSign}>
-                        {/* Mostrar desglose si hay tanto valor base como custodia */}
+                  
+                  <DetailSection title="Finanzas" icon={DollarSign} color="emerald">
                         {serviceBreakdown.hasBothValues ? (
                           <>
                             <DetailItem 
@@ -483,17 +489,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                         )}
                          <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
-                    </DetailSection>
+                  </DetailSection>
 
                   {serviceData.observations && (
-                    <>
-                      <Separator className="border-border"/>
-                       <div className='pt-6'>
-                          <DetailSection title="Observaciones" icon={FileText}>
-                             <p className="text-muted-foreground whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
-                          </DetailSection>
-                       </div>
-                    </>
+                      <DetailSection title="Observaciones" icon={FileText} color="orange">
+                         <p className="text-muted-foreground whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
+                      </DetailSection>
                   )}
               </div>
             </TabsContent>

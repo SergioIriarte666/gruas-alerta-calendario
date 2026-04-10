@@ -120,24 +120,27 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
 
   return (
     <div className="mt-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          {isVehicleSpecific ? (
-            <Car className="w-5 h-5 text-tms-green" />
-          ) : (
-            <User className="w-5 h-5 text-tms-green" />
-          )}
-          <h3 className="text-lg font-semibold text-foreground">
-            {isVehicleSpecific 
-              ? `Historial de Servicios - Patente ${licensePlate}`
-              : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
-            }
-          </h3>
+      <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-cyan-500/10">
+              {isVehicleSpecific ? (
+                <Car className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              ) : (
+                <User className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+              )}
+            </div>
+            <h3 className="text-base font-semibold text-cyan-700 dark:text-cyan-300">
+              {isVehicleSpecific 
+                ? `Historial de Servicios - Patente ${licensePlate}`
+                : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
+              }
+            </h3>
+          </div>
+          <Badge variant="outline" className="text-tms-green border-tms-green">
+            {history.length} servicio{history.length !== 1 ? 's' : ''} encontrado{history.length !== 1 ? 's' : ''}
+          </Badge>
         </div>
-        <Badge variant="outline" className="text-tms-green border-tms-green">
-          {history.length} servicio{history.length !== 1 ? 's' : ''} encontrado{history.length !== 1 ? 's' : ''}
-        </Badge>
-      </div>
       
       <div className="overflow-x-auto">
         <Table>
@@ -199,6 +202,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
             ))}
           </TableBody>
         </Table>
+      </div>
       </div>
     </div>
   );
