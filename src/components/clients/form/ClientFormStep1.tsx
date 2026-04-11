@@ -62,33 +62,29 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
         return;
       }
 
-      setSreResult(data as SreResult);
-      toast.success('Datos encontrados en SRE');
+      const result = data as SreResult;
+      setSreResult(result);
+
+      // Auto-apply data to form
+      if (result.razon_social) {
+        onChange('name', toTitleCase(result.razon_social));
+      }
+
+      const address = [result.direccion, result.comuna].filter(Boolean).join(', ');
+
+      onSreData?.({
+        name: result.razon_social ? toTitleCase(result.razon_social) : name,
+        address,
+        phone: result.telefono,
+        email: result.email || result.dte_email,
+      });
+
+      toast.success('Datos encontrados y aplicados al formulario');
     } catch (err) {
       toast.error('Error de conexión con el servicio SRE');
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const applyData = () => {
-    if (!sreResult) return;
-
-    if (sreResult.razon_social) {
-      onChange('name', toTitleCase(sreResult.razon_social));
-    }
-
-    const address = [sreResult.direccion, sreResult.comuna].filter(Boolean).join(', ');
-
-    onSreData?.({
-      name: sreResult.razon_social ? toTitleCase(sreResult.razon_social) : name,
-      address,
-      phone: sreResult.telefono,
-      email: sreResult.email || sreResult.dte_email,
-    });
-
-    toast.success('Datos aplicados al formulario');
-    setSreResult(null);
   };
 
   const dismissResult = () => setSreResult(null);
@@ -223,15 +219,9 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                 )}
               </div>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={applyData}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Aplicar datos al formulario
-              </Button>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                ✓ Datos aplicados automáticamente al formulario
+              </p>
             </div>
           )}
 
