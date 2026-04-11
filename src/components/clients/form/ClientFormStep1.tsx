@@ -195,7 +195,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                       ))}
                     </ul>
                   </div>
-                )}
+              </div>
 
               <Button
                 type="button"
