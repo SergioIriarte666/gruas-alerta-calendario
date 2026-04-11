@@ -77,7 +77,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
       name: sreResult.razon_social ? toTitleCase(sreResult.razon_social) : name,
       address,
       phone: sreResult.telefono,
-      email: sreResult.email,
+      email: sreResult.email || sreResult.dte_email,
     });
 
     toast.success('Datos aplicados al formulario');
