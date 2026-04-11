@@ -172,7 +172,30 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                     <p className="font-medium">{sreResult.email}</p>
                   </div>
                 )}
-              </div>
+                {sreResult.dte_email && sreResult.dte_email !== sreResult.email && (
+                  <div>
+                    <span className="text-muted-foreground">Email DTE:</span>
+                    <p className="font-medium">{sreResult.dte_email}</p>
+                  </div>
+                )}
+                {sreResult.fecha_resolucion && (
+                  <div>
+                    <span className="text-muted-foreground">Fecha Resolución:</span>
+                    <p className="font-medium">{sreResult.fecha_resolucion}</p>
+                  </div>
+                )}
+                {sreResult.actividades_economicas?.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground">Actividades Económicas:</span>
+                    <ul className="mt-1 space-y-0.5">
+                      {sreResult.actividades_economicas.map((act, i) => (
+                        <li key={i} className="font-medium text-xs">
+                          • {act.descripcion || act.codigo || JSON.stringify(act)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               <Button
                 type="button"
