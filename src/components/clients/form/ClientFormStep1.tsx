@@ -10,14 +10,21 @@ import { toast } from 'sonner';
 
 interface SreResult {
   razon_social: string;
+  rut: string;
+  dte_email: string;
+  fecha_resolucion: string;
+  numero_resolucion: number | null;
+  actecos: string[];
+  glosa_giro: string;
+  es_mipyme: boolean | null;
+  url: string;
+  actualizado: string;
+  // Premium fields
   direccion: string;
   comuna: string;
   telefono: string;
   email: string;
-  dte_email: string;
-  glosa_giro: string;
   actividades_economicas: { codigo: string; descripcion: string }[];
-  fecha_resolucion: string;
 }
 
 interface ClientFormStep1Props {
@@ -172,7 +179,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                     <p className="font-medium">{sreResult.email}</p>
                   </div>
                 )}
-                {sreResult.dte_email && sreResult.dte_email !== sreResult.email && (
+                {sreResult.dte_email && (
                   <div>
                     <span className="text-muted-foreground">Email DTE:</span>
                     <p className="font-medium">{sreResult.dte_email}</p>
@@ -182,6 +189,12 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                   <div>
                     <span className="text-muted-foreground">Fecha Resolución:</span>
                     <p className="font-medium">{sreResult.fecha_resolucion}</p>
+                  </div>
+                )}
+                {sreResult.actecos?.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground">Actividades Económicas (códigos):</span>
+                    <p className="font-medium text-xs mt-0.5">{sreResult.actecos.join(', ')}</p>
                   </div>
                 )}
                 {sreResult.actividades_economicas?.length > 0 && (
@@ -194,6 +207,18 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+                {sreResult.es_mipyme !== null && (
+                  <div>
+                    <span className="text-muted-foreground">MiPyme:</span>
+                    <p className="font-medium">{sreResult.es_mipyme ? 'Sí' : 'No'}</p>
+                  </div>
+                )}
+                {sreResult.url && (
+                  <div>
+                    <span className="text-muted-foreground">Sitio Web:</span>
+                    <p className="font-medium">{sreResult.url}</p>
                   </div>
                 )}
               </div>
