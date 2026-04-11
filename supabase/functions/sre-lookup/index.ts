@@ -11,13 +11,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("SRE_API_TOKEN");
-    if (!token) {
-      return new Response(
-        JSON.stringify({ error: "SRE_API_TOKEN no configurado" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const envToken = Deno.env.get("SRE_API_TOKEN");
+    const token = envToken || "token_publico";
+    const isPublicToken = token === "token_publico";
 
     const body = await req.json();
     const rut = body?.rut?.trim();
@@ -29,23 +25,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Looking up RUT: ${rut}`);
+    console.log(`Looking up RUT: ${rut} (token: ${isPublicToken ? "público" : "premium"})`);
 
-    const sreResponse = await fetch(SRE_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token,
-        rut,
-        version: "2.0",
-      }),
-    });
+    let sreResponse: Response;
+
+    if (isPublicToken) {
+      // Public token uses GET with query params
+      const url = `${SRE_API_URL}?token=${encodeURIComponent(token)}&rut=${encodeURIComponent(rut)}`;
+      sreResponse = await fetch(url, { method: "GET" });
+    } else {
+      // Premium token uses POST with JSON body
+      sreResponse = await fetch(SRE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, rut, version: "2.0" }),
+      });
+    }
 
     if (!sreResponse.ok) {
       const errorBody = await sreResponse.text().catch(() => "no body");
       console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
       return new Response(
-        JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}` }),
+        JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}`, details: errorBody }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -60,7 +61,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map real SRE API fields to our normalized result
     const result = {
       razon_social: data.razon_social || "",
       rut: data.rut || "",
