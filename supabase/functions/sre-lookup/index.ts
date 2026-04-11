@@ -11,13 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("SRE_API_TOKEN");
-    if (!token) {
-      return new Response(
-        JSON.stringify({ error: "SRE_API_TOKEN no configurado" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Use public token until premium is activated
+    const token = "token_publico";
 
     const body = await req.json();
     const rut = body?.rut?.trim();
@@ -29,23 +24,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Looking up RUT: ${rut}`);
+    console.log(`Looking up RUT: ${rut} (token: público)`);
 
     const sreResponse = await fetch(SRE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token,
-        rut,
-        version: "2.0",
-      }),
+      body: JSON.stringify({ token, rut }),
     });
 
     if (!sreResponse.ok) {
       const errorBody = await sreResponse.text().catch(() => "no body");
       console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
       return new Response(
-        JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}` }),
+        JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}`, details: errorBody }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -60,7 +51,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map real SRE API fields to our normalized result
     const result = {
       razon_social: data.razon_social || "",
       rut: data.rut || "",
@@ -72,7 +62,7 @@ Deno.serve(async (req) => {
       es_mipyme: data.es_mipyme ?? null,
       url: data.url || "",
       actualizado: data.actualizado || "",
-      // Premium fields (may come with paid token)
+      // Premium fields (available with paid token)
       direccion: data.direccion || "",
       comuna: data.comuna || "",
       telefono: data.telefono || "",
