@@ -4,6 +4,52 @@ const corsHeaders = {
 };
 
 const SRE_API_URL = "https://sre.cl/api/company_info";
+const RUTS_INFO_API_URL = "https://ruts.info/api/company-info";
+
+function cleanRut(rut: string): string {
+  return rut.replace(/\./g, "").replace(/-/g, "");
+}
+
+async function fetchFromRutsInfo(rut: string): Promise<Response> {
+  const apiKey = Deno.env.get("RUTS_INFO_API_KEY");
+  if (!apiKey) {
+    throw new Error("RUTS_INFO_API_KEY not configured");
+  }
+
+  const cleanedRut = cleanRut(rut);
+  console.log(`Falling back to ruts.info with RUT: ${cleanedRut}`);
+
+  const response = await fetch(`${RUTS_INFO_API_URL}?rut=${cleanedRut}`, {
+    method: "GET",
+    headers: { "x-api-key": apiKey },
+  });
+
+  return response;
+}
+
+function mapRutsInfoResponse(data: any) {
+  const firstAddress = data.addresses?.[0];
+  const activities = data.activities || [];
+
+  return {
+    razon_social: data.business_name || "",
+    rut: data.rut || "",
+    dte_email: "",
+    fecha_resolucion: "",
+    numero_resolucion: null,
+    actecos: activities.map((a: any) => a.activity_code).filter(Boolean),
+    glosa_giro: activities.map((a: any) => a.activity_description).filter(Boolean).join(", "),
+    es_mipyme: null,
+    url: "",
+    actualizado: "",
+    direccion: firstAddress ? [firstAddress.street, firstAddress.street_number].filter(Boolean).join(" ") : "",
+    comuna: firstAddress?.district || "",
+    telefono: "",
+    email: "",
+    actividades_economicas: activities,
+    _source: "ruts.info",
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,8 +57,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Use public token until premium is activated
-    const token = "token_publico";
+    const token = Deno.env.get("SRE_API_TOKEN") || "token_publico";
 
     const body = await req.json();
     const rut = body?.rut?.trim();
@@ -24,69 +69,122 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Looking up RUT: ${rut} (token: público)`);
+    console.log(`Looking up RUT: ${rut} (token: ${token === "token_publico" ? "público" : "premium"})`);
 
-    const sreResponse = await fetch(SRE_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, rut }),
-    });
+    // Try SRE first
+    let useFallback = false;
+    let sreError = "";
 
-    if (!sreResponse.ok) {
-      const errorBody = await sreResponse.text().catch(() => "no body");
-      console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
-      
-      // Parse SRE error message for user-friendly display
-      let userMessage = `Error de API SRE (${sreResponse.status})`;
-      try {
-        const parsed = JSON.parse(errorBody);
-        if (parsed?.message?.includes("consultas disponibles")) {
-          userMessage = "Se agotaron las consultas gratuitas de SRE. Activa tu token premium en sre.cl para continuar.";
-        } else if (parsed?.message?.includes("desactivado")) {
-          userMessage = "El token SRE está desactivado. Actívalo en sre.cl.";
-        } else if (parsed?.message) {
-          userMessage = parsed.message;
+    try {
+      const sreResponse = await fetch(SRE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, rut }),
+      });
+
+      if (!sreResponse.ok) {
+        const errorBody = await sreResponse.text().catch(() => "no body");
+        console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
+
+        try {
+          const parsed = JSON.parse(errorBody);
+          if (parsed?.message?.includes("consultas disponibles") || parsed?.message?.includes("desactivado") || sreResponse.status === 403) {
+            useFallback = true;
+            sreError = parsed?.message || `HTTP ${sreResponse.status}`;
+          }
+        } catch {
+          useFallback = true;
+          sreError = `HTTP ${sreResponse.status}`;
         }
-      } catch {}
 
-      return new Response(
-        JSON.stringify({ error: userMessage }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        if (!useFallback) {
+          return new Response(
+            JSON.stringify({ error: `Error de API SRE (${sreResponse.status})` }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        const data = await sreResponse.json();
+        console.log("SRE response:", JSON.stringify(data));
+
+        if (data.error) {
+          useFallback = true;
+          sreError = data.error;
+        } else {
+          const result = {
+            razon_social: data.razon_social || "",
+            rut: data.rut || "",
+            dte_email: data.dte_email || "",
+            fecha_resolucion: data.fecha_resol || "",
+            numero_resolucion: data.numero_resol || null,
+            actecos: data.actecos || [],
+            glosa_giro: data.glosa_giro || "",
+            es_mipyme: data.es_mipyme ?? null,
+            url: data.url || "",
+            actualizado: data.actualizado || "",
+            direccion: data.direccion || "",
+            comuna: data.comuna || "",
+            telefono: data.telefono || "",
+            email: data.email || "",
+            actividades_economicas: data.actividades_economicas || [],
+            _source: "sre.cl",
+          };
+
+          return new Response(
+            JSON.stringify(result),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    } catch (e) {
+      console.error("SRE fetch error:", e);
+      useFallback = true;
+      sreError = e.message || "SRE connection error";
     }
 
-    const data = await sreResponse.json();
-    console.log("SRE response:", JSON.stringify(data));
+    // Fallback to ruts.info
+    if (useFallback) {
+      console.log(`SRE failed (${sreError}), trying ruts.info fallback...`);
 
-    if (data.error) {
-      return new Response(
-        JSON.stringify({ error: data.error }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      try {
+        const rutsResponse = await fetchFromRutsInfo(rut);
+
+        if (!rutsResponse.ok) {
+          const errText = await rutsResponse.text().catch(() => "no body");
+          console.error(`ruts.info error: ${rutsResponse.status} - ${errText}`);
+          return new Response(
+            JSON.stringify({ error: `Ambas fuentes fallaron. SRE: ${sreError}. ruts.info: HTTP ${rutsResponse.status}` }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const rutsData = await rutsResponse.json();
+        console.log("ruts.info response:", JSON.stringify(rutsData));
+
+        if (rutsData.error) {
+          return new Response(
+            JSON.stringify({ error: rutsData.error }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const result = mapRutsInfoResponse(rutsData);
+        return new Response(
+          JSON.stringify(result),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (fallbackError) {
+        console.error("ruts.info fallback error:", fallbackError);
+        return new Response(
+          JSON.stringify({ error: `SRE: ${sreError}. ruts.info: ${fallbackError.message}` }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
-
-    const result = {
-      razon_social: data.razon_social || "",
-      rut: data.rut || "",
-      dte_email: data.dte_email || "",
-      fecha_resolucion: data.fecha_resol || "",
-      numero_resolucion: data.numero_resol || null,
-      actecos: data.actecos || [],
-      glosa_giro: data.glosa_giro || "",
-      es_mipyme: data.es_mipyme ?? null,
-      url: data.url || "",
-      actualizado: data.actualizado || "",
-      // Premium fields (available with paid token)
-      direccion: data.direccion || "",
-      comuna: data.comuna || "",
-      telefono: data.telefono || "",
-      email: data.email || "",
-      actividades_economicas: data.actividades_economicas || [],
-    };
 
     return new Response(
-      JSON.stringify(result),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Error inesperado" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("sre-lookup error:", error);
