@@ -42,7 +42,8 @@ Deno.serve(async (req) => {
     });
 
     if (!sreResponse.ok) {
-      console.error(`SRE API error: ${sreResponse.status}`);
+      const errorBody = await sreResponse.text().catch(() => "no body");
+      console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
       return new Response(
         JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}` }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -64,8 +65,11 @@ Deno.serve(async (req) => {
       direccion: data.direccion || "",
       comuna: data.comuna || "",
       telefono: data.telefono || "",
-      email: data.email || data.dte_email || "",
+      email: data.email || "",
+      dte_email: data.dte_email || "",
       glosa_giro: data.glosa_giro || data.giro || "",
+      actividades_economicas: data.actividades_economicas || [],
+      fecha_resolucion: data.fecha_resolucion || "",
     };
 
     return new Response(

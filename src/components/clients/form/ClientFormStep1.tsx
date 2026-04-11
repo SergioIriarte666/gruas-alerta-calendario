@@ -14,7 +14,10 @@ interface SreResult {
   comuna: string;
   telefono: string;
   email: string;
+  dte_email: string;
   glosa_giro: string;
+  actividades_economicas: { codigo: string; descripcion: string }[];
+  fecha_resolucion: string;
 }
 
 interface ClientFormStep1Props {
