@@ -1,17 +1,88 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
-import { Building2 } from 'lucide-react';
+import { Building2, Search, Loader2, CheckCircle2, X } from 'lucide-react';
 import { toTitleCase } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface SreResult {
+  razon_social: string;
+  direccion: string;
+  comuna: string;
+  telefono: string;
+  email: string;
+  glosa_giro: string;
+}
 
 interface ClientFormStep1Props {
   name: string;
   rut: string;
   onChange: (field: string, value: string) => void;
+  onSreData?: (data: { name: string; address: string; phone: string; email: string }) => void;
 }
 
-export const ClientFormStep1 = ({ name, rut, onChange }: ClientFormStep1Props) => {
+export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormStep1Props) => {
+  const [isSearching, setIsSearching] = useState(false);
+  const [sreResult, setSreResult] = useState<SreResult | null>(null);
+
+  const handleSearch = async () => {
+    if (!rut.trim()) {
+      toast.error('Ingrese un RUT para buscar');
+      return;
+    }
+
+    setIsSearching(true);
+    setSreResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('sre-lookup', {
+        body: { rut: rut.trim() },
+      });
+
+      if (error) {
+        toast.error('Error al consultar SRE: ' + error.message);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      setSreResult(data as SreResult);
+      toast.success('Datos encontrados en SRE');
+    } catch (err) {
+      toast.error('Error de conexión con el servicio SRE');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const applyData = () => {
+    if (!sreResult) return;
+
+    if (sreResult.razon_social) {
+      onChange('name', toTitleCase(sreResult.razon_social));
+    }
+
+    const address = [sreResult.direccion, sreResult.comuna].filter(Boolean).join(', ');
+
+    onSreData?.({
+      name: sreResult.razon_social ? toTitleCase(sreResult.razon_social) : name,
+      address,
+      phone: sreResult.telefono,
+      email: sreResult.email,
+    });
+
+    toast.success('Datos aplicados al formulario');
+    setSreResult(null);
+  };
+
+  const dismissResult = () => setSreResult(null);
+
   return (
     <div className="space-y-4">
       <ColoredSectionCard
@@ -21,6 +92,97 @@ export const ClientFormStep1 = ({ name, rut, onChange }: ClientFormStep1Props) =
         required
       >
         <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="rut" className="text-foreground">RUT *</Label>
+            <div className="flex gap-2">
+              <Input
+                id="rut"
+                value={rut}
+                onChange={(e) => onChange('rut', e.target.value)}
+                placeholder="12.345.678-9"
+                className="bg-background"
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleSearch}
+                disabled={isSearching || !rut.trim()}
+                className="shrink-0 border-violet-300 hover:bg-violet-50 hover:border-violet-400 dark:hover:bg-violet-950"
+                title="Buscar en SRE"
+              >
+                {isSearching ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                ) : (
+                  <Search className="h-4 w-4 text-violet-600" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Formato: XX.XXX.XXX-X — Presiona buscar para auto-completar datos desde SRE
+            </p>
+          </div>
+
+          {sreResult && (
+            <div className="rounded-lg border border-emerald-200 border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4 space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                    Datos encontrados en SRE
+                  </span>
+                </div>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={dismissResult}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                {sreResult.razon_social && (
+                  <div>
+                    <span className="text-muted-foreground">Razón Social:</span>
+                    <p className="font-medium">{sreResult.razon_social}</p>
+                  </div>
+                )}
+                {sreResult.glosa_giro && (
+                  <div>
+                    <span className="text-muted-foreground">Giro:</span>
+                    <p className="font-medium">{sreResult.glosa_giro}</p>
+                  </div>
+                )}
+                {sreResult.direccion && (
+                  <div>
+                    <span className="text-muted-foreground">Dirección:</span>
+                    <p className="font-medium">{sreResult.direccion}{sreResult.comuna ? `, ${sreResult.comuna}` : ''}</p>
+                  </div>
+                )}
+                {sreResult.telefono && (
+                  <div>
+                    <span className="text-muted-foreground">Teléfono:</span>
+                    <p className="font-medium">{sreResult.telefono}</p>
+                  </div>
+                )}
+                {sreResult.email && (
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>
+                    <p className="font-medium">{sreResult.email}</p>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="button"
+                size="sm"
+                onClick={applyData}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Aplicar datos al formulario
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="name" className="text-foreground">Nombre/Razón Social *</Label>
             <Input
@@ -32,21 +194,6 @@ export const ClientFormStep1 = ({ name, rut, onChange }: ClientFormStep1Props) =
               className="bg-background"
               required
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="rut" className="text-foreground">RUT *</Label>
-            <Input
-              id="rut"
-              value={rut}
-              onChange={(e) => onChange('rut', e.target.value)}
-              placeholder="12.345.678-9"
-              className="bg-background"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              Formato: XX.XXX.XXX-X
-            </p>
           </div>
         </div>
       </ColoredSectionCard>
