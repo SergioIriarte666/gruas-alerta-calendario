@@ -219,15 +219,9 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                 )}
               </div>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={applyData}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Aplicar datos al formulario
-              </Button>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                ✓ Datos aplicados automáticamente al formulario
+              </p>
             </div>
           )}
 
