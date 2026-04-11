@@ -116,6 +116,15 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
             name={formData.name}
             rut={formData.rut}
             onChange={handleChange}
+            onSreData={(data) => {
+              setFormData(prev => ({
+                ...prev,
+                name: data.name || prev.name,
+                phone: data.phone || prev.phone,
+                email: data.email || prev.email,
+                address: data.address || prev.address,
+              }));
+            }}
           />
         );
       case 2:
