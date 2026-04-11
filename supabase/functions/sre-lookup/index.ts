@@ -11,9 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const envToken = Deno.env.get("SRE_API_TOKEN");
-    const token = envToken || "token_publico";
-    const isPublicToken = token === "token_publico";
+    // Use public token until premium is activated
+    const token = "token_publico";
 
     const body = await req.json();
     const rut = body?.rut?.trim();
