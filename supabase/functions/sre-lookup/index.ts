@@ -130,6 +130,46 @@ Deno.serve(async (req) => {
             _source: "sre.cl",
           };
 
+          // If SRE succeeded but missing address/phone (free tier), enrich from ruts.info
+          const missingAddress = !result.direccion && !result.comuna;
+          const missingContact = !result.telefono && !result.email;
+          
+          if (missingAddress || missingContact) {
+            console.log("SRE missing address/contact data, enriching from ruts.info...");
+            try {
+              const enrichResponse = await fetchFromRutsInfo(rut);
+              if (enrichResponse.ok) {
+                const enrichData = await enrichResponse.json();
+                console.log("ruts.info enrich response:", JSON.stringify(enrichData));
+                
+                if (!enrichData.error) {
+                  const mapped = mapRutsInfoResponse(enrichData);
+                  if (missingAddress) {
+                    result.direccion = mapped.direccion;
+                    result.comuna = mapped.comuna;
+                  }
+                  if (missingContact) {
+                    // Keep SRE data priority, only fill blanks
+                    if (!result.telefono && mapped.telefono) result.telefono = mapped.telefono;
+                    if (!result.email && mapped.email) result.email = mapped.email;
+                  }
+                  if (!result.glosa_giro && mapped.glosa_giro) {
+                    result.glosa_giro = mapped.glosa_giro;
+                  }
+                  if (result.actividades_economicas.length === 0 && mapped.actividades_economicas.length > 0) {
+                    result.actividades_economicas = mapped.actividades_economicas;
+                  }
+                  result._source = "sre.cl + ruts.info";
+                }
+              } else {
+                const errText = await enrichResponse.text().catch(() => "");
+                console.log("ruts.info enrich failed:", errText);
+              }
+            } catch (enrichErr) {
+              console.log("ruts.info enrich error (non-fatal):", enrichErr.message);
+            }
+          }
+
           return new Response(
             JSON.stringify(result),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
