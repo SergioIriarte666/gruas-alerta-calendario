@@ -24,7 +24,7 @@ interface SreResult {
   comuna: string;
   telefono: string;
   email: string;
-  actividades_economicas: { codigo: string; descripcion: string }[];
+  actividades_economicas: { codigo?: string; descripcion?: string; activity_code?: string; activity_description?: string }[];
 }
 
 interface ClientFormStep1Props {
