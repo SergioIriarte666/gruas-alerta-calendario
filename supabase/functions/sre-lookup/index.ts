@@ -53,23 +53,31 @@ Deno.serve(async (req) => {
     const data = await sreResponse.json();
     console.log("SRE response:", JSON.stringify(data));
 
-    if (data.error || data.status === "error") {
+    if (data.error) {
       return new Response(
-        JSON.stringify({ error: data.message || data.error || "RUT no encontrado" }),
+        JSON.stringify({ error: data.error }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Map real SRE API fields to our normalized result
     const result = {
-      razon_social: data.razon_social || data.nombre || "",
+      razon_social: data.razon_social || "",
+      rut: data.rut || "",
+      dte_email: data.dte_email || "",
+      fecha_resolucion: data.fecha_resol || "",
+      numero_resolucion: data.numero_resol || null,
+      actecos: data.actecos || [],
+      glosa_giro: data.glosa_giro || "",
+      es_mipyme: data.es_mipyme ?? null,
+      url: data.url || "",
+      actualizado: data.actualizado || "",
+      // Premium fields (may come with paid token)
       direccion: data.direccion || "",
       comuna: data.comuna || "",
       telefono: data.telefono || "",
       email: data.email || "",
-      dte_email: data.dte_email || "",
-      glosa_giro: data.glosa_giro || data.giro || "",
       actividades_economicas: data.actividades_economicas || [],
-      fecha_resolucion: data.fecha_resolucion || "",
     };
 
     return new Response(
