@@ -35,9 +35,23 @@ Deno.serve(async (req) => {
     if (!sreResponse.ok) {
       const errorBody = await sreResponse.text().catch(() => "no body");
       console.error(`SRE API error: ${sreResponse.status} - ${errorBody}`);
+      
+      // Parse SRE error message for user-friendly display
+      let userMessage = `Error de API SRE (${sreResponse.status})`;
+      try {
+        const parsed = JSON.parse(errorBody);
+        if (parsed?.message?.includes("consultas disponibles")) {
+          userMessage = "Se agotaron las consultas gratuitas de SRE. Activa tu token premium en sre.cl para continuar.";
+        } else if (parsed?.message?.includes("desactivado")) {
+          userMessage = "El token SRE está desactivado. Actívalo en sre.cl.";
+        } else if (parsed?.message) {
+          userMessage = parsed.message;
+        }
+      } catch {}
+
       return new Response(
-        JSON.stringify({ error: `Error de API SRE: ${sreResponse.status}`, details: errorBody }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: userMessage }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
