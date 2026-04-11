@@ -27,20 +27,11 @@ Deno.serve(async (req) => {
 
     console.log(`Looking up RUT: ${rut} (token: ${isPublicToken ? "público" : "premium"})`);
 
-    let sreResponse: Response;
-
-    if (isPublicToken) {
-      // Public token uses GET with query params
-      const url = `${SRE_API_URL}?token=${encodeURIComponent(token)}&rut=${encodeURIComponent(rut)}`;
-      sreResponse = await fetch(url, { method: "GET" });
-    } else {
-      // Premium token uses POST with JSON body
-      sreResponse = await fetch(SRE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, rut, version: "2.0" }),
-      });
-    }
+    const sreResponse = await fetch(SRE_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, rut }),
+    });
 
     if (!sreResponse.ok) {
       const errorBody = await sreResponse.text().catch(() => "no body");
@@ -72,7 +63,7 @@ Deno.serve(async (req) => {
       es_mipyme: data.es_mipyme ?? null,
       url: data.url || "",
       actualizado: data.actualizado || "",
-      // Premium fields (may come with paid token)
+      // Premium fields (available with paid token)
       direccion: data.direccion || "",
       comuna: data.comuna || "",
       telefono: data.telefono || "",
