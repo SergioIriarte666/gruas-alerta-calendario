@@ -1,39 +1,27 @@
 
 
-# Plan: Actualizar Edge Function para Plan Premium SRE
+# Plan: Usar token público de SRE temporalmente
 
-## Problema
-1. El token SRE no está activo (403 en todos los requests) — esto se resuelve activándolo en el panel de SRE.cl
-2. La Edge Function actual solo captura campos del plan público. Con el plan premium hay más datos disponibles.
+## Cambio
+Modificar la Edge Function `sre-lookup` para usar el token público `"token_publico"` como fallback cuando el `SRE_API_TOKEN` no esté activo, o directamente usar el token público por ahora.
 
-## Campos premium a agregar
+### Enfoque simple
+En `supabase/functions/sre-lookup/index.ts`, línea 14:
+- Cambiar la lógica del token para usar `"token_publico"` como fallback:
+```typescript
+const token = Deno.env.get("SRE_API_TOKEN") || "token_publico";
+```
+- Esto permite que funcione inmediatamente con datos públicos
+- Cuando el token premium se active, automáticamente lo usará (ya está guardado como secret)
 
-Según la documentación de SRE (captura adjunta):
+### También cambiar el método a GET
+La API pública de SRE usa GET con query params, no POST. Agregar lógica para detectar si es token público y usar GET:
+```
+GET https://sre.cl/api/company_info?token=token_publico&rut=XX.XXX.XXX-X
+```
 
-| Campo Premium | Uso en formulario |
-|---|---|
-| email (contacto) | email del cliente |
-| telefono | teléfono del cliente |
-| direccion completa | dirección del cliente |
-| actividades_economicas | mostrar en panel de resultados |
-| fecha_resolucion | mostrar en panel de resultados |
-| logo | posible uso futuro |
-| tags | posible uso futuro |
-| info geográfica | posible uso futuro |
+Si el token es el premium (de env), seguir usando POST como está documentado para el plan premium.
 
-## Cambios
-
-### 1. `supabase/functions/sre-lookup/index.ts`
-- Agregar log del body de respuesta completo para debug (ya existe)
-- Agregar mapeo de campos premium adicionales: `actividades_economicas`, `fecha_resolucion`, `dte_email` (separado del email de contacto)
-- Mejorar log de error para incluir el body de la respuesta 403 (útil para diagnosticar)
-
-### 2. `src/components/clients/form/ClientFormStep1.tsx`
-- Agregar visualización de campos premium en el panel de resultados (actividades económicas, fecha resolución, DTE email)
-- Mantener el botón "Aplicar datos" con los campos relevantes para el formulario
-
-## Alcance
-- 2 archivos modificados
-- Sin cambios de lógica de negocio ni base de datos
-- Compatible hacia atrás: si los campos premium vienen vacíos (plan público), simplemente no se muestran
+## Archivos
+- `supabase/functions/sre-lookup/index.ts` — agregar fallback a token público + soporte GET
 
