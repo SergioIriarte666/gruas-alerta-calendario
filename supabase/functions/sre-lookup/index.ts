@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Looking up RUT: ${rut} (token: ${isPublicToken ? "público" : "premium"})`);
+    console.log(`Looking up RUT: ${rut} (token: público)`);
 
     const sreResponse = await fetch(SRE_API_URL, {
       method: "POST",
