@@ -199,7 +199,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                     <ul className="mt-1 space-y-0.5">
                       {sreResult.actividades_economicas.map((act, i) => (
                         <li key={i} className="font-medium text-xs">
-                          • {act.descripcion || act.codigo || JSON.stringify(act)}
+                          • {act.activity_description || act.descripcion || act.codigo || (typeof act === 'string' ? act : JSON.stringify(act))}
                         </li>
                       ))}
                     </ul>
