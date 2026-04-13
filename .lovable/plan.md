@@ -1,26 +1,28 @@
 
 
-# Plan: Acortar etiquetas de estado largas en badges
+# Plan: Agregar N° Fiscal al header y botón Imprimir servicios
 
-## Problema
-Las etiquetas "Con Orden de Compra" y "Esperando O.C." son demasiado largas para badges, causando que se vean desordenados y ocupen demasiado espacio, especialmente en tablas y modales.
+## Cambios en `src/components/invoices/InvoiceDetailsModal.tsx`
 
-## Solución
-Usar abreviaciones consistentes en todos los badges de estado. Varios archivos del proyecto ya usan "Con O.C." y "Esperando O.C." — unificar todo.
+### 1. Header: Mostrar N° Fiscal junto al folio
+En el `DialogTitle` (línea 253-259), agregar el `numeroFiscal` al lado del folio de factura. Ejemplo visual:
+```text
+📄 Factura FACT-4359 | N° 12345        [Enviada]
+```
+Si no tiene número fiscal, no se muestra nada adicional.
 
-## Cambios
+### 2. Botón Imprimir en pestaña Servicios
+Agregar un botón `Imprimir` (icono `Printer` de lucide-react) en el header de la sección "Servicios Incluidos" (línea 518-525). Al hacer clic, abre una ventana de impresión con una tabla limpia que incluye:
+- Header: Factura (folio + N° fiscal), cliente, fecha
+- Tabla de servicios: Folio, Fecha, Vehículo, Patente, Valor, Estado
+- Total al final
 
-### 1. `src/utils/statusHelpers.ts`
-- `purchase_order_pending`: "Esperando O.C." → **"OC Pendiente"**
-- `with_purchase_order`: "Con Orden de Compra" → **"Con O.C."**
+Se usará `window.open()` + `document.write()` para generar un HTML limpio de impresión, sin dependencias adicionales.
 
-### 2. `src/components/services/VehicleHistory.tsx`
-- `purchase_order_pending`: "Esperando O.C." → **"OC Pendiente"**
-- `with_purchase_order`: "Con Orden de Compra" → **"Con O.C."**
+### Importaciones
+- Agregar `Printer` desde `lucide-react`
+- Agregar `Button` desde `@/components/ui/button`
 
-Esto afecta todas las tablas de servicios, el dashboard, el modal de detalles, el portal de clientes, y el historial de vehículos — todos usan estas mismas funciones/configs.
-
-## Archivos
-- `src/utils/statusHelpers.ts` — 2 labels
-- `src/components/services/VehicleHistory.tsx` — 2 labels
+## Archivo
+- `src/components/invoices/InvoiceDetailsModal.tsx`
 
