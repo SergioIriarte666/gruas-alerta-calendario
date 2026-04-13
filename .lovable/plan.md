@@ -1,28 +1,42 @@
 
 
-# Plan: Agregar N° Fiscal al header y botón Imprimir servicios
+# Plan: Cambiar SRE.cl de modo gratuito a premium
 
-## Cambios en `src/components/invoices/InvoiceDetailsModal.tsx`
+## Contexto
+La API de SRE.cl ya está activa y tienes un token premium configurado como secret (`SRE_API_TOKEN`). Sin embargo, el código actual tiene un fallback a `"token_publico"` y no envía el parámetro `version: "2.0"` que la documentación de SRE.cl especifica. Además, con el modo premium ya no es necesario enriquecer desde ruts.info porque SRE.cl premium devuelve dirección completa, teléfono, email, logo, etc.
 
-### 1. Header: Mostrar N° Fiscal junto al folio
-En el `DialogTitle` (línea 253-259), agregar el `numeroFiscal` al lado del folio de factura. Ejemplo visual:
-```text
-📄 Factura FACT-4359 | N° 12345        [Enviada]
+## Cambios en `supabase/functions/sre-lookup/index.ts`
+
+### 1. Eliminar fallback a token_publico
+Línea 60 — cambiar:
+```typescript
+// Antes
+const token = Deno.env.get("SRE_API_TOKEN") || "token_publico";
+
+// Después
+const token = Deno.env.get("SRE_API_TOKEN");
+if (!token) {
+  return new Response(
+    JSON.stringify({ error: "SRE_API_TOKEN no configurado" }),
+    { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 ```
-Si no tiene número fiscal, no se muestra nada adicional.
 
-### 2. Botón Imprimir en pestaña Servicios
-Agregar un botón `Imprimir` (icono `Printer` de lucide-react) en el header de la sección "Servicios Incluidos" (línea 518-525). Al hacer clic, abre una ventana de impresión con una tabla limpia que incluye:
-- Header: Factura (folio + N° fiscal), cliente, fecha
-- Tabla de servicios: Folio, Fecha, Vehículo, Patente, Valor, Estado
-- Total al final
+### 2. Agregar `version: "2.0"` al request POST
+Línea 82 — incluir versión en el body:
+```typescript
+body: JSON.stringify({ token, rut, version: "2.0" }),
+```
 
-Se usará `window.open()` + `document.write()` para generar un HTML limpio de impresión, sin dependencias adicionales.
+### 3. Mapear campos premium adicionales
+Agregar los campos que devuelve el modo premium al resultado (ciudad, provincia, región, logo, tags).
 
-### Importaciones
-- Agregar `Printer` desde `lucide-react`
-- Agregar `Button` desde `@/components/ui/button`
+### 4. Simplificar lógica de enriquecimiento
+Con premium, SRE.cl ya devuelve dirección, teléfono y email. Mantener el enriquecimiento desde ruts.info solo como fallback en caso de que algún campo específico esté vacío, pero sin depender de ello.
+
+### 5. Redesplegar la edge function
 
 ## Archivo
-- `src/components/invoices/InvoiceDetailsModal.tsx`
+- `supabase/functions/sre-lookup/index.ts`
 
