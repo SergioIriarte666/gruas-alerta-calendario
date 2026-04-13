@@ -22,8 +22,10 @@ import {
   Receipt,
   Wrench,
   Package,
-  Car
+  Car,
+  Printer
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
@@ -254,6 +256,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
             <span className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
               Factura {invoice.folio}
+              {invoice.numeroFiscal && (
+                <span className="text-muted-foreground font-normal text-sm">| N° {invoice.numeroFiscal}</span>
+              )}
             </span>
             <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
           </DialogTitle>
@@ -522,6 +527,60 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                   Servicios Incluidos
                   {services.length > 0 && (
                     <Badge variant="outline" className="ml-2 text-xs">{services.length}</Badge>
+                  )}
+                  {services.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-auto h-7 text-xs"
+                      onClick={() => {
+                        const printWindow = window.open('', '_blank');
+                        if (!printWindow) return;
+                        const totalServicios = services.reduce((sum, s) => sum + (s.value || 0), 0);
+                        const rows = services.map(s => `
+                          <tr>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.folio || 'N/A'}</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${formatSafeDate(s.service_date)}</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.vehicle_brand && s.vehicle_model ? `${s.vehicle_brand} ${s.vehicle_model}` : 'N/A'}</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.license_plate || 'N/A'}</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${formatCurrency(s.value)}</td>
+                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.status || 'N/A'}</td>
+                          </tr>
+                        `).join('');
+                        printWindow.document.write(`
+                          <html><head><title>Servicios - Factura ${invoice.folio}</title>
+                          <style>
+                            body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}
+                            h2{margin:0 0 4px}
+                            .meta{color:#666;font-size:13px;margin-bottom:16px}
+                            table{width:100%;border-collapse:collapse;font-size:13px}
+                            th{text-align:left;padding:8px 10px;border-bottom:2px solid #333;font-weight:600}
+                            .total-row td{font-weight:700;border-top:2px solid #333;padding-top:10px}
+                            @media print{body{margin:15px}}
+                          </style></head><body>
+                          <h2>Factura ${invoice.folio}${invoice.numeroFiscal ? ` | N° Fiscal: ${invoice.numeroFiscal}` : ''}</h2>
+                          <div class="meta">
+                            Cliente: ${invoice.clientName || 'N/A'} &nbsp;|&nbsp; 
+                            Fecha: ${formatSafeDate(invoice.date)} &nbsp;|&nbsp;
+                            Servicios: ${services.length}
+                          </div>
+                          <table>
+                            <thead><tr>
+                              <th>Folio</th><th>Fecha</th><th>Vehículo</th><th>Patente</th><th style="text-align:right">Valor</th><th>Estado</th>
+                            </tr></thead>
+                            <tbody>${rows}
+                              <tr class="total-row"><td colspan="4" style="text-align:right;padding:10px">Total</td><td style="text-align:right;padding:10px">${formatCurrency(totalServicios)}</td><td></td></tr>
+                            </tbody>
+                          </table>
+                          </body></html>
+                        `);
+                        printWindow.document.close();
+                        printWindow.print();
+                      }}
+                    >
+                      <Printer className="w-3.5 h-3.5 mr-1" />
+                      Imprimir
+                    </Button>
                   )}
                 </h3>
                 {loadingServices ? (
