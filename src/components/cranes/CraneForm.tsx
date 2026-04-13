@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Crane, CraneType } from '@/types';
+import { formatRut } from '@/utils/rutFormatter';
 
 interface CraneFormProps {
   crane?: Crane;
@@ -115,7 +116,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             <Input
               id="ownerCompanyRut"
               value={formData.ownerCompanyRut}
-              onChange={(e) => handleChange('ownerCompanyRut', e.target.value)}
+              onChange={(e) => handleChange('ownerCompanyRut', formatRut(e.target.value))}
               placeholder="76.123.456-7"
               required
             />

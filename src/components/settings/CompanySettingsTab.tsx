@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatRut } from '@/utils/rutFormatter';
 
 export const CompanySettingsTab = () => {
   const { settings, updateSettings, saveSettings, saving } = useSettings();
@@ -338,7 +339,7 @@ export const CompanySettingsTab = () => {
               <Label className="text-black">RUT</Label>
               <Input
                 value={profileForm.rut}
-                onChange={(e) => setProfileForm(prev => ({ ...prev, rut: e.target.value }))}
+                onChange={(e) => setProfileForm(prev => ({ ...prev, rut: formatRut(e.target.value) }))}
                 placeholder="13.222.170-7"
                 className="bg-white border-gray-300 text-black"
                 disabled={selectedProfileRut !== '__new__'}

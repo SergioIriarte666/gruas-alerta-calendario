@@ -7,6 +7,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { SupplierFormData } from '@/types/suppliers';
 import { Plus, Loader2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatRut } from '@/utils/rutFormatter';
 
 interface QuickSupplierModalProps {
   isOpen: boolean;
@@ -93,7 +94,7 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
             <Input
               id="supplier-rut"
               value={rut}
-              onChange={(e) => setRut(e.target.value)}
+              onChange={(e) => setRut(formatRut(e.target.value))}
               placeholder="ej: 76.123.456-7"
               disabled={isCreating}
             />
