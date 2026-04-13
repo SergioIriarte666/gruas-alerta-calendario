@@ -7,7 +7,7 @@ const SRE_API_URL = "https://sre.cl/api/company_info";
 const RUTS_INFO_API_URL = "https://ruts.info/api/company-info";
 
 function cleanRut(rut: string): string {
-  return rut.replace(/\./g, "").replace(/-/g, "");
+  return rut.replace(/\./g, "");
 }
 
 async function fetchFromRutsInfo(rut: string): Promise<Response> {
@@ -57,7 +57,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("SRE_API_TOKEN") || "token_publico";
+    const token = Deno.env.get("SRE_API_TOKEN");
+    if (!token) {
+      return new Response(
+        JSON.stringify({ error: "SRE_API_TOKEN no configurado" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const body = await req.json();
     const rut = body?.rut?.trim();
@@ -69,9 +75,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Looking up RUT: ${rut} (token: ${token === "token_publico" ? "público" : "premium"})`);
+    console.log(`Looking up RUT: ${rut} (premium mode)`);
 
-    // Try SRE first
+    // Try SRE premium first
     let useFallback = false;
     let sreError = "";
 
@@ -79,7 +85,7 @@ Deno.serve(async (req) => {
       const sreResponse = await fetch(SRE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, rut }),
+        body: JSON.stringify({ token, rut, version: "2.0" }),
       });
 
       if (!sreResponse.ok) {
@@ -105,7 +111,7 @@ Deno.serve(async (req) => {
         }
       } else {
         const data = await sreResponse.json();
-        console.log("SRE response:", JSON.stringify(data));
+        console.log("SRE premium response:", JSON.stringify(data));
 
         if (data.error) {
           useFallback = true;
@@ -124,24 +130,27 @@ Deno.serve(async (req) => {
             actualizado: data.actualizado || "",
             direccion: data.direccion || "",
             comuna: data.comuna || "",
+            ciudad: data.ciudad || "",
+            provincia: data.provincia || "",
+            region: data.region || "",
             telefono: data.telefono || "",
             email: data.email || "",
+            logo: data.logo || "",
+            tags: data.tags || [],
             actividades_economicas: data.actividades_economicas || [],
-            _source: "sre.cl",
+            _source: "sre.cl (premium)",
           };
 
-          // If SRE succeeded but missing address/phone (free tier), enrich from ruts.info
+          // Only enrich from ruts.info if critical fields are still missing
           const missingAddress = !result.direccion && !result.comuna;
           const missingContact = !result.telefono && !result.email;
-          
+
           if (missingAddress || missingContact) {
-            console.log("SRE missing address/contact data, enriching from ruts.info...");
+            console.log("SRE premium missing some data, enriching from ruts.info...");
             try {
               const enrichResponse = await fetchFromRutsInfo(rut);
               if (enrichResponse.ok) {
                 const enrichData = await enrichResponse.json();
-                console.log("ruts.info enrich response:", JSON.stringify(enrichData));
-                
                 if (!enrichData.error) {
                   const mapped = mapRutsInfoResponse(enrichData);
                   if (missingAddress) {
@@ -149,7 +158,6 @@ Deno.serve(async (req) => {
                     result.comuna = mapped.comuna;
                   }
                   if (missingContact) {
-                    // Keep SRE data priority, only fill blanks
                     if (!result.telefono && mapped.telefono) result.telefono = mapped.telefono;
                     if (!result.email && mapped.email) result.email = mapped.email;
                   }
@@ -159,7 +167,7 @@ Deno.serve(async (req) => {
                   if (result.actividades_economicas.length === 0 && mapped.actividades_economicas.length > 0) {
                     result.actividades_economicas = mapped.actividades_economicas;
                   }
-                  result._source = "sre.cl + ruts.info";
+                  result._source = "sre.cl (premium) + ruts.info";
                 }
               } else {
                 const errText = await enrichResponse.text().catch(() => "");
