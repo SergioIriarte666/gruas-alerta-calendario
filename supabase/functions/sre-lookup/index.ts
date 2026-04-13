@@ -17,12 +17,28 @@ async function fetchFromRutsInfo(rut: string): Promise<Response> {
   }
 
   const cleanedRut = cleanRut(rut);
-  console.log(`Falling back to ruts.info with RUT: ${cleanedRut}`);
+  const url = `${RUTS_INFO_API_URL}?rut=${cleanedRut}`;
+  console.log(`Calling ruts.info: ${url}`);
 
-  const response = await fetch(`${RUTS_INFO_API_URL}?rut=${cleanedRut}`, {
+  const response = await fetch(url, {
     method: "GET",
     headers: { "x-api-key": apiKey },
   });
+
+  if (!response.ok) {
+    // Try alternative format without dash
+    const altRut = rut.replace(/[.\-]/g, "");
+    const altUrl = `${RUTS_INFO_API_URL}?rut=${altRut}`;
+    console.log(`ruts.info returned ${response.status}, retrying with alt format: ${altUrl}`);
+    
+    const altResponse = await fetch(altUrl, {
+      method: "GET",
+      headers: { "x-api-key": apiKey },
+    });
+    
+    console.log(`ruts.info alt response: ${altResponse.status}`);
+    return altResponse;
+  }
 
   return response;
 }
