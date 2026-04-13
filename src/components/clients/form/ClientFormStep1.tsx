@@ -19,9 +19,10 @@ interface SreResult {
   es_mipyme: boolean | null;
   url: string;
   actualizado: string;
-  // Premium fields
   direccion: string;
   comuna: string;
+  ciudad: string;
+  region: string;
   telefono: string;
   email: string;
   actividades_economicas: { codigo?: string; descripcion?: string; activity_code?: string; activity_description?: string }[];
