@@ -1,30 +1,38 @@
 
 
-# Plan: Auto-formatear RUT con puntos y guion mientras se escribe
+# Plan: Aplicar formateo automático de RUT en todos los formularios
 
-## Problema
-El campo de RUT acepta texto libre sin formateo automático. El usuario quiere que al escribir "767698410" se convierta automáticamente a "76.769.841-0".
+## Archivos a modificar (6 archivos, 1 línea cada uno)
 
-## Cambios
-
-### 1. Crear utilidad `src/utils/rutFormatter.ts`
-Función `formatRut(value: string): string` que:
-- Limpia todo excepto dígitos y K/k
-- Separa el dígito verificador (último carácter)
-- Agrega puntos cada 3 dígitos de derecha a izquierda en el cuerpo
-- Agrega guion antes del verificador
-- Ejemplo: `767698410` → `76.769.841-0`
-
-### 2. Modificar `src/components/clients/form/ClientFormStep1.tsx`
-En el `onChange` del input de RUT (línea 108), aplicar el formateo automático:
+### 1. `src/components/suppliers/form/SupplierFormStep1.tsx` (línea 54)
 ```typescript
-onChange={(e) => onChange('rut', formatRut(e.target.value))}
+onChange={(e) => onRutChange(formatRut(e.target.value))}
 ```
 
-### 3. Asegurar que `sre-lookup` limpia el RUT formateado
-La edge function ya tiene `cleanRut()` que elimina puntos. Verificar que también maneje el formato con puntos correctamente (ya lo hace con `replace(/\./g, "")`).
+### 2. `src/components/suppliers/QuickSupplierModal.tsx` (línea 96)
+```typescript
+onChange={(e) => setRut(formatRut(e.target.value))}
+```
 
-## Archivo
-- `src/utils/rutFormatter.ts` (nuevo)
-- `src/components/clients/form/ClientFormStep1.tsx` (1 línea)
+### 3. `src/components/operators/OperatorForm.tsx` (línea 152)
+```typescript
+onChange={(e) => handleChange('rut', formatRut(e.target.value))}
+```
+
+### 4. `src/components/settings/CompanySettingsTab.tsx` (línea 341)
+```typescript
+onChange={(e) => setProfileForm(prev => ({ ...prev, rut: formatRut(e.target.value) }))}
+```
+
+### 5. `src/components/cranes/CraneForm.tsx` (línea 118)
+```typescript
+onChange={(e) => handleChange('ownerCompanyRut', formatRut(e.target.value))}
+```
+
+### 6. `src/components/finance/historical/PurchaseHistoryImport.tsx` (línea 1480)
+```typescript
+onChange={e => setNewSupplierData({...newSupplierData, rut: formatRut(e.target.value)})}
+```
+
+Cada archivo solo necesita agregar `import { formatRut } from '@/utils/rutFormatter';` y envolver el valor en `formatRut()`. No se requieren cambios en backend ya que todas las funciones ya limpian el RUT antes de usarlo.
 
