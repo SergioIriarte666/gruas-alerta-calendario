@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Building2, Search, Loader2, CheckCircle2, X } from 'lucide-react';
 import { toTitleCase } from '@/lib/utils';
+import { formatRut } from '@/utils/rutFormatter';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -105,7 +106,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
               <Input
                 id="rut"
                 value={rut}
-                onChange={(e) => onChange('rut', e.target.value)}
+                onChange={(e) => onChange('rut', formatRut(e.target.value))}
                 placeholder="12.345.678-9"
                 className="bg-background"
                 required
