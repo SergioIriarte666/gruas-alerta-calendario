@@ -70,7 +70,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
         onChange('name', toTitleCase(result.razon_social));
       }
 
-      const address = [result.direccion, result.comuna].filter(Boolean).join(', ');
+      const address = [result.direccion, result.comuna, result.ciudad, result.region].filter(Boolean).join(', ');
 
       onSreData?.({
         name: result.razon_social ? toTitleCase(result.razon_social) : name,
