@@ -1,22 +1,26 @@
 
 
-# Plan: Agregar estado "Con Orden de Compra" al historial de servicios
+# Plan: Acortar etiquetas de estado largas en badges
 
 ## Problema
-El componente `VehicleHistory.tsx` (pestaña "Historial" del modal de servicio) tiene un mapa de estados incompleto. Le falta el estado `with_purchase_order`, por lo que los servicios con OC se muestran como "Desconocido".
+Las etiquetas "Con Orden de Compra" y "Esperando O.C." son demasiado largas para badges, causando que se vean desordenados y ocupen demasiado espacio, especialmente en tablas y modales.
 
-## Cambio
-En `src/components/services/VehicleHistory.tsx`, línea 30, agregar el estado faltante al `statusConfig`:
+## Solución
+Usar abreviaciones consistentes en todos los badges de estado. Varios archivos del proyecto ya usan "Con O.C." y "Esperando O.C." — unificar todo.
 
-```
-with_purchase_order: { label: 'Con Orden de Compra', className: 'bg-teal-500 text-white' }
-```
+## Cambios
 
-También agregar `failed` para cubrir todos los estados del tipo `ServiceStatus`:
-```
-failed: { label: 'Fallido', className: 'bg-red-700 text-white' }
-```
+### 1. `src/utils/statusHelpers.ts`
+- `purchase_order_pending`: "Esperando O.C." → **"OC Pendiente"**
+- `with_purchase_order`: "Con Orden de Compra" → **"Con O.C."**
 
-## Archivo
-- `src/components/services/VehicleHistory.tsx` — agregar 2 estados faltantes al `statusConfig`
+### 2. `src/components/services/VehicleHistory.tsx`
+- `purchase_order_pending`: "Esperando O.C." → **"OC Pendiente"**
+- `with_purchase_order`: "Con Orden de Compra" → **"Con O.C."**
+
+Esto afecta todas las tablas de servicios, el dashboard, el modal de detalles, el portal de clientes, y el historial de vehículos — todos usan estas mismas funciones/configs.
+
+## Archivos
+- `src/utils/statusHelpers.ts` — 2 labels
+- `src/components/services/VehicleHistory.tsx` — 2 labels
 
