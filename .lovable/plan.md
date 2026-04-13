@@ -1,38 +1,30 @@
 
 
-# Plan: Mejorar mapeo de datos premium SRE al formulario de cliente
+# Plan: Auto-formatear RUT con puntos y guion mientras se escribe
 
 ## Problema
-Los logs muestran que SRE.cl premium devuelve valores `false` (boolean) para campos como `comuna`, `ciudad`, `provincia`, `region` cuando no hay datos. Además, cuando SÍ existen, la dirección solo usa `direccion + comuna` ignorando ciudad y región. También, ruts.info falla como fallback (`"Error fetching company info"`).
+El campo de RUT acepta texto libre sin formateo automático. El usuario quiere que al escribir "767698410" se convierta automáticamente a "76.769.841-0".
 
 ## Cambios
 
-### 1. `supabase/functions/sre-lookup/index.ts` — Sanitizar booleans y enriquecer dirección
-Líneas 131-135: los campos geográficos pueden venir como `false` (boolean). Cambiar el mapeo para filtrar explícitamente booleans:
+### 1. Crear utilidad `src/utils/rutFormatter.ts`
+Función `formatRut(value: string): string` que:
+- Limpia todo excepto dígitos y K/k
+- Separa el dígito verificador (último carácter)
+- Agrega puntos cada 3 dígitos de derecha a izquierda en el cuerpo
+- Agrega guion antes del verificador
+- Ejemplo: `767698410` → `76.769.841-0`
+
+### 2. Modificar `src/components/clients/form/ClientFormStep1.tsx`
+En el `onChange` del input de RUT (línea 108), aplicar el formateo automático:
 ```typescript
-direccion: (typeof data.direccion === 'string' && data.direccion) || "",
-comuna: (typeof data.comuna === 'string' && data.comuna) || "",
-ciudad: (typeof data.ciudad === 'string' && data.ciudad) || "",
-provincia: (typeof data.provincia === 'string' && data.provincia) || "",
-region: (typeof data.region === 'string' && data.region) || "",
-telefono: (typeof data.telefono === 'string' && data.telefono) || "",
-email: (typeof data.email === 'string' && data.email) || "",
+onChange={(e) => onChange('rut', formatRut(e.target.value))}
 ```
 
-### 2. `src/components/clients/form/ClientFormStep1.tsx` — Construir dirección completa
-Línea 73: incluir ciudad y región en la dirección cuando estén disponibles:
-```typescript
-const address = [result.direccion, result.comuna, result.ciudad, result.region]
-  .filter(Boolean)
-  .join(', ');
-```
+### 3. Asegurar que `sre-lookup` limpia el RUT formateado
+La edge function ya tiene `cleanRut()` que elimina puntos. Verificar que también maneje el formato con puntos correctamente (ya lo hace con `replace(/\./g, "")`).
 
-### 3. Redesplegar edge function `sre-lookup`
-
-## Nota
-Para el RUT 77118775-7 específicamente, SRE.cl no tiene datos de dirección/teléfono/email. Esto es normal — la API premium lo advierte: "Información puede no estar disponible". Pero con estos cambios, cuando los datos SÍ existan para otros RUTs, se aplicarán correctamente.
-
-## Archivos
-- `supabase/functions/sre-lookup/index.ts` — sanitizar booleans
-- `src/components/clients/form/ClientFormStep1.tsx` — dirección completa con ciudad/región
+## Archivo
+- `src/utils/rutFormatter.ts` (nuevo)
+- `src/components/clients/form/ClientFormStep1.tsx` (1 línea)
 
