@@ -27,8 +27,8 @@ const getStatusBadge = (status: ServiceStatus) => {
       cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' },
       invoiced: { label: 'Facturado', className: 'bg-purple-500 text-white' },
       quoted: { label: 'Cotizado', className: 'bg-cyan-500 text-white' },
-      purchase_order_pending: { label: 'Esperando O.C.', className: 'bg-amber-500 text-white' },
-      with_purchase_order: { label: 'Con Orden de Compra', className: 'bg-teal-500 text-white' },
+      purchase_order_pending: { label: 'OC Pendiente', className: 'bg-amber-500 text-white' },
+      with_purchase_order: { label: 'Con O.C.', className: 'bg-teal-500 text-white' },
       failed: { label: 'Fallido', className: 'bg-red-700 text-white' }
     };
 
