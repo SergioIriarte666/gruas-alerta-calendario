@@ -8,6 +8,7 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save } from 'lucide-react';
+import { formatRut } from '@/utils/rutFormatter';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
 import { Operator } from '@/types';
@@ -149,7 +150,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
               id="rut"
               type="text"
               value={formData.rut}
-              onChange={(e) => handleChange('rut', e.target.value)}
+              onChange={(e) => handleChange('rut', formatRut(e.target.value))}
               placeholder="12.345.678-9"
               required
             />

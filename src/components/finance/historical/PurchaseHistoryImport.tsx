@@ -13,6 +13,7 @@ import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlu
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { formatRut } from '@/utils/rutFormatter';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
@@ -1477,7 +1478,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="rut" className="text-right">RUT</Label>
-                    <Input id="rut" value={newSupplierData.rut} onChange={e => setNewSupplierData({...newSupplierData, rut: e.target.value})} className="col-span-3" />
+                    <Input id="rut" value={newSupplierData.rut} onChange={e => setNewSupplierData({...newSupplierData, rut: formatRut(e.target.value)})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="name" className="text-right">Nombre</Label>

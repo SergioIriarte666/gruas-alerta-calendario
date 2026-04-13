@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Building2 } from 'lucide-react';
+import { formatRut } from '@/utils/rutFormatter';
 
 interface SupplierFormStep1Props {
   name: string;
@@ -51,7 +52,7 @@ export const SupplierFormStep1 = ({
             <Input
               id="rut"
               value={rut}
-              onChange={(e) => onRutChange(e.target.value)}
+              onChange={(e) => onRutChange(formatRut(e.target.value))}
               placeholder="12.345.678-9"
               className="bg-background"
             />
