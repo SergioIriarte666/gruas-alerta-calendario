@@ -560,8 +560,8 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                           </style></head><body>
                           <h2>Factura ${invoice.folio}${invoice.numeroFiscal ? ` | N° Fiscal: ${invoice.numeroFiscal}` : ''}</h2>
                           <div class="meta">
-                            Cliente: ${invoice.clientName || 'N/A'} &nbsp;|&nbsp; 
-                            Fecha: ${formatSafeDate(invoice.date)} &nbsp;|&nbsp;
+                            Cliente: ${invoice.client?.name || 'N/A'} &nbsp;|&nbsp; 
+                            Fecha: ${formatSafeDate(invoice.issueDate)} &nbsp;|&nbsp;
                             Servicios: ${services.length}
                           </div>
                           <table>
