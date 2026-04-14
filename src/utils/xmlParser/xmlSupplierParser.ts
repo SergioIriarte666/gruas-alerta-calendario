@@ -1,6 +1,8 @@
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 export class XMLSupplierParser {
   private parser: DOMParser;
 
@@ -664,7 +666,7 @@ export class XMLSupplierParser {
       return dateString; // Retornar el original si no se puede parsear
     }
     
-    return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    return toLocalDateString(date); // Formato YYYY-MM-DD
   }
 
   private validateDocuments(documents: XMLDocumentData[]): { errors: string[], warnings: string[] } {
@@ -756,12 +758,12 @@ export class XMLSupplierParser {
       // Si no hay fecha de emisión, usar fecha actual + 30 días
       const today = new Date();
       today.setDate(today.getDate() + 30);
-      return today.toISOString().split('T')[0];
+      return toLocalDateString(today);
     }
 
     const date = new Date(issueDate);
     date.setDate(date.getDate() + 30); // 30 días por defecto
-    return date.toISOString().split('T')[0];
+    return toLocalDateString(date);
   }
 
   private stripNamespaces(xml: string): string {

@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 export interface MaintenanceRecord {
   id: string;
   craneId: string;
@@ -77,7 +79,7 @@ const syncMaintenanceCost = async (params: {
     return;
   }
 
-  const costDate = params.completedDate || params.scheduledDate || new Date().toISOString().split('T')[0];
+  const costDate = params.completedDate || params.scheduledDate || getTodayLocal();
   const paymentDate = params.markAsPaid ? costDate : null;
 
   // Check if a cost already exists for this maintenance

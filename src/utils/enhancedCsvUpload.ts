@@ -2,6 +2,8 @@ import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { DataMapper, MappedServiceData } from './dataMapper';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 export interface ValidationError {
   row: number;
   field: string;
@@ -191,7 +193,7 @@ export class EnhancedCSVUploader {
               if (typeof value === 'string' && value.includes('/')) {
                 const date = new Date(value);
                 if (!isNaN(date.getTime())) {
-                  value = date.toISOString().split('T')[0];
+                  value = toLocalDateString(date);
                   console.log(`📅 Converted date ${row[headerIndex]} to ${value}`);
                 }
               }

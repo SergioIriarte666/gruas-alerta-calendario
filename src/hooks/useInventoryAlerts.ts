@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 const INVENTORY_ALERTS_SELECT = `
   id,
   alert_type,
@@ -229,7 +231,7 @@ export const useActiveAlerts = () => {
           .from('inventory_movements')
           .select(EXPIRING_MOVEMENTS_SELECT)
           .not('expiration_date', 'is', null)
-          .gte('expiration_date', new Date().toISOString().split('T')[0]);
+          .gte('expiration_date', getTodayLocal());
 
         if (expiringError) throw expiringError;
 

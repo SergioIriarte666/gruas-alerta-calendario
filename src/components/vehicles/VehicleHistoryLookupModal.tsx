@@ -14,6 +14,8 @@ import { VehicleFullHistory } from './VehicleFullHistory';
 import { generateVehicleHistoryPDF } from '@/utils/pdf/vehicleHistoryPdfGenerator';
 import { toast } from 'sonner';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface VehicleHistoryLookupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,7 +54,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Historial-Vehiculo-${data.licensePlate.toUpperCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = `Historial-Vehiculo-${data.licensePlate.toUpperCase()}-${getTodayLocal()}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 export const useInspectionPDF = () => {
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfStep, setPdfStep] = useState('');
@@ -29,7 +31,7 @@ export const useInspectionPDF = () => {
       
       setPdfDownloadUrl(downloadUrl);
       
-      const filename = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
       await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
       
       console.log('✅ [PDF] PDF generado exitosamente');
@@ -44,7 +46,7 @@ export const useInspectionPDF = () => {
     if (pdfDownloadUrl && service) {
       const link = document.createElement('a');
       link.href = pdfDownloadUrl;
-      link.download = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
       link.click();
     }
   };

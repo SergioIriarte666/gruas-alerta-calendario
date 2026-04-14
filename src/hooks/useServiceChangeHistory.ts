@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 export interface ServiceChangeEntry {
   id: string;
   serviceId: string;
@@ -84,7 +86,7 @@ export const groupChangesByDateAndUser = (changes: ServiceChangeEntry[]): Groupe
 
   changes.forEach((change) => {
     const date = new Date(change.changedAt);
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = toLocalDateString(date);
     const timeKey = date.toTimeString().slice(0, 5);
     const groupKey = `${dateKey}-${timeKey}-${change.changedBy || 'system'}`;
 

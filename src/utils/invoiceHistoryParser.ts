@@ -3,6 +3,8 @@ import * as XLSX from 'xlsx';
 import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 export type DocumentType = 'factura' | 'nota_credito' | 'nota_debito';
 
 export interface ParsedInvoiceRow {
@@ -121,7 +123,7 @@ const parseDate = (dateVal: any): string | null => {
     const date = new Date((dateVal - 25569) * 86400 * 1000);
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
+      return toLocalDateString(date);
     }
   }
 

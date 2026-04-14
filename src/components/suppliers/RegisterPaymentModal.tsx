@@ -12,6 +12,8 @@ import { usePendingPayments } from '@/hooks/usePendingPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { PendingPaymentSelector } from './form/PendingPaymentSelector';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface RegisterPaymentModalProps {
   onClose: () => void;
   onSuccess?: () => void;
@@ -25,7 +27,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [paymentDate, setPaymentDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    getTodayLocal()
   );
   const [bankReference, setBankReference] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('transfer');

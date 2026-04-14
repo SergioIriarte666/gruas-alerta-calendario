@@ -3,6 +3,8 @@ import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface UseServicesForClosuresOptions {
   dateFrom?: Date;
   dateTo?: Date;
@@ -107,12 +109,12 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       // Add explicit date range filter only when the user selects dates
       if (dateFrom) {
-        billableQuery = billableQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
-        pendingQuery = pendingQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
+        billableQuery = billableQuery.gte('service_date', toLocalDateString(dateFrom));
+        pendingQuery = pendingQuery.gte('service_date', toLocalDateString(dateFrom));
       }
       if (dateTo) {
-        billableQuery = billableQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
-        pendingQuery = pendingQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
+        billableQuery = billableQuery.lte('service_date', toLocalDateString(dateTo));
+        pendingQuery = pendingQuery.lte('service_date', toLocalDateString(dateTo));
       }
 
       // In global mode, avoid loading massive datasets until user searches

@@ -2,6 +2,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Invoice, InvoiceStatus } from '@/types';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 interface UseInvoiceFormDataProps {
   invoice?: Invoice | null;
   preselectedClosureId?: string | null;
@@ -19,8 +21,8 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
     if (invoice) {
       return {
         closureId: invoice.closureId || '',
-        issueDate: invoice.issueDate || new Date().toISOString().split('T')[0],
-        dueDate: invoice.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        issueDate: invoice.issueDate || getTodayLocal(),
+        dueDate: invoice.dueDate || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
@@ -31,8 +33,8 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
     
     return {
       closureId: preselectedClosureId || '',
-      issueDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      issueDate: getTodayLocal(),
+      dueDate: toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
       status: 'draft' as InvoiceStatus,
       paymentTermId: undefined,
       paymentDate: '',

@@ -1,8 +1,10 @@
 
 import { CalendarEvent } from '@/types/calendar';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 export const getEventsForDate = (events: CalendarEvent[], date: Date) => {
-  const dateString = date.toISOString().split('T')[0];
+  const dateString = toLocalDateString(date);
   return events.filter(event => event.date === dateString);
 };
 

@@ -14,6 +14,8 @@ import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface QuickEntryFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,7 +38,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
     type: 'service',
     description: '',
     amount: undefined,
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayLocal(),
     notes: '',
   });
   const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
@@ -101,7 +103,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         type: 'service',
         description: '',
         amount: undefined,
-        date: new Date().toISOString().split('T')[0],
+        date: getTodayLocal(),
         notes: '',
       });
       setPhotos([]);

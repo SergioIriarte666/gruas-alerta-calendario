@@ -14,6 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { X, FileText, Calendar } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface PaymentFormProps {
   onClose: () => void;
   onCancel: () => void;
@@ -32,7 +34,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
   const [formData, setFormData] = useState({
     client_id: preselectedClientId && preselectedClientId !== 'all' ? preselectedClientId : '',
     amount: '',
-    payment_date: new Date().toISOString().split('T')[0],
+    payment_date: getTodayLocal(),
     bank_reference: '',
     payment_method: 'transferencia',
     notes: ''

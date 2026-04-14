@@ -4,6 +4,8 @@ import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 const SUPPLIER_PAYMENTS_SELECT = `
   id,
   supplier_id,
@@ -112,7 +114,7 @@ export const useSupplierPayments = () => {
           description: `Compra de piezas: ${partDetails.part_name}`,
           notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
           subcategory: paymentData.subcategory || 'Piezas y Repuestos',
-          payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          payment_date: paymentData.paid_date || getTodayLocal(),
         })
         .eq('id', paymentWithCost.cost_id)
         .select('id')
@@ -133,7 +135,7 @@ export const useSupplierPayments = () => {
           amount: totalAmount,
           category_id: maintenanceCategory.id,
           crane_id: partDetails.crane_id,
-          date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          date: paymentData.paid_date || getTodayLocal(),
           description: `Compra de piezas: ${partDetails.part_name}`,
           notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
           subcategory: paymentData.subcategory || 'Piezas y Repuestos',
@@ -200,7 +202,7 @@ export const useSupplierPayments = () => {
         supplier_id: paymentData.supplier_id,
         supplier_name: supplierName,
         cost_id: costId,
-        movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        movement_date: paymentData.paid_date || getTodayLocal(),
         reason: 'Compra desde módulo de proveedores',
         observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
         created_by: (await supabase.auth.getUser()).data.user?.id
@@ -284,7 +286,7 @@ export const useSupplierPayments = () => {
           supplier_id: paymentData.supplier_id,
           supplier_name: supplierName,
           cost_id: costId,
-          movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          movement_date: paymentData.paid_date || getTodayLocal(),
           reason: 'Consumo inmediato',
           observations: `Consumo inmediato desde proveedor. Pago: ${paymentData.reference_number || paymentData.description}`,
           created_by: (await supabase.auth.getUser()).data.user?.id
@@ -368,7 +370,7 @@ export const useSupplierPayments = () => {
           notes: data.notes || null,
           status: data.status || 'pending',
           paid_amount: isPaid ? data.amount : 0,
-          paid_date: isPaid ? (data.paid_date || new Date().toISOString().split('T')[0]) : null,
+          paid_date: isPaid ? (data.paid_date || getTodayLocal()) : null,
           part_name: data.part_name || null,
           part_quantity: data.part_quantity || null,
           part_unit_price: data.part_unit_price || null,
@@ -472,7 +474,7 @@ export const useSupplierPayments = () => {
       
       // Si se está marcando como paid, sincronizar paid_amount con amount total
       if (data.status === 'paid') {
-        cleanedData.paid_date = data.paid_date || new Date().toISOString().split('T')[0];
+        cleanedData.paid_date = data.paid_date || getTodayLocal();
         // Siempre igualar paid_amount al monto total cuando se marca como pagado
         cleanedData.paid_amount = typeof data.amount === 'number' ? data.amount : 0;
       }
@@ -538,7 +540,7 @@ export const useSupplierPayments = () => {
         .from('supplier_payments')
         .update({
           status: 'paid',
-          paid_date: paid_date || new Date().toISOString().split('T')[0],
+          paid_date: paid_date || getTodayLocal(),
           paid_amount
         })
         .eq('id', id)

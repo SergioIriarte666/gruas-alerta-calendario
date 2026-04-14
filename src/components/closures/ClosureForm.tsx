@@ -18,6 +18,8 @@ import { detectPurchaseOrders, getPurchaseOrderSummary } from '@/utils/closureUt
 import { useClients } from '@/hooks/useClients';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface ClosureFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -101,8 +103,8 @@ const ClosureForm = ({
     try {
       await onSubmit({
         dateRange: {
-          from: formData.dateFrom.toISOString().split('T')[0],
-          to: formData.dateTo.toISOString().split('T')[0]
+          from: toLocalDateString(formData.dateFrom),
+          to: toLocalDateString(formData.dateTo)
         },
         clientId: formData.clientId || undefined,
         serviceIds: formData.serviceIds,

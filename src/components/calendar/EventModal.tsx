@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CalendarEvent } from '@/hooks/useCalendar';
 import { Plus } from 'lucide-react';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 interface EventModalProps {
   onCreateEvent: (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
   selectedDate?: Date;
@@ -19,7 +21,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    date: selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    date: selectedDate ? toLocalDateString(selectedDate) : getTodayLocal(),
     startTime: '09:00',
     endTime: '10:00',
     type: 'other' as CalendarEvent['type'],
@@ -51,7 +53,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
     setFormData({
       title: '',
       description: '',
-      date: selectedDate ? selectedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      date: selectedDate ? toLocalDateString(selectedDate) : getTodayLocal(),
       startTime: '09:00',
       endTime: '10:00',
       type: 'other',

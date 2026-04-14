@@ -5,6 +5,8 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface ServiceIssue {
   type: 'warning' | 'error';
   message: string;
@@ -117,8 +119,8 @@ export const useClosureAutomation = () => {
           operators!left(id, name, rut, phone, license_number, is_active),
           service_types!left(id, name, description, is_active)
         `)
-        .gte('service_date', monthStart.toISOString().split('T')[0])
-        .lte('service_date', monthEnd.toISOString().split('T')[0])
+        .gte('service_date', toLocalDateString(monthStart))
+        .lte('service_date', toLocalDateString(monthEnd))
         .in('status', ['completed', 'with_purchase_order', 'pending', 'failed'])
         .order('service_date', { ascending: true })
         .limit(1000); // Add limit to prevent massive payloads

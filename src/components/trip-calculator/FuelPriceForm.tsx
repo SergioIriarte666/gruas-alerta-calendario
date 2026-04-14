@@ -15,6 +15,8 @@ import * as z from 'zod';
 import { useAddFuelPrice, useUpdateFuelPrice, FUEL_TYPES, REGIONS, type FuelPrice } from '@/hooks/useFuelPrices';
 import { toast } from 'sonner';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 const schema = z.object({
   fuel_type: z.string().min(1, 'Seleccione tipo'),
   price_per_liter: z.number().positive('Debe ser mayor a 0'),
@@ -32,7 +34,7 @@ function getNearestThursday(): string {
   const diff = (4 - day + 7) % 7;
   const thursday = new Date(now);
   thursday.setDate(now.getDate() + (diff === 0 ? 0 : diff));
-  return thursday.toISOString().split('T')[0];
+  return toLocalDateString(thursday);
 }
 
 interface FuelPriceFormProps {

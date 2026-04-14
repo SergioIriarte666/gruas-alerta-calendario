@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { generateServiceDetailsPDF } from '@/utils/pdf/serviceDetailsPdfGenerator';
 import { toast } from 'sonner';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 export const useServiceDetailsPDF = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -27,7 +29,7 @@ export const useServiceDetailsPDF = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Servicio-${serviceData.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = `Servicio-${serviceData.folio}-${getTodayLocal()}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

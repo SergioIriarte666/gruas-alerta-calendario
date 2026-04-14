@@ -31,6 +31,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
   Table,
   TableBody,
   TableCell,
@@ -48,7 +50,7 @@ const getWeekMonday = (dateStr: string): string => {
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d.setDate(diff));
-  return monday.toISOString().split('T')[0];
+  return toLocalDateString(monday);
 };
 
 /** Format week label like "Sem 24-Feb" */
