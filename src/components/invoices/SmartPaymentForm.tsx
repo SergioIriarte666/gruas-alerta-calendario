@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface SmartPaymentFormProps {
   onClose: () => void;
   preselectedClientId?: string;
@@ -47,7 +49,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [formData, setFormData] = useState({
     client_id: preselectedClientId && preselectedClientId !== 'all' ? preselectedClientId : '',
     amount: '',
-    payment_date: new Date().toISOString().split('T')[0],
+    payment_date: getTodayLocal(),
     bank_reference: '',
     payment_method: 'transferencia',
     notes: ''

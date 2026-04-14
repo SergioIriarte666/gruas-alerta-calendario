@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 const purchaseSchema = z.object({
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   unit_cost: z.number().min(0.01, 'El costo unitario debe ser mayor a 0'),
@@ -57,7 +59,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
     defaultValues: {
       quantity: 1,
       unit_cost: item?.unit_cost || 0,
-      movement_date: new Date().toISOString().split('T')[0],
+      movement_date: getTodayLocal(),
     }
   });
 
@@ -83,7 +85,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         supplier_id: data.supplier_id || undefined,
         supplier_name: data.supplier_name || undefined,
         batch_number: data.batch_number || undefined,
-        expiration_date: data.expiration_date ? new Date(data.expiration_date).toISOString().split('T')[0] : undefined,
+        expiration_date: data.expiration_date ? toLocalDateString(new Date(data.expiration_date)) : undefined,
         reference_document: data.reference_document || undefined,
         observations: data.observations || undefined,
         movement_date: movementDate,

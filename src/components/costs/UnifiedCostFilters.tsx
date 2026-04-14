@@ -15,6 +15,8 @@ import { useCranes } from '@/hooks/useCranes';
 import { CostFilters } from './CostFilters';
 import { cn } from '@/lib/utils';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface UnifiedCostFiltersProps {
   filters: CostFilters;
   onFiltersChange: (filters: CostFilters) => void;
@@ -211,14 +213,14 @@ export const UnifiedCostFilters = ({
                     <div>
                       <Label className="text-xs text-muted-foreground">Desde</Label>
                       <DatePickerInput
-                        value={filters.dateFrom ? filters.dateFrom.toISOString().split('T')[0] : ''}
+                        value={filters.dateFrom ? toLocalDateString(filters.dateFrom) : ''}
                         onChange={(date) => updateFilter('dateFrom', date ? new Date(date) : null)}
                       />
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Hasta</Label>
                       <DatePickerInput
-                        value={filters.dateTo ? filters.dateTo.toISOString().split('T')[0] : ''}
+                        value={filters.dateTo ? toLocalDateString(filters.dateTo) : ''}
                         onChange={(date) => updateFilter('dateTo', date ? new Date(date) : null)}
                       />
                     </div>

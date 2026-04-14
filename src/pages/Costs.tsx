@@ -27,12 +27,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { 
-  getCurrentChileDate, 
+import { getCurrentChileDate, 
   formatForDisplay,
   formatForDatabase,
-  getCurrentWeekRange 
-} from '@/utils/timezoneUtils';
+  getCurrentWeekRange, getTodayLocal } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
     useInventorySyncWatcher();
@@ -332,7 +330,7 @@ const CostsPage = () => {
         ];
         ws['!cols'] = wscols;
 
-        const fileName = `costos_${new Date().toISOString().split('T')[0]}.xlsx`;
+        const fileName = `costos_${getTodayLocal()}.xlsx`;
         XLSX.writeFile(wb, fileName);
     }, [finalFilteredCosts]);
 

@@ -29,7 +29,7 @@ import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
-import { parseFromDatabase, formatForDisplay } from '@/utils/timezoneUtils';
+import { parseFromDatabase, formatForDisplay, getTodayLocal } from '@/utils/timezoneUtils';
 import { Badge } from '@/components/ui/badge';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
@@ -108,7 +108,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       part_unit_price: payment?.part_unit_price || undefined,
       crane_id: payment?.crane_id || '',
       add_to_inventory: payment?.add_to_inventory || false,
-      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : new Date().toISOString().split('T')[0]
+      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : getTodayLocal()
     }
   });
 
@@ -301,7 +301,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     Fecha de Pago
                   </Label>
                   <DatePickerInput
-                    value={form.watch('paid_date') || new Date().toISOString().split('T')[0]}
+                    value={form.watch('paid_date') || getTodayLocal()}
                     onChange={(value) => form.setValue('paid_date', value)}
                     placeholder="Seleccionar fecha de pago"
                   />

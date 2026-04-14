@@ -3,6 +3,8 @@ import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 // Safe number conversion with fallback
 const safeNumber = (value: any, fallback: number = 0): number => {
   const num = Number(value);
@@ -19,7 +21,7 @@ const safeDate = (value: any): string | null => {
   if (!value) return null;
   try {
     const date = new Date(value);
-    return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+    return isNaN(date.getTime()) ? null : toLocalDateString(date);
   } catch {
     return null;
   }
@@ -69,7 +71,7 @@ export const formatInvoiceData = (data: any): Invoice => {
   if (!data.folio) throw new Error('Folio de factura es requerido');
   if (!data.client_id) throw new Error('ID de cliente es requerido');
 
-  const dueDate = safeDate(data.due_date) || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const dueDate = safeDate(data.due_date) || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
   const subtotal = safeNumber(data.subtotal);
   const vat = safeNumber(data.vat);
   const total = safeNumber(data.total);
@@ -108,7 +110,7 @@ export const formatInvoiceData = (data: any): Invoice => {
       phone: data.client.phone,
       department: data.client.department
     } : undefined,
-    issueDate: safeDate(data.issue_date) || new Date().toISOString().split('T')[0],
+    issueDate: safeDate(data.issue_date) || getTodayLocal(),
     dueDate,
     subtotal,
     vat,

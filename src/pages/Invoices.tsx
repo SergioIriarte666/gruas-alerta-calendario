@@ -49,6 +49,8 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
   const isMobile = useIsMobile();
@@ -162,7 +164,7 @@ const Invoices = () => {
       // Si la factura se creó como pagada, registrar el pago automáticamente
       if (data.status === 'paid' && newInvoice?.id) {
         try {
-          const paymentDate = data.paymentDate || data.issueDate || new Date().toISOString().split('T')[0];
+          const paymentDate = data.paymentDate || data.issueDate || getTodayLocal();
           await markAsPaid(newInvoice.id, paymentDate);
         } catch (payError) {
           console.error('Error registering automatic payment:', payError);

@@ -1,3 +1,4 @@
+import { toLocalDateString } from '@/utils/timezoneUtils';
 
 export class DataValidators {
   fixDateFormat(value: any): string {
@@ -6,20 +7,20 @@ export class DataValidators {
     // Handle Excel serial numbers
     if (typeof value === 'number') {
       const date = new Date((value - 25569) * 86400 * 1000);
-      return date.toISOString().split('T')[0];
+      return toLocalDateString(date);
     }
     
     // Handle string dates
     if (typeof value === 'string') {
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
+        return toLocalDateString(date);
       }
     }
     
     // Handle Date objects
     if (value instanceof Date) {
-      return value.toISOString().split('T')[0];
+      return toLocalDateString(value);
     }
     
     return value.toString();

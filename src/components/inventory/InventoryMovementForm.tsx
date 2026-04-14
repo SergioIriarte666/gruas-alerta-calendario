@@ -1,4 +1,5 @@
 import React from 'react';
+import { toLocalDateString } from '@/utils/timezoneUtils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -135,7 +136,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         total_cost,
         reference_document: data.reference_document,
         batch_number: data.batch_number,
-        expiration_date: data.expiration_date?.toISOString().split('T')[0],
+        expiration_date: data.expiration_date ? toLocalDateString(data.expiration_date) : undefined,
         supplier_id: data.supplier_id || null,
         crane_id: data.crane_id,
         operator_id: data.operator_id,
@@ -154,7 +155,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         total_cost,
         reference_document: data.reference_document,
         batch_number: data.batch_number,
-        expiration_date: data.expiration_date?.toISOString().split('T')[0],
+        expiration_date: data.expiration_date ? toLocalDateString(data.expiration_date) : undefined,
         supplier_id: data.supplier_id || null,
         crane_id: data.crane_id,
         operator_id: data.operator_id,

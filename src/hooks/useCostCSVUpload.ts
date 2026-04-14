@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface CostRow {
   rowIndex: number;
   fecha: string;
@@ -52,7 +54,7 @@ const parseDate = (value: string): string | null => {
   const num = Number(trimmed);
   if (!isNaN(num) && num > 40000 && num < 60000) {
     const date = new Date((num - 25569) * 86400 * 1000);
-    return date.toISOString().split('T')[0];
+    return toLocalDateString(date);
   }
   
   return null;

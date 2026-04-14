@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { toLocalDateString } from '@/utils/timezoneUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +49,7 @@ const getWeekMonday = (dateStr: string): string => {
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d.setDate(diff));
-  return monday.toISOString().split('T')[0];
+  return toLocalDateString(monday);
 };
 
 /** Format week label like "Sem 24-Feb" */

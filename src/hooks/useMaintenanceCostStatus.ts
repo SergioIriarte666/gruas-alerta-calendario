@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 interface MaintenanceCostStatus {
   maintenanceId: string;
   hasCost: boolean;
@@ -53,7 +55,7 @@ export const useToggleMaintenanceCostPayment = () => {
       const { error } = await supabase
         .from('costs')
         .update({
-          payment_date: isPaid ? new Date().toISOString().split('T')[0] : null,
+          payment_date: isPaid ? getTodayLocal() : null,
         })
         .eq('id', costId);
 

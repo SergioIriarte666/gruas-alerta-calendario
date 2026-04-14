@@ -15,6 +15,8 @@ import { InvoiceFormStep1 } from './form/InvoiceFormStep1';
 import { InvoiceFormStep2 } from './form/InvoiceFormStep2';
 import { InvoiceFormStep3 } from './form/InvoiceFormStep3';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 const invoiceSchema = z.object({
   closureId: z.string().min(1, 'Debe seleccionar un cierre'),
   issueDate: z.string().min(1, 'Fecha de emisión es requerida'),
@@ -59,16 +61,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     if (shouldReset) {
       const resetFormData = invoice ? {
         closureId: invoice.closureId || '',
-        issueDate: invoice.issueDate || new Date().toISOString().split('T')[0],
-        dueDate: invoice.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        issueDate: invoice.issueDate || getTodayLocal(),
+        dueDate: invoice.dueDate || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
         numeroFiscal: invoice.numeroFiscal || ''
       } : {
         closureId: preselectedClosureId || '',
-        issueDate: new Date().toISOString().split('T')[0],
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        issueDate: getTodayLocal(),
+        dueDate: toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
         status: 'draft' as InvoiceStatus,
         paymentTermId: undefined,
         paymentDate: '',
@@ -113,7 +115,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       if (term && term.days >= 0) {
         const dueDate = new Date(watchedIssueDate);
         dueDate.setDate(dueDate.getDate() + term.days);
-        setValue('dueDate', dueDate.toISOString().split('T')[0]);
+        setValue('dueDate', toLocalDateString(dueDate));
       }
     }
   }, [watchedPaymentTermId, watchedIssueDate, paymentTerms, setValue, isEditing]);

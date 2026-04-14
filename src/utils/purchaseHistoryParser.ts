@@ -3,6 +3,8 @@ import * as XLSX from 'xlsx';
 import { Supplier } from '@/types/suppliers';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
 
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+
 export type PurchaseDocumentType = 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exenta';
 
 export interface ParsedPurchaseRow {
@@ -107,7 +109,7 @@ const parseDate = (dateVal: any): string | null => {
     const date = new Date((dateVal - 25569) * 86400 * 1000);
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
+      return toLocalDateString(date);
     }
   }
 
@@ -348,7 +350,7 @@ export const processPurchaseRows = (
 
     // Clean data
     const rut = normalizeRut(row.rut);
-    const issueDate = parseDate(row.fecha) || new Date().toISOString().split('T')[0];
+    const issueDate = parseDate(row.fecha) || getTodayLocal();
     const dueDate = parseDate(row.fechaVencimiento) || issueDate;
     const folio = row.folio.trim();
 

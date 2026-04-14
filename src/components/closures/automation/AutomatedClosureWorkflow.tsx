@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Bot, Zap } from 'lucide-react';
 import { toTitleCase } from '@/lib/utils';
 
+import { toLocalDateString } from '@/utils/timezoneUtils';
+
 interface ClientClosureData {
   client: any;
   services: any[];
@@ -81,8 +83,8 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
       
       const closureData = {
         dateRange: { 
-          from: dateFrom.toISOString().split('T')[0], 
-          to: dateTo.toISOString().split('T')[0] 
+          from: toLocalDateString(dateFrom), 
+          to: toLocalDateString(dateTo) 
         },
         clientId: clientData.client.id,
         serviceIds: servicesToInclude.map(s => s.id),

@@ -545,3 +545,22 @@ export const getCurrentTimeInBusinessTZ = async (): Promise<string> => {
     hour12: false 
   });
 };
+
+// ===================== CONVENIENCE ALIASES =====================
+
+/**
+ * Convert a Date to YYYY-MM-DD using LOCAL time (not UTC).
+ * Alias for formatForInput — avoids toISOString().split('T')[0] which shifts dates in negative UTC offsets.
+ */
+export const toLocalDateString = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
+ * Get today as YYYY-MM-DD in local time.
+ * Equivalent to getCurrentChileDateString but synchronous and without timezone conversion overhead.
+ */
+export const getTodayLocal = (): string => toLocalDateString(new Date());

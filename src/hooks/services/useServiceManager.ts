@@ -5,6 +5,8 @@ import { Service, ServiceFormData } from '@/types';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
+import { getTodayLocal } from '@/utils/timezoneUtils';
+
 // Función helper para detectar comisiones existentes y comparar con nuevas
 const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
   const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
@@ -761,7 +763,7 @@ export const useServiceManager = () => {
             category_id: cost.category_id,
             service_id: id,
             service_folio: currentService?.folio || 'Unknown',
-            date: currentService?.service_date || serviceData.serviceDate || new Date().toISOString().split('T')[0],
+            date: currentService?.service_date || serviceData.serviceDate || getTodayLocal(),
             description: cost.description,
             subcategory: cost.subcategory || null,
             notes: cost.notes || 'Costo actualizado desde formulario de servicio',
@@ -854,7 +856,7 @@ export const useServiceManager = () => {
             category_id: commissionCategoryId,
             service_id: id,
             service_folio: currentService?.folio || 'Unknown',
-            date: currentService?.service_date || serviceData.serviceDate || new Date().toISOString().split('T')[0],
+            date: currentService?.service_date || serviceData.serviceDate || getTodayLocal(),
             description: `Comisión operador - Servicio ${currentService?.folio || id}`,
             subcategory: 'comisiones',
             notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
@@ -1105,7 +1107,7 @@ export const useServiceManager = () => {
                 service_id: id,
                 amount: serviceData.outsourcedCost,
                 description: `Servicio tercerizado: ${svcData?.folio || id}`,
-                date: svcData?.service_date || new Date().toISOString().split('T')[0],
+                date: svcData?.service_date || getTodayLocal(),
                 notes: serviceData.outsourcedNotes || 'Costo de proveedor tercero creado automáticamente',
                 category_id: categoryId,
                 subcategory: 'Servicios Terceros',
