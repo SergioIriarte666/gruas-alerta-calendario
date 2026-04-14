@@ -21,7 +21,7 @@ const fetchDashboardData = async () => {
   
   // Only fetch services from the last 2 months (current + previous) instead of ALL
   const twoMonthsAgo = subMonths(new Date(), 2);
-  const queryStartDate = startOfMonthtoLocalDateString((twoMonthsAgo));
+  const queryStartDate = toLocalDateString(startOfMonth(twoMonthsAgo));
 
   const [
     servicesRes,
