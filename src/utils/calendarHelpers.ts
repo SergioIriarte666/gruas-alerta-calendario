@@ -1,7 +1,6 @@
 
 import { CalendarEvent } from '@/types/calendar';
-
-import { toLocalDateString } from '@/utils/timezoneUtils';
+import { toLocalDateString, safeParseDateOnly } from '@/utils/timezoneUtils';
 
 export const getEventsForDate = (events: CalendarEvent[], date: Date) => {
   const dateString = toLocalDateString(date);
@@ -10,7 +9,7 @@ export const getEventsForDate = (events: CalendarEvent[], date: Date) => {
 
 export const getEventsForMonth = (events: CalendarEvent[], year: number, month: number) => {
   return events.filter(event => {
-    const eventDate = new Date(event.date);
+    const eventDate = safeParseDateOnly(event.date);
     return eventDate.getFullYear() === year && eventDate.getMonth() === month;
   });
 };
