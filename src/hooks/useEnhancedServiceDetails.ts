@@ -142,7 +142,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   // Intentar leer desde service_resources primero
   const { data: resourcesData } = await supabase
     .from('service_resources')
-    .select('id, operator_id, role, commission_amount, is_primary, operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, created_at, updated_at)')
+    .select('id, operator_id, role, commission_amount, is_primary, operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, created_at, updated_at, commission_exempt)')
     .eq('service_id', serviceId)
     .eq('resource_type', 'operator');
 
@@ -151,7 +151,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   if (resourcesData && resourcesData.length > 0) {
     // Fuente primaria: service_resources con roles y comisiones reales
     resourcesData.forEach((resource: any) => {
-      if (resource.operator_id && resource.operators) {
+      if (resource.operator_id && resource.operators && !resource.operators.commission_exempt) {
         operators.push({
           id: resource.id,
           operatorId: resource.operator_id,

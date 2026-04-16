@@ -3,18 +3,6 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('ForceCommissionSync');
 
-// Operadores excluidos de comisiones según reglas de negocio
-const EXCLUDED_OPERATOR_NAMES = ['Jorge Iriarte', 'Sergio Iriarte', 'Jorge Ignacio Iriarte'];
-
-/**
- * Valida si un operador está excluido de comisiones
- */
-const isOperatorExcluded = (operatorName: string | null | undefined): boolean => {
-  if (!operatorName) return false;
-  return EXCLUDED_OPERATOR_NAMES.some(excluded => 
-    operatorName.toLowerCase().includes(excluded.toLowerCase())
-  );
-};
 
 /**
  * Emergency function to force sync commissions for a specific service
@@ -45,14 +33,14 @@ export const forceCommissionSyncForService = async (serviceId: string): Promise<
       return { success: true, message: 'El servicio no tiene comisión configurada' };
     }
     
-    // Step 1: Get service_resources with commissions
+    // Step 1: Get service_resources with commissions, excluding exempt operators
     const { data: serviceResources, error: resourcesError } = await supabase
       .from('service_resources')
       .select(`
         id,
         operator_id,
         commission_amount,
-        operators(id, name, rut)
+        operators(id, name, rut, commission_exempt)
       `)
       .eq('service_id', serviceId)
       .eq('resource_type', 'operator')
@@ -63,9 +51,9 @@ export const forceCommissionSyncForService = async (serviceId: string): Promise<
       return { success: false, message: `Error al obtener recursos: ${resourcesError.message}` };
     }
 
-    // Filtrar operadores excluidos
+    // Filter out commission-exempt operators
     const validResources = serviceResources?.filter(r => 
-      !isOperatorExcluded(r.operators?.name)
+      !(r.operators as any)?.commission_exempt
     ) || [];
 
     if (validResources.length === 0) {

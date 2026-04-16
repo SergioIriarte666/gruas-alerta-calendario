@@ -32,6 +32,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
     position: operator?.position || '',
     licenseNumber: operator?.licenseNumber || '',
     examExpiry: operator?.examExpiry || '',
+    commissionExempt: operator?.commissionExempt ?? false,
     isActive: operator?.isActive ?? true
   });
 
@@ -232,6 +233,20 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
               />
               <span className="text-sm text-muted-foreground">
                 {formData.isActive ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="commissionExempt">Comisiones</Label>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="commissionExempt"
+                checked={formData.commissionExempt}
+                onCheckedChange={(checked) => handleChange('commissionExempt', checked)}
+              />
+              <span className="text-sm text-muted-foreground">
+                {formData.commissionExempt ? 'Exento de comisiones' : 'Recibe comisiones'}
               </span>
             </div>
           </div>

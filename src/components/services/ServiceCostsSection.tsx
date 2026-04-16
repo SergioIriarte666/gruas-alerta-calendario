@@ -77,7 +77,9 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
     );
   }
 
-  if (!allCosts || (allCosts.length === 0 && operatorsData.length === 0)) {
+  const hasCommissions = operatorsData.some(op => (op.commission || 0) > 0);
+
+  if (!allCosts || (allCosts.length === 0 && !hasCommissions)) {
     return (
       <div className="text-center py-6 text-muted-foreground">
         <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -105,20 +107,20 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
           </span>
         </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">
-          <span>{allCosts.length + operatorsData.length} costo{(allCosts.length + operatorsData.length) !== 1 ? 's' : ''} registrado{(allCosts.length + operatorsData.length) !== 1 ? 's' : ''}</span>
-          <span>{categoryKeys.length + (operatorsData.length > 0 ? 1 : 0)} categoría{(categoryKeys.length + (operatorsData.length > 0 ? 1 : 0)) !== 1 ? 's' : ''}</span>
+          <span>{allCosts.length + (hasCommissions ? operatorsData.length : 0)} costo{(allCosts.length + (hasCommissions ? operatorsData.length : 0)) !== 1 ? 's' : ''} registrado{(allCosts.length + (hasCommissions ? operatorsData.length : 0)) !== 1 ? 's' : ''}</span>
+          <span>{categoryKeys.length + (hasCommissions ? 1 : 0)} categoría{(categoryKeys.length + (hasCommissions ? 1 : 0)) !== 1 ? 's' : ''}</span>
         </div>
       </div>
 
       {/* Resumen por categorías */}
-      {(categoryKeys.length > 1 || operatorsData.length > 0) && (
+      {(categoryKeys.length > 1 || hasCommissions) && (
         <div className="bg-muted/50 rounded-lg p-4 border border-border">
           <div className="flex items-center space-x-2 mb-3">
             <TrendingDown className="w-4 h-4 text-primary" />
             <span className="font-medium text-foreground text-sm">Resumen por Categoría</span>
           </div>
           <div className="space-y-2">
-            {operatorsData.length > 0 && (
+            {hasCommissions && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span className={`w-2.5 h-2.5 rounded-full ${COMMISSION_COLOR.dot}`} />
@@ -145,7 +147,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       )}
 
       {/* Comisiones de operadores */}
-      {operatorsData.length > 0 && (
+      {hasCommissions && (
         <div className="space-y-2">
           <h4 className={`font-semibold text-sm pb-1 flex items-center gap-2 ${COMMISSION_COLOR.text}`}>
             <span className={`w-1 h-4 rounded-full ${COMMISSION_COLOR.dot}`} />

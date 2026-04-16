@@ -164,6 +164,7 @@ export interface Operator {
   position?: string;
   licenseNumber?: string;
   examExpiry?: string;
+  commissionExempt?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
