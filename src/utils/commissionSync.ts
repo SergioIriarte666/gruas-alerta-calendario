@@ -3,18 +3,6 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('CommissionSync');
 
-// Operadores excluidos de comisiones según reglas de negocio
-const EXCLUDED_OPERATOR_NAMES = ['Jorge Iriarte', 'Sergio Iriarte', 'Jorge Ignacio Iriarte'];
-
-/**
- * Valida si un operador está excluido de comisiones
- */
-const isOperatorExcluded = (operatorName: string | null | undefined): boolean => {
-  if (!operatorName) return false;
-  return EXCLUDED_OPERATOR_NAMES.some(excluded => 
-    operatorName.toLowerCase().includes(excluded.toLowerCase())
-  );
-};
 
 /**
  * Utility to synchronize commissions from service_resources to costs table
