@@ -8,6 +8,7 @@ import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
 import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
+import { PDFCostImport } from '@/components/costs/PDFCostImport';
 import { CostFilters } from '@/components/costs/CostFilters';
 import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
@@ -22,7 +23,7 @@ import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
 import { prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet, FileScan } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
@@ -42,6 +43,7 @@ const CostsPage = () => {
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
+    const [isPDFImportOpen, setIsPDFImportOpen] = useState(false);
     const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isBatchMarkPaidOpen, setIsBatchMarkPaidOpen] = useState(false);
@@ -399,6 +401,16 @@ const CostsPage = () => {
                     >
                         {isMobile ? 'XML' : 'Cargar XML'}
                     </Button>
+
+                    <Button
+                        onClick={() => setIsPDFImportOpen(true)}
+                        variant="outline"
+                        size={isMobile ? 'sm' : 'default'}
+                        className="border-violet-500 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950"
+                    >
+                        <FileScan className="w-4 h-4 mr-1" />
+                        {isMobile ? 'PDF' : 'Importar PDF'}
+                    </Button>
                     
                     <Button 
                         onClick={() => setIsCSVUploadOpen(true)}
@@ -542,6 +554,15 @@ const CostsPage = () => {
                 isOpen={isXMLUploadOpen}
                 onClose={handleCloseXMLUpload}
                 onSuccess={handleXMLUploadSuccess}
+            />
+
+            <PDFCostImport
+                isOpen={isPDFImportOpen}
+                onClose={() => setIsPDFImportOpen(false)}
+                onSuccess={() => {
+                    invalidateAll();
+                    setIsPDFImportOpen(false);
+                }}
             />
 
             <CSVCostUpload
