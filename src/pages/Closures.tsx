@@ -12,7 +12,7 @@ import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
 import ClosuresTable, { ClosureSortField, SortDirection } from '@/components/closures/ClosuresTable';
 import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
-import AutomatedClosureWorkflow from '@/components/closures/automation/AutomatedClosureWorkflow';
+
 import { ClosureDetailsModal } from '@/components/closures/ClosureDetailsModal';
 import { ClosureDeleteConfirmDialog } from '@/components/closures/ClosureDeleteConfirmDialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,7 +26,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import ClosureReportForm from '@/components/closures/ClosureReportForm';
-import { Bot, Zap } from 'lucide-react';
+
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const Closures = () => {
@@ -41,7 +41,7 @@ const Closures = () => {
   const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
-  const [showAutomation, setShowAutomation] = useState(false);
+  
   const [sortField, setSortField] = useState<ClosureSortField>('dateFrom');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
@@ -242,13 +242,6 @@ const Closures = () => {
     );
   }
 
-  if (showAutomation) {
-    return (
-      <ErrorBoundary name="AutomatedClosureWorkflow">
-        <AutomatedClosureWorkflow onBack={() => setShowAutomation(false)} />
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <div className="space-y-6 closures-scope">
@@ -256,29 +249,6 @@ const Closures = () => {
         onCreateClosure={handleShowCreateModal}
       />
       
-      {/* Automation Button */}
-      <Card className="bg-gradient-to-r from-blue-500/10 to-blue-600/5 border-blue-500/20">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Bot className="h-6 w-6 text-blue-600" />
-              <div>
-                <h3 className="font-semibold text-foreground">Asistente de Automatización</h3>
-                <p className="text-sm text-muted-foreground">
-                  Automatiza el proceso de cierre por cliente y período
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => setShowAutomation(true)}
-              className="bg-violet-400 hover:bg-violet-500 text-white"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Automatizar Cierres
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
       
       <ClosuresStats closures={closures} />
       
