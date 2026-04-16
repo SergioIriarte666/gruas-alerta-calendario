@@ -15,7 +15,7 @@ import { InvoiceFormStep1 } from './form/InvoiceFormStep1';
 import { InvoiceFormStep2 } from './form/InvoiceFormStep2';
 import { InvoiceFormStep3 } from './form/InvoiceFormStep3';
 
-import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { toLocalDateString, getTodayLocal, safeParseDateOnly } from '@/utils/timezoneUtils';
 
 const invoiceSchema = z.object({
   closureId: z.string().min(1, 'Debe seleccionar un cierre'),
@@ -113,7 +113,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     if (watchedPaymentTermId && watchedIssueDate && !isEditing) {
       const term = paymentTerms.find(t => t.id === watchedPaymentTermId);
       if (term && term.days >= 0) {
-        const dueDate = new Date(watchedIssueDate);
+        const dueDate = safeParseDateOnly(watchedIssueDate);
         dueDate.setDate(dueDate.getDate() + term.days);
         setValue('dueDate', toLocalDateString(dueDate));
       }
