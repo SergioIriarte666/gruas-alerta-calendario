@@ -61,6 +61,7 @@ serve(async (req) => {
     const imageUrl = typeof body.imageUrl === "string" ? body.imageUrl : undefined;
     const imageBase64 = typeof body.imageBase64 === "string" ? body.imageBase64 : undefined;
     const imageMimeType = typeof body.imageMimeType === "string" ? body.imageMimeType : "image/jpeg";
+    const docMode = body.mode === "invoice" ? "invoice" : "receipt";
 
     if (!imageUrl && !imageBase64) {
       return jsonResponse({ error: "Se requiere imageUrl o imageBase64" }, 400);
@@ -96,20 +97,23 @@ serve(async (req) => {
 
     const imagePayload = { type: "image_url", image_url: { url: dataUrl } };
 
-    // 5. Call OpenAI API
-    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              `Eres un extractor de datos de comprobantes de gasto chilenos (boleta/factura) a partir de una imagen.
+    const systemPrompt = docMode === "invoice"
+      ? `Eres un extractor de datos de FACTURAS y BOLETAS chilenas (DTE) a partir de la imagen del documento (escaneo o PDF renderizado).
+Devuelve SIEMPRE datos estructurados usando la herramienta extract_receipt.
+
+Reglas:
+- Prioriza la fecha de emisión del documento (no fecha de impresión).
+- Montos en CLP normalmente sin decimales. Devuelve números (no strings).
+- Si no encuentras un campo, devuelve string vacío o null según corresponda.
+- RUT formato XX.XXX.XXX-X o XXXXXXXXX (limpia puntos si lo prefieres).
+- Tipo documento: "Factura", "Factura Electrónica", "Boleta", "Boleta Electrónica", "Nota de Crédito", "Nota de Débito", u "Otro".
+- Número documento: folio, N°, Nro, etc.
+- vendorName / vendorRut = EMISOR (proveedor que emite la factura), NO el receptor.
+- Si la factura tiene neto + IVA + total, devuelve los tres. Si solo hay total (boleta), devuelve solo total.
+- Intenta extraer medio de pago si aparece (efectivo, débito, crédito, transferencia, cheque, otro).
+- Si la factura tiene múltiples ítems/líneas, devuélvelos en "items" con descripción, cantidad, precio unitario y total. Si no hay líneas claras, omite items.
+`
+      : `Eres un extractor de datos de comprobantes de gasto chilenos (boleta/factura) a partir de una imagen.
 Devuelve SIEMPRE datos estructurados usando la herramienta extract_receipt.
 
 Reglas:
@@ -120,12 +124,27 @@ Reglas:
 - Tipo documento: "Boleta", "Boleta Electrónica", "Factura", "Factura Electrónica", u "Otro".
 - Número documento: folio, N°, Nro, etc.
 - También intenta extraer medio de pago si aparece (efectivo, débito, crédito, transferencia, otro).
-`,
-          },
+`;
+
+    const userInstruction = docMode === "invoice"
+      ? "Extrae todos los datos de la factura/boleta del documento. Identifica al EMISOR (proveedor) y todos los ítems si existen."
+      : "Extrae todos los datos del comprobante de gasto de la imagen.";
+
+    // 5. Call OpenAI API
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openaiApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: [
-              { type: "text", text: "Extrae todos los datos del comprobante de gasto de la imagen." },
+              { type: "text", text: userInstruction },
               imagePayload,
             ],
           },
@@ -135,12 +154,12 @@ Reglas:
             type: "function",
             function: {
               name: "extract_receipt",
-              description: "Extraer datos estructurados de un comprobante de gasto",
+              description: "Extraer datos estructurados de un comprobante de gasto o factura",
               parameters: {
                 type: "object",
                 properties: {
-                  vendorName: { type: "string", description: "Nombre/razón social del proveedor" },
-                  vendorRut: { type: "string", description: "RUT del proveedor" },
+                  vendorName: { type: "string", description: "Nombre/razón social del emisor (proveedor)" },
+                  vendorRut: { type: "string", description: "RUT del emisor (proveedor)" },
                   documentType: { type: "string", description: "Tipo de documento (Boleta/Factura/etc.)" },
                   documentNumber: { type: "string", description: "Número/folio del documento" },
                   date: { type: "string", description: "Fecha del documento en formato YYYY-MM-DD o null" },
@@ -156,6 +175,19 @@ Reglas:
                   },
                   paymentMethod: { type: "string", description: "Medio de pago detectado" },
                   notes: { type: "string", description: "Notas o glosa relevante para describir el gasto" },
+                  items: {
+                    type: "array",
+                    description: "Líneas/ítems de la factura cuando existan. Omitir si no hay detalle.",
+                    items: {
+                      type: "object",
+                      properties: {
+                        description: { type: "string" },
+                        quantity: { type: "number" },
+                        unitPrice: { type: "number" },
+                        total: { type: "number" },
+                      },
+                    },
+                  },
                   confidence: {
                     type: "object",
                     description: "Confianza 0..1 por campo",
@@ -214,6 +246,7 @@ Reglas:
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
       paymentMethod: parsed.paymentMethod || "",
       notes: parsed.notes || "",
+      items: Array.isArray(parsed.items) ? parsed.items : [],
       confidence: parsed.confidence || {},
     };
 
