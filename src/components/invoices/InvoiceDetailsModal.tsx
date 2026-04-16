@@ -536,44 +536,45 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                       onClick={() => {
                         const printWindow = window.open('', '_blank');
                         if (!printWindow) return;
+                        const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
                         const totalServicios = services.reduce((sum, s) => sum + (s.value || 0), 0);
                         const rows = services.map(s => `
-                          <tr>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.folio || 'N/A'}</td>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${formatSafeDate(s.service_date)}</td>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.vehicle_brand && s.vehicle_model ? `${s.vehicle_brand} ${s.vehicle_model}` : 'N/A'}</td>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.license_plate || 'N/A'}</td>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${formatCurrency(s.value)}</td>
-                            <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.status || 'N/A'}</td>
-                          </tr>
-                        `).join('');
-                        printWindow.document.write(`
-                          <html><head><title>Servicios - Factura ${invoice.folio}</title>
-                          <style>
-                            body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}
-                            h2{margin:0 0 4px}
-                            .meta{color:#666;font-size:13px;margin-bottom:16px}
-                            table{width:100%;border-collapse:collapse;font-size:13px}
-                            th{text-align:left;padding:8px 10px;border-bottom:2px solid #333;font-weight:600}
-                            .total-row td{font-weight:700;border-top:2px solid #333;padding-top:10px}
-                            @media print{body{margin:15px}}
-                          </style></head><body>
-                          <h2>Factura ${invoice.folio}${invoice.numeroFiscal ? ` | N° Fiscal: ${invoice.numeroFiscal}` : ''}</h2>
-                          <div class="meta">
-                            Cliente: ${invoice.client?.name || 'N/A'} &nbsp;|&nbsp; 
-                            Fecha: ${formatSafeDate(invoice.issueDate)} &nbsp;|&nbsp;
-                            Servicios: ${services.length}
-                          </div>
-                          <table>
-                            <thead><tr>
-                              <th>Folio</th><th>Fecha</th><th>Vehículo</th><th>Patente</th><th style="text-align:right">Valor</th><th>Estado</th>
-                            </tr></thead>
-                            <tbody>${rows}
-                              <tr class="total-row"><td colspan="4" style="text-align:right;padding:10px">Total</td><td style="text-align:right;padding:10px">${formatCurrency(totalServicios)}</td><td></td></tr>
-                            </tbody>
-                          </table>
-                          </body></html>
-                        `);
+                           <tr>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.folio || 'N/A')}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(formatSafeDate(s.service_date))}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.vehicle_brand && s.vehicle_model ? `${esc(s.vehicle_brand)} ${esc(s.vehicle_model)}` : 'N/A'}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.license_plate || 'N/A')}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${esc(formatCurrency(s.value))}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.status || 'N/A')}</td>
+                           </tr>
+                         `).join('');
+                         printWindow.document.write(`
+                           <html><head><title>Servicios - Factura ${esc(invoice.folio)}</title>
+                           <style>
+                             body{font-family:Arial,sans-serif;margin:30px;color:#1a1a1a}
+                             h2{margin:0 0 4px}
+                             .meta{color:#666;font-size:13px;margin-bottom:16px}
+                             table{width:100%;border-collapse:collapse;font-size:13px}
+                             th{text-align:left;padding:8px 10px;border-bottom:2px solid #333;font-weight:600}
+                             .total-row td{font-weight:700;border-top:2px solid #333;padding-top:10px}
+                             @media print{body{margin:15px}}
+                           </style></head><body>
+                           <h2>Factura ${esc(invoice.folio)}${invoice.numeroFiscal ? ` | N° Fiscal: ${esc(invoice.numeroFiscal)}` : ''}</h2>
+                           <div class="meta">
+                             Cliente: ${esc(invoice.client?.name || 'N/A')} &nbsp;|&nbsp; 
+                             Fecha: ${esc(formatSafeDate(invoice.issueDate))} &nbsp;|&nbsp;
+                             Servicios: ${services.length}
+                           </div>
+                           <table>
+                             <thead><tr>
+                               <th>Folio</th><th>Fecha</th><th>Vehículo</th><th>Patente</th><th style="text-align:right">Valor</th><th>Estado</th>
+                             </tr></thead>
+                             <tbody>${rows}
+                               <tr class="total-row"><td colspan="4" style="text-align:right;padding:10px">Total</td><td style="text-align:right;padding:10px">${esc(formatCurrency(totalServicios))}</td><td></td></tr>
+                             </tbody>
+                           </table>
+                           </body></html>
+                         `);
                         printWindow.document.close();
                         printWindow.print();
                       }}
