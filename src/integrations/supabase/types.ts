@@ -2852,6 +2852,7 @@ export type Database = {
       }
       operators: {
         Row: {
+          commission_exempt: boolean
           created_at: string | null
           created_by: string | null
           department: string | null
@@ -2868,6 +2869,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          commission_exempt?: boolean
           created_at?: string | null
           created_by?: string | null
           department?: string | null
@@ -2884,6 +2886,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          commission_exempt?: boolean
           created_at?: string | null
           created_by?: string | null
           department?: string | null
