@@ -1,55 +1,63 @@
 
 
-# Plan: Importar Facturas de Proveedor desde PDF (sin romper XML)
+# Plan: Corregir parser XML + reparar 8 movimientos descuadrados
 
-## Problema
-Algunos proveedores no entregan XML (DTE), solo entregan el PDF de la factura. Actualmente no hay forma de importar esos datos sin ingresarlos manualmente.
+## Contexto
+Diagnóstico ya validado: en importación XML con consumo inmediato, las **entradas** usan `MontoItem/Qty` (neto con descuento) pero las **salidas** usan `PrcItem` (bruto sin descuento). Resultado: salida > entrada por el monto del descuento de línea.
 
-## Solución propuesta
+Folios afectados confirmados: **5245639** y **5246554** (8 movimientos en total: 4 entradas + 4 salidas).
 
-Agregar un botón **"Importar PDF"** junto al botón existente de "Importar XML" en el módulo de **Costos**. El flujo reutiliza la Edge Function `parse-receipt-image` que ya existe y funciona con OpenAI Vision (gpt-4o-mini), adaptándola para aceptar también PDFs.
+## Cambios
 
-### Flujo del usuario
-1. Clic en "Importar PDF" → se abre un modal (estilo wizard, igual que el XML)
-2. Arrastra/sube el PDF de la factura
-3. El sistema convierte la primera página a imagen, la envía a `parse-receipt-image`
-4. Muestra los datos extraídos (proveedor, RUT, folio, fecha, montos) en un formulario editable para que el usuario corrija lo que haga falta
-5. El usuario asigna categoría/subcategoría y confirma
-6. Se crea el costo + pago a proveedor + factura (misma lógica triangular que el XML)
+### 1. Fix del parser (previene futuros casos)
+**Archivo**: `src/utils/xmlParser/xmlSupplierParser.ts` (línea ~505)
 
-### Cambios técnicos
+Cambiar:
+```ts
+unit_price: precio,  // PrcItem bruto
+```
+Por:
+```ts
+unit_price: cantidad > 0 ? subtotal / cantidad : precio,  // MontoItem/Qty neto
+```
 
-**1. Edge Function `parse-receipt-image` (mínima adaptación)**
-- Ya acepta `imageBase64` + `imageMimeType` → solo hay que ampliar el prompt del sistema para que también reconozca facturas completas (no solo boletas de gasto)
-- Agregar campo `items` (lista de ítems con descripción, cantidad, monto) al schema de extracción para facturas con múltiples líneas
+Esto garantiza que el `unit_price` que se propaga al flujo (entrada, salida, costos, glosa) ya venga con el descuento aplicado. El `PrcItem` queda solo como dato informativo si se necesita.
 
-**2. Nuevo componente `PDFCostImport.tsx`**
-- Modal con dropzone para PDF (acepta `.pdf`)
-- Usa `pdfjs-dist` (ya instalado en el proyecto para VIP pipeline) para renderizar la primera página como imagen
-- Envía la imagen a `parse-receipt-image` vía `supabase.functions.invoke`
-- Muestra formulario de revisión con los datos extraídos (editable)
-- Reutiliza los mismos hooks: `useAddCost`, `useCostCategories`, `useCostSubcategories`, `usePaymentTerms`, `useCostDuplicateCheck`
-- Aplica la misma sincronización triangular (costo → pago proveedor → factura) que el XML
+### 2. Corrección de los 8 movimientos existentes
+**Migración SQL puntual** que actualiza solo las **salidas** de los folios 5245639 y 5246554 para igualar el `unit_cost` y `total_cost` de su entrada correspondiente (mismo `cost_id` + `item_id`).
 
-**3. Página de Costos (`Costs.tsx`)**
-- Agregar botón "Importar PDF" junto al botón "Importar XML" existente
-- Abre `PDFCostImport`
+Lógica:
+```sql
+UPDATE inventory_movements exit
+SET unit_cost = entry.unit_cost,
+    total_cost = entry.unit_cost * exit.quantity
+FROM inventory_movements entry
+WHERE exit.movement_type = 'exit'
+  AND entry.movement_type = 'entry'
+  AND exit.cost_id = entry.cost_id
+  AND exit.item_id = entry.item_id
+  AND exit.cost_id IN (
+    SELECT id FROM costs WHERE document_number IN ('5245639', '5246554')
+  );
+```
 
-**4. Opcionalmente: Módulo de Proveedores**
-- Agregar el mismo botón en la pestaña de documentos del proveedor para importar facturas PDF directamente asociadas a ese proveedor
+Solo afecta a los 4 movimientos de salida de esos 2 folios. Las entradas no se tocan (ya están correctas).
 
-### Lo que NO se toca
-- El importador XML existente no se modifica en absoluto
-- La sincronización triangular existente no cambia (se reutiliza)
-- Los triggers de BD permanecen intactos
-- La lógica de detección de duplicados se reutiliza (mismo `useCostDuplicateCheck`)
+### 3. Validación post-corrección
+Consulta de verificación que confirme que entrada y salida de cada par tienen el mismo `unit_cost` y `total_cost` para ambos folios.
 
-### Archivos involucrados
-- `supabase/functions/parse-receipt-image/index.ts` (~20 líneas: ampliar prompt + agregar `items` al schema)
-- Nuevo: `src/components/costs/PDFCostImport.tsx` (~400-500 líneas: modal wizard)
-- `src/pages/Costs.tsx` (~5 líneas: botón + import)
-- Nuevo: `src/hooks/costs/usePDFCostExtraction.ts` (~100 líneas: lógica de conversión PDF→imagen→AI)
+## Lo que NO se toca
+- Importador XML general (solo 1 línea cambia)
+- Triggers de stock
+- Lógica triangular costo↔pago↔factura
+- Cualquier otro folio histórico (alcance limitado a los 2 folios reportados)
 
-### Resultado
-El usuario puede importar facturas PDF con extracción automática vía IA, revisar y corregir los datos, y crear el costo con toda la trazabilidad (proveedor, pago, factura) igual que si hubiera importado un XML.
+## Archivos involucrados
+- `src/utils/xmlParser/xmlSupplierParser.ts` (1 línea)
+- 1 migración SQL puntual (UPDATE acotado a 4 filas)
+
+## Resultado
+- Próximas importaciones XML: entradas y salidas cuadran automáticamente
+- Los 8 movimientos actuales: las salidas se igualan a las entradas (descuento aplicado correctamente)
+- Inventario y costos quedan consistentes con el valor neto de la factura
 
