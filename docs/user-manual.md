@@ -1,4 +1,4 @@
-# Manual de Usuario - TMS Grúas v2.2.0
+# Manual de Usuario - TMS Grúas v2.3.0
 
 ## Tabla de Contenidos
 
@@ -26,6 +26,10 @@
 22. [Integración Inventario-Grúas](#integración-inventario-grúas)
 23. [Mejores Prácticas y Flujos de Trabajo](#mejores-prácticas-y-flujos-de-trabajo)
 24. [Solución de Problemas](#solución-de-problemas)
+25. [Calculadora de Viajes](#25-calculadora-de-viajes)
+26. [Importador XML Unificado](#26-importador-xml-unificado)
+27. [Accesibilidad y Diseño](#27-accesibilidad-y-diseño)
+28. [Auditoría y Seguridad](#28-auditoría-y-seguridad)
 
 ---
 
@@ -33,7 +37,7 @@
 
 ### ¿Qué es TMS Grúas?
 
-TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
+TMS Grúas v2.3.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
 
 - **Gestión completa de servicios**: Desde la creación hasta la facturación con flujos optimizados
 - **Control de inventario avanzado**: Seguimiento de repuestos con integración automática a grúas
@@ -49,43 +53,77 @@ TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios d
 - **Portal del cliente**: Acceso directo para clientes con funcionalidades ampliadas
 - **Aplicación móvil PWA**: Funcionalidades offline mejoradas para uso en campo
 
-### Características Principales v2.2.0
+### Características Principales v2.3.0
 
-- ✅ **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil
-- ✅ **Gestión de Inventario**: Control completo con integración automática
-- ✅ **TMS Completo**: Todas las funcionalidades de un TMS profesional
-- ✅ **Seguridad Empresarial**: Autenticación robusta con auditoría completa
-- ✅ **Reportes Avanzados**: Dashboard con métricas en tiempo real y alertas
-- ✅ **Portal del Cliente**: Interfaz dedicada con acceso a servicios y facturas
+- ✅ **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil (mobile-first, tablas → cards)
+- ✅ **Tema Violeta de Alto Contraste**: Esquema de accesibilidad sin verde
+- ✅ **Gestión de Inventario**: Auto-SKU en importación XML + valoración consistente
+- ✅ **TMS Completo**: Servicios, cierres, grúas, operadores y bitácora técnica
+- ✅ **Seguridad Empresarial**: RLS endurecido, auditoría `created_by` global y permisos granulares por módulo
+- ✅ **Reportes Avanzados**: Reportes integrales automáticos por email + filtro por departamento
+- ✅ **Portal del Cliente**: Acceso a servicios, facturas y documentos
 - ✅ **Sistema de Backup**: Respaldos automáticos programables
-- ✅ **Gestión de Proveedores**: Módulo completo para proveedores y pagos
-- ✅ **Entradas Rápidas**: Registro móvil con GPS y fotografías
-- ✅ **Pipeline VIP**: Seguimiento avanzado de clientes estratégicos
-- ✅ **Facturación Diferida**: Ciclos personalizados por cliente
-- ✅ **Sistema de Cierres**: Control avanzado de facturación
-- ✅ **Portal del Operador**: Herramientas especializadas para campo
-- ✅ **Búsqueda Avanzada**: Incluye cotización y orden de compra
-- ✅ **Actualizaciones Masivas**: Batch updates para eficiencia
-- ✅ **Integración Automática**: Inventario-Grúas sincronizado para evitar duplicados
-- ✅ **PWA Avanzada**: Funcionalidad offline con sincronización inteligente
-- ✅ **Auditoría Completa**: Trazabilidad de todas las operaciones del sistema
+- ✅ **Gestión de Proveedores**: Wizard XML unificado, sincronización triangular y calendario de pagos TZ Chile
+- ✅ **Cuentas por Pagar**: Deudas, créditos, intereses y cuotas unificadas
+- ✅ **Entradas Rápidas con OCR**: Auto-extracción con OpenAI gpt-4o-mini, GPS y fotos
+- ✅ **Pipeline VIP con OCR fuzzy matching**: Importación de OC y cotizaciones tolerante a errores
+- ✅ **Facturación Diferida**: Ciclos personalizados + anulación con Nota de Crédito obligatoria
+- ✅ **Sistema de Cierres**: Sincronización forzada con facturas y estados protegidos
+- ✅ **Portal del Operador**: Herramientas de campo con firma digital
+- ✅ **Calculadora de Viajes**: Mapbox + GetAPI (peajes, distancia, costo estimado)
+- ✅ **Integración Inventario-Grúas**: Sincronización atómica para evitar duplicados
+- ✅ **PWA Offline v5**: CRUD completo offline con IndexedDB
+- ✅ **Notificaciones WhatsApp**: Integración directa vía Meta Cloud API
+- ✅ **Importación Histórica SII**: Ventas históricas (CSV/XLSX) aisladas del activo
+- ✅ **Conciliación Inteligente**: Manual con prioridad por vencimiento (sin auto-asignación)
+- ✅ **Verificación RUT Multi-proveedor**: SRE/Ruts.info + formateo global automático
+- ✅ **Autocompletado Inteligente**: En todos los campos de texto libre
+- ✅ **Calendario Hub**: Sincronización multi-fuente (servicios, mantenciones, eventos)
+- ✅ **Operaciones por Lote**: Cierre masivo, cambio de estado y duplicación de servicios
 
-### Novedades v2.2.0
+### Novedades v2.3.0
 
 #### 🆕 **Nuevas Funcionalidades**
-- **Pipeline VIP**: Seguimiento especializado de clientes estratégicos
-- **Sistema de Cierres Avanzado**: Control completo del proceso de cierre de servicios
-- **Facturación Diferida**: Gestión de ciclos de facturación personalizados
-- **Portal del Operador**: Interfaz especializada para personal de campo
-- **Búsqueda Expandida**: Búsqueda por cotización y orden de compra en servicios
-- **Actualizaciones Masivas**: Batch updates para cotizaciones y órdenes de compra
-- **Entradas Rápidas con GPS**: Registro móvil de gastos con ubicación
+- **Auto-SKU en importación XML**: Formato `SKU-YYYYMMDD-XXXX`. Se aplica solo cuando el proveedor no entrega código en el XML; el formulario manual sigue exigiendo SKU explícito. Backfill aplicado a productos existentes sin código.
+- **Sincronización triangular Costos ↔ Pagos a Proveedores ↔ Facturas**: Triggers de base de datos mantienen consistencia automática entre los tres módulos.
+- **Importador XML unificado tipo Wizard**: Modal de gran formato (1600px) con detección de duplicados en 3 niveles (folio, hash, contenido), asociación a costos existentes y fallback por RUT cuando falla la búsqueda por nombre.
+- **Resiliencia v4 de importación XML**: Vínculo atómico entre facturas, costos, pagos y bodega.
+- **Anulación de facturas con Nota de Crédito obligatoria**: Sistema formal de auditoría para cancelaciones.
+- **Protección de eliminación**: Prompt "ELIMINAR" en facturas generadas por la app (no históricas HIST-).
+- **Sistema de comisiones rediseñado**: Tabla `costs` como fuente única de verdad, flag `commission_exempt` por operador.
+- **Cuentas por Pagar unificadas**: Deudas, créditos, intereses y cuotas (tablas `debts`, `debt_installments`, `creditors`).
+- **Ventas Históricas SII**: Importación CSV/XLSX de facturas, NC y ND con prefijo HIST-.
+- **Aislamiento Histórico vs Activo**: Las finanzas activas excluyen documentos históricos.
+- **Conciliación inteligente sin auto-asignación**: Pagos manuales con visualización de fecha de vencimiento.
+- **Cálculo de antigüedad y vencidas por saldo**: Estado real basado en saldo, no solo en flag.
+- **Permisos granulares por módulo**: Administradores controlan visibilidad por usuario.
+- **Panel de Emergencia**: Herramientas administrativas centralizadas.
+- **Calculadora de Viajes**: Mapbox + GetAPI Chile (peajes, ruta, costo estimado).
+- **Verificación RUT multi-proveedor**: SRE/Ruts.info con enriquecimiento de datos + formateo automático global.
+- **Pipeline VIP con OCR fuzzy matching**: Importación de OC y cotizaciones tolerante a errores de lectura.
+- **Bitácora técnica de grúas v3**: Mantenciones + integración financiera + kilometraje.
+- **Subcontratación de servicios**: Vinculada a proveedores de inventario (`outsourced_provider_id`).
+- **Sistema de auditoría `created_by`**: Trazabilidad de autoría en todos los módulos principales.
+- **Resumen de pendientes al iniciar sesión**: Modal proactivo en el Dashboard.
+- **Notificaciones WhatsApp**: Integración directa con Meta WhatsApp Cloud API.
+- **Reportes integrales automáticos**: Envío vía Resend programado con pg_cron.
+- **Autocompletado inteligente**: En observaciones, descripciones y referencias.
+- **Quick Records con auto-extracción**: OpenAI gpt-4o-mini analiza foto del recibo.
+- **Calendario hub multi-fuente**: Servicios, mantenciones y eventos remotos sincronizados.
+- **Operaciones por lote y duplicación de servicios**: Cierre masivo, cambio de estado, reasignación.
+- **Log de auditoría de servicios**: Tabla `services_history` con seguimiento de cambios.
+- **Sistema de tarifas automáticas**: Jerarquía cliente → tipo de servicio → default.
+- **Tema accesibilidad violeta**: Sistema de diseño sin verde, alto contraste.
+- **PWA offline v5**: CRUD completo offline con IndexedDB.
+- **Diseño responsivo mobile-first**: Tablas se transforman en cards en móvil.
 
 #### 🔧 **Mejoras Existentes**
-- **Gestión de Inventario**: Números de lote, agrupación de compras
-- **Sistema Financiero**: Comisiones avanzadas y centros de costo
-- **Reportes**: Nuevas métricas y análisis avanzados
-- **PWA**: Mejor rendimiento offline y sincronización
+- **Gestión de Inventario**: Valoración solo desde entradas activas, indicador multi-item.
+- **Sistema Financiero**: Restricción de escritura solo administradores en tablas críticas.
+- **Reportes**: Filtro por Departamento, métricas con TZ Chile/Santiago.
+- **PWA**: Offline robusto v5 con sincronización inteligente al recuperar conexión.
+- **Categorías**: Subcategorías cargadas dinámicamente según categoría seleccionada.
+- **Descripciones**: Edición dinámica priorizando legibilidad en costos e inventario.
 
 ---
 
@@ -2889,12 +2927,155 @@ Este manual proporciona una guía completa y actualizada para el uso del sistema
 
 Para obtener ayuda adicional, acceder a capacitaciones específicas o reportar problemas, no dude en contactar al equipo de soporte técnico usando los canales proporcionados en la sección de Solución de Problemas.
 
-**¡Gracias por usar TMS Grúas v2.2.0!**
+**¡Gracias por usar TMS Grúas v2.3.0!**
 
 ---
 
-*Documento actualizado: Octubre 2025*  
-*Versión del manual: 2.2.0*  
-*Versión del sistema: 2.2.0*  
-*Última actualización: Manual completamente revisado con todas las funcionalidades actuales*  
-*Páginas: 1,300+ | Módulos documentados: 30+ | Funcionalidades: 17+ nuevas características*
+## 25. Calculadora de Viajes
+
+### Descripción General
+Módulo de estimación automática de costos operativos para viajes, integrado en `/trip-calculator`. Combina ruteo geográfico, peajes reales y consumo de combustible por tipo de grúa.
+
+### Integraciones
+- **Mapbox**: Cálculo de ruta, distancia y previsualización en mapa interactivo.
+- **GetAPI Chile (Peajes)**: Tarifas reales de peajes por categoría de vehículo.
+- **GetAPI Chile (Vehículo)**: Validación de patentes (separado por API key independiente).
+- **Tabla `crane_consumption_rates`**: Consumo base por tipo de grúa y factor de carga (vacío vs cargado).
+- **Tabla `fuel_prices`**: Precio actual de combustible por tipo (diésel/bencina) y región.
+
+### Funcionalidades
+- ✅ Búsqueda de origen y destino con autocompletado de Mapbox.
+- ✅ Selección de grúa: aplica consumo y categoría de peaje automáticamente.
+- ✅ Modo "cargado" vs "vacío" con factor de consumo diferenciado.
+- ✅ Cálculo de costo total: combustible + peajes + opcional viáticos.
+- ✅ Visualización de ruta en mapa con trazado real.
+- ✅ Detalle desglosado por tramo y tipo de costo.
+
+### Casos de Uso
+- Cotización rápida previa a un servicio.
+- Estimación de costo operativo para presupuestos.
+- Planificación de rutas óptimas considerando peajes.
+
+### Limitaciones
+- Requiere conexión a internet (no offline).
+- Las tarifas dependen de la última actualización de GetAPI.
+- Los precios de combustible se actualizan manualmente o vía cron.
+
+---
+
+## 26. Importador XML Unificado
+
+### Descripción General
+Wizard de importación de documentos XML (DTE) consolidado para los módulos de **Costos**, **Proveedores** y **Bodega**. Modal de gran formato (1600px) con flujo guiado paso a paso.
+
+### Flujo del Wizard
+1. **Carga del archivo XML**: Drag & drop o selección manual.
+2. **Parseo y validación**: Limpieza de namespaces (`xmlns`), extracción de RUT emisor, folio, monto, ítems y forma de pago.
+3. **Detección de duplicados (3 niveles)**:
+   - Por folio + RUT emisor.
+   - Por hash del contenido.
+   - Por similitud de monto + fecha + proveedor.
+4. **Identificación del proveedor**:
+   - Búsqueda primaria por nombre normalizado.
+   - **Fallback automático por RUT** si la búsqueda por nombre falla.
+   - Creación automática del proveedor si no existe (con verificación SRE/Ruts.info).
+5. **Asociación opcional a costo existente**: Para evitar duplicación cuando el costo ya fue registrado manualmente.
+6. **Lógica financiera SII**:
+   - Documentos a **Crédito** (`FmaPago = 2`) → no generan pago automático, quedan como cuenta por pagar.
+   - Documentos al **Contado** (`FmaPago = 1`) → generan pago automático en la fecha del documento.
+7. **Vínculo atómico**: Crea factura, costo, pago y movimiento de bodega en una sola transacción.
+
+### Características Clave
+- ✅ Detección de duplicados configurable (omitir / forzar).
+- ✅ Auto-SKU para productos sin código en el XML.
+- ✅ Soporte multi-ítem con desglose visual (badge ámbar).
+- ✅ Sincronización triangular automática post-importación.
+- ✅ Fallback por RUT garantiza tasa de éxito alta incluso con nombres inconsistentes.
+
+### Buenas Prácticas
+- Verificar previamente si el costo ya existe antes de importar.
+- Mantener actualizada la tabla `inventory_suppliers` con RUT correctos.
+- Revisar el log del importador (estado de cada documento).
+
+---
+
+## 27. Accesibilidad y Diseño
+
+### Sistema de Diseño "Violet"
+La aplicación utiliza un esquema de **alto contraste centrado en violeta** (`violet-600`) por requerimiento de accesibilidad visual del usuario principal (dificultad para leer el verde).
+
+#### Reglas
+- ❌ Prohibido el color verde en cualquier elemento de UI.
+- ✅ Usar tokens semánticos definidos en `index.css` y `tailwind.config.ts`.
+- ✅ Todos los colores expresados en formato HSL.
+- ✅ Estados de éxito → violeta o ámbar (nunca verde).
+- ✅ Modales con fondos sólidos (no transparentes) sobre Radix UI.
+
+### Diseño Responsivo
+- **Desktop (≥1024px)**: Tablas completas con todas las columnas.
+- **Tablet (768-1023px)**: Tablas con scroll horizontal y columnas priorizadas.
+- **Móvil (<768px)**: Las tablas se transforman automáticamente en **cards apiladas** con información jerarquizada.
+- **FAB flotante**: Acceso rápido a acciones principales en móvil.
+
+### PWA Offline v5
+- IndexedDB con CRUD completo en: Servicios, Costos, Clientes, Operadores, Grúas, Inventario.
+- Sincronización inteligente al recuperar conexión.
+- Resolución manual de conflictos.
+- Cache estratificado: App Shell + datos críticos + recursos estáticos.
+
+### Estado Visual de Pago
+Estándar para tablas de costos (3 estados):
+- 🟢 **Pagado** → indicador violeta (no verde).
+- 🟡 **Pendiente** → ámbar.
+- 🔴 **Vencido** → rojo (basado en saldo + fecha).
+
+---
+
+## 28. Auditoría y Seguridad
+
+### Sistema de Auditoría `created_by`
+Todos los módulos principales registran el usuario que creó cada registro mediante el campo `created_by` (FK a `profiles`). Incluye:
+- Servicios, costos, facturas, pagos.
+- Inventario (items, movimientos, consumos).
+- Grúas, operadores, clientes.
+- Mantenciones, documentos.
+
+### Log de Auditoría de Servicios
+Tabla `services_history` que registra cada cambio en un servicio:
+- Estado anterior y nuevo.
+- Usuario responsable.
+- Timestamp.
+- Campos modificados.
+
+### Row Level Security (RLS)
+- **Política por defecto**: Cada usuario solo accede a sus datos según rol.
+- **Servicios endurecidos**: Previenen exposición indebida de datos cliente/operador.
+- **Notificaciones**: Inserción restringida al propio `user_id`.
+- **Storage**: Buckets con políticas granulares por carpeta.
+
+### Restricción de Escritura en Finanzas
+Las tablas `creditors`, `debts`, `debt_installments`, `debt_payments` solo permiten INSERT/UPDATE/DELETE a usuarios con rol **admin**. Visualización abierta a roles autorizados.
+
+### Permisos Granulares por Módulo
+Los administradores pueden activar/desactivar visibilidad de módulos completos por usuario desde **Administración → Usuarios → Permisos**.
+
+### Anulación con Nota de Crédito
+Las facturas generadas por la app no pueden eliminarse: solo anularse mediante una **Nota de Crédito formal** que mantiene el rastro de auditoría. Las facturas históricas (HIST-) sí permiten eliminación directa con prompt "ELIMINAR".
+
+### Eliminación Segura de Costos
+Flujo de confirmación múltiple para evitar inconsistencias bidireccionales con facturas, pagos y movimientos de bodega.
+
+### Panel de Emergencia
+Centraliza herramientas administrativas de recuperación:
+- Limpieza global de inventario.
+- Reconstrucción de stock desde movimientos.
+- Sincronización forzada cliente ↔ servicios ↔ facturas.
+- Backfill de campos críticos.
+
+---
+
+*Documento actualizado: Abril 2026*  
+*Versión del manual: 2.3.0*  
+*Versión del sistema: 2.3.0*  
+*Última actualización: Manual completamente revisado con todas las funcionalidades acumuladas hasta v2.3.0*  
+*Páginas: 1,500+ | Módulos documentados: 35+ | Funcionalidades nuevas v2.3.0: 30+*
