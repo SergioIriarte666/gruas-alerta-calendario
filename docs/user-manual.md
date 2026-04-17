@@ -1,4 +1,4 @@
-# Manual de Usuario - TMS Grúas v2.2.0
+# Manual de Usuario - TMS Grúas v2.3.0
 
 ## Tabla de Contenidos
 
@@ -26,6 +26,10 @@
 22. [Integración Inventario-Grúas](#integración-inventario-grúas)
 23. [Mejores Prácticas y Flujos de Trabajo](#mejores-prácticas-y-flujos-de-trabajo)
 24. [Solución de Problemas](#solución-de-problemas)
+25. [Calculadora de Viajes](#25-calculadora-de-viajes)
+26. [Importador XML Unificado](#26-importador-xml-unificado)
+27. [Accesibilidad y Diseño](#27-accesibilidad-y-diseño)
+28. [Auditoría y Seguridad](#28-auditoría-y-seguridad)
 
 ---
 
