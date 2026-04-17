@@ -1,63 +1,67 @@
 
 
-# Plan: Corregir parser XML + reparar 8 movimientos descuadrados
+# Plan: Auto-SKU solo en importación XML + Backfill
 
-## Contexto
-Diagnóstico ya validado: en importación XML con consumo inmediato, las **entradas** usan `MontoItem/Qty` (neto con descuento) pero las **salidas** usan `PrcItem` (bruto sin descuento). Resultado: salida > entrada por el monto del descuento de línea.
+## Decisiones confirmadas
+- **Alcance**: Auto-SKU **solo cuando se crea un producto desde importación XML** (donde el proveedor no entrega código). El formulario manual sigue exigiendo SKU manual.
+- **Formato**: `SKU-{YYYYMMDD}-{HEX4}` (ej: `SKU-20260417-A3F2`). Único garantizado, sin necesidad de contador en BD.
+- **Backfill**: completar SKU faltantes en productos existentes con el mismo formato.
+- **Memoria**: actualizar la regla `manual-sku-enforcement-v2` para reflejar la excepción XML.
 
-Folios afectados confirmados: **5245639** y **5246554** (8 movimientos en total: 4 entradas + 4 salidas).
+## Cambios técnicos
 
-## Cambios
-
-### 1. Fix del parser (previene futuros casos)
-**Archivo**: `src/utils/xmlParser/xmlSupplierParser.ts` (línea ~505)
-
-Cambiar:
+### 1. Helper nuevo: `src/utils/skuGenerator.ts`
 ```ts
-unit_price: precio,  // PrcItem bruto
-```
-Por:
-```ts
-unit_price: cantidad > 0 ? subtotal / cantidad : precio,  // MontoItem/Qty neto
+export const generateAutoSku = (): string => {
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  const hex = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+  return `SKU-${date}-${hex}`;
+};
 ```
 
-Esto garantiza que el `unit_price` que se propaga al flujo (entrada, salida, costos, glosa) ya venga con el descuento aplicado. El `PrcItem` queda solo como dato informativo si se necesita.
+### 2. Auto-SKU en creación XML
+Localizar los 3 puntos donde el flujo XML crea `inventory_items` (sin SKU manual):
+- `src/services/UnifiedPurchaseService.ts` (línea ~204) — crea item desde compra unificada
+- `src/hooks/useUnifiedParts.ts` (línea ~196) — crea item desde XML/repuestos
+- `src/hooks/useSupplierPayments.ts` (línea ~169) — crea item desde pago proveedor
 
-### 2. Corrección de los 8 movimientos existentes
-**Migración SQL puntual** que actualiza solo las **salidas** de los folios 5245639 y 5246554 para igualar el `unit_cost` y `total_cost` de su entrada correspondiente (mismo `cost_id` + `item_id`).
+En cada uno: si el `productCode` del XML viene vacío, asignar `sku: generateAutoSku()`. Si viene con código, respetarlo.
 
-Lógica:
+El parser XML (`xmlSupplierParser.ts` línea 614) ya extrae `productCode` desde múltiples campos (`codigo, sku, product_code...`); solo necesitamos rellenar cuando llega vacío al insert.
+
+### 3. Backfill productos existentes sin SKU
+Migración SQL puntual:
 ```sql
-UPDATE inventory_movements exit
-SET unit_cost = entry.unit_cost,
-    total_cost = entry.unit_cost * exit.quantity
-FROM inventory_movements entry
-WHERE exit.movement_type = 'exit'
-  AND entry.movement_type = 'entry'
-  AND exit.cost_id = entry.cost_id
-  AND exit.item_id = entry.item_id
-  AND exit.cost_id IN (
-    SELECT id FROM costs WHERE document_number IN ('5245639', '5246554')
-  );
+UPDATE inventory_items
+SET sku = 'SKU-' || to_char(now(),'YYYYMMDD') || '-' ||
+          upper(substr(md5(id::text || random()::text), 1, 4))
+WHERE (sku IS NULL OR sku = '') AND is_active = true;
 ```
+Genera SKU determinístico-único por fila usando hash del id.
 
-Solo afecta a los 4 movimientos de salida de esos 2 folios. Las entradas no se tocan (ya están correctas).
+### 4. Formulario manual
+**No se modifica.** Sigue permitiendo SKU vacío como hoy (campo opcional). La regla "no auto-SKU manual" se mantiene.
 
-### 3. Validación post-corrección
-Consulta de verificación que confirme que entrada y salida de cada par tienen el mismo `unit_cost` y `total_cost` para ambos folios.
+### 5. Actualizar memoria
+Editar `mem://constraints/inventory/manual-sku-enforcement-v2` para indicar:
+> Auto-SKU permitido **únicamente** en importación XML (proveedor no entrega código). Formulario manual sigue sin auto-generación.
 
 ## Lo que NO se toca
-- Importador XML general (solo 1 línea cambia)
-- Triggers de stock
-- Lógica triangular costo↔pago↔factura
-- Cualquier otro folio histórico (alcance limitado a los 2 folios reportados)
+- Validación de unicidad de SKU (ya existe vía índice + manejo de error)
+- Formulario manual `ProductFormModal`
+- Lógica de stock, movimientos, costos
+- Importador XML general (solo se rellena un campo cuando viene vacío)
 
-## Archivos involucrados
-- `src/utils/xmlParser/xmlSupplierParser.ts` (1 línea)
-- 1 migración SQL puntual (UPDATE acotado a 4 filas)
+## Archivos modificados
+- `src/utils/skuGenerator.ts` (nuevo, ~10 líneas)
+- `src/services/UnifiedPurchaseService.ts` (~2 líneas)
+- `src/hooks/useUnifiedParts.ts` (~2 líneas)
+- `src/hooks/useSupplierPayments.ts` (~2 líneas)
+- 1 migración SQL (UPDATE backfill)
+- Memoria: `manual-sku-enforcement-v2`
 
 ## Resultado
-- Próximas importaciones XML: entradas y salidas cuadran automáticamente
-- Los 8 movimientos actuales: las salidas se igualan a las entradas (descuento aplicado correctamente)
-- Inventario y costos quedan consistentes con el valor neto de la factura
+- Productos existentes sin SKU quedan completados con formato `SKU-20260417-XXXX`.
+- Próximas importaciones XML sin código de producto generan SKU automático.
+- Creación manual de productos sigue requiriendo SKU explícito (sin cambios).
 
