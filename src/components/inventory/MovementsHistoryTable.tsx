@@ -332,12 +332,20 @@ export const MovementsHistoryTable = () => {
                           <code className="text-sm bg-muted px-1 rounded">
                             {movement.reference_document}
                           </code>
-                          {/* Show if this document has multiple products */}
-                          {activeMovements.filter(m => m.reference_document === movement.reference_document && m.reference_document).length > 1 && (
-                            <Badge variant="secondary" className="text-xs">
-                              Compra múltiple ({activeMovements.filter(m => m.reference_document === movement.reference_document).length} productos)
-                            </Badge>
-                          )}
+                          {/* Show if this document has multiple products (count unique items, not entry+exit pairs) */}
+                          {(() => {
+                            if (!movement.reference_document) return null;
+                            const uniqueItems = new Set(
+                              activeMovements
+                                .filter(m => m.reference_document === movement.reference_document)
+                                .map(m => m.item_id)
+                            );
+                            return uniqueItems.size > 1 ? (
+                              <Badge variant="secondary" className="text-xs">
+                                Compra múltiple ({uniqueItems.size} productos)
+                              </Badge>
+                            ) : null;
+                          })()}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">-</span>
