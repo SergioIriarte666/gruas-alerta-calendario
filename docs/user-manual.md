@@ -53,43 +53,77 @@ TMS Grúas v2.3.0 es un sistema integral de gestión de transporte y servicios d
 - **Portal del cliente**: Acceso directo para clientes con funcionalidades ampliadas
 - **Aplicación móvil PWA**: Funcionalidades offline mejoradas para uso en campo
 
-### Características Principales v2.2.0
+### Características Principales v2.3.0
 
-- ✅ **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil
-- ✅ **Gestión de Inventario**: Control completo con integración automática
-- ✅ **TMS Completo**: Todas las funcionalidades de un TMS profesional
-- ✅ **Seguridad Empresarial**: Autenticación robusta con auditoría completa
-- ✅ **Reportes Avanzados**: Dashboard con métricas en tiempo real y alertas
-- ✅ **Portal del Cliente**: Interfaz dedicada con acceso a servicios y facturas
+- ✅ **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil (mobile-first, tablas → cards)
+- ✅ **Tema Violeta de Alto Contraste**: Esquema de accesibilidad sin verde
+- ✅ **Gestión de Inventario**: Auto-SKU en importación XML + valoración consistente
+- ✅ **TMS Completo**: Servicios, cierres, grúas, operadores y bitácora técnica
+- ✅ **Seguridad Empresarial**: RLS endurecido, auditoría `created_by` global y permisos granulares por módulo
+- ✅ **Reportes Avanzados**: Reportes integrales automáticos por email + filtro por departamento
+- ✅ **Portal del Cliente**: Acceso a servicios, facturas y documentos
 - ✅ **Sistema de Backup**: Respaldos automáticos programables
-- ✅ **Gestión de Proveedores**: Módulo completo para proveedores y pagos
-- ✅ **Entradas Rápidas**: Registro móvil con GPS y fotografías
-- ✅ **Pipeline VIP**: Seguimiento avanzado de clientes estratégicos
-- ✅ **Facturación Diferida**: Ciclos personalizados por cliente
-- ✅ **Sistema de Cierres**: Control avanzado de facturación
-- ✅ **Portal del Operador**: Herramientas especializadas para campo
-- ✅ **Búsqueda Avanzada**: Incluye cotización y orden de compra
-- ✅ **Actualizaciones Masivas**: Batch updates para eficiencia
-- ✅ **Integración Automática**: Inventario-Grúas sincronizado para evitar duplicados
-- ✅ **PWA Avanzada**: Funcionalidad offline con sincronización inteligente
-- ✅ **Auditoría Completa**: Trazabilidad de todas las operaciones del sistema
+- ✅ **Gestión de Proveedores**: Wizard XML unificado, sincronización triangular y calendario de pagos TZ Chile
+- ✅ **Cuentas por Pagar**: Deudas, créditos, intereses y cuotas unificadas
+- ✅ **Entradas Rápidas con OCR**: Auto-extracción con OpenAI gpt-4o-mini, GPS y fotos
+- ✅ **Pipeline VIP con OCR fuzzy matching**: Importación de OC y cotizaciones tolerante a errores
+- ✅ **Facturación Diferida**: Ciclos personalizados + anulación con Nota de Crédito obligatoria
+- ✅ **Sistema de Cierres**: Sincronización forzada con facturas y estados protegidos
+- ✅ **Portal del Operador**: Herramientas de campo con firma digital
+- ✅ **Calculadora de Viajes**: Mapbox + GetAPI (peajes, distancia, costo estimado)
+- ✅ **Integración Inventario-Grúas**: Sincronización atómica para evitar duplicados
+- ✅ **PWA Offline v5**: CRUD completo offline con IndexedDB
+- ✅ **Notificaciones WhatsApp**: Integración directa vía Meta Cloud API
+- ✅ **Importación Histórica SII**: Ventas históricas (CSV/XLSX) aisladas del activo
+- ✅ **Conciliación Inteligente**: Manual con prioridad por vencimiento (sin auto-asignación)
+- ✅ **Verificación RUT Multi-proveedor**: SRE/Ruts.info + formateo global automático
+- ✅ **Autocompletado Inteligente**: En todos los campos de texto libre
+- ✅ **Calendario Hub**: Sincronización multi-fuente (servicios, mantenciones, eventos)
+- ✅ **Operaciones por Lote**: Cierre masivo, cambio de estado y duplicación de servicios
 
-### Novedades v2.2.0
+### Novedades v2.3.0
 
 #### 🆕 **Nuevas Funcionalidades**
-- **Pipeline VIP**: Seguimiento especializado de clientes estratégicos
-- **Sistema de Cierres Avanzado**: Control completo del proceso de cierre de servicios
-- **Facturación Diferida**: Gestión de ciclos de facturación personalizados
-- **Portal del Operador**: Interfaz especializada para personal de campo
-- **Búsqueda Expandida**: Búsqueda por cotización y orden de compra en servicios
-- **Actualizaciones Masivas**: Batch updates para cotizaciones y órdenes de compra
-- **Entradas Rápidas con GPS**: Registro móvil de gastos con ubicación
+- **Auto-SKU en importación XML**: Formato `SKU-YYYYMMDD-XXXX`. Se aplica solo cuando el proveedor no entrega código en el XML; el formulario manual sigue exigiendo SKU explícito. Backfill aplicado a productos existentes sin código.
+- **Sincronización triangular Costos ↔ Pagos a Proveedores ↔ Facturas**: Triggers de base de datos mantienen consistencia automática entre los tres módulos.
+- **Importador XML unificado tipo Wizard**: Modal de gran formato (1600px) con detección de duplicados en 3 niveles (folio, hash, contenido), asociación a costos existentes y fallback por RUT cuando falla la búsqueda por nombre.
+- **Resiliencia v4 de importación XML**: Vínculo atómico entre facturas, costos, pagos y bodega.
+- **Anulación de facturas con Nota de Crédito obligatoria**: Sistema formal de auditoría para cancelaciones.
+- **Protección de eliminación**: Prompt "ELIMINAR" en facturas generadas por la app (no históricas HIST-).
+- **Sistema de comisiones rediseñado**: Tabla `costs` como fuente única de verdad, flag `commission_exempt` por operador.
+- **Cuentas por Pagar unificadas**: Deudas, créditos, intereses y cuotas (tablas `debts`, `debt_installments`, `creditors`).
+- **Ventas Históricas SII**: Importación CSV/XLSX de facturas, NC y ND con prefijo HIST-.
+- **Aislamiento Histórico vs Activo**: Las finanzas activas excluyen documentos históricos.
+- **Conciliación inteligente sin auto-asignación**: Pagos manuales con visualización de fecha de vencimiento.
+- **Cálculo de antigüedad y vencidas por saldo**: Estado real basado en saldo, no solo en flag.
+- **Permisos granulares por módulo**: Administradores controlan visibilidad por usuario.
+- **Panel de Emergencia**: Herramientas administrativas centralizadas.
+- **Calculadora de Viajes**: Mapbox + GetAPI Chile (peajes, ruta, costo estimado).
+- **Verificación RUT multi-proveedor**: SRE/Ruts.info con enriquecimiento de datos + formateo automático global.
+- **Pipeline VIP con OCR fuzzy matching**: Importación de OC y cotizaciones tolerante a errores de lectura.
+- **Bitácora técnica de grúas v3**: Mantenciones + integración financiera + kilometraje.
+- **Subcontratación de servicios**: Vinculada a proveedores de inventario (`outsourced_provider_id`).
+- **Sistema de auditoría `created_by`**: Trazabilidad de autoría en todos los módulos principales.
+- **Resumen de pendientes al iniciar sesión**: Modal proactivo en el Dashboard.
+- **Notificaciones WhatsApp**: Integración directa con Meta WhatsApp Cloud API.
+- **Reportes integrales automáticos**: Envío vía Resend programado con pg_cron.
+- **Autocompletado inteligente**: En observaciones, descripciones y referencias.
+- **Quick Records con auto-extracción**: OpenAI gpt-4o-mini analiza foto del recibo.
+- **Calendario hub multi-fuente**: Servicios, mantenciones y eventos remotos sincronizados.
+- **Operaciones por lote y duplicación de servicios**: Cierre masivo, cambio de estado, reasignación.
+- **Log de auditoría de servicios**: Tabla `services_history` con seguimiento de cambios.
+- **Sistema de tarifas automáticas**: Jerarquía cliente → tipo de servicio → default.
+- **Tema accesibilidad violeta**: Sistema de diseño sin verde, alto contraste.
+- **PWA offline v5**: CRUD completo offline con IndexedDB.
+- **Diseño responsivo mobile-first**: Tablas se transforman en cards en móvil.
 
 #### 🔧 **Mejoras Existentes**
-- **Gestión de Inventario**: Números de lote, agrupación de compras
-- **Sistema Financiero**: Comisiones avanzadas y centros de costo
-- **Reportes**: Nuevas métricas y análisis avanzados
-- **PWA**: Mejor rendimiento offline y sincronización
+- **Gestión de Inventario**: Valoración solo desde entradas activas, indicador multi-item.
+- **Sistema Financiero**: Restricción de escritura solo administradores en tablas críticas.
+- **Reportes**: Filtro por Departamento, métricas con TZ Chile/Santiago.
+- **PWA**: Offline robusto v5 con sincronización inteligente al recuperar conexión.
+- **Categorías**: Subcategorías cargadas dinámicamente según categoría seleccionada.
+- **Descripciones**: Edición dinámica priorizando legibilidad en costos e inventario.
 
 ---
 
