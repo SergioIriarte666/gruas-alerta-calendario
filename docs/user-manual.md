@@ -2927,12 +2927,155 @@ Este manual proporciona una guía completa y actualizada para el uso del sistema
 
 Para obtener ayuda adicional, acceder a capacitaciones específicas o reportar problemas, no dude en contactar al equipo de soporte técnico usando los canales proporcionados en la sección de Solución de Problemas.
 
-**¡Gracias por usar TMS Grúas v2.2.0!**
+**¡Gracias por usar TMS Grúas v2.3.0!**
 
 ---
 
-*Documento actualizado: Octubre 2025*  
-*Versión del manual: 2.2.0*  
-*Versión del sistema: 2.2.0*  
-*Última actualización: Manual completamente revisado con todas las funcionalidades actuales*  
-*Páginas: 1,300+ | Módulos documentados: 30+ | Funcionalidades: 17+ nuevas características*
+## 25. Calculadora de Viajes
+
+### Descripción General
+Módulo de estimación automática de costos operativos para viajes, integrado en `/trip-calculator`. Combina ruteo geográfico, peajes reales y consumo de combustible por tipo de grúa.
+
+### Integraciones
+- **Mapbox**: Cálculo de ruta, distancia y previsualización en mapa interactivo.
+- **GetAPI Chile (Peajes)**: Tarifas reales de peajes por categoría de vehículo.
+- **GetAPI Chile (Vehículo)**: Validación de patentes (separado por API key independiente).
+- **Tabla `crane_consumption_rates`**: Consumo base por tipo de grúa y factor de carga (vacío vs cargado).
+- **Tabla `fuel_prices`**: Precio actual de combustible por tipo (diésel/bencina) y región.
+
+### Funcionalidades
+- ✅ Búsqueda de origen y destino con autocompletado de Mapbox.
+- ✅ Selección de grúa: aplica consumo y categoría de peaje automáticamente.
+- ✅ Modo "cargado" vs "vacío" con factor de consumo diferenciado.
+- ✅ Cálculo de costo total: combustible + peajes + opcional viáticos.
+- ✅ Visualización de ruta en mapa con trazado real.
+- ✅ Detalle desglosado por tramo y tipo de costo.
+
+### Casos de Uso
+- Cotización rápida previa a un servicio.
+- Estimación de costo operativo para presupuestos.
+- Planificación de rutas óptimas considerando peajes.
+
+### Limitaciones
+- Requiere conexión a internet (no offline).
+- Las tarifas dependen de la última actualización de GetAPI.
+- Los precios de combustible se actualizan manualmente o vía cron.
+
+---
+
+## 26. Importador XML Unificado
+
+### Descripción General
+Wizard de importación de documentos XML (DTE) consolidado para los módulos de **Costos**, **Proveedores** y **Bodega**. Modal de gran formato (1600px) con flujo guiado paso a paso.
+
+### Flujo del Wizard
+1. **Carga del archivo XML**: Drag & drop o selección manual.
+2. **Parseo y validación**: Limpieza de namespaces (`xmlns`), extracción de RUT emisor, folio, monto, ítems y forma de pago.
+3. **Detección de duplicados (3 niveles)**:
+   - Por folio + RUT emisor.
+   - Por hash del contenido.
+   - Por similitud de monto + fecha + proveedor.
+4. **Identificación del proveedor**:
+   - Búsqueda primaria por nombre normalizado.
+   - **Fallback automático por RUT** si la búsqueda por nombre falla.
+   - Creación automática del proveedor si no existe (con verificación SRE/Ruts.info).
+5. **Asociación opcional a costo existente**: Para evitar duplicación cuando el costo ya fue registrado manualmente.
+6. **Lógica financiera SII**:
+   - Documentos a **Crédito** (`FmaPago = 2`) → no generan pago automático, quedan como cuenta por pagar.
+   - Documentos al **Contado** (`FmaPago = 1`) → generan pago automático en la fecha del documento.
+7. **Vínculo atómico**: Crea factura, costo, pago y movimiento de bodega en una sola transacción.
+
+### Características Clave
+- ✅ Detección de duplicados configurable (omitir / forzar).
+- ✅ Auto-SKU para productos sin código en el XML.
+- ✅ Soporte multi-ítem con desglose visual (badge ámbar).
+- ✅ Sincronización triangular automática post-importación.
+- ✅ Fallback por RUT garantiza tasa de éxito alta incluso con nombres inconsistentes.
+
+### Buenas Prácticas
+- Verificar previamente si el costo ya existe antes de importar.
+- Mantener actualizada la tabla `inventory_suppliers` con RUT correctos.
+- Revisar el log del importador (estado de cada documento).
+
+---
+
+## 27. Accesibilidad y Diseño
+
+### Sistema de Diseño "Violet"
+La aplicación utiliza un esquema de **alto contraste centrado en violeta** (`violet-600`) por requerimiento de accesibilidad visual del usuario principal (dificultad para leer el verde).
+
+#### Reglas
+- ❌ Prohibido el color verde en cualquier elemento de UI.
+- ✅ Usar tokens semánticos definidos en `index.css` y `tailwind.config.ts`.
+- ✅ Todos los colores expresados en formato HSL.
+- ✅ Estados de éxito → violeta o ámbar (nunca verde).
+- ✅ Modales con fondos sólidos (no transparentes) sobre Radix UI.
+
+### Diseño Responsivo
+- **Desktop (≥1024px)**: Tablas completas con todas las columnas.
+- **Tablet (768-1023px)**: Tablas con scroll horizontal y columnas priorizadas.
+- **Móvil (<768px)**: Las tablas se transforman automáticamente en **cards apiladas** con información jerarquizada.
+- **FAB flotante**: Acceso rápido a acciones principales en móvil.
+
+### PWA Offline v5
+- IndexedDB con CRUD completo en: Servicios, Costos, Clientes, Operadores, Grúas, Inventario.
+- Sincronización inteligente al recuperar conexión.
+- Resolución manual de conflictos.
+- Cache estratificado: App Shell + datos críticos + recursos estáticos.
+
+### Estado Visual de Pago
+Estándar para tablas de costos (3 estados):
+- 🟢 **Pagado** → indicador violeta (no verde).
+- 🟡 **Pendiente** → ámbar.
+- 🔴 **Vencido** → rojo (basado en saldo + fecha).
+
+---
+
+## 28. Auditoría y Seguridad
+
+### Sistema de Auditoría `created_by`
+Todos los módulos principales registran el usuario que creó cada registro mediante el campo `created_by` (FK a `profiles`). Incluye:
+- Servicios, costos, facturas, pagos.
+- Inventario (items, movimientos, consumos).
+- Grúas, operadores, clientes.
+- Mantenciones, documentos.
+
+### Log de Auditoría de Servicios
+Tabla `services_history` que registra cada cambio en un servicio:
+- Estado anterior y nuevo.
+- Usuario responsable.
+- Timestamp.
+- Campos modificados.
+
+### Row Level Security (RLS)
+- **Política por defecto**: Cada usuario solo accede a sus datos según rol.
+- **Servicios endurecidos**: Previenen exposición indebida de datos cliente/operador.
+- **Notificaciones**: Inserción restringida al propio `user_id`.
+- **Storage**: Buckets con políticas granulares por carpeta.
+
+### Restricción de Escritura en Finanzas
+Las tablas `creditors`, `debts`, `debt_installments`, `debt_payments` solo permiten INSERT/UPDATE/DELETE a usuarios con rol **admin**. Visualización abierta a roles autorizados.
+
+### Permisos Granulares por Módulo
+Los administradores pueden activar/desactivar visibilidad de módulos completos por usuario desde **Administración → Usuarios → Permisos**.
+
+### Anulación con Nota de Crédito
+Las facturas generadas por la app no pueden eliminarse: solo anularse mediante una **Nota de Crédito formal** que mantiene el rastro de auditoría. Las facturas históricas (HIST-) sí permiten eliminación directa con prompt "ELIMINAR".
+
+### Eliminación Segura de Costos
+Flujo de confirmación múltiple para evitar inconsistencias bidireccionales con facturas, pagos y movimientos de bodega.
+
+### Panel de Emergencia
+Centraliza herramientas administrativas de recuperación:
+- Limpieza global de inventario.
+- Reconstrucción de stock desde movimientos.
+- Sincronización forzada cliente ↔ servicios ↔ facturas.
+- Backfill de campos críticos.
+
+---
+
+*Documento actualizado: Abril 2026*  
+*Versión del manual: 2.3.0*  
+*Versión del sistema: 2.3.0*  
+*Última actualización: Manual completamente revisado con todas las funcionalidades acumuladas hasta v2.3.0*  
+*Páginas: 1,500+ | Módulos documentados: 35+ | Funcionalidades nuevas v2.3.0: 30+*
