@@ -192,13 +192,15 @@ export const useUnifiedPartsPurchase = () => {
         inventoryItemId = existingItem.id;
         console.log('📦 Usando item de inventario existente:', inventoryItemId, existingItem.name);
       } else {
+        const { generateAutoSku } = await import('@/utils/skuGenerator');
         const { data: newItem, error: itemError } = await supabase
           .from('inventory_items')
           .insert({
             name: purchaseData.part_name.trim(),
             description: 'Creado desde compra unificada de piezas',
             unit_of_measure: 'unidad',
-            unit_cost: purchaseData.unit_price
+            unit_cost: purchaseData.unit_price,
+            sku: generateAutoSku()
           })
           .select()
           .single();

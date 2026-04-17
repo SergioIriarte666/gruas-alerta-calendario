@@ -166,12 +166,14 @@ export const useSupplierPayments = () => {
       let itemId = existingItem?.id;
 
       if (!itemId) {
+        const { generateAutoSku } = await import('@/utils/skuGenerator');
         const { data: newItem, error: itemError } = await supabase
           .from('inventory_items')
           .insert({
             name: partDetails.part_name,
             unit_of_measure: 'unidad',
             unit_cost: partDetails.part_unit_price,
+            sku: generateAutoSku(),
             created_by: (await supabase.auth.getUser()).data.user?.id
           })
           .select('id')

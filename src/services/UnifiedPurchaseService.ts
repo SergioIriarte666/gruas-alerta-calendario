@@ -199,13 +199,15 @@ export class UnifiedPurchaseService {
       return existingItem.id;
     }
     
-    // Create new inventory item
+    // Create new inventory item (auto-SKU since this path is reached from XML / unified purchase)
+    const { generateAutoSku } = await import('@/utils/skuGenerator');
     const { data: newItem, error } = await supabase
       .from('inventory_items')
       .insert({
         name: data.itemName.trim(),
         unit_of_measure: 'unidad',
         unit_cost: data.unitCost,
+        sku: generateAutoSku(),
         is_active: true,
       })
       .select('id')
