@@ -502,7 +502,7 @@ export class XMLSupplierParser {
             product_name: productName || undefined,
             description: descripcion,
             quantity: cantidad,
-            unit_price: precio,
+            unit_price: cantidad > 0 ? subtotal / cantidad : precio, // Neto con descuento (MontoItem/Qty), no PrcItem bruto
             subtotal,
             tax_amount: taxAmount,
             total: total,
