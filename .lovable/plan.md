@@ -1,67 +1,86 @@
 
 
-# Plan: Auto-SKU solo en importación XML + Backfill
+# Plan: Actualización integral del Manual de Usuario a v2.3.0
 
-## Decisiones confirmadas
-- **Alcance**: Auto-SKU **solo cuando se crea un producto desde importación XML** (donde el proveedor no entrega código). El formulario manual sigue exigiendo SKU manual.
-- **Formato**: `SKU-{YYYYMMDD}-{HEX4}` (ej: `SKU-20260417-A3F2`). Único garantizado, sin necesidad de contador en BD.
-- **Backfill**: completar SKU faltantes en productos existentes con el mismo formato.
-- **Memoria**: actualizar la regla `manual-sku-enforcement-v2` para reflejar la excepción XML.
+## Alcance
+Actualizar `docs/user-manual.md` (actualmente v2.2.0, 2899 líneas, 24 secciones) incorporando **todas** las mejoras y módulos nuevos acumulados desde la última versión documentada, sin perder contenido vigente.
 
-## Cambios técnicos
+## Cambios por sección
 
-### 1. Helper nuevo: `src/utils/skuGenerator.ts`
-```ts
-export const generateAutoSku = (): string => {
-  const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const hex = Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
-  return `SKU-${date}-${hex}`;
-};
-```
+### Encabezado / Novedades v2.3.0 (sección 1)
+Nueva sección "Novedades v2.3.0" listando:
+- **Auto-SKU en importación XML** (formato `SKU-YYYYMMDD-XXXX`) + backfill
+- **Sincronización triangular Costos ↔ Pagos a Proveedores ↔ Facturas**
+- **Importador XML unificado tipo Wizard** (modal 1600px) con detección de duplicados en 3 niveles, asociación a costos existentes y fallback por RUT
+- **Resiliencia v4 de importación XML** con vínculo atómico
+- **Nota de Crédito obligatoria** para anular facturas
+- **Protección de eliminación** con prompt "ELIMINAR"
+- **Sistema de comisiones rediseñado** (tabla `costs` como fuente única, flag `commission_exempt`)
+- **Cuentas por Pagar** unificadas (deudas, créditos, intereses, cuotas)
+- **Ventas Históricas SII** (importación CSV/XLSX con prefijo HIST-)
+- **Aislamiento Histórico vs Activo** en finanzas
+- **Conciliación inteligente sin auto-asignación** (manual, prioridad por vencimiento)
+- **Cálculo de antigüedad y vencidas** por saldo
+- **Permisos granulares por módulo** por usuario
+- **Panel de Emergencia** para administradores
+- **Calculadora de Viajes** con Mapbox + GetAPI (peajes, ruta)
+- **Verificación RUT multi-proveedor** (SRE/Ruts.info) y formateo global
+- **Pipeline VIP con OCR fuzzy matching** para OC/Cotizaciones
+- **Bitácora técnica de grúas v3** con kilometraje e integración financiera
+- **Subcontratación de servicios** vinculada a proveedores de inventario
+- **Sistema de auditoría** (`created_by`) en todos los módulos
+- **Resumen de pendientes al iniciar sesión** (modal proactivo)
+- **Notificaciones WhatsApp** vía Meta Cloud API
+- **Reportes integrales automáticos** vía Resend + pg_cron
+- **Autocompletado inteligente** en campos de texto libre
+- **Quick Records con auto-extracción** (OpenAI gpt-4o-mini)
+- **Calendario hub multi-fuente** (servicios, mantenciones, eventos remotos)
+- **Operaciones por lote** y duplicación de servicios
+- **Log de auditoría de servicios** (history table)
+- **Sistema de tarifas** con jerarquía cliente→tipo→default
+- **Tema accesibilidad violeta** (sin verde) — alto contraste
+- **PWA offline v5** (IndexedDB) con CRUD completo
+- **Diseño responsivo** mobile-first (tablas → cards)
 
-### 2. Auto-SKU en creación XML
-Localizar los 3 puntos donde el flujo XML crea `inventory_items` (sin SKU manual):
-- `src/services/UnifiedPurchaseService.ts` (línea ~204) — crea item desde compra unificada
-- `src/hooks/useUnifiedParts.ts` (línea ~196) — crea item desde XML/repuestos
-- `src/hooks/useSupplierPayments.ts` (línea ~169) — crea item desde pago proveedor
+### Secciones modificadas
 
-En cada uno: si el `productCode` del XML viene vacío, asignar `sku: generateAutoSku()`. Si viene con código, respetarlo.
+| Sección | Cambios |
+|---|---|
+| 4. Servicios | Subsección "Subcontratación", "Log de Auditoría", "Operaciones por Lote y Duplicación", "Sistema de Tarifas Automáticas" |
+| 5. Cierres | Sincronización forzada con facturas, protección de estados intermedios |
+| 6. Grúas | Bitácora Técnica v3 (mantenciones + financiero + km) |
+| 7. Operadores | Flag `commission_exempt`, comisiones desde `costs` |
+| 10. Inventario | Auto-SKU XML, valoración solo desde entradas, Multi-item badge, importación XML unificada con duplicados/fallback RUT |
+| 11. Proveedores | Pestañas Pagos/Proveedores/Calendario, sincronización triangular, importador XML wizard, conciliación con costos existentes, calendario de pagos con TZ Chile |
+| 12. VIP | OCR fuzzy matching para OC/Cotizaciones |
+| 13. Facturación | Anulación con NC obligatoria, protección "ELIMINAR", descripción opcional, antigüedad por saldo, conciliación automática al crear como pagada, historial SII |
+| 16. Financiero | Cuentas por Pagar, Histórico vs Activo, comisiones overhaul, conciliación sin auto-asignación, restricción de escritura solo admin |
+| 17. Reportes | Reportes integrales automáticos por email, filtro Departamento, métricas con TZ Chile |
+| 18. Admin | Panel de Emergencia, permisos granulares, RUT multi-proveedor |
+| 19. Configuración | Notificaciones WhatsApp Meta, configuración regional Chile |
+| 20. Portal Cliente | Sin cambios mayores (revisar) |
+| 21. Móvil/PWA | Offline v5 (IndexedDB), Quick Records con OCR, GPS |
 
-El parser XML (`xmlSupplierParser.ts` línea 614) ya extrae `productCode` desde múltiples campos (`codigo, sku, product_code...`); solo necesitamos rellenar cuando llega vacío al insert.
+### Secciones nuevas
+- **25. Calculadora de Viajes** — Mapbox + GetAPI (peajes, distancia, costo estimado)
+- **26. Importador XML Unificado** — wizard, duplicados, fallback RUT, asociación a costos
+- **27. Accesibilidad y Diseño** — esquema violeta, alto contraste, responsive, PWA
+- **28. Auditoría y Seguridad** — RLS, `created_by`, restricción admin en finanzas, log de servicios
 
-### 3. Backfill productos existentes sin SKU
-Migración SQL puntual:
-```sql
-UPDATE inventory_items
-SET sku = 'SKU-' || to_char(now(),'YYYYMMDD') || '-' ||
-          upper(substr(md5(id::text || random()::text), 1, 4))
-WHERE (sku IS NULL OR sku = '') AND is_active = true;
-```
-Genera SKU determinístico-único por fila usando hash del id.
+### Actualizaciones transversales
+- Cambiar versión: v2.2.0 → **v2.3.0** en título, intro y referencias
+- Actualizar Tabla de Contenidos con nuevas secciones (25–28)
+- Refrescar "Características Principales" con módulos nuevos
+- Mantener mismo tono y formato (markdown, emojis ✅, tablas, viñetas)
 
-### 4. Formulario manual
-**No se modifica.** Sigue permitiendo SKU vacío como hoy (campo opcional). La regla "no auto-SKU manual" se mantiene.
-
-### 5. Actualizar memoria
-Editar `mem://constraints/inventory/manual-sku-enforcement-v2` para indicar:
-> Auto-SKU permitido **únicamente** en importación XML (proveedor no entrega código). Formulario manual sigue sin auto-generación.
+## Método de implementación
+Por extensión del archivo (~2899 → ~3500 líneas). Editaré por bloques con `code--line_replace` (cambios quirúrgicos en secciones existentes) y `code--write` solo si reescribo el archivo completo. Preferencia por edición incremental para preservar contenido.
 
 ## Lo que NO se toca
-- Validación de unicidad de SKU (ya existe vía índice + manejo de error)
-- Formulario manual `ProductFormModal`
-- Lógica de stock, movimientos, costos
-- Importador XML general (solo se rellena un campo cuando viene vacío)
-
-## Archivos modificados
-- `src/utils/skuGenerator.ts` (nuevo, ~10 líneas)
-- `src/services/UnifiedPurchaseService.ts` (~2 líneas)
-- `src/hooks/useUnifiedParts.ts` (~2 líneas)
-- `src/hooks/useSupplierPayments.ts` (~2 líneas)
-- 1 migración SQL (UPDATE backfill)
-- Memoria: `manual-sku-enforcement-v2`
+- Código de la aplicación (solo documentación)
+- Otros archivos `.md` (CHANGELOG, docs internos)
+- Memorias
 
 ## Resultado
-- Productos existentes sin SKU quedan completados con formato `SKU-20260417-XXXX`.
-- Próximas importaciones XML sin código de producto generan SKU automático.
-- Creación manual de productos sigue requiriendo SKU explícito (sin cambios).
+Manual v2.3.0 completo, alineado con el estado real del sistema, con 28 secciones cubriendo todas las funcionalidades hasta abril 2026.
 
