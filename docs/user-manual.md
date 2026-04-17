@@ -37,7 +37,7 @@
 
 ### ¿Qué es TMS Grúas?
 
-TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
+TMS Grúas v2.3.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
 
 - **Gestión completa de servicios**: Desde la creación hasta la facturación con flujos optimizados
 - **Control de inventario avanzado**: Seguimiento de repuestos con integración automática a grúas
