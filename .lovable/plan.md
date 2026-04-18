@@ -1,86 +1,71 @@
 
 
-# Plan: Actualización integral del Manual de Usuario a v2.3.0
+# Plan: Fuente única de verdad para fechas — Business Timezone
 
-## Alcance
-Actualizar `docs/user-manual.md` (actualmente v2.2.0, 2899 líneas, 24 secciones) incorporando **todas** las mejoras y módulos nuevos acumulados desde la última versión documentada, sin perder contenido vigente.
+## Diagnóstico (verificado)
+- **334 usos** de `new Date()` / `Date.now()` directos en el código → cada uno toma la hora del navegador (UTC interno).
+- **3 fuentes de verdad coexistiendo**, lo cual es el origen del caos:
+  1. `new Date()` directo (navegador, sin TZ).
+  2. `getCurrentChileDate()` / `getCurrentChileDateString()` → usa `user_settings.timezone` (cada usuario distinto).
+  3. `getBusinessTimezone()` → lee `company_data.report_timezone` ✅ (la correcta, pero solo usada en alertas/reportes).
+- BD verificada: `company_data.report_timezone = 'America/Santiago'`, `report_use_system_timezone = false`. **Esta es la fuente de verdad designada.**
+- Inserts inconsistentes: unos guardan `YYYY-MM-DD` (medianoche UTC → desfase visual de 1 día), otros guardan ISO completo (`new Date().toISOString()` → hora UTC del navegador, no de Chile).
+- Resultado: registros aparecen en días equivocados, ordenamientos rotos, "consumo inmediato" cae al fondo de listas, alertas se disparan en momentos incorrectos.
 
-## Cambios por sección
+## Solución: Capa única `businessClock`
 
-### Encabezado / Novedades v2.3.0 (sección 1)
-Nueva sección "Novedades v2.3.0" listando:
-- **Auto-SKU en importación XML** (formato `SKU-YYYYMMDD-XXXX`) + backfill
-- **Sincronización triangular Costos ↔ Pagos a Proveedores ↔ Facturas**
-- **Importador XML unificado tipo Wizard** (modal 1600px) con detección de duplicados en 3 niveles, asociación a costos existentes y fallback por RUT
-- **Resiliencia v4 de importación XML** con vínculo atómico
-- **Nota de Crédito obligatoria** para anular facturas
-- **Protección de eliminación** con prompt "ELIMINAR"
-- **Sistema de comisiones rediseñado** (tabla `costs` como fuente única, flag `commission_exempt`)
-- **Cuentas por Pagar** unificadas (deudas, créditos, intereses, cuotas)
-- **Ventas Históricas SII** (importación CSV/XLSX con prefijo HIST-)
-- **Aislamiento Histórico vs Activo** en finanzas
-- **Conciliación inteligente sin auto-asignación** (manual, prioridad por vencimiento)
-- **Cálculo de antigüedad y vencidas** por saldo
-- **Permisos granulares por módulo** por usuario
-- **Panel de Emergencia** para administradores
-- **Calculadora de Viajes** con Mapbox + GetAPI (peajes, ruta)
-- **Verificación RUT multi-proveedor** (SRE/Ruts.info) y formateo global
-- **Pipeline VIP con OCR fuzzy matching** para OC/Cotizaciones
-- **Bitácora técnica de grúas v3** con kilometraje e integración financiera
-- **Subcontratación de servicios** vinculada a proveedores de inventario
-- **Sistema de auditoría** (`created_by`) en todos los módulos
-- **Resumen de pendientes al iniciar sesión** (modal proactivo)
-- **Notificaciones WhatsApp** vía Meta Cloud API
-- **Reportes integrales automáticos** vía Resend + pg_cron
-- **Autocompletado inteligente** en campos de texto libre
-- **Quick Records con auto-extracción** (OpenAI gpt-4o-mini)
-- **Calendario hub multi-fuente** (servicios, mantenciones, eventos remotos)
-- **Operaciones por lote** y duplicación de servicios
-- **Log de auditoría de servicios** (history table)
-- **Sistema de tarifas** con jerarquía cliente→tipo→default
-- **Tema accesibilidad violeta** (sin verde) — alto contraste
-- **PWA offline v5** (IndexedDB) con CRUD completo
-- **Diseño responsivo** mobile-first (tablas → cards)
+Crear un módulo **`src/utils/businessClock.ts`** que sea la **única forma autorizada** de obtener "ahora" y "hoy" en toda la app. Lee `company_data.report_timezone` con cache sincrónico precargado al boot.
 
-### Secciones modificadas
+### API (síncrona, lista para usar en cualquier lado)
+```ts
+businessClock.now()         // Date — instante actual ajustado a TZ negocio
+businessClock.nowISO()      // string ISO — para guardar en BD (created_at, updated_at, movement_date)
+businessClock.today()       // string 'YYYY-MM-DD' — para campos date-only
+businessClock.todayDate()   // Date — hoy 12:00 en TZ negocio
+businessClock.format(d, fmt)// string — formato consistente
+businessClock.timezone()    // string — 'America/Santiago'
+```
 
-| Sección | Cambios |
-|---|---|
-| 4. Servicios | Subsección "Subcontratación", "Log de Auditoría", "Operaciones por Lote y Duplicación", "Sistema de Tarifas Automáticas" |
-| 5. Cierres | Sincronización forzada con facturas, protección de estados intermedios |
-| 6. Grúas | Bitácora Técnica v3 (mantenciones + financiero + km) |
-| 7. Operadores | Flag `commission_exempt`, comisiones desde `costs` |
-| 10. Inventario | Auto-SKU XML, valoración solo desde entradas, Multi-item badge, importación XML unificada con duplicados/fallback RUT |
-| 11. Proveedores | Pestañas Pagos/Proveedores/Calendario, sincronización triangular, importador XML wizard, conciliación con costos existentes, calendario de pagos con TZ Chile |
-| 12. VIP | OCR fuzzy matching para OC/Cotizaciones |
-| 13. Facturación | Anulación con NC obligatoria, protección "ELIMINAR", descripción opcional, antigüedad por saldo, conciliación automática al crear como pagada, historial SII |
-| 16. Financiero | Cuentas por Pagar, Histórico vs Activo, comisiones overhaul, conciliación sin auto-asignación, restricción de escritura solo admin |
-| 17. Reportes | Reportes integrales automáticos por email, filtro Departamento, métricas con TZ Chile |
-| 18. Admin | Panel de Emergencia, permisos granulares, RUT multi-proveedor |
-| 19. Configuración | Notificaciones WhatsApp Meta, configuración regional Chile |
-| 20. Portal Cliente | Sin cambios mayores (revisar) |
-| 21. Móvil/PWA | Offline v5 (IndexedDB), Quick Records con OCR, GPS |
+### Bootstrap
+- Precarga al iniciar la app (en `App.tsx`, antes de routing) → cache disponible síncrono el resto de la sesión.
+- Refresca cada 5 min y al cambiar configuración en `TimezoneSettingsTab`.
+- Fallback `America/Santiago` si BD no responde.
 
-### Secciones nuevas
-- **25. Calculadora de Viajes** — Mapbox + GetAPI (peajes, distancia, costo estimado)
-- **26. Importador XML Unificado** — wizard, duplicados, fallback RUT, asociación a costos
-- **27. Accesibilidad y Diseño** — esquema violeta, alto contraste, responsive, PWA
-- **28. Auditoría y Seguridad** — RLS, `created_by`, restricción admin en finanzas, log de servicios
+## Migración (3 fases sin romper nada)
 
-### Actualizaciones transversales
-- Cambiar versión: v2.2.0 → **v2.3.0** en título, intro y referencias
-- Actualizar Tabla de Contenidos con nuevas secciones (25–28)
-- Refrescar "Características Principales" con módulos nuevos
-- Mantener mismo tono y formato (markdown, emojis ✅, tablas, viñetas)
+### Fase 1 — Núcleo (alto impacto, bajo riesgo)
+1. **Crear** `src/utils/businessClock.ts` + bootstrap en `App.tsx`.
+2. **Reemplazar en `UnifiedPurchaseService.ts`**: todos los `movement_date` y `created_at` → `businessClock.nowISO()`. Esto resuelve el bug actual (consumos con timestamp medianoche UTC).
+3. **Reemplazar en hooks de costos/inventario/servicios** (`useCosts`, `useServices`, `useInventoryMovements`, `useCranePartsTechnical`, `useUnifiedParts`, `useSupplierPayments`): cualquier `new Date().toISOString()` para `updated_at`/`created_at`/`movement_date` → `businessClock.nowISO()`.
+4. **Reemplazar `format(new Date(), 'yyyy-MM-dd')`** en formularios (Debt, Invoice, Payment, etc.) → `businessClock.today()`.
 
-## Método de implementación
-Por extensión del archivo (~2899 → ~3500 líneas). Editaré por bloques con `code--line_replace` (cambios quirúrgicos en secciones existentes) y `code--write` solo si reescribo el archivo completo. Preferencia por edición incremental para preservar contenido.
+### Fase 2 — UI y formato
+5. **Listados y tablas** (Costos, Inventario, Servicios, Crane Parts): ordenar siempre por `created_at DESC` (timestamp confiable post-Fase 1) en vez de `movement_date` o `date`.
+6. **Cambiar fechas mostradas** a usar `formatForDisplay` / `formatForDisplayWithTime` ya existentes (que respetan `user_settings`), pero garantizando que el **dato fuente** ya viene en TZ negocio.
+7. **Eliminar `getCurrentChileDate*`** progresivamente (mantener como alias deprecado a `businessClock.*` para no romper).
+
+### Fase 3 — Validación BD (trigger defensivo)
+8. **Trigger SQL** en tablas críticas (`costs`, `inventory_movements`, `crane_parts`, `services`, `payments`) que si reciben `created_at = NULL` o `movement_date = '00:00:00'` los rellena con `now() AT TIME ZONE 'America/Santiago'`. Última línea de defensa.
+
+## Archivos afectados (estimado)
+- **Nuevo**: `src/utils/businessClock.ts` (~120 líneas)
+- **Modificados**: ~25 archivos críticos en Fase 1 (servicios, hooks de mutación, formularios principales)
+- **Modificados**: ~40 archivos en Fase 2 (componentes UI con `format(new Date(), …)`)
+- **Migración SQL**: 1 (triggers defensivos)
 
 ## Lo que NO se toca
-- Código de la aplicación (solo documentación)
-- Otros archivos `.md` (CHANGELOG, docs internos)
-- Memorias
+- `formatForDisplay`, `formatForDisplayWithTime`, `safeParseDateOnly` — **ya están bien**, siguen siendo la API de presentación.
+- `user_settings.timezone` / `date_format` — siguen controlando el **formato visual** por usuario (DD/MM vs MM/DD), pero la **fuente del dato** será siempre TZ negocio.
+- Datos históricos en BD: no se modifican (Fase 3 solo aplica a inserts futuros).
+- RLS, lógica de negocio, sincronizaciones triangulares.
 
-## Resultado
-Manual v2.3.0 completo, alineado con el estado real del sistema, con 28 secciones cubriendo todas las funcionalidades hasta abril 2026.
+## Resultado esperado
+- ✅ Un solo "reloj" en toda la app: `businessClock`.
+- ✅ Consumos de inventario aparecen al inicio de listados (timestamp real).
+- ✅ Costos, servicios y movimientos se registran con la fecha+hora de Chile (no UTC del navegador del usuario).
+- ✅ Alertas, reportes mensuales y dashboards usan el mismo "hoy" en cualquier dispositivo.
+- ✅ Si mañana se cambia `report_timezone` en configuración a otra zona, **toda la app se ajusta automáticamente** sin tocar código.
+
+## Riesgo
+- **Bajo-medio**. El cambio es aditivo: `businessClock` reemplaza `new Date()` punto a punto. Cada reemplazo es local y revertible. Fase 1 + 2 se pueden desplegar incrementalmente con verificación visual.
 
