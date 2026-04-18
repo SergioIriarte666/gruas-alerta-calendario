@@ -16,9 +16,13 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
 import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
+import { businessClock } from '@/utils/businessClock';
 
 // Version check for production debugging
-  console.log('App version: 1.0.8 - Optimized Invoice Selector (Fix Freeze)');
+  console.log('App version: 1.0.9 - businessClock (single source of truth for dates)');
+
+// Precargar zona horaria del negocio antes de renderizar nada
+businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
 
 // Route chunk imports - stored for preloading
 const routeImports = {
