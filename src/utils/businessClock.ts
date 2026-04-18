@@ -165,4 +165,9 @@ export const businessClock = {
   format,
 };
 
+// Auto-invalidar cache cuando el usuario cambia la TZ en Configuración
+if (typeof window !== 'undefined') {
+  window.addEventListener('timezone-changed', () => invalidate());
+}
+
 export default businessClock;
