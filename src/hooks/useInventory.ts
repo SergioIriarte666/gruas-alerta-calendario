@@ -364,7 +364,7 @@ export const useInventoryMovements = (limit = 50) => {
         .from('inventory_movements')
         .select(INVENTORY_MOVEMENT_SELECT)
         .eq('status', 'active')
-        .order('movement_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
@@ -408,7 +408,7 @@ export const usePagedInventoryMovements = (page: number, pageSize: number) => {
           { count: 'exact' }
         )
         .eq('status', 'active')
-        .order('movement_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(from, to);
 
       if (error) throw error;
