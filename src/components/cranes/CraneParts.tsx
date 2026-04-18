@@ -68,7 +68,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
         .eq('crane_id', crane.id)
         .eq('movement_type', 'exit')
         .eq('status', 'active')
-        .order('movement_date', { ascending: false });
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },

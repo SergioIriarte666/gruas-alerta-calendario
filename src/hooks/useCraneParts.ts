@@ -247,7 +247,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         .eq('crane_id', craneId)
         .eq('movement_type', 'exit')
         .eq('status', 'active')
-        .order('movement_date', { ascending: false });
+        .order('created_at', { ascending: false });
 
       // Excluir movimientos que ya están vinculados en crane_parts
       if (linkedMovementIds.length > 0) {
