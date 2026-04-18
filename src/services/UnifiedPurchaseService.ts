@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { showSyncToast, type SyncAction } from '@/utils/syncToast';
+import { businessClock } from '@/utils/businessClock';
 
 export interface UnifiedPurchaseData {
   // Item information
@@ -315,7 +316,7 @@ export class UnifiedPurchaseService {
           quantity: params.quantity,
           unit_cost: params.unitCost,
           total_cost: totalCost,
-          movement_date: params.date,
+          movement_date: businessClock.toTimestamp(params.date),
           supplier_id: params.supplierId || null,
           supplier_name: params.supplierName || null,
           reference_document: params.referenceDocument || null,
@@ -377,7 +378,7 @@ export class UnifiedPurchaseService {
         quantity: params.quantity,
         unit_cost: params.unitCost,
         total_cost: totalCost,
-        movement_date: params.date,
+        movement_date: businessClock.toTimestamp(params.date),
         reason: 'Compra de inventario',
         observations: params.observations || `Compra registrada: ${params.itemName}`,
         status: 'active',
@@ -508,7 +509,7 @@ export class UnifiedPurchaseService {
           quantity: params.quantity,
           unit_cost: params.unitCost,
           total_cost: totalCost,
-          movement_date: params.date,
+          movement_date: businessClock.toTimestamp(params.date),
           reason: 'Consumo inmediato',
           observations: `Consumo inmediato - ${params.itemName}`,
           crane_id: params.craneId,
@@ -579,7 +580,7 @@ export class UnifiedPurchaseService {
         quantity: params.quantity,
         unit_cost: params.unitCost,
         total_cost: totalCost,
-        movement_date: params.date,
+        movement_date: businessClock.toTimestamp(params.date),
         reason: 'Consumo inmediato',
         observations: `Consumo inmediato - ${params.itemName}`,
         status: 'active',
@@ -778,7 +779,7 @@ export class UnifiedPurchaseService {
         quantity: params.quantity,
         unit_cost: params.unitCost,
         total_cost: totalCost,
-        movement_date: params.date,
+        movement_date: businessClock.toTimestamp(params.date),
         reason: 'Consumo a grúa',
         observations: 'Distribución desde inventario',
         status: 'active',
