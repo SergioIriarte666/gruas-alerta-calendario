@@ -5657,6 +5657,10 @@ export type Database = {
       is_authenticated_user_safe: { Args: never; Returns: boolean }
       is_client_user: { Args: never; Returns: boolean }
       is_client_user_safe: { Args: never; Returns: boolean }
+      is_operator_assigned_to_service: {
+        Args: { _service_id: string }
+        Returns: boolean
+      }
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
       log_audit_entry: {
