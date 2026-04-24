@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Palette, Save } from 'lucide-react';
 import type { UserSettings } from '@/types/settings';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface UserSettingsTabProps {
   settings: UserSettings;
@@ -22,6 +23,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
   onSave,
   onUpdateSettings
 }) => {
+  const { theme, setTheme } = useTheme();
   return (
     <Card className="bg-card border">
       <CardHeader>
@@ -35,10 +37,12 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           <div className="space-y-2">
             <Label className="text-foreground">Tema</Label>
             <Select 
-              value={settings.theme} 
-              onValueChange={(value) => onUpdateSettings({
-                user: { ...settings, theme: value as 'light' | 'dark' | 'system' }
-              })}
+              value={theme}
+              onValueChange={(value) => {
+                const t = value as 'light' | 'dark' | 'system';
+                setTheme(t);
+                onUpdateSettings({ user: { ...settings, theme: t } });
+              }}
             >
               <SelectTrigger className="bg-background border-input text-foreground">
                 <SelectValue className="text-foreground" />

@@ -74,6 +74,61 @@
   --input: var(--border);
 }
 
+/* =====================================================================
+   Modo oscuro — mismos tokens semánticos, paleta invertida.
+   Se activa con la clase `.dark` en <html> (gestionado por ThemeProvider).
+   ===================================================================== */
+.dark {
+  /* === Marca === */
+  --primary: 271 91% 65%;            /* violeta más luminoso para contraste sobre oscuro */
+  --primary-foreground: 222 47% 8%;  /* texto oscuro sobre primary claro */
+  --primary-hover: 271 91% 72%;
+  --primary-soft: 271 60% 18%;       /* fondos suaves oscuros */
+
+  /* === Superficies === */
+  --background: 222 47% 8%;          /* casi negro con tinte azul */
+  --surface: 222 40% 11%;            /* tarjetas */
+  --surface-elevated: 222 40% 14%;   /* popovers, modales */
+  --surface-sunken: 222 47% 6%;      /* zonas hundidas más oscuras que el fondo */
+
+  /* === Texto === */
+  --text-strong: 0 0% 98%;
+  --text: 210 30% 92%;
+  --text-muted: 215 16% 65%;
+  --text-subtle: 215 16% 45%;
+
+  /* === Bordes y foco === */
+  --border: 217 25% 22%;
+  --border-strong: 217 25% 32%;
+  --ring: 271 91% 65%;
+
+  /* === Estados (mismo hue, más luminosos) === */
+  --success: 142 71% 45%;
+  --success-foreground: 222 47% 8%;
+  --success-soft: 142 60% 18%;
+  --warning: 38 92% 58%;
+  --warning-foreground: 222 47% 8%;
+  --warning-soft: 38 60% 18%;
+  --danger: 0 84% 65%;
+  --danger-foreground: 222 47% 8%;
+  --danger-soft: 0 60% 20%;
+  --info: 217 91% 65%;
+  --info-foreground: 222 47% 8%;
+  --info-soft: 217 60% 20%;
+
+  /* === Sombras (más profundas) === */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.25), 0 6px 18px hsl(var(--primary) / 0.35);
+
+  /* === Gradientes === */
+  --gradient-card: linear-gradient(135deg, hsl(var(--surface)) 0%, hsl(222 40% 13%) 100%);
+
+  /* === Accent === */
+  --accent: 271 60% 18%;
+}
+
 /* Reset y configuración base */
 * {
   border-color: hsl(var(--border));
