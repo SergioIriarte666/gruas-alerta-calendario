@@ -18,20 +18,14 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 [&>span]:truncate [&>span]:block [&>span]:max-w-full",
-      "bg-white border-gray-300 text-black",
+      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-0 [&>span]:block [&>span]:max-w-full [&>span]:truncate",
       className
     )}
-    style={{ 
-      background: '#ffffff',
-      color: '#000000',
-      borderColor: '#d1d5db'
-    }}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50 text-black" />
+      <ChevronDown className="h-4 w-4 text-muted-foreground opacity-60" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ))
@@ -44,12 +38,12 @@ const SelectScrollUpButton = React.forwardRef<
   <SelectPrimitive.ScrollUpButton
     ref={ref}
     className={cn(
-      "flex cursor-default items-center justify-center py-1 text-black pointer-events-auto",
+      "flex cursor-default items-center justify-center py-1 text-foreground pointer-events-auto",
       className
     )}
     {...props}
   >
-    <ChevronUp className="h-4 w-4 text-black" />
+    <ChevronUp className="h-4 w-4 text-foreground" />
   </SelectPrimitive.ScrollUpButton>
 ))
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
@@ -61,12 +55,12 @@ const SelectScrollDownButton = React.forwardRef<
   <SelectPrimitive.ScrollDownButton
     ref={ref}
     className={cn(
-      "flex cursor-default items-center justify-center py-1 text-black pointer-events-auto",
+      "flex cursor-default items-center justify-center py-1 text-foreground pointer-events-auto",
       className
     )}
     {...props}
   >
-    <ChevronDown className="h-4 w-4 text-black" />
+    <ChevronDown className="h-4 w-4 text-foreground" />
   </SelectPrimitive.ScrollDownButton>
 ))
 SelectScrollDownButton.displayName =
@@ -83,16 +77,11 @@ const SelectContent = React.forwardRef<
         "relative z-[70] min-w-[8rem] max-h-[min(24rem,var(--radix-select-content-available-height))] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-        "bg-white border-gray-300 text-black",
+        "border-border bg-popover text-popover-foreground",
         className
       )}
       position={position}
-      style={{
-        background: '#ffffff',
-        borderColor: '#d1d5db',
-        color: '#000000',
-        zIndex: 70
-      }}
+      style={{ zIndex: 70 }}
       onWheelCapture={(event) => {
         event.stopPropagation();
       }}
@@ -127,8 +116,7 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-black", className)}
-    style={{ color: '#000000' }}
+    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-foreground", className)}
     {...props}
   />
 ))
