@@ -1,6 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { MetricCard } from '@/components/ui/metric-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { 
   Truck, 
   CheckCircle, 
@@ -18,47 +20,6 @@ import { Crane } from '@/types';
 import { useCraneMetrics } from '@/hooks/useCraneMetrics';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { CraneDocumentsSection } from './CraneDocumentsSection';
-
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: string;
-  status?: 'success' | 'warning' | 'danger' | 'info';
-}
-
-const MetricCard = ({ title, value, icon: Icon, trend, status = 'info' }: MetricCardProps) => {
-  const statusColors = {
-    success: 'border-green-500/30 bg-green-500/5',
-    warning: 'border-yellow-500/30 bg-yellow-500/5',
-    danger: 'border-red-500/30 bg-red-500/5',
-    info: 'border-tms-green/30 bg-white/5'
-  };
-
-  const iconColors = {
-    success: 'text-green-400',
-    warning: 'text-yellow-400',
-    danger: 'text-red-400',
-    info: 'text-tms-green'
-  };
-
-  return (
-    <Card className={`${statusColors[status]} border transition-all hover:border-opacity-50`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-gray-300 text-sm">{title}</p>
-            <p className="text-white text-2xl font-bold mt-1">{value}</p>
-            {trend && (
-              <p className="text-gray-400 text-xs mt-1">{trend}</p>
-            )}
-          </div>
-          <Icon className={`w-8 h-8 ${iconColors[status]}`} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 interface CraneMetricsOverviewProps {
   crane: Crane;
@@ -124,14 +85,14 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
       {/* Estado General */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-white">Estado General</h3>
-          <p className="text-gray-300">Resumen de métricas clave</p>
+          <h3 className="text-xl font-semibold text-foreground">Estado General</h3>
+          <p className="text-muted-foreground">Resumen de métricas clave</p>
         </div>
         <Badge 
           variant={crane.isActive ? "default" : "secondary"}
           className={crane.isActive 
-            ? "bg-tms-green/20 text-tms-green border-tms-green/50" 
-            : "bg-gray-600/20 text-gray-400 border-gray-600/50"
+            ? "border-primary/20 bg-primary-soft text-foreground" 
+            : "border-border bg-muted text-muted-foreground"
           }
         >
           {crane.isActive ? 'Activa' : 'Inactiva'}
@@ -139,111 +100,108 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
       </div>
 
       {/* Métricas de Servicios */}
-      <div>
-        <h4 className="text-lg font-medium text-white mb-4">Servicios</h4>
+      <SectionCard title="Servicios" flush className="border-0 bg-transparent shadow-none">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Total Servicios"
             value={metrics?.totalServices || 0}
             icon={Truck}
-            trend="Este mes"
-            status="info"
+            description="Este mes"
+            tone="primary"
           />
           <MetricCard
             title="Completados"
             value={metrics?.completedServices || 0}
             icon={CheckCircle}
-            trend={`${metrics?.totalServices ? Math.round(((metrics.completedServices || 0) / metrics.totalServices) * 100) : 0}% tasa éxito`}
-            status="success"
+            description={`${metrics?.totalServices ? Math.round(((metrics.completedServices || 0) / metrics.totalServices) * 100) : 0}% tasa éxito`}
+            tone="success"
           />
           <MetricCard
             title="Pendientes"
             value={metrics?.pendingServices || 0}
             icon={Clock}
-            trend="Por realizar"
-            status={(metrics?.pendingServices || 0) > 5 ? "warning" : "info"}
+            description="Por realizar"
+            tone={(metrics?.pendingServices || 0) > 5 ? "warning" : "info"}
           />
           <MetricCard
             title="Ingresos Mes"
             value={`$${((metrics?.monthlyRevenue || 0) / 1000).toFixed(0)}K`}
             icon={DollarSign}
-            trend="Este mes"
-            status="success"
+            description="Este mes"
+            tone="success"
           />
         </div>
-      </div>
+      </SectionCard>
 
       {/* Métricas de Inventario y Costos */}
-      <div>
-        <h4 className="text-lg font-medium text-white mb-4">Inventario y Costos</h4>
+      <SectionCard title="Inventario y Costos" flush className="border-0 bg-transparent shadow-none">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Piezas Instaladas"
             value={inventoryMetrics?.totalPartsInstalled || 0}
             icon={Package}
-            trend="Directas + Consumos"
-            status="info"
+            description="Directas + Consumos"
+            tone="primary"
           />
           <MetricCard
             title="Valor Total Piezas"
             value={`$${((inventoryMetrics?.totalValue || 0) / 1000).toFixed(0)}K`}
             icon={Warehouse}
-            trend="Inversión acumulada"
-            status="success"
+            description="Inversión acumulada"
+            tone="success"
           />
           <MetricCard
             title="Compras Recientes"
             value={inventoryMetrics?.recentPurchases || 0}
             icon={ShoppingCart}
-            trend="Últimos 30 días"
-            status={(inventoryMetrics?.recentPurchases || 0) > 5 ? "warning" : "info"}
+            description="Últimos 30 días"
+            tone={(inventoryMetrics?.recentPurchases || 0) > 5 ? "warning" : "info"}
           />
           <MetricCard
             title="Gasto Mensual"
             value={`$${((metrics?.maintenanceCosts || 0) / 1000).toFixed(0)}K`}
             icon={TrendingUp}
-            trend="Costos de mantenimiento"
-            status="info"
+            description="Costos de mantenimiento"
+            tone="warning"
           />
         </div>
-      </div>
+      </SectionCard>
 
       {/* Gestión de Documentos */}
       <CraneDocumentsSection crane={crane} />
 
       {/* Eficiencia y Rendimiento */}
-      <div>
-        <h4 className="text-lg font-medium text-white mb-4">Rendimiento</h4>
+      <SectionCard title="Rendimiento" flush className="border-0 bg-transparent shadow-none">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <MetricCard
             title="Tasa Utilización"
             value={`${metrics?.utilizationRate || 0}%`}
             icon={Activity}
-            trend="Promedio mensual"
-            status={(metrics?.utilizationRate || 0) >= 80 ? "success" : "warning"}
+            description="Promedio mensual"
+            tone={(metrics?.utilizationRate || 0) >= 80 ? "success" : "warning"}
           />
           <MetricCard
             title="Eficiencia"
             value={`${metrics?.efficiency || 0}%`}
             icon={TrendingUp}
-            trend="Servicios a tiempo"
-            status={(metrics?.efficiency || 0) >= 90 ? "success" : "warning"}
+            description="Servicios a tiempo"
+            tone={(metrics?.efficiency || 0) >= 90 ? "success" : "warning"}
           />
           <MetricCard
             title="Costos Mantención"
             value={`$${((metrics?.maintenanceCosts || 0) / 1000).toFixed(0)}K`}
             icon={AlertTriangle}
-            trend="Este mes"
-            status="info"
+            description="Este mes"
+            tone="warning"
           />
         </div>
-      </div>
+      </SectionCard>
 
       {/* Alertas si las hay */}
       {(technicalReviewDays <= 30 || insuranceDays <= 30 || permitDays <= 30 || (inventoryMetrics?.pendingMaintenanceAlerts || 0) > 0) && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
+        <Card className="border-warning/30 bg-warning-soft">
           <CardHeader>
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="w-5 h-5" />
               Alertas del Sistema
             </CardTitle>
@@ -251,22 +209,22 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
           <CardContent>
             <div className="space-y-2">
               {technicalReviewDays <= 30 && (
-                <p className="text-yellow-300">
+                <p className="text-foreground">
                   • Revisión técnica {technicalReviewDays <= 0 ? 'vencida' : `vence en ${technicalReviewDays} días`}
                 </p>
               )}
               {insuranceDays <= 30 && (
-                <p className="text-yellow-300">
+                <p className="text-foreground">
                   • Seguro {insuranceDays <= 0 ? 'vencido' : `vence en ${insuranceDays} días`}
                 </p>
               )}
               {permitDays <= 30 && (
-                <p className="text-yellow-300">
+                <p className="text-foreground">
                   • Permiso de circulación {permitDays <= 0 ? 'vencido' : `vence en ${permitDays} días`}
                 </p>
               )}
               {(inventoryMetrics?.pendingMaintenanceAlerts || 0) > 0 && (
-                <p className="text-yellow-300">
+                <p className="text-foreground">
                   • {inventoryMetrics?.pendingMaintenanceAlerts} alertas de mantenimiento pendientes
                 </p>
               )}
