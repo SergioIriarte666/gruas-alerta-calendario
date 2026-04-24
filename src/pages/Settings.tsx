@@ -78,7 +78,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in bg-background min-h-screen settings-scope overflow-x-hidden">
+    <div className="space-y-4 animate-fade-in bg-background min-h-screen overflow-x-hidden">
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

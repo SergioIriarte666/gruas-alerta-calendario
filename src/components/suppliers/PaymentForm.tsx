@@ -185,7 +185,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     false;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card border">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
           <CardTitle className="text-white flex items-center gap-2">

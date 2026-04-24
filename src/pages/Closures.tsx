@@ -244,7 +244,7 @@ const Closures = () => {
 
 
   return (
-    <div className="space-y-6 closures-scope">
+    <div className="space-y-6">
       <ClosuresHeader 
         onCreateClosure={handleShowCreateModal}
       />

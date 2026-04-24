@@ -140,7 +140,7 @@ const Operators = () => {
   }
 
   return (
-    <div className="space-y-6 operators-scope">
+    <div className="space-y-6">
       <OperatorsHeader onNewOperator={handleCreate} />
 
       <OperatorsFilters 

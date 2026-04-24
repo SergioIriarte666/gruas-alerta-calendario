@@ -526,7 +526,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   }
 
   return (
-    <div className="space-y-4 vip-pipeline-scope">
+    <div className="space-y-4">
       {/* Barra de acciones para servicios seleccionados */}
       {selectedServices.size > 0 && (
         <PipelineBatchActionBar

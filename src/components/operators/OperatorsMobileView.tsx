@@ -32,7 +32,7 @@ export const OperatorsMobileView = ({
 
   if (operators.length === 0 && searchTerm) {
     return (
-      <Card className="bg-card border operators-scope">
+      <Card className="bg-card border">
         <CardContent className="p-6 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
@@ -50,7 +50,7 @@ export const OperatorsMobileView = ({
 
   if (operators.length === 0) {
     return (
-      <Card className="bg-card border operators-scope">
+      <Card className="bg-card border">
         <CardContent className="p-6 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
@@ -67,7 +67,7 @@ export const OperatorsMobileView = ({
   }
 
   return (
-    <div className="space-y-4 operators-scope">
+    <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">Personal ({totalOperators})</h3>
       </div>

@@ -2,47 +2,26 @@
 import { useEffect } from 'react';
 import { useSettings } from './useSettings';
 
+/**
+ * Hook de tema. Hoy la app es solo claro (Fase 6 del refactor visual
+ * añadirá modo oscuro real con tokens semánticos invertidos).
+ * El selector de tema en Configuración queda oculto hasta entonces.
+ */
 export const useTheme = () => {
   const { settings, updateSettings } = useSettings();
 
   useEffect(() => {
-    const applyTheme = () => {
-      const root = document.documentElement;
-      const body = document.body;
-      
-      // Aplicar tema claro unificado
-      root.classList.remove('dark');
-      root.classList.add('light');
-      body.classList.remove('dark');
-      body.classList.add('light');
-
-      // Variables CSS se toman desde :root en index.css
-      // Solo forzar atributos para consistencia
-      root.setAttribute('data-theme', 'light');
-      body.setAttribute('data-theme', 'light');
-      
-      // Asegurar fondo base
-      body.style.backgroundColor = 'hsl(var(--background))';
-      body.style.color = 'hsl(var(--foreground))';
-    };
-
-    applyTheme();
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('light');
+    root.setAttribute('data-theme', 'light');
   }, []);
 
-  const setTheme = (theme: 'light' | 'dark' | 'system') => {
-    // Mantener siempre claro independientemente de la configuración
+  const setTheme = (_theme: 'light' | 'dark' | 'system') => {
     if (settings) {
-      updateSettings({
-        user: {
-          ...settings.user,
-          theme: 'light' // Forzar tema claro
-        }
-      });
+      updateSettings({ user: { ...settings.user, theme: 'light' } });
     }
   };
 
-  return {
-    theme: 'light' as const,
-    setTheme
-  };
+  return { theme: 'light' as const, setTheme };
 };

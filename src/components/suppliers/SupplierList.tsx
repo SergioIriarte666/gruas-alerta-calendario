@@ -221,7 +221,7 @@ export const SupplierList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 suppliers-scope">
+    <div className="space-y-6">
       {/* Header and Filters */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>

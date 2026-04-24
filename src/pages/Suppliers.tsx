@@ -22,7 +22,7 @@ export const Suppliers: React.FC = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${isMobile ? 'p-3' : 'p-6'} suppliers-scope`}>
+    <div className={`min-h-screen bg-background text-foreground ${isMobile ? 'p-3' : 'p-6'}`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>

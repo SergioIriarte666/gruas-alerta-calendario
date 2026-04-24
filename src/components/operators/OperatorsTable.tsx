@@ -69,7 +69,7 @@ export const OperatorsTable = ({
 
   if (operators.length === 0 && searchTerm) {
     return (
-      <Card className="bg-card border-border operators-scope">
+      <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
@@ -87,7 +87,7 @@ export const OperatorsTable = ({
 
   if (operators.length === 0) {
     return (
-      <Card className="bg-card border-border operators-scope">
+      <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
@@ -104,7 +104,7 @@ export const OperatorsTable = ({
   }
 
   return (
-    <Card className="bg-card border-border operators-scope">
+    <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
           <span>Personal ({totalOperators})</span>

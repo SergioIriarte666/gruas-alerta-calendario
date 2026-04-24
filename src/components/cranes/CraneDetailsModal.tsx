@@ -40,7 +40,7 @@ export const CraneDetailsModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 px-6 pb-6 cranes-scope">
+        <div className="flex-1 min-h-0 px-6 pb-6">
           <CraneTabsWithCounters crane={crane} />
         </div>
 

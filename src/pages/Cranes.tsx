@@ -154,7 +154,7 @@ const Cranes = () => {
   }
 
   return (
-    <div className="space-y-6 cranes-scope">
+    <div className="space-y-6">
       <Dialog open={intakeOpen} onOpenChange={(open) => {
         setIntakeOpen(open);
         if (!open) {
