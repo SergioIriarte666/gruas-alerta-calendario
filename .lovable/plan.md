@@ -1,71 +1,117 @@
 
+# Plan: Refactor del sistema visual — de parches a sistema unificado
 
-# Plan: Fuente única de verdad para fechas — Business Timezone
+## Diagnóstico (verificado en código)
 
-## Diagnóstico (verificado)
-- **334 usos** de `new Date()` / `Date.now()` directos en el código → cada uno toma la hora del navegador (UTC interno).
-- **3 fuentes de verdad coexistiendo**, lo cual es el origen del caos:
-  1. `new Date()` directo (navegador, sin TZ).
-  2. `getCurrentChileDate()` / `getCurrentChileDateString()` → usa `user_settings.timezone` (cada usuario distinto).
-  3. `getBusinessTimezone()` → lee `company_data.report_timezone` ✅ (la correcta, pero solo usada en alertas/reportes).
-- BD verificada: `company_data.report_timezone = 'America/Santiago'`, `report_use_system_timezone = false`. **Esta es la fuente de verdad designada.**
-- Inserts inconsistentes: unos guardan `YYYY-MM-DD` (medianoche UTC → desfase visual de 1 día), otros guardan ISO completo (`new Date().toISOString()` → hora UTC del navegador, no de Chile).
-- Resultado: registros aparecen en días equivocados, ordenamientos rotos, "consumo inmediato" cae al fondo de listas, alertas se disparan en momentos incorrectos.
+El tema actual NO está roto, pero es **frágil**: cada cambio de color obliga a tocar 5–10 lugares. Las causas son acumulativas:
 
-## Solución: Capa única `businessClock`
+### 1. Tokens contradictorios entre sí
+- `src/index.css` define `--primary: 84 100% 58%` (**verde lima `#9cfa24`**).
+- `tailwind.config.ts` expone además `tms.green`, `sidebar.principal`, `slate.*` con valores duplicados.
+- La memoria del proyecto (`design-system-standards`, `responsive-design-standards`) dice "alto contraste centrado en **violeta**".
+- El usuario tiene preferencia de accesibilidad: **evitar verde** (memoria `accessibility-color-preference-v2`).
+- → Hoy conviven **dos paletas** (verde TMS heredado + violeta nuevo), por eso "cambiar el tema" se siente caótico.
 
-Crear un módulo **`src/utils/businessClock.ts`** que sea la **única forma autorizada** de obtener "ahora" y "hoy" en toda la app. Lee `company_data.report_timezone` con cache sincrónico precargado al boot.
-
-### API (síncrona, lista para usar en cualquier lado)
-```ts
-businessClock.now()         // Date — instante actual ajustado a TZ negocio
-businessClock.nowISO()      // string ISO — para guardar en BD (created_at, updated_at, movement_date)
-businessClock.today()       // string 'YYYY-MM-DD' — para campos date-only
-businessClock.todayDate()   // Date — hoy 12:00 en TZ negocio
-businessClock.format(d, fmt)// string — formato consistente
-businessClock.timezone()    // string — 'America/Santiago'
+### 2. Doce "scopes" CSS por módulo (parches)
+En `src/index.css` existen estos bloques con **64 `!important`**:
 ```
+client-scope, services-scope, calendar-scope, vip-pipeline-scope,
+cranes-scope, operators-scope, closures-scope, suppliers-scope,
+reports-scope, service-types-scope, settings-scope, clients-scope
+```
+Cada uno **deshace** clases hardcodeadas (`text-white`, `bg-black`, `bg-gray-700`, `border-gray-700`) que quedaron de cuando la app era oscura. Es código defensivo: si se cambia un color del token, los scopes lo "ganan" con `!important` y nada se actualiza.
 
-### Bootstrap
-- Precarga al iniciar la app (en `App.tsx`, antes de routing) → cache disponible síncrono el resto de la sesión.
-- Refresca cada 5 min y al cambiar configuración en `TimezoneSettingsTab`.
-- Fallback `America/Santiago` si BD no responde.
+### 3. Botón con estilos inline + handlers JS
+`src/components/ui/button.tsx` aplica `style={{ backgroundColor: '#9cfa24', color: '#000' }}` y maneja hover con `onMouseEnter/Leave` en JS. **Esto sobreescribe cualquier token** y es invisible para Tailwind/Theming. Cambiar el verde implica editar este archivo, no un token.
 
-## Migración (3 fases sin romper nada)
+### 4. Theme hook bloqueado
+`src/hooks/useTheme.ts` fuerza `'light'` ignorando la configuración del usuario. El selector "Tema" en `UserSettingsTab` existe pero no hace nada → falsa promesa de modo oscuro.
 
-### Fase 1 — Núcleo (alto impacto, bajo riesgo)
-1. **Crear** `src/utils/businessClock.ts` + bootstrap en `App.tsx`.
-2. **Reemplazar en `UnifiedPurchaseService.ts`**: todos los `movement_date` y `created_at` → `businessClock.nowISO()`. Esto resuelve el bug actual (consumos con timestamp medianoche UTC).
-3. **Reemplazar en hooks de costos/inventario/servicios** (`useCosts`, `useServices`, `useInventoryMovements`, `useCranePartsTechnical`, `useUnifiedParts`, `useSupplierPayments`): cualquier `new Date().toISOString()` para `updated_at`/`created_at`/`movement_date` → `businessClock.nowISO()`.
-4. **Reemplazar `format(new Date(), 'yyyy-MM-dd')`** en formularios (Debt, Invoice, Payment, etc.) → `businessClock.today()`.
+### 5. `App.css` legacy
+Estilos del template Vite original (`#root { max-width: 1280px; padding: 2rem; text-align: center }`) que no se aplican al layout real pero generan ruido y pueden romper páginas no envueltas en `Layout`.
 
-### Fase 2 — UI y formato
-5. **Listados y tablas** (Costos, Inventario, Servicios, Crane Parts): ordenar siempre por `created_at DESC` (timestamp confiable post-Fase 1) en vez de `movement_date` o `date`.
-6. **Cambiar fechas mostradas** a usar `formatForDisplay` / `formatForDisplayWithTime` ya existentes (que respetan `user_settings`), pero garantizando que el **dato fuente** ya viene en TZ negocio.
-7. **Eliminar `getCurrentChileDate*`** progresivamente (mantener como alias deprecado a `businessClock.*` para no romper).
+### 6. Sin escala tipográfica ni de espaciado documentada
+Cada componente decide tamaños (`text-[10px]`, `text-xs`, `text-sm`, `text-2xl`) sin tokens semánticos (`text-metric`, `text-section-title`). El "Cost Module" — que es el patrón a seguir según el project-knowledge — no está formalizado como tokens reutilizables.
 
-### Fase 3 — Validación BD (trigger defensivo)
-8. **Trigger SQL** en tablas críticas (`costs`, `inventory_movements`, `crane_parts`, `services`, `payments`) que si reciben `created_at = NULL` o `movement_date = '00:00:00'` los rellena con `now() AT TIME ZONE 'America/Santiago'`. Última línea de defensa.
+---
 
-## Archivos afectados (estimado)
-- **Nuevo**: `src/utils/businessClock.ts` (~120 líneas)
-- **Modificados**: ~25 archivos críticos en Fase 1 (servicios, hooks de mutación, formularios principales)
-- **Modificados**: ~40 archivos en Fase 2 (componentes UI con `format(new Date(), …)`)
-- **Migración SQL**: 1 (triggers defensivos)
+## Propuesta de mejora
 
-## Lo que NO se toca
-- `formatForDisplay`, `formatForDisplayWithTime`, `safeParseDateOnly` — **ya están bien**, siguen siendo la API de presentación.
-- `user_settings.timezone` / `date_format` — siguen controlando el **formato visual** por usuario (DD/MM vs MM/DD), pero la **fuente del dato** será siempre TZ negocio.
-- Datos históricos en BD: no se modifican (Fase 3 solo aplica a inserts futuros).
-- RLS, lógica de negocio, sincronizaciones triangulares.
+### Fase 1 — Unificar la paleta (decisión de fondo)
+Antes de tocar código necesito que confirmes la dirección de marca. El plan se adapta a tu elección, pero el resto de fases es el mismo.
+
+> Te haré la pregunta al inicio de la implementación. Opciones:
+> - **A) Violeta** (`271 81% 56%` ≈ `#8b5cf6`) — coherente con tu accesibilidad y con la mayoría de memorias recientes. Recomendado.
+> - **B) Verde lima actual** (`#9cfa24`) — mantener marca histórica TMS.
+> - **C) Otra** — me dices el HEX.
+
+Lo elegido se vuelve **`--primary` única** y se eliminan `tms.green*` y `sidebar.principal` del config para que no exista una segunda fuente.
+
+### Fase 2 — Tokens semánticos completos
+Reescribir `:root` en `src/index.css` con un set mínimo y semántico:
+```
+--primary, --primary-foreground, --primary-hover
+--surface, --surface-elevated, --surface-sunken    (reemplaza card/popover/secondary)
+--text-strong, --text, --text-muted, --text-subtle
+--border, --border-strong, --ring
+--success, --warning, --danger, --info  (+ -foreground y -soft de cada uno)
+--radius-sm/md/lg, --shadow-sm/md/lg
+```
+Los tokens viejos (`--card`, `--muted`, etc.) se mantienen como **alias** para no romper Radix/shadcn, pero apuntan a los nuevos.
+
+Añadir tokens de **estado de pago** (memoria `payment-status-visual-standard`) y de **departamentos** ya existentes, expuestos como clases utilitarias (`.badge-paid`, `.badge-pending`, `.badge-overdue`).
+
+### Fase 3 — Reescribir el Button (sin estilos inline)
+Eliminar `style={{}}` y `onMouseEnter/Leave` de `src/components/ui/button.tsx`. Las variantes vuelven a depender 100% de `cva` + clases Tailwind con tokens (`bg-primary text-primary-foreground hover:bg-primary/90`). Resultado: cambiar `--primary` actualiza **todos los botones** sin tocar TS.
+
+### Fase 4 — Eliminar los 12 `-scope` y limpiar clases hardcodeadas
+1. Buscar y reemplazar en cada módulo las clases legacy de tema oscuro:
+   - `text-white` → `text-foreground`
+   - `text-gray-300/400/500` → `text-muted-foreground`
+   - `bg-black`, `bg-gray-700/800` → `bg-card` / `bg-muted`
+   - `border-gray-600/700/800` → `border-border`
+2. Eliminar los wrappers `<div className="services-scope">…</div>` en cada página.
+3. Borrar los bloques `*-scope` de `index.css` (≈ 250 líneas, los 64 `!important` desaparecen).
+4. Verificar visualmente módulo por módulo (Servicios, Grúas, Operadores, Clientes, Calendario, Suppliers, Reports, Settings, VIP, Closures, Service Types).
+
+### Fase 5 — Componentes primitivos del "Cost Module" como estándar
+Extraer las piezas que el project-knowledge marca como referencia y promoverlas a `src/components/ui/`:
+- `<PageHeader>` (título + métricas + acciones, como `CostsHeader`).
+- `<MetricCard>` (unifica `ReportMetricCard`, `MetricCard`, `PendingCategoryCard`).
+- `<DataToolbar>` (búsqueda + filtros rápidos + view-mode toggle).
+- `<StatusBadge variant="paid|pending|overdue|...">` (reemplaza badges sueltos).
+- `<SectionCard>` (Card con header tipográfico estandarizado).
+
+Cada uno consume **solo tokens semánticos**. Migrar primero Costos (ya cumple), luego Inventario, Servicios, Grúas, etc.
+
+### Fase 6 — Theme hook honesto
+Dos opciones; decido en implementación según tu respuesta a Fase 1:
+- **Si no quieres modo oscuro**: ocultar el selector "Tema" en `UserSettingsTab` y borrar `useTheme.ts`.
+- **Si lo quieres**: implementar dark real añadiendo bloque `.dark { ... }` en `index.css` con los mismos tokens semánticos invertidos. Dado el volumen actual, esto se entrega como Fase 6 opcional **después** de Fases 1–5.
+
+### Fase 7 — Limpieza final
+- Borrar `src/App.css` (legacy del template).
+- Documentar tokens y primitivas en `docs/design-system.md` (1 página: paleta, tipografía, espaciado, badges, ejemplo de uso).
+- Crear memoria `mem://design/tokens-v3` con la paleta final como **única fuente de verdad** y marcar las memorias antiguas conflictivas como obsoletas.
+
+---
+
+## Orden de entrega y riesgo
+
+| Fase | Riesgo | Reversible | Visual user-facing |
+|------|--------|------------|--------------------|
+| 1. Decisión paleta | — | sí | no |
+| 2. Tokens semánticos + alias | bajo | sí | mínimo (mismo look) |
+| 3. Button sin inline | bajo | sí | sí, hover más limpio |
+| 4. Eliminar `-scope` (módulo a módulo) | medio | sí, módulo por módulo | sí |
+| 5. Primitivas UI | bajo | sí | consistencia visual |
+| 6. Modo oscuro real (opcional) | medio | sí | nuevo feature |
+| 7. Limpieza + docs | nulo | — | no |
+
+**Lo funcional NO se toca**: ninguna lógica de negocio, ninguna tabla, ningún hook de datos. Solo CSS, clases y un componente (`button.tsx`).
 
 ## Resultado esperado
-- ✅ Un solo "reloj" en toda la app: `businessClock`.
-- ✅ Consumos de inventario aparecen al inicio de listados (timestamp real).
-- ✅ Costos, servicios y movimientos se registran con la fecha+hora de Chile (no UTC del navegador del usuario).
-- ✅ Alertas, reportes mensuales y dashboards usan el mismo "hoy" en cualquier dispositivo.
-- ✅ Si mañana se cambia `report_timezone` en configuración a otra zona, **toda la app se ajusta automáticamente** sin tocar código.
-
-## Riesgo
-- **Bajo-medio**. El cambio es aditivo: `businessClock` reemplaza `new Date()` punto a punto. Cada reemplazo es local y revertible. Fase 1 + 2 se pueden desplegar incrementalmente con verificación visual.
-
+- Cambiar el color de marca = editar **una línea** (`--primary`) y todo se actualiza.
+- 0 `!important`, 0 wrappers `*-scope`, 0 estilos inline en primitivas.
+- Un solo lenguaje visual heredado del módulo de Costos.
+- Base limpia para introducir, si quieres, modo oscuro real más adelante sin parches.
