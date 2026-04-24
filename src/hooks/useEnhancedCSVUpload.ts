@@ -113,7 +113,10 @@ export const useEnhancedCSVUpload = () => {
 
       const result = await uploader.uploadServices(
         validationResult.validRows,
-        createService,
+        (serviceData) => createService(serviceData, {
+          silent: true,
+          tolerateResourceSyncFailure: true,
+        }),
         setUploadProgress
       );
 
