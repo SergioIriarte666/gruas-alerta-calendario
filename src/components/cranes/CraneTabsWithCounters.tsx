@@ -91,39 +91,39 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
   });
 
   const CounterBadge = ({ count }: { count: number }) => (
-    <Badge variant="secondary" className="ml-2 bg-primary/20 text-black border-primary/50">
+    <Badge variant="secondary" className="ml-2 border-primary/20 bg-primary-soft text-foreground">
       {count}
     </Badge>
   );
 
   return (
     <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-      <TabsList className="flex w-full overflow-x-auto bg-muted border-b border-border">
-        <TabsTrigger value="overview" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+      <TabsList className="flex w-full overflow-x-auto h-auto border border-border bg-muted/60 p-1">
+        <TabsTrigger value="overview" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <BarChart3 className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Resumen</span>
         </TabsTrigger>
-        <TabsTrigger value="services" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+        <TabsTrigger value="services" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <Wrench className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Servicios</span>
           <CounterBadge count={counters?.services || 0} />
         </TabsTrigger>
-        <TabsTrigger value="costs" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+        <TabsTrigger value="costs" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <DollarSign className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Costos</span>
           <CounterBadge count={counters?.costs || 0} />
         </TabsTrigger>
-        <TabsTrigger value="parts" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+        <TabsTrigger value="parts" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <Package className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Piezas</span>
           <CounterBadge count={counters?.parts || 0} />
         </TabsTrigger>
-        <TabsTrigger value="maintenance" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+        <TabsTrigger value="maintenance" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <Settings className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Mant.</span>
           <CounterBadge count={counters?.maintenance || 0} />
         </TabsTrigger>
-        <TabsTrigger value="inventory" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary hidden lg:flex">
+        <TabsTrigger value="inventory" className="hidden lg:flex flex-shrink-0 min-w-0 gap-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           <Warehouse className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Inventario</span>
         </TabsTrigger>

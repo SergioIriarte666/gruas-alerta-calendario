@@ -16,21 +16,21 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-medium text-black">Generar Respaldo Manual</h4>
+      <h4 className="text-sm font-medium text-foreground">Generar Respaldo Manual</h4>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Respaldo Completo */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Database className="w-4 h-4 text-tms-green" />
-            <span className="font-medium text-black">Respaldo Completo</span>
+            <Database className="w-4 h-4 text-primary" />
+            <span className="font-medium text-foreground">Respaldo Completo</span>
           </div>
           
           <div className="grid grid-cols-1 gap-2">
             <Button 
               onClick={() => onGenerateBackup('full', 'sql')} 
               disabled={progress.isGenerating} 
-              className="w-full bg-tms-green text-black font-medium hover:bg-tms-green/80"
+              className="w-full bg-gradient-primary font-medium text-primary-foreground hover:opacity-95"
             >
               {progress.isGenerating && progress.stage.includes('SQL') ? (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -44,7 +44,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
               onClick={() => onGenerateBackup('full', 'json')} 
               disabled={progress.isGenerating} 
               variant="outline" 
-              className="w-full border-tms-green text-tms-green bg-white hover:bg-tms-green hover:text-black"
+              className="w-full border-primary text-primary hover:bg-primary-soft"
             >
               {progress.isGenerating && progress.stage.includes('JSON') ? (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -55,7 +55,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
             </Button>
           </div>
           
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             Incluye todos los datos del sistema. SQL para restauración completa, JSON para análisis.
           </p>
         </div>
@@ -63,15 +63,15 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
         {/* Respaldo Rápido */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-tms-green" />
-            <span className="font-medium text-black">Respaldo Rápido</span>
+            <Zap className="w-4 h-4 text-primary" />
+            <span className="font-medium text-foreground">Respaldo Rápido</span>
           </div>
           
           <Button 
             onClick={() => onGenerateBackup('quick', 'json')} 
             disabled={progress.isGenerating} 
             variant="outline" 
-            className="w-full border-gray-300 text-black bg-white hover:bg-gray-50"
+            className="w-full"
           >
             {progress.isGenerating && progress.stage.includes('Rápido') ? (
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -81,7 +81,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
             Configuración JSON
           </Button>
           
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-muted-foreground">
             Solo configuración y estadísticas básicas en formato JSON.
           </p>
         </div>

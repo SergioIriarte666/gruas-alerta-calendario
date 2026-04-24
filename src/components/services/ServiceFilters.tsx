@@ -1,7 +1,8 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdvancedServiceFilters } from './AdvancedServiceFilters';
 import { useAdvancedFilters, AdvancedFilters } from '@/hooks/useAdvancedFilters';
 
@@ -45,84 +46,49 @@ export const ServiceFilters = ({
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
+                <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
                   placeholder="Buscar por folio, cliente, patente, marca, origen, destino, cotización, orden de compra..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:border-tms-green focus:outline-none"
+                  className="pl-10"
                 />
               </div>
             </div>
             <div className="flex gap-4">
               <Select value={statusFilter} onValueChange={onStatusChange}>
-                <SelectTrigger 
-                  className="w-48 bg-white border-gray-300 text-black"
-                >
+                <SelectTrigger className="w-48">
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
-                <SelectContent 
-                  className="bg-white border-gray-300 text-black z-50"
-                >
-                  <SelectItem 
-                    value="all" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                <SelectContent>
+                  <SelectItem value="all">
                     Todos los estados
                   </SelectItem>
-                  <SelectItem 
-                    value="pending" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="pending">
                     Pendientes
                   </SelectItem>
-                  <SelectItem 
-                    value="in_progress" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="in_progress">
                     En Progreso
                   </SelectItem>
-                  <SelectItem 
-                    value="completed" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="completed">
                     Completados
                   </SelectItem>
-                  <SelectItem 
-                    value="cancelled" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="cancelled">
                     Cancelados
                   </SelectItem>
-                  <SelectItem 
-                    value="invoiced" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="invoiced">
                     Facturados
                   </SelectItem>
-                  <SelectItem 
-                    value="quoted" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="quoted">
                     Cotizados
                   </SelectItem>
-                  <SelectItem 
-                    value="purchase_order_pending" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="purchase_order_pending">
                     Esperando O.C.
                   </SelectItem>
-                  <SelectItem 
-                    value="with_purchase_order" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="with_purchase_order">
                     Con Orden de Compra
                   </SelectItem>
-                  <SelectItem 
-                    value="failed" 
-                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
-                  >
+                  <SelectItem value="failed">
                     Fallidos
                   </SelectItem>
                 </SelectContent>
@@ -130,14 +96,14 @@ export const ServiceFilters = ({
               <Button 
                 variant="outline" 
                 onClick={() => setIsOpen(true)}
-                className={`border-gray-300 bg-white text-gray-700 hover:bg-gray-50 relative ${
-                  hasActiveFilters ? 'border-tms-green bg-green-50 text-green-700' : ''
+                className={`relative ${
+                  hasActiveFilters ? 'border-primary/30 bg-primary-soft text-foreground hover:bg-primary-soft/80' : ''
                 }`}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Más Filtros
                 {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-tms-green rounded-full"></span>
+                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary"></span>
                 )}
               </Button>
               {hasActiveFilters && (

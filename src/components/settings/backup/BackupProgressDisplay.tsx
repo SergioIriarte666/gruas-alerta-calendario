@@ -17,22 +17,19 @@ export const BackupProgressDisplay: React.FC<BackupProgressDisplayProps> = ({ pr
   return (
     <div className="space-y-2">
       {progress.isGenerating && (
-        <div className="space-y-2 p-4 rounded-lg border bg-white border-gray-200" style={{ background: '#ffffff' }}>
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-black">{progress.stage}</span>
-            <span className="text-gray-600">{progress.progress}%</span>
+            <span className="text-foreground">{progress.stage}</span>
+            <span className="text-muted-foreground">{progress.progress}%</span>
           </div>
           <Progress value={progress.progress} className="w-full h-2" />
         </div>
       )}
 
       {progress.error && (
-        <Alert 
-          className="border-red-200" 
-          style={{ background: '#ffffff', color: '#000000', borderColor: '#fecaca' }}
-        >
-          <XCircle className="w-4 h-4 text-red-500" />
-          <AlertDescription className="text-red-700" style={{ color: '#b91c1c' }}>
+        <Alert variant="destructive">
+          <XCircle className="w-4 h-4 text-danger" />
+          <AlertDescription className="text-foreground">
             Error: {progress.error}
           </AlertDescription>
         </Alert>

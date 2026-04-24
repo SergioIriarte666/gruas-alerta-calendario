@@ -44,24 +44,23 @@ export const BackupManagementSection = () => {
           hookError={hookError}
         />
 
-        <Separator className="bg-gray-200" />
+        <Separator />
 
         <BackupControlsSection 
           progress={progress}
           onGenerateBackup={generateAndDownloadBackup}
         />
 
-        <Separator className="bg-gray-200" />
+        <Separator />
 
         <BackupHistorySection backupLogs={backupLogs} />
 
         {/* Información adicional */}
         <Alert 
-          className="border-blue-200" 
-          style={{ background: '#ffffff', color: '#000000', borderColor: '#bfdbfe' }}
+          className="border-info/30 bg-info-soft"
         >
-          <AlertTriangle className="w-4 h-4 text-blue-500" />
-          <AlertDescription className="text-sm text-blue-700" style={{ color: '#1d4ed8' }}>
+          <AlertTriangle className="w-4 h-4 text-info" />
+          <AlertDescription className="text-sm text-foreground">
             <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema. 
             Los respaldos completos permiten restauración total en caso de emergencia.
           </AlertDescription>

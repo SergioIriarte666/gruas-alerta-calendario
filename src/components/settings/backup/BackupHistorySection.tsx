@@ -46,27 +46,27 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-medium text-black">Historial de Respaldos</h4>
+      <h4 className="text-sm font-medium text-foreground">Historial de Respaldos</h4>
       
       {backupLogs && backupLogs.length > 0 ? (
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {backupLogs.map(log => (
-            <div key={log.id} className="flex items-center justify-between p-4 rounded-lg border bg-white border-gray-200" style={{ background: '#ffffff' }}>
+            <div key={log.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
               <div className="flex items-center space-x-3">
                 {getStatusIcon(log.status)}
                 <div>
                   <div className="flex items-center space-x-2 mb-1">
                     {log.backup_type === 'full' ? (
-                      <FileText className="w-4 h-4 text-gray-600" />
+                      <FileText className="w-4 h-4 text-muted-foreground" />
                     ) : (
-                      <Zap className="w-4 h-4 text-gray-600" />
+                      <Zap className="w-4 h-4 text-muted-foreground" />
                     )}
-                    <span className="text-sm font-medium text-black">
+                    <span className="text-sm font-medium text-foreground">
                       {log.backup_type === 'full' ? 'Completo' : 'Rápido'}
                     </span>
                     {getStatusBadge(log.status)}
                   </div>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(log.created_at), {
                       addSuffix: true,
                       locale: es
@@ -76,7 +76,7 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
                     )}
                   </p>
                   {log.error_message && (
-                    <p className="text-xs mt-1 px-2 py-1 rounded text-red-600 bg-red-50" style={{ color: '#dc2626', background: '#fef2f2' }}>
+                    <p className="mt-1 rounded bg-danger-soft px-2 py-1 text-xs text-foreground">
                       {log.error_message}
                     </p>
                   )}
@@ -86,12 +86,12 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 rounded-lg border bg-white border-gray-200" style={{ background: '#ffffff' }}>
-          <Database className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-600">
+        <div className="rounded-lg border border-border bg-card py-8 text-center">
+          <Database className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
             No hay respaldos registrados
           </p>
-          <p className="text-xs mt-1 text-gray-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Genera tu primer respaldo usando los botones de arriba
           </p>
         </div>
