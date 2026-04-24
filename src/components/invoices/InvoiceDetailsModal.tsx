@@ -151,6 +151,12 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [closures, setClosures] = useState<ClosureRow[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [cancellation, setCancellation] = useState<{
+    credit_note_number: string;
+    cancellation_reason: string;
+    reason_details: string | null;
+    cancelled_at: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!invoice || !isOpen) return;
@@ -166,6 +172,18 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         });
     } else {
       setPaymentTermName(null);
+    }
+
+    // Cargar datos de anulación si la factura está anulada
+    if (invoice.status === 'cancelled') {
+      supabase
+        .from('invoice_cancellations')
+        .select('credit_note_number, cancellation_reason, reason_details, cancelled_at')
+        .eq('invoice_id', invoice.id)
+        .maybeSingle()
+        .then(({ data }) => setCancellation(data || null));
+    } else {
+      setCancellation(null);
     }
 
     setLoadingPayments(true);
@@ -231,13 +249,30 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
   if (!invoice) return null;
 
+  const isCancelled = invoice.status === 'cancelled';
   const rawPaidAmount = invoice.paidAmount ?? 0;
-  const paidAmount = invoice.status === 'paid' && rawPaidAmount <= 0 ? invoice.total : rawPaidAmount;
-  const pendingAmount = invoice.status === 'paid'
+  // En facturas anuladas el monto se neutraliza con NC, no se considera "pagado"
+  const paidAmount = isCancelled
     ? 0
-    : (invoice.remainingAmount != null ? invoice.remainingAmount : Math.max(invoice.total - paidAmount, 0));
-  const paymentPercentage = invoice.total > 0 ? Math.min(100, Math.round((paidAmount / invoice.total) * 100)) : 0;
+    : (invoice.status === 'paid' && rawPaidAmount <= 0 ? invoice.total : rawPaidAmount);
+  const pendingAmount = isCancelled
+    ? 0
+    : (invoice.status === 'paid'
+      ? 0
+      : (invoice.remainingAmount != null ? invoice.remainingAmount : Math.max(invoice.total - paidAmount, 0)));
+  const paymentPercentage = isCancelled
+    ? 0
+    : (invoice.total > 0 ? Math.min(100, Math.round((paidAmount / invoice.total) * 100)) : 0);
   const statusConfig = getStatusConfig(invoice.status);
+
+  const cancellationReasonLabels: Record<string, string> = {
+    error_datos_cliente: 'Error en datos del cliente',
+    error_montos: 'Error en montos facturados',
+    servicio_no_prestado: 'Servicio no prestado',
+    duplicado: 'Duplicado de factura',
+    solicitud_cliente: 'Solicitud del cliente',
+    otro: 'Otro',
+  };
 
   const methodLabels: Record<string, string> = {
     fifo: 'Automático (legado)',
@@ -275,6 +310,50 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           {/* Tab 1: General */}
           <TabsContent value="general" className="mt-6">
             <div className="space-y-4">
+              {isCancelled && (
+                <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-rose-700 dark:text-rose-300">
+                    <div className="p-1 rounded bg-rose-500/10 text-rose-600">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    Factura Anulada
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                    <DetailItem
+                      icon={Hash}
+                      label="Nota de Crédito"
+                      value={cancellation?.credit_note_number
+                        ? <span className="font-semibold text-rose-700 dark:text-rose-300">NC {cancellation.credit_note_number}</span>
+                        : <span className="text-muted-foreground italic">Sin registro</span>}
+                    />
+                    <DetailItem
+                      icon={Calendar}
+                      label="Fecha de Anulación"
+                      value={cancellation?.cancelled_at ? formatSafeDate(cancellation.cancelled_at) : 'N/A'}
+                    />
+                    <DetailItem
+                      icon={FileText}
+                      label="Motivo"
+                      value={cancellation?.cancellation_reason
+                        ? (cancellationReasonLabels[cancellation.cancellation_reason] || cancellation.cancellation_reason)
+                        : 'N/A'}
+                      isFullWidth={!cancellation?.reason_details}
+                    />
+                    {cancellation?.reason_details && (
+                      <DetailItem
+                        icon={FileText}
+                        label="Detalle"
+                        value={cancellation.reason_details}
+                        isFullWidth
+                      />
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-3 italic">
+                    Esta factura fue anulada mediante Nota de Crédito y no genera deuda. Los servicios fueron liberados para re-facturación.
+                  </p>
+                </div>
+              )}
+
               <DetailSection title="Identificación" icon={FileText} color="blue">
                 <DetailItem icon={FileText} label="Folio" value={invoice.folio} />
                 <DetailItem
@@ -326,7 +405,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                     );
                   } catch { return null; }
                 })()}
-                {invoice.dueDate && invoice.status !== 'paid' && (() => {
+                {invoice.dueDate && invoice.status !== 'paid' && !isCancelled && (() => {
                   try {
                     const due = typeof invoice.dueDate === 'string' ? parseISO(invoice.dueDate) : new Date(invoice.dueDate);
                     if (!isValid(due)) return null;
@@ -365,6 +444,15 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           {/* Tab 2: Financiera */}
           <TabsContent value="financial" className="mt-6">
             <div className="space-y-4">
+              {isCancelled && (
+                <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-3 text-sm text-rose-700 dark:text-rose-300 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>
+                    Factura anulada{cancellation?.credit_note_number ? ` con NC ${cancellation.credit_note_number}` : ''}. El monto fue neutralizado y no representa deuda ni ingreso pagado.
+                  </span>
+                </div>
+              )}
+
               <DetailSection title="Desglose" icon={DollarSign} color="violet">
                 <DetailItem icon={DollarSign} label="Subtotal" value={formatCurrency(invoice.subtotal)} />
                 <DetailItem icon={DollarSign} label="IVA" value={formatCurrency(invoice.vat)} />
@@ -374,40 +462,54 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                   value={formatCurrency(invoice.total)}
                   valueClass="text-lg font-bold"
                 />
-                <DetailItem
-                  icon={CheckCircle}
-                  label="Monto Pagado"
-                  value={formatCurrency(paidAmount)}
-                  valueClass="text-green-600"
-                />
-                <DetailItem
-                  icon={AlertTriangle}
-                  label="Monto Pendiente"
-                  value={formatCurrency(pendingAmount)}
-                  valueClass={pendingAmount > 0 ? 'text-orange-600' : 'text-green-600'}
-                />
-                {invoice.paymentDate && (
+                {!isCancelled && (
+                  <DetailItem
+                    icon={CheckCircle}
+                    label="Monto Pagado"
+                    value={formatCurrency(paidAmount)}
+                    valueClass="text-green-600"
+                  />
+                )}
+                {!isCancelled && (
+                  <DetailItem
+                    icon={AlertTriangle}
+                    label="Monto Pendiente"
+                    value={formatCurrency(pendingAmount)}
+                    valueClass={pendingAmount > 0 ? 'text-orange-600' : 'text-green-600'}
+                  />
+                )}
+                {isCancelled && (
+                  <DetailItem
+                    icon={AlertTriangle}
+                    label="Estado Financiero"
+                    value={<span className="text-rose-600 font-semibold">Anulada con NC</span>}
+                    isFullWidth
+                  />
+                )}
+                {invoice.paymentDate && !isCancelled && (
                   <DetailItem icon={Calendar} label="Fecha de Pago" value={formatSafeDate(invoice.paymentDate)} />
                 )}
               </DetailSection>
 
-              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.emerald.border} ${sectionColorConfig.emerald.bg} p-4`}>
-                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.emerald.title}`}>
-                  <div className={`p-1 rounded ${sectionColorConfig.emerald.iconBg}`}>
-                    <CreditCard className="w-4 h-4" />
+              {!isCancelled && (
+                <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.emerald.border} ${sectionColorConfig.emerald.bg} p-4`}>
+                  <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.emerald.title}`}>
+                    <div className={`p-1 rounded ${sectionColorConfig.emerald.iconBg}`}>
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    Progreso de Pago
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {formatCurrency(paidAmount)} de {formatCurrency(invoice.total)}
+                      </span>
+                      <span className="font-medium text-foreground">{paymentPercentage}%</span>
+                    </div>
+                    <Progress value={paymentPercentage} className="h-3" />
                   </div>
-                  Progreso de Pago
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {formatCurrency(paidAmount)} de {formatCurrency(invoice.total)}
-                    </span>
-                    <span className="font-medium text-foreground">{paymentPercentage}%</span>
-                  </div>
-                  <Progress value={paymentPercentage} className="h-3" />
                 </div>
-              </div>
+              )}
             </div>
           </TabsContent>
 
