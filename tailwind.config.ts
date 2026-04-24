@@ -57,27 +57,28 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// TMS colors - Sistema unificado
+				// TMS colors → ahora todos apuntan al primary (violeta) para mantener compatibilidad
+				// con clases legacy bg-tms-green / text-tms-green dispersas en la app.
 				tms: {
-					green: '84 100% 58%',        /* #9cfa24 */
-					'green-light': '84 100% 65%',  /* #a1fb3d */
-					'green-dark': '84 100% 45%',   /* #7ae01b */
+					green: 'hsl(var(--primary))',
+					'green-light': 'hsl(var(--primary) / 0.85)',
+					'green-dark': 'hsl(var(--primary-hover))',
 					status: {
-						pending: '45 93% 47%',     /* #f59e0b */
-						closed: '217 91% 60%',     /* #3b82f6 */
-						invoiced: '142 76% 36%',   /* #10b981 */
-						overdue: '0 84% 60%'       /* #ef4444 */
+						pending: 'hsl(var(--warning))',
+						closed: 'hsl(var(--info))',
+						invoiced: 'hsl(var(--success))',
+						overdue: 'hsl(var(--danger))'
 					}
 				},
-				// Sidebar colors - Colores para grupos de navegación
+				// Sidebar — colores semánticos por grupo de navegación (no marca)
 				sidebar: {
-					principal: '84 100% 58%',      /* Verde lima - Principal */
-					operaciones: '217 91% 60%',    /* Azul - Operaciones */
-					recursos: '25 95% 53%',        /* Naranja - Recursos */
-					inventario: '271 81% 56%',     /* Púrpura - Inventario */
-					finanzas: '142 76% 36%',       /* Verde esmeralda - Finanzas */
-					analisis: '330 81% 60%',       /* Rosa - Análisis */
-					configuracion: '215 16% 47%'   /* Gris - Configuración */
+					principal: 'hsl(var(--primary))',
+					operaciones: '217 91% 60%',
+					recursos: '25 95% 53%',
+					inventario: '271 81% 56%',
+					finanzas: '142 76% 36%',
+					analisis: '330 81% 60%',
+					configuracion: '215 16% 47%'
 				},
 				// Color palette - HSL format
 				slate: {
