@@ -295,3 +295,139 @@ body {
     --muted-foreground: 210 40% 30%;
   }
 }
+
+/* =====================================================================
+   GLOBAL THEME ENFORCEMENT (Definitive Fix)
+   --------------------------------------------------------------------
+   Many legacy components use hardcoded Tailwind colors (bg-white,
+   text-black, bg-gray-*, text-gray-*, border-gray-*) that break in
+   dark mode and produce unreadable contrast. Instead of refactoring
+   210+ files individually, we remap these utilities to semantic
+   design tokens so they respect the current theme automatically.
+   ===================================================================== */
+@layer utilities {
+  /* Surface backgrounds → card/background tokens */
+  .bg-white { background-color: hsl(var(--card)) !important; }
+  .bg-black { background-color: hsl(var(--background)) !important; }
+
+  .bg-gray-50,
+  .bg-gray-100 { background-color: hsl(var(--muted)) !important; }
+  .bg-gray-200,
+  .bg-gray-300 { background-color: hsl(var(--muted)) !important; }
+  .bg-gray-400,
+  .bg-gray-500 { background-color: hsl(var(--muted-foreground) / 0.4) !important; }
+  .bg-gray-600,
+  .bg-gray-700,
+  .bg-gray-800,
+  .bg-gray-900 { background-color: hsl(var(--card)) !important; }
+
+  .bg-slate-50,
+  .bg-slate-100 { background-color: hsl(var(--muted)) !important; }
+  .bg-slate-800,
+  .bg-slate-900 { background-color: hsl(var(--card)) !important; }
+
+  .bg-neutral-50,
+  .bg-neutral-100 { background-color: hsl(var(--muted)) !important; }
+  .bg-neutral-800,
+  .bg-neutral-900 { background-color: hsl(var(--card)) !important; }
+
+  .bg-zinc-50,
+  .bg-zinc-100 { background-color: hsl(var(--muted)) !important; }
+  .bg-zinc-800,
+  .bg-zinc-900 { background-color: hsl(var(--card)) !important; }
+
+  /* Text colors → foreground tokens */
+  .text-white { color: hsl(var(--foreground)) !important; }
+  .text-black { color: hsl(var(--foreground)) !important; }
+
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600 { color: hsl(var(--muted-foreground)) !important; }
+  .text-gray-700,
+  .text-gray-800,
+  .text-gray-900 { color: hsl(var(--foreground)) !important; }
+
+  .text-slate-400,
+  .text-slate-500,
+  .text-slate-600 { color: hsl(var(--muted-foreground)) !important; }
+  .text-slate-700,
+  .text-slate-800,
+  .text-slate-900 { color: hsl(var(--foreground)) !important; }
+
+  .text-neutral-400,
+  .text-neutral-500,
+  .text-neutral-600 { color: hsl(var(--muted-foreground)) !important; }
+  .text-neutral-700,
+  .text-neutral-800,
+  .text-neutral-900 { color: hsl(var(--foreground)) !important; }
+
+  .text-zinc-400,
+  .text-zinc-500,
+  .text-zinc-600 { color: hsl(var(--muted-foreground)) !important; }
+  .text-zinc-700,
+  .text-zinc-800,
+  .text-zinc-900 { color: hsl(var(--foreground)) !important; }
+
+  /* Border colors → border token */
+  .border-gray-100,
+  .border-gray-200,
+  .border-gray-300,
+  .border-gray-400,
+  .border-gray-500,
+  .border-gray-600,
+  .border-gray-700,
+  .border-gray-800,
+  .border-gray-900 { border-color: hsl(var(--border)) !important; }
+
+  .border-slate-200,
+  .border-slate-300,
+  .border-slate-700,
+  .border-slate-800 { border-color: hsl(var(--border)) !important; }
+
+  .border-neutral-200,
+  .border-neutral-300,
+  .border-neutral-700,
+  .border-neutral-800 { border-color: hsl(var(--border)) !important; }
+
+  .border-zinc-200,
+  .border-zinc-300,
+  .border-zinc-700,
+  .border-zinc-800 { border-color: hsl(var(--border)) !important; }
+
+  .border-white { border-color: hsl(var(--border)) !important; }
+  .border-black { border-color: hsl(var(--border)) !important; }
+
+  /* Hover variants */
+  .hover\:bg-white:hover { background-color: hsl(var(--card)) !important; }
+  .hover\:bg-gray-50:hover,
+  .hover\:bg-gray-100:hover,
+  .hover\:bg-gray-200:hover { background-color: hsl(var(--muted)) !important; }
+  .hover\:bg-gray-700:hover,
+  .hover\:bg-gray-800:hover { background-color: hsl(var(--accent)) !important; }
+  .hover\:text-white:hover,
+  .hover\:text-black:hover { color: hsl(var(--foreground)) !important; }
+  .hover\:text-gray-700:hover,
+  .hover\:text-gray-800:hover,
+  .hover\:text-gray-900:hover { color: hsl(var(--foreground)) !important; }
+
+  /* Legacy TMS classes → semantic primary/success */
+  .bg-tms-green,
+  .bg-tms-primary { background-color: hsl(var(--primary)) !important; color: hsl(var(--primary-foreground)) !important; }
+  .text-tms-green,
+  .text-tms-primary { color: hsl(var(--primary)) !important; }
+  .border-tms-green,
+  .border-tms-primary { border-color: hsl(var(--primary)) !important; }
+  .hover\:bg-tms-green:hover,
+  .hover\:bg-tms-primary:hover { background-color: hsl(var(--primary) / 0.9) !important; }
+
+  /* CRITICAL: Anything on a primary/violet background must use primary-foreground */
+  [class*="bg-primary"]:not([class*="bg-primary-foreground"]),
+  [class*="bg-violet-"],
+  [class*="bg-purple-6"],
+  [class*="bg-purple-7"],
+  [class*="bg-purple-8"],
+  [class*="bg-purple-9"] {
+    color: hsl(var(--primary-foreground));
+  }
+}
