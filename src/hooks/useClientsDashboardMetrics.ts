@@ -24,7 +24,8 @@ const fetchPendingInvoices = async () => {
   const { data, error } = await supabase
     .from('invoices')
     .select('total, status, remaining_amount')
-    .in('status', ['sent', 'overdue', 'partial']);
+    .in('status', ['sent', 'overdue', 'partial'])
+    .neq('status', 'cancelled');
   if (error) throw error;
   return data || [];
 };

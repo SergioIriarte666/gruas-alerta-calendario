@@ -66,11 +66,13 @@ export const useClientInvoices = (clientId: string | null) => {
         }
     }, [clientId, fetchInvoicesByClient]);
     
-    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0);
-    const paidInvoices = invoices.filter(inv => inv.status === 'paid');
+    // Excluir facturas anuladas (NC) de los cálculos financieros
+    const activeInvoices = invoices.filter(inv => inv.status !== 'cancelled');
+    const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + inv.total, 0);
+    const paidInvoices = activeInvoices.filter(inv => inv.status === 'paid');
     const totalPaid = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
     const pendingAmount = totalInvoiced - totalPaid;
-    const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').length;
+    const overdueInvoices = activeInvoices.filter(inv => inv.status === 'overdue').length;
 
     const invoiceMetrics = {
         totalInvoiced,

@@ -123,6 +123,7 @@ export const useInvoiceCancellation = () => {
         .from('invoices')
         .update({ 
           status: 'cancelled',
+          paid_amount: invoice.total,
           updated_at: new Date().toISOString()
         })
         .eq('id', data.invoiceId);

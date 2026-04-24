@@ -77,15 +77,17 @@ const InvoiceExportModal = ({
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    const totalInvoiced = filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
-    const totalPaid = filteredInvoices.reduce((sum, inv) => {
+    // Excluir facturas anuladas (NC) del cálculo de pendientes/total
+    const activeInvoices = filteredInvoices.filter(inv => inv.status !== 'cancelled');
+    const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+    const totalPaid = activeInvoices.reduce((sum, inv) => {
       if (inv.status === 'paid') {
         return sum + Number(inv.total || 0);
       }
       return sum;
     }, 0);
     const pendingAmount = totalInvoiced - totalPaid;
-    const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue').length;
+    const overdueInvoices = activeInvoices.filter(inv => inv.status === 'overdue').length;
     
     return {
       totalInvoiced,
