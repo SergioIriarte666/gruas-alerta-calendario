@@ -421,13 +421,18 @@ body {
   .hover\:bg-tms-green:hover,
   .hover\:bg-tms-primary:hover { background-color: hsl(var(--primary) / 0.9) !important; }
 
-  /* CRITICAL: Anything on a primary/violet background must use primary-foreground */
-  [class*="bg-primary"]:not([class*="bg-primary-foreground"]),
-  [class*="bg-violet-"],
-  [class*="bg-purple-6"],
-  [class*="bg-purple-7"],
-  [class*="bg-purple-8"],
-  [class*="bg-purple-9"] {
-    color: hsl(var(--primary-foreground));
+  /* Active state only: never infer text color from raw className substrings,
+     because selectors like [class*="bg-primary"] also match
+     `data-[state=active]:bg-primary` on inactive elements. */
+  [data-state="active"].bg-primary,
+  [data-state="active"].bg-tms-green,
+  [data-state="active"].bg-tms-primary,
+  [data-state="active"].bg-violet-600,
+  [data-state="active"].bg-violet-700,
+  [data-state="active"].bg-purple-600,
+  [data-state="active"].bg-purple-700,
+  [data-state="active"].bg-purple-800,
+  [data-state="active"].bg-purple-900 {
+    color: hsl(var(--primary-foreground)) !important;
   }
 }
