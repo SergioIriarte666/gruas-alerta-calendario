@@ -10,31 +10,18 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
-      "data-[state=unchecked]:bg-gray-600 data-[state=checked]:bg-tms-green",
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+      "data-[state=unchecked]:bg-muted data-[state=checked]:border-primary data-[state=checked]:bg-primary",
       className
     )}
     {...props}
     ref={ref}
-    style={{ 
-      backgroundColor: props.checked ? '#9cfa24' : '#6b7280',  // Verde brillante o gris más claro
-      border: '2px solid #9ca3af'  // Borde gris claro visible
-    }}
-    onCheckedChange={(checked) => {
-      console.log('Switch state changed:', checked);
-      props.onCheckedChange?.(checked);
-    }}
   >
     <SwitchPrimitives.Thumb
       className={cn(
         "pointer-events-none block h-5 w-5 rounded-full shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0",
-        "bg-white"
+        "bg-background data-[state=checked]:bg-primary-foreground"
       )}
-      style={{
-        backgroundColor: '#ffffff',
-        border: '2px solid #374151',  // Borde gris oscuro para contraste
-        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'  // Sombra para destacar
-      }}
     />
   </SwitchPrimitives.Root>
 ))
