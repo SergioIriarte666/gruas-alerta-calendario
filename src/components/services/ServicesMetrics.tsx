@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReportMetricCard } from '../reports/shared/ReportMetricCard';
+import { MetricCard } from '@/components/ui/metric-card';
 import { 
   Truck, 
   DollarSign, 
@@ -18,36 +18,36 @@ interface ServicesMetricsProps {
 export const ServicesMetrics = ({ metrics, showSensitiveData = true }: ServicesMetricsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-      <ReportMetricCard
+      <MetricCard
         icon={Truck}
         title="Total Servicios"
-        value={`${metrics.totalServices} servicios`}
+        value={metrics.totalServices}
         description={`Valor: ${showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}`}
-        valueClassName="text-blue-400"
+        tone="info"
       />
       
-      <ReportMetricCard
+      <MetricCard
         icon={TrendingDown}
         title="Gastos"
         value={showSensitiveData ? formatCurrency(metrics.totalCosts) : '••••••'}
         description="Costos operativos del período"
-        valueClassName="text-red-400"
+        tone="danger"
       />
       
-      <ReportMetricCard
+      <MetricCard
         icon={DollarSign}
         title="Total Generado"
         value={showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}
         description="Ingresos totales por servicios"
-        valueClassName="text-green-400"
+        tone="success"
       />
       
-      <ReportMetricCard
+      <MetricCard
         icon={metrics.netProfit >= 0 ? TrendingUp : TrendingDown}
         title="Balance"
         value={showSensitiveData ? formatCurrency(metrics.netProfit) : '••••••'}
         description={`Margen: ${showSensitiveData ? metrics.profitMargin.toFixed(1) + '%' : '••••'}`}
-        valueClassName="text-violet-600"
+        tone={metrics.netProfit >= 0 ? 'primary' : 'danger'}
       />
     </div>
   );
