@@ -40,21 +40,21 @@ const CraneInventoryIndicators = ({ crane }: { crane: Crane }) => {
       </div>
       
       <div className="flex items-center gap-1 text-xs">
-        <DollarSign className="w-3 h-3 text-green-600" />
+        <DollarSign className="w-3 h-3 text-success" />
         <span className="text-foreground">${(metrics.totalValue / 1000).toFixed(0)}K</span>
       </div>
 
       {metrics.recentPurchases > 0 && (
         <div className="flex items-center gap-1 text-xs">
-          <TrendingUp className="w-3 h-3 text-blue-600" />
-          <span className="text-blue-600">{metrics.recentPurchases} recientes</span>
+          <TrendingUp className="w-3 h-3 text-info" />
+          <span className="text-info">{metrics.recentPurchases} recientes</span>
         </div>
       )}
 
       {metrics.pendingMaintenanceAlerts > 0 && (
         <div className="flex items-center gap-1 text-xs">
-          <AlertTriangle className="w-3 h-3 text-yellow-600" />
-          <span className="text-yellow-600">{metrics.pendingMaintenanceAlerts} alertas</span>
+          <AlertTriangle className="w-3 h-3 text-warning" />
+          <span className="text-warning">{metrics.pendingMaintenanceAlerts} alertas</span>
         </div>
       )}
     </div>
@@ -81,7 +81,7 @@ export const CranesMobileView = ({
           <p className="text-muted-foreground mb-4">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewCrane} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewCrane}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar Grúa
           </Button>
@@ -99,7 +99,7 @@ export const CranesMobileView = ({
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primera grúa al sistema
           </p>
-          <Button onClick={onNewCrane} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewCrane}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primera Grúa
           </Button>
@@ -129,8 +129,8 @@ export const CranesMobileView = ({
               <Badge 
                 variant={crane.isActive ? "default" : "secondary"}
                 className={crane.isActive 
-                  ? "bg-tms-green text-black" 
-                  : "bg-gray-600 text-white"
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground"
                 }
               >
                 {crane.isActive ? 'Activa' : 'Inactiva'}
@@ -166,7 +166,7 @@ export const CranesMobileView = ({
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onViewDetails(crane)}
                 className={cn(
-                  "text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/50 touch-target",
+                  "border border-info/30 text-info hover:bg-info-soft/60 hover:text-info touch-target",
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
@@ -179,7 +179,7 @@ export const CranesMobileView = ({
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onEdit(crane)}
                 className={cn(
-                  "text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50 touch-target",
+                  "border border-primary/30 text-primary hover:bg-primary-soft hover:text-primary touch-target",
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
@@ -192,7 +192,7 @@ export const CranesMobileView = ({
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onDelete(crane)}
                 className={cn(
-                  "text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50 touch-target",
+                  "border border-danger/30 text-danger hover:bg-danger-soft/70 hover:text-danger touch-target",
                   isMobile ? "w-full" : "px-3"
                 )}
               >
