@@ -317,8 +317,8 @@ export const translateDatabaseError = (error: any): string => {
     }
   }
   
-  // Si no encuentra una traducción específica, devolver mensaje genérico
-  return 'Error al procesar la solicitud. Por favor, verifique los datos e intente nuevamente';
+  // Si no encuentra una traducción específica, devolver el error real
+  return errorMessage.trim() || 'Error al procesar la solicitud. Por favor, verifique los datos e intente nuevamente';
 };
 
 /**

@@ -5,6 +5,11 @@ import { useServiceManager } from './services/useServiceManager';
 import { useQueryClient } from '@tanstack/react-query';
 import { refreshAllServiceData } from '@/utils/globalDataRefresh';
 
+interface CreateServiceOptions {
+  silent?: boolean;
+  tolerateResourceSyncFailure?: boolean;
+}
+
 export const useServices = () => {
   const { services, loading, refetch } = useServiceFetcher();
   const { createService: createServiceMutation, updateService: updateServiceMutation, deleteService: deleteServiceMutation } = useServiceManager();
@@ -22,8 +27,8 @@ export const useServices = () => {
       .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
   };
 
-  const createService = async (serviceData: ServiceFormData): Promise<Service> => {
-    const newService = await createServiceMutation(serviceData);
+  const createService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {
+    const newService = await createServiceMutation(serviceData, options);
     await refetch();
     return newService;
   };

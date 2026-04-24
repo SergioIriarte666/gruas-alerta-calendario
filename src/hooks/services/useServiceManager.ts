@@ -7,6 +7,34 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 
+interface CreateServiceOptions {
+  silent?: boolean;
+  tolerateResourceSyncFailure?: boolean;
+}
+
+const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') => {
+  if (!error) return fallback;
+  if (typeof error === 'string' && error.trim()) return error;
+
+  const parts = [error.message, error.details, error.hint]
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+  if (parts.length > 0) {
+    return parts.join(' · ');
+  }
+
+  if (typeof error.code === 'string' && error.code.trim()) {
+    return `Código ${error.code}`;
+  }
+
+  try {
+    const serialized = JSON.stringify(error);
+    return serialized && serialized !== '{}' ? serialized : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 // Función helper para detectar comisiones existentes y comparar con nuevas
 const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
   const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
@@ -180,7 +208,13 @@ export const useServiceManager = () => {
 
   // CREAR SERVICIO
   const createServiceMutation = useMutation({
-    mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
+    mutationFn: async ({
+      serviceData,
+      options,
+    }: {
+      serviceData: ServiceFormData;
+      options?: CreateServiceOptions;
+    }): Promise<Service> => {
       try {
 
         // Obtener configuración del tipo de servicio para validaciones condicionales
@@ -302,23 +336,12 @@ export const useServiceManager = () => {
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
-            creator:profiles!services_created_by_fkey(id, full_name, email),
-            service_resources!service_resources_service_id_fkey(
-              id,
-              resource_type,
-              operator_id,
-              crane_id,
-              is_primary,
-              commission_amount,
-              role,
-              operator:operators(*),
-              crane:cranes(*)
-            )
+            creator:profiles!services_created_by_fkey(id, full_name, email)
           `)
           .single();
 
         if (serviceError) {
-          throw serviceError;
+          throw new Error(getReadableSupabaseError(serviceError));
         }
         
         // Si hay operadores, crearlos en service_resources
@@ -339,8 +362,18 @@ export const useServiceManager = () => {
               
             if (operatorError) throw operatorError;
           });
-          
-          await Promise.all(operatorPromises);
+
+          try {
+            await Promise.all(operatorPromises);
+          } catch (resourceError) {
+            const readableResourceError = getReadableSupabaseError(resourceError);
+
+            if (!options?.tolerateResourceSyncFailure) {
+              throw new Error(readableResourceError);
+            }
+
+            console.error('[useServiceManager - createService] Non-blocking service_resources error:', resourceError);
+          }
         }
 
         // Si hay costos, crearlos
@@ -441,16 +474,28 @@ export const useServiceManager = () => {
 
       } catch (error) {
         console.error('Error en creación de servicio:', error);
-        throw error;
+        throw error instanceof Error
+          ? error
+          : new Error(getReadableSupabaseError(error, 'No se pudo crear el servicio'));
       }
     },
-    onSuccess: () => {
-      toast.success('Servicio creado exitosamente');
+    onSuccess: (_data, variables) => {
+      if (!variables.options?.silent) {
+        toast.success('Servicio creado exitosamente');
+      }
     },
-    onError: createMutationErrorHandler({
-      title: 'Error al Crear Servicio',
-      context: 'useServiceManager - createService'
-    })
+    onError: (error: any, variables) => {
+      console.error('[useServiceManager - createService] Error:', error);
+
+      if (variables.options?.silent) {
+        return;
+      }
+
+      createMutationErrorHandler({
+        title: 'Error al Crear Servicio',
+        context: 'useServiceManager - createService'
+      })(error);
+    }
   });
 
   // ACTUALIZAR SERVICIO
@@ -1202,8 +1247,8 @@ export const useServiceManager = () => {
   const isLoading = createServiceMutation.isPending || updateServiceMutation.isPending || deleteServiceMutation.isPending;
 
   // Funciones públicas
-  const createService = async (serviceData: ServiceFormData): Promise<Service> => {
-    return createServiceMutation.mutateAsync(serviceData);
+  const createService = async (serviceData: ServiceFormData, options?: CreateServiceOptions): Promise<Service> => {
+    return createServiceMutation.mutateAsync({ serviceData, options });
   };
 
   const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service> => {
