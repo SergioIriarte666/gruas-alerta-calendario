@@ -1,18 +1,22 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Database, Zap, RefreshCw, FileCode, FileText } from 'lucide-react';
+import { Database, Zap, RefreshCw, FileCode, FileText, Download } from 'lucide-react';
 import { BackupProgressDisplay } from './BackupProgressDisplay';
-import type { BackupProgress } from '@/types/backup';
+import type { BackupProgress, BackupResult } from '@/types/backup';
 
 interface BackupControlsSectionProps {
   progress: BackupProgress;
   onGenerateBackup: (type: 'full' | 'quick', format?: 'json' | 'sql') => void;
+  lastGeneratedBackup?: BackupResult | null;
+  onDownloadBackup?: () => void;
 }
 
 export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
   progress,
-  onGenerateBackup
+  onGenerateBackup,
+  lastGeneratedBackup,
+  onDownloadBackup
 }) => {
   return (
     <div className="space-y-4">
@@ -88,6 +92,15 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
       </div>
 
       <BackupProgressDisplay progress={progress} />
+
+      {lastGeneratedBackup?.fileName && onDownloadBackup ? (
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={onDownloadBackup}>
+            <Download className="mr-2 h-4 w-4" />
+            Descargar archivo
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 };

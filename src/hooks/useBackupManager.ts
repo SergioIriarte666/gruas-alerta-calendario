@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { BackupLog, BackupProgress, BackupResult } from '@/types/backup';
+import { downloadTextFile } from '@/utils/fileDownload';
 
 export const useBackupManager = () => {
   const [progress, setProgress] = useState<BackupProgress>({
@@ -11,6 +12,7 @@ export const useBackupManager = () => {
     progress: 0,
     stage: 'idle'
   });
+  const [lastGeneratedBackup, setLastGeneratedBackup] = useState<BackupResult | null>(null);
 
   // Obtener historial de respaldos
   const { data: backupLogs, refetch: refetchLogs, error } = useQuery({
@@ -129,25 +131,11 @@ export const useBackupManager = () => {
 
   const downloadBackup = useCallback((content: string, fileName: string, contentType: string) => {
     try {
-      const blob = new Blob([content], { type: contentType });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      const format = fileName.endsWith('.sql') ? 'SQL' : 'JSON';
-      toast.success(`Respaldo ${format} descargado`, {
-        description: `Archivo ${fileName} descargado exitosamente.`
-      });
+      downloadTextFile({ content, fileName, contentType });
+      return true;
     } catch (error) {
       console.error('Error downloading backup:', error);
-      toast.error('Error en descarga', {
-        description: 'No se pudo descargar el archivo de respaldo.'
-      });
+      return false;
     }
   }, []);
 
@@ -159,14 +147,21 @@ export const useBackupManager = () => {
       const result = await generateBackup(type, format);
       
       if (result.success && result.content && result.fileName && result.type) {
-        downloadBackup(result.content, result.fileName, result.type);
+        setLastGeneratedBackup(result);
+        const downloadStarted = downloadBackup(result.content, result.fileName, result.type);
         
         const formatLabel = format === 'sql' ? 'SQL' : 'JSON';
         const typeLabel = type === 'full' ? 'completo' : 'rápido';
         
-        toast.success('Respaldo generado', {
-          description: `Respaldo ${typeLabel} (${formatLabel}) generado y descargado exitosamente.`
-        });
+        if (downloadStarted) {
+          toast.success('Respaldo listo', {
+            description: `Respaldo ${typeLabel} (${formatLabel}) generado. Si el navegador bloquea la descarga automática, use el botón “Descargar archivo”.`
+          });
+        } else {
+          toast.error('Descarga no iniciada', {
+            description: 'El archivo se generó, pero el navegador no inició la descarga automática. Use el botón “Descargar archivo”.'
+          });
+        }
       } else {
         toast.error('Error en respaldo', {
           description: result.error || 'No se pudo generar el respaldo.'
@@ -182,6 +177,7 @@ export const useBackupManager = () => {
 
   return {
     progress,
+    lastGeneratedBackup,
     backupLogs,
     generateBackup,
     downloadBackup,

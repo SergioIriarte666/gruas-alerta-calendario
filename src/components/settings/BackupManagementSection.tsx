@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Database, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Database, AlertTriangle, RefreshCw, Download } from 'lucide-react';
 import { useBackupManager } from '@/hooks/useBackupManager';
 import { BackupStatusSection } from './backup/BackupStatusSection';
 import { BackupControlsSection } from './backup/BackupControlsSection';
@@ -14,6 +14,8 @@ export const BackupManagementSection = () => {
   const {
     progress,
     backupLogs,
+    lastGeneratedBackup,
+    downloadBackup,
     generateAndDownloadBackup,
     error: hookError,
     refetchLogs
@@ -49,6 +51,18 @@ export const BackupManagementSection = () => {
         <BackupControlsSection 
           progress={progress}
           onGenerateBackup={generateAndDownloadBackup}
+          lastGeneratedBackup={lastGeneratedBackup}
+          onDownloadBackup={() => {
+            if (!lastGeneratedBackup?.content || !lastGeneratedBackup.fileName || !lastGeneratedBackup.type) {
+              return;
+            }
+
+            downloadBackup(
+              lastGeneratedBackup.content,
+              lastGeneratedBackup.fileName,
+              lastGeneratedBackup.type,
+            );
+          }}
         />
 
         <Separator />
@@ -56,13 +70,30 @@ export const BackupManagementSection = () => {
         <BackupHistorySection backupLogs={backupLogs} />
 
         {/* Información adicional */}
-        <Alert 
-          className="border-info/30 bg-info-soft"
-        >
+        <Alert className="border-info/30 bg-info-soft">
           <AlertTriangle className="w-4 h-4 text-info" />
-          <AlertDescription className="text-sm text-foreground">
-            <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema. 
-            Los respaldos completos permiten restauración total en caso de emergencia.
+          <AlertDescription className="flex flex-col gap-3 text-sm text-foreground sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema.
+              {' '}Los respaldos completos permiten restauración total en caso de emergencia.
+            </span>
+
+            {lastGeneratedBackup?.content && lastGeneratedBackup.fileName && lastGeneratedBackup.type ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => downloadBackup(
+                  lastGeneratedBackup.content!,
+                  lastGeneratedBackup.fileName!,
+                  lastGeneratedBackup.type!,
+                )}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Descargar archivo
+              </Button>
+            ) : null}
           </AlertDescription>
         </Alert>
       </CardContent>
