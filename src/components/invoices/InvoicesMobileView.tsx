@@ -50,6 +50,7 @@ const getStatusBadge = (status: string) => {
 
 const getDaysUntilDueBadge = (dueDate: any, status: string) => {
   if (status === 'paid') return <Badge className="bg-green-500 text-white text-xs">✓ Pagada</Badge>;
+  if (status === 'cancelled') return <Badge className="bg-muted text-muted-foreground text-xs">Anulada</Badge>;
   if (!dueDate) return null;
   try {
     const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);

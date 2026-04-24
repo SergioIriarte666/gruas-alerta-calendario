@@ -63,6 +63,11 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
     return <Badge className="bg-green-500 text-white">✓ Pagada</Badge>;
   }
 
+  // Si está anulada con NC, no aplica vencimiento
+  if (status === 'cancelled') {
+    return <Badge className="bg-muted text-muted-foreground">Anulada</Badge>;
+  }
+
   if (!dueDate) return <Badge className="bg-muted text-foreground">Sin fecha</Badge>;
   
   try {
