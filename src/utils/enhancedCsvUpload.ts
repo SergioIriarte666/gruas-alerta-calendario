@@ -189,12 +189,18 @@ export class EnhancedCSVUploader {
             headers.forEach((header, headerIndex) => {
               let value = row[headerIndex];
               
-              // Handle date conversion for Excel
-              if (typeof value === 'string' && value.includes('/')) {
-                const date = new Date(value);
-                if (!isNaN(date.getTime())) {
-                  value = toLocalDateString(date);
-                  console.log(`📅 Converted date ${row[headerIndex]} to ${value}`);
+              // Handle date conversion for Excel (DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD)
+              if (typeof value === 'string') {
+                const trimmed = value.trim();
+                const ddmmyyyy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                const yyyymmdd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+                if (ddmmyyyy) {
+                  const [, d, m, y] = ddmmyyyy;
+                  value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                  console.log(`📅 Converted date ${trimmed} to ${value}`);
+                } else if (yyyymmdd) {
+                  const [, y, m, d] = yyyymmdd;
+                  value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
                 }
               }
               
