@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
@@ -217,7 +218,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SessionTimeoutProvider warningMinutes={20} timeoutMinutes={30}>
           <UserProvider>
@@ -231,6 +233,7 @@ export default function App() {
           </UserProvider>
         </SessionTimeoutProvider>
       </AuthProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
