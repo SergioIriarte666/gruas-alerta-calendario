@@ -10,6 +10,9 @@ import { Calendar, Clock, DollarSign, Package, PackageMinus, Plus } from 'lucide
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Crane } from '@/types';
+import { MetricCard } from '@/components/ui/metric-card';
+import { SectionCard } from '@/components/ui/section-card';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface CranePartsProps {
   crane: Crane;
@@ -129,66 +132,20 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <PackageMinus className="w-8 h-8 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Consumos</p>
-                <p className="text-2xl font-bold text-foreground">{consumptions.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Consumido</p>
-                <p className="text-2xl font-bold text-red-400">-${formatInt(totalConsumed)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Último Consumo</p>
-                <p className="text-2xl font-bold text-foreground">{lastDate ? format(lastDate, 'dd/MM', { locale: es }) : '-'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-orange-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Últimos 30 días</p>
-                <p className="text-2xl font-bold text-foreground">{recentCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <MetricCard title="Total Consumos" value={consumptions.length} icon={PackageMinus} tone="primary" />
+        <MetricCard title="Total Consumido" value={`-$${formatInt(totalConsumed)}`} icon={DollarSign} tone="danger" />
+        <MetricCard title="Último Consumo" value={lastDate ? format(lastDate, 'dd/MM', { locale: es }) : '-'} icon={Calendar} tone="info" />
+        <MetricCard title="Últimos 30 días" value={recentCount} icon={Clock} tone="warning" />
       </div>
 
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-white">Consumos de Inventario</h3>
-          <p className="text-gray-400">Registro de consumos para la grúa {crane.licensePlate}</p>
+          <h3 className="text-lg font-semibold text-foreground">Consumos de Inventario</h3>
+          <p className="text-muted-foreground">Registro de consumos para la grúa {crane.licensePlate}</p>
         </div>
-        <Button
-          onClick={() => setIsExitOpen(true)}
-          className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
-        >
+        <Button onClick={() => setIsExitOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Registrar Consumo
         </Button>
@@ -196,56 +153,53 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-400">Cargando consumos...</div>
+          <div className="text-muted-foreground">Cargando consumos...</div>
         </div>
       ) : consumptions.length === 0 ? (
-        <Card className="bg-white/5 border-tms-green/30">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Package className="w-16 h-16 text-gray-500 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No hay registros</h3>
-            <p className="text-gray-400 text-center mb-6">
+        <SectionCard className="border-border" contentClassName="py-12">
+          <div className="flex flex-col items-center justify-center">
+            <Package className="mb-4 h-16 w-16 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold text-foreground">No hay registros</h3>
+            <p className="mb-6 text-center text-muted-foreground">
               Comienza registrando el primer consumo de inventario para esta grúa.
             </p>
-            <Button
-              onClick={() => setIsExitOpen(true)}
-              className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
-            >
+            <Button onClick={() => setIsExitOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Registrar Primer Consumo
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </SectionCard>
       ) : (
         <div className="space-y-4">
           {consumptions.map((m: any) => (
-            <Card key={m.id} className="bg-white/5 border-tms-green/30 hover:bg-white/10 transition-colors">
+            <Card key={m.id} className="border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-white">{(m.inventory_items as any)?.name || 'Producto'}</h4>
+                        <h4 className="text-lg font-semibold text-foreground">{(m.inventory_items as any)?.name || 'Producto'}</h4>
                         <div className="flex items-center gap-4 mt-2">
-                          <span className="text-sm font-medium text-red-400">
+                          <StatusBadge tone="overdue">
                             -{m.quantity} {(m.inventory_items as any)?.unit_of_measure || 'unidad'}
-                          </span>
-                          <span className="text-sm text-gray-400">
+                          </StatusBadge>
+                          <span className="text-sm text-muted-foreground">
                             Unitario: ${formatInt(getDisplayUnitCost(m))}
                           </span>
-                          <span className="text-sm font-medium text-red-400">
+                          <span className="text-sm font-medium text-danger">
                             -{formatInt(getDisplayTotalCost(m))}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         <span>{m.movement_date ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es }) : '-'}</span>
                       </div>
                     </div>
                     {m.reason && (
-                      <p className="text-sm text-gray-400 bg-white/5 p-3 rounded-md">
+                      <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
                         {m.reason}
                       </p>
                     )}
