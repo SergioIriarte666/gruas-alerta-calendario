@@ -75,7 +75,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
           Nuevo Evento
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] calendar-scope">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-foreground">Crear Nuevo Evento</DialogTitle>
         </DialogHeader>

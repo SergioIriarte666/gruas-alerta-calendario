@@ -147,7 +147,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
   ];
 
   return (
-    <div className="space-y-4 vip-pipeline-scope">
+    <div className="space-y-4">
       {/* Overview Card */}
       <Card className="bg-card border-purple-500/20">
         <CardHeader className="pb-3">

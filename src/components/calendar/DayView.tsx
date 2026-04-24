@@ -53,7 +53,7 @@ export const DayView = ({
   };
 
   return (
-    <div className="space-y-4 calendar-scope">
+    <div className="space-y-4">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-foreground mb-2">
           {formatForDisplayLong(selectedDate)}

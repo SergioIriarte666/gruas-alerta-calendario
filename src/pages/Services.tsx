@@ -259,7 +259,7 @@ const Services = () => {
   }
 
   return (
-    <div className="services-scope container mx-auto py-6 space-y-6 bg-white min-h-screen">
+    <div className=" container mx-auto py-6 space-y-6 bg-white min-h-screen">
       {/* Batch Action Bar - show when services are selected */}
       {selectedServiceIds.size > 0 && (
         <ServiceBatchActionBar

@@ -95,7 +95,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }
 
   return (
-    <div className="space-y-4 vip-pipeline-scope">
+    <div className="space-y-4">
       {/* Board Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">Pipeline de Servicios</h2>

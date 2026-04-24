@@ -71,7 +71,7 @@ export const CranesTable = ({
   // Desktop view (unchanged functionality)
   if (cranes.length === 0 && searchTerm) {
     return (
-      <Card className="bg-card border-border cranes-scope">
+      <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
           <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
@@ -89,7 +89,7 @@ export const CranesTable = ({
 
   if (cranes.length === 0) {
     return (
-      <Card className="bg-card border-border cranes-scope">
+      <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
           <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>
@@ -106,7 +106,7 @@ export const CranesTable = ({
   }
 
   return (
-    <Card className="bg-card border-border cranes-scope">
+    <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
           <span>Grúas Registradas ({totalCranes})</span>

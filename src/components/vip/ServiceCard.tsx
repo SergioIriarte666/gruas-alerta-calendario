@@ -52,7 +52,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   };
 
   return (
-    <Card className="bg-card border hover:border-foreground/20 transition-all duration-200 cursor-pointer group vip-pipeline-scope">
+    <Card className="bg-card border hover:border-foreground/20 transition-all duration-200 cursor-pointer group">
       <CardContent className="p-3 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between">

@@ -285,7 +285,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-5xl h-[80vh] bg-card border select-none flex flex-col p-0 vip-pipeline-scope" 
+        className="max-w-5xl h-[80vh] bg-card border select-none flex flex-col p-0" 
         style={{
           position: 'fixed',
           top: '50%',

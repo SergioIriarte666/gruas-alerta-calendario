@@ -80,7 +80,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
   };
 
   return (
-    <div className="space-y-4 calendar-scope">
+    <div className="space-y-4">
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-foreground">

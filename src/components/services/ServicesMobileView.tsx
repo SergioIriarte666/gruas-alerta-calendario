@@ -41,7 +41,7 @@ export const ServicesMobileView = ({
 
   if (services.length === 0) {
     return (
-      <div className="services-scope text-center py-12">
+      <div className=" text-center py-12">
         <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <Truck className="w-8 h-8 text-tms-green" />
         </div>
@@ -69,7 +69,7 @@ export const ServicesMobileView = ({
   }
 
   return (
-    <div className="services-scope space-y-4">
+    <div className=" space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground flex items-center">
           <Truck className="w-5 h-5 text-tms-green mr-2" />
