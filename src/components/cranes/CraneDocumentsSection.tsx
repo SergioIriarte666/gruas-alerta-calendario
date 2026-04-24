@@ -18,6 +18,7 @@ import {
 import { Crane } from '@/types';
 import { useCraneDocuments } from '@/hooks/useCraneDocuments';
 import { parseFromDatabase, getCurrentChileDate, formatForDisplay } from '@/utils/timezoneUtils';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface CraneDocumentsSectionProps {
   crane: Crane;
@@ -97,9 +98,15 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
     const isUploading = uploadingType === type.key;
 
     const statusColors = {
-      success: 'border-green-500/30 bg-green-500/5',
-      warning: 'border-yellow-500/30 bg-yellow-500/5',
-      danger: 'border-red-500/30 bg-red-500/5'
+      success: 'border-success/30 bg-success-soft/40',
+      warning: 'border-warning/30 bg-warning-soft/40',
+      danger: 'border-danger/30 bg-danger-soft/40'
+    };
+
+    const statusLabelColors = {
+      success: 'text-success',
+      warning: 'text-warning',
+      danger: 'text-danger'
     };
 
     const statusIcons = {
@@ -112,21 +119,18 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
 
     return (
       <Card className={`${statusColors[status]} border transition-all hover:border-opacity-50`}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-white flex items-center justify-between">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-foreground">
             <span className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
               {type.label}
             </span>
             {expiryDate && (
               <div className="flex items-center gap-2">
-                <StatusIcon className={`w-4 h-4 ${
-                  status === 'success' ? 'text-green-400' :
-                  status === 'warning' ? 'text-yellow-400' : 'text-red-400'
-                }`} />
-                <Badge variant={status === 'success' ? 'default' : 'destructive'}>
+                  <StatusIcon className={`w-4 h-4 ${statusLabelColors[status]}`} />
+                  <StatusBadge tone={status === 'success' ? 'completed' : status === 'warning' ? 'pending' : 'overdue'}>
                   {daysUntilExpiry} días
-                </Badge>
+                  </StatusBadge>
               </div>
             )}
           </CardTitle>
@@ -135,18 +139,16 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
           {/* Estado actual */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-300">Estado:</span>
-              <span className={
-                document ? 'text-green-400' : 'text-yellow-400'
-              }>
+                <span className="text-muted-foreground">Estado:</span>
+                <span className={document ? 'text-success' : 'text-warning'}>
                 {document ? 'Subido' : 'Sin subir'}
               </span>
             </div>
             
             {expiryDate && (
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-300">Vencimiento:</span>
-                <span className="text-white">
+                <span className="text-muted-foreground">Vencimiento:</span>
+                <span className="text-foreground">
                   {formatForDisplay(parseFromDatabase(expiryDate))}
                 </span>
               </div>
@@ -154,8 +156,8 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
 
             {document && (
               <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-300">Archivo:</span>
-                <span className="text-white truncate max-w-[150px]" title={document.fileName}>
+                <span className="text-muted-foreground">Archivo:</span>
+                <span className="max-w-[150px] truncate text-foreground" title={document.fileName}>
                   {document.fileName}
                 </span>
               </div>
@@ -187,9 +189,9 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
           )}
 
           {/* Formulario de subida */}
-          <div className="space-y-3 pt-3 border-t border-gray-600">
+          <div className="space-y-3 border-t border-border pt-3">
             <div>
-              <Label htmlFor={`file-${type.key}`} className="text-sm text-gray-300">
+              <Label htmlFor={`file-${type.key}`} className="text-sm text-foreground">
                 {document ? 'Actualizar documento' : 'Subir documento'}
               </Label>
               <Input
@@ -205,7 +207,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
             </div>
 
             <div>
-              <Label htmlFor={`expiry-${type.key}`} className="text-sm text-gray-300">
+              <Label htmlFor={`expiry-${type.key}`} className="text-sm text-foreground">
                 Fecha de vencimiento
               </Label>
               <DatePickerInput
@@ -244,7 +246,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando documentos...</div>
+        <div className="text-muted-foreground">Cargando documentos...</div>
       </div>
     );
   }
@@ -253,12 +255,12 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h4 className="text-lg font-medium text-white">Gestión de Documentos</h4>
-          <p className="text-gray-300 text-sm">Sube y gestiona los documentos legales de la grúa</p>
+          <h4 className="text-lg font-medium text-foreground">Gestión de Documentos</h4>
+          <p className="text-sm text-muted-foreground">Sube y gestiona los documentos legales de la grúa</p>
         </div>
-        <Badge variant="outline" className="text-tms-green border-tms-green/50">
+        <StatusBadge tone="info">
           {documents.length} documento{documents.length !== 1 ? 's' : ''} subido{documents.length !== 1 ? 's' : ''}
-        </Badge>
+        </StatusBadge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -272,9 +274,9 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
         const expiryDate = crane[type.craneField] as string;
         return expiryDate && getDaysUntilExpiry(expiryDate) <= 30;
       }) && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5 mt-6">
+        <Card className="mt-6 border-warning/30 bg-warning-soft/40">
           <CardHeader>
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="w-5 h-5" />
               Documentos por Vencer
             </CardTitle>
@@ -288,7 +290,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
                 if (!expiryDate || days > 30) return null;
                 
                 return (
-                  <p key={type.key} className="text-yellow-300 text-sm">
+                  <p key={type.key} className="text-sm text-foreground">
                     • {type.label} {days <= 0 ? 'vencido' : `vence en ${days} días`}
                   </p>
                 );

@@ -32,6 +32,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { createExportFileName } from '@/utils/reports/reportUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { MetricCard } from '@/components/ui/metric-card';
+import { SectionCard } from '@/components/ui/section-card';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface CraneInventoryTabProps {
   crane: Crane;
@@ -67,7 +70,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
   if (metricsLoading || movementsLoading || traceabilityLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-gray-400">Cargando información de inventario...</div>
+        <div className="text-muted-foreground">Cargando información de inventario...</div>
       </div>
     );
   }
@@ -507,11 +510,11 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
   const getMovementTypeIcon = (type: string) => {
     switch (type) {
       case 'entry':
-        return <ArrowUpDown className="w-4 h-4 text-green-400" />;
+        return <ArrowUpDown className="w-4 h-4 text-success" />;
       case 'exit':
-        return <ArrowUpDown className="w-4 h-4 text-red-400" />;
+        return <ArrowUpDown className="w-4 h-4 text-danger" />;
       default:
-        return <ArrowUpDown className="w-4 h-4 text-gray-400" />;
+        return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -584,51 +587,27 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       </Card>
 
       {/* Resumen de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Valor Instalado</p>
-                <p className="text-2xl font-bold text-green-400">
-                  +${(metrics?.installedPartsValue || 0).toLocaleString('es-CL')}
-                </p>
-                <p className="text-xs text-muted-foreground">{metrics?.totalPartsInstalled || 0} piezas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <TrendingDown className="w-8 h-8 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Valor Consumido</p>
-                <p className="text-2xl font-bold text-red-400">
-                  -${(metrics?.consumptionValue || 0).toLocaleString('es-CL')}
-                </p>
-                <p className="text-xs text-muted-foreground">{metrics?.totalInventoryConsumptions || 0} consumos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Balance Neto</p>
-                <p className="text-2xl font-bold text-blue-400">
-                  ${((metrics?.installedPartsValue || 0) - (metrics?.consumptionValue || 0)).toLocaleString('es-CL')}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Valor Instalado"
+          value={`+$${(metrics?.installedPartsValue || 0).toLocaleString('es-CL')}`}
+          description={`${metrics?.totalPartsInstalled || 0} piezas`}
+          icon={TrendingUp}
+          tone="success"
+        />
+        <MetricCard
+          title="Valor Consumido"
+          value={`-$${(metrics?.consumptionValue || 0).toLocaleString('es-CL')}`}
+          description={`${metrics?.totalInventoryConsumptions || 0} consumos`}
+          icon={TrendingDown}
+          tone="danger"
+        />
+        <MetricCard
+          title="Balance Neto"
+          value={`$${((metrics?.installedPartsValue || 0) - (metrics?.consumptionValue || 0)).toLocaleString('es-CL')}`}
+          icon={DollarSign}
+          tone="info"
+        />
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -675,98 +654,81 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <span className="text-sm text-muted-foreground">Trazabilidad de Piezas</span>
-            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
+            <StatusBadge tone="completed">
               ✅ Sincronizada
-            </Badge>
+            </StatusBadge>
           </div>
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <span className="text-sm text-muted-foreground">Costos de Mantenimiento</span>
-            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
+            <StatusBadge tone="completed">
               ✅ Actualizado
-            </Badge>
+            </StatusBadge>
           </div>
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <span className="text-sm text-muted-foreground">Inventario</span>
-            <Badge className={
-              metrics?.syncStatus?.syncPercentage === 100 
-                ? "bg-green-500/20 text-green-600 border-green-500/30"
-                : "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
-            }>
+            <StatusBadge tone={metrics?.syncStatus?.syncPercentage === 100 ? 'completed' : 'pending'}>
               {metrics?.syncStatus?.syncPercentage === 100 
                 ? `✅ Sincronizado (100%)` 
                 : `⚠️ Parcial (${metrics?.syncStatus?.syncPercentage}%)`
               }
-            </Badge>
+            </StatusBadge>
           </div>
           {(metrics?.pendingMaintenanceAlerts || 0) > 0 && (
-            <div className="flex items-center justify-between p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <span className="text-sm text-yellow-600">Mantenimientos Pendientes</span>
-              <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30">
+            <div className="flex items-center justify-between rounded-lg border border-warning/30 bg-warning-soft/40 p-3">
+              <span className="text-sm text-warning">Mantenimientos Pendientes</span>
+              <StatusBadge tone="pending">
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 {metrics.pendingMaintenanceAlerts} alertas
-              </Badge>
+              </StatusBadge>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Trazabilidad de Piezas */}
-      <Card className="bg-white/5 border-tms-green/30">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Warehouse className="w-5 h-5 text-tms-green" />
-            Trazabilidad de Piezas e Inventario
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <SectionCard title="Trazabilidad de Piezas e Inventario" icon={Warehouse}>
           {syncStats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white/5 p-3 rounded-lg">
-                <p className="text-sm text-gray-400">Piezas Sincronizadas</p>
-                <p className="text-xl font-bold text-tms-green">{syncStats.synced_parts}</p>
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">Piezas Sincronizadas</p>
+                <p className="text-xl font-bold text-success">{syncStats.synced_parts}</p>
               </div>
-              <div className="bg-white/5 p-3 rounded-lg">
-                <p className="text-sm text-gray-400">Sin Sincronizar</p>
-                <p className="text-xl font-bold text-yellow-400">{syncStats.unsynced_parts}</p>
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">Sin Sincronizar</p>
+                <p className="text-xl font-bold text-warning">{syncStats.unsynced_parts}</p>
               </div>
-              <div className="bg-white/5 p-3 rounded-lg">
-                <p className="text-sm text-gray-400">% Sincronización</p>
-                <p className="text-xl font-bold text-blue-400">{syncStats.sync_percentage.toFixed(1)}%</p>
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">% Sincronización</p>
+                <p className="text-xl font-bold text-info">{syncStats.sync_percentage.toFixed(1)}%</p>
               </div>
-              <div className="bg-white/5 p-3 rounded-lg">
-                <p className="text-sm text-gray-400">Items Inventario</p>
-                <p className="text-xl font-bold text-purple-400">{syncStats.total_inventory_items}</p>
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">Items Inventario</p>
+                <p className="text-xl font-bold text-primary">{syncStats.total_inventory_items}</p>
               </div>
             </div>
           )}
 
           {traceabilityData && traceabilityData.length > 0 ? (
             <div className="space-y-3">
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Piezas Recientes</h4>
+              <h4 className="mb-3 text-sm font-medium text-foreground">Piezas Recientes</h4>
               {traceabilityData.slice(0, 5).map((item, index) => (
-                <div key={`${item.part_id}-${index}`} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div key={`${item.part_id}-${index}`} className="flex items-center justify-between rounded-lg bg-muted p-3">
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-tms-green" />
+                    <Package className="w-4 h-4 text-primary" />
                     <div>
-                      <p className="text-white font-medium">{item.part_name}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="font-medium text-foreground">{item.part_name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {item.supplier} • Stock: {item.current_stock}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={item.inventory_item_id ? 'default' : 'secondary'}
-                        className={item.inventory_item_id 
-                          ? 'bg-tms-green/20 text-tms-green border-tms-green/30' 
-                          : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                        }
-                      >
+                      <StatusBadge tone={item.inventory_item_id ? 'completed' : 'pending'}>
                         {item.inventory_item_id ? 'Sincronizado' : 'Pendiente'}
-                      </Badge>
+                      </StatusBadge>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       ${item.purchase_cost.toLocaleString('es-CL')}
                     </p>
                   </div>
@@ -774,22 +736,21 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
               ))}
               
               {traceabilityData.length > 5 && (
-                <p className="text-center text-gray-400 text-sm">
+                <p className="text-center text-sm text-muted-foreground">
                   ... y {traceabilityData.length - 5} piezas más
                 </p>
               )}
             </div>
           ) : (
             <div className="text-center py-6">
-              <Package className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Sin datos de trazabilidad</h3>
-              <p className="text-gray-400 text-sm">
+              <Package className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-semibold text-foreground">Sin datos de trazabilidad</h3>
+              <p className="text-sm text-muted-foreground">
                 No se encontraron piezas registradas para esta grúa.
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </SectionCard>
 
       {/* Consumos de Inventario de esta Grúa */}
       {craneConsumptions.length > 0 && (

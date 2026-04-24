@@ -78,7 +78,7 @@ export const CranesTable = ({
           <p className="text-muted-foreground mb-4">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewCrane} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button onClick={onNewCrane}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar Grúa
           </Button>
@@ -96,7 +96,7 @@ export const CranesTable = ({
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primera grúa al sistema
           </p>
-          <Button onClick={onNewCrane} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button onClick={onNewCrane}>
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primera Grúa
           </Button>
@@ -227,7 +227,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onViewDetails(crane)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/50"
+                        className="border border-info/30 text-info hover:bg-info-soft/60 hover:text-info"
                         title="Ver detalles"
                       >
                         <Eye className="w-4 h-4" />
@@ -236,7 +236,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(crane)}
-                        className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
+                        className="border border-primary/30 text-primary hover:bg-primary-soft hover:text-primary"
                         title="Editar grúa"
                       >
                         <Edit className="w-4 h-4" />
@@ -245,7 +245,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(crane)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
+                        className="border border-danger/30 text-danger hover:bg-danger-soft/70 hover:text-danger"
                         title="Eliminar grúa"
                       >
                         <Trash2 className="w-4 h-4" />
