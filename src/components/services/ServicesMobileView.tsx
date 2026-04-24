@@ -42,8 +42,8 @@ export const ServicesMobileView = ({
   if (services.length === 0) {
     return (
       <div className=" text-center py-12">
-        <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Truck className="w-8 h-8 text-tms-green" />
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft">
+          <Truck className="h-8 w-8 text-primary" />
         </div>
         <h3 className="text-lg font-medium text-foreground mb-2">
           {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
@@ -56,7 +56,7 @@ export const ServicesMobileView = ({
         </p>
         {!hasInitialServices && onAddNewService && (
           <Button 
-            className="bg-tms-green hover:bg-tms-green-dark text-black"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={onAddNewService}
             title="Crear el primer servicio"
           >
@@ -72,7 +72,7 @@ export const ServicesMobileView = ({
     <div className=" space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground flex items-center">
-          <Truck className="w-5 h-5 text-tms-green mr-2" />
+          <Truck className="mr-2 h-5 w-5 text-primary" />
           Servicios ({services.length})
         </h3>
       </div>
@@ -118,7 +118,7 @@ export const ServicesMobileView = ({
                   <span>{service.operator?.name || 'Sin asignar'} • {service.crane?.licensePlate || 'Sin grúa'}</span>
                 </div>
 
-                <div className="flex items-center text-tms-green text-sm font-semibold">
+                <div className="flex items-center text-primary text-sm font-semibold">
                   <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span>{formatCurrency(getDisplayServiceValue(service))}</span>
                 </div>
@@ -129,7 +129,7 @@ export const ServicesMobileView = ({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1 border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
+                    className="flex-1 border-success/30 bg-success-soft text-foreground hover:bg-success-soft/80"
                     onClick={() => onCloseService(service)}
                   >
                     <Check className="w-4 h-4 mr-1" />
@@ -140,7 +140,7 @@ export const ServicesMobileView = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 border-tms-green/50 bg-tms-green/10 text-tms-green hover:bg-tms-green/20 hover:border-tms-green"
+                    className="flex-1 border-primary/30 bg-primary-soft text-foreground hover:bg-primary-soft/80"
                   onClick={() => onViewDetails(service)}
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -152,8 +152,8 @@ export const ServicesMobileView = ({
                     variant="outline" 
                     size="sm" 
                     className={`flex-1 ${isInvoiced && !isAdmin 
-                      ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
-                      : "border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"}`}
+                      ? "cursor-not-allowed border-border bg-muted text-muted-foreground" 
+                      : "border-info/30 bg-info-soft text-foreground hover:bg-info-soft/80"}`}
                     onClick={() => onEdit(service)}
                     disabled={isInvoiced && !isAdmin}
                   >
@@ -167,8 +167,8 @@ export const ServicesMobileView = ({
                     variant="outline" 
                     size="sm" 
                     className={`${isInvoiced 
-                      ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed px-3" 
-                      : "border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500 px-3"}`}
+                      ? "cursor-not-allowed border-border bg-muted px-3 text-muted-foreground" 
+                      : "border-danger/30 bg-danger-soft px-3 text-foreground hover:bg-danger-soft/80"}`}
                     onClick={isInvoiced ? undefined : () => onDelete(service)}
                     disabled={isInvoiced}
                   >

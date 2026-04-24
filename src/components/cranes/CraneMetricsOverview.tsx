@@ -56,20 +56,10 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
   const insuranceDays = crane?.insuranceExpiry ? getDaysUntilExpiry(crane.insuranceExpiry) : 0;
   const permitDays = crane?.circulationPermitExpiry ? getDaysUntilExpiry(crane.circulationPermitExpiry) : 0;
 
-  console.log('🔍 DEBUG: Crane documentation data:', {
-    crane: crane?.licensePlate,
-    technicalReview: crane?.technicalReviewExpiry,
-    insurance: crane?.insuranceExpiry,
-    permit: crane?.circulationPermitExpiry,
-    days: { technicalReviewDays, insuranceDays, permitDays }
-  });
-
-  console.log('🚨 DOCUMENTACIÓN SECCIÓN DEBE APARECER SIEMPRE');
-
   if (isLoading || inventoryLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando métricas...</div>
+        <div className="text-muted-foreground">Cargando métricas...</div>
       </div>
     );
   }

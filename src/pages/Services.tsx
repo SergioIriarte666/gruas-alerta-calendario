@@ -246,7 +246,7 @@ const Services = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 space-y-6 bg-white">
+      <div className="container mx-auto min-h-screen space-y-6 bg-background py-6 text-foreground">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-8 w-64" />
         <div className="space-y-4">
@@ -259,7 +259,7 @@ const Services = () => {
   }
 
   return (
-    <div className=" container mx-auto py-6 space-y-6 bg-white min-h-screen">
+    <div className="container mx-auto min-h-screen space-y-6 bg-background py-6 text-foreground">
       {/* Batch Action Bar - show when services are selected */}
       {selectedServiceIds.size > 0 && (
         <ServiceBatchActionBar
