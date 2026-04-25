@@ -74,6 +74,15 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
 );
 
 export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
+  return <CostDetailsModalInner cost={cost} isOpen={isOpen} onClose={onClose} onDuplicate={onDuplicate} />;
+};
+
+const CostHistoryTabContent: React.FC<{ costId: string }> = ({ costId }) => {
+  const { data, isLoading } = useCostChangeHistory(costId);
+  return <ChangeHistoryPanel changes={data || []} isLoading={isLoading} />;
+};
+
+const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
   const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
   const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
 
