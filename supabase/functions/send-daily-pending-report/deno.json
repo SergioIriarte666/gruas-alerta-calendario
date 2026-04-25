@@ -2,7 +2,7 @@
   "imports": {
     "jspdf": "npm:jspdf@2.5.2",
     "jspdf-autotable": "npm:jspdf-autotable@5.0.2",
-    "resend": "npm:resend@2.0.0",
+    "resend": "npm:resend@6",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.50.0"
   },
   "nodeModulesDir": "auto"
