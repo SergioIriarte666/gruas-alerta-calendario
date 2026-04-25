@@ -422,6 +422,33 @@ export const ConsolidatedCostDetails = ({
 
           {/* Acciones */}
           <div className="flex gap-2 pt-2">
+          </div>
+
+          {/* Historial de cambios colapsable */}
+          <Separator />
+          <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <History className="w-4 h-4 text-violet-600" />
+                  Historial de cambios
+                  {changeHistory && changeHistory.length > 0 && (
+                    <Badge variant="outline" className="ml-1">{changeHistory.length}</Badge>
+                  )}
+                </span>
+                {showHistory ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <ChangeHistoryPanel changes={changeHistory || []} isLoading={historyLoading} />
+            </CollapsibleContent>
+          </Collapsible>
+
+          <div className="flex gap-2 pt-2">
             {onEdit && (
               <Button
                 variant="outline"
