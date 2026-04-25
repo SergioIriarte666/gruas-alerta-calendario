@@ -379,6 +379,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <CostHistoryTabContent costId={cost.id} />
+          </TabsContent>
         </Tabs>
 
         {/* Traceability Panel */}
