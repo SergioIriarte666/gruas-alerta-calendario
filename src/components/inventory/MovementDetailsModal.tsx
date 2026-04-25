@@ -379,3 +379,8 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
     </div>
   );
 };
+
+const MovementHistorySection: React.FC<{ movementId: string }> = ({ movementId }) => {
+  const { data, isLoading } = useInventoryMovementChangeHistory(movementId);
+  return <ChangeHistoryPanel changes={data || []} isLoading={isLoading} />;
+};
