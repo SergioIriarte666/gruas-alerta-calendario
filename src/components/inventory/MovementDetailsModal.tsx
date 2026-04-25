@@ -26,6 +26,9 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCancelInventoryMovement, type InventoryMovement } from '@/hooks/useInventory';
 import { MovementEditModal } from './MovementEditModal';
+import { useInventoryMovementChangeHistory } from '@/hooks/useChangeHistory';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
+import { Clock } from 'lucide-react';
 
 interface MovementDetailsModalProps {
   movement: InventoryMovement;
@@ -299,6 +302,22 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
       )}
 
       {/* Footer */}
+      <div className="flex justify-end gap-3 pt-4 border-t">
+      </div>
+
+      {/* Change history */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="w-4 h-4 text-primary" />
+            Historial de cambios
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MovementHistorySection movementId={movement.id} />
+        </CardContent>
+      </Card>
+
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button variant="outline" onClick={onClose}>
           Cerrar
