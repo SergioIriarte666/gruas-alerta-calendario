@@ -25,10 +25,13 @@ import {
   MapPin,
   Car,
   StickyNote,
+  History,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 import { supabase } from '@/integrations/supabase/client';
+import { useCostChangeHistory } from '@/hooks/useChangeHistory';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 
 interface ConsolidatedCostDetailsProps {
   cost: Cost;
@@ -47,6 +50,8 @@ export const ConsolidatedCostDetails = ({
 }: ConsolidatedCostDetailsProps) => {
   const [showAssociations, setShowAssociations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -415,7 +420,30 @@ export const ConsolidatedCostDetails = ({
             </div>
           )}
 
-          {/* Acciones */}
+          {/* Historial de cambios colapsable */}
+          <Separator />
+          <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <History className="w-4 h-4 text-violet-600" />
+                  Historial de cambios
+                  {changeHistory && changeHistory.length > 0 && (
+                    <Badge variant="outline" className="ml-1">{changeHistory.length}</Badge>
+                  )}
+                </span>
+                {showHistory ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <ChangeHistoryPanel changes={changeHistory || []} isLoading={historyLoading} />
+            </CollapsibleContent>
+          </Collapsible>
+
           <div className="flex gap-2 pt-2">
             {onEdit && (
               <Button

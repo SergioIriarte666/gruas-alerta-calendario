@@ -6,13 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { SimpleExitForm } from '@/components/inventory/SimpleExitForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, DollarSign, Package, PackageMinus, Plus } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Package, PackageMinus, Plus, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Crane } from '@/types';
 import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
+import {
+  useCranePartChangeHistory,
+  useInventoryMovementChangeHistory,
+} from '@/hooks/useChangeHistory';
 
 interface CranePartsProps {
   crane: Crane;
@@ -20,6 +25,7 @@ interface CranePartsProps {
 
 export const CraneParts = ({ crane }: CranePartsProps) => {
   const [isExitOpen, setIsExitOpen] = useState(false);
+  const [historyTarget, setHistoryTarget] = useState<{ movementId: string; cranePartId: string | null; itemName: string } | null>(null);
   const queryClient = useQueryClient();
 
   const getFirstRelationRow = (value: any) => {
@@ -44,6 +50,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           observations,
           reference_document,
           crane_part:crane_parts!crane_parts_inventory_movement_id_fkey (
+            id,
             unit_price,
             total_value
           ),
@@ -172,7 +179,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
       ) : (
         <div className="space-y-4">
           {consumptions.map((m: any) => (
-            <Card key={m.id} className="border-border bg-card">
+            <Card key={m.id} className="border-border bg-card hover:border-violet-500/40 hover:shadow-md transition-all cursor-pointer group" onClick={() => setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' })}>
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1 space-y-3">
@@ -191,6 +198,10 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                           </span>
                         </div>
                       </div>
+                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' }); }}>
+                        <History className="w-4 h-4 mr-1" />
+                        Historial
+                      </Button>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
@@ -224,6 +235,39 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Modal historial de cambios */}
+      <PartHistoryModal target={historyTarget} onClose={() => setHistoryTarget(null)} />
     </div>
+  );
+};
+
+interface PartHistoryModalProps {
+  target: { movementId: string; cranePartId: string | null; itemName: string } | null;
+  onClose: () => void;
+}
+
+const PartHistoryModal = ({ target, onClose }: PartHistoryModalProps) => {
+  const { data: movementHistory, isLoading: loadingMovement } = useInventoryMovementChangeHistory(target?.movementId ?? null);
+  const { data: partHistory, isLoading: loadingPart } = useCranePartChangeHistory(target?.cranePartId ?? null);
+
+  const combined = [
+    ...(movementHistory || []),
+    ...(partHistory || []),
+  ].sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
+
+  return (
+    <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="w-5 h-5 text-violet-600" />
+            Historial de cambios
+            {target && <span className="text-sm font-normal text-muted-foreground">— {target.itemName}</span>}
+          </DialogTitle>
+        </DialogHeader>
+        <ChangeHistoryPanel changes={combined} isLoading={loadingMovement || loadingPart} />
+      </DialogContent>
+    </Dialog>
   );
 };
