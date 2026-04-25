@@ -550,6 +550,45 @@ export type Database = {
           },
         ]
       }
+      cost_change_history: {
+        Row: {
+          change_context: string | null
+          change_summary: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          cost_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          cost_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          cost_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: []
+      }
       cost_inventory_items: {
         Row: {
           cost_id: string
@@ -1027,6 +1066,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crane_part_change_history: {
+        Row: {
+          change_context: string | null
+          change_summary: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          crane_part_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          crane_part_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          crane_part_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: []
       }
       crane_parts: {
         Row: {
@@ -2118,6 +2196,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      inventory_movement_change_history: {
+        Row: {
+          change_context: string | null
+          change_summary: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          field_name: string
+          id: string
+          movement_id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name: string
+          id?: string
+          movement_id: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name?: string
+          id?: string
+          movement_id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: []
       }
       inventory_movements: {
         Row: {

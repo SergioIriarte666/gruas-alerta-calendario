@@ -27,6 +27,8 @@ import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUti
 import { getCreatorDisplayName } from '@/types/common';
 import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { useCostChangeHistory } from '@/hooks/useChangeHistory';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -72,6 +74,15 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
 );
 
 export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
+  return <CostDetailsModalInner cost={cost} isOpen={isOpen} onClose={onClose} onDuplicate={onDuplicate} />;
+};
+
+const CostHistoryTabContent: React.FC<{ costId: string }> = ({ costId }) => {
+  const { data, isLoading } = useCostChangeHistory(costId);
+  return <ChangeHistoryPanel changes={data || []} isLoading={isLoading} />;
+};
+
+const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
   const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
   const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
 
@@ -162,10 +173,11 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">Información General</TabsTrigger>
             <TabsTrigger value="details">Detalles</TabsTrigger>
             <TabsTrigger value="associations">Asociaciones</TabsTrigger>
+            <TabsTrigger value="history">Historial</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="mt-6">
@@ -375,6 +387,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <CostHistoryTabContent costId={cost.id} />
           </TabsContent>
         </Tabs>
 
