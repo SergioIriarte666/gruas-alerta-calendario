@@ -27,6 +27,8 @@ import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUti
 import { getCreatorDisplayName } from '@/types/common';
 import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { useCostChangeHistory } from '@/hooks/useChangeHistory';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -162,10 +164,11 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">Información General</TabsTrigger>
             <TabsTrigger value="details">Detalles</TabsTrigger>
             <TabsTrigger value="associations">Asociaciones</TabsTrigger>
+            <TabsTrigger value="history">Historial</TabsTrigger>
           </TabsList>
           
           <TabsContent value="general" className="mt-6">
