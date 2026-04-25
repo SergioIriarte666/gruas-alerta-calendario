@@ -587,7 +587,15 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cost_change_history_changed_by_profile_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cost_inventory_items: {
         Row: {
@@ -1104,7 +1112,15 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "crane_part_change_history_changed_by_profile_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crane_parts: {
         Row: {
@@ -2234,7 +2250,15 @@ export type Database = {
           new_value?: string | null
           old_value?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movement_change_history_changed_by_profile_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_movements: {
         Row: {
