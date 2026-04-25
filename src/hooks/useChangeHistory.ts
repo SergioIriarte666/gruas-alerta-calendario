@@ -23,42 +23,67 @@ export interface GroupedChanges {
   changes: ChangeHistoryEntry[];
 }
 
-const buildHook = (
-  table: 'cost_change_history' | 'inventory_movement_change_history' | 'crane_part_change_history',
-  idColumn: 'cost_id' | 'movement_id' | 'crane_part_id',
-  queryKey: string,
-) => (entityId: string | null) => {
-  return useQuery({
-    queryKey: [queryKey, entityId],
+const mapRow = (e: any, idColumn: string): ChangeHistoryEntry => ({
+  id: e.id,
+  entityId: e[idColumn],
+  changedBy: e.changed_by,
+  changerName: e.profiles?.full_name || null,
+  changerEmail: e.profiles?.email || null,
+  changedAt: e.changed_at,
+  changeType: e.change_type,
+  fieldName: e.field_name,
+  oldValue: e.old_value,
+  newValue: e.new_value,
+  changeSummary: e.change_summary,
+});
+
+export const useCostChangeHistory = (costId: string | null) =>
+  useQuery({
+    queryKey: ['cost-change-history', costId],
     queryFn: async (): Promise<ChangeHistoryEntry[]> => {
-      if (!entityId) return [];
-      const { data, error } = await supabase
-        .from(table)
-        .select(`id, ${idColumn}, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)`)
-        .eq(idColumn, entityId)
+      if (!costId) return [];
+      const { data, error } = await (supabase as any)
+        .from('cost_change_history')
+        .select('id, cost_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
+        .eq('cost_id', costId)
         .order('changed_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map((e: any) => ({
-        id: e.id,
-        entityId: e[idColumn],
-        changedBy: e.changed_by,
-        changerName: e.profiles?.full_name || null,
-        changerEmail: e.profiles?.email || null,
-        changedAt: e.changed_at,
-        changeType: e.change_type,
-        fieldName: e.field_name,
-        oldValue: e.old_value,
-        newValue: e.new_value,
-        changeSummary: e.change_summary,
-      }));
+      return (data || []).map((r: any) => mapRow(r, 'cost_id'));
     },
-    enabled: !!entityId,
+    enabled: !!costId,
   });
-};
 
-export const useCostChangeHistory = buildHook('cost_change_history', 'cost_id', 'cost-change-history');
-export const useInventoryMovementChangeHistory = buildHook('inventory_movement_change_history', 'movement_id', 'inventory-movement-change-history');
-export const useCranePartChangeHistory = buildHook('crane_part_change_history', 'crane_part_id', 'crane-part-change-history');
+export const useInventoryMovementChangeHistory = (movementId: string | null) =>
+  useQuery({
+    queryKey: ['inventory-movement-change-history', movementId],
+    queryFn: async (): Promise<ChangeHistoryEntry[]> => {
+      if (!movementId) return [];
+      const { data, error } = await (supabase as any)
+        .from('inventory_movement_change_history')
+        .select('id, movement_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
+        .eq('movement_id', movementId)
+        .order('changed_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map((r: any) => mapRow(r, 'movement_id'));
+    },
+    enabled: !!movementId,
+  });
+
+export const useCranePartChangeHistory = (cranePartId: string | null) =>
+  useQuery({
+    queryKey: ['crane-part-change-history', cranePartId],
+    queryFn: async (): Promise<ChangeHistoryEntry[]> => {
+      if (!cranePartId) return [];
+      const { data, error } = await (supabase as any)
+        .from('crane_part_change_history')
+        .select('id, crane_part_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
+        .eq('crane_part_id', cranePartId)
+        .order('changed_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map((r: any) => mapRow(r, 'crane_part_id'));
+    },
+    enabled: !!cranePartId,
+  });
 
 export const groupChangesByDateAndUser = (changes: ChangeHistoryEntry[]): GroupedChanges[] => {
   const groups = new Map<string, GroupedChanges>();
