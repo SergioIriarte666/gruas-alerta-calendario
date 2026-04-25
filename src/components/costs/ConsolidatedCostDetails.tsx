@@ -420,10 +420,6 @@ export const ConsolidatedCostDetails = ({
             </div>
           )}
 
-          {/* Acciones */}
-          <div className="flex gap-2 pt-2">
-          </div>
-
           {/* Historial de cambios colapsable */}
           <Separator />
           <Collapsible open={showHistory} onOpenChange={setShowHistory}>
