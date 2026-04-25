@@ -6,13 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { SimpleExitForm } from '@/components/inventory/SimpleExitForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Clock, DollarSign, Package, PackageMinus, Plus } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Package, PackageMinus, Plus, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Crane } from '@/types';
 import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
+import {
+  useCranePartChangeHistory,
+  useInventoryMovementChangeHistory,
+} from '@/hooks/useChangeHistory';
 
 interface CranePartsProps {
   crane: Crane;
@@ -20,6 +25,7 @@ interface CranePartsProps {
 
 export const CraneParts = ({ crane }: CranePartsProps) => {
   const [isExitOpen, setIsExitOpen] = useState(false);
+  const [historyTarget, setHistoryTarget] = useState<{ movementId: string; cranePartId: string | null; itemName: string } | null>(null);
   const queryClient = useQueryClient();
 
   const getFirstRelationRow = (value: any) => {
@@ -44,6 +50,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           observations,
           reference_document,
           crane_part:crane_parts!crane_parts_inventory_movement_id_fkey (
+            id,
             unit_price,
             total_value
           ),
