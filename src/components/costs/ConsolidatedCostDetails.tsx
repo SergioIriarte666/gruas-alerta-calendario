@@ -25,10 +25,13 @@ import {
   MapPin,
   Car,
   StickyNote,
+  History,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 import { supabase } from '@/integrations/supabase/client';
+import { useCostChangeHistory } from '@/hooks/useChangeHistory';
+import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 
 interface ConsolidatedCostDetailsProps {
   cost: Cost;
@@ -47,6 +50,8 @@ export const ConsolidatedCostDetails = ({
 }: ConsolidatedCostDetailsProps) => {
   const [showAssociations, setShowAssociations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
