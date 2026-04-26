@@ -2,8 +2,8 @@
 
 ## TMS Grúas — Towing Management System
 
-- **Versión del documento:** 3.0
-- **Última actualización:** 2026-04-25
+- **Versión del documento:** 3.1
+- **Última actualización:** 2026-04-26
 - **Versión del producto:** 2.2.x (en producción)
 - **Estado:** Vigente — fuente única de verdad de producto
 - **URLs:**
@@ -15,11 +15,13 @@
 
 ## Tabla de contenidos
 
+0. Resumen ejecutivo para stakeholders no técnicos
 1. Resumen ejecutivo
 2. Glosario y convenciones
 3. Personas, roles y permisos
 4. Mapa funcional y flujos end-to-end
 5. Especificación detallada por módulo
+5.bis Criterios de aceptación (Definition of Done) por módulo crítico
 6. Reglas de negocio críticas
 7. Integraciones externas
 8. Catálogo de Edge Functions
@@ -33,6 +35,51 @@
 16. Métricas de éxito (KPIs)
 17. Roadmap
 18. Apéndices
+19. Supuestos, restricciones y out-of-scope global
+20. Riesgos y mitigaciones
+21. Matriz de dependencias críticas
+
+---
+
+## 0. Resumen ejecutivo para stakeholders no técnicos
+
+> Lectura sugerida: 5 minutos. Esta sección está pensada para perfiles **no técnicos** (gerencia, finanzas, clientes internos). El resto del PRD (§1 en adelante) es la especificación detallada para producto, ingeniería y QA.
+
+### Qué es TMS Grúas
+TMS Grúas es la plataforma operativa y financiera de una empresa de grúas en Chile. Reemplaza planillas, papel y sistemas dispersos por una sola aplicación web (también instalable como app en celular) que cubre el ciclo completo: tomar el servicio, ejecutarlo en terreno con foto y firma, facturarlo, cobrarlo, controlar costos e inventario, y reportar resultados.
+
+Está diseñada para que **el equipo administrativo sea pequeño** y **los operadores trabajen desde el celular**, incluso sin internet. Toda la información financiera y operativa queda registrada con autor, fecha y trazabilidad de cambios.
+
+Comercialmente está desplegada como **Grúas 5 Norte** (`gruas5norte.com`), pero la plataforma es reutilizable para otras empresas del rubro.
+
+### Quién la usa y para qué
+
+| Rol | Beneficio principal |
+|---|---|
+| **Administrador / dueño** | Visión integral del negocio, KPIs, control de cobros y pagos, configuración. |
+| **Personal administrativo (viewer)** | Carga de servicios, facturación, conciliación de pagos, reportes. |
+| **Operador en terreno** | App móvil offline para inspección, fotos, firma y cierre del servicio. |
+| **Cliente final (B2B)** | Portal para solicitar servicios, ver historial y descargar facturas. |
+
+### Estado actual (semáforo de madurez)
+
+| Área | Estado | Comentario |
+|---|---|---|
+| Operaciones (servicios, calendario, cierres) | 🟢 Estable | Núcleo del negocio, en producción. |
+| Finanzas (facturas, costos, conciliación, comisiones) | 🟢 Estable | Reglas críticas y triggers SQL endurecidos. |
+| Inventario y proveedores | 🟢 Estable | Importador XML SII operativo. |
+| Móvil / PWA / Offline | 🟡 En consolidación | Funciona, pero requiere endurecer conflictos y límites (ver §11 y R2 en §20). |
+| Integraciones externas (OpenAI, Mapbox, GetAPI, Resend) | 🟡 Operativas con dependencia | Funcionan, pero hay riesgo si un proveedor cae (ver §21 plan de degradación). |
+| Notificaciones WhatsApp | 🔴 Pendiente | Decisión tomada (Meta Cloud API), implementación en curso. |
+| Multi-tenant | 🔴 No iniciado | En preparación, no comprometido. |
+
+### Próximos hitos priorizados
+
+1. **Separar entornos preview y producción a nivel de datos** (P0). Hoy comparten la misma base Supabase; ver R1 en §20.
+2. **Endurecer offline/PWA** (P0): definir conflictos, límites y casos no soportados de manera explícita.
+3. **Notificaciones WhatsApp directas** (P0/P1): cierre de la integración con Meta Cloud API.
+
+Detalle completo de prioridades en §17 (Roadmap) y de riesgos en §20.
 
 ---
 
@@ -383,6 +430,77 @@ Cada módulo abajo declara propósito, usuarios, funcionalidades clave, reglas d
 
 ---
 
+## 5.bis Criterios de aceptación (Definition of Done) por módulo crítico
+
+> Checklist verificable por QA y desarrollo. Si un cambio toca un módulo de esta lista, debe cumplir TODOS los criterios marcados antes de considerarse "listo". Los módulos no listados aplican criterios genéricos de §14.
+
+### Genérico (aplica a todos)
+- [ ] RLS activa y verificada para todos los roles relevantes.
+- [ ] `created_by` poblado y visible en UI cuando aplica.
+- [ ] Estados de carga, vacío y error implementados.
+- [ ] Responsive mobile (cards) y desktop (tabla) según patrón del módulo de Costos.
+- [ ] Sin colores hardcoded; usa tokens del design system v3.
+- [ ] Sin regresiones en módulos dependientes (ver §21).
+
+### Servicios
+- [ ] Estados protegidos: `pending → in_progress → completed → closed` (no se permite saltar hacia atrás sin permiso).
+- [ ] Tarifa pre-llenada según jerarquía cliente → tipo → default.
+- [ ] Subcontratación con `outsourced_provider_id` correctamente reflejada en cierres y reportes.
+- [ ] Audit log (`service_audit_log`) registra cambios de estado, operador, grúa, valor y cliente.
+- [ ] Operaciones por lote (cerrar, cambiar estado, reasignar) protegidas por confirmación.
+- [ ] CRUD funciona offline y sincroniza al recuperar conexión.
+- [ ] Gastos auto-pagados (peajes/viáticos) no duplican costos.
+
+### Facturas
+- [ ] Estado de pago calculado por **saldo real**, no por estado nominal.
+- [ ] Anulación SOLO vía Nota de Crédito; nunca delete directo.
+- [ ] Eliminación protegida con confirmación "ELIMINAR" para facturas no históricas.
+- [ ] Importación histórica SII (CSV/XLSX) marca prefijo `HIST-`.
+- [ ] Conciliación automática al crear factura ya pagada.
+- [ ] Aging (0-30/31-60/61-90/90+) coincide con vista de proyecciones.
+- [ ] N° fiscal es el identificador prioritario en búsquedas.
+
+### Costos
+- [ ] Relación 1:1 estricta con Facturas de proveedor (no se permite duplicar).
+- [ ] Importador XML detecta duplicados por folio + hash + contenido.
+- [ ] Clasificación histórica por tokens funciona y es la única vía (no hay otra).
+- [ ] Fechas originales del DTE preservadas (no se reemplazan por fecha de importación).
+- [ ] Eliminación pasa por flujo seguro con verificación de dependencias.
+- [ ] Badge multi-ítem visible cuando el costo está vinculado a factura con varios ítems.
+
+### Pagos / Conciliación
+- [ ] Prohibida cualquier auto-asignación FIFO/LIFO. La conciliación es manual.
+- [ ] Modal de pago muestra `due_date` y prioridad por vencimiento.
+- [ ] Pago parcial actualiza saldo correctamente y refleja estado en factura.
+- [ ] `reference_number` (folio del DTE) NUNCA se mezcla con la referencia bancaria.
+
+### Inventario
+- [ ] Auto-SKU SOLO en importación XML (`SKU-YYYYMMDD-HEX4`); manual exige SKU del usuario.
+- [ ] Valoración total filtra estrictamente `status='active'`.
+- [ ] Movimientos generan trazabilidad (`inventory_movement_change_history`).
+- [ ] Stock crítico genera alerta visible en Dashboard.
+- [ ] Vínculo atómico XML → factura → costo → stock (rollback si una etapa falla).
+
+### Comisiones
+- [ ] Única fuente de verdad: tabla `costs`.
+- [ ] Operadores con `commission_exempt = true` NO generan comisiones (validado por trigger en BD).
+- [ ] Sincronización con servicios cerrados respeta fecha del servicio.
+- [ ] Sin nombres hardcoded en código ni documentación.
+
+### Cuentas por Pagar
+- [ ] Solo `admin` puede escribir en `creditors`, `debts`, `debt_installments`, `debt_payments` (RLS verificada).
+- [ ] Cuotas con interés/reajuste calculan correctamente.
+- [ ] Pagos parciales se reflejan en deuda pendiente.
+
+### PWA Offline
+- [ ] Módulos soportados (Servicios, Costos, Clientes, Operadores, Grúas, Inventario) operan 100% sin red para CRUD básico.
+- [ ] Cola de operaciones pendientes visible en `SyncIndicator`.
+- [ ] Resolución de conflictos documentada (last-write-wins por fila con timestamp).
+- [ ] Operaciones NO soportadas offline (importadores XML, OCR, envío de email, generación PDF server-side, integraciones externas) muestran mensaje claro.
+- [ ] Inspecciones (fotos + firma) funcionan completamente offline y sincronizan al reconectar.
+
+---
+
 ## 6. Reglas de negocio críticas
 
 Reglas no-negociables del sistema (consolidadas desde memorias del proyecto y código productivo):
@@ -514,6 +632,30 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - Instalación: prompt nativo (`InstallPrompt`, `PWAInstallButton`).
 - Actualización: notificación al usuario cuando hay nueva versión del SW.
 
+### Soportado offline (lista cerrada)
+- CRUD: Servicios, Costos, Clientes, Operadores, Grúas, Inventario (movimientos básicos).
+- Inspección PWA completa: checklist + fotos + firma.
+- Lectura de catálogos previamente cacheados (tipos de servicio, tarifas, vehículos).
+
+### NO soportado offline
+- Importadores XML (DTE de costos, proveedores e inventario).
+- OCR de boletas / Quick Entry con auto-extracción.
+- Generación de PDFs server-side y envío por email (Resend).
+- Integraciones externas: Mapbox (rutas), GetAPI (peajes/patentes/RUT), Tollroutes, OpenAI, Meta WhatsApp.
+- Conciliación de pagos compleja (requiere consistencia transaccional contra el servidor).
+- Reportes con agregaciones server-side y exportación.
+
+### Resolución de conflictos
+- Estrategia: **last-write-wins a nivel de fila**, usando timestamp del cliente para ordenar y timestamp del servidor como árbitro final.
+- Campos calculados (saldos, totales, estados derivados) se recalculan SIEMPRE en servidor; el valor offline es provisional.
+- En caso de conflicto destructivo (borrado offline + edición online o viceversa), prevalece la versión más reciente y se notifica al usuario en el `SyncIndicator`.
+
+### Límites declarados
+- Cola IndexedDB: máximo recomendado ~500 operaciones pendientes por dispositivo; sobre ese umbral se muestra advertencia.
+- TTL de operaciones pendientes: 7 días. Pasado ese plazo se solicita confirmación manual antes de sincronizar.
+- Tamaño máximo de fotos en cola: comprimidas en cliente antes de encolar.
+- No hay garantía de orden global entre dispositivos; el orden lo determina el servidor al recibir.
+
 ---
 
 ## 12. Seguridad
@@ -582,6 +724,8 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - **Producción:** `t-m-s.lovable.app` + dominio propio `gruas5norte.com`.
 - Preview y producción comparten la misma instancia de Supabase y Edge Functions.
 
+> ⚠️ **Riesgo operativo R1 (ver §20).** Compartir Supabase entre preview y producción facilita pruebas pero permite que un cambio en preview impacte datos reales. Mientras no se separe la instancia, aplican las mitigaciones definidas en §20 (ventana de pruebas, snapshot diario, prohibición de mutaciones masivas/destructivas en preview).
+
 ### Pipeline
 - Cambios desde Lovable → despliegue automático preview.
 - Migraciones SQL: archivos timestamped en `supabase/migrations/` (gestionados desde Lovable).
@@ -635,12 +779,32 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - **Fase 4 (v2.1.0):** Sistema integral de Inventario y Bodega + alertas.
 - **Fase 5 (v2.2.x):** Optimización de rendimiento, reportes avanzados, integraciones (Mapbox, Tollroutes, GetAPI, OpenAI), VIP pipeline, Cuentas por Pagar estructuradas, Histórico SII, Quick Entry con OCR, audit logs visibles en UI, hardening de seguridad y RLS, design system v3, sistema de comisiones reescrito.
 
-### En curso / próximo
-- Notificaciones WhatsApp directas (Meta Cloud API).
-- Analítica predictiva (predicción de demanda y mantención).
-- Expansión de reportes con dashboards interactivos.
-- Mejoras al VIP pipeline (matching más robusto, dashboard de conversión).
-- Multi-tenant nativo (preparación de schema y RLS).
+### Priorización Impacto × Esfuerzo
+
+Convenciones: Impacto = Alto/Medio/Bajo. Esfuerzo = S (≤1 semana) / M (2–4 semanas) / L (>1 mes). Prioridad = P0 (crítico, ya) / P1 (alto valor, próximo) / P2 (mejora) / P3 (backlog explícito).
+
+| # | Iniciativa | Impacto | Esfuerzo | Prioridad | Dependencias | Justificación |
+|---|---|---|---|---|---|---|
+| 1 | Separar Supabase preview vs producción (o política operativa estricta) | Alto | M | **P0** | Infra Lovable Cloud | Riesgo R1: hoy comparten datos reales. |
+| 2 | Endurecer offline/PWA: conflictos, límites, casos no soportados (ya documentados en §11) y telemetría de cola | Alto | M | **P0** | IndexedDB v5, SyncIndicator | Riesgo R2: complejidad creciente. |
+| 3 | Notificaciones WhatsApp directas (Meta Cloud API) | Alto | M | **P0** | Edge Function nueva, secretos Meta | Decisión tomada; cierra gap de comunicación con clientes/operadores. |
+| 4 | Plan de degradación por proveedor externo (OpenAI, Mapbox, GetAPI, Resend) | Medio | S | **P1** | Ninguna | Riesgo R5: hoy no hay fallback formal. |
+| 5 | Dashboards interactivos de reportes | Medio | M | **P1** | Reportes existentes | Mejora analítica sin cambiar modelo. |
+| 6 | Multi-tenant nativo (schema + RLS) | Alto | L | **P1** | RLS, refactor `created_by` → `tenant_id` | Habilita modelo SaaS para más empresas. |
+| 7 | Analítica predictiva (demanda, mantención) | Medio | L | **P2** | Histórico de servicios y mantenciones | Valor diferencial, no urgente. |
+| 8 | Mejoras VIP pipeline (matching, dashboard conversión) | Medio | M | **P2** | OCR fuzzy actual | Optimización de un flujo ya operativo. |
+| 9 | Telemetría de errores client-side estructurada | Medio | S | **P2** | `src/lib/logger.ts` | Mejora mantenibilidad. |
+| 10 | App nativa (iOS/Android) | — | — | **P3 / Out of scope** | — | La PWA cubre el caso. Ver §19. |
+
+### "No haremos" (out of scope explícito del producto)
+- App nativa iOS/Android dedicada (la PWA cumple el rol).
+- ERP completo (RRHH, contabilidad fiscal completa, activos fijos avanzados).
+- Emisión directa de DTE al SII (solo importación/registro). Se asume que el cliente usa un facturador electrónico autorizado.
+- Módulo de RRHH / liquidación de sueldos.
+- Marketplace público de servicios de grúa.
+- Integración telefónica (CTI / call center).
+
+Ver §19 para alcance global del producto y §20 para riesgos asociados a estas decisiones.
 
 ---
 
@@ -702,3 +866,92 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 |---|---|---|
 | 1.0 | — | PRD inicial breve (~78 líneas). |
 | 3.0 | 2026-04-25 | Reescritura completa exhaustiva: 18 secciones, los 33 módulos, reglas de negocio críticas, integraciones, Edge Functions, modelo de datos, RLS, offline/PWA, seguridad, design system, KPIs, roadmap actualizado y apéndices. |
+| 3.1 | 2026-04-26 | Capa ejecutiva (§0), criterios de aceptación por módulo (§5.bis), refuerzo de §11 (offline: soportado/no soportado/conflictos/límites), nota de riesgo en §15, reescritura de §17 con priorización Impacto×Esfuerzo y out-of-scope, y nuevas secciones §19 (supuestos/restricciones/out-of-scope global), §20 (riesgos y mitigaciones) y §21 (matriz de dependencias críticas). Sin cambios en código. |
+
+---
+
+## 19. Supuestos, restricciones y out-of-scope global
+
+### Supuestos operativos
+- Conectividad **intermitente** esperada en terreno; la app debe seguir operando offline en módulos críticos (§11).
+- Equipo administrativo **pequeño** (1–5 personas). La automatización es prioridad sobre la flexibilidad de configuración.
+- Volumen máximo asumido en la operación actual: hasta ~3.000 servicios/mes, ~10.000 ítems de inventario activos, ~20 usuarios concurrentes. Sobre ese umbral se requiere revisión de rendimiento y costos.
+- Los DTE se importan desde XML del SII; **el sistema no emite DTE** al SII directamente.
+- El cliente cuenta con un facturador electrónico externo autorizado.
+- Operación mono-empresa por instancia hoy; multi-tenant es P1 en §17.
+
+### Restricciones técnicas
+- Stack obligatorio: React 18 + Vite + TypeScript + Tailwind + shadcn/ui.
+- Backend único: Lovable Cloud / Supabase (Postgres + Auth + Storage + Edge Functions Deno).
+- Sin servidor propio ni contenedores administrados por el cliente.
+- Idioma del producto: es-CL. Moneda: CLP. Zona horaria: America/Santiago.
+- Diseño centrado en violeta (#8b5cf6); prohibido el verde (preferencia de accesibilidad declarada).
+- Compatibilidad navegadores actuales (Chrome, Edge, Safari, Firefox); Safari/WebKit requiere compat layer pdfjs.
+
+### Out of scope global del producto
+(Complementa la lista del §17.) Ver justificación allí.
+- App nativa iOS/Android.
+- Emisión SII directa.
+- ERP / RRHH / liquidaciones.
+- Marketplace público.
+- CTI / centralita telefónica.
+- Sincronización con sistemas contables externos (SAP, Defontana, etc.) — sí está sujeto a evaluación futura como integración puntual, pero no es alcance del PRD vigente.
+
+---
+
+## 20. Riesgos y mitigaciones
+
+| ID | Riesgo | Probabilidad | Impacto | Estado | Mitigación | Owner |
+|---|---|---|---|---|---|---|
+| **R1** | Preview y producción comparten la misma instancia Supabase. Una prueba destructiva puede afectar datos reales. | Media | Alto | Abierto | (a) Política operativa: prohibido ejecutar mutaciones masivas/destructivas en preview; (b) snapshot diario antes de pruebas relevantes; (c) plan P0 (§17 #1) para separar instancia. | Admin / Producto |
+| **R2** | Offline/PWA: conflictos de sincronización, cola creciente, casos no soportados confusos para el usuario. | Media | Alto | Mitigado parcial | §11 documenta soportado/no soportado, estrategia de conflictos (last-write-wins) y límites de cola. P0 (§17 #2) para endurecer telemetría. | Ingeniería |
+| **R3** | Envejecimiento del PRD: si no se actualiza por release, deja de ser fuente única de verdad. | Alta | Medio | Abierto | (a) Owner asignado al PRD; (b) revisión obligatoria por release menor; (c) Apéndice E como changelog vivo; (d) referenciar `docs/modules/` y `mem://` en lugar de duplicar. | Producto |
+| **R4** | Concentración de conocimiento: un único documento concentra muchísima información. | Media | Medio | Mitigado | El PRD referencia y no duplica especificaciones detalladas (módulos en `docs/modules/`, decisiones vivas en `mem://`). | Producto |
+| **R5** | Dependencias externas (OpenAI, Mapbox, GetAPI, Resend, Meta) pueden caer o cambiar precios/cuotas. | Media | Alto | Abierto | Plan de degradación documentado en §21. P1 (§17 #4) para formalizar fallbacks. | Ingeniería |
+| **R6** | Crecimiento descontrolado del producto si no se respeta out-of-scope (§19). | Media | Medio | Mitigado | §19 explícito; cualquier nueva iniciativa debe reclasificarse en §17 antes de comprometerse. | Producto |
+| **R7** | Pérdida de datos por error humano en backups/restauración. | Baja | Crítico | Mitigado parcial | Backups bajo demanda + reporte diario; falta política formal de retención off-site. | Admin |
+| **R8** | Cambios regulatorios SII (estructura DTE, formatos). | Baja | Alto | Monitoreo | Parser XML aislado y testeable; cambios se atienden por release menor. | Ingeniería |
+
+---
+
+## 21. Matriz de dependencias críticas
+
+Marcas: ● dependencia fuerte (sin esto el módulo no funciona); ◐ dependencia parcial (degrada funcionalidad); ○ no aplica.
+
+```text
+Módulo                | RLS | Edge Fn | Storage | OCR/IA | Offline | Mapbox | GetAPI | Resend | SII XML
+----------------------|-----|---------|---------|--------|---------|--------|--------|--------|--------
+Servicios             |  ●  |    ◐    |    ●    |   ○    |    ●    |   ○    |   ○    |   ◐    |   ○
+Calendario            |  ●  |    ○    |    ○    |   ○    |    ◐    |   ○    |   ○    |   ○    |   ○
+Cierres               |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ◐    |   ○
+Clientes              |  ●  |    ◐    |    ○    |   ○    |    ●    |   ○    |   ◐    |   ○    |   ○
+Grúas (Vehículos)     |  ●  |    ◐    |    ●    |   ○    |    ●    |   ○    |   ◐    |   ○    |   ○
+Operadores            |  ●  |    ○    |    ○    |   ○    |    ●    |   ○    |   ○    |   ○    |   ○
+Inventario            |  ●  |    ○    |    ○    |   ○    |    ●    |   ○    |   ○    |   ○    |   ●
+Proveedores           |  ●  |    ◐    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ●
+Facturas              |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ●
+Costos                |  ●  |    ●    |    ○    |   ◐    |    ●    |   ○    |   ○    |   ○    |   ●
+Pagos / Conciliación  |  ●  |    ◐    |    ○    |   ○    |    ○    |   ○    |   ○    |   ◐    |   ○
+Comisiones            |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ○
+Cuentas por Pagar     |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ○
+Inspecciones (PWA)    |  ●  |    ●    |    ●    |   ○    |    ●    |   ○    |   ○    |   ●    |   ○
+Quick Entry / OCR     |  ●  |    ●    |    ●    |   ●    |    ○    |   ○    |   ○    |   ○    |   ○
+Trip Calculator       |  ●  |    ●    |    ○    |   ○    |    ○    |   ●    |   ●    |   ○    |   ○
+Reportes              |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+VIP Pipeline          |  ●  |    ●    |    ●    |   ●    |    ○    |   ○    |   ○    |   ○    |   ○
+Backup                |  ●  |    ●    |    ●    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+Notificaciones        |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+```
+
+### Plan de degradación por dependencia externa
+
+| Dependencia | Si cae… | Comportamiento esperado |
+|---|---|---|
+| **OpenAI (gpt-4o-mini)** | Quick Entry no extrae datos automáticamente. | El usuario completa el costo manualmente; el registro queda guardado con foto. |
+| **Mapbox** | Trip Calculator no muestra ruta/preview. | Permitir ingreso manual de distancia y duración estimadas. |
+| **GetAPI (vehículos / RUT / peajes)** | No verifica patente, RUT ni estima peajes. | Aceptar datos manuales con advertencia "no verificado". |
+| **Resend** | No salen emails (facturas, reportes diarios, alertas). | Encolar y reintentar; mostrar en UI los emails pendientes. |
+| **Meta WhatsApp Cloud API** | No salen notificaciones WhatsApp. | Fallback a email + notificación in-app. |
+| **SRE / Ruts.info** | No verifica RUT en alta de cliente. | Validar formato local y permitir alta marcada como "RUT no verificado". |
+| **Tollroutes** | Trip Calculator sin peajes. | Estimar peajes manualmente o devolver 0. |
+| **Lovable AI Gateway** | Funcionalidades IA fuera de servicio. | Mismo fallback que OpenAI. |
