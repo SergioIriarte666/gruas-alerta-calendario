@@ -779,12 +779,32 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - **Fase 4 (v2.1.0):** Sistema integral de Inventario y Bodega + alertas.
 - **Fase 5 (v2.2.x):** Optimización de rendimiento, reportes avanzados, integraciones (Mapbox, Tollroutes, GetAPI, OpenAI), VIP pipeline, Cuentas por Pagar estructuradas, Histórico SII, Quick Entry con OCR, audit logs visibles en UI, hardening de seguridad y RLS, design system v3, sistema de comisiones reescrito.
 
-### En curso / próximo
-- Notificaciones WhatsApp directas (Meta Cloud API).
-- Analítica predictiva (predicción de demanda y mantención).
-- Expansión de reportes con dashboards interactivos.
-- Mejoras al VIP pipeline (matching más robusto, dashboard de conversión).
-- Multi-tenant nativo (preparación de schema y RLS).
+### Priorización Impacto × Esfuerzo
+
+Convenciones: Impacto = Alto/Medio/Bajo. Esfuerzo = S (≤1 semana) / M (2–4 semanas) / L (>1 mes). Prioridad = P0 (crítico, ya) / P1 (alto valor, próximo) / P2 (mejora) / P3 (backlog explícito).
+
+| # | Iniciativa | Impacto | Esfuerzo | Prioridad | Dependencias | Justificación |
+|---|---|---|---|---|---|---|
+| 1 | Separar Supabase preview vs producción (o política operativa estricta) | Alto | M | **P0** | Infra Lovable Cloud | Riesgo R1: hoy comparten datos reales. |
+| 2 | Endurecer offline/PWA: conflictos, límites, casos no soportados (ya documentados en §11) y telemetría de cola | Alto | M | **P0** | IndexedDB v5, SyncIndicator | Riesgo R2: complejidad creciente. |
+| 3 | Notificaciones WhatsApp directas (Meta Cloud API) | Alto | M | **P0** | Edge Function nueva, secretos Meta | Decisión tomada; cierra gap de comunicación con clientes/operadores. |
+| 4 | Plan de degradación por proveedor externo (OpenAI, Mapbox, GetAPI, Resend) | Medio | S | **P1** | Ninguna | Riesgo R5: hoy no hay fallback formal. |
+| 5 | Dashboards interactivos de reportes | Medio | M | **P1** | Reportes existentes | Mejora analítica sin cambiar modelo. |
+| 6 | Multi-tenant nativo (schema + RLS) | Alto | L | **P1** | RLS, refactor `created_by` → `tenant_id` | Habilita modelo SaaS para más empresas. |
+| 7 | Analítica predictiva (demanda, mantención) | Medio | L | **P2** | Histórico de servicios y mantenciones | Valor diferencial, no urgente. |
+| 8 | Mejoras VIP pipeline (matching, dashboard conversión) | Medio | M | **P2** | OCR fuzzy actual | Optimización de un flujo ya operativo. |
+| 9 | Telemetría de errores client-side estructurada | Medio | S | **P2** | `src/lib/logger.ts` | Mejora mantenibilidad. |
+| 10 | App nativa (iOS/Android) | — | — | **P3 / Out of scope** | — | La PWA cubre el caso. Ver §19. |
+
+### "No haremos" (out of scope explícito del producto)
+- App nativa iOS/Android dedicada (la PWA cumple el rol).
+- ERP completo (RRHH, contabilidad fiscal completa, activos fijos avanzados).
+- Emisión directa de DTE al SII (solo importación/registro). Se asume que el cliente usa un facturador electrónico autorizado.
+- Módulo de RRHH / liquidación de sueldos.
+- Marketplace público de servicios de grúa.
+- Integración telefónica (CTI / call center).
+
+Ver §19 para alcance global del producto y §20 para riesgos asociados a estas decisiones.
 
 ---
 
