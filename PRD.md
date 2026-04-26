@@ -866,3 +866,92 @@ Ver §19 para alcance global del producto y §20 para riesgos asociados a estas 
 |---|---|---|
 | 1.0 | — | PRD inicial breve (~78 líneas). |
 | 3.0 | 2026-04-25 | Reescritura completa exhaustiva: 18 secciones, los 33 módulos, reglas de negocio críticas, integraciones, Edge Functions, modelo de datos, RLS, offline/PWA, seguridad, design system, KPIs, roadmap actualizado y apéndices. |
+| 3.1 | 2026-04-26 | Capa ejecutiva (§0), criterios de aceptación por módulo (§5.bis), refuerzo de §11 (offline: soportado/no soportado/conflictos/límites), nota de riesgo en §15, reescritura de §17 con priorización Impacto×Esfuerzo y out-of-scope, y nuevas secciones §19 (supuestos/restricciones/out-of-scope global), §20 (riesgos y mitigaciones) y §21 (matriz de dependencias críticas). Sin cambios en código. |
+
+---
+
+## 19. Supuestos, restricciones y out-of-scope global
+
+### Supuestos operativos
+- Conectividad **intermitente** esperada en terreno; la app debe seguir operando offline en módulos críticos (§11).
+- Equipo administrativo **pequeño** (1–5 personas). La automatización es prioridad sobre la flexibilidad de configuración.
+- Volumen máximo asumido en la operación actual: hasta ~3.000 servicios/mes, ~10.000 ítems de inventario activos, ~20 usuarios concurrentes. Sobre ese umbral se requiere revisión de rendimiento y costos.
+- Los DTE se importan desde XML del SII; **el sistema no emite DTE** al SII directamente.
+- El cliente cuenta con un facturador electrónico externo autorizado.
+- Operación mono-empresa por instancia hoy; multi-tenant es P1 en §17.
+
+### Restricciones técnicas
+- Stack obligatorio: React 18 + Vite + TypeScript + Tailwind + shadcn/ui.
+- Backend único: Lovable Cloud / Supabase (Postgres + Auth + Storage + Edge Functions Deno).
+- Sin servidor propio ni contenedores administrados por el cliente.
+- Idioma del producto: es-CL. Moneda: CLP. Zona horaria: America/Santiago.
+- Diseño centrado en violeta (#8b5cf6); prohibido el verde (preferencia de accesibilidad declarada).
+- Compatibilidad navegadores actuales (Chrome, Edge, Safari, Firefox); Safari/WebKit requiere compat layer pdfjs.
+
+### Out of scope global del producto
+(Complementa la lista del §17.) Ver justificación allí.
+- App nativa iOS/Android.
+- Emisión SII directa.
+- ERP / RRHH / liquidaciones.
+- Marketplace público.
+- CTI / centralita telefónica.
+- Sincronización con sistemas contables externos (SAP, Defontana, etc.) — sí está sujeto a evaluación futura como integración puntual, pero no es alcance del PRD vigente.
+
+---
+
+## 20. Riesgos y mitigaciones
+
+| ID | Riesgo | Probabilidad | Impacto | Estado | Mitigación | Owner |
+|---|---|---|---|---|---|---|
+| **R1** | Preview y producción comparten la misma instancia Supabase. Una prueba destructiva puede afectar datos reales. | Media | Alto | Abierto | (a) Política operativa: prohibido ejecutar mutaciones masivas/destructivas en preview; (b) snapshot diario antes de pruebas relevantes; (c) plan P0 (§17 #1) para separar instancia. | Admin / Producto |
+| **R2** | Offline/PWA: conflictos de sincronización, cola creciente, casos no soportados confusos para el usuario. | Media | Alto | Mitigado parcial | §11 documenta soportado/no soportado, estrategia de conflictos (last-write-wins) y límites de cola. P0 (§17 #2) para endurecer telemetría. | Ingeniería |
+| **R3** | Envejecimiento del PRD: si no se actualiza por release, deja de ser fuente única de verdad. | Alta | Medio | Abierto | (a) Owner asignado al PRD; (b) revisión obligatoria por release menor; (c) Apéndice E como changelog vivo; (d) referenciar `docs/modules/` y `mem://` en lugar de duplicar. | Producto |
+| **R4** | Concentración de conocimiento: un único documento concentra muchísima información. | Media | Medio | Mitigado | El PRD referencia y no duplica especificaciones detalladas (módulos en `docs/modules/`, decisiones vivas en `mem://`). | Producto |
+| **R5** | Dependencias externas (OpenAI, Mapbox, GetAPI, Resend, Meta) pueden caer o cambiar precios/cuotas. | Media | Alto | Abierto | Plan de degradación documentado en §21. P1 (§17 #4) para formalizar fallbacks. | Ingeniería |
+| **R6** | Crecimiento descontrolado del producto si no se respeta out-of-scope (§19). | Media | Medio | Mitigado | §19 explícito; cualquier nueva iniciativa debe reclasificarse en §17 antes de comprometerse. | Producto |
+| **R7** | Pérdida de datos por error humano en backups/restauración. | Baja | Crítico | Mitigado parcial | Backups bajo demanda + reporte diario; falta política formal de retención off-site. | Admin |
+| **R8** | Cambios regulatorios SII (estructura DTE, formatos). | Baja | Alto | Monitoreo | Parser XML aislado y testeable; cambios se atienden por release menor. | Ingeniería |
+
+---
+
+## 21. Matriz de dependencias críticas
+
+Marcas: ● dependencia fuerte (sin esto el módulo no funciona); ◐ dependencia parcial (degrada funcionalidad); ○ no aplica.
+
+```text
+Módulo                | RLS | Edge Fn | Storage | OCR/IA | Offline | Mapbox | GetAPI | Resend | SII XML
+----------------------|-----|---------|---------|--------|---------|--------|--------|--------|--------
+Servicios             |  ●  |    ◐    |    ●    |   ○    |    ●    |   ○    |   ○    |   ◐    |   ○
+Calendario            |  ●  |    ○    |    ○    |   ○    |    ◐    |   ○    |   ○    |   ○    |   ○
+Cierres               |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ◐    |   ○
+Clientes              |  ●  |    ◐    |    ○    |   ○    |    ●    |   ○    |   ◐    |   ○    |   ○
+Grúas (Vehículos)     |  ●  |    ◐    |    ●    |   ○    |    ●    |   ○    |   ◐    |   ○    |   ○
+Operadores            |  ●  |    ○    |    ○    |   ○    |    ●    |   ○    |   ○    |   ○    |   ○
+Inventario            |  ●  |    ○    |    ○    |   ○    |    ●    |   ○    |   ○    |   ○    |   ●
+Proveedores           |  ●  |    ◐    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ●
+Facturas              |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ●
+Costos                |  ●  |    ●    |    ○    |   ◐    |    ●    |   ○    |   ○    |   ○    |   ●
+Pagos / Conciliación  |  ●  |    ◐    |    ○    |   ○    |    ○    |   ○    |   ○    |   ◐    |   ○
+Comisiones            |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ○
+Cuentas por Pagar     |  ●  |    ○    |    ○    |   ○    |    ○    |   ○    |   ○    |   ○    |   ○
+Inspecciones (PWA)    |  ●  |    ●    |    ●    |   ○    |    ●    |   ○    |   ○    |   ●    |   ○
+Quick Entry / OCR     |  ●  |    ●    |    ●    |   ●    |    ○    |   ○    |   ○    |   ○    |   ○
+Trip Calculator       |  ●  |    ●    |    ○    |   ○    |    ○    |   ●    |   ●    |   ○    |   ○
+Reportes              |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+VIP Pipeline          |  ●  |    ●    |    ●    |   ●    |    ○    |   ○    |   ○    |   ○    |   ○
+Backup                |  ●  |    ●    |    ●    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+Notificaciones        |  ●  |    ●    |    ○    |   ○    |    ○    |   ○    |   ○    |   ●    |   ○
+```
+
+### Plan de degradación por dependencia externa
+
+| Dependencia | Si cae… | Comportamiento esperado |
+|---|---|---|
+| **OpenAI (gpt-4o-mini)** | Quick Entry no extrae datos automáticamente. | El usuario completa el costo manualmente; el registro queda guardado con foto. |
+| **Mapbox** | Trip Calculator no muestra ruta/preview. | Permitir ingreso manual de distancia y duración estimadas. |
+| **GetAPI (vehículos / RUT / peajes)** | No verifica patente, RUT ni estima peajes. | Aceptar datos manuales con advertencia "no verificado". |
+| **Resend** | No salen emails (facturas, reportes diarios, alertas). | Encolar y reintentar; mostrar en UI los emails pendientes. |
+| **Meta WhatsApp Cloud API** | No salen notificaciones WhatsApp. | Fallback a email + notificación in-app. |
+| **SRE / Ruts.info** | No verifica RUT en alta de cliente. | Validar formato local y permitir alta marcada como "RUT no verificado". |
+| **Tollroutes** | Trip Calculator sin peajes. | Estimar peajes manualmente o devolver 0. |
+| **Lovable AI Gateway** | Funcionalidades IA fuera de servicio. | Mismo fallback que OpenAI. |
