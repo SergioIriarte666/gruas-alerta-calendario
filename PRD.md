@@ -2,8 +2,8 @@
 
 ## TMS Grúas — Towing Management System
 
-- **Versión del documento:** 3.0
-- **Última actualización:** 2026-04-25
+- **Versión del documento:** 3.1
+- **Última actualización:** 2026-04-26
 - **Versión del producto:** 2.2.x (en producción)
 - **Estado:** Vigente — fuente única de verdad de producto
 - **URLs:**
@@ -15,11 +15,13 @@
 
 ## Tabla de contenidos
 
+0. Resumen ejecutivo para stakeholders no técnicos
 1. Resumen ejecutivo
 2. Glosario y convenciones
 3. Personas, roles y permisos
 4. Mapa funcional y flujos end-to-end
 5. Especificación detallada por módulo
+5.bis Criterios de aceptación (Definition of Done) por módulo crítico
 6. Reglas de negocio críticas
 7. Integraciones externas
 8. Catálogo de Edge Functions
@@ -33,6 +35,51 @@
 16. Métricas de éxito (KPIs)
 17. Roadmap
 18. Apéndices
+19. Supuestos, restricciones y out-of-scope global
+20. Riesgos y mitigaciones
+21. Matriz de dependencias críticas
+
+---
+
+## 0. Resumen ejecutivo para stakeholders no técnicos
+
+> Lectura sugerida: 5 minutos. Esta sección está pensada para perfiles **no técnicos** (gerencia, finanzas, clientes internos). El resto del PRD (§1 en adelante) es la especificación detallada para producto, ingeniería y QA.
+
+### Qué es TMS Grúas
+TMS Grúas es la plataforma operativa y financiera de una empresa de grúas en Chile. Reemplaza planillas, papel y sistemas dispersos por una sola aplicación web (también instalable como app en celular) que cubre el ciclo completo: tomar el servicio, ejecutarlo en terreno con foto y firma, facturarlo, cobrarlo, controlar costos e inventario, y reportar resultados.
+
+Está diseñada para que **el equipo administrativo sea pequeño** y **los operadores trabajen desde el celular**, incluso sin internet. Toda la información financiera y operativa queda registrada con autor, fecha y trazabilidad de cambios.
+
+Comercialmente está desplegada como **Grúas 5 Norte** (`gruas5norte.com`), pero la plataforma es reutilizable para otras empresas del rubro.
+
+### Quién la usa y para qué
+
+| Rol | Beneficio principal |
+|---|---|
+| **Administrador / dueño** | Visión integral del negocio, KPIs, control de cobros y pagos, configuración. |
+| **Personal administrativo (viewer)** | Carga de servicios, facturación, conciliación de pagos, reportes. |
+| **Operador en terreno** | App móvil offline para inspección, fotos, firma y cierre del servicio. |
+| **Cliente final (B2B)** | Portal para solicitar servicios, ver historial y descargar facturas. |
+
+### Estado actual (semáforo de madurez)
+
+| Área | Estado | Comentario |
+|---|---|---|
+| Operaciones (servicios, calendario, cierres) | 🟢 Estable | Núcleo del negocio, en producción. |
+| Finanzas (facturas, costos, conciliación, comisiones) | 🟢 Estable | Reglas críticas y triggers SQL endurecidos. |
+| Inventario y proveedores | 🟢 Estable | Importador XML SII operativo. |
+| Móvil / PWA / Offline | 🟡 En consolidación | Funciona, pero requiere endurecer conflictos y límites (ver §11 y R2 en §20). |
+| Integraciones externas (OpenAI, Mapbox, GetAPI, Resend) | 🟡 Operativas con dependencia | Funcionan, pero hay riesgo si un proveedor cae (ver §21 plan de degradación). |
+| Notificaciones WhatsApp | 🔴 Pendiente | Decisión tomada (Meta Cloud API), implementación en curso. |
+| Multi-tenant | 🔴 No iniciado | En preparación, no comprometido. |
+
+### Próximos hitos priorizados
+
+1. **Separar entornos preview y producción a nivel de datos** (P0). Hoy comparten la misma base Supabase; ver R1 en §20.
+2. **Endurecer offline/PWA** (P0): definir conflictos, límites y casos no soportados de manera explícita.
+3. **Notificaciones WhatsApp directas** (P0/P1): cierre de la integración con Meta Cloud API.
+
+Detalle completo de prioridades en §17 (Roadmap) y de riesgos en §20.
 
 ---
 
