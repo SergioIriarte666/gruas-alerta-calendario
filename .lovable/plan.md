@@ -1,96 +1,46 @@
 ## Objetivo
 
-Reescribir completamente `PRD.md` para reflejar el estado real y actual del sistema **TMS Grúas** (versión actual ≥ 2.2.x con todos los módulos en producción), pasando de un documento de ~78 líneas a un PRD **exhaustivo** que sirva como fuente única de verdad para producto, ingeniería, soporte y onboarding.
+Reemplazar en el PRD (y en el repositorio) toda mención hardcoded a los nombres "Jorge Iriarte / Sergio Iriarte / Jorge Ignacio Iriarte" como exclusión de comisiones, por la regla actual y escalable: **flag `commission_exempt` en la tabla `operators`**. Suprimir además la memoria obsoleta que aún describe la regla por nombres y dejar una sola fuente de verdad.
 
----
+## Contexto verificado
 
-## Alcance del nuevo PRD
+- Memoria obsoleta: `mem://business-rules/commission-exclusion-enforcement-v2` describe aún la exclusión por nombres hardcoded.
+- Memoria vigente (índice Core, línea 6): *"Commission exemptions managed via `commission_exempt` flag on operators table (not hardcoded names)"*.
+- Ocurrencias a corregir en `PRD.md`:
+  - Línea 203 (flujo "Comisión de operador").
+  - Línea 356 (módulo `commissions` → "Exclusiones forzadas").
+  - Línea 392 (regla crítica #3).
 
-El documento cubrirá los **33 módulos funcionales** ya implementados (visibles en `docs/modules/`) más capas transversales, reglas de negocio, integraciones, seguridad, datos y roadmap.
+## Cambios concretos
 
-### Estructura propuesta (índice)
+### 1. `PRD.md` — actualizar 3 pasajes
 
-1. **Resumen Ejecutivo**
-   - Visión, propuesta de valor, mercado objetivo (empresas de grúas en Chile), versión actual y estado.
+- **L203** → Cambiar el paréntesis final por:
+  *"Operadores con `commission_exempt = true` quedan excluidos del cálculo (configurable en su ficha)."*
 
-2. **Glosario y convenciones**
-   - Términos: servicio, folio, cierre, DTE, custodia, VIP, etc.
-   - Moneda CLP, zona horaria America/Santiago, formatos de fecha.
+- **L356** (módulo commissions) → Reemplazar "Exclusiones forzadas: …nombres…" por:
+  *"**Exclusiones configurables:** operadores marcados con `commission_exempt = true` en su ficha. Trigger DB (`prevent_excluded_operator_commissions`) impide insertar comisiones para operadores exentos. Sin nombres hardcoded — totalmente escalable."*
 
-3. **Personas y roles**
-   - `admin`, `viewer`, `operator`, `client` con permisos detallados y matriz de acceso por módulo.
-   - Sistema de permisos granulares por módulo.
+- **L392** (regla crítica #3) → Reemplazar por:
+  *"**Exclusión de comisiones configurable.** Operadores con `commission_exempt = true` no generan comisiones. La regla es por flag en `operators`, no por nombre — para que sea escalable a nuevos socios/exentos sin tocar código."*
 
-4. **Mapa funcional del sistema**
-   - Diagrama de módulos y dependencias.
-   - Flujos end-to-end principales: Solicitud → Asignación → Inspección → Cierre → Facturación → Cobro → Reporte.
+### 2. Memoria — eliminar/reescribir la entrada obsoleta
 
-5. **Especificación detallada por módulo** (una sub-sección por módulo, cada una con: propósito, usuarios, funcionalidades, reglas de negocio, dependencias, KPIs):
-   - **Núcleo y transversales**: core-app, layout-navigation, auth, supabase-integration, notifications, PWA, backup.
-   - **Operación**: dashboard, services, calendar, quick-entry, daily-report, trip-calculator, operator-app, portal cliente.
-   - **Activos y catálogos**: cranes, operators-admin, clients, suppliers, inventory, catalogos-admin (service-types, service-rates, cost-centers, vehicles), settings-admin.
-   - **Financiero**: closures, invoices, costs, accounts-payable, commissions, incomes, projections, finance-historical, reports, vip-pipeline.
+- Reescribir `mem://business-rules/commission-exclusion-enforcement-v2` para que documente la **regla actual por flag** (qué tabla, qué trigger, cómo se administra desde la ficha del operador), eliminando los nombres propios.
+- Actualizar la descripción correspondiente en `mem://index.md` (ya dice "DB-driven commission_exempt flag…", se mantiene; solo verificar consistencia).
 
-6. **Reglas de negocio críticas** (consolidadas desde memorias del proyecto):
-   - Cierres y facturación, sincronización bidireccional Costos ↔ Pagos a Proveedores, exclusión de comisiones específicas, relación 1:1 costo-factura, lógica de antigüedad y vencimiento de facturas, anulación con nota de crédito, no auto-asignación en conciliación, exclusión de clientes con facturación mensual, status de servicios protegido, preservación de fechas en costos, etc.
+### 3. Repositorio — barrido de menciones residuales
 
-7. **Integraciones externas**
-   - Supabase (Auth, DB, Storage, Edge Functions, Realtime), Resend (emails transaccionales: invitaciones, recordatorios, reset, reportes diarios, confirmaciones, alertas de documentos), Mapbox (rutas y peajes), GetAPI Chile / SRE (verificación de patentes y RUT), OpenAI (clasificación de costos, OCR de boletas), WhatsApp Cloud API (decisión de integración directa), pdfjs-dist (parsing PDF VIP).
-
-8. **Edge Functions** (catálogo): `check-vehicle-patent`, `classify-cost`, `generate-backup`, `generate-sql-dump`, `mapbox-proxy`, `parse-receipt-image`, `send-*` (8 funciones de email/push), `sre-lookup`, `tollroutes-proxy`, etc., con propósito de cada una.
-
-9. **Modelo de datos (alto nivel)**
-   - Entidades principales y relaciones: services, costs, invoices, clients, cranes, operators, inventory_*, suppliers, debts, commissions, closures, notifications, user_roles, audit_logs.
-   - RLS y `has_role()` security definer.
-
-10. **Auditoría y trazabilidad**
-    - `created_by`, `service_audit_log`, historial de cambios visible en UI (Servicios, Costos, Repuestos), logs de backup.
-
-11. **Capacidad Offline / PWA**
-    - IndexedDB v5, CRUD offline en módulos clave, sincronización automática, indicadores de conexión, instalación, push notifications.
-
-12. **Seguridad**
-    - RLS en todas las tablas, roles en tabla separada (`user_roles` + enum `app_role`), hardening de notificaciones y storage, restricciones de escritura en tablas financieras críticas, separación de claves API por servicio.
-
-13. **Diseño y experiencia**
-    - Sistema de diseño v3 (violet `#8b5cf6`, alto contraste, tokens en `index.css`, primitivos `PageHeader`, `MetricCard`, `StatusBadge`, `SectionCard`).
-    - Estándares responsive y accesibilidad (preferencia violeta por discapacidad visual del usuario).
-    - Patrón de modales con Radix Select estable.
-
-14. **Requisitos no funcionales**
-    - Rendimiento (TTI < 3s, precarga de rutas, React Query caching), disponibilidad (Supabase + Lovable hosting), escalabilidad, compatibilidad (Safari/WebKit, móvil), backups automáticos.
-
-15. **Despliegue y entornos**
-    - Preview, publicado (`t-m-s.lovable.app`), dominio propio (`gruas5norte.com`), despliegue continuo desde Lovable, edge functions automáticas, migraciones gestionadas.
-
-16. **Métricas de éxito y KPIs del producto**
-    - Operativos (servicios/día, tiempo de cierre, % inspecciones digitales), financieros (DSO, margen, tasa de cobro), técnicos (uptime, errores).
-
-17. **Roadmap**
-    - Fases completadas (1–5) con hitos reales y fase actual: WhatsApp directo, analítica predictiva, mejoras VIP pipeline, expansión de reportes.
-
-18. **Apéndices**
-    - A. Variables de entorno y secretos.
-    - B. Catálogo de rutas (admin / operator / portal).
-    - C. Referencias cruzadas a `docs/modules/*` y memorias del proyecto.
-    - D. Historial de versiones resumido.
-
----
-
-## Detalles técnicos / fuentes a consolidar
-
-- Leer y sintetizar los 33 archivos de `docs/modules/*.md` para cada sub-sección.
-- Incorporar reglas de negocio desde las memorias (`mem://features/*`, `mem://business-rules/*`, `mem://data-integrity/*`, `mem://constraints/*`, `mem://security/*`).
-- Cruzar con `CHANGELOG.md`, `docs/changelog/releases.md`, `docs/technical/*` para versionado e hitos.
-- Listar Edge Functions reales desde `supabase/functions/`.
-- Mantener el documento en español y en formato Markdown puro (sin emojis decorativos en encabezados, salvo iconos ya presentes en el changelog si aportan claridad).
-- Incluir 2–3 diagramas Mermaid clave (mapa de módulos, flujo end-to-end servicio→cobro, capas de arquitectura).
-
-## Entregable
-
-Un único archivo `PRD.md` reescrito completo (estimado 800–1.500 líneas), reemplazando la versión actual. No se modificará ningún otro archivo del código.
+- Buscar otras menciones documentales (`docs/sistema-comisiones-restaurado.md`, `docs/changelog/*`, `CHANGELOG.md`, `docs/modules/commissions.md` si existe) que aún mencionen los nombres como regla activa, y reemplazarlas por la regla por flag. Si solo aparecen como nota histórica de migración, se conservan con un encabezado claro de "histórico".
+- **No se tocan** las migraciones SQL antiguas (`supabase/migrations/*.sql`) porque son historial inmutable de cambios ya aplicados; modificarlas rompería la integridad del historial. Se deja constancia en el PRD que esas migraciones son históricas.
 
 ## Fuera de alcance
 
-- No se modifica código de la aplicación, base de datos, edge functions ni documentación de `docs/`.
-- No se generan PDFs ni artefactos descargables (a menos que lo pidas después).
+- No se cambia código de la app ni triggers de base de datos (la regla por flag ya está implementada).
+- No se modifican migraciones SQL existentes.
+
+## Entregable
+
+- `PRD.md` actualizado (3 pasajes).
+- `mem://business-rules/commission-exclusion-enforcement-v2` reescrita.
+- Documentos en `docs/` con menciones obsoletas actualizadas.

@@ -200,7 +200,7 @@ sequenceDiagram
 
 - **Costo de proveedor:** Importación XML DTE → Detección de duplicado → Costo + pago a proveedor + (opcional) ingreso a inventario (sincronización triangular atómica).
 - **Mantención de grúa:** Mantención → Repuestos asociados → Costo + descuento de stock + pago al proveedor.
-- **Comisión de operador:** Servicio cerrado → Cálculo según regla → Registro en `costs` (única fuente). Excluidos los socios (Jorge Iriarte, Sergio Iriarte, Jorge Ignacio Iriarte).
+- **Comisión de operador:** Servicio cerrado → Cálculo según regla → Registro en `costs` (única fuente). Operadores con `commission_exempt = true` quedan excluidos del cálculo (configurable en su ficha, sin nombres hardcoded).
 - **Captura rápida móvil:** Foto de boleta → OCR (`parse-receipt-image`) → Pre-llenado de costo.
 
 ---
@@ -353,7 +353,7 @@ Cada módulo abajo declara propósito, usuarios, funcionalidades clave, reglas d
 #### 5.4.5 commissions
 - Comisiones de operadores. **Fuente única de verdad:** tabla `costs`.
 - Soporta múltiples esquemas (% por servicio, fijo, escalonado).
-- **Exclusiones forzadas:** Jorge Iriarte, Sergio Iriarte, Jorge Ignacio Iriarte.
+- **Exclusiones configurables:** operadores marcados con `commission_exempt = true` en su ficha. El trigger DB `prevent_excluded_operator_commissions` impide insertar comisiones para operadores exentos. Sin nombres hardcoded — totalmente escalable a nuevos socios o exentos sin tocar código.
 - Herramienta admin para forzar resync.
 
 #### 5.4.6 incomes
@@ -389,7 +389,7 @@ Reglas no-negociables del sistema (consolidadas desde memorias del proyecto y c�
 
 1. **Roles en tabla separada.** Nunca almacenar el rol en `profiles`. Usar `user_roles` + `has_role()` SECURITY DEFINER.
 2. **Sin auto-asignación de pagos.** La conciliación es 100% manual (decisión expresa del cliente).
-3. **Exclusión de comisiones (socios).** Jorge Iriarte, Sergio Iriarte, Jorge Ignacio Iriarte siempre excluidos.
+3. **Exclusión de comisiones configurable.** Operadores con `commission_exempt = true` no generan comisiones. La regla vive en la base de datos (flag en `operators` + trigger `prevent_excluded_operator_commissions`), no en código ni por nombre — escalable a nuevos exentos sin modificar la app.
 4. **Facturación mensual.** Clientes con `billing_type='monthly'` quedan fuera de cierres semanales/quincenales.
 5. **Costo ↔ Factura proveedor: relación 1:1.**
 6. **Anulación de factura ⇒ Nota de Crédito.** No se elimina; se genera NC con razón obligatoria.
