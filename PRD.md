@@ -724,6 +724,8 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - **Producción:** `t-m-s.lovable.app` + dominio propio `gruas5norte.com`.
 - Preview y producción comparten la misma instancia de Supabase y Edge Functions.
 
+> ⚠️ **Riesgo operativo R1 (ver §20).** Compartir Supabase entre preview y producción facilita pruebas pero permite que un cambio en preview impacte datos reales. Mientras no se separe la instancia, aplican las mitigaciones definidas en §20 (ventana de pruebas, snapshot diario, prohibición de mutaciones masivas/destructivas en preview).
+
 ### Pipeline
 - Cambios desde Lovable → despliegue automático preview.
 - Migraciones SQL: archivos timestamped en `supabase/migrations/` (gestionados desde Lovable).
