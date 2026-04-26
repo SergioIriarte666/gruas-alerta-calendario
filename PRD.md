@@ -430,6 +430,77 @@ Cada módulo abajo declara propósito, usuarios, funcionalidades clave, reglas d
 
 ---
 
+## 5.bis Criterios de aceptación (Definition of Done) por módulo crítico
+
+> Checklist verificable por QA y desarrollo. Si un cambio toca un módulo de esta lista, debe cumplir TODOS los criterios marcados antes de considerarse "listo". Los módulos no listados aplican criterios genéricos de §14.
+
+### Genérico (aplica a todos)
+- [ ] RLS activa y verificada para todos los roles relevantes.
+- [ ] `created_by` poblado y visible en UI cuando aplica.
+- [ ] Estados de carga, vacío y error implementados.
+- [ ] Responsive mobile (cards) y desktop (tabla) según patrón del módulo de Costos.
+- [ ] Sin colores hardcoded; usa tokens del design system v3.
+- [ ] Sin regresiones en módulos dependientes (ver §21).
+
+### Servicios
+- [ ] Estados protegidos: `pending → in_progress → completed → closed` (no se permite saltar hacia atrás sin permiso).
+- [ ] Tarifa pre-llenada según jerarquía cliente → tipo → default.
+- [ ] Subcontratación con `outsourced_provider_id` correctamente reflejada en cierres y reportes.
+- [ ] Audit log (`service_audit_log`) registra cambios de estado, operador, grúa, valor y cliente.
+- [ ] Operaciones por lote (cerrar, cambiar estado, reasignar) protegidas por confirmación.
+- [ ] CRUD funciona offline y sincroniza al recuperar conexión.
+- [ ] Gastos auto-pagados (peajes/viáticos) no duplican costos.
+
+### Facturas
+- [ ] Estado de pago calculado por **saldo real**, no por estado nominal.
+- [ ] Anulación SOLO vía Nota de Crédito; nunca delete directo.
+- [ ] Eliminación protegida con confirmación "ELIMINAR" para facturas no históricas.
+- [ ] Importación histórica SII (CSV/XLSX) marca prefijo `HIST-`.
+- [ ] Conciliación automática al crear factura ya pagada.
+- [ ] Aging (0-30/31-60/61-90/90+) coincide con vista de proyecciones.
+- [ ] N° fiscal es el identificador prioritario en búsquedas.
+
+### Costos
+- [ ] Relación 1:1 estricta con Facturas de proveedor (no se permite duplicar).
+- [ ] Importador XML detecta duplicados por folio + hash + contenido.
+- [ ] Clasificación histórica por tokens funciona y es la única vía (no hay otra).
+- [ ] Fechas originales del DTE preservadas (no se reemplazan por fecha de importación).
+- [ ] Eliminación pasa por flujo seguro con verificación de dependencias.
+- [ ] Badge multi-ítem visible cuando el costo está vinculado a factura con varios ítems.
+
+### Pagos / Conciliación
+- [ ] Prohibida cualquier auto-asignación FIFO/LIFO. La conciliación es manual.
+- [ ] Modal de pago muestra `due_date` y prioridad por vencimiento.
+- [ ] Pago parcial actualiza saldo correctamente y refleja estado en factura.
+- [ ] `reference_number` (folio del DTE) NUNCA se mezcla con la referencia bancaria.
+
+### Inventario
+- [ ] Auto-SKU SOLO en importación XML (`SKU-YYYYMMDD-HEX4`); manual exige SKU del usuario.
+- [ ] Valoración total filtra estrictamente `status='active'`.
+- [ ] Movimientos generan trazabilidad (`inventory_movement_change_history`).
+- [ ] Stock crítico genera alerta visible en Dashboard.
+- [ ] Vínculo atómico XML → factura → costo → stock (rollback si una etapa falla).
+
+### Comisiones
+- [ ] Única fuente de verdad: tabla `costs`.
+- [ ] Operadores con `commission_exempt = true` NO generan comisiones (validado por trigger en BD).
+- [ ] Sincronización con servicios cerrados respeta fecha del servicio.
+- [ ] Sin nombres hardcoded en código ni documentación.
+
+### Cuentas por Pagar
+- [ ] Solo `admin` puede escribir en `creditors`, `debts`, `debt_installments`, `debt_payments` (RLS verificada).
+- [ ] Cuotas con interés/reajuste calculan correctamente.
+- [ ] Pagos parciales se reflejan en deuda pendiente.
+
+### PWA Offline
+- [ ] Módulos soportados (Servicios, Costos, Clientes, Operadores, Grúas, Inventario) operan 100% sin red para CRUD básico.
+- [ ] Cola de operaciones pendientes visible en `SyncIndicator`.
+- [ ] Resolución de conflictos documentada (last-write-wins por fila con timestamp).
+- [ ] Operaciones NO soportadas offline (importadores XML, OCR, envío de email, generación PDF server-side, integraciones externas) muestran mensaje claro.
+- [ ] Inspecciones (fotos + firma) funcionan completamente offline y sincronizan al reconectar.
+
+---
+
 ## 6. Reglas de negocio críticas
 
 Reglas no-negociables del sistema (consolidadas desde memorias del proyecto y código productivo):
