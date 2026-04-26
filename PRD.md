@@ -632,6 +632,30 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - Instalación: prompt nativo (`InstallPrompt`, `PWAInstallButton`).
 - Actualización: notificación al usuario cuando hay nueva versión del SW.
 
+### Soportado offline (lista cerrada)
+- CRUD: Servicios, Costos, Clientes, Operadores, Grúas, Inventario (movimientos básicos).
+- Inspección PWA completa: checklist + fotos + firma.
+- Lectura de catálogos previamente cacheados (tipos de servicio, tarifas, vehículos).
+
+### NO soportado offline
+- Importadores XML (DTE de costos, proveedores e inventario).
+- OCR de boletas / Quick Entry con auto-extracción.
+- Generación de PDFs server-side y envío por email (Resend).
+- Integraciones externas: Mapbox (rutas), GetAPI (peajes/patentes/RUT), Tollroutes, OpenAI, Meta WhatsApp.
+- Conciliación de pagos compleja (requiere consistencia transaccional contra el servidor).
+- Reportes con agregaciones server-side y exportación.
+
+### Resolución de conflictos
+- Estrategia: **last-write-wins a nivel de fila**, usando timestamp del cliente para ordenar y timestamp del servidor como árbitro final.
+- Campos calculados (saldos, totales, estados derivados) se recalculan SIEMPRE en servidor; el valor offline es provisional.
+- En caso de conflicto destructivo (borrado offline + edición online o viceversa), prevalece la versión más reciente y se notifica al usuario en el `SyncIndicator`.
+
+### Límites declarados
+- Cola IndexedDB: máximo recomendado ~500 operaciones pendientes por dispositivo; sobre ese umbral se muestra advertencia.
+- TTL de operaciones pendientes: 7 días. Pasado ese plazo se solicita confirmación manual antes de sincronizar.
+- Tamaño máximo de fotos en cola: comprimidas en cliente antes de encolar.
+- No hay garantía de orden global entre dispositivos; el orden lo determina el servidor al recibir.
+
 ---
 
 ## 12. Seguridad
