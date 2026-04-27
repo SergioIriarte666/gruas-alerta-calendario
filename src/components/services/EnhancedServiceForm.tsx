@@ -200,7 +200,9 @@ export const EnhancedServiceForm = ({
   }, [serviceTypes, service]);
 
   // Rate lookup: buscar tarifa predefinida cuando cambia cliente, origen o tipo de servicio
+  const isEditingRef = useRef<boolean>(!!service?.id && !isDuplicating);
   useEffect(() => {
+    if (isEditingRef.current) return;
     if (service?.id && !isDuplicating) return;
     
     const performLookup = async () => {
