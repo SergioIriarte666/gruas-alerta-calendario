@@ -119,8 +119,8 @@ export const MultipleOperatorsSection = ({
                         <span className="flex items-center gap-2">
                           {op.name}
                           {op.commissionExempt && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-200">
-                              Exento
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-200" title="Exento de comisiones">
+                              E
                             </span>
                           )}
                         </span>
