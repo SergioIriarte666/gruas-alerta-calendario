@@ -149,9 +149,10 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   console.log('🔍 [ENHANCED_SERVICE] service_resources found:', resourcesData?.length || 0);
 
   if (resourcesData && resourcesData.length > 0) {
-    // Fuente primaria: service_resources con roles y comisiones reales
+    // Fuente primaria: service_resources con asignaciones reales.
+    // Un operador exento igual pertenece al servicio; solo su comisión debe ser 0.
     resourcesData.forEach((resource: any) => {
-      if (resource.operator_id && resource.operators && !resource.operators.commission_exempt) {
+      if (resource.operator_id && resource.operators) {
         operators.push({
           id: resource.id,
           operatorId: resource.operator_id,
@@ -165,11 +166,12 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
             position: resource.operators.position || '',
             licenseNumber: resource.operators.license_number || '',
             examExpiry: resource.operators.exam_expiry || '',
+            commissionExempt: resource.operators.commission_exempt ?? false,
             isActive: resource.operators.is_active ?? true,
             createdAt: resource.operators.created_at || '',
             updatedAt: resource.operators.updated_at || ''
           },
-          commission: resource.commission_amount || 0,
+          commission: resource.operators.commission_exempt ? 0 : (resource.commission_amount || 0),
           role: resource.role || (resource.is_primary ? 'Principal' : 'Adicional'),
           hours: undefined
         });
