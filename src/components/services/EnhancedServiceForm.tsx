@@ -302,7 +302,7 @@ export const EnhancedServiceForm = ({
 
   // Efecto para cargar datos existentes del servicio
   useEffect(() => {
-    if (service && !enhancedService) {
+    if (service && !enhancedService && !loadingEnhancedService) {
       console.log('🔄 [FORM] Loading basic service data (no enhanced service yet)');
       setFolio(service.folio);
       setFormData({
@@ -321,7 +321,13 @@ export const EnhancedServiceForm = ({
         origin: service.origin,
         destination: service.destination,
         crane: service.crane?.id || '',
-        operators: [],
+        operators: service.operator ? [{
+          id: 'legacy-1',
+          operatorId: service.operator.id,
+          commission: service.operator.commissionExempt ? 0 : (service.operatorCommission || 0),
+          role: 'Principal',
+          hours: 8
+        }] : [],
         value: service.value,
         costDetails: [],
         markCostsPaidOnCreate: true,
@@ -348,7 +354,7 @@ export const EnhancedServiceForm = ({
       });
       setIsManualFolio(true);
     }
-  }, [service, enhancedService]);
+  }, [service, enhancedService, loadingEnhancedService]);
 
   // Obtener el tipo de servicio seleccionado
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
