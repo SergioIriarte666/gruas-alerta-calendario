@@ -1,92 +1,42 @@
+## Diagnóstico
 
-# Plan: PRD v3.1 — Capa ejecutiva, aceptación, riesgos y dependencias
+### 1. "Línea negra al final del modal Editar Operador"
+En `src/components/operators/OperatorForm.tsx` (líneas 272-278) hay un indicador `fixed bottom-4 right-4 z-50` con fondo `bg-gray-800/90` y texto "Guardado automático activo". Esa píldora oscura es lo que se ve al pie del modal en el screenshot, solapando el botón "Actualizar Operador". No es parte del modal, está fijada a la ventana, y aparece SIEMPRE (también fuera del modal).
 
-Se actualiza `PRD.md` (de v3.0 a v3.1) atacando los seis vacíos detectados, sin perder el detalle técnico actual (se reorganiza, no se elimina). El documento sigue siendo fuente única de verdad, pero gana una capa ejecutiva al inicio y secciones formales de gobernanza al final.
+### 2. "Jorge Iriarte no se guarda en servicios"
+Jorge Iriarte tiene `commission_exempt = true` (visible en el screenshot, switch violeta encendido en "Exento de comisiones"). El selector de operadores en `MultipleOperatorsSection.tsx` solo filtra por `op.isActive` — no filtra por exento, así que aparece y se puede seleccionar. Pero al guardar el servicio, el flujo en `useServiceManager.ts` (líneas 293-297, 348-364) inserta `operator_commission` y luego registros en `service_resources` con `commission_amount`. Cuando el servicio pasa a estado completado, los triggers de comisiones intentan crear un registro en `costs` y el trigger de defensa `prevent_excluded_operator_commissions` lanza una excepción que aborta la transacción y deja al usuario sin un mensaje claro de por qué no se guardó.
 
-## Cambios estructurales en `PRD.md`
+Causa raíz: el formulario de servicios no diferencia entre operadores que reciben comisión y operadores exentos. Para los exentos hay que forzar `commission = 0` y mostrar visualmente que es "Exento".
 
-### 1. Nueva sección "0. Resumen ejecutivo para stakeholders no técnicos"
-Insertada antes del actual §1. Una página, sin jerga:
-- Qué es TMS Grúas en 3 párrafos.
-- Quiénes lo usan y para qué (matriz rol → beneficio).
-- Estado actual y madurez (semáforo verde/ámbar/rojo por área: Operaciones, Finanzas, Inventario, Móvil/PWA, Integraciones).
-- Próximos 3 hitos priorizados con impacto esperado.
-- Link explícito al resto del documento para perfiles técnicos.
+## Cambios propuestos
 
-### 2. Reescritura del §17 Roadmap con priorización Impacto × Esfuerzo
-Reemplazar la lista plana actual por:
-- **Tabla de priorización** con columnas: Iniciativa | Impacto (Alto/Medio/Bajo) | Esfuerzo (S/M/L) | Prioridad (P0/P1/P2) | Dependencias | Justificación.
-- **Clasificación P0/P1/P2/P3:**
-  - P0 (crítico, próximo): separación preview/prod en Supabase, WhatsApp Meta, hardening offline (conflictos).
-  - P1 (alto valor): analítica predictiva, dashboards interactivos, multi-tenant prep.
-  - P2 (mejoras): VIP matching, expansión reportes.
-  - P3 (backlog explícito): ideas registradas pero no comprometidas.
-- **Sección "No haremos (out of scope explícito)"** dentro del roadmap: app nativa iOS/Android, ERP completo, módulo de RRHH, integración SII directa de emisión, etc.
+### A. `src/components/operators/OperatorForm.tsx`
+- Eliminar el bloque "Auto-save indicator" fijo (líneas 272-278). Eliminar también el `import { Save }` si ya no se usa en otros lugares (sigue usándose en el `Alert`, así que se mantiene).
+- Reemplazar el `border-t border` del footer (línea 255, clase mal escrita) por `border-t border-border` para coherencia con el design system violeta.
 
-### 3. Nueva sección "5.bis Criterios de aceptación (Definition of Done) por módulo crítico"
-Checklist formal para los 8 módulos más sensibles: Servicios, Facturas, Costos, Pagos/Conciliación, Inventario, Comisiones, Cuentas por Pagar, PWA Offline. Cada uno con:
-- Criterios funcionales (qué debe hacer, verificable).
-- Criterios de datos (integridad, RLS, auditoría).
-- Criterios de UX (responsive, estados de carga/error/vacío, accesibilidad).
-- Criterios de QA (casos felices, casos límite, regresiones a verificar).
-- Criterios de rendimiento (umbral concreto cuando aplique).
+### B. `src/components/services/form/MultipleOperatorsSection.tsx`
+- Cuando el operador seleccionado tenga `commissionExempt = true`:
+  1. Mostrar un badge violeta junto a su nombre en el `SelectItem` y en el bloque ya seleccionado: `Exento`.
+  2. Forzar `commission = 0` automáticamente al seleccionarlo (en `updateOperator` cuando el campo es `operatorId`, mirar `availableOperators` y si `commissionExempt` setear `commission: 0`).
+  3. Deshabilitar el input de "Comisión (CLP)" para ese operador y mostrar texto auxiliar: "Operador exento de comisiones".
+  4. Quitar el asterisco de obligatoriedad de la comisión cuando el operador es exento.
+- Mantener filtro `op.isActive` para no mostrar inactivos.
 
-Formato compacto tipo checklist, no prosa.
+### C. `src/hooks/services/useServiceManager.ts`
+- Antes de los `insert` (creación) y `update` de servicios, normalizar comisiones: para cada operador en `serviceData.operators`, si el operador tiene `commission_exempt = true` en BD, forzar `commission = 0` antes de persistir (defensa en profundidad por si el form se salta el guard).
+  - Hacer un `select id, commission_exempt from operators where id in (...)` previo a la inserción y mapear.
+- Igualmente normalizar `operator_commission` en el `transformedData` del `service` principal cuando el operador principal sea exento.
+- Capturar específicamente el error del trigger `prevent_excluded_operator_commissions` y mostrar un toast claro: "El operador X está marcado como exento de comisiones. La comisión se ajustó a $0".
 
-### 4. Nueva sección "19. Supuestos, restricciones y out-of-scope global"
-- **Supuestos operativos:** conectividad intermitente esperada en terreno, equipo administrativo pequeño, volumen máximo asumido (servicios/mes, items inventario, usuarios concurrentes).
-- **Restricciones técnicas:** stack Lovable/React/Vite, Supabase como backend único, sin servidor propio, idioma es-CL.
-- **Out of scope global:** lista de funcionalidades fuera del producto y razón.
+### D. `src/components/services/EnhancedServiceForm.tsx`
+- En la sección de "Operador y Comisión" principal (campo único, no múltiple), aplicar la misma lógica visual: si el operador elegido es exento, deshabilitar input de comisión, forzar 0 y mostrar etiqueta "Exento".
 
-### 5. Nueva sección "20. Riesgos y mitigaciones"
-Tabla: Riesgo | Probabilidad | Impacto | Estado | Mitigación | Owner. Incluye explícitamente los riesgos detectados:
-- **R1 — Preview y producción comparten Supabase.** Alto impacto. Mitigación propuesta: proyecto Supabase separado para preview o, en su defecto, política estricta de "no mutaciones destructivas en preview", sufijo de datos de prueba, snapshot diario antes de pruebas.
-- **R2 — Offline/PWA y conflictos de sincronización.** Definir en §11 política de resolución de conflictos (last-write-wins por campo vs merge), límites declarados (qué no se soporta offline: importadores XML, OCR, generación PDF compleja), tamaño máximo de cola, expiración.
-- **R3 — Envejecimiento del PRD.** Política de mantenimiento: revisión obligatoria por release menor, owner asignado, cambelog del propio PRD (ya existe en Apéndice E, se formaliza).
-- **R4 — Concentración de conocimiento.** Mitigación: enlace cruzado obligatorio PRD ↔ `docs/modules/` ↔ `mem://`, evitar duplicar especificaciones detalladas (el PRD referencia, no duplica).
-- **R5 — Dependencias externas (OpenAI, Mapbox, GetAPI, Resend, Meta).** Plan de degradación por proveedor.
+## Verificación post-cambio
+- Editar un operador → no se ve píldora oscura debajo del botón.
+- Crear/editar un servicio asignando a Jorge Iriarte → comisión queda en $0 automáticamente, badge "Exento" visible, servicio se guarda sin errores.
+- Crear/editar un servicio asignando a un operador NO exento → comportamiento de comisiones intacto.
+- Completar un servicio con operador exento → no se genera registro en `costs` (comportamiento ya garantizado por trigger `generate_commission_on_service_completion`), no hay error.
 
-### 6. Nueva sección "21. Matriz de dependencias críticas"
-Tabla módulo × dependencia con marcas (●/○):
-
-```text
-Módulo              | RLS | Edge Fn | Storage | OCR/IA | Offline | Mapbox | GetAPI | Resend | SII XML
-Servicios           |  ●  |    ○    |    ●    |   ○    |   ●     |   ○    |   ○    |   ○    |   ○
-Facturas            |  ●  |    ●    |    ○    |   ○    |   ○     |   ○    |   ○    |   ●    |   ●
-Costos              |  ●  |    ●    |    ○    |   ●    |   ●     |   ○    |   ○    |   ○    |   ●
-Inventario          |  ●  |    ○    |    ○    |   ○    |   ●     |   ○    |   ○    |   ○    |   ●
-Inspecciones        |  ●  |    ●    |    ●    |   ○    |   ●     |   ○    |   ○    |   ●    |   ○
-Trip Calculator     |  ●  |    ●    |    ○    |   ○    |   ○     |   ●    |   ●    |   ○    |   ○
-Quick Entry OCR     |  ●  |    ●    |    ●    |   ●    |   ○     |   ○    |   ○    |   ○    |   ○
-Reportes            |  ●  |    ●    |    ○    |   ○    |   ○     |   ○    |   ○    |   ●    |   ○
-Comisiones          |  ●  |    ○    |    ○    |   ○    |   ○     |   ○    |   ○    |   ○    |   ○
-Backup              |  ●  |    ●    |    ●    |   ○    |   ○     |   ○    |   ○    |   ●    |   ○
-```
-
-Acompañada de una breve sección "Plan de degradación por dependencia" (qué hace el sistema si OpenAI/Mapbox/GetAPI/Resend caen).
-
-### 7. Refuerzo de §11 Capacidad offline (no nueva sección, expansión)
-Añadir subsecciones explícitas:
-- **Soportado offline:** lista cerrada por módulo.
-- **NO soportado offline:** importadores XML, OCR, envío de emails, generación de PDFs server-side, integraciones externas.
-- **Resolución de conflictos:** estrategia (last-write-wins a nivel de fila con timestamp del cliente vs servidor; campos calculados siempre del servidor).
-- **Límites:** tamaño máximo de cola IndexedDB, TTL de operaciones pendientes, política cuando se excede.
-
-### 8. Refuerzo de §15 Despliegue (no nueva, expansión breve)
-Añadir nota destacada del riesgo R1 y la mitigación recomendada (link a §20).
-
-## Cambios menores
-
-- Versión del documento: 3.0 → 3.1; actualizar fecha y entrada en Apéndice E con resumen de cambios.
-- Actualizar Tabla de contenidos con las nuevas secciones (0, 5.bis, 19, 20, 21).
-- Asegurar que el detalle técnico ya existente (§5–§13) se mantiene intacto — no se elimina, solo se complementa.
-
-## Archivos a modificar
-
-- `PRD.md` — única edición. No se tocan `docs/`, memorias ni código.
-
-## Lo que NO hace este plan
-
-- No reescribe la especificación por módulo (§5).
-- No cambia reglas de negocio (§6) ni el modelo de datos.
-- No genera documentos derivados (resumen ejecutivo separado, deck, etc.) — si se quiere uno aparte, se hace en una iteración posterior.
+## Notas
+- No se modifica el esquema de BD ni los triggers existentes (la regla escalable de `commission_exempt` se mantiene como fuente de verdad).
+- Se respeta el design system violeta (badges, switches y estados ya alineados con el módulo de Costos).

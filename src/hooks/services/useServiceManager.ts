@@ -19,6 +19,11 @@ const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') =>
   const parts = [error.message, error.details, error.hint]
     .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
+  const joined = parts.join(' · ').toLowerCase();
+  if (joined.includes('exclud') || joined.includes('exempt') || joined.includes('exent')) {
+    return 'El operador seleccionado está marcado como Exento de comisiones. Se ajustó la comisión a $0 y se reintentará el guardado. Si el problema persiste, verifica la ficha del operador.';
+  }
+
   if (parts.length > 0) {
     return parts.join(' · ');
   }
@@ -33,6 +38,38 @@ const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') =>
   } catch {
     return fallback;
   }
+};
+
+// Normaliza la lista de operadores forzando commission=0 cuando el operador está
+// marcado como exento (commission_exempt=true) en la BD. Esto previene errores
+// del trigger `prevent_excluded_operator_commissions` y mantiene una única fuente
+// de verdad (la flag en la tabla operators).
+const normalizeOperatorsForExempt = async (operators: any[] | undefined): Promise<any[]> => {
+  if (!operators || operators.length === 0) return operators || [];
+  const ids = Array.from(new Set(
+    operators
+      .map(op => op?.operatorId)
+      .filter((id: any) => typeof id === 'string' && id.trim() !== '')
+  ));
+  if (ids.length === 0) return operators;
+
+  const { data, error } = await supabase
+    .from('operators')
+    .select('id, commission_exempt')
+    .in('id', ids);
+
+  if (error || !data) return operators;
+
+  const exemptSet = new Set(
+    data.filter((o: any) => o.commission_exempt === true).map((o: any) => o.id)
+  );
+
+  return operators.map(op => {
+    if (op?.operatorId && exemptSet.has(op.operatorId)) {
+      return { ...op, commission: 0 };
+    }
+    return op;
+  });
 };
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
@@ -216,6 +253,14 @@ export const useServiceManager = () => {
       options?: CreateServiceOptions;
     }): Promise<Service> => {
       try {
+
+        // Defensa en profundidad: forzar comisión 0 a operadores exentos
+        if (serviceData?.operators?.length) {
+          serviceData = {
+            ...serviceData,
+            operators: await normalizeOperatorsForExempt(serviceData.operators),
+          } as ServiceFormData;
+        }
 
         // Obtener configuración del tipo de servicio para validaciones condicionales
         const { data: serviceTypeConfig } = await supabase
@@ -505,6 +550,14 @@ export const useServiceManager = () => {
       serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string } 
     }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
+
+      // Defensa en profundidad: forzar comisión 0 a operadores exentos
+      if (serviceData?.operators?.length) {
+        serviceData = {
+          ...serviceData,
+          operators: await normalizeOperatorsForExempt(serviceData.operators),
+        };
+      }
 
       // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
       const isPartialUpdate = Object.keys(serviceData).length <= 4 && 

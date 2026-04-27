@@ -252,7 +252,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline"
@@ -268,14 +268,6 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </Button>
         </div>
       </form>
-
-      {/* Auto-save indicator */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full flex items-center space-x-2">
-          <Save className="w-3 h-3" />
-          <span>Guardado automático activo</span>
-        </div>
-      </div>
     </div>
   );
 };
