@@ -41,17 +41,21 @@ export const MultipleOperatorsSection = ({
   const removeOperator = (id: string) => {
     onOperatorsChange(operators.filter(op => op.id !== id));
   };
+  const isExempt = (operatorId?: string) => {
+    if (!operatorId) return false;
+    const op = availableOperators.find(o => o.id === operatorId);
+    return !!op?.commissionExempt;
+  };
   const updateOperator = (id: string, field: keyof ServiceOperator, value: any) => {
-    const updatedOperators = operators.map(op => op.id === id ? {
-      ...op,
-      [field]: value
-    } : op);
-    console.log('🔄 [MultipleOperatorsSection] updateOperator called:', {
-      id,
-      field,
-      value
+    const updatedOperators = operators.map(op => {
+      if (op.id !== id) return op;
+      const next: ServiceOperator = { ...op, [field]: value };
+      // Si se selecciona un operador exento, forzar comisión = 0
+      if (field === 'operatorId' && isExempt(value as string)) {
+        next.commission = 0;
+      }
+      return next;
     });
-    console.log('🔄 [MultipleOperatorsSection] updatedOperators:', updatedOperators);
     onOperatorsChange(updatedOperators);
   };
   const getAvailableOperatorsForSelect = (currentOperatorId?: string) => {
@@ -112,7 +116,14 @@ export const MultipleOperatorsSection = ({
                   </SelectTrigger>
                   <SelectContent>
                     {getAvailableOperatorsForSelect(operator.operatorId).map(op => <SelectItem key={op.id} value={op.id}>
-                        {op.name}
+                        <span className="flex items-center gap-2">
+                          {op.name}
+                          {op.commissionExempt && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-200">
+                              Exento
+                            </span>
+                          )}
+                        </span>
                       </SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -145,9 +156,20 @@ export const MultipleOperatorsSection = ({
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3 text-green-600" />
-                  Comisión (CLP) *
+                  Comisión (CLP) {!isExempt(operator.operatorId) && '*'}
                 </Label>
-                <Input type="number" value={operator.commission} onChange={e => updateOperator(operator.id, 'commission', Number(e.target.value))} placeholder="150000" min="0" disabled={disabled} className="border-green-300 focus:border-green-500" />
+                <Input
+                  type="number"
+                  value={isExempt(operator.operatorId) ? 0 : operator.commission}
+                  onChange={e => updateOperator(operator.id, 'commission', Number(e.target.value))}
+                  placeholder="150000"
+                  min="0"
+                  disabled={disabled || isExempt(operator.operatorId)}
+                  className="border-green-300 focus:border-green-500"
+                />
+                {isExempt(operator.operatorId) && (
+                  <p className="text-xs text-violet-700">Operador exento de comisiones</p>
+                )}
               </div>
             </div>
           </div>)}
