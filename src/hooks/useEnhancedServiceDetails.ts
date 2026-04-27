@@ -28,7 +28,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
       client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
       third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
       cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
-      operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, created_at, updated_at),
+      operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, commission_exempt, created_at, updated_at),
       service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at, is_outsourced),
       creator:profiles!services_created_by_fkey(id, full_name, email),
       outsourced_provider:inventory_suppliers!services_outsourced_provider_id_fkey(id, name, rut, phone, email)
@@ -196,12 +196,13 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
           department: serviceData.operators.department,
           position: serviceData.operators.position,
           licenseNumber: serviceData.operators.license_number,
-          examExpiry: serviceData.operators.exam_expiry,
+            examExpiry: serviceData.operators.exam_expiry,
+            commissionExempt: serviceData.operators.commission_exempt ?? false,
           isActive: serviceData.operators.is_active,
           createdAt: serviceData.operators.created_at,
           updatedAt: serviceData.operators.updated_at
         },
-        commission: serviceData.operator_commission || 0,
+          commission: serviceData.operators.commission_exempt ? 0 : (serviceData.operator_commission || 0),
         role: 'Principal',
         hours: 8
       });
