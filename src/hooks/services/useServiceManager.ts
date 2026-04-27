@@ -217,14 +217,6 @@ export const useServiceManager = () => {
     }): Promise<Service> => {
       try {
 
-        // Defensa en profundidad: forzar comisión 0 a operadores exentos
-        if (serviceData?.operators?.length) {
-          serviceData = {
-            ...serviceData,
-            operators: await normalizeOperatorsForExempt(serviceData.operators),
-          } as ServiceFormData;
-        }
-
         // Obtener configuración del tipo de servicio para validaciones condicionales
         const { data: serviceTypeConfig } = await supabase
           .from('service_types')
@@ -513,14 +505,6 @@ export const useServiceManager = () => {
       serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string } 
     }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
-
-      // Defensa en profundidad: forzar comisión 0 a operadores exentos
-      if (serviceData?.operators?.length) {
-        serviceData = {
-          ...serviceData,
-          operators: await normalizeOperatorsForExempt(serviceData.operators),
-        };
-      }
 
       // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
       const isPartialUpdate = Object.keys(serviceData).length <= 4 && 
