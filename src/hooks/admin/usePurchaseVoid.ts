@@ -57,62 +57,22 @@ export const useSearchVoidablePurchases = (search: string, enabled: boolean = tr
     enabled,
     queryFn: async (): Promise<VoidablePurchase[]> => {
       const term = (search || '').trim();
-
-      // Query SIN embed para evitar problemas de RLS/FK con suppliers
-      let query = supabase
-        .from('costs')
-        .select(
-          'id, date, description, amount, supplier_id, document_number, service_folio, ' +
-          'payment_date, immediate_consumption, inventory_movement_id, ' +
-          'supplier_payment_id, supplier_invoice_id, ' +
-          'purchase_quantity, purchase_unit_cost, notes'
-        )
-        .order('date', { ascending: false })
-        .limit(200);
-
-      if (term.length > 0) {
-        const t = `%${term}%`;
-        query = query.or(
-          `description.ilike.${t},document_number.ilike.${t},service_folio.ilike.${t}`
-        );
-      } else {
-        // Sin término: solo costos con vínculo a inventario
-        query = query.not('inventory_movement_id', 'is', null);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc(
+        'search_voidable_inventory_purchases',
+        { p_search: term || null }
+      );
       if (error) {
-        console.error('[PurchaseVoid] search error:', error);
+        console.error('[PurchaseVoid] search rpc error:', error);
         throw error;
       }
-
-      console.log('[PurchaseVoid] search term:', term, 'rows:', data?.length || 0);
-
-      // Resolver nombres de proveedores en una segunda query
-      const supplierIds = Array.from(
-        new Set((data || []).map((r: any) => r.supplier_id).filter(Boolean))
-      );
-      let supplierMap = new Map<string, string>();
-      if (supplierIds.length > 0) {
-        const { data: sup } = await supabase
-          .from('suppliers')
-          .select('id, name')
-          .in('id', supplierIds);
-        (sup || []).forEach((s: any) => supplierMap.set(s.id, s.name));
-      }
-
-      // Filtrar: solo compras de bodega (con movimiento o purchase_quantity)
-      const filtered = (data || []).filter((row: any) => {
-        return !!row.inventory_movement_id || row.purchase_quantity !== null;
-      });
-
-      return filtered.map((row: any) => ({
+      console.log('[PurchaseVoid] term:', term, 'rows:', data?.length || 0);
+      return (data || []).map((row: any) => ({
         id: row.id,
         date: row.date,
         description: row.description,
         amount: Number(row.amount),
         supplier_id: row.supplier_id,
-        supplier_name: row.supplier_id ? supplierMap.get(row.supplier_id) || null : null,
+        supplier_name: row.supplier_name,
         document_number: row.document_number,
         service_folio: row.service_folio,
         payment_date: row.payment_date,
@@ -133,75 +93,43 @@ export const usePurchaseVoidImpact = (cost: VoidablePurchase | null) => {
     enabled: !!cost?.id,
     queryFn: async (): Promise<PurchaseVoidImpact> => {
       if (!cost) throw new Error('Sin costo seleccionado');
-
-      // Movimientos: por cost_id o por inventory_movement_id directo
-      const { data: movs, error: movsError } = await supabase
-        .from('inventory_movements')
-        .select(`
-          id, movement_type, quantity, unit_cost, item_id, location_id, crane_id,
-          inventory_items ( name ),
-          inventory_locations ( name )
-        `)
-        .or(
-          cost.inventory_movement_id
-            ? `cost_id.eq.${cost.id},id.eq.${cost.inventory_movement_id}`
-            : `cost_id.eq.${cost.id}`
-        );
-      if (movsError) throw movsError;
-
-      const movements = (movs || []).map((m: any) => ({
+      const { data, error } = await supabase.rpc('get_purchase_void_impact', {
+        p_cost_id: cost.id,
+      });
+      if (error) {
+        console.error('[PurchaseVoid] impact rpc error:', error);
+        throw error;
+      }
+      const impact = (data || {}) as any;
+      const movements = (impact.movements || []).map((m: any) => ({
         id: m.id,
         movement_type: m.movement_type,
-        quantity: m.quantity,
-        unit_cost: m.unit_cost,
+        quantity: Number(m.quantity),
+        unit_cost: m.unit_cost !== null ? Number(m.unit_cost) : null,
         item_id: m.item_id,
-        item_name: m.inventory_items?.name || null,
+        item_name: m.item_name,
         location_id: m.location_id,
-        location_name: m.inventory_locations?.name || null,
+        location_name: m.location_name,
         crane_id: m.crane_id,
       }));
-
-      // Pago
-      let payment: PurchaseVoidImpact['payment'] = null;
-      if (cost.supplier_payment_id) {
-        const { data: p } = await supabase
-          .from('supplier_payments')
-          .select('id, amount, paid_date, reference_number, description')
-          .eq('id', cost.supplier_payment_id)
-          .maybeSingle();
-        if (p) payment = { ...p, amount: Number(p.amount) };
-      }
-
-      // Factura
-      let invoice: PurchaseVoidImpact['invoice'] = null;
-      if (cost.supplier_invoice_id) {
-        const { data: inv } = await supabase
-          .from('supplier_invoices')
-          .select('id, invoice_number, issue_date, amount')
-          .eq('id', cost.supplier_invoice_id)
-          .maybeSingle();
-        if (inv) invoice = { ...inv, amount: Number(inv.amount) };
-      }
-
-      // Stock actual y proyectado
-      let currentStock: number | null = null;
-      let stockAfter: number | null = null;
-      const entry = movements.find((m) => m.movement_type === 'entry');
-      if (entry) {
-        const { data: stockRow } = await supabase
-          .from('inventory_stock')
-          .select('current_quantity')
-          .eq('item_id', entry.item_id)
-          .eq('location_id', entry.location_id)
-          .maybeSingle();
-        currentStock = stockRow?.current_quantity ?? 0;
-        const exitsForCost = movements
-          .filter((m) => m.movement_type === 'exit')
-          .reduce((s, m) => s + m.quantity, 0);
-        stockAfter = (currentStock || 0) - entry.quantity + exitsForCost;
-      }
-
-      return { cost, movements, payment, invoice, currentStock, stockAfter };
+      return {
+        cost,
+        movements,
+        payment: impact.payment
+          ? { ...impact.payment, amount: Number(impact.payment.amount) }
+          : null,
+        invoice: impact.invoice
+          ? { ...impact.invoice, amount: Number(impact.invoice.amount) }
+          : null,
+        currentStock:
+          impact.currentStock !== null && impact.currentStock !== undefined
+            ? Number(impact.currentStock)
+            : null,
+        stockAfter:
+          impact.stockAfter !== null && impact.stockAfter !== undefined
+            ? Number(impact.stockAfter)
+            : null,
+      };
     },
   });
 };
