@@ -19,6 +19,7 @@ export interface VoidablePurchase {
   supplier_invoice_id: string | null;
   purchase_quantity: number | null;
   purchase_unit_cost: number | null;
+  matched_item: string | null;
 }
 
 export interface PurchaseVoidImpact {
@@ -82,6 +83,7 @@ export const useSearchVoidablePurchases = (search: string, enabled: boolean = tr
         supplier_invoice_id: row.supplier_invoice_id,
         purchase_quantity: row.purchase_quantity,
         purchase_unit_cost: row.purchase_unit_cost,
+        matched_item: row.matched_item ?? null,
       }));
     },
   });
