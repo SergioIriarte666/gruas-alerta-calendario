@@ -58,42 +58,52 @@ export const useSearchVoidablePurchases = (search: string, enabled: boolean = tr
     queryFn: async (): Promise<VoidablePurchase[]> => {
       const term = (search || '').trim();
 
-      // Estrategia: si hay término, buscamos por descripción/folio/nro doc/proveedor
-      // SIN restringir a inventario en el servidor, y filtramos cliente para mostrar
-      // solo costos vinculados a inventario o que sean compras (con purchase_quantity).
+      // Query SIN embed para evitar problemas de RLS/FK con suppliers
       let query = supabase
         .from('costs')
-        .select(`
-          id, date, description, amount, supplier_id, document_number, service_folio,
-          payment_date, immediate_consumption, inventory_movement_id,
-          supplier_payment_id, supplier_invoice_id,
-          purchase_quantity, purchase_unit_cost,
-          suppliers ( name )
-        `)
+        .select(
+          'id, date, description, amount, supplier_id, document_number, service_folio, ' +
+          'payment_date, immediate_consumption, inventory_movement_id, ' +
+          'supplier_payment_id, supplier_invoice_id, ' +
+          'purchase_quantity, purchase_unit_cost, notes'
+        )
         .order('date', { ascending: false })
-        .limit(100);
+        .limit(200);
 
       if (term.length > 0) {
         const t = `%${term}%`;
         query = query.or(
-          `description.ilike.${t},document_number.ilike.${t},service_folio.ilike.${t},notes.ilike.${t}`
+          `description.ilike.${t},document_number.ilike.${t},service_folio.ilike.${t}`
         );
       } else {
-        query = query.or('inventory_movement_id.not.is.null,purchase_quantity.not.is.null');
+        // Sin término: solo costos con vínculo a inventario
+        query = query.not('inventory_movement_id', 'is', null);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('[PurchaseVoid] search error:', error);
+        throw error;
+      }
 
-      const lowerTerm = term.toLowerCase();
+      console.log('[PurchaseVoid] search term:', term, 'rows:', data?.length || 0);
+
+      // Resolver nombres de proveedores en una segunda query
+      const supplierIds = Array.from(
+        new Set((data || []).map((r: any) => r.supplier_id).filter(Boolean))
+      );
+      let supplierMap = new Map<string, string>();
+      if (supplierIds.length > 0) {
+        const { data: sup } = await supabase
+          .from('suppliers')
+          .select('id, name')
+          .in('id', supplierIds);
+        (sup || []).forEach((s: any) => supplierMap.set(s.id, s.name));
+      }
+
+      // Filtrar: solo compras de bodega (con movimiento o purchase_quantity)
       const filtered = (data || []).filter((row: any) => {
-        const isInventoryCost =
-          !!row.inventory_movement_id || row.purchase_quantity !== null;
-        if (!term) return isInventoryCost;
-        // En modo búsqueda: aceptar también match por nombre de proveedor
-        const supplierMatch =
-          row.suppliers?.name?.toLowerCase().includes(lowerTerm) ?? false;
-        return isInventoryCost && (supplierMatch || true);
+        return !!row.inventory_movement_id || row.purchase_quantity !== null;
       });
 
       return filtered.map((row: any) => ({
@@ -102,7 +112,7 @@ export const useSearchVoidablePurchases = (search: string, enabled: boolean = tr
         description: row.description,
         amount: Number(row.amount),
         supplier_id: row.supplier_id,
-        supplier_name: row.suppliers?.name || null,
+        supplier_name: row.supplier_id ? supplierMap.get(row.supplier_id) || null : null,
         document_number: row.document_number,
         service_folio: row.service_folio,
         payment_date: row.payment_date,
