@@ -123,6 +123,13 @@ export const PurchaseVoidTool = () => {
                         )}
                         <span className="font-medium truncate">{p.description}</span>
                       </div>
+                      {p.matched_item &&
+                        p.matched_item.trim().toLowerCase() !==
+                          (p.description || '').trim().toLowerCase() && (
+                          <div className="text-xs text-violet-700 dark:text-violet-300 mt-0.5 truncate">
+                            Ítem: {p.matched_item}
+                          </div>
+                        )}
                       <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
                         <span>{formatDate(p.date)}</span>
                         <span>•</span>
