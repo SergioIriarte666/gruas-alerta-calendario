@@ -82,7 +82,7 @@ export const PurchaseVoidTool = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por descripción o folio..."
+                placeholder="Buscar por folio, descripción, proveedor..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -115,17 +115,18 @@ export const PurchaseVoidTool = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{p.description}</div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(p.document_number || p.service_folio) && (
+                          <Badge variant="secondary" className="font-mono text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border-violet-300">
+                            #{p.document_number || p.service_folio}
+                          </Badge>
+                        )}
+                        <span className="font-medium truncate">{p.description}</span>
+                      </div>
                       <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
                         <span>{formatDate(p.date)}</span>
                         <span>•</span>
                         <span>{p.supplier_name || 'Sin proveedor'}</span>
-                        {p.document_number && (
-                          <>
-                            <span>•</span>
-                            <span>Folio {p.document_number}</span>
-                          </>
-                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -172,8 +173,13 @@ export const PurchaseVoidTool = () => {
               <>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div className="p-3 rounded-md border bg-muted/30">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Costo
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center justify-between">
+                      <span>Costo</span>
+                      {(selected.document_number || selected.service_folio) && (
+                        <span className="font-mono text-violet-700 dark:text-violet-300">
+                          #{selected.document_number || selected.service_folio}
+                        </span>
+                      )}
                     </div>
                     <div className="font-medium">{selected.description}</div>
                     <div className="text-violet-600 font-semibold">
