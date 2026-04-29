@@ -8,7 +8,8 @@ import { ForceStatusChangeTool } from './ForceStatusChangeTool';
 import { BulkStatusRepairTool } from './BulkStatusRepairTool';
 import { ServiceDeletionTool } from './ServiceDeletionTool';
 import { PaymentReassignmentTool } from './PaymentReassignmentTool';
-import { Unlock, RefreshCw, ScanSearch, Trash2, ArrowRightLeft } from 'lucide-react';
+import { PurchaseVoidTool } from './PurchaseVoidTool';
+import { Unlock, RefreshCw, ScanSearch, Trash2, ArrowRightLeft, PackageX } from 'lucide-react';
 
 export const AdminEmergencyPanel = () => {
   const { isAdmin } = useUserPermissions();
@@ -28,7 +29,7 @@ export const AdminEmergencyPanel = () => {
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-5 bg-card border h-auto p-1 gap-1">
+          <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-6 bg-card border h-auto p-1 gap-1">
             <TabsTrigger value="liberation" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
               <Unlock className="w-4 h-4" />
               <span>Liberación</span>
@@ -49,6 +50,10 @@ export const AdminEmergencyPanel = () => {
               <ArrowRightLeft className="w-4 h-4" />
               <span>Reconexión Pagos</span>
             </TabsTrigger>
+            <TabsTrigger value="void-purchase" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+              <PackageX className="w-4 h-4" />
+              <span>Anular Compra</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -66,6 +71,9 @@ export const AdminEmergencyPanel = () => {
         </TabsContent>
         <TabsContent value="payment-reassign">
           <PaymentReassignmentTool />
+        </TabsContent>
+        <TabsContent value="void-purchase">
+          <PurchaseVoidTool />
         </TabsContent>
       </Tabs>
     </div>
