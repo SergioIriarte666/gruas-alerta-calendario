@@ -108,7 +108,6 @@ export const PurchaseVoidTool = () => {
               <AlertTitle>Error al buscar compras</AlertTitle>
               <AlertDescription>
                 {(searchError as any)?.message || 'No se pudo consultar la base de datos.'}
-                {' '}Verifica tu sesión de administrador y vuelve a intentar.
               </AlertDescription>
             </Alert>
           )}
