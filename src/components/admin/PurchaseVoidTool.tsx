@@ -39,7 +39,12 @@ export const PurchaseVoidTool = () => {
   const [confirmText, setConfirmText] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { data: results = [], isLoading: searching } = useSearchVoidablePurchases(search);
+  const {
+    data: results = [],
+    isLoading: searching,
+    error: searchError,
+    isFetching: searchFetching,
+  } = useSearchVoidablePurchases(search);
   const { data: impact, isLoading: loadingImpact } = usePurchaseVoidImpact(selected);
   const voidMutation = useVoidPurchase();
 
@@ -90,16 +95,29 @@ export const PurchaseVoidTool = () => {
             </div>
           </div>
 
-          {searching && (
+          {(searching || searchFetching) && (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin mr-2" />
               Buscando...
             </div>
           )}
 
-          {!searching && results.length === 0 && (
+          {!searching && !searchFetching && searchError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error al buscar compras</AlertTitle>
+              <AlertDescription>
+                {(searchError as any)?.message || 'No se pudo consultar la base de datos.'}
+                {' '}Verifica tu sesión de administrador y vuelve a intentar.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!searching && !searchFetching && !searchError && results.length === 0 && (
             <div className="text-center py-6 text-muted-foreground text-sm">
-              No se encontraron compras de bodega.
+              {search.trim()
+                ? `Sin resultados para "${search.trim()}".`
+                : 'No se encontraron compras de bodega.'}
             </div>
           )}
 

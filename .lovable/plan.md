@@ -1,82 +1,54 @@
-## Diagnóstico
+Voy a corregir la búsqueda de “Anular Compra de Bodega” en dos capas: base de datos y experiencia visual.
 
-El registro del **Óptico Izquierdo Mack Vision** sí existe, pero el costo principal quedó guardado como:
+Hallazgo principal:
+- Los datos sí existen: hay “Optico Izquierdo Mack Vision” y “Optico Derecho Mack Vision”.
+- La consulta interna simulada encuentra ambos registros para `optico`.
+- Pero la UI no muestra nada, por lo que el problema probable está entre el RPC publicado/contrato de Supabase, permisos/autenticación, caché o manejo silencioso de errores. Además, el buscador actual sigue siendo muy frágil para resultados compuestos.
 
-- `description`: `Implementos S.A.`
-- `notes`: contiene `Glosa principal: Optico Izquierdo Mack Vision`
-- `supplier_invoice_id`: factura `6475314`
-- La factura tiene varios ítems (`Optico Izquierdo`, `Paños`, `LimpiaVidrios`, etc.)
-- Los movimientos sí tienen `item_name = Optico Izquierdo Mack Vision`
+Plan de acción:
 
-La búsqueda actual todavía no es lo suficientemente robusta porque prioriza campos del costo y movimientos básicos, pero no indexa correctamente todas las fuentes donde puede vivir el nombre real del producto:
+1. Reemplazar la búsqueda RPC por una versión más robusta y compatible
+   - Mantener `unaccent` para ignorar tildes.
+   - Normalizar también mayúsculas/minúsculas y caracteres extraños.
+   - Buscar en:
+     - costo: descripción, notas, folio/documento, service_folio;
+     - factura proveedor: folio y datos XML si existen;
+     - ítems de factura proveedor: descripción y nombre de producto;
+     - movimientos de inventario: observaciones, referencia, proveedor;
+     - productos de inventario: nombre del ítem.
+   - Para varias palabras, exigir que todas aparezcan en el texto consolidado, pero permitir que estén distribuidas entre factura, ítem y movimiento.
+   - Devolver `matched_item` y `match_score`, manteniendo un contrato estable para el frontend.
+   - Evitar dependencias frágiles como orden no determinístico en `LIMIT 1`; elegir el mejor ítem coincidente cuando exista.
 
-- `supplier_invoice_items.description`
-- `supplier_invoice_items.product_name`
-- `inventory_items.name`
-- términos separados: buscar `optico izquierdo mack` debería coincidir aunque las palabras estén repartidas entre nota, ítem o movimiento.
+2. Asegurar que “optico” y “óptico” muestren los dos registros esperados
+   - Validar específicamente estos casos:
+     - `optico`
+     - `óptico`
+     - `optico izquierdo`
+     - `óptico izquierdo`
+     - `optico derecho`
+     - `mack vision`
+     - folios `6475314` y `6475315`
+   - La búsqueda `optico` debe mostrar al menos:
+     - Folio 6475314: Optico Izquierdo Mack Vision
+     - Folio 6475315: Optico Derecho Mack Vision
 
-## Plan de corrección inmediata
+3. Mejorar el frontend para no fallar en silencio
+   - Mostrar un mensaje de error visible si el RPC falla, en vez de mostrar solo “No se encontraron compras”.
+   - Añadir una línea de diagnóstico útil en pantalla: por ejemplo “0 resultados para ‘optico’” o “Error consultando compras anulables”.
+   - Mantener el estilo del módulo de Costos: violetas, badges, tarjetas y tipografía existente.
+   - Si el resultado viene por ítem vinculado y no por descripción del costo, mostrar el badge “Ítem: Optico Izquierdo Mack Vision” / “Ítem: Optico Derecho Mack Vision”.
 
-### 1. Búsqueda sin tildes y por palabras
+4. Controlar caché/estado de React Query
+   - Ajustar la key y opciones de la consulta para evitar que muestre resultados obsoletos o quede pegada en cero resultados tras una migración.
+   - Invalidar correctamente al cambiar búsqueda o anular una compra.
 
-Actualizar `search_voidable_inventory_purchases` para:
+5. Prueba final en preview
+   - Probar la herramienta desde la ruta real donde está “Anular Compra”.
+   - Verificar que al escribir `optico` aparecen los dos registros.
+   - Verificar que con tilde y sin tilde el resultado es el mismo.
+   - Verificar que si hay un error de permisos o RPC, la UI lo informa explícitamente.
 
-- Ignorar mayúsculas/minúsculas.
-- Ignorar tildes: `óptico`, `optico`, `ÓPTICO` deben ser equivalentes.
-- Dividir el texto buscado en palabras.
-  - Ejemplo: `Optico Izquierdo Mack` → `optico`, `izquierdo`, `mack`.
-- Devolver un costo si **todas las palabras** aparecen en algún texto agregado del registro.
-
-### 2. Construir un “texto de búsqueda” consolidado por costo
-
-Para cada costo anulable, construir internamente un campo virtual con:
-
-- `costs.description`
-- `costs.document_number`
-- `costs.service_folio`
-- `costs.notes`
-- nombre del proveedor
-- nombres de ítems en `supplier_invoice_items.description`
-- `supplier_invoice_items.product_name`
-- `inventory_items.name` desde movimientos relacionados
-- `inventory_movements.observations`
-- `inventory_movements.reference_document`
-- `inventory_movements.supplier_name`
-
-Así el costo `Implementos S.A.` aparecerá aunque el producto esté solo dentro de la factura XML o movimientos.
-
-### 3. Mejorar el ranking de resultados
-
-Ordenar resultados por relevancia:
-
-1. Coincidencia exacta por folio/documento.
-2. Coincidencia en descripción directa del costo.
-3. Coincidencia en ítems de factura o movimiento.
-4. Coincidencia en notas/proveedor.
-5. Fecha descendente.
-
-Resultado esperado:
-
-- Buscar `optico` → muestra Derecho e Izquierdo.
-- Buscar `óptico` → muestra Derecho e Izquierdo.
-- Buscar `Optico Izquierdo Mack` → muestra el registro `6475314` aunque su descripción sea `Implementos S.A.`.
-- Buscar `6475314` → muestra el registro izquierdo.
-- Buscar `6475315` → muestra el registro derecho.
-
-### 4. Ajuste visual mínimo
-
-En la lista de resultados, cuando la descripción del costo sea genérica (`Implementos S.A.`) pero exista un ítem coincidente, mostrar una línea secundaria tipo:
-
-`Ítem encontrado: Optico Izquierdo Mack Vision`
-
-Esto evitará confusión: el usuario sabrá por qué apareció un costo cuyo título principal no contiene el producto.
-
-### 5. Luego abordar anulación parcial de factura multi-ítem
-
-Después de estabilizar la búsqueda, implementar el flujo acordado:
-
-- Si la factura tiene 1 ítem → anulación total.
-- Si tiene varios ítems → selector de ítems.
-- El ajuste de monto se calcula automáticamente, pero queda editable antes de confirmar.
-
-Este plan separa el problema urgente de búsqueda del flujo más grande de anulación parcial, para evitar mezclar dos fuentes de error.
+Notas importantes:
+- No voy a cambiar aún la lógica de anulación parcial de ítems en esta corrección; primero dejaré la búsqueda estable y confiable.
+- No editaré manualmente `src/integrations/supabase/types.ts`; si el contrato de Supabase cambia, se debe tratar con el flujo correcto de tipos generados.
