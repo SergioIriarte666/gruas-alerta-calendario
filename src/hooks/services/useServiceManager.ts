@@ -813,6 +813,18 @@ export const useServiceManager = () => {
             subcategory: cost.subcategory || null,
             notes: cost.notes || 'Costo actualizado desde formulario de servicio',
             crane_id: currentService?.crane_id,
+          payment_date: serviceData.markCostsPaidOnCreate
+            ? (currentService?.service_date || serviceData.serviceDate || getTodayLocal())
+            : null,
+          supplier_id: (cost as any).supplier_id || null,
+          operator_id: (cost as any).operator_id || null,
+          document_type: (cost as any).document_type || null,
+          document_number: (cost as any).document_number || null,
+          location_text: (cost as any).location_text || null,
+          other_reason: (cost as any).other_reason || null,
+          purchase_quantity: (cost as any).purchase_quantity || null,
+          purchase_unit_cost: (cost as any).purchase_unit_cost || null,
+          immediate_consumption: !!(cost as any).immediate_consumption,
             created_by: null
           }));
       

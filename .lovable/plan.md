@@ -1,42 +1,34 @@
-## Diagnóstico
+## Problema
 
-### 1. "Línea negra al final del modal Editar Operador"
-En `src/components/operators/OperatorForm.tsx` (líneas 272-278) hay un indicador `fixed bottom-4 right-4 z-50` con fondo `bg-gray-800/90` y texto "Guardado automático activo". Esa píldora oscura es lo que se ve al pie del modal en el screenshot, solapando el botón "Actualizar Operador". No es parte del modal, está fijada a la ventana, y aparece SIEMPRE (también fuera del modal).
+En el modal de edición de servicios, al activar el toggle **"Marcar costos como pagados al crear"**, los costos se crean correctamente pero aparecen como **NO pagados** en el módulo de Costos.
 
-### 2. "Jorge Iriarte no se guarda en servicios"
-Jorge Iriarte tiene `commission_exempt = true` (visible en el screenshot, switch violeta encendido en "Exento de comisiones"). El selector de operadores en `MultipleOperatorsSection.tsx` solo filtra por `op.isActive` — no filtra por exento, así que aparece y se puede seleccionar. Pero al guardar el servicio, el flujo en `useServiceManager.ts` (líneas 293-297, 348-364) inserta `operator_commission` y luego registros en `service_resources` con `commission_amount`. Cuando el servicio pasa a estado completado, los triggers de comisiones intentan crear un registro en `costs` y el trigger de defensa `prevent_excluded_operator_commissions` lanza una excepción que aborta la transacción y deja al usuario sin un mensaje claro de por qué no se guardó.
+## Causa raíz
 
-Causa raíz: el formulario de servicios no diferencia entre operadores que reciben comisión y operadores exentos. Para los exentos hay que forzar `commission = 0` y mostrar visualmente que es "Exento".
+El flag `markCostsPaidOnCreate` solo se aplica en el flujo de **creación** de servicios (`createServiceMutation` en `useServiceManager.ts`, líneas 393 y 450). En el flujo de **actualización** (`updateServiceMutation`, líneas 806-817), cuando se insertan los costos del servicio, el objeto mapeado **no incluye el campo `payment_date`**, por lo que siempre queda en `null` (no pagado), sin importar el estado del toggle.
 
-## Cambios propuestos
+Confirmado en BD: los dos costos más recientes (servicio `f28f0cf5...`, creados hoy a las 15:19 y 15:22 mediante edición) tienen `payment_date = NULL`, mientras que los costos creados directamente al crear el servicio sí tienen `payment_date` con la fecha del servicio.
 
-### A. `src/components/operators/OperatorForm.tsx`
-- Eliminar el bloque "Auto-save indicator" fijo (líneas 272-278). Eliminar también el `import { Save }` si ya no se usa en otros lugares (sigue usándose en el `Alert`, así que se mantiene).
-- Reemplazar el `border-t border` del footer (línea 255, clase mal escrita) por `border-t border-border` para coherencia con el design system violeta.
+## Solución
 
-### B. `src/components/services/form/MultipleOperatorsSection.tsx`
-- Cuando el operador seleccionado tenga `commissionExempt = true`:
-  1. Mostrar un badge violeta junto a su nombre en el `SelectItem` y en el bloque ya seleccionado: `Exento`.
-  2. Forzar `commission = 0` automáticamente al seleccionarlo (en `updateOperator` cuando el campo es `operatorId`, mirar `availableOperators` y si `commissionExempt` setear `commission: 0`).
-  3. Deshabilitar el input de "Comisión (CLP)" para ese operador y mostrar texto auxiliar: "Operador exento de comisiones".
-  4. Quitar el asterisco de obligatoriedad de la comisión cuando el operador es exento.
-- Mantener filtro `op.isActive` para no mostrar inactivos.
+En `src/hooks/services/useServiceManager.ts`, dentro del `updateServiceMutation`, en el bloque que construye `serviceCosts` (≈línea 806):
 
-### C. `src/hooks/services/useServiceManager.ts`
-- Antes de los `insert` (creación) y `update` de servicios, normalizar comisiones: para cada operador en `serviceData.operators`, si el operador tiene `commission_exempt = true` en BD, forzar `commission = 0` antes de persistir (defensa en profundidad por si el form se salta el guard).
-  - Hacer un `select id, commission_exempt from operators where id in (...)` previo a la inserción y mapear.
-- Igualmente normalizar `operator_commission` en el `transformedData` del `service` principal cuando el operador principal sea exento.
-- Capturar específicamente el error del trigger `prevent_excluded_operator_commissions` y mostrar un toast claro: "El operador X está marcado como exento de comisiones. La comisión se ajustó a $0".
+1. Agregar el campo `payment_date` aplicando la misma lógica que en `createService`:
+   ```ts
+   payment_date: serviceData.markCostsPaidOnCreate
+     ? (currentService?.service_date || serviceData.serviceDate || getTodayLocal())
+     : null,
+   ```
 
-### D. `src/components/services/EnhancedServiceForm.tsx`
-- En la sección de "Operador y Comisión" principal (campo único, no múltiple), aplicar la misma lógica visual: si el operador elegido es exento, deshabilitar input de comisión, forzar 0 y mostrar etiqueta "Exento".
+2. (Mejora consistente) Propagar también los campos opcionales que ya se persisten en creación pero se pierden al editar: `supplier_id`, `operator_id`, `document_type`, `document_number`, `location_text`, `other_reason`, `purchase_quantity`, `purchase_unit_cost`, `immediate_consumption`. Esto evita que al editar un servicio se pierdan datos del costo capturados en el formulario.
 
-## Verificación post-cambio
-- Editar un operador → no se ve píldora oscura debajo del botón.
-- Crear/editar un servicio asignando a Jorge Iriarte → comisión queda en $0 automáticamente, badge "Exento" visible, servicio se guarda sin errores.
-- Crear/editar un servicio asignando a un operador NO exento → comportamiento de comisiones intacto.
-- Completar un servicio con operador exento → no se genera registro en `costs` (comportamiento ya garantizado por trigger `generate_commission_on_service_completion`), no hay error.
+No se requieren cambios de UI ni de esquema. El campo ya existe en `formData` y se envía al hook; solo falta usarlo en el path de update.
 
-## Notas
-- No se modifica el esquema de BD ni los triggers existentes (la regla escalable de `commission_exempt` se mantiene como fuente de verdad).
-- Se respeta el design system violeta (badges, switches y estados ya alineados con el módulo de Costos).
+## Archivos a modificar
+
+- `src/hooks/services/useServiceManager.ts` — ajustar el mapeo de `serviceCosts` en `updateServiceMutation`.
+
+## Verificación
+
+1. Editar un servicio existente, activar el toggle, agregar/modificar costos y guardar.
+2. Abrir el módulo Costos y confirmar que los costos del servicio aparecen como pagados (con fecha de pago = fecha del servicio).
+3. Repetir con el toggle desactivado y confirmar que quedan como no pagados.
