@@ -5770,6 +5770,7 @@ export type Database = {
           total_purchased: number
         }[]
       }
+      get_purchase_void_impact: { Args: { p_cost_id: string }; Returns: Json }
       get_supplier_payment_stats: {
         Args: { p_supplier_id: string }
         Returns: {
@@ -5939,6 +5940,27 @@ export type Database = {
       safe_update_service: {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
+      }
+      search_voidable_inventory_purchases: {
+        Args: { p_search?: string }
+        Returns: {
+          amount: number
+          date: string
+          description: string
+          document_number: string
+          has_inventory_link: boolean
+          id: string
+          immediate_consumption: boolean
+          inventory_movement_id: string
+          payment_date: string
+          purchase_quantity: number
+          purchase_unit_cost: number
+          service_folio: string
+          supplier_id: string
+          supplier_invoice_id: string
+          supplier_name: string
+          supplier_payment_id: string
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
