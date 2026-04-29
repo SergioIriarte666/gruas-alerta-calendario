@@ -3289,6 +3289,59 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_voids: {
+        Row: {
+          created_at: string
+          id: string
+          original_cost_id: string
+          original_cost_snapshot: Json
+          original_invoice_link_snapshot: Json | null
+          original_movements_snapshot: Json | null
+          original_payment_snapshot: Json | null
+          reason: string
+          replacement_supplier_id: string | null
+          reverted_summary: Json | null
+          voided_at: string
+          voided_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_cost_id: string
+          original_cost_snapshot: Json
+          original_invoice_link_snapshot?: Json | null
+          original_movements_snapshot?: Json | null
+          original_payment_snapshot?: Json | null
+          reason: string
+          replacement_supplier_id?: string | null
+          reverted_summary?: Json | null
+          voided_at?: string
+          voided_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_cost_id?: string
+          original_cost_snapshot?: Json
+          original_invoice_link_snapshot?: Json | null
+          original_movements_snapshot?: Json | null
+          original_payment_snapshot?: Json | null
+          reason?: string
+          replacement_supplier_id?: string | null
+          reverted_summary?: Json | null
+          voided_at?: string
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_voids_replacement_supplier_id_fkey"
+            columns: ["replacement_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
@@ -5993,6 +6046,16 @@ export type Database = {
       }
       verify_auth_system: { Args: never; Returns: Json }
       verify_security_compliance: { Args: never; Returns: string }
+      void_inventory_purchase: {
+        Args: {
+          p_cost_id: string
+          p_reason: string
+          p_replacement_supplier_id?: string
+          p_revert_invoice?: boolean
+          p_revert_payment?: boolean
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "operator" | "viewer" | "client"
