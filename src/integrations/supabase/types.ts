@@ -5952,6 +5952,8 @@ export type Database = {
           id: string
           immediate_consumption: boolean
           inventory_movement_id: string
+          match_score: number
+          matched_item: string
           payment_date: string
           purchase_quantity: number
           purchase_unit_cost: number
@@ -5994,6 +5996,7 @@ export type Database = {
         Returns: undefined
       }
       trigger_global_data_refresh: { Args: never; Returns: undefined }
+      unaccent: { Args: { "": string }; Returns: string }
       update_closure_status_on_invoice: {
         Args: { p_closure_id: string }
         Returns: undefined
