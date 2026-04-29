@@ -20,7 +20,6 @@ import {
   type VoidablePurchase,
 } from '@/hooks/admin/usePurchaseVoid';
 import { formatCurrency } from '@/lib/utils';
-import { safeParseDateOnly } from '@/utils/dateHelpers' assert { 'resolution-mode': 'import' };
 
 const formatDate = (d: string | null | undefined) => {
   if (!d) return '—';
