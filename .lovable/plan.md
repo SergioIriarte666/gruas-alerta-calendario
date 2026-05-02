@@ -1,54 +1,47 @@
-Voy a corregir la búsqueda de “Anular Compra de Bodega” en dos capas: base de datos y experiencia visual.
+# Enriquecer tarjeta de servicio en "Registro por Lotes" (Pipeline VIP)
 
-Hallazgo principal:
-- Los datos sí existen: hay “Optico Izquierdo Mack Vision” y “Optico Derecho Mack Vision”.
-- La consulta interna simulada encuentra ambos registros para `optico`.
-- Pero la UI no muestra nada, por lo que el problema probable está entre el RPC publicado/contrato de Supabase, permisos/autenticación, caché o manejo silencioso de errores. Además, el buscador actual sigue siendo muy frágil para resultados compuestos.
+## Contexto
 
-Plan de acción:
+En el modal `BatchUpdateModal` (Pipeline VIP → "Actualización por Lotes"), cada servicio listado en el panel izquierdo muestra muy poca información:
 
-1. Reemplazar la búsqueda RPC por una versión más robusta y compatible
-   - Mantener `unaccent` para ignorar tildes.
-   - Normalizar también mayúsculas/minúsculas y caracteres extraños.
-   - Buscar en:
-     - costo: descripción, notas, folio/documento, service_folio;
-     - factura proveedor: folio y datos XML si existen;
-     - ítems de factura proveedor: descripción y nombre de producto;
-     - movimientos de inventario: observaciones, referencia, proveedor;
-     - productos de inventario: nombre del ítem.
-   - Para varias palabras, exigir que todas aparezcan en el texto consolidado, pero permitir que estén distribuidas entre factura, ítem y movimiento.
-   - Devolver `matched_item` y `match_score`, manteniendo un contrato estable para el frontend.
-   - Evitar dependencias frágiles como orden no determinístico en `LIMIT 1`; elegir el mejor ítem coincidente cuando exista.
+- Folio (ej. `SRV-6617`)
+- Estado (`Completado`)
+- Tipo de servicio + fecha (`Grua Livianos · 25/04/26`)
+- Badges de COT/OC si existen
 
-2. Asegurar que “optico” y “óptico” muestren los dos registros esperados
-   - Validar específicamente estos casos:
-     - `optico`
-     - `óptico`
-     - `optico izquierdo`
-     - `óptico izquierdo`
-     - `optico derecho`
-     - `mack vision`
-     - folios `6475314` y `6475315`
-   - La búsqueda `optico` debe mostrar al menos:
-     - Folio 6475314: Optico Izquierdo Mack Vision
-     - Folio 6475315: Optico Derecho Mack Vision
+Se solicita agregar **debajo del folio** los datos del vehículo (marca, modelo, patente) y otros datos relevantes para identificar el servicio sin tener que abrirlo.
 
-3. Mejorar el frontend para no fallar en silencio
-   - Mostrar un mensaje de error visible si el RPC falla, en vez de mostrar solo “No se encontraron compras”.
-   - Añadir una línea de diagnóstico útil en pantalla: por ejemplo “0 resultados para ‘optico’” o “Error consultando compras anulables”.
-   - Mantener el estilo del módulo de Costos: violetas, badges, tarjetas y tipografía existente.
-   - Si el resultado viene por ítem vinculado y no por descripción del costo, mostrar el badge “Ítem: Optico Izquierdo Mack Vision” / “Ítem: Optico Derecho Mack Vision”.
+## Cambios
 
-4. Controlar caché/estado de React Query
-   - Ajustar la key y opciones de la consulta para evitar que muestre resultados obsoletos o quede pegada en cero resultados tras una migración.
-   - Invalidar correctamente al cambiar búsqueda o anular una compra.
+Editar **un único archivo**: `src/components/vip/BatchUpdateModal.tsx` (bloque de la tarjeta de servicio, líneas ~381–426).
 
-5. Prueba final en preview
-   - Probar la herramienta desde la ruta real donde está “Anular Compra”.
-   - Verificar que al escribir `optico` aparecen los dos registros.
-   - Verificar que con tilde y sin tilde el resultado es el mismo.
-   - Verificar que si hay un error de permisos o RPC, la UI lo informa explícitamente.
+### Nueva estructura de la tarjeta
 
-Notas importantes:
-- No voy a cambiar aún la lógica de anulación parcial de ítems en esta corrección; primero dejaré la búsqueda estable y confiable.
-- No editaré manualmente `src/integrations/supabase/types.ts`; si el contrato de Supabase cambia, se debe tratar con el flujo correcto de tipos generados.
+```text
+[✓] SRV-6617                            [Completado]
+    [COT: 4184]  [OC: 123]              ← (si existen, ya estaba)
+    🚗 Toyota Hilux · ABCD12             ← NUEVO
+    📍 Santiago → Valparaíso             ← NUEVO (truncado si es largo)
+    👤 Juan Pérez · GRUA-01              ← NUEVO (operador · grúa)
+    Grúa Livianos · 25/04/26             ← (ya existía, queda al final)
+```
+
+### Detalle por línea agregada
+
+1. **Vehículo**: ícono `Car` (lucide) + `{vehicleBrand} {vehicleModel} · {licensePlate}`. Si falta marca/modelo, mostrar solo patente. Si no hay patente tampoco, omitir la línea.
+2. **Ruta**: ícono `MapPin` + `{origin} → {destination}` con `truncate` y `title` para tooltip. Omitir si ambos están vacíos.
+3. **Operador / Grúa**: ícono `User` + `{operator?.name ?? 'Sin operador'} · {crane?.licensePlate ?? 'Sin grúa'}`. Omitir si ambos están vacíos.
+
+Todos los textos: `text-xs text-muted-foreground`, íconos `w-3 h-3` para mantener densidad. Layout vertical con `space-y-0.5` o `mt-1`.
+
+## Estilo
+
+- Reutilizar tokens del sistema (`text-muted-foreground`, `text-foreground`) para respetar el modo oscuro y el patrón del módulo de Costos (memoria de diseño activa).
+- Sin colores hardcodeados.
+- Íconos de `lucide-react` (ya importados parcialmente en el archivo; agregar los faltantes: `Car`, `MapPin`, `User`).
+
+## Verificación
+
+- Confirmar visualmente en el modal que servicios con/sin patente, con/sin operador y con/sin ruta se renderizan sin huecos.
+- Confirmar que el `truncate` evita que rutas largas rompan el layout del panel izquierdo.
+- Sin cambios de comportamiento (selección/exclusión sigue funcionando al hacer click en la tarjeta).
