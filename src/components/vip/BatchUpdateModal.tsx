@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock, DollarSign } from 'lucide-react';
+import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock, DollarSign, Car, MapPin, User } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -418,6 +418,40 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                                   OC: {service.purchaseOrderNumber}
                                 </Badge>
                               )}
+                            </div>
+                          )}
+                          {/* Datos del vehículo y servicio */}
+                          {(service.vehicleBrand || service.vehicleModel || service.licensePlate) && (
+                            <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground min-w-0">
+                              <Car className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">
+                                {[service.vehicleBrand, service.vehicleModel].filter(Boolean).join(' ')}
+                                {(service.vehicleBrand || service.vehicleModel) && service.licensePlate && ' · '}
+                                {service.licensePlate && (
+                                  <span className="font-medium text-foreground">{service.licensePlate}</span>
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {(service.origin || service.destination) && (
+                            <div
+                              className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0"
+                              title={`${service.origin || '?'} → ${service.destination || '?'}`}
+                            >
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">
+                                {service.origin || '—'} → {service.destination || '—'}
+                              </span>
+                            </div>
+                          )}
+                          {(service.operator?.name || service.crane?.licensePlate) && (
+                            <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0">
+                              <User className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">
+                                {service.operator?.name || 'Sin operador'}
+                                {' · '}
+                                {service.crane?.licensePlate || 'Sin grúa'}
+                              </span>
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground mt-1 truncate">
