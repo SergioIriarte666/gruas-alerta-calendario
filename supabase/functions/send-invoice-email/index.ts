@@ -161,20 +161,20 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo">${companyName}</div>
-              <p style="color: #666; margin: 0;">RUT: ${companyRut}</p>
-              <p style="color: #666; margin: 0;">${companyAddress}</p>
+              <div class="logo">${escapeHtml(companyName)}</div>
+              <p style="color: #666; margin: 0;">RUT: ${escapeHtml(companyRut)}</p>
+              <p style="color: #666; margin: 0;">${escapeHtml(companyAddress)}</p>
             </div>
 
             <h2 style="color: #333; text-align: center;">📄 Factura</h2>
             
-            <div class="folio">Factura N° ${folio}</div>
+            <div class="folio">Factura N° ${escapeHtml(folio)}</div>
 
             <div class="invoice-info">
               <h3 style="margin-top: 0; color: #333;">Información de Facturación</h3>
               <div class="info-row">
                 <span class="label">Cliente:</span>
-                <span class="value">${clientName}</span>
+                <span class="value">${escapeHtml(clientName)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Fecha de Emisión:</span>
