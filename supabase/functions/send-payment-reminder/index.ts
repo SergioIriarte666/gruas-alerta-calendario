@@ -10,10 +10,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (v: unknown): string =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 interface PaymentReminderRequest {
-  clientEmail: string;
-  clientName: string;
-  invoiceFolio: string;
+  invoiceId?: string;
+  clientEmail?: string;
+  clientName?: string;
+  invoiceFolio?: string;
   dueDate: string;
   total: number;
   daysOverdue?: number;
@@ -40,6 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
+    const callerId = (claimsData.claims as any).sub as string;
 
     console.log('Enviando recordatorio de pago...');
     
@@ -48,14 +58,39 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: callerId, _role: 'admin' });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: 'Solo administradores pueden enviar recordatorios' }), {
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
     const { 
-      clientEmail,
-      clientName,
-      invoiceFolio,
+      invoiceId,
       dueDate,
       total,
       daysOverdue
     }: PaymentReminderRequest = await req.json();
+
+    if (!invoiceId) {
+      return new Response(JSON.stringify({ error: 'invoiceId es requerido' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    const { data: invoice, error: invErr } = await supabase
+      .from('invoices')
+      .select('id, folio, client_id, clients:client_id(name, email)')
+      .eq('id', invoiceId)
+      .maybeSingle();
+    if (invErr || !invoice?.clients?.email) {
+      return new Response(JSON.stringify({ error: 'No se encontró email del cliente' }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const clientEmail = invoice.clients.email as string;
+    const clientName = invoice.clients.name as string;
+    const invoiceFolio = (invoice as any).folio as string;
 
     // Obtener datos de la empresa
     const { data: companyData } = await supabase
@@ -120,7 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
               }
             </div>
             
-            <p>Estimado/a <strong>${clientName}</strong>,</p>
+            <p>Estimado/a <strong>${escapeHtml(clientName)}</strong>,</p>
             
             <p>Le recordamos que tiene una factura ${reminderType} pendiente de pago:</p>
 
@@ -128,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h3 style="margin-top: 0; color: #333;">Información de la Factura</h3>
               <div class="info-row">
                 <span class="label">Factura N°:</span>
-                <span class="value">${invoiceFolio}</span>
+                <span class="value">${escapeHtml(invoiceFolio)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Fecha de Vencimiento:</span>
