@@ -10,10 +10,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (v: unknown): string =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 interface InvoiceEmailRequest {
   invoiceId: string;
-  clientEmail: string;
-  clientName: string;
+  clientEmail?: string;
+  clientName?: string;
   folio: string;
   issueDate: string;
   dueDate: string;
@@ -48,6 +56,8 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
+    const callerId = (claimsData.claims as any).sub as string;
+
     console.log('Enviando factura por email...');
     
     const supabase = createClient(
@@ -55,16 +65,42 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Restrict to admin callers — these endpoints send branded company emails
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: callerId, _role: 'admin' });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: 'Solo administradores pueden enviar facturas' }), {
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
     const { 
       invoiceId,
-      clientEmail,
-      clientName,
       folio,
       issueDate,
       dueDate,
       total,
       services
     }: InvoiceEmailRequest = await req.json();
+
+    if (!invoiceId) {
+      return new Response(JSON.stringify({ error: 'invoiceId es requerido' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    // Derive recipient server-side from the invoice → client relationship
+    const { data: invoice, error: invErr } = await supabase
+      .from('invoices')
+      .select('id, client_id, clients:client_id(name, email)')
+      .eq('id', invoiceId)
+      .maybeSingle();
+    if (invErr || !invoice?.clients?.email) {
+      return new Response(JSON.stringify({ error: 'No se encontró email del cliente' }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const clientEmail = invoice.clients.email as string;
+    const clientName = invoice.clients.name as string;
 
     // Obtener datos de la empresa
     const { data: companyData } = await supabase
@@ -92,9 +128,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Generar tabla de servicios
     const servicesTable = services.map(service => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${service.folio}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${escapeHtml(service.folio)}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd;">${new Date(service.serviceDate).toLocaleDateString('es-CL')}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${service.serviceType}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${escapeHtml(service.serviceType)}</td>
         <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(service.value)}</td>
       </tr>
     `).join('');
