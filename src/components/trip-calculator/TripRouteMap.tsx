@@ -37,6 +37,22 @@ export const TripRouteMap = ({
   const [error, setError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const fetchMapImage = async (mode: 'preview' | 'full'): Promise<string | null> => {
+    const { data, error: fnError } = await supabase.functions.invoke('mapbox-proxy', {
+      body: {
+        action: 'static_map',
+        geometry,
+        origin: originCoords,
+        destination: destinationCoords,
+        mode,
+      },
+    });
+    if (fnError || !data) return null;
+    // Edge function returns binary image data — wrap as a Blob URL
+    const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: 'image/png' });
+    return URL.createObjectURL(blob);
+  };
+
   // Load preview map
   useEffect(() => {
     if (!geometry?.coordinates?.length) return;
@@ -44,23 +60,14 @@ export const TripRouteMap = ({
 
     const loadMap = async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke('mapbox-proxy', {
-          body: {
-            action: 'static_map',
-            geometry,
-            origin: originCoords,
-            destination: destinationCoords,
-            mode: 'preview',
-          },
-        });
-
-        if (fnError || !data?.url || cancelled) {
+        const url = await fetchMapImage('preview');
+        if (cancelled) return;
+        if (!url) {
           setError(true);
           setLoading(false);
           return;
         }
-
-        setPreviewUrl(data.url);
+        setPreviewUrl(url);
         setLoading(false);
       } catch {
         setError(true);
@@ -81,22 +88,13 @@ export const TripRouteMap = ({
 
     const loadFull = async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke('mapbox-proxy', {
-          body: {
-            action: 'static_map',
-            geometry,
-            origin: originCoords,
-            destination: destinationCoords,
-            mode: 'full',
-          },
-        });
-
-        if (fnError || !data?.url || cancelled) {
+        const url = await fetchMapImage('full');
+        if (cancelled) return;
+        if (!url) {
           setFullLoading(false);
           return;
         }
-
-        setFullUrl(data.url);
+        setFullUrl(url);
         setFullLoading(false);
       } catch {
         setFullLoading(false);
