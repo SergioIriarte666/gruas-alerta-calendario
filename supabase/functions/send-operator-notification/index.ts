@@ -10,9 +10,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const escapeHtml = (v: unknown): string =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 interface OperatorNotificationRequest {
-  operatorEmail: string;
-  operatorName: string;
+  operatorId?: string;
+  operatorEmail?: string;
+  operatorName?: string;
   serviceId: string;
   folio: string;
   clientName: string;
@@ -44,6 +53,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
+    const callerId = (claimsData.claims as any).sub as string;
 
     console.log('Enviando notificación a operador...');
     
@@ -52,9 +62,15 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: callerId, _role: 'admin' });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: 'Solo administradores pueden enviar notificaciones de operador' }), {
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
     const { 
-      operatorEmail,
-      operatorName,
+      operatorId,
       serviceId,
       folio, 
       clientName,
@@ -64,6 +80,36 @@ const handler = async (req: Request): Promise<Response> => {
       serviceTypeName,
       craneLicensePlate
     }: OperatorNotificationRequest = await req.json();
+
+    if (!operatorId) {
+      return new Response(JSON.stringify({ error: 'operatorId es requerido' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    // Derive operator name + email server-side
+    const { data: operator, error: opErr } = await supabase
+      .from('operators')
+      .select('id, name, user_id')
+      .eq('id', operatorId)
+      .maybeSingle();
+    if (opErr || !operator?.user_id) {
+      return new Response(JSON.stringify({ error: 'Operador no encontrado o sin usuario vinculado' }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email, full_name')
+      .eq('id', operator.user_id)
+      .maybeSingle();
+    if (!profile?.email) {
+      return new Response(JSON.stringify({ error: 'No se encontró email del operador' }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const operatorEmail = profile.email as string;
+    const operatorName = (operator.name || profile.full_name || 'Operador') as string;
 
     // Obtener datos de la empresa
     const { data: companyData } = await supabase
@@ -107,27 +153,27 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo">${companyName}</div>
+              <div class="logo">${escapeHtml(companyName)}</div>
               <p style="color: #666; margin: 0;">Sistema de Gestión de Servicios</p>
             </div>
 
             <h2 style="color: #333; text-align: center;">🚛 Nuevo Servicio Asignado</h2>
             
-            <p>Hola <strong>${operatorName}</strong>,</p>
+            <p>Hola <strong>${escapeHtml(operatorName)}</strong>,</p>
             
             <p>Se te ha asignado un nuevo servicio de grúa. Por favor revisa los detalles y prepárate para el servicio programado:</p>
 
-            <div class="folio">Folio: ${folio}</div>
+            <div class="folio">Folio: ${escapeHtml(folio)}</div>
 
             <div class="service-info">
               <h3 style="margin-top: 0; color: #333;">Detalles del Servicio</h3>
               <div class="info-row">
                 <span class="label">Cliente:</span>
-                <span class="value">${clientName}</span>
+                <span class="value">${escapeHtml(clientName)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Tipo de Servicio:</span>
-                <span class="value">${serviceTypeName}</span>
+                <span class="value">${escapeHtml(serviceTypeName)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Fecha del Servicio:</span>
@@ -135,15 +181,15 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="info-row">
                 <span class="label">Origen:</span>
-                <span class="value">${origin}</span>
+                <span class="value">${escapeHtml(origin)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Destino:</span>
-                <span class="value">${destination}</span>
+                <span class="value">${escapeHtml(destination)}</span>
               </div>
               <div class="info-row">
                 <span class="label">Grúa Asignada:</span>
-                <span class="value">${craneLicensePlate}</span>
+                <span class="value">${escapeHtml(craneLicensePlate)}</span>
               </div>
             </div>
 
