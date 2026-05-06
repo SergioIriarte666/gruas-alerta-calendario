@@ -146,10 +146,23 @@ Deno.serve(async (req) => {
         mapUrl = buildStaticMapUrl(MAPBOX_TOKEN, overlays2, mode, coords, origin, destination);
       }
 
-      return new Response(
-        JSON.stringify({ url: mapUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Fetch the image server-side so the Mapbox token is never exposed to clients
+      const imageRes = await fetch(mapUrl);
+      if (!imageRes.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch static map" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const imageData = await imageRes.arrayBuffer();
+      const contentType = imageRes.headers.get("Content-Type") ?? "image/png";
+      return new Response(imageData, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": contentType,
+          "Cache-Control": "private, max-age=300",
+        },
+      });
     }
 
     // Geocoding action
