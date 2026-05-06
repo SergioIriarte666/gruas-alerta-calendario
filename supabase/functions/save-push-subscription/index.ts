@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface PushSubscriptionData {
-  userId: string;
+  userId?: string;
   subscription: {
     endpoint: string;
     keys: {
@@ -24,12 +24,34 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate caller JWT and use their authenticated identity (ignore userId from body)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId, subscription, userAgent }: PushSubscriptionData = await req.json();
+    const { subscription, userAgent }: PushSubscriptionData = await req.json();
+    const userId = user.id;
 
     console.log('Saving push subscription for user:', userId);
 
