@@ -205,15 +205,25 @@ export const exportServiceReport = async ({
       }
 
       console.log('✅ [PDF Export] PDF generado exitosamente');
-      const pdfBlob = doc.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement('a');
-      pdfLink.href = pdfUrl;
-      pdfLink.download = `${exportFileDefaultName}.pdf`;
-      document.body.appendChild(pdfLink);
-      pdfLink.click();
-      document.body.removeChild(pdfLink);
-      setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+      try {
+        doc.save(`${exportFileDefaultName}.pdf`);
+      } catch (saveError) {
+        console.error('❌ [PDF Export] doc.save falló, usando descarga alternativa:', saveError);
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const pdfLink = document.createElement('a');
+        pdfLink.href = pdfUrl;
+        pdfLink.download = `${exportFileDefaultName}.pdf`;
+        pdfLink.target = '_blank';
+        pdfLink.rel = 'noopener noreferrer';
+        pdfLink.style.display = 'none';
+        document.body.appendChild(pdfLink);
+        pdfLink.click();
+        setTimeout(() => {
+          document.body.removeChild(pdfLink);
+          URL.revokeObjectURL(pdfUrl);
+        }, 100);
+      }
     } catch (error) {
       console.error('❌ [PDF Export] Error generando PDF:', error);
       throw new Error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -297,15 +307,25 @@ export const exportServiceReport = async ({
       XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
     }
 
-    const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const xlsxUrl = URL.createObjectURL(xlsxBlob);
-    const xlsxLink = document.createElement('a');
-    xlsxLink.href = xlsxUrl;
-    xlsxLink.download = `${exportFileDefaultName}.xlsx`;
-    document.body.appendChild(xlsxLink);
-    xlsxLink.click();
-    document.body.removeChild(xlsxLink);
-    setTimeout(() => URL.revokeObjectURL(xlsxUrl), 1000);
+    try {
+      XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
+    } catch (writeError) {
+      console.error('❌ [Excel Export] XLSX.writeFile falló, usando descarga alternativa:', writeError);
+      const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const xlsxUrl = URL.createObjectURL(xlsxBlob);
+      const xlsxLink = document.createElement('a');
+      xlsxLink.href = xlsxUrl;
+      xlsxLink.download = `${exportFileDefaultName}.xlsx`;
+      xlsxLink.target = '_blank';
+      xlsxLink.rel = 'noopener noreferrer';
+      xlsxLink.style.display = 'none';
+      document.body.appendChild(xlsxLink);
+      xlsxLink.click();
+      setTimeout(() => {
+        document.body.removeChild(xlsxLink);
+        URL.revokeObjectURL(xlsxUrl);
+      }, 100);
+    }
   }
 };
