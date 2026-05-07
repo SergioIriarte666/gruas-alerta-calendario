@@ -1450,6 +1450,8 @@ export type Database = {
         Row: {
           adjustment_enabled: boolean
           adjustment_rate: number | null
+          cost_center_id: string | null
+          crane_id: string | null
           created_at: string | null
           created_by: string | null
           creditor_id: string
@@ -1462,7 +1464,9 @@ export type Database = {
           interest_enabled: boolean
           interest_rate: number | null
           metadata: Json | null
+          operator_id: string | null
           status: string
+          subcategory: string | null
           total_amount: number
           updated_at: string | null
           updated_by: string | null
@@ -1470,6 +1474,8 @@ export type Database = {
         Insert: {
           adjustment_enabled?: boolean
           adjustment_rate?: number | null
+          cost_center_id?: string | null
+          crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
           creditor_id: string
@@ -1482,7 +1488,9 @@ export type Database = {
           interest_enabled?: boolean
           interest_rate?: number | null
           metadata?: Json | null
+          operator_id?: string | null
           status?: string
+          subcategory?: string | null
           total_amount: number
           updated_at?: string | null
           updated_by?: string | null
@@ -1490,6 +1498,8 @@ export type Database = {
         Update: {
           adjustment_enabled?: boolean
           adjustment_rate?: number | null
+          cost_center_id?: string | null
+          crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
           creditor_id?: string
@@ -1502,17 +1512,40 @@ export type Database = {
           interest_enabled?: boolean
           interest_rate?: number | null
           metadata?: Json | null
+          operator_id?: string | null
           status?: string
+          subcategory?: string | null
           total_amount?: number
           updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "debts_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debts_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "debts_creditor_id_fkey"
             columns: ["creditor_id"]
             isOneToOne: false
             referencedRelation: "creditors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debts_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
             referencedColumns: ["id"]
           },
         ]
