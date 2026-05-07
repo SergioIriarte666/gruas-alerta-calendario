@@ -8,6 +8,7 @@ import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportCo
 
 interface GenerateReportArgs {
   format: 'pdf' | 'excel';
+  downloadWindow?: Window | null;
   filters: {
     dateFrom: string;
     dateTo: string;
@@ -242,7 +243,7 @@ const fetchReportColumnConfig = async (): Promise<ReportColumnsConfig> => {
   }
 };
 
-export const generateServiceReport = async ({ format, filters }: GenerateReportArgs) => {
+export const generateServiceReport = async ({ format, filters, downloadWindow }: GenerateReportArgs) => {
   try {
     const services = await fetchServicesForReport(filters);
     const settings = await fetchSettings();
@@ -262,6 +263,7 @@ export const generateServiceReport = async ({ format, filters }: GenerateReportA
       settings,
       logoUrl: settings.company.logo,
       reportColumnConfig,
+      downloadWindow,
       appliedFilters: {
         dateRange: {
           from: filters.dateFrom,
