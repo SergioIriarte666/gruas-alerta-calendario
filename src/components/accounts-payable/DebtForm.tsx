@@ -263,6 +263,60 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
             </div>
           )}
 
+          <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium text-foreground">Asociaciones (heredadas a cada pago)</p>
+            <div className="space-y-2">
+              <Label>Subcategoría</Label>
+              <Select value={form.subcategory} onValueChange={(v) => handleChange('subcategory', v)}>
+                <SelectTrigger><SelectValue placeholder="Sin subcategoría" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin subcategoría</SelectItem>
+                  {subcategories.map((sc: any) => (
+                    <SelectItem key={sc.id} value={sc.name}>{sc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>Centro de costo</Label>
+                <Select value={form.cost_center_id} onValueChange={(v) => handleChange('cost_center_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {costCenters.map((cc: any) => (
+                      <SelectItem key={cc.id} value={cc.id}>{cc.code} - {cc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Grúa</Label>
+                <Select value={form.crane_id} onValueChange={(v) => handleChange('crane_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {cranes.map((crane: any) => (
+                      <SelectItem key={crane.id} value={crane.id}>{crane.licensePlate} - {crane.brand} {crane.model}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Operador</Label>
+                <Select value={form.operator_id} onValueChange={(v) => handleChange('operator_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {operators.map((op: any) => (
+                      <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={isPending || !canSubmit}>
