@@ -34,7 +34,18 @@ export const sendBlobToDownloadWindow = (downloadWindow: Window | null | undefin
   }
 
   const url = URL.createObjectURL(blob);
-  downloadWindow.location.href = url;
+  downloadWindow.document.body.innerHTML = '';
+  const title = downloadWindow.document.createElement('h1');
+  title.textContent = 'Descarga lista';
+  const link = downloadWindow.document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.textContent = `Descargar ${fileName}`;
+  link.style.fontFamily = 'system-ui, sans-serif';
+  link.style.fontSize = '18px';
+  downloadWindow.document.body.appendChild(title);
+  downloadWindow.document.body.appendChild(link);
+  link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   return true;
 };
