@@ -29,8 +29,8 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
   const { data: costCenters = [] } = useCostCenters();
   const { cranes = [] } = useCranes();
   const { operators = [] } = useOperators();
-  const { categories = [] } = useCostCategories();
-  const debtCategoryId = categories.find((c: any) => c.name === 'Deudas y Obligaciones')?.id;
+  const { data: categories = [] } = useCostCategories();
+  const debtCategoryId = (categories as any[]).find((c: any) => c.name === 'Deudas y Obligaciones')?.id;
   const { subcategories = [] } = useCostSubcategories(debtCategoryId);
 
   const [form, setForm] = useState({
