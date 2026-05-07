@@ -274,6 +274,6 @@ export const generateServiceReport = async ({ format, filters, downloadWindow }:
     });
   } catch (error) {
     console.error("Failed to generate service report:", error);
-    // Here you could add a toast notification to inform the user
+    throw error;
   }
 };
