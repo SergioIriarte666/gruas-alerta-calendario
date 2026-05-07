@@ -132,6 +132,15 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
           </div>
         )}
 
+        {immediateConsumption && (!quantity || !unitCost || Number(quantity) <= 0 || Number(unitCost) <= 0) && (
+          <Alert variant="destructive" className="py-2">
+            <Info className="w-4 h-4" />
+            <AlertDescription className="text-xs">
+              Cantidad y precio unitario son <strong>obligatorios</strong> para registrar el consumo inmediato en bodega y grúa.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Consumo Inmediato - Layout compacto */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-4 p-3 bg-muted/30 rounded-lg">
