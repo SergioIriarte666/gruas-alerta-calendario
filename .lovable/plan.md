@@ -1,42 +1,44 @@
 ## Objetivo
-Que al abrir `www.gruas5norte.com` (nueva pestaña/ventana o reapertura del navegador) el usuario siempre vea la pantalla de login, en lugar de entrar con una sesión recordada.
 
-## Causa actual
-En `src/integrations/supabase/client.ts` el cliente Supabase está configurado así:
+Mostrar de forma transparente la información de **Arriendo de Equipos** en el PDF "Informe de Servicios" que se envía al cliente, incluyendo tipo de equipo, tarifa diaria, días y total — datos hoy visibles solo en el detalle del servicio.
 
-```ts
-auth: {
-  storage: localStorage,
-  persistSession: true,
-  autoRefreshToken: true,
-}
-```
+## Situación actual
 
-`localStorage` guarda la sesión indefinidamente entre cierres del navegador, por eso siempre entra logueado.
+El PDF (`src/utils/reports/serviceReportExporter.ts`) reusa las columnas de **Custodia** (Inicio / Fin / Días / Valor) para los servicios de Arriendo de Equipos. Esto funciona para fechas y días, pero:
 
-## Cambio propuesto
-Cambiar el almacenamiento de la sesión a `sessionStorage`:
+- No se distingue visualmente un Arriendo de una Custodia (mismas etiquetas).
+- No aparece el **Tipo de Equipo** (ej. "Starlink Mini") ni la **Tarifa Diaria**, datos clave para que el cliente valide la facturación.
+- En la fila del screenshot, la columna "Custodia" sale "-" porque el servicio no tiene custodia tradicional.
 
-```ts
-auth: {
-  storage: sessionStorage,
-  persistSession: true,
-  autoRefreshToken: true,
-}
-```
+## Cambios propuestos
 
-Comportamiento resultante:
-- Al cerrar la pestaña/ventana o el navegador, la sesión se pierde y se exige login al volver.
-- Dentro de la misma pestaña, recargar (F5) o navegar entre rutas mantiene la sesión (evita re-login molesto en uso normal).
+### 1. Sección dedicada "Detalle de Arriendos" en el PDF
 
-## Pasos
-1. Editar `src/integrations/supabase/client.ts` para usar `sessionStorage`.
-2. Limpieza extra: en `src/utils/authCleanup.ts` ya se barren claves `sb-*` y `supabase.auth.*` de ambos storages, así que no requiere cambios.
-3. Verificar en preview/producción: abrir el sitio en una pestaña nueva tras cerrar el navegador → debe redirigir a `/auth`.
+Debajo de la tabla principal, agregar una sección **solo si hay servicios de tipo "Arriendo de Equipos"** en el período, con tabla:
 
-## Alternativa (si prefieres aún más estricto)
-Usar `persistSession: false`. Esto obliga login incluso al recargar la misma pestaña. No lo recomiendo porque rompe la experiencia normal de trabajo (cada F5 te saca), pero está disponible si lo deseas.
+| Fecha | Folio | Tipo de Equipo | Fecha Inicio | Fecha Fin | Días | Tarifa Diaria | Total Arriendo |
 
-## Notas
-- No se tocan políticas RLS, edge functions, ni el flujo de `AuthContext`. Solo el almacenamiento del token.
-- Usuarios actualmente logueados con token en `localStorage` seguirán viéndolo hasta que cierren sesión una vez (o hasta que su token expire); para forzar el efecto inmediato puedo añadir una migración de limpieza al iniciar la app (borrar claves `sb-*` de `localStorage` al cargar).
+- Detección: `isEquipmentRentalService(service)` (helper ya existente).
+- Datos: se leen de los campos custody (`custody_vehicle_type`, `custody_start_date`, `custody_end_date`, `custody_days`, tarifa diaria calculada con `convertToDaily`, `custody_total_amount`).
+- Estilo: header violeta (siguiendo el design system del módulo de Costos / memoria de accesibilidad), mismo `fontSize` y `cellPadding` que la tabla principal.
+
+### 2. Etiquetas dinámicas en columnas Custodia (opcional, menor)
+
+Renombrar internamente la fila cuando es Arriendo: en las columnas Inicio/Fin/Días Custodia mostrar el dato igual (ya lo hace), pero el bloque nuevo aclara la naturaleza. **Sin** cambiar headers globales para no romper otros casos.
+
+### 3. Excel: hoja adicional "Arriendos de Equipos"
+
+En el export Excel, añadir una hoja nueva con las mismas columnas de la sección PDF, solo con los servicios de arriendo. La hoja "Detalle de Servicios" se mantiene intacta.
+
+## Archivos a modificar
+
+- `src/utils/reports/serviceReportExporter.ts` — agregar bloque `autoTable` para arriendos en PDF, hoja nueva en Excel.
+- (Opcional) `src/utils/custodyCalculations.ts` — reutilizar `getCustodyDisplayInfo` y `convertToDaily` para extraer tarifa diaria; no se modifica.
+
+## Fuera de alcance
+
+- No se cambia la lógica de cálculo de valores ni la estructura de columnas configurables del informe principal.
+- No se tocan otros exporters (costos, comisiones, etc.).
+- No se modifica la base de datos.
+
+¿Apruebas para implementar?
