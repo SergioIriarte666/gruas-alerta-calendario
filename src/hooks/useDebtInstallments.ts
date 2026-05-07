@@ -19,6 +19,10 @@ export interface DebtInstallment {
     description: string;
     creditor_id: string;
     currency?: string;
+    cost_center_id?: string | null;
+    crane_id?: string | null;
+    operator_id?: string | null;
+    subcategory?: string | null;
     creditors?: { name: string; type: string };
   };
 }
@@ -29,7 +33,7 @@ export const useDebtInstallments = (debtId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('debt_installments')
-        .select('*, debts(description, creditor_id, currency, creditors(name, type))')
+        .select('*, debts(description, creditor_id, currency, cost_center_id, crane_id, operator_id, subcategory, creditors(name, type))')
         .order('due_date');
 
       if (debtId) query = query.eq('debt_id', debtId);
@@ -52,7 +56,7 @@ export const useMonthlyInstallments = (monthDate?: Date) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('debt_installments')
-        .select('*, debts(description, creditor_id, currency, creditors(name, type))')
+        .select('*, debts(description, creditor_id, currency, cost_center_id, crane_id, operator_id, subcategory, creditors(name, type))')
         .gte('due_date', start)
         .lte('due_date', end)
         .order('due_date');
@@ -71,18 +75,12 @@ export const usePayInstallment = () => {
       paymentDate,
       method,
       notes,
-      cost_center_id,
-      crane_id,
-      operator_id,
       uf_value,
     }: {
       installment: DebtInstallment;
       paymentDate: string;
       method?: string;
       notes?: string;
-      cost_center_id?: string | null;
-      crane_id?: string | null;
-      operator_id?: string | null;
       uf_value?: number | null;
     }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -135,6 +133,10 @@ export const usePayInstallment = () => {
 
       const creditorName = installment.debts?.creditors?.name || 'Acreedor';
       const debtDesc = installment.debts?.description || 'Deuda';
+      const debtCostCenterId = installment.debts?.cost_center_id || null;
+      const debtCraneId = installment.debts?.crane_id || null;
+      const debtOperatorId = installment.debts?.operator_id || null;
+      const debtSubcategory = installment.debts?.subcategory || null;
 
       // 4. Create cost record
       const { error: cErr } = await supabase.from('costs').insert({
@@ -143,9 +145,10 @@ export const usePayInstallment = () => {
         date: paymentDate,
         payment_date: paymentDate,
         category_id: categoryId,
-        cost_center_id: cost_center_id || null,
-        crane_id: crane_id || null,
-        operator_id: operator_id || null,
+        subcategory: debtSubcategory,
+        cost_center_id: debtCostCenterId,
+        crane_id: debtCraneId,
+        operator_id: debtOperatorId,
         notes: paymentNotes,
         created_by: userId,
       });
