@@ -389,6 +389,30 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                     }
                 }
             }
+
+            // Validación adicional: cualquier costo en categoría "Inventario" o con
+            // "Consumo Inmediato" activo DEBE tener cantidad y costo unitario para
+            // poder sincronizar con bodega y grúa. Esto cubre subcategorías que no
+            // tienen routes_to_inventory marcado (ej. "Partes y Piezas").
+            const selectedCategoryName = categories.find(c => c.id === values.category_id)?.name;
+            const isInventoryCategory = selectedCategoryName === 'Inventario';
+            const requiresInventorySync = isInventoryCategory || values.immediate_consumption === true;
+            if (requiresInventorySync) {
+                if (!values.purchase_quantity || values.purchase_quantity <= 0) {
+                    toast.error("Cantidad requerida", {
+                        description: "Para registrar entrada a bodega y consumo inmediato, debes indicar la cantidad comprada.",
+                    });
+                    setCurrentStep(2);
+                    return;
+                }
+                if (!values.purchase_unit_cost || values.purchase_unit_cost <= 0) {
+                    toast.error("Precio unitario requerido", {
+                        description: "Debes indicar el precio unitario para sincronizar con bodega.",
+                    });
+                    setCurrentStep(2);
+                    return;
+                }
+            }
             
             if (values.subcategory === 'Piezas y Repuestos') {
                 if (!values.part_name || values.part_name.trim() === '') {
