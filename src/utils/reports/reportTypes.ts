@@ -31,6 +31,7 @@ export interface ExportServiceReportArgs {
   appliedFilters: AppliedServiceFilters;
   logoUrl?: string;
   reportColumnConfig?: ReportColumnsConfig;
+  downloadWindow?: Window | null;
 }
 
 export interface AppliedCostFilters {

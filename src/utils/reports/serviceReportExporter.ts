@@ -5,6 +5,7 @@ import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
+import { sendBlobToDownloadWindow } from './downloadWindow';
 import { getDisplayServiceValue, getServiceValueBreakdown } from '../serviceValueCalculations';
 import { isEquipmentRentalService } from '../serviceValueCalculations';
 import { getCustodyDisplayInfo } from '../custodyCalculations';
@@ -84,7 +85,8 @@ export const exportServiceReport = async ({
   appliedFilters, 
   logoUrl, 
   customFileName,
-  reportColumnConfig 
+  reportColumnConfig,
+  downloadWindow 
 }: ExportServiceReportArgs & { customFileName?: string }) => {
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
@@ -205,11 +207,15 @@ export const exportServiceReport = async ({
       }
 
       console.log('✅ [PDF Export] PDF generado exitosamente');
+      const pdfBlob = doc.output('blob');
+      if (sendBlobToDownloadWindow(downloadWindow, pdfBlob, `${exportFileDefaultName}.pdf`)) {
+        return;
+      }
+
       try {
         doc.save(`${exportFileDefaultName}.pdf`);
       } catch (saveError) {
         console.error('❌ [PDF Export] doc.save falló, usando descarga alternativa:', saveError);
-        const pdfBlob = doc.output('blob');
         const pdfUrl = URL.createObjectURL(pdfBlob);
         const pdfLink = document.createElement('a');
         pdfLink.href = pdfUrl;
@@ -307,12 +313,16 @@ export const exportServiceReport = async ({
       XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
     }
 
+    const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    if (sendBlobToDownloadWindow(downloadWindow, xlsxBlob, `${exportFileDefaultName}.xlsx`)) {
+      return;
+    }
+
     try {
       XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
     } catch (writeError) {
       console.error('❌ [Excel Export] XLSX.writeFile falló, usando descarga alternativa:', writeError);
-      const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const xlsxUrl = URL.createObjectURL(xlsxBlob);
       const xlsxLink = document.createElement('a');
       xlsxLink.href = xlsxUrl;
