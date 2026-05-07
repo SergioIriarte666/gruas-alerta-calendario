@@ -205,7 +205,15 @@ export const exportServiceReport = async ({
       }
 
       console.log('✅ [PDF Export] PDF generado exitosamente');
-      doc.save(`${exportFileDefaultName}.pdf`);
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const pdfLink = document.createElement('a');
+      pdfLink.href = pdfUrl;
+      pdfLink.download = `${exportFileDefaultName}.pdf`;
+      document.body.appendChild(pdfLink);
+      pdfLink.click();
+      document.body.removeChild(pdfLink);
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
     } catch (error) {
       console.error('❌ [PDF Export] Error generando PDF:', error);
       throw new Error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -289,6 +297,15 @@ export const exportServiceReport = async ({
       XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
     }
 
-    XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
+    const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const xlsxBlob = new Blob([xlsxArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const xlsxUrl = URL.createObjectURL(xlsxBlob);
+    const xlsxLink = document.createElement('a');
+    xlsxLink.href = xlsxUrl;
+    xlsxLink.download = `${exportFileDefaultName}.xlsx`;
+    document.body.appendChild(xlsxLink);
+    xlsxLink.click();
+    document.body.removeChild(xlsxLink);
+    setTimeout(() => URL.revokeObjectURL(xlsxUrl), 1000);
   }
 };
