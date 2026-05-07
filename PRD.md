@@ -2,8 +2,8 @@
 
 ## TMS Grúas — Towing Management System
 
-- **Versión del documento:** 3.1
-- **Última actualización:** 2026-04-26
+- **Versión del documento:** 3.3
+- **Última actualización:** 2026-05-07
 - **Versión del producto:** 2.2.x (en producción)
 - **Estado:** Vigente — fuente única de verdad de producto
 - **URLs:**
@@ -27,11 +27,14 @@
 8. Catálogo de Edge Functions
 9. Modelo de datos (alto nivel)
 10. Auditoría y trazabilidad
+10.bis Observabilidad e ingestión masiva
 11. Capacidad offline / PWA
 12. Seguridad
+12.bis Gobernanza de exportaciones y datos sensibles
 13. Sistema de diseño y UX
 14. Requisitos no funcionales
 15. Despliegue, entornos y operación
+15.bis Soporte y diagnóstico
 16. Métricas de éxito (KPIs)
 17. Roadmap
 18. Apéndices
@@ -287,6 +290,12 @@ Cada módulo abajo declara propósito, usuarios, funcionalidades clave, reglas d
 - `generate-backup` (JSON multi-tabla) y `generate-sql-dump` (SQL completo), historial en `backup_logs`, descarga, validación de autoría, logger estructurado.
 - Acceso: solo `admin`.
 
+#### 5.1.8 productividad operativa transversal
+- **Búsqueda global contextual** desde el header para localizar servicios, clientes, facturas, operadores y grúas sin cambiar de módulo.
+- Navegación rápida para equipos administrativos con alto volumen operativo; reduce tiempo de acceso a entidades frecuentes y mejora soporte interno.
+- **Permisos granulares por módulo** aplicados también a navegación y visibilidad, con fallback compatible hacia "habilitado por defecto" cuando no existe override explícito por usuario.
+- Esta capa no reemplaza RLS: actúa como control de experiencia y exposición funcional en frontend.
+
 ### 5.2 Operación
 
 #### 5.2.1 dashboard
@@ -365,6 +374,12 @@ Cada módulo abajo declara propósito, usuarios, funcionalidades clave, reglas d
 #### 5.3.7 settings-admin
 - Datos de empresa (`company_data`), gestión de usuarios + permisos granulares por módulo, alertas de documentos, configuración de reporte diario, configuración de notificaciones push.
 - **Panel de Emergencia:** herramientas administrativas centralizadas (limpieza de servicios, sincronización forzada de comisiones, eliminación segura).
+
+#### 5.3.8 continuidad operativa y herramientas de emergencia
+- Conjunto de utilidades exclusivas de `admin` orientadas a corregir inconsistencias sin intervención directa en base de datos.
+- Alcance actual: liberación de servicios bloqueados, cambio forzado de estado, reparación masiva, eliminación segura de servicios, reconexión de pagos y anulación de compras de inventario con cascada controlada.
+- Todo flujo de emergencia debe dejar trazabilidad, confirmación explícita y mensajes operativos claros para minimizar errores humanos en producción.
+- Estas herramientas se consideran parte del producto operativo y no simples utilidades de desarrollo.
 
 ### 5.4 Financiero, comercial y reportería
 
@@ -619,6 +634,14 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - **Importaciones:** `import_batches` + `import_batch_records` para soportar rollback.
 - **Pagos masivos:** `cost_bulk_payment_operations` registra cada operación batch.
 
+## 10.bis Observabilidad e ingestión masiva
+
+- El producto incluye una **capa transversal de ingestión** para archivos CSV/XLSX/XML con pipeline consistente: parseo, normalización, validación, preview, persistencia, post-proceso y recuperación.
+- La ingestión masiva no es solo una facilidad UI; es una capacidad de negocio para acelerar altas operativas, importación de costos e integración documental con proveedores.
+- Debe diferenciar explícitamente **errores** vs **advertencias**, permitir corrección previa cuando aplica y entregar resumen final con filas procesadas/fallidas.
+- Las importaciones relevantes deben registrar lotes, fallos por fila y artefactos de rollback en `import_batches` e `import_batch_records`.
+- La observabilidad mínima esperada incluye logging estructurado, progreso visible, mensajes de recuperación y soporte para reintento selectivo en flujos batch críticos.
+
 ---
 
 ## 11. Capacidad offline / PWA
@@ -672,6 +695,14 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - Session timeout automático.
 - Cleanup de auth al detectar sesiones huérfanas.
 - Validación de fortaleza de contraseña y reset seguro vía Edge Function.
+
+## 12.bis Gobernanza de exportaciones y datos sensibles
+
+- Toda exportación PDF/Excel debe respetar permisos del módulo origen y el mismo perímetro de datos visible en UI.
+- Los reportes pueden contener PII, datos financieros, datos tributarios y evidencia operativa; por lo tanto, se consideran artefactos sensibles aun cuando se generen en cliente.
+- Branding y datos corporativos embebidos en reportes provienen de `company_data`; no deben hardcodearse en componentes o exporters.
+- Cualquier ampliación de exportaciones debe preservar trazabilidad, comportamiento estable de descarga y compatibilidad con encabezados corporativos existentes.
+- Recomendación operativa: evolucionar hacia auditoría adicional de exportaciones críticas y mecanismos de watermarking cuando el volumen de clientes B2B o auditorías externas lo justifique.
 
 ---
 
@@ -736,6 +767,13 @@ Estándar: Deno + Resend v6, CORS estandarizado, logging estructurado, validaci�
 - Backups bajo demanda desde `/backup` (admin); reporte diario por email; dump SQL completo disponible.
 - Logs de Edge Functions en Supabase; logs de cliente con `src/lib/logger.ts`.
 - Recuperación ante fallos: reload de chunk automático; retry de fetch; modo offline.
+
+## 15.bis Soporte y diagnóstico
+
+- La aplicación incluye rutas y utilidades internas de soporte para diagnóstico controlado de conectividad, rendimiento y fallos de carga.
+- Rutas técnicas actualmente disponibles: `/performance-test`, `/debug-freeze`, `/connection-test`.
+- Estas rutas no forman parte del flujo comercial estándar, pero son relevantes para soporte, QA, troubleshooting post-deploy y validación de entorno.
+- Su uso debe limitarse a personal interno autorizado y no reemplaza monitoreo formal ni telemetría estructurada.
 
 ---
 
@@ -868,6 +906,7 @@ Ver §19 para alcance global del producto y §20 para riesgos asociados a estas 
 | 3.0 | 2026-04-25 | Reescritura completa exhaustiva: 18 secciones, los 33 módulos, reglas de negocio críticas, integraciones, Edge Functions, modelo de datos, RLS, offline/PWA, seguridad, design system, KPIs, roadmap actualizado y apéndices. |
 | 3.1 | 2026-04-26 | Capa ejecutiva (§0), criterios de aceptación por módulo (§5.bis), refuerzo de §11 (offline: soportado/no soportado/conflictos/límites), nota de riesgo en §15, reescritura de §17 con priorización Impacto×Esfuerzo y out-of-scope, y nuevas secciones §19 (supuestos/restricciones/out-of-scope global), §20 (riesgos y mitigaciones) y §21 (matriz de dependencias críticas). Sin cambios en código. |
 | 3.2 | 2026-05-06 | **Panel de Emergencia (Admin)**: nueva herramienta "Anular Compra de Bodega" (`PurchaseVoidTool`) que permite buscar compras de inventario por descripción/folio/proveedor vía RPC `search_voidable_inventory_purchases` (con `unaccent`/`lower` sobre `costs`, `supplier_invoice_items` e `inventory_movements`) y anularlas en cascada (costo, movimientos de inventario, pago a proveedor y factura del proveedor) con registro en auditoría. Corregida desalineación del `RETURNS TABLE` del RPC y limpiado el mensaje de error que sugería revisar la sesión. **VIP Pipeline → Actualización por Lotes**: las tarjetas de servicio del panel izquierdo de `BatchUpdateModal` ahora muestran, bajo el folio, datos del vehículo (marca/modelo/patente con ícono `Car`), ruta origen→destino truncada (`MapPin`) y operador · grúa (`User`), respetando tokens semánticos y modo oscuro. |
+| 3.3 | 2026-05-07 | Complementos de cobertura funcional del PRD sin cambiar alcance del producto: nueva subsección de **productividad operativa transversal** (búsqueda global y permisos granulares en navegación), formalización de **continuidad operativa** y alcance del Panel de Emergencia, nueva sección **10.bis** para observabilidad e ingestión masiva, nueva sección **12.bis** para gobernanza de exportaciones y datos sensibles, nueva sección **15.bis** para soporte y diagnóstico, y actualización del encabezado del documento para alinearlo con el historial real. |
 
 ---
 
