@@ -6,6 +6,8 @@ import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { getDisplayServiceValue, getServiceValueBreakdown } from '../serviceValueCalculations';
+import { isEquipmentRentalService } from '../serviceValueCalculations';
+import { getCustodyDisplayInfo } from '../custodyCalculations';
 import { Service } from '@/types';
 import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
 
@@ -169,7 +171,39 @@ export const exportServiceReport = async ({
         tableWidth: availableWidth,
         columnStyles
       });
-      
+
+      // Sección dedicada: Detalle de Arriendos de Equipos
+      const rentalServices = sortedServices.filter(s => isEquipmentRentalService(s));
+      if (rentalServices.length > 0) {
+        const rentalStartY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(12);
+        doc.text('Detalle de Arriendos de Equipos', 14, rentalStartY);
+
+        const rentalBody = rentalServices.map(s => {
+          const info = getCustodyDisplayInfo(s) || ({} as any);
+          const dailyRate = info.dailyRate || 0;
+          const total = (s as any).custodyTotalAmount || (s as any).custody_total_amount || 0;
+          return [
+            formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
+            s.folio,
+            info.vehicleType || '-',
+            info.startDate ? formatDate(new Date(info.startDate + 'T00:00:00'), 'dd/MM/yy') : '-',
+            info.endDate ? formatDate(new Date(info.endDate + 'T00:00:00'), 'dd/MM/yy') : '-',
+            (info.days ?? 0).toString(),
+            dailyRate > 0 ? `$${Math.round(dailyRate).toLocaleString('es-CL')}` : '-',
+            total > 0 ? `$${total.toLocaleString('es-CL')}` : '-',
+          ];
+        });
+
+        autoTable(doc, {
+          head: [['Fecha', 'Folio', 'Tipo de Equipo', 'Inicio', 'Fin', 'Días', 'Tarifa Diaria', 'Total Arriendo']],
+          body: rentalBody,
+          startY: rentalStartY + 4,
+          headStyles: { fillColor: [139, 92, 246], fontSize: 8 },
+          styles: { fontSize: 7, cellPadding: 1.5 },
+        });
+      }
+
       console.log('✅ [PDF Export] PDF generado exitosamente');
       doc.save(`${exportFileDefaultName}.pdf`);
     } catch (error) {
@@ -231,6 +265,29 @@ export const exportServiceReport = async ({
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen');
+
+    // Hoja adicional: Arriendos de Equipos
+    const rentalServices = sortedServices.filter(s => isEquipmentRentalService(s));
+    if (rentalServices.length > 0) {
+      const rental_data = rentalServices.map(s => {
+        const info = getCustodyDisplayInfo(s) || ({} as any);
+        const dailyRate = info.dailyRate || 0;
+        const total = (s as any).custodyTotalAmount || (s as any).custody_total_amount || 0;
+        return {
+          'Fecha': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+          'Folio': s.folio,
+          'Cliente': s.client?.name || 'N/A',
+          'Tipo de Equipo': info.vehicleType || '-',
+          'Fecha Inicio': info.startDate || '-',
+          'Fecha Fin': info.endDate || '-',
+          'Días': info.days ?? 0,
+          'Tarifa Diaria': Math.round(dailyRate),
+          'Total Arriendo': total,
+        };
+      });
+      const rental_ws = XLSX.utils.json_to_sheet(rental_data);
+      XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
+    }
 
     XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
   }
