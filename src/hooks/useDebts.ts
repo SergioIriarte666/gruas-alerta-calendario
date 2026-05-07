@@ -19,6 +19,10 @@ export interface Debt {
   status: string;
   metadata: Record<string, unknown> | null;
   created_at: string;
+  cost_center_id?: string | null;
+  crane_id?: string | null;
+  operator_id?: string | null;
+  subcategory?: string | null;
   creditors?: { name: string; type: string };
 }
 
@@ -46,6 +50,10 @@ export interface DebtFormData {
   down_payment_paid?: boolean;
   down_payment_method?: string | null;
   down_payment_payment_date?: string | null;
+  cost_center_id?: string | null;
+  crane_id?: string | null;
+  operator_id?: string | null;
+  subcategory?: string | null;
 }
 
 const generateInstallmentDates = (firstDate: string, count: number, frequency: string) => {
@@ -135,6 +143,10 @@ export const useCreateDebt = () => {
           adjustment_enabled: data.adjustment_enabled,
           adjustment_rate: data.adjustment_rate || null,
           currency: data.currency || 'CLP',
+          cost_center_id: data.cost_center_id || null,
+          crane_id: data.crane_id || null,
+          operator_id: data.operator_id || null,
+          subcategory: data.subcategory || null,
           created_by: userId,
         })
         .select()
@@ -251,6 +263,10 @@ export const useCreateDebt = () => {
                 date: paymentDate,
                 payment_date: paymentDate,
                 category_id: categoryId,
+                subcategory: data.subcategory || null,
+                cost_center_id: data.cost_center_id || null,
+                crane_id: data.crane_id || null,
+                operator_id: data.operator_id || null,
                 created_by: userId,
               });
               if (cErr) throw cErr;
@@ -288,6 +304,10 @@ export const useUpdateDebt = () => {
         adjustment_enabled: data.adjustment_enabled,
         adjustment_rate: data.adjustment_enabled ? (data.adjustment_rate ?? null) : null,
         currency: data.currency,
+        cost_center_id: data.cost_center_id ?? undefined,
+        crane_id: data.crane_id ?? undefined,
+        operator_id: data.operator_id ?? undefined,
+        subcategory: data.subcategory ?? undefined,
         updated_by: userId,
         updated_at: new Date().toISOString(),
       };
