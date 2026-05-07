@@ -11,6 +11,11 @@ import { useCreditors } from '@/hooks/useCreditors';
 import { useCreateDebt } from '@/hooks/useDebts';
 import { format } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { useCostCenters } from '@/hooks/useCostCenters';
+import { useCranes } from '@/hooks/useCranes';
+import { useOperators } from '@/hooks/useOperators';
+import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 
 interface DebtFormProps {
   open: boolean;
@@ -21,6 +26,12 @@ interface DebtFormProps {
 export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps) => {
   const { data: creditors } = useCreditors();
   const { mutate: createDebt, isPending } = useCreateDebt();
+  const { data: costCenters = [] } = useCostCenters();
+  const { cranes = [] } = useCranes();
+  const { operators = [] } = useOperators();
+  const { categories = [] } = useCostCategories();
+  const debtCategoryId = categories.find((c: any) => c.name === 'Deudas y Obligaciones')?.id;
+  const { subcategories = [] } = useCostSubcategories(debtCategoryId);
 
   const [form, setForm] = useState({
     creditor_id: '',
@@ -40,6 +51,10 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
     down_payment_paid: false,
     down_payment_payment_date: format(new Date(), 'yyyy-MM-dd'),
     down_payment_method: 'transferencia',
+    cost_center_id: 'none',
+    crane_id: 'none',
+    operator_id: 'none',
+    subcategory: 'none',
   });
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -66,6 +81,10 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
         down_payment_paid: form.has_down_payment ? form.down_payment_paid : false,
         down_payment_payment_date: form.has_down_payment && form.down_payment_paid ? form.down_payment_payment_date : null,
         down_payment_method: form.has_down_payment && form.down_payment_paid ? form.down_payment_method : null,
+        cost_center_id: form.cost_center_id === 'none' ? null : form.cost_center_id,
+        crane_id: form.crane_id === 'none' ? null : form.crane_id,
+        operator_id: form.operator_id === 'none' ? null : form.operator_id,
+        subcategory: form.subcategory === 'none' ? null : form.subcategory,
       },
       { onSuccess: () => onOpenChange(false) }
     );
