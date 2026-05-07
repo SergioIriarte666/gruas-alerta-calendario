@@ -1,7 +1,7 @@
 const DOWNLOAD_WINDOW_TITLE = 'Preparando descarga';
 
 export const openDownloadWindow = (): Window | null => {
-  const downloadWindow = window.open('', '_blank', 'noopener,noreferrer');
+  const downloadWindow = window.open('', '_blank');
 
   if (!downloadWindow) {
     return null;
