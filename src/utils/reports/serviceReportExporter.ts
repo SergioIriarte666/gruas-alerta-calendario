@@ -78,6 +78,73 @@ const truncate = (str: string, maxLength: number): string => {
   return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
 };
 
+const parseReportDate = (value: unknown): Date | null => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  const normalizedValue = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? `${value}T00:00:00`
+    : value;
+  const parsedDate = new Date(normalizedValue);
+
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
+const formatReportDate = (value: unknown, pattern: string): string => {
+  const parsedDate = parseReportDate(value);
+  return parsedDate ? formatDate(parsedDate, pattern) : '-';
+};
+
+const formatCurrency = (value: unknown): string => {
+  const numericValue = typeof value === 'number' ? value : Number(value || 0);
+  return numericValue > 0 ? `$${Math.round(numericValue).toLocaleString('es-CL')}` : '-';
+};
+
+type EquipmentRentalExportRow = {
+  pdfRow: string[];
+  excelRow: Record<string, string | number>;
+};
+
+const buildEquipmentRentalExportRows = (services: Service[]): EquipmentRentalExportRow[] => {
+  return services
+    .filter(service => isEquipmentRentalService(service))
+    .map(service => {
+      const info = getCustodyDisplayInfo(service);
+      const totalAmount = info?.totalAmount ?? (service as any).custodyTotalAmount ?? (service as any).custody_total_amount ?? 0;
+      const rawDays = info?.days ?? (service as any).custodyDays ?? (service as any).custody_days ?? 0;
+      const rentalDays = typeof rawDays === 'number' ? rawDays : Number(rawDays || 0);
+      const vehicleType = info?.vehicleType || (service as any).custodyVehicleType || (service as any).custody_vehicle_type || '-';
+      const startDate = info?.startDate || (service as any).custodyStartDate || (service as any).custody_start_date;
+      const endDate = info?.endDate || (service as any).custodyEndDate || (service as any).custody_end_date;
+      const dailyRate = info?.dailyRate ?? 0;
+
+      return {
+        pdfRow: [
+          formatReportDate(service.serviceDate, 'dd/MM/yy'),
+          service.folio || '-',
+          vehicleType,
+          formatReportDate(startDate, 'dd/MM/yy'),
+          formatReportDate(endDate, 'dd/MM/yy'),
+          rentalDays > 0 ? rentalDays.toString() : '-',
+          formatCurrency(dailyRate),
+          formatCurrency(totalAmount),
+        ],
+        excelRow: {
+          'Fecha': formatReportDate(service.serviceDate, 'yyyy-MM-dd'),
+          'Folio': service.folio || '-',
+          'Cliente': service.client?.name || 'N/A',
+          'Tipo de Equipo': vehicleType,
+          'Fecha Inicio': formatReportDate(startDate, 'yyyy-MM-dd'),
+          'Fecha Fin': formatReportDate(endDate, 'yyyy-MM-dd'),
+          'Días': rentalDays > 0 ? rentalDays : '-',
+          'Tarifa Diaria': Math.round(typeof dailyRate === 'number' ? dailyRate : Number(dailyRate || 0)),
+          'Total Arriendo': Math.round(typeof totalAmount === 'number' ? totalAmount : Number(totalAmount || 0)),
+        }
+      };
+    });
+};
+
 export const exportServiceReport = async ({ 
   format, 
   services, 
@@ -174,36 +241,24 @@ export const exportServiceReport = async ({
         columnStyles
       });
 
-      // Sección dedicada: Detalle de Arriendos de Equipos
-      const rentalServices = sortedServices.filter(s => isEquipmentRentalService(s));
-      if (rentalServices.length > 0) {
-        const rentalStartY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(12);
-        doc.text('Detalle de Arriendos de Equipos', 14, rentalStartY);
+      // Mantiene el detalle adicional aislado para no afectar la descarga principal.
+      const rentalRows = buildEquipmentRentalExportRows(sortedServices);
+      if (rentalRows.length > 0) {
+        try {
+          const rentalStartY = (doc as any).lastAutoTable.finalY + 10;
+          doc.setFontSize(12);
+          doc.text('Detalle de Arriendos de Equipos', 14, rentalStartY);
 
-        const rentalBody = rentalServices.map(s => {
-          const info = getCustodyDisplayInfo(s) || ({} as any);
-          const dailyRate = info.dailyRate || 0;
-          const total = (s as any).custodyTotalAmount || (s as any).custody_total_amount || 0;
-          return [
-            formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
-            s.folio,
-            info.vehicleType || '-',
-            info.startDate ? formatDate(new Date(info.startDate + 'T00:00:00'), 'dd/MM/yy') : '-',
-            info.endDate ? formatDate(new Date(info.endDate + 'T00:00:00'), 'dd/MM/yy') : '-',
-            (info.days ?? 0).toString(),
-            dailyRate > 0 ? `$${Math.round(dailyRate).toLocaleString('es-CL')}` : '-',
-            total > 0 ? `$${total.toLocaleString('es-CL')}` : '-',
-          ];
-        });
-
-        autoTable(doc, {
-          head: [['Fecha', 'Folio', 'Tipo de Equipo', 'Inicio', 'Fin', 'Días', 'Tarifa Diaria', 'Total Arriendo']],
-          body: rentalBody,
-          startY: rentalStartY + 4,
-          headStyles: { fillColor: [139, 92, 246], fontSize: 8 },
-          styles: { fontSize: 7, cellPadding: 1.5 },
-        });
+          autoTable(doc, {
+            head: [['Fecha', 'Folio', 'Tipo de Equipo', 'Inicio', 'Fin', 'Días', 'Tarifa Diaria', 'Total Arriendo']],
+            body: rentalRows.map(row => row.pdfRow),
+            startY: rentalStartY + 4,
+            headStyles: { fillColor: [139, 92, 246], fontSize: 8 },
+            styles: { fontSize: 7, cellPadding: 1.5 },
+          });
+        } catch (rentalSectionError) {
+          console.warn('⚠️ [PDF Export] No se pudo generar el detalle de arriendos:', rentalSectionError);
+        }
       }
 
       console.log('✅ [PDF Export] PDF generado exitosamente');
@@ -290,27 +345,14 @@ export const exportServiceReport = async ({
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen');
 
-    // Hoja adicional: Arriendos de Equipos
-    const rentalServices = sortedServices.filter(s => isEquipmentRentalService(s));
-    if (rentalServices.length > 0) {
-      const rental_data = rentalServices.map(s => {
-        const info = getCustodyDisplayInfo(s) || ({} as any);
-        const dailyRate = info.dailyRate || 0;
-        const total = (s as any).custodyTotalAmount || (s as any).custody_total_amount || 0;
-        return {
-          'Fecha': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
-          'Folio': s.folio,
-          'Cliente': s.client?.name || 'N/A',
-          'Tipo de Equipo': info.vehicleType || '-',
-          'Fecha Inicio': info.startDate || '-',
-          'Fecha Fin': info.endDate || '-',
-          'Días': info.days ?? 0,
-          'Tarifa Diaria': Math.round(dailyRate),
-          'Total Arriendo': total,
-        };
-      });
-      const rental_ws = XLSX.utils.json_to_sheet(rental_data);
-      XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
+    const rentalRows = buildEquipmentRentalExportRows(sortedServices);
+    if (rentalRows.length > 0) {
+      try {
+        const rental_ws = XLSX.utils.json_to_sheet(rentalRows.map(row => row.excelRow));
+        XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
+      } catch (rentalSheetError) {
+        console.warn('⚠️ [Excel Export] No se pudo generar la hoja de arriendos:', rentalSheetError);
+      }
     }
 
     const xlsxArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
