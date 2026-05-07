@@ -11,6 +11,11 @@ import { useCreditors } from '@/hooks/useCreditors';
 import { useCreateDebt } from '@/hooks/useDebts';
 import { format } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { useCostCenters } from '@/hooks/useCostCenters';
+import { useCranes } from '@/hooks/useCranes';
+import { useOperators } from '@/hooks/useOperators';
+import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 
 interface DebtFormProps {
   open: boolean;
@@ -21,6 +26,12 @@ interface DebtFormProps {
 export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps) => {
   const { data: creditors } = useCreditors();
   const { mutate: createDebt, isPending } = useCreateDebt();
+  const { data: costCenters = [] } = useCostCenters();
+  const { cranes = [] } = useCranes();
+  const { operators = [] } = useOperators();
+  const { data: categories = [] } = useCostCategories();
+  const debtCategoryId = (categories as any[]).find((c: any) => c.name === 'Deudas y Obligaciones')?.id;
+  const { subcategories = [] } = useCostSubcategories(debtCategoryId);
 
   const [form, setForm] = useState({
     creditor_id: '',
@@ -40,6 +51,10 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
     down_payment_paid: false,
     down_payment_payment_date: format(new Date(), 'yyyy-MM-dd'),
     down_payment_method: 'transferencia',
+    cost_center_id: 'none',
+    crane_id: 'none',
+    operator_id: 'none',
+    subcategory: 'none',
   });
 
   const handleChange = (field: string, value: string | boolean) => {
@@ -66,6 +81,10 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
         down_payment_paid: form.has_down_payment ? form.down_payment_paid : false,
         down_payment_payment_date: form.has_down_payment && form.down_payment_paid ? form.down_payment_payment_date : null,
         down_payment_method: form.has_down_payment && form.down_payment_paid ? form.down_payment_method : null,
+        cost_center_id: form.cost_center_id === 'none' ? null : form.cost_center_id,
+        crane_id: form.crane_id === 'none' ? null : form.crane_id,
+        operator_id: form.operator_id === 'none' ? null : form.operator_id,
+        subcategory: form.subcategory === 'none' ? null : form.subcategory,
       },
       { onSuccess: () => onOpenChange(false) }
     );
@@ -243,6 +262,60 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
               <Input type="number" step="0.01" value={form.interest_rate} onChange={(e) => handleChange('interest_rate', e.target.value)} />
             </div>
           )}
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium text-foreground">Asociaciones (heredadas a cada pago)</p>
+            <div className="space-y-2">
+              <Label>Subcategoría</Label>
+              <Select value={form.subcategory} onValueChange={(v) => handleChange('subcategory', v)}>
+                <SelectTrigger><SelectValue placeholder="Sin subcategoría" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin subcategoría</SelectItem>
+                  {subcategories.map((sc: any) => (
+                    <SelectItem key={sc.id} value={sc.name}>{sc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>Centro de costo</Label>
+                <Select value={form.cost_center_id} onValueChange={(v) => handleChange('cost_center_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {costCenters.map((cc: any) => (
+                      <SelectItem key={cc.id} value={cc.id}>{cc.code} - {cc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Grúa</Label>
+                <Select value={form.crane_id} onValueChange={(v) => handleChange('crane_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {cranes.map((crane: any) => (
+                      <SelectItem key={crane.id} value={crane.id}>{crane.licensePlate} - {crane.brand} {crane.model}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Operador</Label>
+                <Select value={form.operator_id} onValueChange={(v) => handleChange('operator_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Sin asociar" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin asociar</SelectItem>
+                    {operators.map((op: any) => (
+                      <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>

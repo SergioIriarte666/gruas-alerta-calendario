@@ -1,84 +1,43 @@
+## Problemas detectados
 
-## Diagnóstico — Caso "Optico Derecho Mack Vision"
+### 1. Validación errónea al editar el costo creado por una cuota
+Al pagar una cuota desde Cuentas por Pagar, se crea un costo en categoría "Deudas y Obligaciones". Si la cuota se asoció a una grúa, al abrir ese costo en edición el `CostForm` asume `immediate_consumption = true` (porque hay `crane_id`), y dispara la validación de "Cantidad requerida" pensando que es una compra de inventario. No corresponde: una cuota nunca es una entrada a bodega.
 
-### Datos en BD (lo que pasó)
-- **Costo** `2f1810c5...` creado el 2026-05-07:
-  - `amount = 299.768`
-  - `purchase_unit_cost = 299.768`
-  - **`purchase_quantity = NULL`** ← causa raíz
-  - `immediate_consumption = true`
-  - `crane_id` = sí (asignada)
-  - `inventory_movement_id = NULL`
-  - Subcategoría: **"Partes y Piezas"** (categoría **Inventario**)
-- **`inventory_items`**: el ítem "Optico Derecho Mack Vision" (SKU `ATPACC0046`) sí existe (creado el 03-abr).
-- **`inventory_movements`**: ningún movimiento referencia ese ítem (sólo existe el del Óptico Izquierdo, registrado bien en abril).
-- **`crane_parts`**: no hay registro para esta compra.
-- **`supplier_payments`**: sí se creó el pago al proveedor — esa parte sincronizó.
+Adicionalmente el costo se guarda sin `subcategory`, por lo que al editarlo el campo aparece vacío.
 
-### Por qué falló la sincronización
-1. El formulario muestra `InventoryPurchaseFields` cuando la **categoría = "Inventario"**, sin importar la subcategoría.
-2. La validación obligatoria de `purchase_quantity > 0` en `CostForm.tsx` (líneas 378-389) sólo se ejecuta si `subcategoryConfig.routes_to_inventory === true`.
-3. La subcategoría **"Partes y Piezas"** (categoría Inventario) tiene `routes_to_inventory = false` en `cost_subcategories` → la validación se saltó.
-4. El usuario guardó con `purchase_quantity` vacío (probablemente sólo llenó precio unitario, que se igualó al monto total).
-5. En `onSuccess` (líneas 451-454, 571-574) la condición `isInventoryPurchase` exige `purchase_quantity > 0`. Como es null → **no se llama a `UnifiedPurchaseService.registerForExistingCost`** → no se crea movimiento de bodega ni `crane_parts`.
-6. El costo quedó guardado pero "huérfano" respecto al inventario, aunque visualmente el toggle "Consumo Inmediato" estaba activo.
+### 2. Pago de cuota repite datos ya definidos en la deuda
+El `PayInstallmentModal` pide centro de costo, grúa y operador en cada pago, cuando esto debería definirse una sola vez al crear la deuda y heredarse a todas las cuotas/costos. La tabla `debts` actualmente no tiene esos campos.
 
-### Resultado visible
-- En **Costos**: aparece normal, con consumo inmediato + grúa.
-- En **Bodega/Movimientos**: no existe (cantidad nunca se descontó).
-- En **Grúa → Bitácora/Partes**: no aparece la pieza consumida.
-- En **Pago a proveedor**: sí está registrado (esa parte usa otra ruta).
+## Plan
 
----
+### A. Persistir asociaciones a nivel de Deuda
+**Migración** sobre `public.debts`:
+- Agregar `cost_center_id uuid` (FK a `cost_centers`)
+- Agregar `crane_id uuid` (FK a `cranes`)
+- Agregar `operator_id uuid` (FK a `operators`)
+- Agregar `subcategory text` (default `'Cuotas de Deuda'` o seleccionable; ver pregunta)
 
-## Plan de corrección
+### B. `DebtForm` (crear/editar deuda)
+- Añadir selectores de Centro de Costo, Grúa, Operador y Subcategoría (subcategorías de "Deudas y Obligaciones": Compra Activo Fijo, Sobregiro Bancario, Convenios, etc.).
+- Mismo estilo visual que `CostForm` (ColoredSectionCard, Select shadcn, mismas tipografías y badges violeta).
 
-### Parte A — Fix en código (prevenir nuevos casos)
+### C. `PayInstallmentModal`
+- Quitar los selectores de Centro de costo / Grúa / Operador.
+- Mantener solo: Fecha de pago, Método, Valor UF (si aplica), Notas.
+- Tomar las asociaciones directamente desde `installment.debts.*`.
 
-**Archivo: `src/components/costs/CostForm.tsx`**
+### D. `usePayInstallment` (hook)
+- Leer `cost_center_id`, `crane_id`, `operator_id`, `subcategory` desde la deuda asociada.
+- Insertar el costo con esos valores y con `subcategory` poblado.
 
-Cambiar la validación para que dependa de la **categoría = Inventario** (o de tener `purchase_unit_cost`/`immediate_consumption` activado), no sólo del flag `routes_to_inventory` de la subcategoría:
+### E. `CostForm` — fix de la validación
+En el `useEffect` de carga (línea 231) y en la validación (línea 399):
+- No forzar `immediate_consumption = true` cuando la categoría del costo es **"Deudas y Obligaciones"** (ni para otras categorías financieras como "Comisiones"/"Impuestos" si aplica). Solo derivarlo de `crane_parts.length > 0` o del flag explícito guardado en BD.
+- En la validación de inventario, excluir la categoría "Deudas y Obligaciones" (una cuota con grúa asociada no es compra de inventario).
 
-```text
-si (categoría == "Inventario") O (immediate_consumption == true)
-   → exigir purchase_quantity > 0  AND  purchase_unit_cost > 0
-```
+### F. Costos existentes
+Para el costo recién creado sin subcategoría: una vez aplicada la corrección al formulario, el usuario podrá editarlo sin el bloqueo. Opcional: backfill por SQL del `subcategory` en costos creados por cuotas (los identificamos por `description ILIKE 'Cuota%'` y categoría "Deudas y Obligaciones").
 
-Adicionalmente, si `immediate_consumption=true` y faltan `purchase_quantity`/`purchase_unit_cost`, bloquear el submit con toast claro: *"Debes indicar cantidad y precio unitario para registrar el consumo en bodega y grúa."*
+## Pregunta antes de implementar
 
-**Archivo: `src/components/costs/form/InventoryPurchaseFields.tsx`**
-
-Marcar visualmente `purchase_quantity` y `purchase_unit_cost` como obligatorios cuando `immediate_consumption=true`, e impedir `setValue('amount', total)` hasta tener ambos (ya está, pero añadir aviso si falta uno).
-
-### Parte B — Reparación del registro existente
-
-Para "Optico Derecho Mack Vision" del 29-abr (cost_id `2f1810c5-c2fc-4cb2-8746-21d12f480471`), opciones:
-
-1. **Reparación automática vía RPC** (recomendado): crear/usar un RPC `repair_immediate_consumption_cost(cost_id, quantity)` que:
-   - Asuma `quantity = 1` (ya que `purchase_unit_cost == amount`).
-   - Cree movimiento `entry` y `exit` en `inventory_movements` ligados al cost y crane.
-   - Cree `crane_parts` con `quantity = -1`.
-   - Actualice `costs.purchase_quantity = 1` y `costs.inventory_movement_id`.
-2. **Manual desde UI**: editar el costo, ingresar `purchase_quantity = 1`, guardar; el flujo corregido lo sincronizará.
-
-Recomiendo la opción 2 (manual) para este caso puntual y dejar el fix de código para evitar futuros casos. Si encontramos más costos huérfanos del mismo patrón, agregamos un script de reparación masiva.
-
-### Parte C — Auditoría de huérfanos
-
-Consulta para detectar casos similares (no incluida como cambio, sólo diagnóstico):
-```sql
-SELECT id, date, description, amount, purchase_unit_cost
-FROM costs
-WHERE immediate_consumption = true
-  AND inventory_movement_id IS NULL
-  AND (purchase_quantity IS NULL OR purchase_quantity = 0)
-  AND category_id = '571b8c17-b959-4e0f-b76b-30d9587602e2';
-```
-
----
-
-## Archivos a modificar
-- `src/components/costs/CostForm.tsx` — endurecer validación.
-- `src/components/costs/form/InventoryPurchaseFields.tsx` — marcar campos como requeridos cuando aplica.
-
-Sin migración de DB necesaria para el fix preventivo. La reparación del registro afectado puede hacerse desde la UI tras el fix.
+La subcategoría por defecto al crear una Deuda no es obvia. ¿Cómo prefieres manejarla?
