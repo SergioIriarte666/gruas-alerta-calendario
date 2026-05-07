@@ -230,7 +230,6 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 : getCurrentChileDateString();
             const hasImmediateConsumptionAssociation = Boolean(
                 cost.immediate_consumption ||
-                cost.crane_id ||
                 (cost.crane_parts && cost.crane_parts.length > 0)
             );
 
@@ -396,7 +395,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             // tienen routes_to_inventory marcado (ej. "Partes y Piezas").
             const selectedCategoryName = categories.find(c => c.id === values.category_id)?.name;
             const isInventoryCategory = selectedCategoryName === 'Inventario';
-            const requiresInventorySync = isInventoryCategory || values.immediate_consumption === true;
+            const isFinancialCategory = selectedCategoryName === 'Deudas y Obligaciones'
+                || selectedCategoryName === 'Comisiones'
+                || selectedCategoryName === 'Impuestos';
+            const requiresInventorySync = !isFinancialCategory && (isInventoryCategory || values.immediate_consumption === true);
             if (requiresInventorySync) {
                 if (!values.purchase_quantity || values.purchase_quantity <= 0) {
                     toast.error("Cantidad requerida", {
