@@ -209,13 +209,13 @@ serve(async (req) => {
         ? [
             {
               type: 'text',
-              text: `Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, totales, Y MUY IMPORTANTE busca en TODO el documento cualquier referencia a cotizaciones o presupuestos y extrae el número como quoteReference.\n\nContenido del PDF:\n\n${pdfText}`
+              text: `Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto/serviceDate, totales, Y MUY IMPORTANTE busca en TODO el documento cualquier referencia a cotizaciones (quoteReference) y presupuestos (budgetReference) y extrae el número.\n\nContenido del PDF:\n\n${pdfText}`
             }
           ]
         : [
             {
               type: 'text',
-              text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, totales, Y MUY IMPORTANTE busca en TODO el documento cualquier referencia a cotizaciones o presupuestos y extrae el número como quoteReference.'
+              text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto/serviceDate, totales, Y MUY IMPORTANTE busca en TODO el documento cualquier referencia a cotizaciones (quoteReference) y presupuestos (budgetReference).'
             },
             {
               type: 'image_url',
@@ -248,11 +248,15 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Busca patrones de patente dentro del texto de cada ítem.
 - VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN de 16-17 caracteres alfanumericos.
   Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.
+- IDENTIFICADORES CORTOS: Acepta también códigos cortos alfanuméricos en la columna Patente (ej: "STVK15", "PR1234", 6+ caracteres). NO los descartes por ser cortos. NUNCA dejes vacío el campo patente si hay un código en esa columna.
+- DETAIL LITERAL: Devuelve el texto del detalle TAL CUAL aparece en la tabla del PDF. NO PARAFRASEAR, NO RESUMIR (ej: "TRASLADO DE UNIDADES", "TRASLADO DE INSUMOS A FAENA 09-03-26"). Mantener mayúsculas y números intactos.
+- FECHA DEL SERVICIO (serviceDate por ítem): Si dentro del texto de "Detalle" aparece una fecha embebida (formato DD-MM-YY, DD/MM/YY, DD-MM-YYYY), extráela como serviceDate del ítem en formato YYYY-MM-DD. Si no hay fecha embebida, deja serviceDate como null.
 
 *** CRÍTICO - REFERENCIAS A COTIZACIONES/PRESUPUESTOS (quoteReference): ***
-- Busca en TODO el documento frases que referencien cotizaciones o presupuestos.
-- Patrones: "SEGUN COTIZACION", "SEGÚN COTIZACIÓN", "COTIZACION N", "PRESUPUESTO", "COT-", "PPTO", etc.
-- Extrae SOLO el número (ej: "4100", "4090").
+- quoteReference = número de COTIZACIÓN. Patrones: "COTIZACION N°", "COTIZACIÓN", "COT-XXXX", "SEGUN COTIZACION".
+- budgetReference = número de PRESUPUESTO. Patrones: "PRESUPUESTO N°", "PRESUPUESTO XXXX", "PPTO XXXX", "PRES. XXXX". Frecuente en línea "Observación".
+- Si solo hay uno de los dos, llena el correspondiente y deja el otro vacío. Extrae SOLO el número (ej: "4142").
+- Busca en TODAS las secciones: encabezado, tabla, observación, notas.
 - CRÍTICO SOBRE clientRut: Extrae el RUT de la empresa/entidad que EMITE la orden de compra (el comprador/cliente).
   NO extraigas el RUT de la empresa PROVEEDORA/DESTINATARIA de la OC (ej: la empresa de grúas que recibe la OC).
   El RUT del emisor aparece en el encabezado de la OC como "Empresa emisora", "Comprador", etc.
@@ -288,7 +292,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
                           patente: { type: 'string', description: 'Patente/placa del vehículo' },
                           detail: { type: 'string', description: 'Descripción del servicio' },
                           amount: { type: 'number', description: 'Monto total en CLP (cantidad x precio unitario)' },
-                          quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
+                          quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' },
+                          serviceDate: { type: ['string', 'null'], description: 'Fecha embebida en el detalle del ítem (YYYY-MM-DD), o null si no aparece' }
                         },
                         required: ['patente', 'detail', 'amount']
                       },
@@ -306,6 +311,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
                     quoteReference: {
                       type: 'string',
                       description: 'Número de referencia de presupuesto/cotización encontrado en observaciones (solo el número, ej: "4090")'
+                    },
+                    budgetReference: {
+                      type: 'string',
+                      description: 'Número de PRESUPUESTO (PPTO) si aparece en Observación o glosas (solo el número, ej: "4142")'
                     },
                     clientRut: {
                       type: 'string',
