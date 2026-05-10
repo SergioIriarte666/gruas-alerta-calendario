@@ -48,7 +48,7 @@ const parseClpNumber = (value: unknown) => {
   return digits ? Number.parseInt(digits, 10) : 0;
 };
 
-type SanitizedVipItem = { patente: string; detail: string; amount: number; quantity: number };
+type SanitizedVipItem = { patente: string; detail: string; amount: number; quantity: number; serviceDate: string | null };
 
 const sanitizePurchaseOrderResult = (parsed: Record<string, unknown>) => {
   const rawItems = Array.isArray((parsed as any).items) ? (parsed as any).items : [];
@@ -60,13 +60,24 @@ const sanitizePurchaseOrderResult = (parsed: Record<string, unknown>) => {
     const quantity = typeof raw?.quantity === "number" && Number.isFinite(raw.quantity) && raw.quantity > 0
       ? raw.quantity
       : 1;
-
-    return { patente, detail, amount: Math.max(0, Math.round(amount)), quantity };
+    let serviceDate: string | null = typeof raw?.serviceDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.serviceDate)
+      ? raw.serviceDate
+      : null;
+    if (!serviceDate && detail) {
+      const m = detail.match(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/);
+      if (m) {
+        const dd = m[1].padStart(2, '0');
+        const mm = m[2].padStart(2, '0');
+        const yy = m[3].length === 2 ? `20${m[3]}` : m[3];
+        serviceDate = `${yy}-${mm}-${dd}`;
+      }
+    }
+    return { patente, detail, amount: Math.max(0, Math.round(amount)), quantity, serviceDate };
   });
 
   const sanitizedItems = mappedItems.filter((item) => item.patente || item.detail || item.amount > 0);
 
-  const dedupedByKey = new Map<string, { patente: string; detail: string; amount: number; quantity: number; score: number }>();
+  const dedupedByKey = new Map<string, SanitizedVipItem & { score: number }>();
   for (const item of sanitizedItems) {
     const key = `${item.patente.toUpperCase()}|${item.detail.toUpperCase()}|${item.amount}|${item.quantity}`;
     const score = (item.amount > 0 ? 100 : 0) + Math.min(item.detail.length, 40);
@@ -404,6 +415,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
       quoteReference: parsed.quoteReference || '',
+      budgetReference: (parsed as any).budgetReference || '',
       clientRut: extractedClientRut,
       rawText: `Extraído con IA - ${(parsed.items as any[])?.length || 0} items encontrados`,
     };
