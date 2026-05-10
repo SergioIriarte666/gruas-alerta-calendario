@@ -384,7 +384,14 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     const usedServiceIds = new Set<string>();
 
     const allItems = validOCs.flatMap((oc) =>
-      oc.items.map((item) => ({ item, ocNumber: oc.ocNumber, fileName: oc.fileName, quoteReference: oc.quoteReference })),
+      oc.items.map((item) => ({
+        item,
+        ocNumber: oc.ocNumber,
+        fileName: oc.fileName,
+        quoteReference: oc.quoteReference,
+        budgetReference: (oc as any).budgetReference || '',
+        ocDate: oc.date,
+      })),
     );
 
     allItems.sort((a, b) => {
@@ -393,119 +400,158 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       return aHas - bHas;
     });
 
-    for (const { item, ocNumber, fileName, quoteReference } of allItems) {
+    const MIN_SCORE = 50;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysBetween = (a?: string | null, b?: string | null) => {
+      if (!a || !b) return null;
+      const da = new Date(a).getTime();
+      const db = new Date(b).getTime();
+      if (!Number.isFinite(da) || !Number.isFinite(db)) return null;
+      return Math.abs(da - db) / dayMs;
+    };
+    const onlyDigits = (s?: string | null) => (s || '').replace(/\D/g, '');
+
+    for (const { item, ocNumber, fileName, quoteReference, budgetReference, ocDate } of allItems) {
       const patenteNorm = normalizePatente(item.patente);
+      const ocNorm = normalizeOC(ocNumber);
+      const itemDate = item.serviceDate || ocDate;
+      const glosaNorm = normalizeText(item.detail);
+      const quoteDigits = onlyDigits(quoteReference);
+      const budgetDigits = onlyDigits(budgetReference);
+      const unitPrice = item.quantity && item.quantity > 1 ? item.amount / item.quantity : null;
 
-      if (!patenteNorm) {
-        const ocNorm = normalizeOC(ocNumber);
-        const serviceWithSameOC = clientServices.find((service) =>
-          !usedServiceIds.has(service.id) &&
-          (normalizeOC(service.purchaseOrder) === ocNorm || normalizeOC(service.purchaseOrderNumber) === ocNorm),
-        );
+      const scored: CandidateScore[] = [];
 
-        if (serviceWithSameOC) {
-          usedServiceIds.add(serviceWithSameOC.id);
-          matches.push({ parsedItem: item, service: serviceWithSameOC, ocNumber, fileName, status: 'same_oc' });
-          continue;
+      for (const service of clientServices) {
+        if (usedServiceIds.has(service.id)) continue;
+
+        const reasons: string[] = [];
+        let score = 0;
+        let sameOC = false;
+
+        const serviceOC = normalizeOC(service.purchaseOrder) || normalizeOC(service.purchaseOrderNumber);
+        if (serviceOC && ocNorm) {
+          if (serviceOC === ocNorm) {
+            sameOC = true;
+          } else {
+            // ya tiene OTRA OC → descartar
+            continue;
+          }
         }
 
-        if (quoteReference) {
-          const quoteRef = quoteReference.replace(/\D/g, '');
-          if (quoteRef) {
-            const servicesByQuote = clientServices.filter((service) =>
-              !usedServiceIds.has(service.id) &&
-              service.quoteNumber &&
-              service.quoteNumber.replace(/\D/g, '') === quoteRef,
-            );
-
-            if (servicesByQuote.length > 0) {
-              for (const service of servicesByQuote) {
-                usedServiceIds.add(service.id);
-                matches.push({ parsedItem: item, service, ocNumber, fileName, status: 'matched' });
-              }
-              continue;
+        // Patente
+        const servicePat = normalizePatente(service.licensePlate);
+        if (patenteNorm && servicePat) {
+          if (servicePat === patenteNorm) {
+            score += 100;
+            reasons.push('Patente');
+          } else if (patenteNorm.length >= 6 && servicePat.length >= 6) {
+            const dist = levenshtein(patenteNorm, servicePat);
+            const maxDist = patenteNorm.length >= 16 ? 2 : 1;
+            if (dist > 0 && dist <= maxDist) {
+              score += 60;
+              reasons.push('Patente~');
             }
           }
         }
 
-        const glosaNorm = normalizeText(item.detail);
-        if (glosaNorm) {
-          const candidatesByGlosa = clientServices.filter((service) =>
-            !usedServiceIds.has(service.id) &&
-            !service.purchaseOrder &&
-            !service.purchaseOrderNumber &&
-            service.serviceType?.name &&
-            (normalizeText(service.serviceType.name).includes(glosaNorm) || glosaNorm.includes(normalizeText(service.serviceType.name))),
-          );
-
-          if (candidatesByGlosa.length > 0) {
-            const best = item.amount > 0
-              ? candidatesByGlosa.sort((a, b) => Math.abs(a.value - item.amount) - Math.abs(b.value - item.amount))[0]
-              : candidatesByGlosa[0];
-            usedServiceIds.add(best.id);
-            matches.push({ parsedItem: item, service: best, ocNumber, fileName, status: 'matched' });
-            continue;
+        // Cotización / Presupuesto (service.quoteNumber sirve para ambos)
+        const svcQuote = onlyDigits(service.quoteNumber);
+        if (svcQuote) {
+          if (quoteDigits && svcQuote === quoteDigits) {
+            score += 50;
+            reasons.push(`Cotización ${quoteReference}`);
+          } else if (budgetDigits && svcQuote === budgetDigits) {
+            score += 50;
+            reasons.push(`Presupuesto ${budgetReference}`);
           }
         }
 
-        if (item.amount > 0) {
-          const unitPrice = item.quantity && item.quantity > 1 ? item.amount / item.quantity : null;
-          const serviceByAmount = clientServices.find((service) =>
-            !usedServiceIds.has(service.id) &&
-            !service.purchaseOrder &&
-            !service.purchaseOrderNumber &&
-            (Math.abs(service.value - item.amount) < 1 ||
-              (unitPrice !== null && Math.abs(service.value - unitPrice) < 1)),
-          );
-
-          if (serviceByAmount) {
-            usedServiceIds.add(serviceByAmount.id);
-            matches.push({ parsedItem: item, service: serviceByAmount, ocNumber, fileName, status: 'matched' });
-            continue;
+        // Monto
+        if (item.amount > 0 && service.value > 0) {
+          const diff = Math.abs(service.value - item.amount);
+          const unitDiff = unitPrice !== null ? Math.abs(service.value - unitPrice) : Infinity;
+          if (diff < 1 || unitDiff < 1) {
+            score += 30;
+            reasons.push('Monto');
+          } else {
+            const ratio = Math.min(diff, unitDiff) / item.amount;
+            if (ratio <= 0.02) {
+              score += 15;
+              reasons.push('Monto~');
+            }
           }
         }
 
-        matches.push({ parsedItem: item, service: null, ocNumber, fileName, status: 'no_match' });
-        continue;
+        // Fecha
+        const dDays = daysBetween(itemDate, service.serviceDate);
+        if (dDays !== null) {
+          if (dDays <= 30) {
+            score += 20;
+            reasons.push('Fecha');
+            if (dDays < 1) score += 10;
+          }
+        }
+
+        // Glosa ↔ tipo de servicio
+        const typeName = service.serviceType?.name ? normalizeText(service.serviceType.name) : '';
+        if (glosaNorm && typeName && (typeName.includes(glosaNorm) || glosaNorm.includes(typeName))) {
+          score += 15;
+          reasons.push('Glosa');
+        }
+
+        // Same-OC bonus (alinea con la OC ya cargada)
+        if (sameOC) {
+          score += 80;
+          reasons.unshift('Misma OC');
+        }
+
+        if (score > 0) scored.push({ service, score, reasons });
       }
 
-      const matchingServices = clientServices
-        .filter((service) => normalizePatente(service.licensePlate) === patenteNorm && !usedServiceIds.has(service.id))
-        .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
-
-      if (matchingServices.length === 0) {
-        const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
-        if (fuzzyMatch) {
-          const hasOC = fuzzyMatch.purchaseOrderNumber || fuzzyMatch.purchaseOrder;
-          usedServiceIds.add(fuzzyMatch.id);
-          matches.push({
-            parsedItem: item,
-            service: fuzzyMatch,
-            ocNumber,
-            fileName,
-            status: hasOC ? 'already_has_oc' : 'matched',
-          });
-        } else {
-          matches.push({ parsedItem: item, service: null, ocNumber, fileName, status: 'no_match' });
+      // Fallback: VIN fuzzy explícito si no hubo nada
+      if (scored.length === 0 && patenteNorm.length >= 16) {
+        const fuzzy = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
+        if (fuzzy) {
+          scored.push({ service: fuzzy, score: 60, reasons: ['VIN~'] });
         }
+      }
+
+      scored.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const ad = daysBetween(itemDate, a.service.serviceDate) ?? 9999;
+        const bd = daysBetween(itemDate, b.service.serviceDate) ?? 9999;
+        return ad - bd;
+      });
+
+      const top = scored.slice(0, 3);
+      const winner = scored[0];
+
+      if (winner && winner.score >= MIN_SCORE) {
+        const { service } = winner;
+        const serviceOC = normalizeOC(service.purchaseOrder) || normalizeOC(service.purchaseOrderNumber);
+        const status: MatchedService['status'] = serviceOC && serviceOC === ocNorm
+          ? 'same_oc'
+          : 'matched';
+        usedServiceIds.add(service.id);
+        matches.push({
+          parsedItem: item,
+          service,
+          ocNumber,
+          fileName,
+          status,
+          matchReason: winner.reasons.join(' + '),
+          topCandidates: top,
+        });
       } else {
-        const serviceWithoutOC = matchingServices.find((service) => !service.purchaseOrderNumber && !service.purchaseOrder);
-
-        if (serviceWithoutOC) {
-          usedServiceIds.add(serviceWithoutOC.id);
-          matches.push({ parsedItem: item, service: serviceWithoutOC, ocNumber, fileName, status: 'matched' });
-        } else {
-          const topService = matchingServices[0];
-          const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(ocNumber);
-          usedServiceIds.add(topService.id);
-          matches.push({
-            parsedItem: item,
-            service: topService,
-            ocNumber,
-            fileName,
-            status: hasSameOC ? 'same_oc' : 'already_has_oc',
-          });
-        }
+        matches.push({
+          parsedItem: item,
+          service: null,
+          ocNumber,
+          fileName,
+          status: 'no_match',
+          topCandidates: top,
+        });
       }
     }
 
