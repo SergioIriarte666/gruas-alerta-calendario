@@ -1,44 +1,79 @@
-## Objetivo
 
-Mostrar de forma transparente la información de **Arriendo de Equipos** en el PDF "Informe de Servicios" que se envía al cliente, incluyendo tipo de equipo, tarifa diaria, días y total — datos hoy visibles solo en el detalle del servicio.
+## Diagnóstico (con los 3 PDFs reales de SalfaRent)
 
-## Situación actual
+Hoy fallan **dos cosas independientes**:
 
-El PDF (`src/utils/reports/serviceReportExporter.ts`) reusa las columnas de **Custodia** (Inicio / Fin / Días / Valor) para los servicios de Arriendo de Equipos. Esto funciona para fechas y días, pero:
+### A) Extracción del PDF (edge function `parse-purchase-order-pdf`)
+- No detecta patentes cortas / VIN cortos como `STVK15` (las trata como ruido y devuelve `""`).
+- No extrae `PRESUPUESTO 4142` desde la línea "Observación" (el prompt sólo busca cotizaciones).
+- Devuelve un `detail` genérico ("Remolque de Vehículos") en lugar del literal de la tabla ("TRASLADO DE UNIDADES", "TRASLADO DE INSUMOS A FAENA 09-03-26").
+- No detecta fechas embebidas en la glosa ("...A FAENA **09-03-26**"), que suelen ser la fecha real del servicio.
 
-- No se distingue visualmente un Arriendo de una Custodia (mismas etiquetas).
-- No aparece el **Tipo de Equipo** (ej. "Starlink Mini") ni la **Tarifa Diaria**, datos clave para que el cliente valide la facturación.
-- En la fila del screenshot, la columna "Custodia" sale "-" porque el servicio no tiene custodia tradicional.
+### B) Matching (`usePurchaseOrderPDFImport.ts`)
+- Es una cascada rígida (primer match gana), no un score combinando criterios.
+- Nunca usa la **fecha** del documento ni la fecha embebida en la glosa para discriminar.
+- Trata "presupuesto" como sinónimo de "cotización", y lo ignora si la patente está presente.
+- Cuando no hay match, no muestra candidatos ni motivo, así que no se puede corregir manualmente.
 
-## Cambios propuestos
+## Cambios
 
-### 1. Sección dedicada "Detalle de Arriendos" en el PDF
+### 1. Edge function `parse-purchase-order-pdf`
 
-Debajo de la tabla principal, agregar una sección **solo si hay servicios de tipo "Arriendo de Equipos"** en el período, con tabla:
+- Ampliar el schema de la tool de OpenAI:
+  - `budgetReference: string` (nuevo, separado de `quoteReference`).
+  - `serviceDate: string | null` (fecha del servicio si aparece embebida en el detalle, formato `YYYY-MM-DD`).
+- Reforzar el system prompt:
+  - Patentes / códigos de vehículo: aceptar **6+ caracteres alfanuméricos** (no solo formato chileno y no solo VIN 16-17). Incluir explícitamente ejemplos como `STVK15`.
+  - Mantener el `detail` literal de la tabla (no resumir). Repetir "NO PARAFRASEAR".
+  - Buscar en "Observación / Notas / Glosa" patrones `PRESUPUESTO N°? XXXX`, `PPTO XXXX`, `PRES. XXXX` → `budgetReference`.
+  - Buscar fechas dentro del detail con regex `DD-MM-YY[YY]` o `DD/MM/YY[YY]` → `serviceDate`.
+- Fallback local en `localVipPdfParser.ts`: mismas regex de presupuesto y fecha-en-glosa, y aflojar el regex de patente a `[A-Z0-9]{6,8}`.
 
-| Fecha | Folio | Tipo de Equipo | Fecha Inicio | Fecha Fin | Días | Tarifa Diaria | Total Arriendo |
+### 2. Hook `usePurchaseOrderPDFImport.ts` — motor de scoring
 
-- Detección: `isEquipmentRentalService(service)` (helper ya existente).
-- Datos: se leen de los campos custody (`custody_vehicle_type`, `custody_start_date`, `custody_end_date`, `custody_days`, tarifa diaria calculada con `convertToDaily`, `custody_total_amount`).
-- Estilo: header violeta (siguiendo el design system del módulo de Costos / memoria de accesibilidad), mismo `fontSize` y `cellPadding` que la tabla principal.
+Reemplazar la cascada por un **score por candidato**. Para cada ítem, recorrer los servicios elegibles del cliente y sumar:
 
-### 2. Etiquetas dinámicas en columnas Custodia (opcional, menor)
+| Criterio | Puntos |
+|---|---|
+| Patente normalizada exacta | 100 |
+| Patente fuzzy (Levenshtein ≤ 1 corto, ≤ 2 VIN) | 60 |
+| Mismo nº de cotización (`service.quoteNumber`) | 50 |
+| Mismo nº de presupuesto (campo nuevo `budgetReference` ↔ `service.quoteNumber`) | 50 |
+| Monto exacto (`item.amount` = `service.value` o = unitario) | 30 |
+| Monto ±2% | 15 |
+| Fecha (servicio dentro de ±30 días de la fecha de OC o `serviceDate` del ítem) | 20 |
+| Fecha exacta | +10 |
+| Glosa OC ↔ tipo de servicio (token-includes en ambos sentidos) | 15 |
+| Servicio ya tiene OC distinta a la actual | -1000 (descartado) |
 
-Renombrar internamente la fila cuando es Arriendo: en las columnas Inicio/Fin/Días Custodia mostrar el dato igual (ya lo hace), pero el bloque nuevo aclara la naturaleza. **Sin** cambiar headers globales para no romper otros casos.
+Reglas:
+- Gana el de mayor score, **mínimo 50 pts**.
+- Empate → fecha de servicio más cercana a la fecha de la OC.
+- Mantener `usedServiceIds` para no duplicar.
+- Estados elegibles iguales (`quoted`, `purchase_order_pending`, `completed`, `with_purchase_order`, `invoiced`).
 
-### 3. Excel: hoja adicional "Arriendos de Equipos"
+### 3. UI `PurchaseOrderPDFImporter.tsx` — diagnóstico visible
 
-En el export Excel, añadir una hoja nueva con las mismas columnas de la sección PDF, solo con los servicios de arriendo. La hoja "Detalle de Servicios" se mantiene intacta.
+- Badge en cada fila con el **motivo del match** (ej. "Presupuesto 4142 + Monto + Fecha").
+- En filas `no_match`: popover con los **3 mejores candidatos** y su score, para ver por qué no calzó (selección manual queda fuera de alcance de este plan; primero validamos que el matching automático mejora).
+- Toast de resumen al final ya existe; agregar contador de "matched por presupuesto".
 
-## Archivos a modificar
+### 4. Verificación
 
-- `src/utils/reports/serviceReportExporter.ts` — agregar bloque `autoTable` para arriendos en PDF, hoja nueva en Excel.
-- (Opcional) `src/utils/custodyCalculations.ts` — reutilizar `getCustodyDisplayInfo` y `convertToDaily` para extraer tarifa diaria; no se modifica.
+Probar con los 3 PDFs subidos: deberían producir
+- `4701708396` → match por **PRESUPUESTO 4142** + monto + fecha.
+- `4701708476` → match por **fecha embebida 09-03-26** + monto + glosa "TRASLADO DE INSUMOS".
+- `4701708483` → match por **patente STVK15** (con extractor reforzado).
+
+## Archivos afectados
+
+- `supabase/functions/parse-purchase-order-pdf/index.ts` — schema + prompt + sanitización.
+- `src/utils/localVipPdfParser.ts` — regex de patente, presupuesto, fecha-en-glosa.
+- `src/hooks/vip/usePurchaseOrderPDFImport.ts` — motor de scoring + razón del match.
+- `src/components/vip/PurchaseOrderPDFImporter.tsx` — badge de motivo + popover de candidatos.
 
 ## Fuera de alcance
 
-- No se cambia la lógica de cálculo de valores ni la estructura de columnas configurables del informe principal.
-- No se tocan otros exporters (costos, comisiones, etc.).
-- No se modifica la base de datos.
-
-¿Apruebas para implementar?
+- No se agregan columnas a la BD (presupuesto se reusa como `quote_number` en la práctica del cliente).
+- No se cambia el importador de Cotizaciones ni el de Facturas (ese era el otro hilo).
+- Selección manual de servicios para ítems sin match queda para una segunda iteración.
