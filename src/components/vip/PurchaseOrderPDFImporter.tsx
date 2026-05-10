@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -240,9 +241,13 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                       </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
-                          <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="bg-violet-600/10 text-violet-600 text-xs"
+                            title={match.matchReason || 'Match'}
+                          >
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Match
+                            {match.matchReason || 'Match'}
                           </Badge>
                         )}
                         {match.status === 'same_oc' && (
@@ -258,10 +263,43 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                           </Badge>
                         )}
                         {match.status === 'no_match' && (
-                          <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Sin match
-                          </Badge>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Badge
+                                variant="secondary"
+                                className="bg-destructive/10 text-destructive text-xs cursor-pointer hover:bg-destructive/20"
+                              >
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Sin match
+                                {match.topCandidates && match.topCandidates.length > 0 && (
+                                  <span className="ml-1 opacity-70">({match.topCandidates.length})</span>
+                                )}
+                              </Badge>
+                            </PopoverTrigger>
+                            {match.topCandidates && match.topCandidates.length > 0 && (
+                              <PopoverContent className="w-80 text-xs" align="end">
+                                <p className="font-medium mb-2 text-foreground">Mejores candidatos descartados</p>
+                                <ul className="space-y-2">
+                                  {match.topCandidates.map((c) => (
+                                    <li key={c.service.id} className="border-b last:border-0 pb-1.5">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="font-mono font-medium text-foreground">{c.service.folio}</span>
+                                        <span className="text-muted-foreground">{c.score} pts</span>
+                                      </div>
+                                      <div className="text-muted-foreground">
+                                        {c.service.licensePlate || '—'} · {formatCurrency(c.service.value, getUserCurrencySync())}
+                                        {c.service.serviceDate && ` · ${format(new Date(c.service.serviceDate), 'dd/MM/yy')}`}
+                                      </div>
+                                      <div className="text-violet-600">{c.reasons.join(' + ')}</div>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <p className="mt-2 text-muted-foreground italic">
+                                  Score mínimo requerido: 50 pts.
+                                </p>
+                              </PopoverContent>
+                            )}
+                          </Popover>
                         )}
                       </TableCell>
                     </TableRow>
