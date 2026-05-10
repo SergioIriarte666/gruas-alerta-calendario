@@ -6,6 +6,7 @@ export interface LocalVipPdfItem {
   detail: string;
   amount: number;
   quantity?: number;
+  serviceDate?: string | null;
 }
 
 export interface LocalQuotePdfResult {
@@ -24,6 +25,7 @@ export interface LocalPurchaseOrderPdfResult {
   items: LocalVipPdfItem[];
   totals: { neto: number; iva: number; total: number };
   quoteReference: string;
+  budgetReference: string;
   clientRut: string;
   rawText: string;
   source: 'local-pdf';
@@ -92,6 +94,7 @@ const extractDate = (text: string) => {
 const PLATE_REGEX = /(?:^|[^A-Z0-9])([A-Z]{4}-?\d{2}|[A-Z]{2}-?\d{4})(?=$|[^A-Z0-9])/g;
 const VIN_REGEX = /(?:^|[^A-Z0-9])([A-HJ-NPR-Z0-9]{16,17})(?=$|[^A-Z0-9])/g;
 const EMBEDDED_VIN_REGEX = /(?:^|[^A-Z0-9])(?:[A-Z]{2,20})?([A-HJ-NPR-Z0-9]{16,17})(?=$|[^A-Z0-9])/g;
+const SHORT_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]{2,}[A-Z0-9]*\d+[A-Z0-9]*)(?=$|[^A-Z0-9])/g;
 const AMOUNT_REGEX = /\$?\s?\d{1,3}(?:\.\d{3})+(?:,\d+)?|\$?\s?\d{4,}/g;
 const RUT_REGEX = /\b\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]\b/g;
 const SERVICE_KEYWORDS = [
@@ -218,6 +221,16 @@ const extractIdentifiers = (line: string) => {
     }
   }
 
+  if (values.size === 0) {
+    const shortMatches = collectMatches(upper, SHORT_CODE_REGEX);
+    for (let i = 0; i < shortMatches.length; i += 1) {
+      const id = normalizeIdentifier(shortMatches[i][1] || '');
+      if (id.length >= 6 && id.length <= 10 && /[A-Z]/.test(id) && /\d/.test(id)) {
+        values.add(id);
+      }
+    }
+  }
+
   return Array.from(values);
 };
 
@@ -339,10 +352,24 @@ const extractOcNumber = (text: string) => {
 const extractQuoteReference = (text: string) => {
   const candidates = collectMatches(
     text,
-    /(?:SEGUN|SEGÚN|REF\.?|COTIZACI[ÓO]N|PRESUPUESTO|PPTO|COT-)\D{0,20}(\d{3,10})/gi,
+    /(?:SEGUN|SEGÚN|REF\.?|COTIZACI[ÓO]N|COT-)\D{0,20}(\d{3,10})/gi,
   ).map((match) => match[1]);
 
   return candidates[0] || '';
+};
+
+const extractBudgetReference = (text: string) => {
+  const candidates = collectMatches(
+    text,
+    /(?:PRESUPUESTO|PPTO\.?|PRES\.?)\s*N?[°ºo]?\s*(\d{3,10})/gi,
+  ).map((match) => match[1]);
+  return candidates[0] || '';
+};
+
+const extractDateFromDetail = (detail: string): string | null => {
+  const m = detail.match(/\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b/);
+  if (!m) return null;
+  return formatIsoDate(m[1], m[2], m[3]);
 };
 
 const renderPdfPageToDataUrl = async (page: any, scale: number) => {
@@ -477,12 +504,17 @@ export const extractQuoteDataLocally = async (file: File): Promise<LocalQuotePdf
 
 export const extractPurchaseOrderDataLocally = async (file: File): Promise<LocalPurchaseOrderPdfResult> => {
   const { lines, text } = await extractPdfLines(file);
+  const items = extractItems(lines).map((item) => ({
+    ...item,
+    serviceDate: extractDateFromDetail(item.detail),
+  }));
   return {
     ocNumber: extractOcNumber(text),
     date: extractDate(text),
-    items: extractItems(lines),
+    items,
     totals: extractTotals(text),
     quoteReference: extractQuoteReference(text),
+    budgetReference: extractBudgetReference(text),
     clientRut: pickClientRut(text, ['RUT', 'EMPRESA', 'RAZÓN SOCIAL', 'RAZON SOCIAL']) || '',
     rawText: text,
     source: 'local-pdf',
