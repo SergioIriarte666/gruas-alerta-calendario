@@ -209,6 +209,13 @@ const finalizeItems = (items: LocalVipPdfItem[]) => {
 const extractIdentifiers = (line: string) => {
   const upper = line.toUpperCase();
   const values = new Set<string>();
+
+  // No extraer identificadores desde líneas que contengan RUT del cliente.
+  // El RUT chileno no debe confundirse con patente.
+  if (/R\.?U\.?T\.?/.test(upper)) return [];
+  const rutMatches = upper.match(RUT_REGEX) || [];
+  const rutDigits = new Set(rutMatches.map((r) => r.replace(/[^\dkK]/g, '').toUpperCase()));
+
   const patterns = [PLATE_REGEX, VIN_REGEX, EMBEDDED_VIN_REGEX];
 
   for (let patternIndex = 0; patternIndex < patterns.length; patternIndex += 1) {
@@ -217,6 +224,9 @@ const extractIdentifiers = (line: string) => {
       const identifier = normalizeIdentifier(matches[matchIndex][1] || matches[matchIndex][0] || '');
       if (!identifier) continue;
       if (identifier.length >= 16 && !/[A-Z]/.test(identifier)) continue;
+      // Rechazar si coincide con un RUT detectado en la misma línea
+      const idDigits = identifier.replace(/[^\dkK]/g, '').toUpperCase();
+      if (idDigits && rutDigits.has(idDigits)) continue;
       values.add(identifier);
     }
   }
@@ -226,6 +236,8 @@ const extractIdentifiers = (line: string) => {
     for (let i = 0; i < shortMatches.length; i += 1) {
       const id = normalizeIdentifier(shortMatches[i][1] || '');
       if (id.length >= 6 && id.length <= 10 && /[A-Z]/.test(id) && /\d/.test(id)) {
+        const idDigits = id.replace(/[^\dkK]/g, '').toUpperCase();
+        if (idDigits && rutDigits.has(idDigits)) continue;
         values.add(id);
       }
     }
