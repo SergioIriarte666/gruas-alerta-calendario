@@ -27,6 +27,7 @@ export interface ParsedOCItem {
   detail: string;
   amount: number;
   quantity?: number;
+  serviceDate?: string | null;
 }
 
 export interface ParsedOC {
@@ -35,9 +36,16 @@ export interface ParsedOC {
   items: ParsedOCItem[];
   totals: { neto: number; iva: number; total: number };
   quoteReference: string;
+  budgetReference?: string;
   clientRut: string;
   rawText: string;
   fileName: string;
+}
+
+export interface CandidateScore {
+  service: Service;
+  score: number;
+  reasons: string[];
 }
 
 export interface MatchedService {
@@ -46,6 +54,8 @@ export interface MatchedService {
   ocNumber: string;
   fileName: string;
   status: 'matched' | 'no_match' | 'already_has_oc' | 'same_oc';
+  matchReason?: string;
+  topCandidates?: CandidateScore[];
 }
 
 interface ImportState {
