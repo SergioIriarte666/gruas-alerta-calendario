@@ -24,6 +24,32 @@ const parseGatewayError = (raw: string) => {
 };
 
 const normalizeSpaces = (value: string) => value.replace(/\s+/g, " ").trim();
+
+// Detecta si un string es (o contiene) un RUT chileno o la etiqueta "RUT".
+// Esto evita que el RUT del cliente se use como patente del vehículo.
+const RUT_LIKE_REGEX = /\b\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]\b/;
+const looksLikeRut = (value: string) => {
+  if (!value) return false;
+  const upper = value.toUpperCase();
+  if (upper.includes('R.U.T') || upper.includes('RUT')) return true;
+  if (RUT_LIKE_REGEX.test(value)) return true;
+  // Cuerpo de RUT sin DV (7-8 dígitos solo numéricos)
+  const onlyDigits = value.replace(/\D/g, '');
+  if (/^\d{7,9}$/.test(onlyDigits) && !/[A-Z]/i.test(value)) return true;
+  return false;
+};
+
+// Una patente válida en Chile contiene letras + números (ej: BBCC12, STVK15)
+// o un VIN (16-17 caracteres alfanuméricos). Rechaza valores puramente numéricos.
+const isValidPatenteShape = (value: string) => {
+  if (!value) return false;
+  const cleaned = value.replace(/[\s.\-]/g, '').toUpperCase();
+  if (cleaned.length < 4 || cleaned.length > 20) return false;
+  if (!/[A-Z]/.test(cleaned)) return false; // debe tener al menos una letra
+  if (!/\d/.test(cleaned)) return false;    // debe tener al menos un número
+  return true;
+};
+
 const parseClpNumber = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value !== "string") return 0;
@@ -54,7 +80,9 @@ const sanitizePurchaseOrderResult = (parsed: Record<string, unknown>) => {
   const rawItems = Array.isArray((parsed as any).items) ? (parsed as any).items : [];
 
   const mappedItems: SanitizedVipItem[] = rawItems.map((raw: any) => {
-    const patente = typeof raw?.patente === "string" ? raw.patente.trim() : "";
+    const rawPatente = typeof raw?.patente === "string" ? raw.patente.trim() : "";
+    // Rechazar RUTs o textos que contengan "RUT" — nunca son patentes.
+    const patente = (looksLikeRut(rawPatente) || !isValidPatenteShape(rawPatente)) ? "" : rawPatente;
     const detail = typeof raw?.detail === "string" ? normalizeSpaces(raw.detail) : "";
     const amount = parseClpNumber(raw?.amount);
     const quantity = typeof raw?.quantity === "number" && Number.isFinite(raw.quantity) && raw.quantity > 0
