@@ -4,9 +4,18 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Add version logging
-console.log('%c TMS App Version: 2026-03-03.1 (Optimization Fixes)', 'background: #222; color: #bada55; font-size: 14px; padding: 4px;');
-console.log('Environment:', import.meta.env.MODE);
+// Suppress debug logs in production — errors and warnings are preserved
+if (import.meta.env.PROD) {
+  const noop = () => {};
+  console.log = noop;
+  console.debug = noop;
+  console.info = noop;
+  console.group = noop;
+  console.groupEnd = noop;
+  console.groupCollapsed = noop;
+  console.time = noop;
+  console.timeEnd = noop;
+}
 
 // ── Chunk-load error recovery ──────────────────────────────────
 // After a deploy, browsers may still hold a cached index.html that

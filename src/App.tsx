@@ -15,12 +15,10 @@ import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
 import { businessClock } from '@/utils/businessClock';
-
-// Version check for production debugging
-  console.log('App version: 1.0.9 - businessClock (single source of truth for dates)');
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -140,12 +138,12 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background text-foreground">
         <Routes>
-        <Route path="/auth" element={<Suspense fallback={null}><Auth /></Suspense>} />
-        <Route path="/reset-password" element={<Suspense fallback={null}><ResetPassword /></Suspense>} />
+        <Route path="/auth" element={<ErrorBoundary name="Auth"><Suspense fallback={null}><Auth /></Suspense></ErrorBoundary>} />
+        <Route path="/reset-password" element={<ErrorBoundary name="ResetPassword"><Suspense fallback={null}><ResetPassword /></Suspense></ErrorBoundary>} />
         <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
         <Route path="/debug-freeze" element={<DebugFreeze />} />
         <Route path="/connection-test" element={<ConnectionTest />} />
-        <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
+        <Route path="/" element={<ErrorBoundary name="Index"><Suspense fallback={null}><Index /></Suspense></ErrorBoundary>} />
 
         {/* All administrative routes share a single ProtectedRoute + Layout */}
         <Route element={
@@ -209,7 +207,7 @@ function AppContent() {
           <Route path="invoices" element={<PortalInvoices />} />
         </Route>
 
-        <Route path="*" element={<Suspense fallback={null}><NotFound /></Suspense>} />
+        <Route path="*" element={<ErrorBoundary name="NotFound"><Suspense fallback={null}><NotFound /></Suspense></ErrorBoundary>} />
       </Routes>
       <Toaster />
     </div>

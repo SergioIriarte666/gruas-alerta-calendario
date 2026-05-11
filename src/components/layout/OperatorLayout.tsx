@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { User, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const OperatorLayout = () => {
   const { user, logout } = useUser();
@@ -91,7 +92,11 @@ export const OperatorLayout = () => {
 
       {/* Main Content */}
       <main className="p-4 sm:p-6">
-        <Outlet />
+        <ErrorBoundary name="Portal Operador">
+          <Suspense fallback={null}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

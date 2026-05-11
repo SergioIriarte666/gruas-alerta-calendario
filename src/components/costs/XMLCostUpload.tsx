@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
+import React, { useState } from 'react';
+import { useXMLParsing } from '@/hooks/useXMLParsing';
+import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,6 @@ import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-prog
 
 import { cn } from '@/lib/utils';
 import {
-  Upload,
   FileText,
   AlertCircle,
   CheckCircle,
@@ -40,7 +39,7 @@ import {
 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
-import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
+import { findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { createDirectInventoryEntry } from '@/utils/inventoryConsumptionHelper';
@@ -84,44 +83,31 @@ interface XMLCostUploadProps {
 }
 
 export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [parseResult, setParseResult] = useState<XMLCompleteParseResult | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
+
+  // Supplier category/subcategory mapping (used later; declared before hook to allow stable callbacks)
+  const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
+  const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
+  const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
+  const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
+  const [supplierPaymentCondition, setSupplierPaymentCondition] = useState<Record<string, 'none' | 'credit' | string>>({});
+  const [supplierCreditDate, setSupplierCreditDate] = useState<Record<string, string>>({});
+  const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [syncToInventory, setSyncToInventory] = useState(false);
+  const [matchedCosts, setMatchedCosts] = useState<Record<string, any[]>>({});
+  const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
+  const [isSearchingMatches, setIsSearchingMatches] = useState(false);
   const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
   };
-
-  // Supplier category/subcategory mapping
-  const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
-  const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
-
-  // Selections
-  const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
-  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
-
-  // Payment terms / due dates
-  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
-  const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
-  const [supplierPaymentCondition, setSupplierPaymentCondition] = useState<Record<string, 'none' | 'credit' | string>>({});
-  const [supplierCreditDate, setSupplierCreditDate] = useState<Record<string, string>>({});
-
-  // Duplicates
-  const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
-  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
-  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
-
-  // Sync to inventory
-  const [syncToInventory, setSyncToInventory] = useState(false);
-
-  // Cost matching
-  const [matchedCosts, setMatchedCosts] = useState<Record<string, any[]>>({});
-  const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
-  const [isSearchingMatches, setIsSearchingMatches] = useState(false);
 
   const batchProgress = useBatchProgress();
   const { mutate: addCost } = useAddCost();
@@ -129,6 +115,27 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
+
+  const {
+    selectedFile,
+    parseResult,
+    isAnalyzing,
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    handleAnalyzeFile: triggerAnalyze,
+    reset: resetParsing,
+  } = useXMLParsing({
+    onFileSelected: () => {
+      setUploadProgress(0);
+      setDocumentDescriptionOverrides({});
+      setSupplierCategoryMapping({});
+      setSupplierSubcategoryMapping({});
+      setSelectedSuppliers(new Set());
+      setSelectedDocuments(new Set());
+    },
+    onParsed: initAfterParse,
+  });
 
   const getSupplierCondition = (supplierRut: string) => supplierPaymentCondition[supplierRut] ?? 'none';
 
@@ -173,11 +180,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     return value.length > 0 ? value : buildSuggestedGlosa(doc);
   };
 
-  const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string) => {
-    if (!parseResult) return;
+  const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string, docs?: XMLDocumentData[]) => {
+    const documents = docs ?? parseResult?.documents ?? [];
     if (condition === 'none') return;
     const nextOverrides: Record<string, string> = {};
-    parseResult.documents.forEach((doc) => {
+    documents.forEach((doc) => {
       if (doc.supplier_rut !== supplierRut) return;
       if (!doc.issue_date) return;
 
@@ -195,54 +202,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      if (file.type === 'text/xml' || file.type === 'application/xml' || file.name.endsWith('.xml')) {
-        setSelectedFile(file);
-        setParseResult(null);
-        setUploadProgress(0);
-        setDocumentDescriptionOverrides({});
-        setSupplierCategoryMapping({});
-        setSupplierSubcategoryMapping({});
-        setSelectedSuppliers(new Set());
-        setSelectedDocuments(new Set());
-        handleAnalyzeFile(file);
-      } else {
-        toast.error('Por favor selecciona un archivo XML válido');
-      }
-    }
-  }, []);
+  // Called by useXMLParsing after base parsing; handles component-specific initialization
+  async function initAfterParse(result: XMLCompleteParseResult) {
+    const uniqueSuppliers = result.suppliers;
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'text/xml': ['.xml'], 'application/xml': ['.xml'] },
-    multiple: false,
-  });
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement> | Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) onDrop([file]);
-  };
-
-  const handleAnalyzeFile = async (fileParam?: File) => {
-    const fileToAnalyze = fileParam ?? selectedFile;
-    if (!fileToAnalyze) return;
-    setIsAnalyzing(true);
-    const parser = new XMLSupplierParser();
-    try {
-      const result = await parser.parseXMLCompleteFile(fileToAnalyze);
-      const uniqueSuppliers = dedupeSuppliersByIdentity(result.suppliers);
-      const normalizedResult: XMLCompleteParseResult = {
-        ...result,
-        suppliers: uniqueSuppliers,
-        totalSuppliers: uniqueSuppliers.length,
-        validSuppliers: uniqueSuppliers.filter(item => item.name && item.name.trim().length > 0).length,
-      };
-      setParseResult(normalizedResult);
-
-      // Pre-select all valid suppliers and documents
+    // Pre-select all valid suppliers and documents
       const validSuppliers = new Set(uniqueSuppliers.filter(s => s.name && s.rut).map(s => s.rut));
       const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(d => d.folio));
       setSelectedSuppliers(validSuppliers);
@@ -507,12 +471,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           }
         }
       }
-    } catch (error) {
-      console.error('Error analyzing XML:', error);
-      toast.error('Error al analizar el archivo XML');
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
 
   // Find supplier by RUT or name in inventory_suppliers
@@ -842,8 +800,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   };
 
   const reset = () => {
-    setSelectedFile(null);
-    setParseResult(null);
+    resetParsing();
     setUploadProgress(0);
     setSupplierCategoryMapping({});
     setSupplierSubcategoryMapping({});
@@ -865,14 +822,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       const doc = parseResult?.documents[d.index];
       return doc?.folio === folio;
     });
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const selectedTotal = parseResult
@@ -917,60 +866,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         </DialogHeader>
 
         <div className="space-y-6 px-6 pb-6 pt-4">
-          {/* Upload Area */}
-          {!selectedFile && (
-            <div
-              {...getRootProps()}
-              className={cn(
-                'relative overflow-hidden border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
-                isDragActive
-                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                  : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
-              )}
-            >
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
-              <input {...getInputProps()} />
-              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-                <Upload className="h-8 w-8" />
-              </div>
-              <p className="relative font-semibold text-base">
-                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
-              </p>
-              <p className="relative mt-1 text-sm text-muted-foreground">o haz clic para seleccionar un archivo</p>
-              <div className="relative mt-4 flex flex-wrap justify-center gap-2">
-                <Badge variant="secondary" className="bg-background/80">Detección de duplicados</Badge>
-                <Badge variant="secondary" className="bg-background/80">Sync con Bodega</Badge>
-                <Badge variant="secondary" className="bg-background/80">Categorización</Badge>
-              </div>
-            </div>
-          )}
-
-          {/* File Info */}
-          {selectedFile && !parseResult && (
-            <Card className="bg-card border">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-8 w-8 text-primary" />
-                    <div>
-                      <p className="text-foreground font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={() => handleAnalyzeFile()} disabled={isAnalyzing} variant="default">
-                      {isAnalyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-                      Analizar XML
-                    </Button>
-                    <Button variant="outline" onClick={reset}>
-                      <X className="h-4 w-4 mr-2" />
-                      Quitar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <XMLDropzoneArea
+            selectedFile={selectedFile}
+            parseResult={parseResult}
+            isAnalyzing={isAnalyzing}
+            isDragActive={isDragActive}
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            onAnalyze={triggerAnalyze}
+            onReset={reset}
+            badges={['Detección de duplicados', 'Sync con Bodega', 'Categorización']}
+          />
 
           {/* Upload Progress (non-batch) */}
           {isUploading && uploadProgress > 0 && (

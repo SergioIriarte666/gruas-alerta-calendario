@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import PortalHeader from './PortalHeader';
 import PortalSidebar from './PortalSidebar';
 import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface PortalLayoutProps {
   children?: React.ReactNode;
@@ -53,7 +54,11 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
         
         <PortalHeader />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-800 p-4 md:p-6 lg:p-8">
-          {children || <Outlet />}
+          <ErrorBoundary name="Portal Cliente">
+            <Suspense fallback={null}>
+              {children || <Outlet />}
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
       <QuickEntryFAB />

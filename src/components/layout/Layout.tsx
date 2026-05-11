@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
-
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { QuickEntryProvider } from '@/contexts/QuickEntryContext';
 import { useServiceRequestAlerts } from '@/hooks/useServiceRequestAlerts';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -37,9 +37,11 @@ export const Layout = () => {
             "flex-1 overflow-y-auto overflow-x-hidden bg-white",
             isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
           )}>
-            <Suspense fallback={null}>
-              <Outlet />
-            </Suspense>
+            <ErrorBoundary name="Página">
+              <Suspense fallback={null}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
           </main>
         </div>
         <QuickEntryFAB />

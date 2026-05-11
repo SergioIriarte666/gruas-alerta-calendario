@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState } from 'react';
+import { useXMLParsing } from '@/hooks/useXMLParsing';
+import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,11 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
-import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
+import { findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -80,10 +81,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   onClose,
   onSuccess
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [parseResult, setParseResult] = useState<XMLCompleteParseResult | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
   const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
@@ -126,13 +124,33 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
-  
+
+  const {
+    selectedFile,
+    parseResult,
+    isAnalyzing,
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    handleAnalyzeFile: triggerAnalyze,
+    reset: resetParsing,
+  } = useXMLParsing({
+    onFileSelected: () => {
+      setUploadProgress(0);
+      setSupplierCategoryMapping({});
+      setSelectedSuppliers(new Set());
+      setSelectedDocuments(new Set());
+      setDocumentDescriptionOverrides({});
+    },
+    onParsed: initAfterParse,
+  });
+
   const getSupplierCondition = (supplierRut: string) => supplierPaymentCondition[supplierRut] ?? 'none';
-  const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string) => {
-    if (!parseResult) return;
+  const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string, docs?: XMLDocumentData[]) => {
+    const documents = docs ?? parseResult?.documents ?? [];
     if (condition === 'none') return;
     const nextOverrides: Record<string, string> = {};
-    parseResult.documents.forEach((doc) => {
+    documents.forEach((doc) => {
       if (doc.supplier_rut !== supplierRut) return;
       if (!doc.issue_date) return;
       if (condition === 'credit') {
@@ -147,59 +165,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     });
     setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
   };
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      if (file.type === 'text/xml' || file.type === 'application/xml' || file.name.endsWith('.xml')) {
-        setSelectedFile(file);
-        setParseResult(null);
-        setUploadProgress(0);
-        setSupplierCategoryMapping({});
-        setSelectedSuppliers(new Set());
-        setSelectedDocuments(new Set());
-        setDocumentDescriptionOverrides({});
-        handleAnalyzeFile(file);
-      } else {
-        toast.error('Por favor selecciona un archivo XML válido');
-      }
-    }
-  }, []);
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive
-  } = useDropzone({
-    onDrop,
-    accept: {
-      'text/xml': ['.xml'],
-      'application/xml': ['.xml']
-    },
-    multiple: false
-  });
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement> | Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) {
-      onDrop([file]);
-    }
-  };
-  const handleAnalyzeFile = async (fileParam?: File) => {
-    const fileToAnalyze = fileParam ?? selectedFile;
-    if (!fileToAnalyze) return;
-    setIsAnalyzing(true);
-    const parser = new XMLSupplierParser();
-    try {
-      const result = await parser.parseXMLCompleteFile(fileToAnalyze);
-      const uniqueSuppliers = dedupeSuppliersByIdentity(result.suppliers);
-      const normalizedResult = {
-        ...result,
-        suppliers: uniqueSuppliers,
-        totalSuppliers: uniqueSuppliers.length,
-        validSuppliers: uniqueSuppliers.filter(item => item.name && item.name.trim().length > 0).length,
-      };
-      setParseResult(normalizedResult);
+  async function initAfterParse(result: XMLCompleteParseResult) {
+    const uniqueSuppliers = result.suppliers;
 
-      // Pre-select all valid suppliers and documents
+    // Pre-select all valid suppliers and documents
       const validSuppliers = new Set(uniqueSuppliers.filter(s => s.name && s.rut).map(s => s.rut));
       const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(d => d.folio));
       setSelectedSuppliers(validSuppliers);
@@ -355,14 +324,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           }
         }
       }
-    } catch (error) {
-      console.error('Error analyzing XML:', error);
-      toast.error('Error al analizar el archivo XML');
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
-  
+
   const buildSuggestedGlosa = (doc: XMLDocumentData) => {
     if (doc.items && doc.items.length > 0) {
       const lines = doc.items
@@ -755,8 +718,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     });
   };
   const reset = () => {
-    setSelectedFile(null);
-    setParseResult(null);
+    resetParsing();
     setUploadProgress(0);
     setSupplierCategoryMapping({});
     setSupplierSubcategoryMapping({});
@@ -806,13 +768,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setDueDateOverrides(newOverrides);
     toast.success(`Fechas de vencimiento actualizadas a ${daysToAdd} días desde emisión`);
   };
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
         <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
@@ -848,57 +803,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 px-6 pb-6 pt-4">
-          {/* Upload Area */}
-          {!selectedFile && <div {...getRootProps()} className={cn(
-            'relative overflow-hidden border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
-            isDragActive
-              ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-              : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
-          )}>
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
-              <input {...getInputProps()} />
-              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-                <Upload className="h-8 w-8" />
-              </div>
-              <p className="relative font-semibold text-base">
-                {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
-              </p>
-              <p className="relative mt-1 text-sm text-muted-foreground">
-                o haz clic para seleccionar un archivo
-              </p>
-              <div className="relative mt-4 flex flex-wrap justify-center gap-2">
-                <Badge variant="secondary" className="bg-background/80">Detección de duplicados</Badge>
-                <Badge variant="secondary" className="bg-background/80">Pago automático</Badge>
-                <Badge variant="secondary" className="bg-background/80">Categorización</Badge>
-              </div>
-            </div>}
-
-          {/* File Info */}
-          {selectedFile && !parseResult && <Card className="bg-card border">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-8 w-8 text-primary" />
-                    <div>
-                      <p className="text-foreground font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatFileSize(selectedFile.size)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button onClick={() => handleAnalyzeFile()} disabled={isAnalyzing} variant="default">
-                      {isAnalyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-                      Analizar XML
-                    </Button>
-                    <Button variant="outline" onClick={reset}>
-                      <X className="h-4 w-4 mr-2" />
-                      Quitar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>}
+          <XMLDropzoneArea
+            selectedFile={selectedFile}
+            parseResult={parseResult}
+            isAnalyzing={isAnalyzing}
+            isDragActive={isDragActive}
+            getRootProps={getRootProps}
+            getInputProps={getInputProps}
+            onAnalyze={triggerAnalyze}
+            onReset={reset}
+            badges={['Detección de duplicados', 'Pago automático', 'Categorización']}
+          />
 
           {/* Upload Progress */}
           {isUploading && <Card className="bg-card border">
