@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
+import {
+  XMLImportDialogHeader,
+  XMLImportProgressCard,
+  XMLImportStatsGrid,
+} from '@/components/common/XMLImportShared';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +21,7 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -98,6 +102,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
+  const [expandedDocumentDetails, setExpandedDocumentDetails] = useState<Record<string, boolean>>({});
   const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
@@ -141,6 +146,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setSelectedSuppliers(new Set());
       setSelectedDocuments(new Set());
       setDocumentDescriptionOverrides({});
+      setExpandedDocumentDetails({});
     },
     onParsed: initAfterParse,
   });
@@ -770,37 +776,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
-        <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-1">
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <span className="rounded-lg bg-primary/10 p-2 text-primary">
-                  <FileSpreadsheet className="h-5 w-5" />
-                </span>
-                Importar Documentos XML
-              </DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                Analiza documentos XML, detecta duplicados y registra pagos a proveedores.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {selectedFile ? (
-                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
-                  Archivo: {selectedFile.name}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
-                  Esperando XML
-                </Badge>
-              )}
-              {parseResult && (
-                <Badge variant="secondary" className="px-3 py-1 text-xs">
-                  {parseResult.totalDocuments} doc(s)
-                </Badge>
-              )}
-            </div>
-          </div>
-        </DialogHeader>
+        <XMLImportDialogHeader
+          icon={FileSpreadsheet}
+          title="Importar Documentos XML"
+          description="Analiza documentos XML, detecta duplicados y registra pagos a proveedores."
+          fileName={selectedFile?.name}
+          documentCount={parseResult?.totalDocuments}
+        />
 
         <div className="space-y-6 px-6 pb-6 pt-4">
           <XMLDropzoneArea
@@ -816,70 +798,42 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           />
 
           {/* Upload Progress */}
-          {isUploading && <Card className="bg-card border">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-foreground">
-                    <span>Subiendo datos...</span>
-                    <span>{Math.round(uploadProgress)}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>}
+          {isUploading && <XMLImportProgressCard label="Subiendo datos..." value={uploadProgress} />}
 
           {/* Parse Results */}
           {parseResult && <div className="space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                <Card className="border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:from-background dark:to-muted/20">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Proveedores</p>
-                      <div className="text-2xl font-semibold">{parseResult.validSuppliers}/{parseResult.totalSuppliers}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm dark:from-emerald-950/30 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                      <Receipt className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Documentos</p>
-                      <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{parseResult.validDocuments}/{parseResult.totalDocuments}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-red-200/80 bg-gradient-to-br from-red-50 to-white shadow-sm dark:from-red-950/20 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-red-100 p-3 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                      <AlertCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Errores</p>
-                      <div className="text-2xl font-semibold text-red-600 dark:text-red-400">{parseResult.errors.length}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-200/80 bg-gradient-to-br from-blue-50 to-white shadow-sm dark:from-blue-950/20 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                      <DollarSign className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Montos</p>
-                      <div className="text-2xl font-semibold">${parseResult.documents.filter(d => selectedDocuments.has(d.folio)).reduce((sum, d) => sum + d.total_amount, 0).toLocaleString()}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <XMLImportStatsGrid
+                items={[
+                  {
+                    title: 'Proveedores',
+                    value: `${parseResult.validSuppliers}/${parseResult.totalSuppliers}`,
+                    icon: Users,
+                    tone: 'slate',
+                  },
+                  {
+                    title: 'Documentos',
+                    value: `${parseResult.validDocuments}/${parseResult.totalDocuments}`,
+                    icon: Receipt,
+                    tone: 'emerald',
+                  },
+                  {
+                    title: 'Errores',
+                    value: parseResult.errors.length,
+                    icon: AlertCircle,
+                    tone: 'red',
+                  },
+                  {
+                    title: 'Total Montos',
+                    value: `$${parseResult.documents
+                      .filter(d => selectedDocuments.has(d.folio))
+                      .reduce((sum, d) => sum + d.total_amount, 0)
+                      .toLocaleString('es-CL')}`,
+                    icon: DollarSign,
+                    tone: 'blue',
+                  },
+                ]}
+              />
 
               {/* Options */}
               <Card className="bg-card border">
@@ -978,6 +932,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     </Alert>}
                 </div>}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 1</p>
+                <p className="mt-1 font-medium text-foreground">Revisa proveedor y configuración base</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ajusta la forma de pago y la categoría solo si necesitas cambiar cómo se registrarán los documentos de este proveedor.
+                </p>
+              </div>
+
               {/* Suppliers Preview */}
               {parseResult.suppliers.length > 0 && <Card className="overflow-hidden border-border/70 shadow-sm">
                   <CardHeader className="pb-3">
@@ -1006,7 +968,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
                             <div>
-                              <Label className="text-xs text-muted-foreground mb-1.5 block">Condición</Label>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago por defecto</Label>
                               <Select
                                 value={getSupplierCondition(supplier.rut)}
                                 onValueChange={(val) => {
@@ -1032,6 +994,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   ))}
                                 </SelectContent>
                               </Select>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Se aplicará como sugerencia a los documentos de este proveedor.
+                              </p>
                             </div>
                             {getSupplierCondition(supplier.rut) === 'credit' && (
                               <div>
@@ -1047,7 +1012,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               </div>
                             )}
                             <div>
-                              <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría</Label>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría del gasto</Label>
                               <Select value={supplierCategoryMapping[supplier.rut] || supplier.category} onValueChange={value => handleCategoryChange(supplier.rut, value)}>
                                 <SelectTrigger className="w-full">
                                   <SelectValue />
@@ -1058,6 +1023,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     </SelectItem>)}
                                 </SelectContent>
                               </Select>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Ayuda a clasificar los costos y reportes asociados al proveedor.
+                              </p>
                             </div>
                             {/* Subcategory Select */}
                             {(() => {
@@ -1081,6 +1049,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardContent>
                 </Card>}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 2</p>
+                <p className="mt-1 font-medium text-foreground">Revisa cada documento</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Primero valida el estado del documento. Luego, solo si hace falta, abre los detalles para editar la descripción o el vencimiento.
+                </p>
+              </div>
+
               {/* Documents Preview */}
               {parseResult.documents.length > 0 && <Card className="overflow-hidden border-border/70 shadow-sm">
                   <CardHeader className="pb-3">
@@ -1092,44 +1068,69 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   <CardContent>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {parseResult.documents.map((document, index) => {
-                        const parser = new XMLSupplierParser();
-                        const defaultDueDate = dueDateOverrides[document.folio] || 
-                          document.due_date || 
+                        const defaultDueDate = dueDateOverrides[document.folio] ||
+                          document.due_date ||
                           (() => {
                             const date = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd'));
                             date.setDate(date.getDate() + defaultDaysToAdd);
                             return format(date, 'yyyy-MM-dd');
                           })();
-                        const hasCustomDate = !!dueDateOverrides[document.folio];
-                        
+
                         const duplicateInfo = getDuplicateInfoByFolio(document.folio);
                         const isDuplicate = !!duplicateInfo;
-                        
+                        const isExactDuplicate = duplicateInfo?.matchType === 'exact_folio';
+
                         const costsForDoc = matchedCosts[document.folio] || [];
                         const hasMatches = costsForDoc.length > 0;
                         const currentDecision = linkDecisions[document.folio] || 'new';
-                        
+                        const showDetails = expandedDocumentDetails[document.folio] ?? !isExactDuplicate;
+                        const statusMeta = hasMatches && currentDecision !== 'new'
+                          ? {
+                              label: 'Vinculado a costo',
+                              badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+                              hint: 'Este documento se enlazará con un costo existente.',
+                            }
+                          : isExactDuplicate
+                            ? {
+                                label: 'Ya registrado',
+                                badgeClass: 'bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-200',
+                                hint: 'Ya existe en el sistema. Normalmente no necesitas cambiar nada.',
+                              }
+                            : isDuplicate && duplicateInfo.matchType === 'similar'
+                              ? {
+                                  label: 'Revisar coincidencia',
+                                  badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
+                                  hint: 'Se encontró una coincidencia parecida. Conviene revisarlo antes de importar.',
+                                }
+                              : {
+                                  label: 'Listo para revisar',
+                                  badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+                                  hint: 'Puedes importarlo o ajustar sus detalles si lo necesitas.',
+                                };
+
                         return (
-                          <div key={index} className={cn(
-                            "flex flex-col p-3 rounded-lg gap-2 shadow-sm border",
-                            hasMatches && currentDecision !== 'new'
-                              ? "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
-                              : isDuplicate && duplicateInfo.matchType === 'exact_folio'
-                              ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
-                              : isDuplicate && duplicateInfo.matchType === 'similar'
-                              ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800"
-                              : "bg-muted/30 border-border/60"
-                          )}>
-                            {/* Matched cost selector */}
+                          <div
+                            key={index}
+                            className={cn(
+                              'flex flex-col gap-3 rounded-lg border p-3 shadow-sm',
+                              hasMatches && currentDecision !== 'new'
+                                ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30'
+                                : isDuplicate && duplicateInfo.matchType === 'exact_folio'
+                                  ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20'
+                                  : isDuplicate && duplicateInfo.matchType === 'similar'
+                                    ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/20'
+                                    : 'border-border/60 bg-muted/30'
+                            )}
+                          >
                             {hasMatches && (
-                              <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
+                              <div className="flex items-center gap-2 rounded bg-blue-100 px-2 py-1.5 text-xs text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
                                 <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
                                 <span className="font-medium">🔗 Costo encontrado:</span>
-                                <Select 
-                                  value={currentDecision} 
+                                <Select
+                                  value={currentDecision}
                                   onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [document.folio]: val }))}
                                 >
-                                  <SelectTrigger className="h-7 text-xs flex-1 min-w-[200px] bg-background">
+                                  <SelectTrigger className="h-7 min-w-[200px] flex-1 bg-background text-xs">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1143,44 +1144,78 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 </Select>
                               </div>
                             )}
-                            {/* Duplicate warning */}
+
                             {isDuplicate && duplicateInfo.existingPayment && (
-                              <div className={cn(
-                                "text-xs px-2 py-1 rounded",
-                                duplicateInfo.matchType === 'exact_folio' ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
-                              )}>
+                              <div
+                                className={cn(
+                                  'rounded px-2 py-1 text-xs',
+                                  duplicateInfo.matchType === 'exact_folio'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                )}
+                              >
                                 <strong>
                                   {duplicateInfo.matchType === 'exact_folio' ? '⚠️ Folio ya registrado:' : '🔍 Similar:'}
                                 </strong>
-                                {' '}{duplicateInfo.existingPayment.supplier_name} - ${duplicateInfo.existingPayment.amount.toLocaleString('es-CL')}
+                                {' '}
+                                {duplicateInfo.existingPayment.supplier_name} - $
+                                {duplicateInfo.existingPayment.amount.toLocaleString('es-CL')}
                               </div>
                             )}
-                            <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                              <Checkbox 
-                                checked={selectedDocuments.has(document.folio)} 
-                                onCheckedChange={checked => {
-                                  if (checked === true) {
-                                    toggleDocumentSelection(document.folio);
-                                  } else if (checked === false) {
-                                    toggleDocumentSelection(document.folio);
-                                  }
-                                }} 
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-foreground font-medium break-words whitespace-pre-wrap">{getEffectiveGlosa(document)}</p>
-                                <div className="flex items-center space-x-4 text-sm text-muted-foreground flex-wrap">
-                                  <span>Folio: {document.folio}</span>
-                                  <span>Total: ${document.total_amount.toLocaleString()}</span>
-                                  {document.issue_date && (
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      Emisión: {document.issue_date}
+
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex min-w-0 flex-1 items-start space-x-3">
+                                <Checkbox
+                                  checked={selectedDocuments.has(document.folio)}
+                                  onCheckedChange={checked => {
+                                    if (checked === true) {
+                                      toggleDocumentSelection(document.folio);
+                                    } else if (checked === false) {
+                                      toggleDocumentSelection(document.folio);
+                                    }
+                                  }}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="break-words whitespace-pre-wrap font-medium text-foreground">
+                                    {getEffectiveGlosa(document)}
+                                  </p>
+                                  <div className="flex flex-wrap items-center space-x-4 text-sm text-muted-foreground">
+                                    <span>Folio: {document.folio}</span>
+                                    <span>Total: ${document.total_amount.toLocaleString()}</span>
+                                    {document.issue_date && (
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        Emisión: {document.issue_date}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', statusMeta.badgeClass)}>
+                                      {statusMeta.label}
                                     </span>
-                                  )}
+                                    <span className="text-xs text-muted-foreground">{statusMeta.hint}</span>
+                                  </div>
                                 </div>
-                                <div className="mt-2">
-                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Glosa del documento</Label>
+                              </div>
+
+                              <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs"
+                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [document.folio]: !showDetails }))}
+                                >
+                                  {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
+                                  {showDetails ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {showDetails ? (
+                              <div className="space-y-3 border-t pt-3">
+                                <div>
+                                  <Label className="mb-1.5 block text-xs text-muted-foreground">Descripción que se guardará</Label>
                                   <Textarea
                                     value={Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio)
                                       ? documentDescriptionOverrides[document.folio]
@@ -1189,52 +1224,64 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     onInput={(e) => autoResizeTextarea(e.currentTarget)}
                                     ref={(el) => autoResizeTextarea(el)}
                                     rows={3}
-                                    className="text-sm resize-y"
+                                    className="resize-y text-sm"
                                   />
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    Este texto se usará como descripción del pago o del vínculo con costos.
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-end gap-4">
+                                  <div className="max-w-[220px] min-w-[180px] flex-1">
+                                    <Label className="mb-1.5 block text-xs text-muted-foreground">Forma de pago</Label>
+                                    <Select
+                                      value={getSupplierCondition(document.supplier_rut)}
+                                      onValueChange={(val) => {
+                                        setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }));
+                                        if (val === 'credit') {
+                                          applyConditionToSupplierDocuments(document.supplier_rut, 'credit', supplierCreditDate[document.supplier_rut]);
+                                        } else {
+                                          applyConditionToSupplierDocuments(document.supplier_rut, val as any);
+                                        }
+                                      }}
+                                      disabled={loadingTerms}
+                                    >
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                        <SelectItem value="credit">Crédito (fecha)</SelectItem>
+                                        {paymentTerms.map((term) => (
+                                          <SelectItem key={term.id} value={term.id}>
+                                            {term.name} ({term.days} días)
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Define si el documento queda pagado manualmente o con vencimiento.
+                                    </p>
+                                  </div>
+
+                                  <div className="max-w-[220px] min-w-[180px] flex-1">
+                                    <Label className="mb-1.5 block text-xs text-muted-foreground">Vencimiento</Label>
+                                    <DatePickerInput
+                                      value={defaultDueDate || ''}
+                                      onChange={(date) => setDueDateOverrides(prev => ({ ...prev, [document.folio]: date }))}
+                                      className="w-full"
+                                    />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Puedes ajustarlo si el XML no trae una fecha correcta.
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            
-                            {/* Condición de Pago y Fecha de Vencimiento */}
-                            <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
-                              <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
-                                <Select
-                                  value={getSupplierCondition(document.supplier_rut)}
-                                  onValueChange={(val) => {
-                                    setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }));
-                                    if (val === 'credit') {
-                                      applyConditionToSupplierDocuments(document.supplier_rut, 'credit', supplierCreditDate[document.supplier_rut]);
-                                    } else {
-                                      applyConditionToSupplierDocuments(document.supplier_rut, val as any);
-                                    }
-                                  }}
-                                  disabled={loadingTerms}
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">Sin condición (manual)</SelectItem>
-                                    <SelectItem value="credit">Crédito (fecha)</SelectItem>
-                                    {paymentTerms.map((term) => (
-                                      <SelectItem key={term.id} value={term.id}>
-                                        {term.name} ({term.days} días)
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-border/70 bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                                Vista resumida. Abre los detalles solo si necesitas editar la descripción o la fecha de vencimiento.
                               </div>
-                              <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
-                                <DatePickerInput
-                                  value={defaultDueDate || ''}
-                                  onChange={(date) => setDueDateOverrides(prev => ({...prev, [document.folio]: date}))}
-                                  className="w-full"
-                                />
-                              </div>
-                            </div>
-                            </div>
+                            )}
                           </div>
                         );
                       })}
@@ -1242,20 +1289,37 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardContent>
                 </Card>}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 3</p>
+                <p className="mt-1 font-medium text-foreground">Confirma la importación</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Revisa el resumen y luego confirma. Los documentos ya registrados no necesitan cambios salvo que quieras revisar sus detalles.
+                </p>
+              </div>
+
               {/* Actions */}
               <div className="flex items-center justify-between border-t pt-4">
-                <p className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {selectedSuppliers.size > 0 && (
-                    <span>{selectedSuppliers.size} proveedor(es) · {selectedDocuments.size} documento(s)</span>
+                    <div className="space-y-1">
+                      <span className="block">{selectedSuppliers.size} proveedor(es) · {selectedDocuments.size} documento(s)</span>
+                      <span className="block">
+                        Total seleccionado: $
+                        {parseResult.documents
+                          .filter(d => selectedDocuments.has(d.folio))
+                          .reduce((sum, d) => sum + d.total_amount, 0)
+                          .toLocaleString('es-CL')}
+                      </span>
+                    </div>
                   )}
-                </p>
+                </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={reset} disabled={isUploading}>
                     Cancelar
                   </Button>
                   <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0} variant="default">
                     {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                    Importar {selectedSuppliers.size} Proveedores
+                    Confirmar importación
                     {createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
                   </Button>
                 </div>

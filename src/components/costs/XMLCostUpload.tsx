@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
+import {
+  XMLImportDialogHeader,
+  XMLImportProgressCard,
+  XMLImportStatsGrid,
+} from '@/components/common/XMLImportShared';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Progress } from '@/components/ui/progress';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
@@ -32,6 +36,8 @@ import {
   Building,
   ShieldAlert,
   Link2,
+  ChevronDown,
+  ChevronUp,
   Package,
   Info,
   Code,
@@ -103,6 +109,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [matchedCosts, setMatchedCosts] = useState<Record<string, any[]>>({});
   const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
   const [isSearchingMatches, setIsSearchingMatches] = useState(false);
+  const [expandedDocumentDetails, setExpandedDocumentDetails] = useState<Record<string, boolean>>({});
   const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
@@ -133,6 +140,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       setSupplierSubcategoryMapping({});
       setSelectedSuppliers(new Set());
       setSelectedDocuments(new Set());
+      setExpandedDocumentDetails({});
     },
     onParsed: initAfterParse,
   });
@@ -833,37 +841,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
-        <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-1">
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <span className="rounded-lg bg-primary/10 p-2 text-primary">
-                  <Code className="h-5 w-5" />
-                </span>
-                Cargar Gastos desde XML
-              </DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                Analiza documentos XML, detecta duplicados y registra gastos con categorización automática.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {selectedFile ? (
-                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
-                  Archivo: {selectedFile.name}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
-                  Esperando XML
-                </Badge>
-              )}
-              {parseResult && (
-                <Badge variant="secondary" className="px-3 py-1 text-xs">
-                  {parseResult.totalDocuments} doc(s)
-                </Badge>
-              )}
-            </div>
-          </div>
-        </DialogHeader>
+        <XMLImportDialogHeader
+          icon={Code}
+          title="Cargar Gastos desde XML"
+          description="Analiza documentos XML, detecta duplicados y registra gastos con categorización automática."
+          fileName={selectedFile?.name}
+          documentCount={parseResult?.totalDocuments}
+        />
 
         <div className="space-y-6 px-6 pb-6 pt-4">
           <XMLDropzoneArea
@@ -880,77 +864,46 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
           {/* Upload Progress (non-batch) */}
           {isUploading && uploadProgress > 0 && (
-            <Card className="bg-card border">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-foreground">
-                    <span>Subiendo datos...</span>
-                    <span>{Math.round(uploadProgress)}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
+            <XMLImportProgressCard label="Subiendo datos..." value={uploadProgress} />
           )}
 
           {/* Parse Results */}
           {parseResult && (
             <div className="space-y-6">
               {/* Summary Stats */}
-              <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                <Card className="border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:from-background dark:to-muted/20">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-slate-100 p-3 text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Proveedores</p>
-                      <div className="text-2xl font-semibold">{parseResult.validSuppliers}/{parseResult.totalSuppliers}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm dark:from-emerald-950/30 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                      <Receipt className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Documentos</p>
-                      <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{parseResult.validDocuments}/{parseResult.totalDocuments}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-red-200/80 bg-gradient-to-br from-red-50 to-white shadow-sm dark:from-red-950/20 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-red-100 p-3 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                      <AlertCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Errores</p>
-                      <div className="text-2xl font-semibold text-red-600 dark:text-red-400">{parseResult.errors.length}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-blue-200/80 bg-gradient-to-br from-blue-50 to-white shadow-sm dark:from-blue-950/20 dark:to-background">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="rounded-xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                      <DollarSign className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Selec.</p>
-                      <div className="text-2xl font-semibold">${selectedTotal.toLocaleString('es-CL')}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <XMLImportStatsGrid
+                items={[
+                  {
+                    title: 'Proveedores',
+                    value: `${parseResult.validSuppliers}/${parseResult.totalSuppliers}`,
+                    icon: Users,
+                    tone: 'slate',
+                  },
+                  {
+                    title: 'Documentos',
+                    value: `${parseResult.validDocuments}/${parseResult.totalDocuments}`,
+                    icon: Receipt,
+                    tone: 'emerald',
+                  },
+                  {
+                    title: 'Errores',
+                    value: parseResult.errors.length,
+                    icon: AlertCircle,
+                    tone: 'red',
+                  },
+                  {
+                    title: 'Total Selec.',
+                    value: `$${selectedTotal.toLocaleString('es-CL')}`,
+                    icon: DollarSign,
+                    tone: 'blue',
+                  },
+                ]}
+              />
 
               {/* Import Options */}
               <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Opciones de Importación</CardTitle>
+                  <CardTitle className="text-foreground">Cómo registrar estos gastos</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -978,6 +931,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       ✓ Los costos se sincronizarán con el módulo de Bodega
                     </p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Activa esta opción solo si además quieres reflejar estos documentos como entradas en inventario.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -1082,6 +1038,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </div>
               )}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 1</p>
+                <p className="mt-1 font-medium text-foreground">Revisa proveedor y configuración base</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ajusta la forma de pago y la categoría solo si quieres cambiar cómo se registrarán los gastos de este proveedor.
+                </p>
+              </div>
+
               {/* Suppliers Preview */}
               {parseResult.suppliers.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -1109,7 +1073,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
                             <div>
-                              <Label className="text-xs text-muted-foreground mb-1.5 block">Condición</Label>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago por defecto</Label>
                               <Select
                                 value={getSupplierCondition(supplier.rut)}
                                 onValueChange={(val) => {
@@ -1135,6 +1099,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   ))}
                                 </SelectContent>
                               </Select>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Se aplicará como sugerencia a los documentos de este proveedor.
+                              </p>
                             </div>
                             {getSupplierCondition(supplier.rut) === 'credit' && (
                               <div>
@@ -1150,7 +1117,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                               </div>
                             )}
                             <div>
-                              <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría</Label>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría del gasto</Label>
                               <Select
                                 value={supplierCategoryMapping[supplier.rut] || supplier.category}
                                 onValueChange={value => handleCategoryChange(supplier.rut, value)}
@@ -1166,6 +1133,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   ))}
                                 </SelectContent>
                               </Select>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Ayuda a clasificar el gasto y sus reportes asociados.
+                              </p>
                             </div>
                             {/* Subcategory Select */}
                             {(() => {
@@ -1191,6 +1161,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </Card>
               )}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 2</p>
+                <p className="mt-1 font-medium text-foreground">Revisa cada documento</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Primero valida el estado del documento. Luego, solo si hace falta, abre los detalles para editar la descripción o el vencimiento.
+                </p>
+              </div>
+
               {/* Documents Preview */}
               {parseResult.documents.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -1214,14 +1192,39 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
                         const duplicateInfo = getDuplicateInfoByFolio(document.folio);
                         const isDuplicate = !!duplicateInfo;
+                        const isExactDuplicate = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
 
                         const costsForDoc = matchedCosts[document.folio] || [];
                         const hasMatches = costsForDoc.length > 0;
                         const currentDecision = linkDecisions[document.folio] || 'new';
+                        const showDetails = expandedDocumentDetails[document.folio] ?? !isExactDuplicate;
                         const hasDescriptionOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio);
                         const descriptionValue = hasDescriptionOverride
                           ? documentDescriptionOverrides[document.folio]
                           : buildSuggestedGlosa(document);
+                        const statusMeta = hasMatches && currentDecision !== 'new'
+                          ? {
+                              label: 'Vinculado a costo',
+                              badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+                              hint: 'Este documento se enlazará con un costo existente.',
+                            }
+                          : isExactDuplicate
+                            ? {
+                                label: 'Ya registrado',
+                                badgeClass: 'bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-200',
+                                hint: 'Ya existe en el sistema. Normalmente no necesitas cambiar nada.',
+                              }
+                            : isDuplicate && duplicateInfo.matchType === 'similar'
+                              ? {
+                                  label: 'Revisar coincidencia',
+                                  badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
+                                  hint: 'Se encontró una coincidencia parecida. Conviene revisarlo antes de importar.',
+                                }
+                              : {
+                                  label: 'Listo para revisar',
+                                  badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+                                  hint: 'Puedes cargarlo o ajustar sus detalles si lo necesitas.',
+                                };
 
                         return (
                           <div
@@ -1283,8 +1286,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start space-x-3 flex-1 min-w-0">
                                 <Checkbox
                                   checked={selectedDocuments.has(document.folio)}
                                   onCheckedChange={() => toggleDocumentSelection(document.folio)}
@@ -1301,65 +1304,101 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                       </span>
                                     )}
                                   </div>
-                                  <div className="mt-2">
-                                    <Label className="text-xs text-muted-foreground mb-1.5 block">Glosa del costo</Label>
-                                    <Textarea
-                                      value={descriptionValue}
-                                      onChange={(e) =>
-                                        setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))
-                                      }
-                                      onInput={(e) => autoResizeTextarea(e.currentTarget)}
-                                      ref={(el) => autoResizeTextarea(el)}
-                                      placeholder="Ej: Insumo - Mantención"
-                                      rows={3}
-                                      className="text-sm resize-y"
-                                    />
+                                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', statusMeta.badgeClass)}>
+                                      {statusMeta.label}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">{statusMeta.hint}</span>
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Payment term & due date */}
-                              <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
-                                <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
-                                  <Select
-                                    value={getSupplierCondition(document.supplier_rut)}
-                                    onValueChange={(val) => {
-                                      setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }));
-                                      if (val === 'credit') {
-                                        applyConditionToSupplierDocuments(document.supplier_rut, 'credit', supplierCreditDate[document.supplier_rut]);
-                                      } else {
-                                        applyConditionToSupplierDocuments(document.supplier_rut, val as any);
-                                      }
-                                    }}
-                                    disabled={loadingTerms}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="none">Sin condición (manual)</SelectItem>
-                                      <SelectItem value="credit">Crédito (fecha)</SelectItem>
-                                      {paymentTerms.map((term) => (
-                                        <SelectItem key={term.id} value={term.id}>
-                                          {term.name} ({term.days} días)
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
-                                  <DatePickerInput
-                                    value={defaultDueDate || ''}
-                                    onChange={(date) =>
-                                      setDueDateOverrides(prev => ({ ...prev, [document.folio]: date }))
-                                    }
-                                    className="w-full"
-                                  />
-                                </div>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 px-2 text-xs"
+                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [document.folio]: !showDetails }))}
+                                >
+                                  {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
+                                  {showDetails ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
+                                </Button>
                               </div>
                             </div>
+
+                            {showDetails ? (
+                              <div className="space-y-3 border-t pt-3">
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Descripción que se guardará</Label>
+                                  <Textarea
+                                    value={descriptionValue}
+                                    onChange={(e) =>
+                                      setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))
+                                    }
+                                    onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                                    ref={(el) => autoResizeTextarea(el)}
+                                    placeholder="Ej: Insumo - Mantención"
+                                    rows={3}
+                                    className="text-sm resize-y"
+                                  />
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    Este texto se usará como descripción del gasto o del vínculo con un costo existente.
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-end gap-4">
+                                  <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                    <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago</Label>
+                                    <Select
+                                      value={getSupplierCondition(document.supplier_rut)}
+                                      onValueChange={(val) => {
+                                        setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }));
+                                        if (val === 'credit') {
+                                          applyConditionToSupplierDocuments(document.supplier_rut, 'credit', supplierCreditDate[document.supplier_rut]);
+                                        } else {
+                                          applyConditionToSupplierDocuments(document.supplier_rut, val as any);
+                                        }
+                                      }}
+                                      disabled={loadingTerms}
+                                    >
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                        <SelectItem value="credit">Crédito (fecha)</SelectItem>
+                                        {paymentTerms.map((term) => (
+                                          <SelectItem key={term.id} value={term.id}>
+                                            {term.name} ({term.days} días)
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Define si el gasto queda con vencimiento o se manejará manualmente.
+                                    </p>
+                                  </div>
+                                  <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                    <Label className="text-xs text-muted-foreground mb-1.5 block">Vencimiento</Label>
+                                    <DatePickerInput
+                                      value={defaultDueDate || ''}
+                                      onChange={(date) =>
+                                        setDueDateOverrides(prev => ({ ...prev, [document.folio]: date }))
+                                      }
+                                      className="w-full"
+                                    />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Puedes ajustarlo si el XML no trae una fecha correcta.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-border/70 bg-background/70 px-3 py-2 text-sm text-muted-foreground">
+                                Vista resumida. Abre los detalles solo si necesitas editar la descripción o la fecha de vencimiento.
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -1368,13 +1407,24 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </Card>
               )}
 
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 3</p>
+                <p className="mt-1 font-medium text-foreground">Confirma la carga</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Revisa el resumen antes de confirmar. Los documentos ya registrados normalmente no requieren cambios adicionales.
+                </p>
+              </div>
+
               {/* Actions */}
               <div className="flex items-center justify-between border-t pt-4">
-                <p className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {selectedDocuments.size > 0 && (
-                    <span>{selectedDocuments.size} documento(s) · <strong>${selectedTotal.toLocaleString('es-CL')}</strong></span>
+                    <div className="space-y-1">
+                      <span className="block">{selectedDocuments.size} documento(s) seleccionados</span>
+                      <span className="block">Total seleccionado: ${selectedTotal.toLocaleString('es-CL')}</span>
+                    </div>
                   )}
-                </p>
+                </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={reset} disabled={isUploading}>
                     Cancelar
@@ -1388,7 +1438,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     ) : (
                       <Database className="h-4 w-4 mr-2" />
                     )}
-                    Cargar {selectedDocuments.size} Gastos
+                    Confirmar carga
+                    {selectedDocuments.size > 0 && ` (${selectedDocuments.size})`}
                   </Button>
                 </div>
               </div>
