@@ -21,9 +21,10 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
+import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestion';
 import { cn } from '@/lib/utils';
 import { findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
@@ -49,6 +50,158 @@ interface MatchedCost {
   supplier_payment_id: string | null;
   has_invoice: boolean;
 }
+
+type HistoricalGlosaCandidate = {
+  supplier_id: string;
+  description: string | null;
+  amount: number | null;
+  date?: string | null;
+  created_at?: string | null;
+};
+
+type HistoricalGlosaSuggestion = {
+  description: string;
+  matchCount: number;
+  confidence: number;
+};
+
+const GLOSA_STOP_WORDS = new Set([
+  'de', 'la', 'el', 'en', 'los', 'las', 'del', 'por', 'con', 'para', 'una', 'uno', 'que', 'mas', 'más',
+  'folio', 'factura', 'total', 'neto', 'iva', 'documento',
+]);
+
+const normalizeGlosaText = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const tokenizeGlosaText = (text: string) =>
+  normalizeGlosaText(text)
+    .split(' ')
+    .filter(token => token.length >= 3 && !GLOSA_STOP_WORDS.has(token) && !/^\d+$/.test(token));
+
+const extractDocumentSimilarityText = (doc: XMLDocumentData) => {
+  const itemDescriptions = (doc.items || [])
+    .map(item => item.description?.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  return [doc.description, itemDescriptions, doc.document_type]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+};
+
+const isSimilarAmount = (left?: number | null, right?: number | null) => {
+  if (!left || !right || !isFinite(left) || !isFinite(right) || left <= 0 || right <= 0) return false;
+  const ratio = Math.abs(left - right) / Math.max(left, right);
+  return ratio <= 0.08;
+};
+
+const buildHistoricalGlosaSuggestion = (
+  doc: XMLDocumentData,
+  historicalRecords: HistoricalGlosaCandidate[]
+): HistoricalGlosaSuggestion | null => {
+  if (historicalRecords.length === 0) return null;
+
+  const keywords = tokenizeGlosaText(extractDocumentSimilarityText(doc));
+  if (keywords.length === 0) return null;
+
+  const groups = new Map<string, { description: string; totalScore: number; count: number }>();
+  const frequentDescriptions = new Map<string, { description: string; count: number }>();
+
+  for (const record of historicalRecords) {
+    const candidateDescription = record.description?.trim();
+    if (!candidateDescription) continue;
+
+    const normalizedDescription = normalizeGlosaText(candidateDescription);
+    const frequentEntry = frequentDescriptions.get(normalizedDescription);
+    if (frequentEntry) {
+      frequentEntry.count += 1;
+    } else {
+      frequentDescriptions.set(normalizedDescription, {
+        description: candidateDescription,
+        count: 1,
+      });
+    }
+
+    const candidateTokens = tokenizeGlosaText(candidateDescription);
+    if (candidateTokens.length === 0) continue;
+
+    const overlap = keywords.filter(keyword =>
+      candidateTokens.some(token => token.includes(keyword) || keyword.includes(token))
+    );
+
+    const keywordScore = overlap.length / keywords.length;
+    const amountBonus = isSimilarAmount(doc.total_amount, Number(record.amount || 0)) ? 0.2 : 0;
+    const totalScore = Math.min(1, keywordScore + amountBonus);
+
+    if (overlap.length === 0 || totalScore < 0.45) continue;
+
+    const existing = groups.get(normalizedDescription);
+    if (existing) {
+      existing.totalScore += totalScore;
+      existing.count += 1;
+    } else {
+      groups.set(normalizedDescription, {
+        description: candidateDescription,
+        totalScore,
+        count: 1,
+      });
+    }
+  }
+
+  let best: { description: string; totalScore: number; count: number } | null = null;
+  for (const group of groups.values()) {
+    if (!best || group.count > best.count || (group.count === best.count && group.totalScore > best.totalScore)) {
+      best = group;
+    }
+  }
+
+  if (!best) return null;
+
+  const confidence = best.totalScore / best.count;
+  if (best.count < 2 && confidence < 0.72) {
+    let fallback: { description: string; count: number } | null = null;
+    for (const entry of frequentDescriptions.values()) {
+      if (!fallback || entry.count > fallback.count) {
+        fallback = entry;
+      }
+    }
+
+    if (!fallback) return null;
+
+    const hasSimilarAmount = historicalRecords.some(record =>
+      normalizeGlosaText(record.description || '') === normalizeGlosaText(fallback.description) &&
+      isSimilarAmount(doc.total_amount, Number(record.amount || 0))
+    );
+
+    if (fallback.count >= 2 && hasSimilarAmount) {
+      return {
+        description: fallback.description,
+        matchCount: fallback.count,
+        confidence: 0.62,
+      };
+    }
+
+    return null;
+  }
+
+  if (best.count >= 2 && confidence < 0.5) return null;
+
+  return {
+    description: best.description,
+    matchCount: best.count,
+    confidence,
+  };
+};
+
+const getDocumentStateKey = (doc: Pick<XMLDocumentData, 'supplier_rut' | 'folio'>) =>
+  `${doc.supplier_rut || 'sin-rut'}::${doc.folio || 'sin-folio'}`;
 
 // Inline subcategory select that fetches its own data
 const SupplierSubcategorySelect: React.FC<{
@@ -103,6 +256,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
   const [expandedDocumentDetails, setExpandedDocumentDetails] = useState<Record<string, boolean>>({});
+  const [historicalGlosaSuggestions, setHistoricalGlosaSuggestions] = useState<Record<string, HistoricalGlosaSuggestion>>({});
   const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
@@ -129,6 +283,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const resolveCategoryId = (rawCategory?: string | null) => {
+    const normalized = rawCategory?.trim();
+    if (!normalized) return '';
+    const directMatch = activeCategories.find(category => category.id === normalized);
+    if (directMatch) return directMatch.id;
+    const nameMatch = activeCategories.find(category => category.name === normalized || category.label === normalized);
+    return nameMatch?.id || normalized;
+  };
 
   const {
     selectedFile,
@@ -147,6 +309,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setSelectedDocuments(new Set());
       setDocumentDescriptionOverrides({});
       setExpandedDocumentDetails({});
+      setHistoricalGlosaSuggestions({});
     },
     onParsed: initAfterParse,
   });
@@ -159,14 +322,15 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     documents.forEach((doc) => {
       if (doc.supplier_rut !== supplierRut) return;
       if (!doc.issue_date) return;
+      const documentKey = getDocumentStateKey(doc);
       if (condition === 'credit') {
-        if (creditDate) nextOverrides[doc.folio] = creditDate;
+        if (creditDate) nextOverrides[documentKey] = creditDate;
         return;
       }
       const term = paymentTerms.find(t => t.id === condition);
       if (term) {
         const issueDate = safeParseDateOnly(doc.issue_date);
-        nextOverrides[doc.folio] = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+        nextOverrides[documentKey] = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
       }
     });
     setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
@@ -176,16 +340,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
     // Pre-select all valid suppliers and documents
       const validSuppliers = new Set(uniqueSuppliers.filter(s => s.name && s.rut).map(s => s.rut));
-      const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(d => d.folio));
+      const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(getDocumentStateKey));
       setSelectedSuppliers(validSuppliers);
       setSelectedDocuments(validDocuments);
 
-      // Initialize category mapping
+      // Initialize category/subcategory mapping from parsed XML first;
+      // later we overwrite with stored supplier defaults when available.
       const categoryMap: Record<string, string> = {};
+      const subcategoryMap: Record<string, string> = {};
+      const nextHistoricalGlosaSuggestions: Record<string, HistoricalGlosaSuggestion> = {};
       uniqueSuppliers.forEach(supplier => {
-        categoryMap[supplier.rut] = supplier.category;
+        const parsedSubcategory = (supplier as any).subcategory?.trim();
+        categoryMap[supplier.rut] = supplier.category || 'otros';
+        if (parsedSubcategory) {
+          subcategoryMap[supplier.rut] = parsedSubcategory;
+        }
       });
-      setSupplierCategoryMapping(categoryMap);
       
       const initialSupplierCondition: Record<string, 'none' | 'credit' | string> = {};
       const initialSupplierCreditDate: Record<string, string> = {};
@@ -194,11 +364,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         if (supplierRuts.length > 0) {
           const { data, error } = await (supabase as any)
             .from('inventory_suppliers')
-            .select('rut, default_payment_term_id, credit_date')
+            .select('id, rut, category, subcategory, default_payment_term_id, credit_date')
             .in('rut', supplierRuts);
           if (!error && Array.isArray(data)) {
             data.forEach((row: any) => {
               if (!row?.rut) return;
+              if (row.category) {
+                categoryMap[row.rut] = row.category;
+              }
+              if (row.subcategory?.trim()) {
+                subcategoryMap[row.rut] = row.subcategory.trim();
+              }
               if (row.credit_date) {
                 initialSupplierCondition[row.rut] = 'credit';
                 initialSupplierCreditDate[row.rut] = row.credit_date;
@@ -208,6 +384,65 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 initialSupplierCondition[row.rut] = 'none';
               }
             });
+
+            const supplierRowsWithId = data.filter((row: any) => row?.id && row?.rut);
+            const supplierIdByRut = new Map<string, string>();
+            supplierRowsWithId.forEach((row: any) => {
+              supplierIdByRut.set(row.rut, row.id);
+            });
+
+            const supplierIds = supplierRowsWithId.map((row: any) => row.id);
+            if (supplierIds.length > 0) {
+              const [
+                { data: historicalPayments, error: paymentHistoryError },
+                { data: historicalCosts, error: historyError },
+              ] = await Promise.all([
+                (supabase as any)
+                  .from('supplier_payments')
+                  .select('supplier_id, description, amount, due_date, created_at')
+                  .in('supplier_id', supplierIds)
+                  .not('description', 'is', null)
+                  .order('due_date', { ascending: false })
+                  .limit(500),
+                (supabase as any)
+                  .from('costs')
+                  .select('supplier_id, description, amount, date, created_at')
+                  .in('supplier_id', supplierIds)
+                  .not('description', 'is', null)
+                  .order('date', { ascending: false })
+                  .limit(500),
+              ]);
+
+              if ((!paymentHistoryError || !historyError) && (Array.isArray(historicalPayments) || Array.isArray(historicalCosts))) {
+                const recordsBySupplierId = new Map<string, HistoricalGlosaCandidate[]>();
+                const combinedHistory: HistoricalGlosaCandidate[] = [
+                  ...((historicalPayments || []).map((row: any) => ({
+                    supplier_id: row.supplier_id,
+                    description: row.description,
+                    amount: row.amount,
+                    date: row.due_date,
+                    created_at: row.created_at,
+                  })) as HistoricalGlosaCandidate[]),
+                  ...((historicalCosts || []) as HistoricalGlosaCandidate[]),
+                ];
+
+                combinedHistory.forEach((row: HistoricalGlosaCandidate) => {
+                  if (!row?.supplier_id) return;
+                  const existing = recordsBySupplierId.get(row.supplier_id) || [];
+                  existing.push(row);
+                  recordsBySupplierId.set(row.supplier_id, existing);
+                });
+
+                result.documents.forEach((doc) => {
+                  const supplierId = supplierIdByRut.get(doc.supplier_rut);
+                  if (!supplierId) return;
+                  const suggestion = buildHistoricalGlosaSuggestion(doc, recordsBySupplierId.get(supplierId) || []);
+                  if (suggestion) {
+                    nextHistoricalGlosaSuggestions[getDocumentStateKey(doc)] = suggestion;
+                  }
+                });
+              }
+            }
           }
         }
       } catch (error) {
@@ -216,8 +451,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       uniqueSuppliers.forEach(s => {
         if (!initialSupplierCondition[s.rut]) initialSupplierCondition[s.rut] = 'none';
       });
+      setSupplierCategoryMapping(categoryMap);
+      setSupplierSubcategoryMapping(subcategoryMap);
       setSupplierPaymentCondition(initialSupplierCondition);
       setSupplierCreditDate(initialSupplierCreditDate);
+      setHistoricalGlosaSuggestions(nextHistoricalGlosaSuggestions);
       
       // Initialize bulkDueDate from first document's issue_date + 30 days
       if (result.documents.length > 0 && result.documents[0].issue_date) {
@@ -232,7 +470,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       result.documents.forEach(doc => {
         if (doc.issue_date) {
           const issueDate = safeParseDateOnly(doc.issue_date);
-          initialDueOverrides[doc.folio] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
+          initialDueOverrides[getDocumentStateKey(doc)] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
         }
       });
       setDueDateOverrides(initialDueOverrides);
@@ -265,17 +503,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             // Auto-deseleccionar duplicados exactos por folio
             if (duplicates.length > 0) {
               const exactDuplicates = duplicates.filter(d => d.matchType === 'exact_folio');
+              const similarDuplicates = duplicates.filter(d => d.matchType === 'similar');
               if (exactDuplicates.length > 0) {
                 const newSelection = new Set(validDocuments);
                 exactDuplicates.forEach(d => {
                   const doc = result.documents[d.index];
-                  if (doc) newSelection.delete(doc.folio);
+                  if (doc) newSelection.delete(getDocumentStateKey(doc));
                 });
                 setSelectedDocuments(newSelection);
                 setShowDuplicateWarning(true);
-                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. ${exactDuplicates.length} por folio fueron deseleccionados.`);
-              } else {
-                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. Revísalos antes de importar.`);
+                toast.warning(
+                  `Se detectaron ${exactDuplicates.length} duplicados reales y ${similarDuplicates.length} coincidencias similares. Los duplicados por folio fueron deseleccionados para revisión.`
+                );
+              } else if (similarDuplicates.length > 0) {
+                toast.info(
+                  `Se encontraron ${similarDuplicates.length} coincidencias similares para revisar. No se marcó este XML como duplicado ni se deseleccionó automáticamente.`
+                );
               }
             }
           } catch (dupError) {
@@ -309,10 +552,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               });
               
               if (!error && data && data.length > 0) {
-                matches[doc.folio] = data as MatchedCost[];
                 // Auto-select exact match (same amount)
                 const exactMatch = data.find((m: any) => Math.abs(m.amount - doc.total_amount) < 1);
-                decisions[doc.folio] = exactMatch ? (exactMatch as any).id : 'new';
+                const documentKey = getDocumentStateKey(doc);
+                matches[documentKey] = data as MatchedCost[];
+                decisions[documentKey] = exactMatch ? (exactMatch as any).id : 'new';
               }
             }
             
@@ -365,8 +609,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     return typeLabel || 'Factura';
   };
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
-    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, doc.folio);
-    const override = hasOverride ? documentDescriptionOverrides[doc.folio] : undefined;
+    const documentKey = getDocumentStateKey(doc);
+    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
+    const override = hasOverride ? documentDescriptionOverrides[documentKey] : undefined;
     const value = (override ?? buildSuggestedGlosa(doc)).trim();
     return value.length > 0 ? value : buildSuggestedGlosa(doc);
   };
@@ -418,7 +663,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               await new Promise<void>((resolve, reject) => {
                 createSupplier({
                   ...supplier,
-                  category: supplierCategoryMapping[supplier.rut] || supplier.category
+                  category: resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category),
+                  subcategory: (supplierSubcategoryMapping[supplier.rut] || '').trim() || undefined,
                 }, {
                   onSuccess: newSupplier => {
                     createdSupplierMap.set(supplier.rut, newSupplier.id);
@@ -449,7 +695,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           const mappedId = createdSupplierMap.get(supplier.rut);
           if (mappedId) {
             const condition = getSupplierCondition(supplier.rut);
-            const updateData: Record<string, any> = {};
+            const updateData: Record<string, any> = {
+              category: resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category || 'otros'),
+              subcategory: (supplierSubcategoryMapping[supplier.rut] || '').trim() || null,
+            };
             if (condition === 'credit') {
               updateData.credit_date = supplierCreditDate[supplier.rut] || null;
               updateData.default_payment_term_id = null;
@@ -483,7 +732,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       if (createPayments) {
         const parser = new XMLSupplierParser();
         const paymentsData = parser.convertDocumentsToPayments(
-          parseResult.documents.filter(d => selectedDocuments.has(d.folio)), 
+          parseResult.documents.filter(d => selectedDocuments.has(getDocumentStateKey(d))), 
           parseResult.suppliers,
           dueDateOverrides
         );
@@ -512,9 +761,15 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             
             // Determinar status y fecha de pago
             const docFolio = paymentData.reference_number || '';
-            const status = statusOverrides[docFolio] || 'pending';
+            const originalDoc = parseResult.documents.find(
+              d => d.folio === docFolio && d.supplier_rut === paymentData.supplier_rut
+            );
+            const documentKey = originalDoc
+              ? getDocumentStateKey(originalDoc)
+              : `${paymentData.supplier_rut || 'sin-rut'}::${docFolio || 'sin-folio'}`;
+            const status = statusOverrides[documentKey] || 'pending';
             const paidDate = status === 'paid' 
-              ? paidDateOverrides[docFolio] || format(new Date(), 'yyyy-MM-dd')
+              ? paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd')
               : undefined;
             
             // Recalcular due_date si no viene override, según condición del proveedor
@@ -524,7 +779,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               if (condition === 'credit') {
                 finalDueDate = supplierCreditDate[paymentData.supplier_rut] || finalDueDate;
               } else if (condition !== 'none') {
-                const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
                 if (originalDoc?.issue_date) {
                   const term = paymentTerms.find(t => t.id === condition);
                   if (term) {
@@ -554,10 +808,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             }
 
             // Check if user chose to link to existing cost
-            const linkCostId = linkDecisions[docFolio];
+            const linkCostId = linkDecisions[documentKey];
             if (linkCostId && linkCostId !== 'new') {
               // Find the original document data
-              const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
               if (originalDoc) {
                 await linkInvoiceMutation.mutateAsync({
                   costId: linkCostId,
@@ -582,7 +835,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               continue;
             }
 
-            const duplicateInfo = docFolio ? getDuplicateInfoByFolio(docFolio) : undefined;
+            const duplicateInfo = originalDoc ? getDuplicateInfoForDocument(originalDoc) : undefined;
 
             // If the folio already exists (exact match), never create a new row.
             // If user is importing as paid, update the existing payment to paid.
@@ -612,13 +865,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             }
             
             // Resolve category name to UUID for DB storage
-            const catName = supplierCategoryMapping[paymentData.supplier_rut] || paymentData.category;
-            const catObj = activeCategories?.find(c => c.name === catName);
-            const categoryId = catObj?.id || paymentData.category;
+            const categoryId = resolveCategoryId(supplierCategoryMapping[paymentData.supplier_rut] || paymentData.category) || paymentData.category;
             const subcatName = supplierSubcategoryMapping[paymentData.supplier_rut] || null;
 
             const effectiveDescription = (() => {
-              const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
               return originalDoc ? getEffectiveGlosa(originalDoc) : paymentData.description;
             })();
 
@@ -712,13 +962,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       return newSet;
     });
   };
-  const toggleDocumentSelection = (documentFolio: string) => {
+  const toggleDocumentSelection = (documentKey: string) => {
     setSelectedDocuments(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(documentFolio)) {
-        newSet.delete(documentFolio);
+      if (newSet.has(documentKey)) {
+        newSet.delete(documentKey);
       } else {
-        newSet.add(documentFolio);
+        newSet.add(documentKey);
       }
       return newSet;
     });
@@ -742,21 +992,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setShowDuplicateWarning(false);
     setMatchedCosts({});
     setLinkDecisions({});
+    setHistoricalGlosaSuggestions({});
   };
   
-  // Helper para obtener info de duplicado por folio
-  const getDuplicateInfoByFolio = (folio: string): SupplierInvoiceDuplicateResult | undefined => {
+  // Helper para obtener info de duplicado por documento
+  const getDuplicateInfoForDocument = (document: XMLDocumentData): SupplierInvoiceDuplicateResult | undefined => {
     return duplicateResults.find(d => {
       const doc = parseResult?.documents[d.index];
-      return doc?.folio === folio;
+      return !!doc && getDocumentStateKey(doc) === getDocumentStateKey(document);
     });
   };
 
-  const handleDueDateChange = (documentFolio: string, date: Date | undefined) => {
+  const handleDueDateChange = (documentKey: string, date: Date | undefined) => {
     if (date) {
       setDueDateOverrides(prev => ({
         ...prev,
-        [documentFolio]: format(date, 'yyyy-MM-dd')
+        [documentKey]: format(date, 'yyyy-MM-dd')
       }));
     }
   };
@@ -766,9 +1017,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     const daysToAdd = defaultDaysToAdd;
     const newOverrides: Record<string, string> = {};
     parseResult.documents.forEach(doc => {
-      if (selectedDocuments.has(doc.folio) && doc.issue_date) {
+      const documentKey = getDocumentStateKey(doc);
+      if (selectedDocuments.has(documentKey) && doc.issue_date) {
         const issueDate = safeParseDateOnly(doc.issue_date);
-        newOverrides[doc.folio] = format(addDays(issueDate, daysToAdd), 'yyyy-MM-dd');
+        newOverrides[documentKey] = format(addDays(issueDate, daysToAdd), 'yyyy-MM-dd');
       }
     });
     setDueDateOverrides(newOverrides);
@@ -826,7 +1078,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   {
                     title: 'Total Montos',
                     value: `$${parseResult.documents
-                      .filter(d => selectedDocuments.has(d.folio))
+                      .filter(d => selectedDocuments.has(getDocumentStateKey(d)))
                       .reduce((sum, d) => sum + d.total_amount, 0)
                       .toLocaleString('es-CL')}`,
                     icon: DollarSign,
@@ -856,7 +1108,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                   <ShieldAlert className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
-                    <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados de facturas.</strong>
+                    <strong>⚠️ Se detectaron coincidencias que requieren revisión.</strong>
                     <span className="ml-2">
                       {duplicateResults.filter(d => d.matchType === 'exact_folio').length > 0 && (
                         <Badge variant="destructive" className="mr-2">
@@ -868,6 +1120,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                           {duplicateResults.filter(d => d.matchType === 'similar').length} similares
                         </Badge>
                       )}
+                    </span>
+                    <span className="ml-2 text-sm">
+                      Solo los duplicados por folio se deseleccionan automáticamente. Las coincidencias similares son solo referencia.
                     </span>
                     <Button 
                       variant="ghost" 
@@ -1013,13 +1268,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             )}
                             <div>
                               <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría del gasto</Label>
-                              <Select value={supplierCategoryMapping[supplier.rut] || supplier.category} onValueChange={value => handleCategoryChange(supplier.rut, value)}>
+                              <Select value={resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category)} onValueChange={value => handleCategoryChange(supplier.rut, value)}>
                                 <SelectTrigger className="w-full">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {activeCategories?.map(category => <SelectItem key={category.id} value={category.name}>
-                                      {getCategoryLabel(activeCategories, category.name)}
+                                  {activeCategories?.map(category => <SelectItem key={category.id} value={category.id}>
+                                      {getCategoryLabel(activeCategories, category.id)}
                                     </SelectItem>)}
                                 </SelectContent>
                               </Select>
@@ -1029,14 +1284,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             </div>
                             {/* Subcategory Select */}
                             {(() => {
-                              const catName = supplierCategoryMapping[supplier.rut] || supplier.category;
-                              const catObj = activeCategories?.find(c => c.name === catName);
-                              if (!catObj) return null;
+                              const categoryId = resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category);
+                              if (!categoryId) return null;
                               return (
                                 <div>
                                   <Label className="text-xs text-muted-foreground mb-1.5 block">Subcategoría</Label>
                                   <SupplierSubcategorySelect
-                                    categoryId={catObj.id}
+                                    categoryId={categoryId}
                                     value={supplierSubcategoryMapping[supplier.rut] || ''}
                                     onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
                                   />
@@ -1068,7 +1322,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   <CardContent>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {parseResult.documents.map((document, index) => {
-                        const defaultDueDate = dueDateOverrides[document.folio] ||
+                        const documentKey = getDocumentStateKey(document);
+                        const defaultDueDate = dueDateOverrides[documentKey] ||
                           document.due_date ||
                           (() => {
                             const date = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd'));
@@ -1076,14 +1331,25 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             return format(date, 'yyyy-MM-dd');
                           })();
 
-                        const duplicateInfo = getDuplicateInfoByFolio(document.folio);
+                        const duplicateInfo = getDuplicateInfoForDocument(document);
                         const isDuplicate = !!duplicateInfo;
                         const isExactDuplicate = duplicateInfo?.matchType === 'exact_folio';
 
-                        const costsForDoc = matchedCosts[document.folio] || [];
+                        const costsForDoc = matchedCosts[documentKey] || [];
                         const hasMatches = costsForDoc.length > 0;
-                        const currentDecision = linkDecisions[document.folio] || 'new';
-                        const showDetails = expandedDocumentDetails[document.folio] ?? !isExactDuplicate;
+                        const currentDecision = linkDecisions[documentKey] || 'new';
+                        const showDetails = expandedDocumentDetails[documentKey] ?? !isExactDuplicate;
+                        const hasDescriptionOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
+                        const descriptionValue = hasDescriptionOverride
+                          ? documentDescriptionOverrides[documentKey]
+                          : buildSuggestedGlosa(document);
+                        const historicalSuggestion = historicalGlosaSuggestions[documentKey];
+                        const appliedHistoricalSuggestionDescription = historicalSuggestion
+                          ? applyCurrentDocumentFolioToSuggestion(historicalSuggestion.description, document)
+                          : '';
+                        const shouldShowHistoricalSuggestion =
+                          !!historicalSuggestion &&
+                          normalizeGlosaText(appliedHistoricalSuggestionDescription) !== normalizeGlosaText(descriptionValue);
                         const statusMeta = hasMatches && currentDecision !== 'new'
                           ? {
                               label: 'Vinculado a costo',
@@ -1128,7 +1394,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 <span className="font-medium">🔗 Costo encontrado:</span>
                                 <Select
                                   value={currentDecision}
-                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [document.folio]: val }))}
+                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [documentKey]: val }))}
                                 >
                                   <SelectTrigger className="h-7 min-w-[200px] flex-1 bg-background text-xs">
                                     <SelectValue />
@@ -1166,12 +1432,12 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex min-w-0 flex-1 items-start space-x-3">
                                 <Checkbox
-                                  checked={selectedDocuments.has(document.folio)}
+                                  checked={selectedDocuments.has(documentKey)}
                                   onCheckedChange={checked => {
                                     if (checked === true) {
-                                      toggleDocumentSelection(document.folio);
+                                      toggleDocumentSelection(documentKey);
                                     } else if (checked === false) {
-                                      toggleDocumentSelection(document.folio);
+                                      toggleDocumentSelection(documentKey);
                                     }
                                   }}
                                 />
@@ -1204,7 +1470,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 px-2 text-xs"
-                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [document.folio]: !showDetails }))}
+                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [documentKey]: !showDetails }))}
                                 >
                                   {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
                                   {showDetails ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
@@ -1217,10 +1483,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 <div>
                                   <Label className="mb-1.5 block text-xs text-muted-foreground">Descripción que se guardará</Label>
                                   <Textarea
-                                    value={Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio)
-                                      ? documentDescriptionOverrides[document.folio]
-                                      : buildSuggestedGlosa(document)}
-                                    onChange={(e) => setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))}
+                                    value={descriptionValue}
+                                    onChange={(e) => setDocumentDescriptionOverrides(prev => ({ ...prev, [documentKey]: e.target.value }))}
                                     onInput={(e) => autoResizeTextarea(e.currentTarget)}
                                     ref={(el) => autoResizeTextarea(el)}
                                     rows={3}
@@ -1229,6 +1493,41 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   <p className="mt-1 text-xs text-muted-foreground">
                                     Este texto se usará como descripción del pago o del vínculo con costos.
                                   </p>
+                                  {shouldShowHistoricalSuggestion && historicalSuggestion && (
+                                    <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm dark:border-violet-900/60 dark:bg-violet-950/20">
+                                      <div className="flex flex-wrap items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2 text-violet-800 dark:text-violet-200">
+                                            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                            <span className="font-medium">Glosa sugerida por historial</span>
+                                            <Badge variant="secondary" className="text-[11px]">
+                                              {historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}
+                                            </Badge>
+                                          </div>
+                                          <p className="mt-1 whitespace-pre-wrap break-words text-foreground">
+                                            {appliedHistoricalSuggestionDescription}
+                                          </p>
+                                          <p className="mt-1 text-xs text-muted-foreground">
+                                            Coincidencia estimada: {Math.round(historicalSuggestion.confidence * 100)}%
+                                          </p>
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8"
+                                          onClick={() =>
+                                            setDocumentDescriptionOverrides(prev => ({
+                                              ...prev,
+                                              [documentKey]: applyCurrentDocumentFolioToSuggestion(historicalSuggestion.description, document),
+                                            }))
+                                          }
+                                        >
+                                          Usar sugerencia
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="flex flex-wrap items-end gap-4">
@@ -1268,7 +1567,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     <Label className="mb-1.5 block text-xs text-muted-foreground">Vencimiento</Label>
                                     <DatePickerInput
                                       value={defaultDueDate || ''}
-                                      onChange={(date) => setDueDateOverrides(prev => ({ ...prev, [document.folio]: date }))}
+                                      onChange={(date) => setDueDateOverrides(prev => ({ ...prev, [documentKey]: date }))}
                                       className="w-full"
                                     />
                                     <p className="mt-1 text-xs text-muted-foreground">
@@ -1306,7 +1605,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       <span className="block">
                         Total seleccionado: $
                         {parseResult.documents
-                          .filter(d => selectedDocuments.has(d.folio))
+                          .filter(d => selectedDocuments.has(getDocumentStateKey(d)))
                           .reduce((sum, d) => sum + d.total_amount, 0)
                           .toLocaleString('es-CL')}
                       </span>

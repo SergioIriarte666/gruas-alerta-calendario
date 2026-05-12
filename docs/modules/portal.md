@@ -1,94 +1,79 @@
 # portal
 
 ## Resumen
-Módulo de **portal cliente** (rol `client`) para autogestión:
-- ver servicios asociados,
-- solicitar un servicio,
-- revisar facturas.
+Modulo de **portal cliente** para autoservicio de servicios, solicitud de nuevos trabajos y consulta documental limitada.
 
-**Entrypoints**
+La implementacion actual gira principalmente en torno a servicios. La ruta de facturas existe, pero su navegacion esta oculta en el menu y la descarga no aparece como flujo plenamente operativo.
+
+## Entrypoints vigentes
 - Layout: [PortalLayout](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/portal/layout/PortalLayout.tsx)
-- Páginas: [src/pages/portal](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/portal)
+- Paginas: [src/pages/portal](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/portal)
 - Componentes: [src/components/portal](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/portal)
 
-## Arquitectura y componentes
-- Acceso restringido con `ProtectedRoute requireRole="client"` (ver [App.tsx](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/App.tsx#L195-L205)).
-- Layout propio (header/sidebar) para experiencia simplificada.
-- Hooks dedicados en `src/hooks/portal/*` para cargar datos del cliente y acciones (solicitud de servicio).
-
-## API expuesta
-
-### Rutas (frontend)
-- `/portal` (dashboard)
+## Rutas
+- `/portal/dashboard`
 - `/portal/services`
 - `/portal/request-service`
 - `/portal/invoices`
 
-### Operaciones Supabase (tablas/RPC típicas)
-- `clients` (identificación del cliente actual)
-- `services` (servicios del cliente)
-- `invoices`, `invoice_services`, `payments` (facturación/pagos visibles al cliente)
-- `saved_locations` (ubicaciones guardadas, si se usan en solicitud)
+Notas relevantes:
+- `/portal/invoices` existe como ruta, pero hoy su acceso no esta visible en el sidebar.
+- La descarga de facturas en la vista portal no debe documentarse como flujo plenamente resuelto sin aclaracion.
 
-RPC típicas para seguridad:
-- `get_user_client_id_safe` / `get_client_id_for_user` (según implementación)
+## Arquitectura actual
+La experiencia del portal se apoya en:
 
-## Especificación de uso (con ejemplos)
+- `PortalLayout`
+- `PortalDashboard`
+- `PortalServices`
+- `PortalRequestService`
+- `PortalInvoices`
+- hooks en `src/hooks/portal/*`
 
-### Obtener clientId del usuario autenticado (RPC)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+El dashboard actual esta centrado en metricas de servicios; no funciona como un centro financiero amplio.
 
-const { data: clientId } = await supabase.rpc('get_user_client_id_safe')
-```
+## Hooks y servicios clave
+- `useClientServices`
+- `useClientInvoices`
+- `useServiceRequest`
+- `useServiceTypesForPortal`
 
-### Consultar servicios del cliente
-```ts
-const { data } = await supabase
-  .from('services')
-  .select('id, folio, status, date')
-  .eq('client_id', clientId)
-  .order('date', { ascending: false })
-```
+Dependencia transversal:
+- `UserContext` para resolver `client_id` del usuario autenticado
 
-## Dependencias
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `react-hook-form`, `zod` (solicitud de servicio)
-- `date-fns`
-- `lucide-react`, `sonner`
+- `services`
+- `invoices`
+- `clients`
+- tipos de servicio y campos relacionados
 
-### Internas (principales)
-- `@/components/ui/*`
-- `@/hooks/portal/*`
-- `@/integrations/supabase/client`
-- `@/contexts/UserContext` (perfil/rol) y `@/contexts/AuthContext`
+Nota importante:
+- El frontend actual resuelve el cliente desde `user.client_id` en contexto, no mediante RPC como flujo principal.
 
-## Configuración requerida
-- RLS estricta por `client_id`.
-- Mapeo usuario→cliente consistente (perfil/tabla `profiles`, relación en `clients` o RPC).
+## Flujos vigentes
 
-## Casos de uso principales
-- Cliente revisa estado de sus servicios.
-- Cliente solicita un nuevo servicio (creación de registro o “request” según modelo).
-- Cliente revisa facturas y estatus de pago.
+### 1. Dashboard del cliente
+- Hoy se centra en metricas y actividad de servicios.
+- No debe documentarse como dashboard financiero completo.
 
-## Diagramas
+### 2. Consulta de servicios
+- La vista soporta filtros por rango de fechas.
+- Puede alternar entre vista tabla y grid.
+- Incluye exportacion PDF y Excel.
 
-```mermaid
-flowchart TD
-  UI[Portal UI] --> SB[Supabase]
-  SB --> C[(clients)]
-  SB --> S[(services)]
-  SB --> I[(invoices)]
-  SB --> P[(payments)]
-```
+### 3. Solicitud de servicio
+- El formulario es dinamico segun el tipo de servicio.
+- Puede exigir o mostrar campos como patente, marca o modelo segun configuracion.
+- El flujo actual inserta directamente en `services` con estado `pending`, sin crear una entidad separada de request.
 
-## Rendimiento
-- Consultas deben estar filtradas por `client_id` y con columnas explícitas.
-- Evitar traer historiales largos en una sola vista; paginar facturas/servicios.
+### 4. Facturas en portal
+- La ruta existe y lista documentos.
+- La navegacion esta oculta en el menu actual.
+- La descarga no debe asumirse como totalmente operativa sin revisar la UI vigente.
 
-## Seguridad
-- Nunca confiar en `clientId` calculado en frontend: validar con RLS/RPC en DB.
-- Proteger PII y documentos (si se adjuntan) con políticas de storage.
+## Consideraciones de mantenimiento
+- Documentar el cliente actual desde `UserContext` y `profiles.client_id`, no desde RPC aspiracionales.
+- Revisar con cuidado la seguridad del flujo de facturas del portal cuando se actualice esta documentacion.
+- Aclarar siempre si una capacidad esta presente como ruta existente o como flujo realmente visible en la navegacion.

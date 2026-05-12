@@ -150,6 +150,7 @@ export interface XMLSupplierData {
   address: string;
   contact_name: string;
   category: string;
+  subcategory?: string;
   notes?: string;
   is_active: boolean;
 }

@@ -25,7 +25,7 @@ export class XMLCostParser {
 
   public parseXMLString(xmlString: string): XMLParseResult {
     try {
-      const doc = this.parser.parseFromString(xmlString, 'text/xml');
+      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
       
       // Verificar errores de parsing
       const parseError = doc.querySelector('parsererror');
@@ -170,7 +170,7 @@ export class XMLCostParser {
     let node = walker.nextNode();
     while (node) {
       const element = node as Element;
-      if (element.children.length === 0 && element.textContent?.trim()) {
+      if (element.children.length === 0 && this.cleanExtractedText(element.textContent)) {
         fieldNames.add(element.tagName);
       }
       node = walker.nextNode();
@@ -223,7 +223,7 @@ export class XMLCostParser {
         }
         
         if (element) {
-          let value = element.textContent?.trim() || '';
+          let value = this.cleanExtractedText(element.textContent);
           
           if (fieldMapping.transform) {
             try {
@@ -269,7 +269,7 @@ export class XMLCostParser {
     if (!costData.descripcion && costData.proveedor) {
       const giroEmis = this.getNestedElement(documentElement, 'Encabezado/Emisor/GiroEmis');
       if (giroEmis) {
-        costData.descripcion = giroEmis.textContent?.trim() || costData.proveedor;
+        costData.descripcion = this.cleanExtractedText(giroEmis.textContent) || costData.proveedor;
       } else {
         costData.descripcion = costData.proveedor;
       }
@@ -283,7 +283,7 @@ export class XMLCostParser {
     // Agregar información adicional del DTE
     const tipoDTE = this.getNestedElement(documentElement, 'Encabezado/IdDoc/TipoDTE');
     if (tipoDTE) {
-      const tipo = tipoDTE.textContent?.trim();
+      const tipo = this.cleanExtractedText(tipoDTE.textContent);
       if (tipo === '33') costData.notas = 'Factura Electrónica';
       else if (tipo === '34') costData.notas = 'Factura Exenta';
       else if (tipo === '39') costData.notas = 'Boleta Electrónica';
@@ -357,12 +357,84 @@ export class XMLCostParser {
     );
   }
 
-  private readFileAsText(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = (e) => reject(new Error('Error leyendo archivo'));
-      reader.readAsText(file, 'utf-8');
+  private stripNamespaces(xml: string): string {
+    return xml.replace(/\sxmlns(:\w+)?="[^"]*"/g, '');
+  }
+
+  private cleanExtractedText(value?: string | null): string {
+    return (value || '')
+      .replace(/\uFFFD+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private sanitizeDecodedText(value: string): string {
+    return value.replace(/\u0000/g, '').replace(/\ufeff/g, '');
+  }
+
+  private countReplacementChars(value: string): number {
+    return (value.match(/\uFFFD/g) || []).length;
+  }
+
+  private normalizeEncodingLabel(rawEncoding?: string | null): string {
+    const normalized = rawEncoding?.trim().toLowerCase();
+    if (!normalized) return 'utf-8';
+
+    if (normalized === 'utf-8' || normalized === 'utf8') return 'utf-8';
+    if (normalized === 'iso-8859-1' || normalized === 'iso8859-1' || normalized === 'latin1' || normalized === 'latin-1') {
+      return 'windows-1252';
+    }
+    if (normalized === 'windows-1252' || normalized === 'cp1252') return 'windows-1252';
+
+    return normalized;
+  }
+
+  private decodeBytes(bytes: Uint8Array, encoding: string): string {
+    try {
+      return this.sanitizeDecodedText(new TextDecoder(encoding).decode(bytes));
+    } catch {
+      return this.sanitizeDecodedText(new TextDecoder('utf-8').decode(bytes));
+    }
+  }
+
+  private detectDeclaredEncoding(bytes: Uint8Array): string {
+    const header = new TextDecoder('utf-8').decode(bytes.slice(0, 256));
+    const match = header.match(/encoding=["']([^"']+)["']/i);
+    return this.normalizeEncodingLabel(match?.[1]);
+  }
+
+  private selectBestDecodedText(bytes: Uint8Array, preferredEncoding: string): string {
+    const candidateEncodings = Array.from(new Set([
+      preferredEncoding,
+      'utf-8',
+      'windows-1252',
+    ]));
+
+    let bestText = '';
+    let bestScore = Number.POSITIVE_INFINITY;
+    let bestPriority = Number.POSITIVE_INFINITY;
+
+    candidateEncodings.forEach((encoding, index) => {
+      const decodedText = this.decodeBytes(bytes, encoding);
+      const replacementCount = this.countReplacementChars(decodedText);
+      if (
+        replacementCount < bestScore ||
+        (replacementCount === bestScore && index < bestPriority)
+      ) {
+        bestText = decodedText;
+        bestScore = replacementCount;
+        bestPriority = index;
+      }
     });
+
+    return bestText;
+  }
+
+  private async readFileAsText(file: File): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    const declaredEncoding = this.detectDeclaredEncoding(bytes);
+    return this.selectBestDecodedText(bytes, declaredEncoding);
   }
 }

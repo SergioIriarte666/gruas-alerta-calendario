@@ -1,125 +1,100 @@
 # services
 
 ## Resumen
-Módulo central de operación para administrar **servicios** (creación, edición, seguimiento de estado, asignación de recursos, evidencias, costos asociados y relación con cierres/facturación).
+Modulo central de **servicios** para creacion, edicion, seguimiento operativo, asignacion de recursos, evidencia, costos asociados y relacion con cierres/facturacion.
 
-**Entrypoints**
-- Página: [Services](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Services.tsx)
+Aunque conceptualmente sigue siendo el nucleo del producto, la pagina actual es bastante mas rica que una simple tabla con formulario: incluye pipeline, operaciones batch, navegacion contextual y flujos de apertura desde otros modulos.
+
+## Entrypoints vigentes
+- Pagina: [Services](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Services.tsx)
 - Componentes: [src/components/services](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/services)
-- Hooks relacionados (no exhaustivo): `useServices`, `useServiceDetails`, `useServiceCosts`, `useServiceChangeHistory`, `useServiceLiberation`, `useUpdateServicesBatch`.
+- Hook orquestador de pagina: `useServicesPage`
 
-## Arquitectura y componentes
-
-### Capas internas
-- **UI**: tablas/listas, filtros avanzados, formularios paso a paso (`components/services/form/*`), modales de detalle/edición.
-- **Datos**: hooks con React Query que consultan Supabase (tablas y RPC) y normalizan errores.
-- **Consistencia**: acciones administrativas (cierres de emergencia, sincronización de comisiones) a través de RPC.
-
-### Componentes principales (referencia)
-- Listado/operación:
-  - `ServicesTable`, `ServicesPipelineView`, `ServicesMobileView`, `ServicesMetrics`, `ServicesHeader`.
-- Detalle y auditoría:
-  - `ServiceDetailsModal`, `ServiceChangeHistory`, `VehicleHistory`.
-- Formularios:
-  - `EnhancedServiceForm` + subcomponentes en `components/services/form/*`.
-- Carga masiva:
-  - `CSVUploadServices`, `EnhancedCSVUploadServices`.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/services`
 
-### Superficie pública (componentes)
-Ejemplos de imports:
-```tsx
-import { ServicesHeader } from '@/components/services/ServicesHeader'
-import { EnhancedServiceForm } from '@/components/services/EnhancedServiceForm'
-import { ServicesTable } from '@/components/services/ServicesTable'
-```
+## Arquitectura actual de la pagina
+La pagina real se apoya en:
 
-### Operaciones Supabase (tablas/RPC)
-Tablas típicamente involucradas:
-- `services` (entidad principal)
-- `service_costs`, `costs` (costos asociados)
-- `service_change_history` (auditoría)
-- `inspections` (inspección pre-servicio / post, según flujo)
-- `calendar_events` (eventos calendarizados del servicio)
-- `closure_services` y `invoice_services` (integración con cierres/facturas)
+- `ServicesHeader`
+- `ServiceFilters`
+- `ServicesTable`
+- `ServicesMobileView`
+- `ServicesPipelineView`
+- `ServicesDialogs`
+- `ServiceBatchActionBar`
+- `ServiceBatchUpdateModal`
+- `ServiceDeleteConfirmDialog`
+- `AppPagination`
 
-RPC detectadas en el módulo:
+Notas relevantes:
+- `useServicesPage` concentra gran parte del estado, filtros, apertura de dialogos y acciones batch.
+- `EnhancedCSVUploadServices` es el flujo de carga masiva actualmente conectado desde la UI principal.
+- `CSVUploadServices` puede existir en el repositorio, pero no es la superficie principal de `/services`.
+
+## Hooks y servicios clave
+- `useServicesPage`
+- `useServicesPendingExport`
+- `useServices`
+- `useServiceQueries`
+- `useServiceManager`
+- `useUpdateServicesBatch`
+
+Hooks o tooling secundarios:
+- `useServiceLiberation` no es el hook principal de la pagina `/services`; responde a tooling/admin complementario.
+
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
+
+- `services`
+- `service_resources`
+- relaciones con `clients`, `cranes`, `operators`
+- `costs`
+- `inspections`
+- `calendar_events`
+- `service_closures`
+- relaciones con facturacion como `invoice_services`
+
+RPC destacadas:
+
 - `emergency_close_service`
 - `force_commission_sync_for_service`
 
-Referencia del catálogo de tablas/RPC: [types.ts](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/integrations/supabase/types.ts).
+## Flujos vigentes
 
-## Especificación de uso (con ejemplos)
+### 1. Alta y edicion de servicio
+- Apertura desde dialogos coordinados por `ServicesDialogs`.
+- Puede recibir prefill por navegacion o duplicacion.
+- Se integra con clientes, gruas, operadores y costos.
 
-### Renderizar listado + abrir detalle
-```tsx
-import { ServicesTable } from '@/components/services/ServicesTable'
-import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal'
+### 2. Tabla, mobile y pipeline
+- La misma pagina soporta multiples vistas.
+- `ServicesPipelineView` es parte central de la experiencia actual.
+- Mobile y escritorio no son flujos separados a nivel de modulo; comparten estado central.
 
-// El patrón típico es mantener un estado local selectedServiceId y
-// delegar a hooks para cargar datos (react-query).
-```
+### 3. Flujos contextuales
+La pagina puede abrir o filtrarse desde:
 
-### Cerrar un servicio por emergencia (RPC)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+- query string como `status` o `future`
+- calendario
+- inventario mediante `?newSale=true`
+- navegacion con `location.state.prefilledData`
+- duplicacion de un servicio existente
 
-const { data, error } = await supabase.rpc('emergency_close_service', { p_service_id: serviceId })
-if (error) throw error
-```
+### 4. Operaciones batch
+- seleccion multiple
+- actualizacion batch
+- cierre masivo
+- exportacion de pendientes
+- borrado masivo con validacion reforzada por contrasena
+- restricciones segun estado o relacion con facturacion
 
-## Dependencias
+### 5. Detalle y auditoria
+- `ServiceDetailsModal` hoy integra mas que una vista basica.
+- Incluye historial de cambios, vehiculo e informacion relacionada.
+- Puede disparar sincronizacion silenciosa de comisiones.
 
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `date-fns`
-- `lodash` (debounce en formularios)
-- `lucide-react`
-- `sonner`
-
-### Internas (principales)
-- `@/integrations/supabase/client`
-- `@/hooks/*` (servicios/costos/inspecciones/historial)
-- `@/components/ui/*` (table, dialog, form, tabs, etc.)
-- `@/utils/*` (validaciones, helpers de estado, generación de folio/reportes)
-
-## Configuración requerida
-- Permisos:
-  - Acceso restringido por rol (admin/viewer) y opcionalmente por permisos de módulo (`user_module_permissions`).
-- Consistencia BD:
-  - Triggers/RPC relacionados a cambios de estado y facturación deben estar desplegados en Supabase.
-
-## Casos de uso principales
-- Registrar y dar seguimiento a un servicio operativo.
-- Asignar grúa/operador/recursos y gestionar cambios.
-- Adjuntar costos/consumos y evidencias.
-- Convertir/relacionar con cierres y facturación.
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Services UI] --> H[Hooks (react-query)]
-  H --> SB[Supabase]
-  SB --> SVC[(services)]
-  SB --> COST[(service_costs/costs)]
-  SB --> INS[(inspections)]
-  SB --> CAL[(calendar_events)]
-  SB --> RPC[RPC: emergency_close_service]
-  UI --> INV[invoices/closures modules]
-```
-
-## Rendimiento
-- Listados grandes: usar paginación/filtrado server-side; evitar `select('*')`.
-- Acciones masivas: preferir endpoints batch/RPC o actualizaciones por lotes controladas para evitar rate limits.
-- Cache: invalidar queries por clave (services, serviceDetails, metrics) tras mutaciones.
-
-## Seguridad
-- RLS: restringir `services` y tablas relacionadas por rol y/o por relación cliente/operador.
-- Auditoría: `service_change_history` debe registrar “qué cambió” sin incluir datos sensibles innecesarios.
-- Acciones críticas (cierres de emergencia, sincronización) deben validarse en RPC con `auth.uid()`/rol.
+## Consideraciones de mantenimiento
+- Si un cambio toca la pagina de servicios, revisar siempre `useServicesPage` antes de asumir que el estado vive en componentes sueltos.
+- Documentar por separado los flujos realmente montados en `/services` y tooling o componentes legacy.
+- Validar impactos cruzados con calendario, costos, cierres, inspecciones e inventario cuando haya cambios funcionales.

@@ -1,78 +1,49 @@
 # finance-historical
 
 ## Resumen
-Módulo de **histórico financiero** para análisis de compras/ventas y resultados por periodo. Complementa reportes con vistas exploratorias y exportaciones.
+Modulo de **historico financiero** para ventas, compras y resultados, con importacion, edicion, agrupaciones y exportacion.
 
-**Entrypoints**
-- Página: [Historical](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Historical.tsx)
+La implementacion actual no se limita a una vista dual de compras y ventas: incluye tambien una tercera tab de resultados.
+
+## Entrypoints vigentes
+- Pagina: [Historical](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Historical.tsx)
 - Componentes: [src/components/finance](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/finance)
+- Componentes de historico: [src/components/finance/historical](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/finance/historical)
 
-## Arquitectura y componentes
-- Componentes principales: `HistoricalPurchases`, `HistoricalSales` y submódulos bajo `finance/historical/*`.
-- Visualizaciones: `recharts`.
-- Exportación: `jspdf`/`xlsx` cuando se generan reportes descargables.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/historical`
 
-### Operaciones Supabase (tablas típicas)
-- compras:
-  - `supplier_invoices`, `supplier_invoice_items`, `suppliers`
-- ventas:
-  - `invoices`, `invoice_services`, `payments`
-- costos:
-  - `costs` (según análisis cruzado)
+## Arquitectura actual
+La pagina actual organiza 3 tabs:
+- ventas
+- compras
+- resultados
 
-## Especificación de uso (con ejemplos)
+## Hooks y servicios clave
+- `useInvoices`
+- `usePurchaseInvoices`
+- `usePurchaseInvoiceItems`
+- `usePurchaseExport`
 
-### Consultar compras por periodo (ejemplo)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+## Datos y dependencias principales
+Fuentes principales del modulo visible:
+- `invoices`
+- `supplier_invoices`
+- `supplier_invoice_items`
 
-const { data } = await supabase
-  .from('supplier_invoices')
-  .select('id, supplier_id, issue_date, total_amount')
-  .gte('issue_date', '2026-04-01')
-  .lte('issue_date', '2026-04-30')
-```
+## Flujos vigentes
+### 1. Ventas historicas
+- Soporta importacion, suscripcion realtime, edicion masiva y vistas `table`, `grouped` y `pipeline`.
 
-## Dependencias
+### 2. Compras historicas
+- Soporta importacion, creacion, edicion, edicion masiva, recepcion a inventario y vistas `table`, `grouped` y `pipeline`.
 
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `recharts`
-- `date-fns`
-- `xlsx`, `jspdf`, `jspdf-autotable` (según exportaciones)
-- `lucide-react`, `sonner`
+### 3. Resultados historicos
+- Existe una tab dedicada de resultados con su propia lectura consolidada.
 
-### Internas (principales)
-- Hooks: `hooks/finance/*`, `usePurchaseInvoices`, `usePurchaseHistoryParser` (según implementación)
-- Utilidades: `@/utils/purchaseHistoryParser`, `@/utils/reportExporter`
-- UI: `@/components/ui/*`
+### 4. Exportacion
+- El modulo incorpora exportadores e importadores historicos especificos.
 
-## Configuración requerida
-- Definición de periodos y timezone consistente.
-- RLS para datos financieros.
-
-## Casos de uso principales
-- Analizar tendencias de compras/ventas.
-- Auditar periodos específicos (cierres contables).
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Historical UI] --> SB[Supabase]
-  SB --> SI[(supplier_invoices)]
-  SB --> INV[(invoices)]
-  SB --> PAY[(payments)]
-```
-
-## Rendimiento
-- Consultas por rango de fechas con índices; evitar traer detalle completo de items si no es necesario.
-
-## Seguridad
-- Datos financieros sensibles: control por rol y auditoría de exportaciones.
+## Consideraciones de mantenimiento
+- No documentar el historico como si su base principal fueran `payments` o `costs` si la UI visible hoy trabaja sobre facturas de venta y compra.
+- Citar importadores y exportadores reales del historico cuando se profundice la documentacion.

@@ -1,82 +1,57 @@
 # incomes
 
 ## Resumen
-Módulo de **ingresos**: registro/edición, pipeline/seguimiento, categorización y relación con pagos aplicados (cuando un ingreso se usa para registrar un pago).
+Modulo de **ingresos** para registrar cobros, asociarlos a clientes y facturas, y exportar informacion financiera.
 
-**Entrypoints**
-- Página: [Incomes](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Incomes.tsx)
+La implementacion actual combina tabla, formulario, exportacion y una vista tipo pipeline agrupada por cliente.
+
+## Entrypoints vigentes
+- Pagina: [Incomes](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Incomes.tsx)
 - Componentes: [src/components/incomes](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/incomes)
-- Tipos: [types/incomes.ts](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/types/incomes.ts)
+- Exportador: [incomeReportExporter](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/utils/reports/incomeReportExporter.ts)
 
-## Arquitectura y componentes
-- Listado y filtros: `IncomesTable`, `IncomeFilters`, `IncomesHeader`.
-- Formularios: `IncomeForm`.
-- Pipeline: `IncomesPipelineView` + métricas (`IncomesPipelineMetrics`).
-- Integración pagos: algunos flujos pueden crear `payments` desde un ingreso (RPC `create_payment_from_existing_income` y/o `apply_payment_manual` según diseño).
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/incomes`
 
-### Operaciones Supabase (tablas)
+## Arquitectura actual
+La pagina principal se apoya en:
+- `IncomesTable`
+- `IncomeForm`
+- `IncomesPipelineView`
+- exportacion PDF y Excel
+- consulta de `company_data` para reportes
+
+## Hooks y servicios clave
+- `useIncomes`
+- `useIncomeCategories`
+
+Notas:
+- `useIncomeSubcategories` y `useIncomeCategoryManager` no son hooks del flujo operativo principal de la pagina.
+- `subcategory` hoy se maneja como texto libre en el formulario operativo.
+
+## Datos y dependencias principales
 - `incomes`
-- `income_categories`, `income_subcategories`
-- `payments` (si se generan pagos desde ingresos)
+- `income_categories`
+- `clients`
+- `invoices`
+- `payments`
+- `company_data`
 
-### RPC relevantes
-- `apply_payment_manual` (si el ingreso se aplica como pago)
-- `create_payment_from_existing_income` (según implementación)
+## Flujos vigentes
+### 1. Registro de ingreso
+- El formulario permite asociar cliente y factura.
+- Si corresponde, crea pago manualmente en `payments` y luego aplica `apply_payment_manual`.
 
-## Especificación de uso (con ejemplos)
+### 2. Edicion
+- La asociacion a factura y creacion de pago ocurre en el flujo de alta, no como comportamiento general de edicion.
 
-### Crear ingreso
-```ts
-import { supabase } from '@/integrations/supabase/client'
+### 3. Pipeline
+- La vista pipeline actual agrupa por cliente y resume montos o categorias.
+- No debe documentarse como pipeline de estados de negocio.
 
-await supabase.from('incomes').insert({
-  amount: 1200000,
-  date: '2026-04-13',
-  description: 'Pago cliente',
-  category_id: categoryId
-})
-```
+### 4. Exportacion
+- La pagina usa `company_data` y exportadores especificos para PDF y Excel.
 
-## Dependencias
-
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `date-fns`
-- `lucide-react`, `sonner`
-
-### Internas (principales)
-- Hooks: `useIncomes`, `useIncomeSubcategories`, `useIncomeCategoryManager`
-- UI: `@/components/ui/*`
-- Integración con `invoices` y `payments` cuando corresponda.
-
-## Configuración requerida
-- Catálogos de ingresos deben existir y estar alineados con validaciones del formulario.
-- RLS: acceso restringido a roles autorizados.
-
-## Casos de uso principales
-- Registrar ingresos por cobros/otros conceptos.
-- Analizar ingresos por categoría y estado (pipeline).
-- Aplicar ingresos como pagos a facturas (cuando el negocio lo requiere).
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Incomes UI] --> SB[Supabase]
-  SB --> INC[(incomes)]
-  SB --> CAT[(income_categories)]
-  SB --> PAY[(payments)]
-```
-
-## Rendimiento
-- Pipeline: cargar por rangos de fecha/estado y cachear por filtros.
-
-## Seguridad
-- Datos financieros: RLS estricta y auditoría de cambios.
+## Consideraciones de mantenimiento
+- No documentar `create_payment_from_existing_income` como flujo vigente si no esta cableado en la pagina.
+- Aclarar que la subcategoria operativa actual es texto libre.

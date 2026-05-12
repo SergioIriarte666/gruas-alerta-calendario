@@ -1,101 +1,97 @@
 # costs
 
 ## Resumen
-Módulo de **costos** para registro, edición, trazabilidad y cargas masivas (CSV/XML). Incluye flujos integrados con inventario y piezas de grúa cuando el costo corresponde a repuestos/consumo.
+Modulo de **costos** para registro, edicion, duplicacion, trazabilidad y cargas masivas (`CSV`/`XML`).
 
-**Entrypoints**
-- Página: [Costs](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Costs.tsx)
+La pagina actual ya no es solo un listado con formulario basico: combina costo rapido, costo completo, detalle consolidado, acciones batch y sincronizacion directa con inventario mediante `UnifiedPurchaseService`.
+
+## Entrypoints vigentes
+- Pagina: [Costs](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Costs.tsx)
 - Componentes: [src/components/costs](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/costs)
-- Servicio de sincronización inventario↔costos: [UnifiedPurchaseService](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/services/UnifiedPurchaseService.ts)
-- Referencias existentes:
-  - [cost-module-prompt.md](../development/cost-module-prompt.md)
+- Servicio de compra unificada: [UnifiedPurchaseService](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/services/UnifiedPurchaseService.ts)
 
-## Arquitectura y componentes
-- Listado y filtros: `CostsTable`, `EnhancedCostsTable`, `CostsDashboard`, `CostsHeader`.
-- Detalle/edición: `CostDetailsModal`, confirmación de borrado, acciones batch.
-- Formulario por pasos: `components/costs/form/*` (inputs, selector de proveedor/servicio, navegación).
-- Importación:
-  - `CSVCostUpload`, `XMLCostUpload`, uso de plantillas (ver `public/templates`).
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/costs`
 
-### Operaciones Supabase (tablas)
-- `costs` (entidad principal)
-- catálogos: `cost_categories`, `cost_subcategories`, `cost_centers`
-- integración inventario: `inventory_movements`, `inventory_items`, `inventory_stock`
-- integración grúas: `crane_parts`
-- integración proveedores: `suppliers`, `supplier_payments` (según flujo)
+## Arquitectura actual de la pagina
+La pagina real de costos se apoya en estas piezas principales:
 
-### RPC destacadas
-- `find_matching_costs_for_invoice` (soporte a conciliación/relación con facturas)
-- Limpiezas/diagnóstico (según uso): `check_cost_duplicates`, `cleanup_duplicate_inventory_costs`
+- `CostsDashboard`
+- `UnifiedCostFilters`
+- `EnhancedCostsTable` y `CostList`
+- `QuickCostForm`
+- `CostForm`
+- `ConsolidatedCostDetails`
+- `CSVCostUpload`
+- `XMLCostUpload`
+- `CostBatchUpdateModal`
+- `DistributionAssistantDialog`
+- `CostDeleteConfirmDialog`
 
-## Especificación de uso (con ejemplos)
+Notas relevantes:
+- `ConsolidatedCostDetails` es hoy el detalle principal del modulo.
+- La pagina soporta apertura contextual por query string, prefill por navegacion y duplicacion de costos.
 
-### Registrar un costo
-```ts
-import { supabase } from '@/integrations/supabase/client'
+## Hooks y servicios clave
+- `useCosts`
+- `useDeleteCost`
+- `useCostCategories`
+- `useCostSubcategories`
+- `useUpdateCostsBatch`
+- `useCostCSVUpload`
+- `useUniversalSync`
+- `useInventorySyncWatcher`
+- `UnifiedPurchaseService`
 
-await supabase.from('costs').insert({
-  amount: 250000,
-  date: '2026-04-13',
-  description: 'Repuesto grúa',
-  category_id: categoryId
-})
-```
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-### Buscar costos para asociar a una factura (RPC)
-```ts
-const { data } = await supabase.rpc('find_matching_costs_for_invoice', {
-  p_invoice_id: invoiceId
-})
-```
+- `costs`
+- `cost_categories`, `cost_subcategories`, `cost_centers`
+- `inventory_movements`, `inventory_items`, `inventory_stock`
+- `supplier_payments`, `inventory_suppliers`
+- relaciones con `services` y `cranes`
 
-## Dependencias
+RPC y funciones de apoyo relevantes:
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `react-dropzone`
-- `xlsx` (procesamiento de plantillas/importación)
-- `date-fns`
-- `lucide-react`, `sonner`
+- `find_matching_costs_for_invoice`
+- tooling de limpieza o diagnostico segun contexto administrativo
 
-### Internas (principales)
-- Hooks típicos: `useCosts`, `useCostCategories`, `useCostSubcategories`, `useUpdateCostsBatch`, `useCostCSVUpload`
-- Utilidades: `@/utils/costHelpers`, `@/utils/csvValidations`, `@/utils/inventoryCostHelper`
-- Integración con inventario: `@/services/UnifiedPurchaseService`
+## Flujos vigentes
 
-## Configuración requerida
-- Catálogos: categorías/subcategorías deben existir en BD.
-- RLS: escritura en `costs` restringida a roles autorizados.
-- Imports: definir formatos de CSV/XML soportados y validar antes de insertar.
+### 1. Costo rapido
+- Alta rapida desde `QuickCostForm`.
+- Orientado a captura agil con menos campos.
+- Convive con el formulario completo; no es un flujo secundario.
 
-## Casos de uso principales
-- Registrar costos operativos (combustible, repuestos, peajes, etc.).
-- Subir costos masivamente desde CSV/XML.
-- Trazar costos hacia movimientos de inventario y piezas de grúa.
+### 2. Costo completo
+- Alta o edicion desde `CostForm`.
+- Puede recibir prefill por navegacion, quick entry o duplicacion.
+- Integra clasificacion, proveedor, servicio, grua, inventario y consumo inmediato.
 
-## Diagramas
+### 3. Integracion con inventario
+- El formulario completo puede registrar una compra inventariable.
+- La sincronizacion usa `UnifiedPurchaseService`.
+- Puede crear movimiento de entrada, enlazar costo existente y consumir inmediatamente a grua si corresponde.
 
-```mermaid
-flowchart TD
-  UI[Costs UI] --> SB[Supabase]
-  SB --> C[(costs)]
-  SB --> CC[(cost_categories)]
-  C --> IM[(inventory_movements)]
-  C --> CP[(crane_parts)]
-  C --> SUP[(suppliers)]
-```
+### 4. Importacion masiva
+- `CSVCostUpload` para cargas estructuradas.
+- `XMLCostUpload` para documentos tributarios con deteccion de duplicados, sugerencias y enlaces.
 
-## Rendimiento
-- Importaciones masivas: preferir batches y evitar insertar 1 por 1 desde el cliente.
-- Listados: paginar y limitar columnas; delegar agregaciones al servidor.
+### 5. Operacion batch y detalle
+- seleccion multiple de costos
+- actualizacion batch
+- marcado batch de pagado
+- apertura de detalle consolidado
+- confirmacion reforzada para borrado
+- distribucion de costo a multiples gruas mediante `DistributionAssistantDialog`
 
-## Seguridad
-- Validar archivos importados para evitar inyección de datos corruptos.
-- Restringir borrado/actualización con RLS + auditoría (tabla `audit_log` si se usa).
+### 6. Aperturas contextuales
+- apertura por `?costId=...`
+- prefill por navegacion desde otros modulos
+- duplicacion con datos preparados para un nuevo registro
+
+## Consideraciones de mantenimiento
+- Si un cambio toca costos inventariables, revisar siempre el impacto en `UnifiedPurchaseService`.
+- Si un cambio toca XML, validar duplicados, sugerencias y enlaces con proveedores e inventario.
+- Los cambios en detalle, batch actions o filtros deben verificarse tanto en tabla como en cards/mobile.

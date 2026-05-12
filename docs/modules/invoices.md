@@ -1,124 +1,108 @@
 # invoices
 
 ## Resumen
-Módulo de **facturación** y **pagos**: creación/edición de facturas, asociación de servicios/cierres, aplicación de pagos y reconciliación (incluye herramientas de diagnóstico y corrección cuando aplica).
+Modulo de **facturas** y **pagos** para creacion, edicion, conciliacion, alertas, anulaciones, exportacion y consulta portal.
 
-**Entrypoints**
-- Página: [Invoices](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Invoices.tsx)
+La implementacion actual va bastante mas alla de un CRUD simple: crea facturas desde cierres, sincroniza relaciones, soporta conciliacion y contiene tooling administrativo para anulacion, eliminacion protegida, exportacion y backfill historico.
+
+## Entrypoints vigentes
+- Pagina backoffice: [Invoices](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Invoices.tsx)
+- Pagina portal: [PortalInvoices](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/portal/PortalInvoices.tsx)
 - Componentes: [src/components/invoices](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/invoices)
-- Referencias técnicas existentes:
-  - [payment-system.md](../technical/payment-system.md)
-  - [payment-reconciliation-fix.md](../technical/payment-reconciliation-fix.md)
 
-## Arquitectura y componentes
-- Vistas:
-  - tabla/pipeline: `InvoicesTable`, `InvoicesPipelineView`, métricas, búsqueda y vista mobile.
-- Formularios:
-  - `InvoiceForm` + pasos (`components/invoices/form/*`).
-- Pagos:
-  - `PaymentForm`, `SmartPaymentForm`, `PaymentHistory`,
-  - modales: `MarkAsPaidModal`, `PaymentApplicationModal`, `SelectivePaymentModal`.
-- Alertas y salud:
-  - `InvoiceAlertsDashboard`, `InvoiceAlertSettings`, `SystemHealthIndicator`.
-- Cancelaciones:
-  - `InvoiceCancellationModal`, `InvoiceCancellationsHistory`.
-
-## API expuesta
-
-### Ruta (frontend)
+## Rutas
 - `/invoices`
+- `/portal/invoices`
 
-### Operaciones Supabase (tablas)
-- `invoices` (entidad principal)
-- `invoice_services` (relación factura↔servicio)
-- `invoice_closures` (relación factura↔cierre)
-- `payments` y `payment_applications` (pagos y aplicaciones)
-- `invoice_alert_settings`, `invoice_cancellations`
-- apoyo: `services`, `service_closures`
+Nota:
+- `InvoiceAlertSettings` pertenece hoy a `Settings`, no a la pagina principal de `/invoices`.
 
-### RPC (funciones) frecuentes
-- Aplicación de pagos:
-  - `apply_payment_manual`
-  - `smart_apply_payment`
-  - `apply_payment_selective` (si se usa)
-- Diagnóstico/corrección:
-  - `comprehensive_payment_diagnosis`
-  - `validate_payment_system_integrity`
-  - `fix_invoice_payment_inconsistencies`
-  - `sync_paid_invoices_with_payments`
-  - `update_overdue_invoices`
+## Arquitectura actual de la pagina backoffice
+La pagina principal monta y coordina:
 
-## Especificación de uso (con ejemplos)
+- `InvoicesHeader`
+- `InvoicesStats`
+- `InvoicesSearch`
+- `InvoicesTable`
+- `InvoicesPipelineView`
+- `InvoicesMobileView`
+- `InvoiceForm`
+- `PaymentReconciliation`
+- `InvoiceAlertsDashboard`
+- `InvoiceCancellationsHistory`
+- `MarkAsPaidModal`
+- `InvoiceDetailsModal`
+- `InvoiceBatchActions`
+- `InvoiceExportModal`
 
-### Crear factura básica
-```ts
-import { supabase } from '@/integrations/supabase/client'
+Componentes existentes pero no necesariamente centrales en la UI actual:
 
-const { data: invoice, error } = await supabase
-  .from('invoices')
-  .insert({ client_id: clientId, status: 'draft', issue_date: '2026-04-13' })
-  .select('id')
-  .single()
-if (error) throw error
-```
+- `PaymentApplicationModal`
+- `SelectivePaymentModal`
+- `SystemHealthIndicator`
+- piezas auxiliares de exportacion, historial o tooling administrativo
 
-### Asociar servicios a una factura
-```ts
-await supabase.from('invoice_services').insert([
-  { invoice_id: invoiceId, service_id: serviceId }
-])
-```
+## Hooks y servicios clave
+- `useInvoices`
+- `usePagedInvoices`
+- `useInvoiceData`
+- `useInvoiceOperations`
+- `useInvoiceCancellation`
+- `useInvoiceAlerts`
 
-### Aplicar pago manual (RPC)
-```ts
-const { data, error } = await supabase.rpc('apply_payment_manual', {
-  p_invoice_id: invoiceId,
-  p_amount: 100000,
-  p_payment_date: '2026-04-13'
-})
-if (error) throw error
-```
+Notas relevantes:
+- `useInvoices` compone datos y operaciones del modulo.
+- `usePendingPayments` no es un hook central de invoices; pertenece al flujo de pagos de proveedores.
 
-## Dependencias
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `react-hook-form`, `zod`
-- `date-fns`
-- `react-dropzone` (importaciones/adjuntos cuando aplica)
-- `lucide-react`, `sonner`
+- `invoices`
+- `invoice_services`
+- `invoice_closures`
+- `payments`
+- `payment_applications`
+- `invoice_cancellations`
+- `service_closures`
+- relaciones con `services` y `clients`
 
-### Internas (principales)
-- Hooks típicos: `useInvoices`, `usePayments`, `usePaymentApplications`, `useInvoiceAlerts`, `usePendingPayments`
-- Utilidades: `@/utils/invoiceUtils`, `@/utils/currencyUtils`
-- Integración con `closures`, `services`, `reports`.
+RPC y operaciones destacadas:
 
-## Configuración requerida
-- RLS: acceso a facturas/pagos debe ser consistente por rol (admin/viewer) y por cliente en portal.
-- Triggers/RPC: el sistema de pagos depende de funciones y/o triggers (ver documentación técnica enlazada).
+- `create_invoice_transaction`
+- `force_update_service_to_invoiced`
+- `create_automatic_payment_for_invoice`
+- RPC y tooling de conciliacion o correccion segun contexto administrativo
 
-## Casos de uso principales
-- Generar factura por servicios/cierres.
-- Registrar pagos y aplicar a facturas (manual/smart).
-- Detectar y corregir inconsistencias (duplicados, montos aplicados, estados vencidos).
+## Flujos vigentes
 
-## Diagramas
+### 1. Creacion de factura desde cierre
+- El flujo real parte desde `closureId`.
+- `productServiceDescription` es parte requerida del formulario actual.
+- La creacion usa una operacion transaccional y sincroniza relaciones con cierre y servicios.
+- La pagina puede abrir el formulario automaticamente cuando llega desde `Closures` con un cierre preseleccionado.
 
-```mermaid
-flowchart TD
-  UI[Invoices UI] --> SB[Supabase]
-  SB --> INV[(invoices)]
-  SB --> IS[(invoice_services)]
-  IS --> SVC[(services)]
-  SB --> PAY[(payments)]
-  SB --> PA[(payment_applications)]
-  SB --> RPC[RPC: apply_payment_manual/smart_apply_payment]
-```
+### 2. Listado, pipeline y portal
+- Backoffice combina tabla, pipeline y vista mobile.
+- Portal cliente expone consulta de facturas propias en `/portal/invoices`.
 
-## Rendimiento
-- Vistas con gran volumen: paginar por `issue_date`/estado y evitar joins pesados en el cliente.
-- Reconciliación: ejecutar diagnósticos/correcciones como acciones explícitas (no en render).
+### 3. Pago y conciliacion
+- La conciliacion visible actual prioriza registro de pago, historial, detalle y backfill historico.
+- `SmartPaymentForm` participa en el flujo visible actual.
+- Existen piezas para aplicacion manual o selectiva, pero no deben documentarse como la unica UX activa sin aclaracion.
 
-## Seguridad
-- Pagos y facturas son datos financieros: RLS estricta y auditoría.
-- RPC críticas deben verificar rol y consistencia (evitar aplicar pagos a facturas de otro cliente).
+### 4. Factura creada como pagada
+- Si se crea con estado `paid`, la pagina puede disparar `markAsPaid` y generar pago automatico.
+
+### 5. Anulacion y cancelaciones
+- La anulacion no solo registra una NC o historial.
+- Tambien puede revertir relaciones con cierres y servicios y dejar trazabilidad en `invoice_cancellations`.
+
+### 6. Eliminacion protegida y acciones administrativas
+- Existe eliminacion reforzada por contrasena.
+- Hay diferencias de tratamiento para facturas historicas y flujos protegidos.
+- El modulo incluye exportacion y acciones por lote.
+
+## Consideraciones de mantenimiento
+- Si se cambia el formulario, mantener alineado el flujo real de `closureId`, descripcion requerida y transaccion de creacion.
+- Si se cambia conciliacion, revisar tanto UI visible como tooling administrativo y portal.
+- Documentar por separado lo que vive en `/invoices`, lo que vive en `/portal/invoices` y lo que fue movido a `Settings`.

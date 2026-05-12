@@ -1,100 +1,62 @@
 # settings-admin
 
 ## Resumen
-Módulo de **configuración del sistema** y herramientas administrativas:
-- configuración de empresa, términos de pago, categorías, usuarios/permisos,
-- ajustes de zona horaria y preferencias,
-- herramientas de emergencia (reparación de estados, reasignaciones, eliminación/cierre forzado).
+Modulo de **settings admin** para configuracion general del sistema, usuarios, notificaciones, categorias, herramientas administrativas y respaldos embebidos.
 
-**Entrypoints**
-- Página: [Settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Settings.tsx)
-- Componentes settings: [src/components/settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/settings)
-- Componentes admin: [src/components/admin](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/admin)
-- Guía existente: [system-admin-guide.md](../technical/system-admin-guide.md)
+La pagina actual esta estructurada por tabs y centraliza varias capacidades que en otros momentos vivieron separadas.
 
-## Arquitectura y componentes
-- Tabs/Secciones:
-  - company settings (branding, datos),
-  - categorías/configuración del sistema,
-  - gestión usuarios y permisos por módulo,
-  - términos de pago y ajustes financieros.
-- Herramientas admin:
-  - `ServiceDeletionTool`, `ServiceLiberationTool`, `BulkStatusRepairTool`, `ForceStatusChangeTool`, `PaymentReassignmentTool`.
+## Entrypoints vigentes
+- Pagina: [Settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Settings.tsx)
+- Componentes: [src/components/settings](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/settings)
+- Herramientas admin: [src/components/admin](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/admin)
 
-## API expuesta
+## Ruta
+- `/settings`
 
-### Ruta (frontend)
-- `/settings` (AdminOnlyRoute)
+## Arquitectura actual
+Tabs vigentes de la pagina:
+- `company`
+- `timezone`
+- `system`
+- `payment-terms`
+- `notifications`
+- `users`
+- `categories`
+- `liberation`
 
-### Operaciones Supabase (tablas)
-- configuración:
-  - `system_settings`, `company_profiles`, `company_data`
-  - `payment_terms`, `user_settings`
-- seguridad/permisos:
-  - `profiles`, `user_roles`, `user_module_permissions`, `user_invitations`
-- operaciones:
-  - `services`, `invoices`, `payments`, `payment_applications`, `calendar_events`, `inspections`, `costs`
+## Componentes y flujos clave
+- `CompanySettingsTab`
+- `TimezoneSettingsTab`
+- `SystemSettingsTab`
+- `NotificationSettingsTab`
+- `InvoiceAlertSettings`
+- `UserManagementTab`
+- `UserPermissionsModal`
+- secciones de categorias
+- `AdminEmergencyPanel`
 
-### RPC destacadas
-- `delete_service_cascade` (acciones de borrado en cascada)
-- Diagnóstico y corrección de pagos (según sección): `fix_payment_system_inconsistencies`, `validate_payment_system_integrity`, etc.
+## Datos y dependencias principales
+- configuracion de compania y zona horaria
+- terminos de pago
+- notificaciones generales y alertas de facturas
+- usuarios y permisos por modulo
+- backups embebidos dentro de system
 
-## Especificación de uso (con ejemplos)
+## Flujos vigentes
+### 1. Notificaciones
+- En la tab `notifications` conviven configuraciones generales y alertas de facturas.
 
-### Actualizar término de pago
-```ts
-import { supabase } from '@/integrations/supabase/client'
+### 2. Usuarios y permisos
+- La gestion de usuarios incluye permisos por modulo.
+- `ProtectedRoute` usa esos permisos para filtrar acceso a rutas.
 
-await supabase.from('payment_terms').update({ name: '30 días' }).eq('id', termId)
-```
+### 3. System
+- La tab de sistema ya integra gestion de respaldos embebida.
+- Tambien conviven herramientas administrativas complementarias.
 
-### Eliminar servicio en cascada (RPC)
-```ts
-await supabase.rpc('delete_service_cascade', { p_service_id: serviceId })
-```
+### 4. Herramientas de emergencia
+- `AdminEmergencyPanel` incluye varias herramientas, entre ellas `PurchaseVoidTool`.
 
-## Dependencias
-
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `date-fns`
-- `lucide-react`, `sonner`
-
-### Internas (principales)
-- Hooks: `useSettings`, `useSystemSettings`, `useUserManagement`, `useUserPermissions`, `useUserModulePermissions`, `usePaymentTerms`
-- UI: `@/components/ui/*`
-- Integración con `auth` y `supabase-integration`.
-
-## Configuración requerida
-- RLS y roles:
-  - `admin` debe tener acceso completo a settings,
-  - `viewer` lectura acotada (si aplica),
-  - `client/operator` sin acceso (redirigidos).
-- Asegurar consistencia de catálogos (service types/rates/cost centers) con secciones admin dedicadas.
-
-## Casos de uso principales
-- Administrar usuarios, roles y permisos por módulo.
-- Configurar datos corporativos (branding, términos de pago, zona horaria).
-- Ejecutar herramientas de emergencia ante inconsistencias (servicios/pagos).
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Settings/Admin UI] --> SB[Supabase]
-  SB --> CFG[(system_settings/company_profiles/payment_terms)]
-  SB --> SEC[(profiles/user_roles/user_module_permissions)]
-  UI --> OPS[Admin tools]
-  OPS --> RPC[RPC: delete_service_cascade/fixes]
-```
-
-## Rendimiento
-- Evitar cargar todas las secciones/tabs al inicio; cargar bajo demanda.
-- Acciones admin pesadas (fixes) deben ejecutarse explícitamente y mostrar progreso/resultado.
-
-## Seguridad
-- Superficie crítica: restringir a admins y validar rol también en RPC.
-- No loguear datos sensibles en consola (usuarios/pagos).
-- Mantener auditoría de acciones de emergencia y correcciones masivas.
+## Consideraciones de mantenimiento
+- Mantener alineada la documentacion con las tabs reales de `Settings.tsx`.
+- No separar backups y alertas de facturas como si no vivieran tambien dentro de settings.

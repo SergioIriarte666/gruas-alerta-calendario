@@ -1,86 +1,75 @@
 # reports
 
 ## Resumen
-Módulo de **reportes** (operacionales/financieros) con:
-- dashboards y métricas,
-- filtros compartidos,
-- exportación (PDF/Excel cuando aplica).
+Modulo de **reportes** operativos y financieros con filtros, tabs por dominio, graficos y exportaciones especializadas.
 
-**Entrypoints**
-- Página: [Reports](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Reports.tsx)
+La pagina actual no es un dashboard unico generico: funciona como shell de navegacion por tabs y usa hooks especializados para filtros, acciones, tiempo real y exportacion.
+
+## Entrypoints vigentes
+- Pagina: [Reports](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Reports.tsx)
 - Componentes: [src/components/reports](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/reports)
-- Utilidades PDF: [src/utils/pdf](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/utils/pdf)
+- Exportadores: [src/utils/reports](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/utils/reports)
 
-## Arquitectura y componentes
-- Estructura por subdominio:
-  - `reports/cost-analysis/*`
-  - `reports/maintenance/*`
-  - `reports/operational/*`
-  - `reports/shared/*` (filtros, cards)
-- Visualizaciones con `recharts`.
-- Exportación PDF con `jspdf` + `jspdf-autotable` y helpers de encabezados/datos compañía.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/reports`
 
-### Operaciones Supabase (tablas/RPC)
-Tablas usadas comúnmente:
-- `services`, `invoice_services`, `closure_services`
-- `clients`, `operators`, `cranes`
+## Arquitectura actual de la pagina
+La pagina principal organiza el contenido por tabs de dominio:
+
+- `servicios`
+- `ingresos`
+- `clientes`
+- `operadores`
+- `flota`
+- `finanzas`
+- `costos`
+
+Notas relevantes:
+- La UI real se arma desde `ReportsPage`.
+- Existen componentes importados o heredados no montados en la pagina principal, como algunos dashboards o piezas de mantenimiento.
+
+## Hooks y servicios clave
+- `useReports`
+- `useReportFilters`
+- `useReportActions`
+- `useReportCharts`
+- `useCostReportActions`
+- `useReportsRealtime`
+
+## Datos y dependencias principales
+Fuentes de datos frecuentes:
+
+- `services`
+- `invoices`
+- `clients`
+- `operators`
+- `cranes`
+- `costs`
 - `company_data`
 
-RPC relevante detectada:
-- `get_overdue_invoices_for_alerts` (para reportes/alertas de vencimiento)
+Exportadores y utilidades vigentes:
 
-## Especificación de uso (con ejemplos)
+- exportadores PDF y XLSX en `src/utils/reports/*`
+- uso de `jspdf` y `jspdf-autotable`
 
-### Generación PDF (patrón)
-```ts
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
+## Flujos vigentes
 
-const doc = new jsPDF()
-autoTable(doc, { head: [['Col1', 'Col2']], body: [['A', 'B']] })
-doc.save('reporte.pdf')
-```
+### 1. Navegacion por subdominios
+- La pagina no muestra todas las capacidades a la vez.
+- Cada tab agrupa filtros, dataset y visualizaciones propias.
 
-## Dependencias
+### 2. Filtros y graficos
+- Los filtros del modulo viven en hooks dedicados del dominio reportes.
+- La generacion de graficos y KPIs responde al tab activo y al dataset cargado.
 
-### Externas (principales)
-- `react`
-- `recharts`
-- `jspdf`, `jspdf-autotable`
-- `date-fns`
-- `lucide-react`
+### 3. Exportacion
+- Servicios y costos tienen exportadores especializados.
+- No conviene documentar la exportacion como un helper PDF generico aislado del modulo.
 
-### Internas (principales)
-- Hooks: `useReports`, `useDateFilters`, `useAdvancedFilters`
-- Utilidades: `@/utils/pdf/*`, `@/utils/reportExporter`, `@/utils/currencyUtils`
-- UI: `@/components/ui/*`
+### 4. Tiempo real
+- El modulo puede reaccionar a cambios de datos mediante hooks de realtime dedicados.
 
-## Configuración requerida
-- Datos de compañía (`company_data`) para encabezados y branding en PDFs.
-- RLS: permitir lectura de datasets para reportes a roles autorizados.
-
-## Casos de uso principales
-- Reportes de costos, mantenimiento y métricas operacionales.
-- Exportación de resultados para auditoría/contabilidad.
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Reports UI] --> H[Hooks/Filtros]
-  H --> SB[Supabase]
-  SB --> DATA[(services/costs/invoices/...)]
-  UI --> PDF[PDF utils (jsPDF)]
-```
-
-## Rendimiento
-- Consultas para reportes pueden ser pesadas: filtrar por fecha/cliente y usar agregaciones server-side.
-- PDFs grandes: generar en background y evitar bloquear el thread principal.
-
-## Seguridad
-- Reportes exportados pueden incluir PII/finanzas: controlar acceso y considerar watermarking/auditoría.
+## Consideraciones de mantenimiento
+- Usar `ReportsPage` y los hooks de `src/hooks/reports/*` como fuente de verdad del modulo.
+- Distinguir entre piezas activas en la UI y componentes heredados o no conectados.
+- Referenciar exportadores en `src/utils/reports`, no en una carpeta PDF generica, cuando se documente el flujo actual.

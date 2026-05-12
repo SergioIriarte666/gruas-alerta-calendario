@@ -1,85 +1,73 @@
 # closures
 
 ## Resumen
-Módulo de **cierres** que agrupa servicios para consolidación operativa y posterior facturación. Incluye creación/edición, selección de servicios, generación de reportes y relación con facturas.
+Modulo de **cierres** para agrupar servicios por cliente o periodo y preparar la facturacion posterior.
 
-**Entrypoints**
-- Página: [Closures](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Closures.tsx)
+La implementacion actual combina listado, wizard por pasos, seleccion enriquecida de servicios, detalle y confirmacion que navega a facturas al terminar la creacion.
+
+## Entrypoints vigentes
+- Pagina: [Closures](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Closures.tsx)
 - Componentes: [src/components/closures](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/closures)
 
-## Arquitectura y componentes
-- Listado: `ClosuresTable`, `ClosuresGroupedView`, `ClosuresStats`, búsqueda y vista mobile.
-- Formulario: `ClosureForm` + navegación por pasos (`ClosureFormStepNavigation`) y selección de servicios (`ServicesSelector`/`EnhancedServicesSelector`).
-- Detalle: `ClosureDetailsModal`, acciones de emergencia y confirmaciones.
-- Integración facturación: confirmación y asociación de cierres a facturas.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/closures`
 
-### Operaciones Supabase (tablas)
-- `service_closures` (entidad de cierre)
-- `closure_services` (relación cierre↔servicio)
-- `invoice_closures` (relación factura↔cierre)
-- apoyo: `services`, `clients`
+## Arquitectura actual de la pagina
+La pagina principal se apoya en:
 
-## Especificación de uso (con ejemplos)
+- `ClosuresHeader`
+- `ClosuresTable`
+- `ClosuresGroupedView`
+- `ClosuresStats`
+- `ClosureForm`
+- `ClosureDetailsModal`
+- `InvoiceConfirmationDialog`
+- confirmaciones de borrado y tooling auxiliar
 
-### Crear cierre y asociar servicios
-```ts
-import { supabase } from '@/integrations/supabase/client'
+El formulario actual funciona como wizard y usa:
 
-const { data: closure } = await supabase
-  .from('service_closures')
-  .insert({ client_id: clientId, status: 'open' })
-  .select('id')
-  .single()
+- `EnhancedServicesSelector`
+- `ClosureSummaryPanel`
+- `ClosureFormStepNavigation`
 
-await supabase.from('closure_services').insert([
-  { closure_id: closure!.id, service_id: serviceId1 },
-  { closure_id: closure!.id, service_id: serviceId2 }
-])
-```
+## Hooks y servicios clave
+- `useServiceClosures`
+- `useClosureData`
+- `useClosureOperations`
+- `useServicesForClosures`
+- `useClosuresForInvoices`
 
-## Dependencias
+Capacidad existente pero no central en la pagina actual:
+- `useClosureAutomation`
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `react-hook-form`, `zod`
-- `date-fns`
-- `lucide-react`, `sonner`
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-### Internas (principales)
-- Hooks típicos: `useServiceClosures`, `useServicesForClosures`, `useClosuresForInvoices`, `useClosureAutomation`
-- UI: `@/components/ui/*`
-- Integración con `invoices` y `services`.
+- `service_closures`
+- `closure_services`
+- `invoice_closures`
+- relaciones con `services`, `clients` e `invoices`
 
-## Configuración requerida
-- RLS: admins/viewers deben leer/escribir cierres; clientes solo lectura si se expone en portal.
-- Reglas de negocio: mantener consistencia de estados (servicio cerrado vs cierre abierto) mediante triggers/RPC cuando aplique.
+## Flujos vigentes
 
-## Casos de uso principales
-- Agrupar servicios por periodo/cliente para consolidación.
-- Generar reportes de cierre y preparar facturación.
-- Asociar uno o más cierres a una factura.
+### 1. Listado y detalle
+- La pagina muestra cierres en tabla o agrupados.
+- El detalle y el borrado forman parte del flujo principal visible.
 
-## Diagramas
+### 2. Creacion por pasos
+- La creacion no es un formulario plano.
+- Usa seleccion enriquecida de servicios, resumen y navegacion por pasos.
+- La seleccion actual soporta busqueda global, deteccion de procesados y apoyo para completar servicios.
 
-```mermaid
-flowchart TD
-  UI[Closures UI] --> SB[Supabase]
-  SB --> CL[(service_closures)]
-  SB --> CS[(closure_services)]
-  CS --> SV[(services)]
-  CL --> IC[(invoice_closures)]
-  IC --> INV[(invoices)]
-```
+### 3. Transicion a facturas
+- Al crear un cierre se abre una confirmacion.
+- Luego se navega a `/invoices` con `preselectedClosureId` para continuar el flujo.
 
-## Rendimiento
-- Selección de servicios: filtrar por rango de fechas/cliente y paginar.
-- Cálculos (totales, métricas): preferir vistas/RPC si crece el volumen.
+### 4. Reportes del modulo
+- Existen componentes y estado para reporte de cierre.
+- Hoy ese flujo no aparece claramente disparado desde la UI principal, por lo que no debe documentarse como experiencia central plenamente expuesta.
 
-## Seguridad
-- Validar que un usuario no pueda asociar servicios de otro cliente a un cierre (RLS y checks).
-- En acciones de emergencia, registrar auditoría y restringir permisos.
+## Consideraciones de mantenimiento
+- Documentar el flujo real de confirmacion hacia facturas despues de crear un cierre.
+- Si se cambia la seleccion de servicios, revisar `useServicesForClosures` y su logica de servicios procesados o pendientes.
+- Distinguir entre capacidades existentes del repositorio y acciones realmente visibles en la pagina.

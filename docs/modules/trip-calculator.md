@@ -1,79 +1,57 @@
 # trip-calculator
 
 ## Resumen
-Módulo de **cálculo de viaje** para estimar costos de traslado (combustible, peajes, rutas), con apoyo de catálogos de estaciones/tarifas y almacenamiento de estimaciones.
+Modulo de **trip calculator** para estimar rutas, peajes, combustible y costo operativo por viaje.
 
-**Entrypoints**
-- Página: [TripCalculator](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/TripCalculator.tsx)
+La implementacion actual combina calculadora, historial, precios de combustible, tasas de consumo y ubicaciones guardadas.
+
+## Entrypoints vigentes
+- Pagina: [TripCalculator](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/TripCalculator.tsx)
 - Componentes: [src/components/trip-calculator](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/trip-calculator)
 
-## Arquitectura y componentes
-- Formulario principal:
-  - `TripRouteMap` (visualización) y `FuelPriceForm` (parámetros), según implementación.
-- Hooks:
-  - `useTripCalculation`, `useTollCalculation`, `useTripEstimates`, `useFuelPrices` (típicos).
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/trip-calculator`
 
-### Operaciones Supabase (tablas)
-- `routes` (rutas definidas)
-- `route_tolls` (peajes por ruta)
-- `toll_rates`, `toll_stations`
+## Arquitectura actual
+La pagina principal organiza 4 tabs:
+- calculadora
+- historial
+- combustible
+- consumos
+
+Ademas integra `SavedLocationsManager`.
+
+## Hooks y servicios clave
+- `useTripCalculation`
+- `useTollCalculation`
+- `useTripEstimates`
+- `useFuelPrices`
+- `useConsumptionRates`
+- `useSavedLocations`
+- `useCranes`
+- `useTollLocations`
+
+## Datos y dependencias principales
+- edge functions `mapbox-proxy` y `tollroutes-proxy`
 - `fuel_prices`
-- `trip_estimates` (persistencia de estimaciones)
+- `crane_consumption_rates`
+- `saved_locations`
+- `trip_estimates`
 
-## Especificación de uso (con ejemplos)
+## Flujos vigentes
+### 1. Calculo de viaje
+- Usa geocodificacion, ruta y consulta de peajes.
+- Si falla parte del flujo externo, puede requerir o usar fallback manual.
 
-### Guardar una estimación
-```ts
-import { supabase } from '@/integrations/supabase/client'
+### 2. Desglose de costo
+- La calculadora muestra breakdown completo del viaje.
+- Considera peajes, distancia, combustible y parametros operativos.
 
-await supabase.from('trip_estimates').insert({
-  origin: 'Concepción',
-  destination: 'Santiago',
-  estimated_cost: 180000,
-  fuel_price: 1350
-})
-```
+### 3. Historial y guardado
+- La estimacion puede serializarse y guardarse en historial.
 
-## Dependencias
+### 4. Configuracion operativa
+- El modulo administra precios de combustible, tasas de consumo y ubicaciones guardadas.
 
-### Externas (principales)
-- `react`
-- `react-hook-form`, `zod`
-- `lucide-react`, `sonner`
-
-### Internas (principales)
-- Hooks: `useTripCalculation`, `useTollCalculation`, `useTripEstimates`, `useFuelPrices`
-- UI: `@/components/ui/*`
-- Utilidades: formateo moneda/validaciones
-
-## Configuración requerida
-- Catálogos de peajes y tarifas actualizados.
-- RLS: quién puede crear/editar rutas/tarifas (admin) vs quién puede solo consultar.
-
-## Casos de uso principales
-- Calcular costo estimado antes de asignar un servicio con traslado.
-- Evaluar impacto de cambios en combustible/peajes.
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Trip Calculator UI] --> SB[Supabase]
-  SB --> R[(routes)]
-  R --> RT[(route_tolls)]
-  RT --> TR[(toll_rates)]
-  SB --> FP[(fuel_prices)]
-  UI --> TE[(trip_estimates)]
-```
-
-## Rendimiento
-- Evitar recalcular rutas/peajes en cada input; usar debounce y memoización.
-
-## Seguridad
-- Validar inputs para evitar datos corruptos (distancias, costos negativos).
-- Restringir edición de catálogos a admins.
+## Consideraciones de mantenimiento
+- No documentar tablas antiguas de rutas o peajes como base principal si el calculo vigente usa edge functions externas.

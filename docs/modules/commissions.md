@@ -1,85 +1,57 @@
 # commissions
 
 ## Resumen
-Módulo de **comisiones** para cálculo/visualización y herramientas de sincronización con servicios y pagos. Incluye filtros, exportación y acciones administrativas (ajuste de fechas/lotes).
+Modulo de **comisiones** para revisar comisiones calculadas, agruparlas por operador, exportarlas y generar lotes de pago.
 
-**Entrypoints**
-- Página: [Commissions](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Commissions.tsx)
+La fuente de datos vigente no es solo una RPC: el flujo actual usa `useCommissions` con estrategia `RPC + fallback a costs`.
+
+## Entrypoints vigentes
+- Pagina: [Commissions](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Commissions.tsx)
 - Componentes: [src/components/commissions](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/commissions)
-- Utilidades: [commissionSync.ts](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/utils/commissionSync.ts)
-- Referencias existentes: [sistema-comisiones-restaurado.md](../sistema-comisiones-restaurado.md)
 
-## Arquitectura y componentes
-- Tabla y filtros: `CommissionTable`, `CommissionFilters`.
-- Acciones: `CommissionExportButton`, `CreatePaymentBatchDialog`, `EditPaymentDateDialog`.
-- Integración: se apoya en datos de `services` y `operators`, y en RPC para obtener vista consolidada.
+## Ruta
+- `/commissions`
 
-## API expuesta
+## Arquitectura actual
+La pagina actual organiza 2 vistas principales:
+- `Todas las Comisiones`
+- `Por Operador`
 
-### Ruta (frontend)
-- `/commissions` (AdminOnlyRoute)
+Ademas integra:
+- `CommissionTable`
+- exportacion
+- seleccion masiva
+- creacion de lotes de pago
+- dialogo de edicion de fecha de pago
 
-### Operaciones Supabase (tablas/RPC)
-Tablas consumidas (típico):
-- `services`, `operators`, `clients`
+## Hooks y servicios clave
+- `useCommissions`
+- `useCreatePaymentBatch`
+- `useCommissionExport`
+- `useCommissionPayments`
 
-RPC detectadas en hooks:
-- `get_commissions_with_details`
-- `update_commission_payment_date`
+## Datos y dependencias principales
+- RPC `get_commissions_with_details`
+- fallback sobre `costs` cuando la RPC falla o no retorna datos
+- relacion con servicios y detalle desde `ServiceDetailsModal`
 
-Otras RPC relacionadas (según uso):
-- `force_commission_sync_for_service`, `audit_commission_system`
+## Flujos vigentes
+### 1. Consulta de comisiones
+- `useCommissions` intenta obtener datos via RPC.
+- Si falla o vuelve vacio, cae a un flujo alternativo basado en costos.
 
-## Especificación de uso (con ejemplos)
+### 2. Vistas de trabajo
+- La pantalla permite trabajar por listado general o por operador.
+- Ambas vistas soportan exportacion y acciones operativas relacionadas.
 
-### Cargar comisiones con detalles (RPC)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+### 3. Lotes y pagos
+- Se pueden seleccionar registros y generar lotes de pago.
+- Existe edicion de fecha de pago para registros relacionados.
 
-const { data, error } = await supabase.rpc('get_commissions_with_details', {
-  p_start_date: '2026-04-01',
-  p_end_date: '2026-04-30'
-})
-if (error) throw error
-```
+### 4. Navegacion a servicio
+- Desde la tabla se puede abrir `ServiceDetailsModal`.
+- Ese detalle puede disparar sincronizacion relacionada con comisiones.
 
-## Dependencias
-
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `date-fns`
-- `lucide-react`, `sonner`
-
-### Internas (principales)
-- Hooks: `hooks/commissions/*` y/o `useCommissionSync` (según implementación)
-- Utilidades: `@/utils/commissionSync`, `@/utils/forceCommissionSync`
-- UI: `@/components/ui/*`
-
-## Configuración requerida
-- Reglas de negocio (cálculo): deben estar definidas de forma consistente entre UI y backend (idealmente en RPC/vistas).
-- RLS: solo admins deben acceder a comisiones completas.
-
-## Casos de uso principales
-- Revisar comisiones por periodo/operador/cliente.
-- Exportar comisiones y generar lotes de pago.
-- Reparar/sincronizar comisiones ante inconsistencias.
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Commissions UI] --> SB[Supabase]
-  SB --> RPC[RPC: get_commissions_with_details]
-  RPC --> SVC[(services)]
-  RPC --> OP[(operators)]
-  RPC --> CL[(clients)]
-```
-
-## Rendimiento
-- Preferir RPC agregada para evitar N+1 en comisiones.
-- Cachear por rango de fechas y filtros.
-
-## Seguridad
-- Comisiones son datos sensibles: enforcement por RLS y validación de rol en RPC.
-- Registrar auditoría de acciones masivas (lotes/ediciones).
+## Consideraciones de mantenimiento
+- No documentar `useCommissionSync` como eje principal si no participa de la UI actual.
+- Mantener claro que la fuente real es `RPC + fallback`, no solo RPC pura.

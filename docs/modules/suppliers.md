@@ -1,108 +1,91 @@
 # suppliers
 
 ## Resumen
-Módulo de **proveedores**: catálogo, pagos (pendientes/vencidos/pagados), calendario de vencimientos e importación de documentos XML (facturas) con trazabilidad a inventario/costos cuando aplica.
+Modulo de **proveedores** para gestion de catalogo, pagos, calendario de vencimientos e importacion XML con trazabilidad hacia costos e inventario.
 
-**Entrypoints**
-- Página (export nombrado): [Suppliers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Suppliers.tsx#L16-L201)
+La fuente operativa principal del catalogo hoy es `inventory_suppliers`, no una tabla `suppliers` separada como base principal del frontend.
+
+## Entrypoints vigentes
+- Pagina: [Suppliers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Suppliers.tsx)
 - Componentes: [src/components/suppliers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/suppliers)
-- Referencias existentes:
+- Referencias relacionadas:
   - [supplier-payments.md](../features/supplier-payments.md)
   - [supplier-payments-duplicate-elimination.md](../features/supplier-payments-duplicate-elimination.md)
 
-## Arquitectura y componentes
-- Vista por tabs:
-  - pagos (`PaymentList`)
-  - proveedores (`SupplierList`)
-  - calendario (`SupplierPaymentCalendar`)
-- Flujos:
-  - alta/edición proveedor (`SupplierForm`)
-  - registrar pago (`RegisterPaymentModal`)
-  - importar XML (`XMLDocumentUpload`, `XMLSupplierUpload`, según implementación)
-- Métricas: `useSupplierStats` (tarjetas KPI en el header).
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/suppliers`
 
-### Operaciones Supabase (tablas)
-- `suppliers`
-- `supplier_payments` (estado, vencimiento, pagado)
-- `supplier_invoices` y `supplier_invoice_items` (XML)
-- `supplier_categories` (clasificación)
-- integración: `costs`, `inventory_movements` (si XML crea compras/consumos), `crane_parts` (si consumo inmediato a grúa)
+## Arquitectura actual de la pagina
+La vista principal opera por tabs:
 
-### RPC relevantes
-- Duplicados/diagnóstico: `check_supplier_duplicates`, `check_supplier_invoice_duplicates`, `update_overdue_supplier_payments` (según uso)
+- `PaymentList`
+- `SupplierList`
+- `SupplierPaymentCalendar`
 
-## Especificación de uso (con ejemplos)
+Flujos auxiliares montados desde la pagina:
 
-### Registrar un pago a proveedor
-```ts
-import { supabase } from '@/integrations/supabase/client'
+- `SupplierForm`
+- `RegisterPaymentModal`
+- `XMLDocumentUpload`
 
-await supabase.from('supplier_payments').insert({
-  supplier_id: supplierId,
-  amount: 150000,
-  due_date: '2026-04-30',
-  status: 'pending'
-})
-```
+Notas relevantes:
+- `XMLDocumentUpload` es hoy el entrypoint XML principal del modulo.
+- `XMLSupplierUpload` puede existir en el repositorio, pero no esta conectado como flujo principal de `/suppliers`.
 
-### Consultar pagos vencidos
-```ts
-const { data } = await supabase
-  .from('supplier_payments')
-  .select('id, amount, due_date, status')
-  .eq('status', 'overdue')
-  .order('due_date', { ascending: true })
-```
+## Hooks y servicios clave
+- `useSuppliers`
+- `useSupplierPayments`
+- `useSupplierInvoices`
+- `useSupplierStats`
+- `useSupplierPaymentStats`
 
-## Dependencias
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-### Externas (principales)
-- `react`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `react-dropzone` (XML uploads)
-- `date-fns`
-- `lucide-react`, `sonner`
+- `inventory_suppliers`
+- `supplier_payments`
+- `supplier_invoices`
+- `supplier_invoice_items`
+- relaciones con `costs`, `inventory_movements`, `crane_parts`
 
-### Internas (principales)
-- Hooks: `useSuppliers`, `useSupplierPayments`, `useSupplierInvoices`, `useSupplierStats`, `useSupplierPaymentStats`
-- Utilidades: `@/utils/supplierIdentity`, `@/utils/suppliers/*`, parsers XML (según implementación)
-- UI: `@/components/ui/*`
+## Flujos vigentes
 
-## Configuración requerida
-- Importación XML:
-  - definir validaciones y mapeos a `supplier_invoices/items` y (opcional) inventario.
-- RLS:
-  - admins/viewers gestionan proveedores y pagos,
-  - portal (si aplica) debe restringirse por cliente/rol.
+### 1. Catalogo de proveedores
+- Alta y edicion desde `SupplierForm`.
+- El catalogo operativo del frontend se basa en `inventory_suppliers`.
+- Puede almacenar defaults utiles para importaciones recurrentes.
 
-## Casos de uso principales
-- Mantener catálogo de proveedores.
-- Seguimiento de pagos pendientes y vencidos.
-- Importar facturas XML y conciliar con costos/inventario.
+### 2. Gestion de pagos
+Conviven dos superficies reales:
 
-## Diagramas
+- alta rapida desde `RegisterPaymentModal`
+- gestion completa desde `PaymentList`
 
-```mermaid
-flowchart TD
-  UI[Suppliers UI] --> SB[Supabase]
-  SB --> SUP[(suppliers)]
-  SB --> PAY[(supplier_payments)]
-  SB --> INV[(supplier_invoices)]
-  INV --> IT[(supplier_invoice_items)]
-  IT --> IM[(inventory_movements)]
-  IT --> COST[(costs)]
-```
+`PaymentList` cubre:
 
-## Rendimiento
-- Calendario de pagos: consultar por rango de fechas y estado.
-- Import XML: procesar y validar localmente antes de escribir; usar inserciones por lote.
+- filtros y estados
+- edicion o revision de pagos
+- marcado de pagado
+- exportacion y seguimiento
 
-## Seguridad
-- Evitar duplicados y corrupción de datos financieros (validaciones + RPC de deduplicación si existen).
-- Restringir subida de XML a tipos/tamaños permitidos y evitar almacenar datos sensibles innecesarios.
+### 3. Calendario de vencimientos
+- `SupplierPaymentCalendar` resume compromisos por fecha.
+- Complementa, no reemplaza, el listado detallado de pagos.
+
+### 4. Importacion XML
+- `XMLDocumentUpload` importa documentos tributarios del proveedor.
+- Puede detectar duplicados y coincidencias.
+- Puede proponer glosas y defaults por proveedor.
+- Puede enlazar o derivar informacion hacia costos e inventario.
+
+### 5. Trazabilidad pago -> costo -> inventario
+Este es uno de los flujos mas importantes del modulo:
+
+- un pago o documento de proveedor puede crear o actualizar `costs`
+- puede crear movimientos en `inventory_movements`
+- puede incluso participar en consumo inmediato a grua
+
+## Consideraciones de mantenimiento
+- Si se cambia la documentacion del modelo de datos, reflejar que `inventory_suppliers` es la fuente de verdad operativa actual.
+- Si un cambio toca XML, validar impacto cruzado en costos, inventario y sugerencias por proveedor.
+- Diferenciar siempre entre flujos visibles en `/suppliers` y componentes legacy o secundarios del repositorio.

@@ -194,7 +194,7 @@ export class XMLSupplierParser {
         if (!child) return '';
         current = child;
       }
-      return current.textContent?.trim() || '';
+      return this.cleanExtractedText(current.textContent);
     };
 
     const rut = getNestedValue('Documento/Encabezado/Emisor/RUTEmisor');
@@ -221,7 +221,7 @@ export class XMLSupplierParser {
 
   private extractSupplierFromGeneric(element: Element): XMLSupplierData | null {
     const getValue = (selector: string): string => {
-      return element.querySelector(selector)?.textContent?.trim() || '';
+      return this.cleanExtractedText(element.querySelector(selector)?.textContent);
     };
 
     const name = getValue('nombre, name, razon_social');
@@ -249,7 +249,7 @@ export class XMLSupplierParser {
 
   private extractSupplierFromInvoice(facturaElement: Element): XMLSupplierData | null {
     const getValue = (selector: string): string => {
-      return facturaElement.querySelector(selector)?.textContent?.trim() || '';
+      return this.cleanExtractedText(facturaElement.querySelector(selector)?.textContent);
     };
 
     const name = getValue('proveedor, emisor, supplier_name, vendor_name');
@@ -338,6 +338,13 @@ export class XMLSupplierParser {
     // Formatear con puntos y guión
     const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
     return formatted;
+  }
+
+  private cleanExtractedText(value?: string | null): string {
+    return (value || '')
+      .replace(/\uFFFD+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private validateRUT(rut: string): boolean {
@@ -448,7 +455,7 @@ export class XMLSupplierParser {
         if (!child) return '';
         current = child;
       }
-      return current.textContent?.trim() || '';
+      return this.cleanExtractedText(current.textContent);
     };
 
     const getNestedNumber = (path: string): number => {
@@ -480,19 +487,19 @@ export class XMLSupplierParser {
     if (documentoElement) {
       const detalleElements = documentoElement.querySelectorAll('Detalle');
       detalleElements.forEach(detalle => {
-        const descripcion = detalle.querySelector('NmbItem')?.textContent?.trim() || '';
+        const descripcion = this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent);
         const productCode =
-          detalle.querySelector('CdgItem VlrCodigo')?.textContent?.trim() ||
-          detalle.querySelector('CdgItem VlrCodigo')?.textContent?.trim() ||
-          detalle.querySelector('CdgItem > VlrCodigo')?.textContent?.trim() ||
-          detalle.querySelector('VlrCodigo')?.textContent?.trim() ||
-          detalle.querySelector('CdgItem > CdgItem')?.textContent?.trim() ||
+          this.cleanExtractedText(detalle.querySelector('CdgItem VlrCodigo')?.textContent) ||
+          this.cleanExtractedText(detalle.querySelector('CdgItem VlrCodigo')?.textContent) ||
+          this.cleanExtractedText(detalle.querySelector('CdgItem > VlrCodigo')?.textContent) ||
+          this.cleanExtractedText(detalle.querySelector('VlrCodigo')?.textContent) ||
+          this.cleanExtractedText(detalle.querySelector('CdgItem > CdgItem')?.textContent) ||
           '';
-        const productName = detalle.querySelector('NmbItem')?.textContent?.trim() || descripcion;
+        const productName = this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent) || descripcion;
         const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
         const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
         const subtotal = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
-        const taxRate = detalle.querySelector('IndExe')?.textContent?.trim() === '1' ? 0 : 19;
+        const taxRate = this.cleanExtractedText(detalle.querySelector('IndExe')?.textContent) === '1' ? 0 : 19;
         const taxAmount = subtotal > 0 ? subtotal * (taxRate / 100) : 0;
         const total = subtotal + taxAmount;
         
@@ -537,7 +544,7 @@ export class XMLSupplierParser {
 
   private extractDocumentFromGenericInvoice(facturaElement: Element): XMLDocumentData | null {
     const getValue = (selector: string): string => {
-      return facturaElement.querySelector(selector)?.textContent?.trim() || '';
+      return this.cleanExtractedText(facturaElement.querySelector(selector)?.textContent);
     };
 
     const getNumber = (selector: string): number => {
@@ -598,7 +605,7 @@ export class XMLSupplierParser {
       : 19;
 
     return uniqueLineElements.map((line, index) => {
-      const getValue = (selector: string) => line.querySelector(selector)?.textContent?.trim() || '';
+    const getValue = (selector: string) => this.cleanExtractedText(line.querySelector(selector)?.textContent);
       const getNumber = (selector: string) => {
         const value = getValue(selector);
         return value ? parseFloat(value.replace(/[^\d.-]/g, '')) || 0 : 0;
@@ -732,8 +739,9 @@ export class XMLSupplierParser {
       const supplier = supplierMap.get(doc.supplier_rut);
       const category = supplier ? supplier.category : this.categorizeByBusiness(doc.description);
 
+      const documentStateKey = `${doc.supplier_rut || 'sin-rut'}::${doc.folio || 'sin-folio'}`;
       // Priorizar fecha personalizada, luego fecha del documento, luego calcular por defecto
-      const dueDate = (dueDateOverrides && dueDateOverrides[doc.folio]) || 
+      const dueDate = (dueDateOverrides && (dueDateOverrides[documentStateKey] || dueDateOverrides[doc.folio])) || 
                       doc.due_date || 
                       this.calculateDefaultDueDate(doc.issue_date);
 
@@ -770,12 +778,73 @@ export class XMLSupplierParser {
     return xml.replace(/\sxmlns(:\w+)?="[^"]*"/g, '');
   }
 
-  private readFileAsText(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = (e) => reject(new Error('Error leyendo archivo'));
-      reader.readAsText(file, 'utf-8');
+  private sanitizeDecodedText(value: string): string {
+    return value.replace(/\u0000/g, '').replace(/\ufeff/g, '');
+  }
+
+  private countReplacementChars(value: string): number {
+    return (value.match(/\uFFFD/g) || []).length;
+  }
+
+  private normalizeEncodingLabel(rawEncoding?: string | null): string {
+    const normalized = rawEncoding?.trim().toLowerCase();
+    if (!normalized) return 'utf-8';
+
+    if (normalized === 'utf-8' || normalized === 'utf8') return 'utf-8';
+    if (normalized === 'iso-8859-1' || normalized === 'iso8859-1' || normalized === 'latin1' || normalized === 'latin-1') {
+      return 'windows-1252';
+    }
+    if (normalized === 'windows-1252' || normalized === 'cp1252') return 'windows-1252';
+
+    return normalized;
+  }
+
+  private decodeBytes(bytes: Uint8Array, encoding: string): string {
+    try {
+      return this.sanitizeDecodedText(new TextDecoder(encoding).decode(bytes));
+    } catch {
+      return this.sanitizeDecodedText(new TextDecoder('utf-8').decode(bytes));
+    }
+  }
+
+  private detectDeclaredEncoding(bytes: Uint8Array): string {
+    const header = new TextDecoder('utf-8').decode(bytes.slice(0, 256));
+    const match = header.match(/encoding=["']([^"']+)["']/i);
+    return this.normalizeEncodingLabel(match?.[1]);
+  }
+
+  private selectBestDecodedText(bytes: Uint8Array, preferredEncoding: string): string {
+    const candidateEncodings = Array.from(new Set([
+      preferredEncoding,
+      'utf-8',
+      'windows-1252',
+    ]));
+
+    let bestText = '';
+    let bestScore = Number.POSITIVE_INFINITY;
+    let bestPriority = Number.POSITIVE_INFINITY;
+
+    candidateEncodings.forEach((encoding, index) => {
+      const decodedText = this.decodeBytes(bytes, encoding);
+      const replacementCount = this.countReplacementChars(decodedText);
+      if (
+        replacementCount < bestScore ||
+        (replacementCount === bestScore && index < bestPriority)
+      ) {
+        bestText = decodedText;
+        bestScore = replacementCount;
+        bestPriority = index;
+      }
     });
+
+    return bestText;
+  }
+
+  private async readFileAsText(file: File): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    const declaredEncoding = this.detectDeclaredEncoding(bytes);
+    return this.selectBestDecodedText(bytes, declaredEncoding);
   }
 }

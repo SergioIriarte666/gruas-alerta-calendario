@@ -1,93 +1,54 @@
 # calendar
 
 ## Resumen
-Módulo de calendario para visualizar y administrar eventos (agenda) asociados a servicios/recursos. Incluye vistas **mes/semana/día**, sidebar de eventos y modales de creación/detalle.
+Modulo de **calendario** para visualizar y gestionar eventos manuales junto con eventos sinteticos provenientes de servicios y mantenciones.
 
-**Entrypoints**
-- Página: [Calendar](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Calendar.tsx)
+La vista actual no trabaja solo con `calendar_events`: consolida `calendar_events`, `services` y `crane_maintenance` en una misma experiencia.
+
+## Entrypoints vigentes
+- Pagina: [Calendar](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Calendar.tsx)
 - Componentes: [src/components/calendar](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/calendar)
+- Hook orquestador: `useCalendar`
 
-## Arquitectura y componentes
-- UI por vistas:
-  - `MonthView`, `WeekView`, `DayView`
-  - `CalendarHeader`, `CalendarControls`, `EventsSidebar`
-- Edición/detalle:
-  - `EventModal`, `EventDetailsModal`
-  - `ConvertEventToServiceModal` para convertir/relacionar eventos con un `service`.
-
-El módulo suele persistir eventos en `calendar_events` y puede enlazar opcionalmente:
-- `service_id` (evento vinculado a servicio),
-- `client_id`, `operator_id`, `crane_id`.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/calendar`
 
-### Operaciones Supabase (tablas)
-- `calendar_events` (CRUD principal)
-- Lecturas de referencia (según filtros): `clients`, `operators`, `cranes`, `services`
+## Arquitectura actual
+La pagina se apoya en:
+- `CalendarHeader`
+- vistas por dia, semana y mes
+- `EventsSidebar`
+- `EventModal`
+- `ConvertEventToServiceModal`
+- hook `useCalendar` que compone navegacion y eventos
 
-Referencia de esquema: [types.ts](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/integrations/supabase/types.ts#L88-L191).
+## Hooks y servicios clave
+- `useCalendar`
+- `useCalendarEvents`
+- `useCalendarNavigation`
 
-## Especificación de uso (con ejemplos)
+## Datos y dependencias principales
+- `calendar_events`
+- `services`
+- `crane_maintenance`
 
-### Crear evento (patrón Supabase)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+## Flujos vigentes
+### 1. Eventos mixtos
+- El calendario mezcla eventos manuales con eventos sinteticos `svc-*` y `mnt-*`.
+- Los eventos de servicios y mantenciones no deben documentarse como registros editables de `calendar_events`.
 
-await supabase.from('calendar_events').insert({
-  date: '2026-04-13',
-  start_time: '09:00',
-  end_time: '10:00',
-  title: 'Mantención grúa',
-  type: 'maintenance',
-  status: 'scheduled'
-})
-```
+### 2. CRUD manual
+- Solo los eventos manuales pueden editarse o eliminarse.
+- Los eventos sincronizados quedan bloqueados por su origen.
 
-## Dependencias
+### 3. Conversion a servicio
+- Existe flujo para convertir evento a servicio desde vistas y sidebar.
+- El modal usa prefill y abre un flujo operativo relacionado con servicios.
 
-### Externas (principales)
-- `react`
-- `date-fns`
-- `lucide-react`
-- `sonner`
+### 4. Refresh global
+- El modulo escucha refresh global para recargar datos compartidos.
 
-### Internas (principales)
-- `@/integrations/supabase/client`
-- `@/components/ui/*` (dialogs, buttons, inputs)
-- Hooks relacionados: `useCalendarEvents`, `useCalendarNavigation`, validaciones en `@/utils/calendarValidation`
-
-## Configuración requerida
-- Zona horaria: el sistema utiliza utilidades de timezone (ver `@/utils/timezoneUtils`) y configuración en settings cuando aplique.
-- RLS: `calendar_events` debe permitir leer/escribir según rol.
-
-## Casos de uso principales
-- Planificar servicios/recursos con visibilidad semanal/mensual.
-- Enlazar un evento con un servicio existente o convertirlo a servicio.
-- Auditar/actualizar estado del evento (programado/completado/cancelado).
-
-## Diagramas
-
-```mermaid
-sequenceDiagram
-  participant U as Usuario
-  participant Cal as Calendar UI
-  participant SB as Supabase
-  participant CE as calendar_events
-
-  U->>Cal: Crear evento
-  Cal->>SB: insert calendar_events
-  SB->>CE: INSERT
-  CE-->>SB: ok
-  SB-->>Cal: refetch/lista actualizada
-```
-
-## Rendimiento
-- Render de grillas (mes/semana): evitar recalcular layouts en cada render; memoizar eventos filtrados.
-- Para rangos amplios, consultar por rango de fechas (`gte/lte`) y paginar si el volumen crece.
-
-## Seguridad
-- Evitar exponer datos sensibles del cliente en eventos a roles no autorizados.
-- Validar en backend (RLS) que usuarios solo puedan modificar eventos permitidos por su rol/relación.
+## Consideraciones de mantenimiento
+- Usar `useCalendar` como fuente de verdad del modulo.
+- No documentar `EventDetailsModal` como parte de la pagina actual de calendario.
+- Distinguir siempre entre evento manual y evento sincronizado desde otros dominios.

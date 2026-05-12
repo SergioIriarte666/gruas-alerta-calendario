@@ -1,84 +1,81 @@
 # accounts-payable
 
 ## Resumen
-Módulo de **cuentas por pagar** (AP) orientado a administrar acreedores, deudas, cuotas y calendario de pagos.
+Modulo de **cuentas por pagar** para administrar acreedores, deudas, cuotas, pagos y calendario financiero.
 
-**Entrypoints**
-- Página: [AccountsPayable](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/AccountsPayable.tsx)
+La implementacion actual incluye dashboard cards, tabs operativas y una integracion importante con `costs`: pagar cuotas o registrar ciertos pies genera costos automaticamente.
+
+## Entrypoints vigentes
+- Pagina: [AccountsPayable](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/AccountsPayable.tsx)
 - Componentes: [src/components/accounts-payable](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/accounts-payable)
 
-## Arquitectura y componentes
-- Acreedores: `CreditorList`, `CreditorForm`.
-- Deudas: `DebtList`, `DebtForm`, `DebtDetailModal`.
-- Cuotas/pagos: `MonthlyInstallments`, `PayInstallmentModal`.
-- Vista calendario: `DebtCalendar`.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/accounts-payable`
 
-### Operaciones Supabase (tablas)
+## Arquitectura actual de la pagina
+La pagina principal organiza la experiencia mediante:
+
+- `APDashboardCards`
+- tabs para cuotas del mes, deudas, calendario y acreedores
+- `DebtList`
+- `DebtForm`
+- `DebtDetailModal`
+- `MonthlyInstallments`
+- `PayInstallmentModal`
+- `CreditorList`
+- `CreditorForm`
+- `DebtCalendar`
+
+## Hooks y servicios clave
+- `useDebtsWithProgress`
+- `useMonthlyInstallments`
+- `usePayInstallment`
+- `useCreditors`
+- `useCreditorTypes`
+- `useDebts`
+- `useDebtInstallments`
+- `useCostCategories`
+- `useCostSubcategories`
+
+Nota:
+- `usePendingPayments` no corresponde al flujo principal de cuentas por pagar; pertenece al dominio de proveedores.
+
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
+
 - `creditors`
 - `debts`
 - `debt_installments`
 - `debt_payments`
-- `scheduled_payments` (si se usa para programación)
+- `costs`
 
-## Especificación de uso (con ejemplos)
+Dependencias contables u operativas frecuentes:
 
-### Crear acreedor y deuda
-```ts
-import { supabase } from '@/integrations/supabase/client'
+- categorias y subcategorias de costo
+- centro de costo, grua u operador cuando aplica al registrar pagos
 
-const { data: creditor } = await supabase
-  .from('creditors')
-  .insert({ name: 'Proveedor financiero', type: 'leasing' })
-  .select('id')
-  .single()
+## Flujos vigentes
 
-await supabase.from('debts').insert({
-  creditor_id: creditor!.id,
-  total_amount: 5000000,
-  status: 'active'
-})
-```
+### 1. Acreedores y deudas
+- Se pueden crear acreedores y registrar deudas estructuradas.
+- La gestion actual contempla metadata contable y tipos dinamicos de acreedor.
 
-## Dependencias
+### 2. Cuotas del mes y calendario
+- La pagina separa claramente cuotas proximas o del mes del listado general de deudas.
+- El calendario complementa la vista tabular.
 
-### Externas (principales)
-- `react`
-- `date-fns`
-- `lucide-react`
+### 3. Pago de cuotas
+- Pagar una cuota no solo actualiza estado.
+- Tambien crea registro en `debt_payments` y un costo en `costs`.
 
-### Internas (principales)
-- Hooks típicos: `useCreditors`, `useDebts`, `useDebtInstallments`, `usePendingPayments`
-- UI: `@/components/ui/*`
-- `@/integrations/supabase/client`
+### 4. Pie pagado y costos automaticos
+- Al crear ciertas deudas con pie pagado tambien se puede generar costo automaticamente.
 
-## Configuración requerida
-- RLS: acceso a datos financieros restringido a roles autorizados.
-- Reglas de estado: asegurar consistencia (deuda activa vs cuotas pagadas).
+### 5. Soporte UF y herencia contable
+- El flujo actual contempla pagos en UF.
+- Puede heredar informacion contable u operativa como categoria, subcategoria, grua u operador al registrar el pago.
 
-## Casos de uso principales
-- Registrar deudas y programar pagos.
-- Controlar vencimientos y pagos realizados.
-- Visualizar calendario de obligaciones.
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[AP UI] --> SB[Supabase]
-  SB --> CR[(creditors)]
-  SB --> D[(debts)]
-  D --> I[(debt_installments)]
-  I --> P[(debt_payments)]
-```
-
-## Rendimiento
-- Calendarios: filtrar por rango de fecha y status.
-- Agregaciones de montos: preferir vistas/RPC si hay alto volumen.
-
-## Seguridad
-- Datos financieros: proteger con RLS estricta y auditoría.
+## Consideraciones de mantenimiento
+- Si un cambio toca pagos de cuotas, revisar siempre la creacion automatica de costos.
+- No documentar `scheduled_payments` como base del flujo actual sin confirmar su uso real en la pagina.
+- Mantener separada la documentacion de AP respecto al dominio de proveedores, aunque ambos toquen pagos.

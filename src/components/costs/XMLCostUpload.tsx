@@ -38,6 +38,7 @@ import {
   Link2,
   ChevronDown,
   ChevronUp,
+  Sparkles,
   Package,
   Info,
   Code,
@@ -46,6 +47,7 @@ import {
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { findSupplierByIdentity } from '@/utils/supplierIdentity';
+import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestion';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { createDirectInventoryEntry } from '@/utils/inventoryConsumptionHelper';
@@ -82,6 +84,159 @@ const CostSubcategorySelect: React.FC<{
   );
 };
 
+type HistoricalGlosaCandidate = {
+  supplier_id: string;
+  description: string | null;
+  amount: number | null;
+  date?: string | null;
+  created_at?: string | null;
+};
+
+type HistoricalGlosaSuggestion = {
+  description: string;
+  matchCount: number;
+  confidence: number;
+};
+
+const GLOSA_STOP_WORDS = new Set([
+  'de', 'la', 'el', 'en', 'los', 'las', 'del', 'por', 'con', 'para', 'una', 'uno', 'que', 'mas', 'más',
+  'folio', 'factura', 'total', 'neto', 'iva', 'documento',
+]);
+
+const normalizeGlosaText = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const tokenizeGlosaText = (text: string) =>
+  normalizeGlosaText(text)
+    .split(' ')
+    .filter(token => token.length >= 3 && !GLOSA_STOP_WORDS.has(token) && !/^\d+$/.test(token));
+
+const extractDocumentSimilarityText = (doc: XMLDocumentData) => {
+  const itemDescriptions = (doc.items || [])
+    .map(item => item.description?.trim())
+    .filter(Boolean)
+    .join(' ');
+
+  return [doc.description, itemDescriptions, doc.document_type]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+};
+
+const isSimilarAmount = (left?: number | null, right?: number | null) => {
+  if (!left || !right || !isFinite(left) || !isFinite(right) || left <= 0 || right <= 0) return false;
+  const ratio = Math.abs(left - right) / Math.max(left, right);
+  return ratio <= 0.08;
+};
+
+const buildHistoricalGlosaSuggestion = (
+  doc: XMLDocumentData,
+  historicalCosts: HistoricalGlosaCandidate[]
+): HistoricalGlosaSuggestion | null => {
+  if (historicalCosts.length === 0) return null;
+
+  const keywords = tokenizeGlosaText(extractDocumentSimilarityText(doc));
+  if (keywords.length === 0) return null;
+
+  const groups = new Map<string, { description: string; totalScore: number; count: number }>();
+  const frequentDescriptions = new Map<string, { description: string; count: number }>();
+
+  for (const cost of historicalCosts) {
+    const candidateDescription = cost.description?.trim();
+    if (!candidateDescription) continue;
+
+    const normalizedDescription = normalizeGlosaText(candidateDescription);
+    const frequentEntry = frequentDescriptions.get(normalizedDescription);
+    if (frequentEntry) {
+      frequentEntry.count += 1;
+    } else {
+      frequentDescriptions.set(normalizedDescription, {
+        description: candidateDescription,
+        count: 1,
+      });
+    }
+
+    const candidateTokens = tokenizeGlosaText(candidateDescription);
+    if (candidateTokens.length === 0) continue;
+
+    const overlap = keywords.filter(keyword =>
+      candidateTokens.some(token => token.includes(keyword) || keyword.includes(token))
+    );
+
+    const keywordScore = overlap.length / keywords.length;
+    const amountBonus = isSimilarAmount(doc.total_amount, Number(cost.amount || 0)) ? 0.2 : 0;
+    const totalScore = Math.min(1, keywordScore + amountBonus);
+
+    if (overlap.length === 0 || totalScore < 0.45) continue;
+
+    const key = normalizeGlosaText(candidateDescription);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.totalScore += totalScore;
+      existing.count += 1;
+    } else {
+      groups.set(key, {
+        description: candidateDescription,
+        totalScore,
+        count: 1,
+      });
+    }
+  }
+
+  let best: { description: string; totalScore: number; count: number } | null = null;
+  for (const group of groups.values()) {
+    if (!best || group.count > best.count || (group.count === best.count && group.totalScore > best.totalScore)) {
+      best = group;
+    }
+  }
+
+  if (!best) return null;
+
+  const confidence = best.totalScore / best.count;
+  if (best.count < 2 && confidence < 0.72) {
+    let fallback: { description: string; count: number } | null = null;
+    for (const entry of frequentDescriptions.values()) {
+      if (!fallback || entry.count > fallback.count) {
+        fallback = entry;
+      }
+    }
+
+    if (!fallback) return null;
+
+    const hasSimilarAmount = historicalCosts.some(cost =>
+      normalizeGlosaText(cost.description || '') === normalizeGlosaText(fallback.description) &&
+      isSimilarAmount(doc.total_amount, Number(cost.amount || 0))
+    );
+
+    if (fallback.count >= 2 && hasSimilarAmount) {
+      return {
+        description: fallback.description,
+        matchCount: fallback.count,
+        confidence: 0.62,
+      };
+    }
+
+    return null;
+  }
+
+  if (best.count >= 2 && confidence < 0.5) return null;
+
+  return {
+    description: best.description,
+    matchCount: best.count,
+    confidence,
+  };
+};
+
+const getDocumentStateKey = (doc: Pick<XMLDocumentData, 'supplier_rut' | 'folio'>) =>
+  `${doc.supplier_rut || 'sin-rut'}::${doc.folio || 'sin-folio'}`;
+
 interface XMLCostUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -110,6 +265,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
   const [isSearchingMatches, setIsSearchingMatches] = useState(false);
   const [expandedDocumentDetails, setExpandedDocumentDetails] = useState<Record<string, boolean>>({});
+  const [historicalGlosaSuggestions, setHistoricalGlosaSuggestions] = useState<Record<string, HistoricalGlosaSuggestion>>({});
   const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
     if (!el) return;
     el.style.height = 'auto';
@@ -120,6 +276,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const { mutate: addCost } = useAddCost();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const resolveCategoryId = (rawCategory?: string | null) => {
+    const normalized = rawCategory?.trim();
+    if (!normalized) return '';
+    const directMatch = activeCategories.find(category => category.id === normalized);
+    if (directMatch) return directMatch.id;
+    const nameMatch = activeCategories.find(category => category.name === normalized || category.label === normalized);
+    return nameMatch?.id || normalized;
+  };
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
 
@@ -141,6 +305,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       setSelectedSuppliers(new Set());
       setSelectedDocuments(new Set());
       setExpandedDocumentDetails({});
+      setHistoricalGlosaSuggestions({});
     },
     onParsed: initAfterParse,
   });
@@ -182,8 +347,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   };
 
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
-    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, doc.folio);
-    const override = hasOverride ? documentDescriptionOverrides[doc.folio] : undefined;
+    const documentKey = getDocumentStateKey(doc);
+    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
+    const override = hasOverride ? documentDescriptionOverrides[documentKey] : undefined;
     const value = (override ?? buildSuggestedGlosa(doc)).trim();
     return value.length > 0 ? value : buildSuggestedGlosa(doc);
   };
@@ -195,16 +361,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     documents.forEach((doc) => {
       if (doc.supplier_rut !== supplierRut) return;
       if (!doc.issue_date) return;
+      const documentKey = getDocumentStateKey(doc);
 
       if (condition === 'credit') {
-        if (creditDate) nextOverrides[doc.folio] = creditDate;
+        if (creditDate) nextOverrides[documentKey] = creditDate;
         return;
       }
 
       const term = paymentTerms.find(t => t.id === condition);
       if (term) {
         const issueDate = safeParseDateOnly(doc.issue_date);
-        nextOverrides[doc.folio] = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+        nextOverrides[documentKey] = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
       }
     });
     setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
@@ -216,31 +383,43 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
     // Pre-select all valid suppliers and documents
       const validSuppliers = new Set(uniqueSuppliers.filter(s => s.name && s.rut).map(s => s.rut));
-      const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(d => d.folio));
+      const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(getDocumentStateKey));
       setSelectedSuppliers(validSuppliers);
       setSelectedDocuments(validDocuments);
 
-      // Initialize category mapping
+      // Initialize category/subcategory mapping from parsed XML first;
+      // later we overwrite with stored supplier defaults when available.
       const categoryMap: Record<string, string> = {};
+      const subcategoryMap: Record<string, string> = {};
       uniqueSuppliers.forEach(supplier => {
-        categoryMap[supplier.rut] = supplier.category;
+        const parsedSubcategory = (supplier as any).subcategory?.trim();
+        categoryMap[supplier.rut] = supplier.category || 'otros';
+        if (parsedSubcategory) {
+          subcategoryMap[supplier.rut] = parsedSubcategory;
+        }
       });
-      setSupplierCategoryMapping(categoryMap);
 
       const initialSupplierCondition: Record<string, 'none' | 'credit' | string> = {};
       const initialSupplierCreditDate: Record<string, string> = {};
+      const nextHistoricalGlosaSuggestions: Record<string, HistoricalGlosaSuggestion> = {};
 
       try {
         const supplierRuts = uniqueSuppliers.map(s => s.rut).filter(Boolean);
         if (supplierRuts.length > 0) {
           const { data, error } = await (supabase as any)
             .from('inventory_suppliers')
-            .select('rut, default_payment_term_id, credit_date')
+            .select('id, rut, category, subcategory, default_payment_term_id, credit_date')
             .in('rut', supplierRuts);
 
           if (!error && Array.isArray(data)) {
             data.forEach((row: any) => {
               if (!row?.rut) return;
+              if (row.category) {
+                categoryMap[row.rut] = row.category;
+              }
+              if (row.subcategory?.trim()) {
+                subcategoryMap[row.rut] = row.subcategory.trim();
+              }
               if (row.credit_date) {
                 initialSupplierCondition[row.rut] = 'credit';
                 initialSupplierCreditDate[row.rut] = row.credit_date;
@@ -250,6 +429,65 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 initialSupplierCondition[row.rut] = 'none';
               }
             });
+
+            const supplierRowsWithId = data.filter((row: any) => row?.id && row?.rut);
+            const supplierIdByRut = new Map<string, string>();
+            supplierRowsWithId.forEach((row: any) => {
+              supplierIdByRut.set(row.rut, row.id);
+            });
+
+            const supplierIds = supplierRowsWithId.map((row: any) => row.id);
+            if (supplierIds.length > 0) {
+              const [
+                { data: historicalCosts, error: historyError },
+                { data: historicalPayments, error: paymentHistoryError },
+              ] = await Promise.all([
+                (supabase as any)
+                  .from('costs')
+                  .select('supplier_id, description, amount, date, created_at')
+                  .in('supplier_id', supplierIds)
+                  .not('description', 'is', null)
+                  .order('date', { ascending: false })
+                  .limit(500),
+                (supabase as any)
+                  .from('supplier_payments')
+                  .select('supplier_id, description, amount, due_date, created_at')
+                  .in('supplier_id', supplierIds)
+                  .not('description', 'is', null)
+                  .order('due_date', { ascending: false })
+                  .limit(500),
+              ]);
+
+              if ((!historyError || !paymentHistoryError) && (Array.isArray(historicalCosts) || Array.isArray(historicalPayments))) {
+                const costsBySupplierId = new Map<string, HistoricalGlosaCandidate[]>();
+                const combinedHistory: HistoricalGlosaCandidate[] = [
+                  ...((historicalCosts || []) as HistoricalGlosaCandidate[]),
+                  ...((historicalPayments || []).map((row: any) => ({
+                    supplier_id: row.supplier_id,
+                    description: row.description,
+                    amount: row.amount,
+                    date: row.due_date,
+                    created_at: row.created_at,
+                  })) as HistoricalGlosaCandidate[]),
+                ];
+
+                combinedHistory.forEach((row: HistoricalGlosaCandidate) => {
+                  if (!row?.supplier_id) return;
+                  const existing = costsBySupplierId.get(row.supplier_id) || [];
+                  existing.push(row);
+                  costsBySupplierId.set(row.supplier_id, existing);
+                });
+
+                result.documents.forEach((doc) => {
+                  const supplierId = supplierIdByRut.get(doc.supplier_rut);
+                  if (!supplierId) return;
+                  const suggestion = buildHistoricalGlosaSuggestion(doc, costsBySupplierId.get(supplierId) || []);
+                  if (suggestion) {
+                    nextHistoricalGlosaSuggestions[getDocumentStateKey(doc)] = suggestion;
+                  }
+                });
+              }
+            }
           }
         }
       } catch (error) {
@@ -273,15 +511,18 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         }
       });
 
+      setSupplierCategoryMapping(categoryMap);
+      setSupplierSubcategoryMapping(subcategoryMap);
       setSupplierPaymentCondition(initialSupplierCondition);
       setSupplierCreditDate(initialSupplierCreditDate);
+      setHistoricalGlosaSuggestions(nextHistoricalGlosaSuggestions);
 
       // Initialize per-document due date overrides
       const initialDueOverrides: Record<string, string> = {};
       result.documents.forEach(doc => {
         if (doc.issue_date) {
           const issueDate = safeParseDateOnly(doc.issue_date);
-          initialDueOverrides[doc.folio] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
+          initialDueOverrides[getDocumentStateKey(doc)] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
         }
       });
       setDueDateOverrides(initialDueOverrides);
@@ -417,17 +658,22 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
             if (duplicates.length > 0) {
               const exactDuplicates = duplicates.filter(d => d.matchType === 'exact' || d.matchType === 'folio');
+              const similarDuplicates = duplicates.filter(d => d.matchType === 'similar');
               if (exactDuplicates.length > 0) {
                 const newSelection = new Set(validDocuments);
                 exactDuplicates.forEach(d => {
                   const doc = result.documents[d.index];
-                  if (doc) newSelection.delete(doc.folio);
+                  if (doc) newSelection.delete(getDocumentStateKey(doc));
                 });
                 setSelectedDocuments(newSelection);
                 setShowDuplicateWarning(true);
-                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. ${exactDuplicates.length} exactos fueron deseleccionados.`);
-              } else {
-                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. Revísalos antes de importar.`);
+                toast.warning(
+                  `Se detectaron ${exactDuplicates.length} duplicados reales y ${similarDuplicates.length} coincidencias similares. Los duplicados reales fueron deseleccionados para revisión.`
+                );
+              } else if (similarDuplicates.length > 0) {
+                toast.info(
+                  `Se encontraron ${similarDuplicates.length} coincidencias similares para revisar. No se marcó este XML como duplicado ni se deseleccionó automáticamente.`
+                );
               }
             }
           } catch (dupError) {
@@ -460,9 +706,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               });
 
               if (!error && data && data.length > 0) {
-                matches[doc.folio] = data;
+                matches[getDocumentStateKey(doc)] = data;
                 const exactMatch = data.find((m: any) => Math.abs(m.amount - doc.total_amount) < 1);
-                decisions[doc.folio] = exactMatch ? (exactMatch as any).id : 'new';
+                decisions[getDocumentStateKey(doc)] = exactMatch ? (exactMatch as any).id : 'new';
               }
             }
 
@@ -507,7 +753,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     if (!parseResult) return;
 
     const docsToImport = parseResult.documents.filter(d =>
-      selectedDocuments.has(d.folio) && selectedSuppliers.has(d.supplier_rut)
+      selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut)
     );
 
     if (docsToImport.length === 0) {
@@ -573,12 +819,15 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           return existingId;
         }
 
+        const supplierCategory = resolveCategoryId(supplierCategoryMapping[rut] || 'otros');
+        const supplierSubcategory = (supplierSubcategoryMapping[rut] || '').trim() || null;
         const { data: created, error } = await (supabase as any)
           .from('inventory_suppliers')
           .insert([{
             name: name || 'Proveedor',
             rut: rut || null,
-            category: 'otros',
+            category: supplierCategory,
+            subcategory: supplierSubcategory,
             is_active: true,
             created_by: userId,
           }])
@@ -592,9 +841,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         return created.id;
       };
 
-      const updateSupplierCreditConfig = async (supplierId: string, supplierRut: string) => {
+      const updateSupplierDefaults = async (supplierId: string, supplierRut: string) => {
         const condition = getSelectedCondition(supplierRut);
-        const updateData: Record<string, any> = { updated_by: userId };
+        const updateData: Record<string, any> = {
+          category: resolveCategoryId(supplierCategoryMapping[supplierRut] || 'otros'),
+          subcategory: (supplierSubcategoryMapping[supplierRut] || '').trim() || null,
+          updated_by: userId,
+        };
 
         if (condition === 'credit') {
           updateData.credit_date = supplierCreditDate[supplierRut] || null;
@@ -621,7 +874,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       for (const supplierRut of selectedSupplierRuts) {
         const supplierName = supplierNameByRut.get(supplierRut) || '';
         const supplierId = await ensureSupplierId(supplierRut, supplierName);
-        await updateSupplierCreditConfig(supplierId, supplierRut);
+        await updateSupplierDefaults(supplierId, supplierRut);
       }
       
       const existingCostKeys = new Set<string>();
@@ -663,11 +916,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
       for (let i = 0; i < docsToImport.length; i++) {
         const doc = docsToImport[i];
+        const documentKey = getDocumentStateKey(doc);
         const effectiveGlosa = getEffectiveGlosa(doc);
         batchProgress.update(i + 1, `${doc.folio} - ${effectiveGlosa.substring(0, 30)}`);
 
         // If user chose to link to existing cost, skip creation
-        const linkCostId = linkDecisions[doc.folio];
+        const linkCostId = linkDecisions[documentKey];
         if (linkCostId && linkCostId !== 'new') {
           // TODO: link invoice to existing cost if needed
           successCount++;
@@ -675,16 +929,15 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         }
 
         // Resolve category
-        const catName = supplierCategoryMapping[doc.supplier_rut] || '';
-        const catObj = activeCategories?.find(c => c.name === catName);
-        const categoryId = catObj?.id || costCategoriesData[0]?.id || '';
+        const mappedCategory = supplierCategoryMapping[doc.supplier_rut] || '';
+        const categoryId = resolveCategoryId(mappedCategory) || costCategoriesData[0]?.id || '';
         const subcatName = supplierSubcategoryMapping[doc.supplier_rut] || null;
 
         // Find supplier ID
         const supplier = parseResult.suppliers.find(s => s.rut === doc.supplier_rut);
         const supplierId = supplierIdByRut.get(doc.supplier_rut) || await ensureSupplierId(doc.supplier_rut, supplier?.name || '');
 
-        const duplicateInfo = getDuplicateInfoByFolio(doc.folio);
+        const duplicateInfo = getDuplicateInfoForDocument(doc);
         const isDuplicateByCheck = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
         const isDuplicateInDb = doc.folio ? existingCostKeys.has(`${supplierId}|${doc.folio}`) : false;
         const isDuplicatePaymentInDb = doc.folio ? existingPaymentKeys.has(`${supplierId}|${doc.folio}`) : false;
@@ -798,11 +1051,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     });
   };
 
-  const toggleDocumentSelection = (documentFolio: string) => {
+  const toggleDocumentSelection = (documentKey: string) => {
     setSelectedDocuments(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(documentFolio)) newSet.delete(documentFolio);
-      else newSet.add(documentFolio);
+      if (newSet.has(documentKey)) newSet.delete(documentKey);
+      else newSet.add(documentKey);
       return newSet;
     });
   };
@@ -822,19 +1075,20 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setShowDuplicateWarning(false);
     setMatchedCosts({});
     setLinkDecisions({});
+    setHistoricalGlosaSuggestions({});
     setSyncToInventory(false);
   };
 
-  const getDuplicateInfoByFolio = (folio: string): CostDuplicateResult | undefined => {
+  const getDuplicateInfoForDocument = (document: XMLDocumentData): CostDuplicateResult | undefined => {
     return duplicateResults.find(d => {
       const doc = parseResult?.documents[d.index];
-      return doc?.folio === folio;
+      return !!doc && getDocumentStateKey(doc) === getDocumentStateKey(document);
     });
   };
 
   const selectedTotal = parseResult
     ? parseResult.documents
-        .filter(d => selectedDocuments.has(d.folio))
+        .filter(d => selectedDocuments.has(getDocumentStateKey(d)))
         .reduce((sum, d) => sum + d.total_amount, 0)
     : 0;
 
@@ -942,7 +1196,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                   <ShieldAlert className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
-                    <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados.</strong>
+                    <strong>⚠️ Se detectaron coincidencias que requieren revisión.</strong>
                     <span className="ml-2">
                       {duplicateResults.filter(d => d.matchType === 'exact').length > 0 && (
                         <Badge variant="destructive" className="mr-2">
@@ -959,6 +1213,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                           {duplicateResults.filter(d => d.matchType === 'similar').length} similares
                         </Badge>
                       )}
+                    </span>
+                    <span className="ml-2 text-sm">
+                      Solo los coincidencias exactas o por folio se deseleccionan automáticamente. Las similares son solo referencia.
                     </span>
                     <Button
                       variant="ghost"
@@ -1119,7 +1376,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             <div>
                               <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría del gasto</Label>
                               <Select
-                                value={supplierCategoryMapping[supplier.rut] || supplier.category}
+                                value={resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category)}
                                 onValueChange={value => handleCategoryChange(supplier.rut, value)}
                               >
                                 <SelectTrigger className="w-full">
@@ -1127,8 +1384,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 </SelectTrigger>
                                 <SelectContent>
                                   {activeCategories?.map(category => (
-                                    <SelectItem key={category.id} value={category.name}>
-                                      {getCategoryLabel(activeCategories, category.name)}
+                                    <SelectItem key={category.id} value={category.id}>
+                                      {getCategoryLabel(activeCategories, category.id)}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -1139,14 +1396,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             </div>
                             {/* Subcategory Select */}
                             {(() => {
-                              const catName = supplierCategoryMapping[supplier.rut] || supplier.category;
-                              const catObj = activeCategories?.find(c => c.name === catName);
-                              if (!catObj) return null;
+                              const categoryId = resolveCategoryId(supplierCategoryMapping[supplier.rut] || supplier.category);
+                              if (!categoryId) return null;
                               return (
                                 <div>
                                   <Label className="text-xs text-muted-foreground mb-1.5 block">Subcategoría</Label>
                                   <CostSubcategorySelect
-                                    categoryId={catObj.id}
+                                    categoryId={categoryId}
                                     value={supplierSubcategoryMapping[supplier.rut] || ''}
                                     onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
                                   />
@@ -1181,8 +1437,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                   <CardContent>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {parseResult.documents.map((document, index) => {
+                        const documentKey = getDocumentStateKey(document);
                         const defaultDueDate =
-                          dueDateOverrides[document.folio] ||
+                          dueDateOverrides[documentKey] ||
                           document.due_date ||
                           (() => {
                             const date = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd'));
@@ -1190,18 +1447,25 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             return format(date, 'yyyy-MM-dd');
                           })();
 
-                        const duplicateInfo = getDuplicateInfoByFolio(document.folio);
+                        const duplicateInfo = getDuplicateInfoForDocument(document);
                         const isDuplicate = !!duplicateInfo;
                         const isExactDuplicate = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
 
-                        const costsForDoc = matchedCosts[document.folio] || [];
+                        const costsForDoc = matchedCosts[documentKey] || [];
                         const hasMatches = costsForDoc.length > 0;
-                        const currentDecision = linkDecisions[document.folio] || 'new';
-                        const showDetails = expandedDocumentDetails[document.folio] ?? !isExactDuplicate;
-                        const hasDescriptionOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio);
+                        const currentDecision = linkDecisions[documentKey] || 'new';
+                        const showDetails = expandedDocumentDetails[documentKey] ?? !isExactDuplicate;
+                        const hasDescriptionOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
                         const descriptionValue = hasDescriptionOverride
-                          ? documentDescriptionOverrides[document.folio]
+                          ? documentDescriptionOverrides[documentKey]
                           : buildSuggestedGlosa(document);
+                        const historicalSuggestion = historicalGlosaSuggestions[documentKey];
+                        const appliedHistoricalSuggestionDescription = historicalSuggestion
+                          ? applyCurrentDocumentFolioToSuggestion(historicalSuggestion.description, document)
+                          : '';
+                        const shouldShowHistoricalSuggestion =
+                          !!historicalSuggestion &&
+                          normalizeGlosaText(appliedHistoricalSuggestionDescription) !== normalizeGlosaText(descriptionValue);
                         const statusMeta = hasMatches && currentDecision !== 'new'
                           ? {
                               label: 'Vinculado a costo',
@@ -1248,7 +1512,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 <Select
                                   value={currentDecision}
                                   onValueChange={(val) =>
-                                    setLinkDecisions(prev => ({ ...prev, [document.folio]: val }))
+                                    setLinkDecisions(prev => ({ ...prev, [documentKey]: val }))
                                   }
                                 >
                                   <SelectTrigger className="h-7 text-xs flex-1 min-w-[200px] bg-background">
@@ -1289,8 +1553,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start space-x-3 flex-1 min-w-0">
                                 <Checkbox
-                                  checked={selectedDocuments.has(document.folio)}
-                                  onCheckedChange={() => toggleDocumentSelection(document.folio)}
+                                  checked={selectedDocuments.has(documentKey)}
+                                  onCheckedChange={() => toggleDocumentSelection(documentKey)}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-foreground font-medium break-words whitespace-pre-wrap">{getEffectiveGlosa(document)}</p>
@@ -1319,7 +1583,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 px-2 text-xs"
-                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [document.folio]: !showDetails }))}
+                                  onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [documentKey]: !showDetails }))}
                                 >
                                   {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
                                   {showDetails ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
@@ -1334,7 +1598,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   <Textarea
                                     value={descriptionValue}
                                     onChange={(e) =>
-                                      setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))
+                                      setDocumentDescriptionOverrides(prev => ({ ...prev, [documentKey]: e.target.value }))
                                     }
                                     onInput={(e) => autoResizeTextarea(e.currentTarget)}
                                     ref={(el) => autoResizeTextarea(el)}
@@ -1345,6 +1609,41 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   <p className="mt-1 text-xs text-muted-foreground">
                                     Este texto se usará como descripción del gasto o del vínculo con un costo existente.
                                   </p>
+                                  {shouldShowHistoricalSuggestion && historicalSuggestion && (
+                                    <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm dark:border-violet-900/60 dark:bg-violet-950/20">
+                                      <div className="flex flex-wrap items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex items-center gap-2 text-violet-800 dark:text-violet-200">
+                                            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                            <span className="font-medium">Glosa sugerida por historial</span>
+                                            <Badge variant="secondary" className="text-[11px]">
+                                              {historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}
+                                            </Badge>
+                                          </div>
+                                          <p className="mt-1 whitespace-pre-wrap break-words text-foreground">
+                                            {appliedHistoricalSuggestionDescription}
+                                          </p>
+                                          <p className="mt-1 text-xs text-muted-foreground">
+                                            Coincidencia estimada: {Math.round(historicalSuggestion.confidence * 100)}%
+                                          </p>
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8"
+                                          onClick={() =>
+                                            setDocumentDescriptionOverrides(prev => ({
+                                              ...prev,
+                                              [documentKey]: applyCurrentDocumentFolioToSuggestion(historicalSuggestion.description, document),
+                                            }))
+                                          }
+                                        >
+                                          Usar sugerencia
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="flex flex-wrap items-end gap-4">
@@ -1384,7 +1683,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                     <DatePickerInput
                                       value={defaultDueDate || ''}
                                       onChange={(date) =>
-                                        setDueDateOverrides(prev => ({ ...prev, [document.folio]: date }))
+                                        setDueDateOverrides(prev => ({ ...prev, [documentKey]: date }))
                                       }
                                       className="w-full"
                                     />

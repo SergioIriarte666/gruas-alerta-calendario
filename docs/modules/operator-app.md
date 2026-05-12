@@ -1,103 +1,93 @@
 # operator-app
 
 ## Resumen
-Módulo de operación para **usuarios operador**, enfocado en ejecución de servicios asignados y flujo de **inspección** con evidencia (fotos), firma, validación y generación de PDF.
+Modulo de **operador** enfocado en servicios asignados, inspeccion en terreno, evidencia, PDF y cambio de estado del servicio.
 
-**Entrypoints**
+La implementacion actual es mas rica que una lista simple con formulario: el dashboard opera por tabs de estado y la inspeccion se ejecuta en dos fases, con persistencia local y coordinacion de PDF, email y transicion de estados.
+
+## Entrypoints vigentes
 - Layout operador: [OperatorLayout](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/layout/OperatorLayout.tsx)
 - Dashboard operador: [OperatorDashboard](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/OperatorDashboard.tsx)
-- Inspección: [ServiceInspection](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/operator/ServiceInspection.tsx#L1-L112)
+- Inspeccion: [ServiceInspection](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/operator/ServiceInspection.tsx)
 - Componentes: [src/components/operator](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/operator)
 
-## Arquitectura y componentes
-- **Rutas protegidas** por rol `operator` o `admin` bajo `/operator/*` (ver routing en [App.tsx](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/App.tsx#L184-L205)).
-- **Dashboard operador**: lista de servicios asignados y accesos a inspección.
-- **Inspección**:
-  - `useServiceInspection` encapsula carga del servicio, mutaciones y estado de PDF.
-  - UI compuesta por `ServiceDetailsCard`, `InspectionForm`, estados de carga/error y `PDFProgress`.
+## Rutas
+- `/operator`
+- `/operator/service/:id/inspection`
 
-Referencia del ensamblado principal: [ServiceInspection.tsx](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/operator/ServiceInspection.tsx#L12-L109).
+## Arquitectura actual
+### Dashboard
+El dashboard actual organiza servicios por tabs de estado:
 
-## API expuesta
+- `pending`
+- `in_progress`
+- `inspection_completed`
+- `completed`
 
-### Rutas (frontend)
-- `/operator` (dashboard operador)
-- `/operator/service/:id/inspection` (flujo de inspección)
+La UX visible presenta etiquetas tipo:
 
-### Operaciones Supabase (tablas típicas)
-- `services` (leer servicio asignado y actualizar estado)
-- `inspections` (persistir inspección por fase)
-- `service_change_history` (auditar cambios, según flujo)
-- Storage (si aplica a fotos/PDF): buckets/policies según implementación de `photoStorage`/helpers.
+- Asignados
+- Activos
+- Por Entregar
+- Completados
 
-## Especificación de uso (con ejemplos)
+No todas las tarjetas navegan al formulario; las navegables dependen del estado del servicio.
 
-### Navegar a inspección desde un card
-```tsx
-import { useNavigate } from 'react-router-dom'
+### Inspeccion
+El flujo real de inspeccion se compone de:
 
-const navigate = useNavigate()
-const go = (serviceId: string) => navigate(`/operator/service/${serviceId}/inspection`)
-```
+- `InspectionHeader`
+- `InspectionLoadingState`
+- `InspectionErrorState`
+- `ServiceDetailsCard`
+- `InspectionForm`
+- `PDFProgress`
+- componentes de secciones, fotos y firma
 
-### Enviar inspección (patrón de hook)
-```ts
-// El módulo usa un hook que expone una mutation:
-// processInspectionMutation.mutate({ values, phase })
-```
+## Hooks y servicios clave
+- `useOperatorServicesTabs`
+- `useOperatorService`
+- `useServiceInspection`
+- `useInspectionPersistence`
+- `useInspectionPDF`
+- `useInspectionEmail`
+- `useServiceStatusUpdate`
 
-## Dependencias
+## Datos y persistencia principales
+- `services` es la entidad central del flujo.
+- La persistencia de avance del formulario usa `localStorage` en el front actual.
+- El cambio de estado del servicio es parte critica del flujo.
+- PDF y envio por email se coordinan desde hooks especificos.
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `react-signature-canvas`
-- `date-fns`
-- `lucide-react`, `sonner`
+## Flujos vigentes
 
-### Internas (principales)
-- Hooks: `useServiceInspection`, `useInspectionPersistence`, `useImageProcessor`, `useOfflineStorage` (según flujo)
-- UI: `@/components/ui/*`
-- Utilidades: `@/utils/inspectionValidation`, `@/utils/photoProcessor`, `@/utils/inspectionPdfGenerator` (según uso)
+### 1. Dashboard por estados
+- El operador no ve una sola lista plana.
+- El tablero separa servicios por estado operativo y permite refresh manual.
 
-## Configuración requerida
-- Permisos:
-  - RLS para permitir a operador leer/actualizar solo servicios asignados.
-  - Escritura en `inspections` restringida al operador autenticado.
-- PWA/Offline (si se usa):
-  - service worker y almacenamiento local habilitados para capturas en terreno.
+### 2. Inspeccion en dos fases
+- fase inicial
+- fase final o entrega
 
-## Casos de uso principales
-- Operador revisa servicios asignados.
-- Operador completa inspección, adjunta evidencia, firma y genera PDF.
-- Sistema actualiza estado del servicio e informa a backoffice (notificaciones/cola).
+El paso entre fases depende del estado del servicio y del avance de inspeccion.
 
-## Diagramas
+### 3. Transicion de estados
+Flujo general documentable hoy:
 
-```mermaid
-sequenceDiagram
-  participant Op as Operador
-  participant UI as Operator UI
-  participant H as useServiceInspection
-  participant SB as Supabase
+- `pending`
+- inspeccion inicial
+- `inspection_completed`
+- inspeccion final o entrega
+- `completed`
 
-  Op->>UI: Abrir /operator/service/:id/inspection
-  UI->>H: cargar servicio
-  H->>SB: select services/inspections
-  SB-->>H: data
-  H-->>UI: service + estado
-  Op->>UI: Submit inspección
-  UI->>H: mutate(values, phase)
-  H->>SB: upsert inspections + update services
-  SB-->>H: ok
-  H-->>UI: generar PDF + link descarga
-```
+### 4. Persistencia local y recuperacion
+- El avance del formulario puede persistirse localmente.
+- Esto ayuda a continuidad operativa durante el trabajo en terreno.
 
-## Rendimiento
-- Manejo de fotos/PDF puede ser costoso: ejecutar generación bajo demanda y mostrar progreso.
-- Evitar re-renders grandes en forms; preferir subcomponentes y memoización.
+### 5. PDF y envio
+- El modulo coordina generacion de PDF y envio por email como parte del cierre del flujo.
 
-## Seguridad
-- Fotos/firma/PDF son datos sensibles: proteger storage y URLs firmadas; evitar exponer links públicos.
-- Validar en backend que un operador no pueda enviar inspección para un servicio no asignado (RLS + checks en RPC si corresponde).
+## Consideraciones de mantenimiento
+- Documentar la inspeccion como flujo bifasico, no lineal simple.
+- Usar hooks reales del modulo operador e inspeccion como fuente de verdad.
+- Evitar afirmar persistencia en tabla `inspections` si el flujo vigente del frontend no la usa directamente.

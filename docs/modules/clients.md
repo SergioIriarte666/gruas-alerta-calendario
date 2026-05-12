@@ -1,92 +1,82 @@
 # clients
 
 ## Resumen
-Módulo de gestión de **clientes**: CRUD, fichas detalladas, historial (servicios/facturas/cierres), métricas y utilidades de exportación/reportes por cliente.
+Modulo de **clientes** para CRUD, ficha detallada, historial operativo y financiero, metricas y acceso al pipeline VIP.
 
-**Entrypoints**
-- Página: [Clients](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Clients.tsx)
+La pagina actual no es solo una tabla con modal simple: combina listado paginado, acciones batch, modal custom de formulario y detalle por tabs con contadores.
+
+## Entrypoints vigentes
+- Pagina: [Clients](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Clients.tsx)
 - Componentes: [src/components/clients](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/clients)
+- Flujo VIP relacionado: [VipClientPipeline](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/VipClientPipeline.tsx)
 
-## Arquitectura y componentes
-- Listado y filtros: `ClientsTable`, `ClientsFilters`, `ClientsHeader`, vistas mobile.
-- Detalle: `ClientDetailModal`/`ClientDetailsModal`, `ClientGeneralInfo`, `ClientMetricsOverview`.
-- Historial: `ClientServiceHistory`, `ClientClosureHistory`, `ClientRequestHistory`, `ClientInvoicing`.
-- Formulario step-by-step: `components/clients/form/*` (Step1..Step3 + navegación).
-
-Relaciones comunes:
-- cliente ↔ servicios (`services.client_id`)
-- cliente ↔ facturas (`invoices.client_id` o relación vía `invoice_services`)
-- cliente ↔ ubicaciones (`saved_locations`)
-
-## API expuesta
-
-### Rutas (frontend)
+## Rutas
 - `/clients`
-- `/clients/:clientId/pipeline` (entrada al pipeline VIP; ver [vip-pipeline](./vip-pipeline.md))
+- `/clients/:clientId/pipeline`
 
-### Operaciones Supabase (tablas)
-- `clients` (entidad principal)
-- relacionadas según vista:
-  - `services`, `invoices`, `closures`/`service_closures`, `saved_locations`, `calendar_events`
+## Arquitectura actual de la pagina
+La pagina principal se apoya en:
 
-## Especificación de uso (con ejemplos)
+- `ClientsHeader`
+- `ClientsTable`
+- filtros y vistas mobile
+- paginacion con `usePagedClients`
+- acciones batch de actualizacion y borrado
+- `ClientForm` en modal custom
+- `ClientDetailsModal` como detalle vigente
 
-### Crear cliente (patrón Supabase)
-```ts
-import { supabase } from '@/integrations/supabase/client'
+El detalle actual no usa como pieza principal `ClientDetailModal`; la experiencia vigente se centra en `ClientDetailsModal` y `ClientTabsWithCounters`.
 
-await supabase.from('clients').insert({
-  name: 'Cliente Demo',
-  department: 'Operaciones',
-  billing_type: 'monthly'
-})
-```
+## Hooks y servicios clave
+- `useClients`
+- `usePagedClients`
+- `useUpdateClientsBatch`
+- `useDeleteClientsBatch`
+- `useClientMetrics`
+- `useClientServices`
+- `useClientInvoices`
+- `useClientClosures`
+- `useClientRequests`
+- `useClientsDashboardMetrics`
 
-### Mostrar ficha de cliente
-```tsx
-import { ClientDetailModal } from '@/components/clients/ClientDetailModal'
+Hook secundario o de uso puntual:
+- `useClientHistory` no es hoy el hook principal del detalle de cliente.
 
-<ClientDetailModal clientId={selectedId} onClose={() => setSelectedId(null)} />
-```
+## Datos y dependencias principales
+Tablas y relaciones frecuentes:
 
-## Dependencias
+- `clients`
+- `services`
+- `invoices`
+- `service_closures` y relaciones de cierres
+- solicitudes derivadas desde `services` en estados `pending` o relacionados
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `lucide-react`
-- `sonner`
+## Flujos vigentes
 
-### Internas (principales)
-- `@/integrations/supabase/client`
-- Hooks típicos: `useClients`, `useClientHistory`, `useClientMetrics`, `useClientInvoices`, `useClientServices`
-- Componentes UI: `@/components/ui/*`
-- Integración con módulos: `services`, `invoices`, `closures`, `reports`
+### 1. Listado y mantenimiento
+- Alta y edicion de clientes desde modal custom.
+- Filtros, paginacion y batch actions desde la pagina principal.
+- La UX actual no depende de un `Dialog` simple por fila.
 
-## Configuración requerida
-- RLS: acceso a `clients` y datos relacionados debe depender de rol (admin/viewer vs client).
-- Normalización de departamentos/billing types: mantener catálogo/validaciones consistentes.
+### 2. Detalle por tabs
+La ficha vigente agrupa informacion en tabs con contadores para:
 
-## Casos de uso principales
-- Alta y mantenimiento de clientes.
-- Revisión de actividad del cliente (servicios, cierres, facturación).
-- Exportación/reportes específicos por cliente.
+- overview
+- info
+- services
+- invoices
+- closures
+- requests
 
-## Diagramas
+### 3. Historial del cliente
+- Servicios, facturas, cierres y solicitudes se consultan con hooks separados.
+- Las solicitudes del cliente hoy salen desde `services`, no desde una tabla independiente de requests.
 
-```mermaid
-flowchart TD
-  C[Clients UI] --> SB[Supabase]
-  SB --> T1[(clients)]
-  SB --> T2[(services)]
-  SB --> T3[(invoices)]
-  SB --> T4[(saved_locations)]
-  C --> M[Integración con services/invoices/reports]
-```
+### 4. Pipeline VIP
+- El flujo VIP sigue vigente como extension del modulo cliente.
+- Conviene documentarlo como flujo relacionado y no como pieza aislada del dominio.
 
-## Rendimiento
-- Listado: paginar y filtrar server-side en `clients`.
-- Historial: cargar por pestañas (lazy) para evitar traer todo en una sola consulta.
-
-## Seguridad
-- Portal cliente debe restringir lectura a su propio `client_id` (RLS + helper RPC como `get_user_client_id_safe`).
-- Evitar que exports incluyan datos personales no necesarios.
+## Consideraciones de mantenimiento
+- Usar `ClientDetailsModal` como referencia principal de la ficha actual.
+- Si un cambio toca clientes, revisar tambien servicios, facturas, cierres y pipeline VIP.
+- Distinguir entre hooks de detalle vigentes y hooks historicos o secundarios.

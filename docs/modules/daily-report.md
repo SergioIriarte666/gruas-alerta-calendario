@@ -1,75 +1,59 @@
 # daily-report
 
 ## Resumen
-Módulo de **reporte diario** que consolida información operacional y financiera en una vista única (servicios, proveedores, calendario y resumen financiero).
+Modulo de **daily report** para consolidado diario operativo y financiero, con exportacion y modales de detalle.
 
-**Entrypoints**
-- Página: [DailyReport](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/DailyReport.tsx)
+La pagina actual trabaja con multiples queries cliente-side y tiempo real; no depende de una RPC unica de consolidacion.
+
+## Entrypoints vigentes
+- Pagina: [DailyReport](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/DailyReport.tsx)
 - Componentes: [src/components/daily-report](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/daily-report)
+- Hook principal: `useDailyReport`
 
-## Arquitectura y componentes
-- Vista compuesta por secciones (`components/daily-report/sections/*`):
-  - `ServicesSection`
-  - `SuppliersSection`
-  - `CalendarSection`
-  - `FinancialSection`
-- Hook de consolidación (típico): `useDailyReport` para cargar datos agregados y normalizarlos.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/daily-report`
 
-### Operaciones Supabase (tablas/RPC típicas)
-Tablas:
-- `services`, `calendar_events`
-- `supplier_payments` (pendientes/vencidos)
-- `invoices`, `payments` (resumen financiero)
+## Arquitectura actual
+La pagina principal incluye 5 secciones:
+- `ServicesSection`
+- `SuppliersSection`
+- `CalendarSection`
+- `FinancialSection`
+- `OperationsSection`
 
-RPC (si se usa para agregación):
-- `get_overdue_invoices_for_alerts`, `get_invoices_due_soon`
+Ademas integra:
+- exportacion PDF y Excel
+- modales de detalle para servicio, evento, factura, pago, grua y operador
 
-## Especificación de uso (con ejemplos)
+## Hooks y servicios clave
+- `useDailyReport`
 
-### Cargar reporte diario (patrón)
-```ts
-// El patrón recomendado es encapsular la carga en un hook (react-query),
-// y que cada sección consuma datos ya agregados.
-```
+## Datos y dependencias principales
+El hook consulta y consolida datos desde:
+- `services`
+- `invoices`
+- `supplier_payments`
+- `scheduled_payments`
+- `cranes`
+- `operators`
+- `document_alerts` y datos relacionados segun seccion
 
-## Dependencias
+## Flujos vigentes
+### 1. Consolidado diario
+- La consolidacion se hace cliente-side con multiples queries paralelas y `react-query`.
+- El modulo usa realtime para refresco de informacion relevante.
 
-### Externas (principales)
-- `react`
-- `lucide-react`
+### 2. Secciones del reporte
+- Servicios completados y pendientes operativos.
+- Facturas vencidas o por vencer.
+- Pagos programados y pagos a proveedores.
+- Alertas documentales de gruas.
+- Disponibilidad de operadores y otras señales operativas.
 
-### Internas (principales)
-- Hook: `useDailyReport`
-- UI: `@/components/ui/*`
-- Integración con `services`, `suppliers`, `calendar`, `invoices`.
+### 3. Exportacion y detalle
+- El usuario puede exportar el reporte.
+- Tambien puede abrir modales de detalle desde distintas secciones.
 
-## Configuración requerida
-- Definición del “día” y timezone consistente con settings del sistema.
-- RLS por rol.
-
-## Casos de uso principales
-- Supervisión diaria de operación y finanzas.
-- Identificación rápida de pendientes (servicios, pagos proveedor, vencimientos).
-
-## Diagramas
-
-```mermaid
-flowchart TD
-  UI[Daily Report] --> H[useDailyReport]
-  H --> SB[Supabase]
-  SB --> SVC[(services)]
-  SB --> CAL[(calendar_events)]
-  SB --> SP[(supplier_payments)]
-  SB --> INV[(invoices/payments)]
-```
-
-## Rendimiento
-- Consolidar queries (agregación server-side) para no disparar múltiples consultas por sección.
-
-## Seguridad
-- Reporte diario suele concentrar datos sensibles: restringir a roles autorizados.
+## Consideraciones de mantenimiento
+- No describir el modulo como si dependiera de una RPC unica o agregacion server-side que hoy no existe.
+- Recordar que la ruta actual esta disponible para `admin` y `viewer`.

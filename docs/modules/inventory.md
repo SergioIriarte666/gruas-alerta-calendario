@@ -1,125 +1,113 @@
 # inventory
 
 ## Resumen
-Módulo de **inventario** para control de stock, movimientos (entrada/salida), alertas, reportes y sincronización con costos/proveedores/grúas.
+Modulo de **inventario** para control de stock, movimientos, reportes y sincronizacion con compras, costos, proveedores y gruas.
 
-**Entrypoints**
-- Página: [Inventory](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Inventory.tsx)
+La ruta actual de inventario esta centrada en tres superficies visibles: stock, historial de movimientos y reportes. Existen componentes auxiliares de limpieza, sync y diagnostico, pero no todos estan montados en la pagina principal.
+
+## Entrypoints vigentes
+- Pagina: [Inventory](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Inventory.tsx)
 - Componentes: [src/components/inventory](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/inventory)
-- Servicio de compras unificadas: [UnifiedPurchaseService](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/services/UnifiedPurchaseService.ts)
+- Servicio de compra unificada: [UnifiedPurchaseService](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/services/UnifiedPurchaseService.ts)
 
-## Arquitectura y componentes
-- Catálogo y stock:
-  - `ProductCatalogTable`, `InventoryStockView`, `ProductDetailsModal`, `ProductFormModal`.
-- Movimientos:
-  - `InventoryMovementForm`, `MovementsHistoryTable`, `MovementDetailsModal`, `MovementEditModal`.
-- Alertas y sync:
-  - `InventoryAlertsPage`, `InventorySyncDashboard`, `InventoryFixPanel`, `DuplicateProductsPanel`.
-- Reportes:
-  - `components/inventory/reports/*` (análisis, dashboard ejecutivo, exportaciones).
-
-Integraciones típicas:
-- costos ↔ movimientos: `inventory_movements.cost_id` + `costs.inventory_movement_id`
-- consumo a grúa: `inventory_movements.crane_id` + `crane_parts.inventory_movement_id`
-- facturas proveedor (XML): `supplier_invoices`/`supplier_invoice_items` enlazadas a movimientos.
-
-## API expuesta
-
-### Ruta (frontend)
+## Ruta
 - `/inventory`
 
-### Operaciones Supabase (tablas)
-- núcleo inventario:
-  - `inventory_items`, `inventory_stock`, `inventory_movements`
-  - `inventory_locations`, `inventory_categories`
-  - `inventory_alerts`, `inventory_consumptions`
-- integraciones:
-  - `costs`, `crane_parts`
-  - `supplier_invoices`, `supplier_invoice_items`, `supplier_payments`
+## Arquitectura actual de la pagina
+La ruta `/inventory` monta principalmente:
 
-### RPC destacadas
-- `global_inventory_cleanup` (limpieza global / correcciones)
-- migración/sync: `merge_inventory_items`, `migrate_unsynced_crane_parts_to_inventory`, `create_inventory_consumption_movement` (según uso)
+- `InventoryStockView`
+- `MovementsHistoryTable`
+- `InventoryReportsPage`
+- `InventoryMovementForm` en modal para prefill desde Quick Entry
+- `XMLInventoryUpload`
 
-## Especificación de uso (con ejemplos)
+Dentro de `InventoryStockView` viven ademas flujos operativos importantes:
 
-### Registrar movimiento de entrada
-```ts
-import { supabase } from '@/integrations/supabase/client'
+- `SimpleEntryForm`
+- `SimpleExitForm`
+- `ProductDrawer`
+- `DuplicateProductsPanel` como modal
+- acciones de quick movement, merge y limpieza de huerfanos
 
-await supabase.from('inventory_movements').insert({
-  item_id: itemId,
-  location_id: locationId,
-  movement_type: 'entry',
-  quantity: 10,
-  unit_cost: 12000,
-  total_cost: 120000,
-  movement_date: '2026-04-13',
-  status: 'active',
-  reason: 'Compra'
-})
-```
+Componentes existentes pero no centrales en la ruta principal actual:
 
-### Registrar movimiento de salida (consumo)
-```ts
-await supabase.from('inventory_movements').insert({
-  item_id: itemId,
-  location_id: locationId,
-  movement_type: 'exit',
-  quantity: 2,
-  unit_cost: 12000,
-  total_cost: 24000,
-  movement_date: '2026-04-13',
-  status: 'active',
-  reason: 'Consumo'
-})
-```
+- `InventoryAlertsPage`
+- `InventorySyncDashboard`
+- paneles de diagnostico o fix administrativos
 
-## Dependencias
+## Hooks y servicios clave
+Exports granulares vigentes:
 
-### Externas (principales)
-- `react`, `react-router-dom`
-- `@tanstack/react-query`
-- `react-hook-form`, `zod`
-- `react-dropzone`
-- `recharts` (dashboards/reportes)
-- `date-fns`
-- `lucide-react`, `sonner`
+- `useInventoryItems`
+- `useInventoryStock`
+- `useInventoryMovements`
+- `useInventoryStats`
+- `useCreateInventoryMovement`
+- `useCreateInventoryItem`
+- `useUpdateInventoryMovement`
+- `useMergeInventoryItems`
+- `useStockReport`
+- `useMovementReport`
+- `useCostAnalysisReport`
+- `usePredictiveAnalysis`
+- `useInventorySyncWatcher`
+- `useInventoryDeduction`
+- `useUnifiedPurchase`
 
-### Internas (principales)
-- Hooks típicos: `useInventory`, `useInventoryReports`, `useInventoryAlerts`, `useInventorySyncWatcher`, `useInventoryDeduction`
-- Utilidades: `@/utils/inventoryHelper`, `@/utils/inventoryConsumptionHelper`, `@/utils/inventoryCostHelper`
-- Integración costos: `@/hooks/useCosts` y `@/services/UnifiedPurchaseService`
+## Datos y dependencias principales
+Tablas frecuentes:
 
-## Configuración requerida
-- Ubicaciones activas: `inventory_locations.is_active` debe tener al menos una ubicación.
-- RLS: permisos diferenciados (admin vs operator vs viewer).
-- Reglas de stock: la lógica de actualización puede depender de triggers/vistas; mantener alineada con UI.
+- `inventory_items`
+- `inventory_stock`
+- `inventory_movements`
+- `inventory_locations`
+- `inventory_categories`
+- `inventory_alerts`
+- `inventory_consumptions`
+- relaciones con `costs`, `supplier_invoices`, `supplier_invoice_items`, `supplier_payments`, `crane_parts`
 
-## Casos de uso principales
-- Mantener catálogo de productos y stock actual por ubicación.
-- Registrar compras y consumos.
-- Integrar consumos con grúas y costos para trazabilidad financiera.
-- Importar facturas proveedor y generar movimientos asociados.
+RPC y tooling frecuentes:
 
-## Diagramas
+- `merge_inventory_items`
+- limpiezas y migraciones administrativas segun contexto
 
-```mermaid
-flowchart TD
-  UI[Inventory UI] --> SB[Supabase]
-  SB --> IT[(inventory_items)]
-  SB --> MV[(inventory_movements)]
-  MV --> ST[(inventory_stock)]
-  MV --> COST[(costs)]
-  MV --> CP[(crane_parts)]
-  MV --> SI[(supplier_invoice_items)]
-```
+## Flujos vigentes
 
-## Rendimiento
-- Cálculos de stock: preferir mantener stock materializado (`inventory_stock`) y actualizar con triggers, en vez de recalcular desde movimientos cada vez.
-- Listados de movimientos: paginar por fecha y limitar columnas.
+### 1. Stock y catalogo operativo
+- La vista principal de stock vive en `InventoryStockView`.
+- Combina tabla/tarjetas, drawer de producto y acciones rapidas.
+- No depende de un `ProductCatalogTable` como superficie principal actual.
 
-## Seguridad
-- Bloquear salidas que exceden stock (validación + enforcement server-side si corresponde).
-- Restringir ediciones/borrados de movimientos: son financieros y afectan trazabilidad.
-- Aislar datos por rol y registrar auditoría de correcciones masivas (ej. `global_inventory_cleanup`).
+### 2. Entradas de inventario
+- `SimpleEntryForm` es el flujo operativo principal para compras/entradas.
+- Usa `useUnifiedPurchase` para crear compra unificada con costo y movimiento.
+- Puede contemplar consumo inmediato a grua cuando aplica.
+
+### 3. Salidas y consumo
+- `SimpleExitForm` valida stock disponible.
+- Mantiene trazabilidad desde la entrada origen cuando es posible.
+- Puede arrastrar datos como documento de referencia, lote y costo real.
+
+### 4. Historial y reportes
+- `MovementsHistoryTable` concentra revision y edicion de movimientos.
+- `InventoryReportsPage` cubre reporteria y vistas analiticas.
+
+### 5. Prefill desde Quick Entry
+- La pagina puede abrir `InventoryMovementForm` con datos prellenados.
+- Puede adjuntar fotos del quick entry y limpiar el registro rapido al finalizar.
+
+### 6. Importacion XML
+- `XMLInventoryUpload` soporta validacion de lineas, matching con catalogo, alta manual de producto y enlaces con compras/costos.
+- No es solo una importacion pasiva de facturas proveedor.
+
+### 7. Herramientas de saneamiento
+- merge de duplicados
+- limpieza de huerfanos
+- quick movement
+- flujos administrativos de reparacion no siempre montados en tabs principales
+
+## Consideraciones de mantenimiento
+- Documentar por separado lo que esta montado en `/inventory` versus tooling auxiliar existente.
+- Si un cambio toca entradas/salidas, validar impacto en costo, proveedor y grua.
+- Si un cambio toca XML, revisar matching manual, alta de producto y sincronizacion con compras.
