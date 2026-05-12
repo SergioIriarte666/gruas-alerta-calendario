@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { EditPaymentDateDialog } from './EditPaymentDateDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { useServiceDetails } from '@/hooks/useServiceDetails';
 
 export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at' | 'payment_date';
 export type SortDirection = 'asc' | 'desc' | null;
@@ -28,6 +30,27 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   sortField, sortDirection, onSort, onPaymentDateUpdated
 }) => {
   const isMobile = useIsMobile();
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const { data: serviceDetails } = useServiceDetails(selectedServiceId);
+
+  const handleServiceClick = (commission: Commission) => {
+    const id = commission.services?.id || commission.service_id;
+    if (id) setSelectedServiceId(id);
+  };
+
+  const renderFolio = (commission: Commission) => {
+    const folio = commission.service_folio || commission.services?.folio || 'N/A';
+    const id = commission.services?.id || commission.service_id;
+    if (!id) return <span>{folio}</span>;
+    return (
+      <button
+        onClick={() => handleServiceClick(commission)}
+        className="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 underline cursor-pointer text-left"
+      >
+        {folio}
+      </button>
+    );
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
@@ -71,8 +94,8 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                     className="mt-1"
                   />
                   <div className="space-y-1 min-w-0">
-                    <p className="font-medium text-foreground text-sm">
-                      {commission.service_folio || commission.services?.folio || 'N/A'}
+                    <p className="font-medium text-sm">
+                      {renderFolio(commission)}
                     </p>
                     <p className="text-xs text-muted-foreground">{commission.client_name}</p>
                     <p className="text-xs text-muted-foreground">{commission.operators?.name || 'N/A'}</p>
@@ -145,7 +168,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                 <Checkbox checked={selectedCommissions.includes(commission.id)} onCheckedChange={() => onToggleCommission(commission.id)} disabled={commission.status === 'paid'} />
               </TableCell>
               <TableCell>{getStatusBadge(commission.status)}</TableCell>
-              <TableCell className="font-medium">{commission.service_folio || commission.services?.folio || 'N/A'}</TableCell>
+              <TableCell className="font-medium">{renderFolio(commission)}</TableCell>
               <TableCell>{commission.services?.service_date ? formatDate(commission.services.service_date) : formatDate(commission.date)}</TableCell>
               <TableCell>{commission.client_name}</TableCell>
               <TableCell>{commission.operators?.name || 'N/A'}</TableCell>
@@ -169,6 +192,14 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
           ))}
         </TableBody>
       </Table>
+
+      {selectedServiceId && serviceDetails && (
+        <ServiceDetailsModal
+          service={serviceDetails}
+          isOpen={!!selectedServiceId}
+          onClose={() => setSelectedServiceId(null)}
+        />
+      )}
     </div>
   );
 };
