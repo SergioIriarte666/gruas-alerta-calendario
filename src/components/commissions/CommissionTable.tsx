@@ -138,6 +138,13 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
             </CardContent>
           </Card>
         ))}
+        {selectedServiceId && serviceDetails && (
+          <ServiceDetailsModal
+            service={serviceDetails}
+            isOpen={!!selectedServiceId}
+            onClose={() => setSelectedServiceId(null)}
+          />
+        )}
       </div>
     );
   }
