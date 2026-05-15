@@ -7,6 +7,7 @@
 - **[Manual de Usuario](user-manual.md)** - Guía completa de uso del sistema v2.2.0
 
 #### Documentación Técnica
+- **[Integración cruzada entre módulos](architecture/cross-module-integration.md)** — Cómo todos los módulos comparten datos y se sincronizan en tiempo real (característica principal del sistema)
 - **[Guía de Administrador](technical/system-admin-guide.md)** - Manual completo para administradores del sistema
 - **[Configuración PWA](technical/pwa-configuration.md)** - Configuración y optimización de la aplicación móvil
 - **[Sistema de Pagos](technical/payment-system.md)** - Configuración y funcionamiento del módulo de pagos
