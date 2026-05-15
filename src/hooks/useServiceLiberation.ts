@@ -194,6 +194,19 @@ export const useServiceLiberation = () => {
   const liberateInvoice = async (invoiceId: string, serviceIds: string[], closureIds: string[]) => {
     setLiberating(true);
     try {
+      // Recolectar servicios de los cierres vinculados ANTES de borrar relaciones,
+      // para garantizar que ningún servicio quede en estado 'invoiced' huérfano.
+      const allServiceIds = new Set<string>(serviceIds);
+      if (closureIds.length > 0) {
+        const { data: clSvcRows } = await supabase
+          .from('closure_services')
+          .select('service_id')
+          .in('closure_id', closureIds);
+        (clSvcRows || []).forEach((r: any) => {
+          if (r.service_id) allServiceIds.add(r.service_id);
+        });
+      }
+
       // 1. Delete invoice_services
       const { error: e1 } = await supabase
         .from('invoice_services')
@@ -208,13 +221,49 @@ export const useServiceLiberation = () => {
         .eq('invoice_id', invoiceId);
       if (e2) throw e2;
 
-      // 3. Revert closure status to 'closed' if they were 'invoiced'
+      // 3. Eliminar en cascada los cierres vinculados (si no están compartidos con otra factura)
+      const deletedClosureIds: string[] = [];
+      const keptClosureIds: string[] = [];
       if (closureIds.length > 0) {
-        const { error: e3 } = await supabase
-          .from('service_closures')
-          .update({ status: 'closed', updated_at: new Date().toISOString() })
-          .in('id', closureIds);
-        if (e3) throw e3;
+        // Detectar cierres aún vinculados a otras facturas
+        const { data: stillLinked } = await supabase
+          .from('invoice_closures')
+          .select('closure_id')
+          .in('closure_id', closureIds);
+        const sharedSet = new Set((stillLinked || []).map((r: any) => r.closure_id));
+
+        for (const cid of closureIds) {
+          if (sharedSet.has(cid)) {
+            keptClosureIds.push(cid);
+          } else {
+            deletedClosureIds.push(cid);
+          }
+        }
+
+        if (deletedClosureIds.length > 0) {
+          // 3a. Borrar closure_services
+          const { error: e3a } = await supabase
+            .from('closure_services')
+            .delete()
+            .in('closure_id', deletedClosureIds);
+          if (e3a) throw e3a;
+
+          // 3b. Borrar service_closures (padres)
+          const { error: e3b } = await supabase
+            .from('service_closures')
+            .delete()
+            .in('id', deletedClosureIds);
+          if (e3b) throw e3b;
+        }
+
+        if (keptClosureIds.length > 0) {
+          // Cierres compartidos: solo revertir a 'closed' (fallback seguro)
+          const { error: e3c } = await supabase
+            .from('service_closures')
+            .update({ status: 'closed', updated_at: new Date().toISOString() })
+            .in('id', keptClosureIds);
+          if (e3c) throw e3c;
+        }
       }
 
       // 4. Delete the invoice
@@ -224,8 +273,9 @@ export const useServiceLiberation = () => {
         .eq('id', invoiceId);
       if (e4) throw e4;
 
-      // 5. Reset services
-      if (serviceIds.length > 0) {
+      // 5. Reset services (factura ∪ servicios de cierres eliminados)
+      const idsToReset = Array.from(allServiceIds);
+      if (idsToReset.length > 0) {
         const { error: e5 } = await supabase
           .from('services')
           .update({ 
@@ -234,12 +284,12 @@ export const useServiceLiberation = () => {
             invoice_numero_fiscal: null,
             updated_at: new Date().toISOString() 
           })
-          .in('id', serviceIds);
+          .in('id', idsToReset);
         if (e5) throw e5;
       }
 
       setResult(null);
-      return { success: true };
+      return { success: true, deletedClosureIds, keptClosureIds };
     } catch (e: any) {
       return { success: false, error: e.message };
     } finally {
