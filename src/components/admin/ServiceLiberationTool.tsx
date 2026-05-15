@@ -282,7 +282,12 @@ const ResultCard = ({
                 <li>Se eliminarán relaciones en invoice_services e invoice_closures</li>
                 <li>Se eliminará la factura {result.folio}</li>
                 {result.linkedClosures.length > 0 && (
-                  <li>{result.linkedClosures.length} cierre(s) volverán a estado "Cerrado"</li>
+                  <li>
+                    Se eliminará(n) {result.linkedClosures.length} cierre(s) vinculado(s):{' '}
+                    <span className="font-mono">
+                      {result.linkedClosures.map(c => c.folio).join(', ')}
+                    </span>
+                  </li>
                 )}
               </>
             )}
