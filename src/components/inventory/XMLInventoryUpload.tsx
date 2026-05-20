@@ -643,7 +643,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     }
 
     try {
-      const normalizedCode = line.item.product_code?.trim() || null;
+      const rawCode = line.item.product_code?.trim() || null;
+      const normalizedCode = !isPlaceholderCode(rawCode) ? rawCode : null;
       const preferredCategory =
         categories.find((category) => normalizeText(category.name).includes('implement')) ||
         categories.find((category) => normalizeText(category.name).includes('repuesto')) ||
