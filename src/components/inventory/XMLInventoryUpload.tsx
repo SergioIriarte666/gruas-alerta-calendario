@@ -340,7 +340,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const findMatchedInventoryItem = useCallback(
     (line: XMLDocumentItem): { match: InventoryCatalogItem | null; candidates: InventoryCatalogItem[] } => {
       const codeCandidates = [
-        normalizeCode(line.product_code),
+        !isPlaceholderCode(line.product_code) ? normalizeCode(line.product_code) : '',
         normalizeCode(line.product_name),
         normalizeCode(line.description),
       ].filter(Boolean);
@@ -348,8 +348,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
       for (const code of codeCandidates) {
         const exactCodeMatch = inventoryCatalog.find(
           (item) =>
-            normalizeCode(item.sku) === code ||
-            normalizeCode(item.barcode) === code ||
+            (!isPlaceholderCode(item.sku) && normalizeCode(item.sku) === code) ||
+            (!isPlaceholderCode(item.barcode) && normalizeCode(item.barcode) === code) ||
             normalizeCode(item.name) === code
         );
         if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
