@@ -1,79 +1,60 @@
+## Objetivo
+Normalizar a **Title Case (español)** los textos que vienen en MAYÚSCULAS desde el XML del SII al importarlos, para que en Bodega, Proveedores y Costos se vean prolijos y editables. Aplicar **solo a importaciones nuevas** (no migra datos existentes).
 
-## Diagnóstico
+## Alcance
+- Razón social del proveedor (ej: `COMERCIALIZADORA E IMPORTADORA JAVIER VARAS SPA` → `Comercializadora e Importadora Javier Varas SpA`)
+- Nombre/descripción de producto de bodega (ej: `RODAMIENTO 593/572` → `Rodamiento 593/572`)
+- Descripción/glosa de costo generada desde el XML (ej: la concatenación `proveedor + items`)
 
-El XML 850394 trae 4 líneas distintas; todas con `<CdgItem><TpoCodigo>QBLI</TpoCodigo><VlrCodigo>0</VlrCodigo></CdgItem>`. El parser extrae `product_code = "0"` para las 4.
+## Qué construir
 
-En el modal **Importar XML de Bodega** (`src/components/inventory/XMLInventoryUpload.tsx`):
+### 1. Nueva utilidad `src/utils/textNormalization.ts`
+Función `toTitleCaseEs(value: string)` que:
+- Capitaliza primera letra de cada palabra.
+- Mantiene en minúscula palabras chicas (`de, del, la, las, el, los, y, e, o, u, a, en, con, para, por, al`) excepto si son la primera palabra.
+- Preserva siglas conocidas con su capitalización oficial: `SpA, S.A., SA, Ltda, Ltda., EIRL, RUT, S.A.C., SCM`.
+- Preserva tokens alfanuméricos con números o símbolos (ej: `593/572`, `8MJ-8MP`, `R2-8`, `FJX-FJX`).
+- Preserva palabras que ya tienen mayúsculas mezcladas (no las toca).
+- Si el texto **no** está mayoritariamente en mayúsculas (ej: viene ya bien escrito en sentence case), lo deja igual — solo normaliza cuando detecta input "shouting" (>70% letras en MAYÚS).
 
-- `findMatchedInventoryItem` (línea 332) trata `"0"` como un SKU real y matchea cualquier item con `sku="0"`.
-- `createMissingProductDirect` (línea 644) crea el primer producto con `sku: "0"`.
-- A partir de ese momento las otras 3 líneas hacen "match" contra ese mismo producto (la UI muestra "Catalogo: Adaptador 10MB-10MJ" en las 3 inferiores).
-- Resultado en BD: solo se creó "Adaptador 10MB-10MJ" y los 8 movimientos (4 entradas + 4 salidas, folio 850394) apuntan todos a ese `item_id`. Los otros 3 productos no existen.
+### 2. Aplicar en `src/utils/xmlParser/xmlSupplierParser.ts`
+Aplicar `toTitleCaseEs` en estos puntos de extracción (no en `cleanExtractedText` global, para no afectar RUTs/folios):
+- Línea ~201 y ~238: `name` del proveedor (Emisor/RznSoc)
+- Línea ~480: `razonSocial` antes de armar descripción de costo
+- Línea ~490, ~498: `descripcion` y `productName` desde `NmbItem`
+- Línea ~535 y ~577: la `description` concatenada (proveedor + items) ya quedará normalizada al usar las variables ya transformadas
 
-Causa raíz: códigos placeholder (`"0"`, vacíos, solo ceros) tratados como SKU válidos.
+### 3. Verificar puntos de inserción aguas abajo
+Confirmar que no haya `.toUpperCase()` adicional en:
+- `src/components/inventory/XMLInventoryUpload.tsx` (`createMissingProductDirect`, matching) — el `normalize` interno solo se usa para comparar SKU/barcode, no para guardar nombre.
+- `src/components/costs/XMLCostUpload.tsx` y `src/components/suppliers/XMLDocumentUpload.tsx` — leen `description`, `product_name`, `supplier.name` tal cual del parser.
 
-El módulo de Costos quedó bien (1 costo por documento, no toca productos individuales).
+### 4. Test rápido manual
+Volver a cargar el mismo XML que el usuario adjuntó y verificar que en:
+- Bodega → producto se cree como `Rodamiento 593/572`
+- Proveedores → razón social como `Comercializadora e Importadora Javier Varas SpA`
+- Costos → descripción/glosa en title case
 
-## Cambios de código
+## Lo que NO se hace
+- No se migran registros existentes (productos, proveedores ni costos ya cargados).
+- No se cambia la lógica de matching (que sigue normalizando con `.toUpperCase()` solo internamente para comparar).
+- No se toca el CSV/XLSX importer ni los flujos no-XML.
+- No se altera `cleanExtractedText` (sigue usándose para RUT, folios, montos).
 
-### `src/components/inventory/XMLInventoryUpload.tsx`
+## Detalle técnico
 
-1. Agregar helper junto a `normalizeCode` (línea 106):
+```text
+toTitleCaseEs("COMERCIALIZADORA E IMPORTADORA JAVIER VARAS SPA")
+  → "Comercializadora e Importadora Javier Varas SpA"
 
-   ```ts
-   const isPlaceholderCode = (value: string | null | undefined) => {
-     const n = normalizeCode(value);
-     return !n || /^0+$/.test(n);
-   };
-   ```
+toTitleCaseEs("MANGUERA R2-8 TERM. FJX-FJX 90° LT: 2.15 MTS")
+  → "Manguera R2-8 Term. FJX-FJX 90° Lt: 2.15 Mts"
+  (tokens con guión/número se preservan)
 
-2. En `findMatchedInventoryItem` (línea 334) filtrar candidatos placeholder y descartar matches por SKU/barcode placeholder en el catálogo:
+toTitleCaseEs("Rodamiento 593/572")  // ya está bien
+  → "Rodamiento 593/572"  (sin cambios, no es shouting)
+```
 
-   ```ts
-   const codeCandidates = [
-     !isPlaceholderCode(line.product_code) ? normalizeCode(line.product_code) : '',
-     normalizeCode(line.product_name),
-     normalizeCode(line.description),
-   ].filter(Boolean);
-
-   for (const code of codeCandidates) {
-     const exactCodeMatch = inventoryCatalog.find(
-       (item) =>
-         (!isPlaceholderCode(item.sku) && normalizeCode(item.sku) === code) ||
-         (!isPlaceholderCode(item.barcode) && normalizeCode(item.barcode) === code) ||
-         normalizeCode(item.name) === code
-     );
-     if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
-   }
-   ```
-
-3. En `createMissingProductDirect` (línea 638) sanear el SKU al crear:
-
-   ```ts
-   const rawCode = line.item.product_code?.trim() || null;
-   const normalizedCode = !isPlaceholderCode(rawCode) ? rawCode : null;
-   ```
-
-   Pasar `sku: normalizedCode` (queda `null` cuando el XML trae `VlrCodigo=0`).
-
-Con esto cada línea sin código real se identifica por descripción y crea un producto independiente.
-
-## Reparación de datos del folio 850394
-
-Migración que:
-
-1. Limpia el SKU del producto ya creado para que no siga atrapando matches:
-   - `UPDATE inventory_items SET sku = NULL WHERE id = '75b7abc4-3909-4559-8cdc-290a406d8189'` (Adaptador 10MB-10MJ).
-2. Crea los 3 productos faltantes con `sku = NULL`, `unit_of_measure='unidad'`, categoría = misma de Adaptador 10MB-10MJ:
-   - "Adaptador 8MJ-8MP 90°"  unit_cost 5892
-   - "Manguera R2-8 Term. FJX-FJX 90° LT: 2.15 MTS"  unit_cost 30155
-   - "Manguera R2-8 Term. FJX-FJX 90° LT: 2.35 MTS"  unit_cost 31837
-3. Re-apunta los 6 movimientos mal asignados (3 entradas + 3 salidas con `observations` que mencionan cada nombre, `created_at` del 2026-05-20) al `item_id` correcto.
-4. Deja intactos los 2 movimientos correctos de "Adaptador 10MB-10MJ" (qty 2, $4.056).
-5. Los triggers existentes de `inventory_movements` recalculan stock automáticamente.
-
-## Validación
-
-- Volver a importar mentalmente el mismo XML: las 4 líneas se crean como 4 productos distintos (sku NULL) y los movimientos quedan repartidos correctamente.
-- Probar un XML con códigos reales (no "0"): sigue matcheando por SKU como antes.
-- En `/inventory`, revisar que aparezcan los 4 productos con stock 0 (entrada + consumo) y costo correcto, y que el historial muestre cada movimiento con su producto real.
+Archivos a tocar:
+- **nuevo**: `src/utils/textNormalization.ts`
+- **editar**: `src/utils/xmlParser/xmlSupplierParser.ts` (≈6 líneas con wrappers)
