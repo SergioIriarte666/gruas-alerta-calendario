@@ -1073,6 +1073,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setDefaultDaysToAdd(30);
     setSupplierPaymentCondition({});
     setSupplierCreditDate({});
+    setPaidOverrides({});
+    setPaidDateOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
     setMatchedCosts({});
