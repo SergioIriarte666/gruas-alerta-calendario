@@ -1575,6 +1575,43 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                       Puedes ajustarlo si el XML no trae una fecha correcta.
                                     </p>
                                   </div>
+
+                                  <div className="max-w-[260px] min-w-[200px] flex-1">
+                                    <Label className="mb-1.5 block text-xs text-muted-foreground">Estado de pago</Label>
+                                    <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
+                                      <Switch
+                                        id={`sup-paid-${documentKey}`}
+                                        checked={statusOverrides[documentKey] === 'paid'}
+                                        onCheckedChange={(checked) => {
+                                          setStatusOverrides(prev => ({
+                                            ...prev,
+                                            [documentKey]: checked ? 'paid' : 'pending',
+                                          }));
+                                          if (checked && !paidDateOverrides[documentKey]) {
+                                            setPaidDateOverrides(prev => ({
+                                              ...prev,
+                                              [documentKey]: format(new Date(), 'yyyy-MM-dd'),
+                                            }));
+                                          }
+                                        }}
+                                      />
+                                      <Label htmlFor={`sup-paid-${documentKey}`} className="text-xs cursor-pointer">
+                                        Marcar como pagado
+                                      </Label>
+                                    </div>
+                                    {statusOverrides[documentKey] === 'paid' && (
+                                      <div className="mt-2">
+                                        <DatePickerInput
+                                          value={paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd')}
+                                          onChange={(date) => setPaidDateOverrides(prev => ({ ...prev, [documentKey]: date }))}
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Si el documento ya fue pagado, indica la fecha real del pago.
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                             ) : (
