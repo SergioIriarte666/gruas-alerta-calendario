@@ -257,6 +257,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
   const [supplierPaymentCondition, setSupplierPaymentCondition] = useState<Record<string, 'none' | 'credit' | string>>({});
   const [supplierCreditDate, setSupplierCreditDate] = useState<Record<string, string>>({});
+  const [paidOverrides, setPaidOverrides] = useState<Record<string, boolean>>({});
+  const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
@@ -948,11 +950,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
         const condition = getSelectedCondition(doc.supplier_rut);
+        const isManuallyPaid = !!paidOverrides[documentKey];
         // Contado (none) → pagado inmediatamente con fecha de emisión
         // Crédito → payment_date = null (pendiente, no pagado aún)
-        const paymentDate = condition === 'none' 
-          ? emissionDate 
-          : null;
+        // Override manual: si el usuario marca "Pagado", usar paidDateOverrides
+        const paymentDate = isManuallyPaid
+          ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd'))
+          : (condition === 'none' ? emissionDate : null);
 
         const costData = {
           date: emissionDate,
@@ -1071,6 +1075,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setDefaultDaysToAdd(30);
     setSupplierPaymentCondition({});
     setSupplierCreditDate({});
+    setPaidOverrides({});
+    setPaidDateOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
     setMatchedCosts({});
@@ -1689,6 +1695,41 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                     />
                                     <p className="mt-1 text-xs text-muted-foreground">
                                       Puedes ajustarlo si el XML no trae una fecha correcta.
+                                    </p>
+                                  </div>
+                                  <div className="flex-1 min-w-[200px] max-w-[260px]">
+                                    <Label className="text-xs text-muted-foreground mb-1.5 block">Estado de pago</Label>
+                                    <div className="flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background">
+                                      <Switch
+                                        id={`paid-${documentKey}`}
+                                        checked={!!paidOverrides[documentKey]}
+                                        onCheckedChange={(checked) => {
+                                          setPaidOverrides(prev => ({ ...prev, [documentKey]: checked }));
+                                          if (checked && !paidDateOverrides[documentKey]) {
+                                            setPaidDateOverrides(prev => ({
+                                              ...prev,
+                                              [documentKey]: format(new Date(), 'yyyy-MM-dd'),
+                                            }));
+                                          }
+                                        }}
+                                      />
+                                      <Label htmlFor={`paid-${documentKey}`} className="text-xs cursor-pointer">
+                                        Marcar como pagado
+                                      </Label>
+                                    </div>
+                                    {paidOverrides[documentKey] && (
+                                      <div className="mt-2">
+                                        <DatePickerInput
+                                          value={paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd')}
+                                          onChange={(date) =>
+                                            setPaidDateOverrides(prev => ({ ...prev, [documentKey]: date }))
+                                          }
+                                          className="w-full"
+                                        />
+                                      </div>
+                                    )}
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                      Si ya fue pagado, indica la fecha real del pago.
                                     </p>
                                   </div>
                                 </div>
