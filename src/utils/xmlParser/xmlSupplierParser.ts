@@ -198,8 +198,8 @@ export class XMLSupplierParser {
     };
 
     const rut = getNestedValue('Documento/Encabezado/Emisor/RUTEmisor');
-    const name = getNestedValue('Documento/Encabezado/Emisor/RznSoc');
-    const giro = getNestedValue('Documento/Encabezado/Emisor/GiroEmis');
+    const name = toTitleCaseEs(getNestedValue('Documento/Encabezado/Emisor/RznSoc'));
+    const giro = toTitleCaseEs(getNestedValue('Documento/Encabezado/Emisor/GiroEmis'));
     const direccion = getNestedValue('Documento/Encabezado/Emisor/DirOrigen');
     const telefono = getNestedValue('Documento/Encabezado/Emisor/Telefono');
     const email = getNestedValue('Documento/Encabezado/Emisor/CorreoEmisor');
@@ -224,7 +224,7 @@ export class XMLSupplierParser {
       return this.cleanExtractedText(element.querySelector(selector)?.textContent);
     };
 
-    const name = getValue('nombre, name, razon_social');
+    const name = toTitleCaseEs(getValue('nombre, name, razon_social'));
     const rut = getValue('rut, tax_id, id');
     const email = getValue('email, correo');
     const phone = getValue('telefono, phone, tel');
@@ -252,7 +252,7 @@ export class XMLSupplierParser {
       return this.cleanExtractedText(facturaElement.querySelector(selector)?.textContent);
     };
 
-    const name = getValue('proveedor, emisor, supplier_name, vendor_name');
+    const name = toTitleCaseEs(getValue('proveedor, emisor, supplier_name, vendor_name'));
     const rut = getValue('rut_proveedor, supplier_rut, tax_id');
     const email = getValue('email_proveedor, supplier_email');
     const phone = getValue('telefono_proveedor, supplier_phone');
@@ -477,7 +477,7 @@ export class XMLSupplierParser {
     
     // Extraer información del emisor
     const rutEmisor = getNestedValue('Documento/Encabezado/Emisor/RUTEmisor');
-    const razonSocial = getNestedValue('Documento/Encabezado/Emisor/RznSoc');
+    const razonSocial = toTitleCaseEs(getNestedValue('Documento/Encabezado/Emisor/RznSoc'));
     
     // Extraer detalles si existen
     const items: XMLDocumentItem[] = [];
@@ -487,7 +487,7 @@ export class XMLSupplierParser {
     if (documentoElement) {
       const detalleElements = documentoElement.querySelectorAll('Detalle');
       detalleElements.forEach(detalle => {
-        const descripcion = this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent);
+        const descripcion = toTitleCaseEs(this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent));
         const productCode =
           this.cleanExtractedText(detalle.querySelector('CdgItem VlrCodigo')?.textContent) ||
           this.cleanExtractedText(detalle.querySelector('CdgItem VlrCodigo')?.textContent) ||
@@ -495,7 +495,7 @@ export class XMLSupplierParser {
           this.cleanExtractedText(detalle.querySelector('VlrCodigo')?.textContent) ||
           this.cleanExtractedText(detalle.querySelector('CdgItem > CdgItem')?.textContent) ||
           '';
-        const productName = this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent) || descripcion;
+        const productName = toTitleCaseEs(this.cleanExtractedText(detalle.querySelector('NmbItem')?.textContent)) || descripcion;
         const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
         const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
         const subtotal = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
@@ -559,8 +559,8 @@ export class XMLSupplierParser {
     const neto = getNumber('neto, net_amount, subtotal');
     const iva = getNumber('iva, tax, impuesto');
     const rutProveedor = getValue('rut_proveedor, supplier_rut, tax_id');
-    const nombreProveedor = getValue('proveedor, supplier_name, vendor_name, razon_social');
-    const descripcion = getValue('descripcion, description, concepto');
+    const nombreProveedor = toTitleCaseEs(getValue('proveedor, supplier_name, vendor_name, razon_social'));
+    const descripcion = toTitleCaseEs(getValue('descripcion, description, concepto'));
     const items = this.extractItemsFromGenericInvoice(facturaElement, iva, total);
 
     if (!folio && !total) return null;
