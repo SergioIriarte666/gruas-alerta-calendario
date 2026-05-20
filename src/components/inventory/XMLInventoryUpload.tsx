@@ -106,6 +106,14 @@ const normalizeText = (value: string | null | undefined) =>
 const normalizeCode = (value: string | null | undefined) =>
   (value || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().trim();
 
+// Placeholder codes ("0", "", solo ceros) NO deben usarse para matching/SKU,
+// porque XMLs como los de Jomial traen VlrCodigo=0 para todas las líneas y
+// terminan fusionando productos distintos en uno solo.
+const isPlaceholderCode = (value: string | null | undefined) => {
+  const n = normalizeCode(value);
+  return !n || /^0+$/.test(n);
+};
+
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-CL', {
     style: 'currency',

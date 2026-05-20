@@ -1,53 +1,79 @@
-## Hallazgo de investigación
 
-Revisé ambos modales XML:
+## Diagnóstico
 
-- **Costos** (`src/components/costs/XMLCostUpload.tsx`): NO tiene casilla para marcar como pagado. El estado de pago se deriva automáticamente de la `Condición de Pago` (Contado/`none` → `payment_date = fecha emisión`; Crédito → `payment_date = null`). El usuario no puede marcar manualmente un documento como ya pagado.
-- **Proveedores** (`src/components/suppliers/XMLDocumentUpload.tsx`): Tiene los estados internos (`statusOverrides`, `paidDateOverrides`) **pero tampoco tienen UI conectada** — son código muerto. En la práctica todos los documentos se importan como `pending`. La única configuración expuesta es la condición de pago y la fecha de vencimiento.
+El XML 850394 trae 4 líneas distintas; todas con `<CdgItem><TpoCodigo>QBLI</TpoCodigo><VlrCodigo>0</VlrCodigo></CdgItem>`. El parser extrae `product_code = "0"` para las 4.
 
-Conclusión: la casilla **no existe en ninguno de los dos modales**. Hay que crearla en ambos para mantener paridad funcional.
+En el modal **Importar XML de Bodega** (`src/components/inventory/XMLInventoryUpload.tsx`):
 
-## Plan
+- `findMatchedInventoryItem` (línea 332) trata `"0"` como un SKU real y matchea cualquier item con `sku="0"`.
+- `createMissingProductDirect` (línea 644) crea el primer producto con `sku: "0"`.
+- A partir de ese momento las otras 3 líneas hacen "match" contra ese mismo producto (la UI muestra "Catalogo: Adaptador 10MB-10MJ" en las 3 inferiores).
+- Resultado en BD: solo se creó "Adaptador 10MB-10MJ" y los 8 movimientos (4 entradas + 4 salidas, folio 850394) apuntan todos a ese `item_id`. Los otros 3 productos no existen.
 
-Agregar en cada fila de documento (en ambos modales) un control para marcarlo como **Pagado** con su fecha, siguiendo el diseño del Módulo de Costos (mismas fuentes, tamaños, badges, Switch + DatePicker compactos ya usados en el módulo).
+Causa raíz: códigos placeholder (`"0"`, vacíos, solo ceros) tratados como SKU válidos.
 
-### 1. `XMLDocumentUpload.tsx` (proveedores)
+El módulo de Costos quedó bien (1 costo por documento, no toca productos individuales).
 
-- Conectar el `setStatusOverrides` existente a un `Switch` por documento con label "Marcar como pagado".
-- Cuando esté activo, mostrar un `DatePickerInput` compacto con la fecha de pago (default = hoy), usando `setPaidDateOverrides`.
-- Ocultar el selector de "Vencimiento" cuando esté marcado como pagado (no aplica).
-- La lógica de inserción (líneas 770-890) ya está preparada: lee `statusOverrides` y `paidDateOverrides` y crea el `supplier_payment` con `status='paid'`, `paid_date`, `paid_amount`. No requiere cambios en backend.
+## Cambios de código
 
-### 2. `XMLCostUpload.tsx` (costos)
+### `src/components/inventory/XMLInventoryUpload.tsx`
 
-- Añadir estados nuevos `paidOverrides: Record<string, boolean>` y `paidDateOverrides: Record<string, string>`.
-- En cada fila de documento (en el panel expandido, junto al selector de condición y descripción), añadir un `Switch` "Marcar como pagado" + `DatePickerInput` de fecha de pago.
-- En la lógica de creación del costo (línea ~954), reemplazar:
-  ```
-  const paymentDate = condition === 'none' ? emissionDate : null;
-  ```
-  por:
-  ```
-  const isManuallyPaid = paidOverrides[documentKey];
-  const paymentDate = isManuallyPaid
-    ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd'))
-    : (condition === 'none' ? emissionDate : null);
-  ```
-- Resetear los nuevos estados en el `reset()` del modal.
-- También aplicar un "marcar todos como pagados" por proveedor (botón pequeño en el header del grupo de proveedor), igual que ya existe "Aplicar condición a todos".
+1. Agregar helper junto a `normalizeCode` (línea 106):
 
-### 3. Consistencia visual (cost-module pattern)
+   ```ts
+   const isPlaceholderCode = (value: string | null | undefined) => {
+     const n = normalizeCode(value);
+     return !n || /^0+$/.test(n);
+   };
+   ```
 
-- Usar `Switch` de shadcn (ya usado en formularios de costo).
-- `Label` con `text-xs text-muted-foreground` y `mb-1.5 block` (igual que el resto del modal).
-- `DatePickerInput` compacto `w-full max-w-[180px]`.
-- Badge violeta `bg-primary/10 text-primary` cuando el doc esté marcado como pagado, reutilizando el estilo del módulo de costos.
+2. En `findMatchedInventoryItem` (línea 334) filtrar candidatos placeholder y descartar matches por SKU/barcode placeholder en el catálogo:
 
-### 4. Sin cambios de DB
+   ```ts
+   const codeCandidates = [
+     !isPlaceholderCode(line.product_code) ? normalizeCode(line.product_code) : '',
+     normalizeCode(line.product_name),
+     normalizeCode(line.description),
+   ].filter(Boolean);
 
-No hace falta migración: las columnas `payment_date` (costos) y `status/paid_date/paid_amount` (supplier_payments) ya existen y se usan.
+   for (const code of codeCandidates) {
+     const exactCodeMatch = inventoryCatalog.find(
+       (item) =>
+         (!isPlaceholderCode(item.sku) && normalizeCode(item.sku) === code) ||
+         (!isPlaceholderCode(item.barcode) && normalizeCode(item.barcode) === code) ||
+         normalizeCode(item.name) === code
+     );
+     if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
+   }
+   ```
 
-### Archivos a modificar
+3. En `createMissingProductDirect` (línea 638) sanear el SKU al crear:
 
-- `src/components/costs/XMLCostUpload.tsx`
-- `src/components/suppliers/XMLDocumentUpload.tsx`
+   ```ts
+   const rawCode = line.item.product_code?.trim() || null;
+   const normalizedCode = !isPlaceholderCode(rawCode) ? rawCode : null;
+   ```
+
+   Pasar `sku: normalizedCode` (queda `null` cuando el XML trae `VlrCodigo=0`).
+
+Con esto cada línea sin código real se identifica por descripción y crea un producto independiente.
+
+## Reparación de datos del folio 850394
+
+Migración que:
+
+1. Limpia el SKU del producto ya creado para que no siga atrapando matches:
+   - `UPDATE inventory_items SET sku = NULL WHERE id = '75b7abc4-3909-4559-8cdc-290a406d8189'` (Adaptador 10MB-10MJ).
+2. Crea los 3 productos faltantes con `sku = NULL`, `unit_of_measure='unidad'`, categoría = misma de Adaptador 10MB-10MJ:
+   - "Adaptador 8MJ-8MP 90°"  unit_cost 5892
+   - "Manguera R2-8 Term. FJX-FJX 90° LT: 2.15 MTS"  unit_cost 30155
+   - "Manguera R2-8 Term. FJX-FJX 90° LT: 2.35 MTS"  unit_cost 31837
+3. Re-apunta los 6 movimientos mal asignados (3 entradas + 3 salidas con `observations` que mencionan cada nombre, `created_at` del 2026-05-20) al `item_id` correcto.
+4. Deja intactos los 2 movimientos correctos de "Adaptador 10MB-10MJ" (qty 2, $4.056).
+5. Los triggers existentes de `inventory_movements` recalculan stock automáticamente.
+
+## Validación
+
+- Volver a importar mentalmente el mismo XML: las 4 líneas se crean como 4 productos distintos (sku NULL) y los movimientos quedan repartidos correctamente.
+- Probar un XML con códigos reales (no "0"): sigue matcheando por SKU como antes.
+- En `/inventory`, revisar que aparezcan los 4 productos con stock 0 (entrada + consumo) y costo correcto, y que el historial muestre cada movimiento con su producto real.
