@@ -106,6 +106,14 @@ const normalizeText = (value: string | null | undefined) =>
 const normalizeCode = (value: string | null | undefined) =>
   (value || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().trim();
 
+// Placeholder codes ("0", "", solo ceros) NO deben usarse para matching/SKU,
+// porque XMLs como los de Jomial traen VlrCodigo=0 para todas las líneas y
+// terminan fusionando productos distintos en uno solo.
+const isPlaceholderCode = (value: string | null | undefined) => {
+  const n = normalizeCode(value);
+  return !n || /^0+$/.test(n);
+};
+
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-CL', {
     style: 'currency',
@@ -332,7 +340,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const findMatchedInventoryItem = useCallback(
     (line: XMLDocumentItem): { match: InventoryCatalogItem | null; candidates: InventoryCatalogItem[] } => {
       const codeCandidates = [
-        normalizeCode(line.product_code),
+        !isPlaceholderCode(line.product_code) ? normalizeCode(line.product_code) : '',
         normalizeCode(line.product_name),
         normalizeCode(line.description),
       ].filter(Boolean);
@@ -340,8 +348,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
       for (const code of codeCandidates) {
         const exactCodeMatch = inventoryCatalog.find(
           (item) =>
-            normalizeCode(item.sku) === code ||
-            normalizeCode(item.barcode) === code ||
+            (!isPlaceholderCode(item.sku) && normalizeCode(item.sku) === code) ||
+            (!isPlaceholderCode(item.barcode) && normalizeCode(item.barcode) === code) ||
             normalizeCode(item.name) === code
         );
         if (exactCodeMatch) return { match: exactCodeMatch, candidates: [] };
@@ -635,7 +643,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     }
 
     try {
-      const normalizedCode = line.item.product_code?.trim() || null;
+      const rawCode = line.item.product_code?.trim() || null;
+      const normalizedCode = !isPlaceholderCode(rawCode) ? rawCode : null;
       const preferredCategory =
         categories.find((category) => normalizeText(category.name).includes('implement')) ||
         categories.find((category) => normalizeText(category.name).includes('repuesto')) ||
