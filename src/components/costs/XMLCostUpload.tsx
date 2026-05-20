@@ -950,11 +950,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
         const condition = getSelectedCondition(doc.supplier_rut);
+        const isManuallyPaid = !!paidOverrides[documentKey];
         // Contado (none) → pagado inmediatamente con fecha de emisión
         // Crédito → payment_date = null (pendiente, no pagado aún)
-        const paymentDate = condition === 'none' 
-          ? emissionDate 
-          : null;
+        // Override manual: si el usuario marca "Pagado", usar paidDateOverrides
+        const paymentDate = isManuallyPaid
+          ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd'))
+          : (condition === 'none' ? emissionDate : null);
 
         const costData = {
           date: emissionDate,
