@@ -2,6 +2,7 @@ import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDoc
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { toTitleCaseEs } from '@/utils/textNormalization';
 
 export class XMLSupplierParser {
   private parser: DOMParser;
