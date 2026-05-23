@@ -5,6 +5,7 @@ import { es } from 'date-fns/locale';
 import { Cost } from '@/types/costs';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import { sendBlobToDownloadWindow } from '@/utils/reports/downloadWindow';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 
@@ -24,9 +25,10 @@ export interface GenerateCostDetailPdfArgs {
   cost: Cost;
   settings: Settings;
   logoUrl?: string | null;
+  downloadWindow?: Window | null;
 }
 
-export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: GenerateCostDetailPdfArgs) => {
+export const generateCostDetailPDF = async ({ cost, settings, logoUrl, downloadWindow }: GenerateCostDetailPdfArgs) => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const marginX = 14;
@@ -198,10 +200,14 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
   const safeDesc = (cost.description || 'costo').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const fileName = `costo-${safeDesc}-${cost.date}.pdf`;
 
-  // Robust download: prefer Blob + anchor (works reliably in sandboxed/preview iframes),
-  // fallback to doc.save() if Blob path fails.
+  const blob = doc.output('blob');
+
+  if (sendBlobToDownloadWindow(downloadWindow, blob, fileName)) {
+    return fileName;
+  }
+
+  // Fallback when the browser blocks the helper window.
   try {
-    const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
