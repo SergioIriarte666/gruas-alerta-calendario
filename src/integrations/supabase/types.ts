@@ -314,6 +314,10 @@ export type Database = {
           daily_report_emails: string | null
           daily_report_enabled: boolean | null
           daily_report_hour: number | null
+          daily_report_last_attempt_at: string | null
+          daily_report_last_error: string | null
+          daily_report_last_sent_at: string | null
+          daily_report_last_status: string | null
           email: string
           excess_folio_format: string | null
           folio_format: string | null
@@ -340,6 +344,10 @@ export type Database = {
           daily_report_emails?: string | null
           daily_report_enabled?: boolean | null
           daily_report_hour?: number | null
+          daily_report_last_attempt_at?: string | null
+          daily_report_last_error?: string | null
+          daily_report_last_sent_at?: string | null
+          daily_report_last_status?: string | null
           email: string
           excess_folio_format?: string | null
           folio_format?: string | null
@@ -366,6 +374,10 @@ export type Database = {
           daily_report_emails?: string | null
           daily_report_enabled?: boolean | null
           daily_report_hour?: number | null
+          daily_report_last_attempt_at?: string | null
+          daily_report_last_error?: string | null
+          daily_report_last_sent_at?: string | null
+          daily_report_last_status?: string | null
           email?: string
           excess_folio_format?: string | null
           folio_format?: string | null
@@ -1933,6 +1945,27 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
         ]
+      }
+      internal_scheduler_secrets: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
       }
       inventory_alerts: {
         Row: {
