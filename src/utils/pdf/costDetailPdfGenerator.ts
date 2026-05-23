@@ -197,5 +197,27 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
 
   const safeDesc = (cost.description || 'costo').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const fileName = `costo-${safeDesc}-${cost.date}.pdf`;
-  doc.save(fileName);
+
+  // Robust download: prefer Blob + anchor (works reliably in sandboxed/preview iframes),
+  // fallback to doc.save() if Blob path fails.
+  try {
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1500);
+  } catch (err) {
+    console.warn('[costDetailPdf] Blob download failed, falling back to doc.save()', err);
+    doc.save(fileName);
+  }
+
+  return fileName;
 };
