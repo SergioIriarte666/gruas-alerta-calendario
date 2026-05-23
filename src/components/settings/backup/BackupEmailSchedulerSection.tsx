@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Send, Clock, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useBackupEmailConfig } from '@/hooks/useBackupEmailConfig';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/custom-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
