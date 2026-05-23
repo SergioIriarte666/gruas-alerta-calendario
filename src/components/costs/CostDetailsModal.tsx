@@ -19,7 +19,8 @@ import {
   Navigation,
   Users,
   Car,
-  Copy
+  Copy,
+  Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,6 +30,9 @@ import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
+import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
+import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/components/ui/custom-toast';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -85,6 +89,26 @@ const CostHistoryTabContent: React.FC<{ costId: string }> = ({ costId }) => {
 const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
   const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
   const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
+  const [isPrinting, setIsPrinting] = React.useState(false);
+  const { settings } = useSettings();
+  const { toast } = useToast();
+
+  const handlePrint = async () => {
+    if (!settings) {
+      toast({ title: 'Configuración no disponible', description: 'No se pudo cargar los datos de la empresa.', type: 'error' });
+      return;
+    }
+    try {
+      setIsPrinting(true);
+      await generateCostDetailPDF({ cost, settings });
+      toast({ title: 'PDF generado', description: 'El detalle del costo se descargó correctamente.', type: 'success' });
+    } catch (e) {
+      console.error('Error generating cost detail PDF', e);
+      toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   React.useEffect(() => {
     let cancelled = false;
@@ -151,6 +175,16 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                disabled={isPrinting}
+                className="flex items-center gap-1"
+              >
+                <Printer className="w-4 h-4" />
+                {isPrinting ? 'Generando...' : 'Imprimir'}
+              </Button>
               {onDuplicate && (
                 <Button
                   variant="outline"
