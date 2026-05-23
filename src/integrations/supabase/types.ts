@@ -3126,6 +3126,39 @@ export type Database = {
           },
         ]
       }
+      password_reset_rate_limits: {
+        Row: {
+          attempt_count: number
+          blocked_until: string | null
+          created_at: string
+          email_hash: string
+          ip_hash: string
+          last_attempt_at: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          email_hash: string
+          ip_hash: string
+          last_attempt_at?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          blocked_until?: string | null
+          created_at?: string
+          email_hash?: string
+          ip_hash?: string
+          last_attempt_at?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       patent_search_history: {
         Row: {
           año: number | null
