@@ -143,7 +143,7 @@ export const Sidebar = ({
         { name: 'Tarifas de Servicio', href: '/service-rates', icon: DollarSign, adminOnly: false },
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
-        { name: 'Respaldos', href: '/backup', icon: Database, adminOnly: true },
+        { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
       ]
     }
