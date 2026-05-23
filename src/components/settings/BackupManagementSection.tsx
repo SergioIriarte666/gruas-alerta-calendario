@@ -25,7 +25,7 @@ export const BackupManagementSection = () => {
   const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
 
   return (
-    <Card className="bg-card border mt-6">
+    <Card id="respaldos" className="bg-card border mt-6 scroll-mt-24">
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
           <div className="flex items-center space-x-2">
