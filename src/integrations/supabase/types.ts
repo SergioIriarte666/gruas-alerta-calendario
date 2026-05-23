@@ -44,6 +44,51 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_email_config: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_error: string | null
+          last_json_size_bytes: number | null
+          last_sent_at: string | null
+          last_sql_size_bytes: number | null
+          last_status: string | null
+          recipient_email: string
+          schedule_hour: number
+          signed_url_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_json_size_bytes?: number | null
+          last_sent_at?: string | null
+          last_sql_size_bytes?: number | null
+          last_status?: string | null
+          recipient_email?: string
+          schedule_hour?: number
+          signed_url_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_json_size_bytes?: number | null
+          last_sent_at?: string | null
+          last_sql_size_bytes?: number | null
+          last_status?: string | null
+          recipient_email?: string
+          schedule_hour?: number
+          signed_url_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       backup_logs: {
         Row: {
           backup_type: string
