@@ -34,17 +34,21 @@ export const sendBlobToDownloadWindow = (downloadWindow: Window | null | undefin
   }
 
   const url = URL.createObjectURL(blob);
-  downloadWindow.document.body.innerHTML = '';
-  const title = downloadWindow.document.createElement('h1');
-  title.textContent = 'Descarga lista';
+  downloadWindow.document.body.innerHTML = `
+    <h1>PDF listo</h1>
+    <p>Si la descarga no inicia automáticamente, usa el botón de abajo.</p>
+    <div id="download-actions"></div>
+    <iframe title="Vista previa PDF" style="width:100%;height:75vh;margin-top:20px;border:1px solid #d1d5db;border-radius:8px;"></iframe>
+  `;
+  const actions = downloadWindow.document.getElementById('download-actions');
   const link = downloadWindow.document.createElement('a');
   link.href = url;
   link.download = fileName;
-  link.textContent = `Descargar ${fileName}`;
-  link.style.fontFamily = 'system-ui, sans-serif';
-  link.style.fontSize = '18px';
-  downloadWindow.document.body.appendChild(title);
-  downloadWindow.document.body.appendChild(link);
+  link.textContent = `Descargar PDF`;
+  link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:8px;background:#7c3aed;color:white;text-decoration:none;font:600 16px system-ui,sans-serif;';
+  actions?.appendChild(link);
+  const iframe = downloadWindow.document.querySelector('iframe');
+  if (iframe) iframe.src = url;
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
   return true;
