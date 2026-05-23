@@ -31,13 +31,13 @@ export const BackupEmailSchedulerSection: React.FC = () => {
   const handleToggle = async (checked: boolean) => {
     const { error } = await save({ enabled: checked });
     toast(error
-      ? { title: 'Error', description: error, variant: 'destructive' }
-      : { title: checked ? 'Envío diario activado' : 'Envío diario desactivado' });
+      ? { title: 'Error', description: error, type: 'error' }
+      : { title: checked ? 'Envío diario activado' : 'Envío diario desactivado', type: 'success' });
   };
 
   const handleSave = async () => {
     if (!email.includes('@')) {
-      toast({ title: 'Email inválido', variant: 'destructive' });
+      toast({ title: 'Email inválido', type: 'error' });
       return;
     }
     const { error } = await save({
@@ -46,15 +46,15 @@ export const BackupEmailSchedulerSection: React.FC = () => {
       signed_url_days: parseInt(days, 10),
     });
     toast(error
-      ? { title: 'Error al guardar', description: error, variant: 'destructive' }
-      : { title: 'Configuración guardada' });
+      ? { title: 'Error al guardar', description: error, type: 'error' }
+      : { title: 'Configuración guardada', type: 'success' });
   };
 
   const handleTest = async () => {
-    toast({ title: 'Generando respaldo y enviando…', description: 'Puede tardar 30-60s' });
+    toast({ title: 'Generando respaldo y enviando…', description: 'Puede tardar 30-60s', type: 'info' });
     const { error } = await sendTest();
-    if (error) toast({ title: 'Error', description: error, variant: 'destructive' });
-    else toast({ title: '✓ Correo enviado', description: `Revisa la bandeja de ${email}` });
+    if (error) toast({ title: 'Error', description: error, type: 'error' });
+    else toast({ title: '✓ Correo enviado', description: `Revisa la bandeja de ${email}`, type: 'success' });
   };
 
   if (loading) {
