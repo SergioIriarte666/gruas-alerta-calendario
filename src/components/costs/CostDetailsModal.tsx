@@ -32,7 +32,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
-import { triggerFileDownload } from '@/utils/fileDownload';
+import { openDownloadTarget, showPdfInDownloadTarget } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -97,6 +97,8 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
   const { toast } = useToast();
 
   const handlePrint = async () => {
+    const pdfWindow = openDownloadTarget();
+
     try {
       setIsPrinting(true);
       const safeSettings = {
@@ -116,9 +118,10 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
         if (previous?.url) URL.revokeObjectURL(previous.url);
         return { url, fileName };
       });
-      triggerFileDownload(url, fileName);
-      toast({ title: 'PDF listo', description: 'Si no se descargó automáticamente, usa el botón Descargar PDF.', type: 'success' });
+      showPdfInDownloadTarget(pdfWindow, url, fileName);
+      toast({ title: 'PDF abierto', description: 'Usa descargar o imprimir desde la ventana del PDF.', type: 'success' });
     } catch (e) {
+      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
@@ -211,11 +214,11 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => triggerFileDownload(pdfDownload.url, pdfDownload.fileName)}
+                    onClick={() => showPdfInDownloadTarget(openDownloadTarget(), pdfDownload.url, pdfDownload.fileName)}
                   className="flex items-center gap-1"
                 >
                   <Download className="w-4 h-4" />
-                  Descargar PDF
+                    Abrir PDF
                 </Button>
               )}
               {onDuplicate && (
