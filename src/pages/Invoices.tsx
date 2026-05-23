@@ -48,6 +48,7 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
+import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 
@@ -409,9 +410,27 @@ const Invoices = () => {
     }
   };
 
-  const handleBatchExport = (invoiceIds: string[]) => {
-    // TODO: Implement batch export functionality
-    toast.success(`Exportando ${invoiceIds.length} facturas...`);
+  const handleBatchExport = async (invoiceIds: string[]) => {
+    const invoicesToExport = invoices.filter(inv => invoiceIds.includes(inv.id));
+
+    if (invoicesToExport.length === 0) {
+      toast.error('Sin facturas seleccionadas', {
+        description: 'Seleccione al menos una factura para exportar.',
+      });
+      return;
+    }
+
+    const issueDates = invoicesToExport
+      .map(invoice => invoice.issueDate)
+      .filter((value): value is string => Boolean(value))
+      .sort();
+
+    await handleExportInvoiceReport('excel', {
+      dateFrom: issueDates[0],
+      dateTo: issueDates[issueDates.length - 1],
+      status: invoicesToExport.length === 1 ? invoicesToExport[0].status : undefined,
+      clientName: invoicesToExport.length === 1 ? invoicesToExport[0].client?.name : undefined,
+    });
   };
 
   const handleClearSelection = () => {
@@ -419,6 +438,23 @@ const Invoices = () => {
   };
 
   const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
+  const selectedInvoiceMetrics = useMemo(() => {
+    const totalInvoiced = selectedInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+    const totalPaid = selectedInvoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0);
+    const pendingAmount = selectedInvoices.reduce((sum, inv) => sum + Number(inv.remainingAmount || 0), 0);
+    const overdueInvoices = selectedInvoices.filter(inv => inv.status === 'overdue').length;
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      pendingAmount,
+      overdueInvoices,
+    };
+  }, [selectedInvoices]);
+  const { handleExportInvoiceReport } = useInvoiceReport({
+    invoices: selectedInvoices,
+    metrics: selectedInvoiceMetrics,
+  });
 
   // Calculate metrics for export
   const metrics = useMemo(() => {

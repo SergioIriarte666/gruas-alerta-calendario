@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Plus, X } from 'lucide-react';
+import { LayoutDashboard, History, Plus, X, FileText } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,12 +32,11 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
       href: '/portal/request-service',
       icon: Plus,
     },
-    // Facturas ocultas temporalmente - falta integración con sello fiscal
-    // {
-    //   name: 'Mis Facturas',
-    //   href: '/portal/invoices',
-    //   icon: FileText,
-    // },
+    {
+      name: 'Mis Facturas',
+      href: '/portal/invoices',
+      icon: FileText,
+    },
   ];
 
   const handleNavClick = () => {

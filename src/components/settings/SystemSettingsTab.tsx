@@ -79,7 +79,12 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
 
   const sendTestReport = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('send-daily-pending-report');
+      const { data, error } = await supabase.functions.invoke('send-daily-pending-report', {
+        body: {
+          force: true,
+          source: 'manual_test',
+        },
+      });
       if (error) throw error;
       return data;
     },

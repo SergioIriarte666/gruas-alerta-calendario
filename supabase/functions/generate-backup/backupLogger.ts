@@ -5,7 +5,7 @@ export interface BackupLog {
   id?: string;
   backup_type: string;
   status: 'started' | 'completed' | 'failed';
-  created_by: string;
+  created_by?: string | null;
   file_size_bytes?: number;
   metadata?: any;
   error_message?: string;
@@ -14,15 +14,24 @@ export interface BackupLog {
 export class BackupLogger {
   constructor(private supabase: SupabaseClient) {}
 
-  async startLog(backupType: string, userId: string): Promise<string | null> {
+  async startLog(backupType: string, userId?: string | null, metadata?: any): Promise<string | null> {
     try {
+      const payload: BackupLog = {
+        backup_type: backupType,
+        status: 'started',
+      };
+
+      if (userId) {
+        payload.created_by = userId;
+      }
+
+      if (metadata) {
+        payload.metadata = metadata;
+      }
+
       const { data: logData, error: logError } = await this.supabase
         .from('backup_logs')
-        .insert({
-          backup_type: backupType,
-          status: 'started',
-          created_by: userId
-        })
+        .insert(payload)
         .select()
         .single();
 

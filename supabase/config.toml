@@ -52,7 +52,7 @@ double_confirm_changes = true
 enabled = true
 
 [functions.generate-backup]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-service-confirmation]
 verify_jwt = false

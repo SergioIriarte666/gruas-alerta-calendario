@@ -1,5 +1,6 @@
 
 import { parse } from 'papaparse';
+import * as XLSX from 'xlsx';
 import { UploadProgress, UploadResult } from './types';
 import { TemplateGenerator } from './templateGenerator';
 
@@ -22,11 +23,43 @@ export class CSVServiceUploader {
   }
 
   parseExcel(file: File): Promise<any[]> {
-    // Implementation for Excel parsing would go here
-    return Promise.reject(new Error('Excel parsing not implemented'));
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        try {
+          const data = event.target?.result;
+          if (!data) {
+            reject(new Error('No se pudo leer el archivo Excel.'));
+            return;
+          }
+
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          if (!worksheet) {
+            reject(new Error('El archivo Excel no contiene hojas válidas.'));
+            return;
+          }
+
+          const rows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, {
+            defval: '',
+            raw: false,
+          });
+
+          resolve(rows);
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error('Error parsing Excel file'));
+        }
+      };
+
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo Excel.'));
+      reader.readAsArrayBuffer(file);
+    });
   }
 
-  convertToService(csvRow: any, clients: any[], cranes: any[], operators: any[]): any {
+  convertToService(csvRow: any, _clients: any[], _cranes: any[], _operators: any[]): any {
     // Implementation for converting CSV row to service
     return csvRow;
   }

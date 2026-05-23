@@ -2,10 +2,10 @@
 
 ## TMS Gruas - Towing Management System
 
-- **Version del documento:** 3.4
-- **Ultima actualizacion:** 2026-05-12
+- **Version del documento:** 3.5
+- **Ultima actualizacion:** 2026-05-23
 - **Estado:** Vigente
-- **Base de actualizacion:** revision del routing real, paginas, componentes, hooks, servicios y `docs/modules/*`
+- **Base de actualizacion:** lectura rapida del routing real, paginas activas, componentes, hooks, servicios y `docs/modules/*`
 
 ---
 
@@ -85,7 +85,7 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 
 | Superficie | Rutas principales | Proposito |
 |---|---|---|
-| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/incomes`, `/accounts-payable`, `/settings`, etc. | Operacion, finanzas, activos y administracion. |
+| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/incomes`, `/accounts-payable`, `/settings`, `/historical`, etc. | Operacion, finanzas, activos y administracion. |
 | Operador | `/operator`, `/operator/service/:id/inspection` | Ejecucion de inspecciones y seguimiento de servicios asignados. |
 | Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
 
@@ -111,7 +111,10 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 | Cierres | `/closures` | `admin`, `viewer` | servicios, clientes, facturas |
 | Clientes | `/clients` | `admin`, `viewer` | servicios, facturas, pipeline VIP |
 | Gruas | `/cranes` | `admin`, `viewer` | servicios, mantenciones, repuestos, inventario, costos |
+| Vehiculos | `/vehicles` | `admin` | catalogos operativos, datos de vehiculo, formularios relacionados |
 | Operadores | `/operators` | `admin` | servicios, inspecciones, comisiones |
+| Tipos de servicio | `/service-types` | `admin` | servicios, configuracion operativa |
+| Tarifas de servicio | `/service-rates` | `admin` | servicios, proyecciones, calculos operativos |
 | Facturas | `/invoices` | `admin`, `viewer` | cierres, clientes, pagos, ingresos, reportes |
 | Ingresos | `/incomes` | `admin`, `viewer` | facturas, pagos, proyecciones |
 | Costos | `/costs` | `admin`, `viewer` | servicios, proveedores, inventario, XML, reportes |
@@ -275,6 +278,10 @@ flowchart LR
 - soporta formularios manuales, carga CSV y carga XML
 - cruza informacion con servicios, proveedores, inventario y gruas
 - incluye deteccion de duplicados y trazabilidad de costo
+- incorpora vista de detalle consolidado en modal con exportacion PDF
+- soporta actualizacion por lotes, marcado masivo de pago y eliminacion asistida
+- carga datasets amplios mediante paginacion explicita sobre Supabase para evitar truncamiento operativo
+- puede disparar asistencia de distribucion cuando el costo impacta inventario
 
 ### 5.9 Inventario / Bodega
 
@@ -293,6 +300,7 @@ flowchart LR
 
 - maneja acreedores, deudas, cuotas y pagos
 - orientado al control estructurado de obligaciones financieras
+- incluye calendario de vencimientos, detalle de deuda y pagos por cuota
 
 ### 5.12 Gruas
 
@@ -341,6 +349,13 @@ flowchart LR
 - gestion de usuarios y permisos
 - catalogos administrativos
 - herramientas criticas y respaldos
+
+### 5.20.1 Catalogos administrativos activos
+
+- tipos de servicio
+- tarifas de servicio
+- centros de costo
+- configuraciones de terminos de pago, columnas y notificaciones
 
 ### 5.21 App de operador
 
@@ -437,6 +452,7 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 - React Router con lazy loading por ruta
 - React Query para acceso y cache de datos
 - UI basada en Radix/shadcn
+- precarga diferida de chunks de rutas principales despues del primer render
 
 ### Backend y datos
 
@@ -487,6 +503,7 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 ### Integraciones funcionales derivadas
 
 - correo transaccional
+- reporte diario programado por `pg_cron` con control por hora de negocio y anti-duplicado diario
 - push notifications
 - OCR server-side para comprobantes
 - mapas y rutas
@@ -703,6 +720,7 @@ Tabla orientada a onboarding. Lista archivos y hooks representativos, no exhaust
 | Cierres | `src/pages/Closures.tsx` | hooks propios de cierres y relaciones con facturacion | `docs/modules/closures.md` |
 | Clientes | `src/pages/Clients.tsx` | hooks de clientes y formularios/ficha de cliente | `docs/modules/clients.md` |
 | Gruas | `src/pages/Cranes.tsx` | hooks de flota, mantenciones y consumo de inventario | `docs/modules/cranes.md` |
+| Vehiculos, tipos y tarifas | `src/pages/Vehicles.tsx`, `src/pages/ServiceTypes.tsx`, `src/pages/ServiceRates.tsx` | hooks y formularios catalogo para configuracion operativa | documentado transversalmente en codigo y docs relacionadas |
 | Reportes | `src/pages/Reports.tsx` | `useReports`, exportadores PDF/XLSX | `docs/modules/reports.md` |
 | Ingresos y proyecciones | `src/pages/Incomes.tsx`, `src/pages/IncomeProjections.tsx` | hooks de ingresos, pipeline y proyeccion | `docs/modules/incomes.md`, `docs/modules/projections.md` |
 | Cuentas por pagar | `src/pages/AccountsPayable.tsx` | hooks de deudas, cuotas y pagos | `docs/modules/accounts-payable.md` |

@@ -8,11 +8,113 @@ export interface BackupResult {
   size: number;
 }
 
+type QuickBackupPayload = {
+  company_data: Record<string, unknown> | null;
+  system_settings: Record<string, unknown> | null;
+  metadata: {
+    generated_at: string;
+    generated_by: string;
+    counts: {
+      clients: number;
+      services: number;
+      operators: number;
+      cranes: number;
+      invoices: number;
+    };
+  };
+}
+
 export class BackupGenerators {
-  constructor(private supabase: SupabaseClient) {}
+  constructor(
+    private privilegedClient: SupabaseClient,
+    private userClient?: SupabaseClient,
+  ) {}
+
+  private buildJsonBackupResult(contentData: unknown, fileName: string): BackupResult {
+    const content = JSON.stringify(contentData, null, 2);
+
+    return {
+      content,
+      fileName,
+      contentType: 'application/json',
+      size: new Blob([content]).size
+    };
+  }
+
+  private async buildQuickBackupPayload(userEmail: string): Promise<QuickBackupPayload> {
+    const [
+      { data: companyData, error: companyError },
+      { data: systemSettings, error: settingsError },
+      { count: clientsCount, error: clientsError },
+      { count: servicesCount, error: servicesError },
+      { count: operatorsCount, error: operatorsError },
+      { count: cranesCount, error: cranesError },
+      { count: invoicesCount, error: invoicesError },
+    ] = await Promise.all([
+      this.privilegedClient
+        .from('company_data')
+        .select('*')
+        .limit(1)
+        .maybeSingle(),
+      this.privilegedClient
+        .from('system_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle(),
+      this.privilegedClient
+        .from('clients')
+        .select('*', { count: 'exact', head: true }),
+      this.privilegedClient
+        .from('services')
+        .select('*', { count: 'exact', head: true }),
+      this.privilegedClient
+        .from('operators')
+        .select('*', { count: 'exact', head: true }),
+      this.privilegedClient
+        .from('cranes')
+        .select('*', { count: 'exact', head: true }),
+      this.privilegedClient
+        .from('invoices')
+        .select('*', { count: 'exact', head: true }),
+    ]);
+
+    const queryErrors = [
+      companyError,
+      settingsError,
+      clientsError,
+      servicesError,
+      operatorsError,
+      cranesError,
+      invoicesError,
+    ].filter(Boolean);
+
+    if (queryErrors.length > 0) {
+      throw new Error(`No se pudo generar el respaldo rapido: ${queryErrors[0]?.message}`);
+    }
+
+    return {
+      company_data: companyData as Record<string, unknown> | null,
+      system_settings: systemSettings as Record<string, unknown> | null,
+      metadata: {
+        generated_at: new Date().toISOString(),
+        generated_by: userEmail,
+        counts: {
+          clients: clientsCount ?? 0,
+          services: servicesCount ?? 0,
+          operators: operatorsCount ?? 0,
+          cranes: cranesCount ?? 0,
+          invoices: invoicesCount ?? 0,
+        },
+      },
+    };
+  }
 
   async generateQuickBackup(userEmail: string): Promise<BackupResult> {
-    const { data: quickBackup, error } = await this.supabase
+    if (!this.userClient) {
+      throw new Error('Se requiere un administrador autenticado para generar el respaldo rapido manual');
+    }
+
+    const { data: quickBackup, error } = await this.userClient
       .rpc('generate_quick_backup');
 
     if (error) {
@@ -20,15 +122,16 @@ export class BackupGenerators {
       throw error;
     }
 
-    const content = JSON.stringify(quickBackup, null, 2);
     const fileName = `tms-gruas-quick-backup-${new Date().toISOString().split('T')[0]}.json`;
-    
-    return {
-      content,
-      fileName,
-      contentType: 'application/json',
-      size: new Blob([content]).size
-    };
+
+    return this.buildJsonBackupResult(quickBackup, fileName);
+  }
+
+  async generateScheduledQuickBackup(userEmail: string): Promise<BackupResult> {
+    const quickBackup = await this.buildQuickBackupPayload(userEmail);
+    const fileName = `tms-gruas-auto-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+    return this.buildJsonBackupResult(quickBackup, fileName);
   }
 
   async generateFullBackup(userEmail: string): Promise<BackupResult> {
@@ -50,7 +153,7 @@ export class BackupGenerators {
     // Export data from each table
     for (const table of tables) {
       try {
-        const { data, error } = await this.supabase
+        const { data, error } = await this.privilegedClient
           .from(table)
           .select('*');
         
@@ -79,8 +182,12 @@ export class BackupGenerators {
 
   async generateSQLBackup(userEmail: string): Promise<BackupResult> {
     try {
+      if (!this.userClient) {
+        throw new Error('Se requiere un administrador autenticado para generar respaldos SQL');
+      }
+
       // Generate SQL dump using the database function
-      const { data: sqlContent, error } = await this.supabase
+      const { data: sqlContent, error } = await this.userClient
         .rpc('generate_database_backup');
 
       if (error) {

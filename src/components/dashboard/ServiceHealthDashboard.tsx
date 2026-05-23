@@ -1,25 +1,22 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { useIntegrityValidator } from '@/hooks/services/useIntegrityValidator';
-import { useServiceSyncWatcher } from '@/hooks/services/useServiceSyncWatcher';
 import { 
   Shield, 
   AlertTriangle, 
   CheckCircle, 
   RefreshCw, 
   Zap,
-  Activity,
   BarChart3,
   Settings,
   AlertCircle,
-  TrendingUp,
   Clock
 } from 'lucide-react';
-import { formatForDisplay, formatForDisplayWithTime, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 /**
  * FASE 6: DASHBOARD DE MONITOREO CONTINUO
@@ -35,18 +32,14 @@ import { formatForDisplay, formatForDisplayWithTime, parseFromDatabase } from '@
 export const ServiceHealthDashboard = () => {
   const {
     validating,
-    issues,
     metrics,
     runFullAudit,
     autoRepairAllIssues,
     checkForAlerts,
-    getIssuesBySeverity,
     getCriticalIssues,
     isHealthy
   } = useIntegrityValidator();
 
-  const { forceSyncNow, isWatching } = useServiceSyncWatcher();
-  
   const [isRepairing, setIsRepairing] = useState(false);
   const [lastRepairResult, setLastRepairResult] = useState<any>(null);
 
@@ -142,18 +135,19 @@ export const ServiceHealthDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estado del Watcher</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Ultima Auditoria</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <div className={`h-2 w-2 rounded-full ${isWatching ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm font-medium">
-                {isWatching ? 'Activo' : 'Inactivo'}
+                {metrics.lastAuditTime
+                  ? formatForDisplayWithTime(metrics.lastAuditTime)
+                  : 'Pendiente'}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Monitoreo en tiempo real
+              {validating ? 'Auditoria en ejecucion' : 'Ultimo barrido completo de integridad'}
             </p>
           </CardContent>
         </Card>
@@ -222,13 +216,6 @@ export const ServiceHealthDashboard = () => {
               Auto-Reparar ({metrics.autoRepairableIssues})
             </Button>
 
-            <Button 
-              onClick={() => forceSyncNow()}
-              variant="secondary"
-            >
-              <Activity className="mr-2 h-4 w-4" />
-              Forzar Sincronización
-            </Button>
           </div>
 
           {lastRepairResult && (
@@ -364,15 +351,29 @@ export const ServiceHealthDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Última auditoría: {
-                  metrics.lastAuditTime 
-                    ? formatForDisplayWithTime(metrics.lastAuditTime)
-                    : 'Nunca'
-                }</p>
-                <p className="text-sm mt-2">
-                  El historial detallado de auditorías estará disponible próximamente
-                </p>
+              <div className="space-y-4">
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Ultima auditoria completa</span>
+                  <span className="font-medium">
+                    {metrics.lastAuditTime ? formatForDisplayWithTime(metrics.lastAuditTime) : 'Nunca'}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Issues detectados en la ultima corrida</span>
+                  <span className="font-medium">{metrics.totalIssues}</span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Servicios inconsistentes</span>
+                  <span className="font-medium">{metrics.inconsistentServices}</span>
+                </div>
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Ultima reparacion automatica</span>
+                  <span className="font-medium">
+                    {lastRepairResult
+                      ? `Reparados ${lastRepairResult.repaired} / Fallidos ${lastRepairResult.failed}`
+                      : 'Sin ejecuciones manuales'}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

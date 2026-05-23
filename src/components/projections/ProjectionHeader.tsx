@@ -4,10 +4,11 @@ import { ProjectionMetrics } from "@/hooks/projections/useIncomeProjections";
 
 interface ProjectionHeaderProps {
   metrics: ProjectionMetrics;
+  dateRange: number;
   isLoading?: boolean;
 }
 
-export const ProjectionHeader = ({ metrics, isLoading }: ProjectionHeaderProps) => {
+export const ProjectionHeader = ({ metrics, dateRange, isLoading }: ProjectionHeaderProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -19,8 +20,8 @@ export const ProjectionHeader = ({ metrics, isLoading }: ProjectionHeaderProps) 
   const cards = [
     {
       title: "Total Proyectado",
-      subtitle: "Próximos 30 días",
-      value: formatCurrency(metrics.totalProjected30Days),
+      subtitle: `Próximos ${dateRange} días`,
+      value: formatCurrency(metrics.totalProjectedInRange),
       icon: TrendingUp,
       colorClass: "text-green-400",
       bgClass: "bg-green-500/10",
@@ -43,7 +44,7 @@ export const ProjectionHeader = ({ metrics, isLoading }: ProjectionHeaderProps) 
     },
     {
       title: "Tasa de Cobro",
-      subtitle: "Efectividad actual",
+      subtitle: "Recuperado en cartera abierta",
       value: `${metrics.collectionRate.toFixed(1)}%`,
       icon: Percent,
       colorClass: "text-blue-400",

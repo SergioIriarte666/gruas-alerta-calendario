@@ -51,7 +51,7 @@ import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestio
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { createDirectInventoryEntry } from '@/utils/inventoryConsumptionHelper';
-import { useAddCost } from '@/hooks/useCosts';
+import { useAddCost, useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
@@ -276,6 +276,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   const batchProgress = useBatchProgress();
   const { mutate: addCost } = useAddCost();
+  const linkInvoiceMutation = useLinkInvoiceToCost();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const resolveCategoryId = (rawCategory?: string | null) => {
@@ -922,10 +923,40 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         const effectiveGlosa = getEffectiveGlosa(doc);
         batchProgress.update(i + 1, `${doc.folio} - ${effectiveGlosa.substring(0, 30)}`);
 
+        const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
+        const condition = getSelectedCondition(doc.supplier_rut);
+        const isManuallyPaid = !!paidOverrides[documentKey];
+        // Contado (none) -> pagado inmediatamente con fecha de emisión
+        // Crédito -> payment_date = null (pendiente, no pagado aún)
+        // Override manual: si el usuario marca "Pagado", usar paidDateOverrides
+        const paymentDate = isManuallyPaid
+          ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd'))
+          : (condition === 'none' ? emissionDate : null);
+
         // If user chose to link to existing cost, skip creation
         const linkCostId = linkDecisions[documentKey];
         if (linkCostId && linkCostId !== 'new') {
-          // TODO: link invoice to existing cost if needed
+          const supplier = parseResult.suppliers.find(s => s.rut === doc.supplier_rut);
+          const supplierId = supplierIdByRut.get(doc.supplier_rut) || await ensureSupplierId(doc.supplier_rut, supplier?.name || '');
+          const computedDueDate = getComputedDueDate(doc) || emissionDate;
+
+          await linkInvoiceMutation.mutateAsync({
+            costId: linkCostId,
+            supplierId,
+            invoiceData: {
+              folio: doc.folio,
+              issueDate: emissionDate,
+              dueDate: computedDueDate,
+              amount: doc.total_amount,
+              netAmount: doc.net_amount,
+              taxAmount: doc.vat_amount,
+              description: effectiveGlosa,
+              currency: doc.currency,
+              paidDate: paymentDate || undefined,
+              status: paymentDate ? 'paid' : 'pending',
+            },
+          });
+
           successCount++;
           continue;
         }
@@ -947,16 +978,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           skippedDuplicatesCount++;
           continue;
         }
-
-        const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
-        const condition = getSelectedCondition(doc.supplier_rut);
-        const isManuallyPaid = !!paidOverrides[documentKey];
-        // Contado (none) → pagado inmediatamente con fecha de emisión
-        // Crédito → payment_date = null (pendiente, no pagado aún)
-        // Override manual: si el usuario marca "Pagado", usar paidDateOverrides
-        const paymentDate = isManuallyPaid
-          ? (paidDateOverrides[documentKey] || format(new Date(), 'yyyy-MM-dd'))
-          : (condition === 'none' ? emissionDate : null);
 
         const costData = {
           date: emissionDate,

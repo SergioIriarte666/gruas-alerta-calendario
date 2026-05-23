@@ -29,7 +29,7 @@ export default function IncomeProjections() {
 
   const invoices = data?.invoices || [];
   const metrics = data?.metrics || {
-    totalProjected30Days: 0,
+    totalProjectedInRange: 0,
     totalOverdue: 0,
     totalInCollection: 0,
     collectionRate: 0,
@@ -51,7 +51,7 @@ export default function IncomeProjections() {
       </div>
 
       {/* KPI Metrics */}
-      <ProjectionHeader metrics={metrics} isLoading={isLoading} />
+      <ProjectionHeader metrics={metrics} dateRange={filters.dateRange} isLoading={isLoading} />
 
       {/* Filters */}
       <Card>

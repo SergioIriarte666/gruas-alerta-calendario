@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { useClientInvoices } from '@/hooks/portal/useClientInvoices';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +7,31 @@ import { AlertTriangle, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { differenceInDays, parseISO, isValid } from 'date-fns';
+import { useSettings } from '@/hooks/useSettings';
+import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
+import { toast } from 'sonner';
+
+interface PortalInvoiceRecord {
+  id: string;
+  folio: string;
+  issue_date: string;
+  due_date: string;
+  total: number;
+  subtotal: number;
+  vat: number;
+  status: string;
+  numero_fiscal?: string;
+  payment_date?: string | null;
+  remaining_amount?: number | null;
+  notes?: string | null;
+  product_service_description?: string | null;
+  client?: {
+    id: string;
+    name: string;
+    rut?: string | null;
+    email?: string | null;
+  } | null;
+}
 
 
 const formatCurrency = (amount: number) => {
@@ -66,7 +90,57 @@ const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Elem
 };
 
 const PortalInvoices = () => {
+  const { settings } = useSettings();
   const { data: invoices, isLoading, isError, error } = useClientInvoices();
+
+  const handleDownloadInvoice = async (invoice: PortalInvoiceRecord) => {
+    if (!settings) {
+      toast.error('No se pudo exportar la factura', {
+        description: 'La configuración de la empresa todavía no está disponible.',
+      });
+      return;
+    }
+
+    try {
+      await exportInvoiceReport({
+        format: 'pdf',
+        invoices: [{
+          id: invoice.id,
+          folio: invoice.folio,
+          client: invoice.client ?? undefined,
+          numeroFiscal: invoice.numero_fiscal,
+          issueDate: invoice.issue_date,
+          dueDate: invoice.due_date,
+          paymentDate: invoice.payment_date ?? undefined,
+          subtotal: Number(invoice.subtotal || 0),
+          vat: Number(invoice.vat || 0),
+          total: Number(invoice.total || 0),
+          paidAmount: Number(invoice.total || 0) - Number(invoice.remaining_amount || 0),
+          remainingAmount: Number(invoice.remaining_amount || 0),
+          notes: invoice.notes ?? undefined,
+          productServiceDescription: invoice.product_service_description ?? '',
+          status: invoice.status,
+        }],
+        settings,
+        appliedFilters: {
+          clientName: invoice.client?.name,
+          dateFrom: invoice.issue_date,
+          dateTo: invoice.issue_date,
+        },
+        metrics: {
+          totalInvoiced: Number(invoice.total || 0),
+          totalPaid: Number(invoice.total || 0) - Number(invoice.remaining_amount || 0),
+          pendingAmount: Number(invoice.remaining_amount || 0),
+          overdueInvoices: invoice.status === 'overdue' ? 1 : 0,
+        },
+      });
+    } catch (downloadError) {
+      console.error('Error exporting portal invoice:', downloadError);
+      toast.error('No se pudo exportar la factura', {
+        description: 'Intente nuevamente en unos segundos.',
+      });
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -142,9 +216,9 @@ const PortalInvoices = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    disabled
-                    className="text-gray-500"
-                    title="Descarga no disponible"
+                    onClick={() => handleDownloadInvoice(invoice as PortalInvoiceRecord)}
+                    className="text-tms-green hover:text-white"
+                    title="Descargar PDF"
                   >
                     <Download className="w-4 h-4" />
                   </Button>

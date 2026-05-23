@@ -14,9 +14,9 @@ import {
   Building, 
   Settings,
   FileText,
-  Wallet,
-  TrendingUp,
   MapPin,
+  TrendingUp,
+  Database,
   type LucideIcon
 } from 'lucide-react';
 
@@ -103,14 +103,6 @@ export const APP_MODULES: AppModule[] = [
     route: '/costs'
   },
   { 
-    key: 'incomes', 
-    label: 'Ingresos', 
-    icon: TrendingUp, 
-    description: 'Gestión de ingresos',
-    defaultRoles: ['admin', 'viewer'],
-    route: '/incomes'
-  },
-  { 
     key: 'inventory', 
     label: 'Inventario', 
     icon: Package, 
@@ -134,6 +126,14 @@ export const APP_MODULES: AppModule[] = [
     defaultRoles: ['admin', 'viewer'],
     route: '/reports'
   },
+  {
+    key: 'income-projections',
+    label: 'Proyección de Ingresos',
+    icon: TrendingUp,
+    description: 'Proyección y seguimiento de cobros pendientes',
+    defaultRoles: ['admin', 'viewer'],
+    route: '/income-projections'
+  },
   { 
     key: 'commissions', 
     label: 'Comisiones', 
@@ -151,14 +151,6 @@ export const APP_MODULES: AppModule[] = [
     route: '/suppliers'
   },
   { 
-    key: 'payments', 
-    label: 'Pagos', 
-    icon: Wallet, 
-    description: 'Gestión de pagos',
-    defaultRoles: ['admin', 'viewer'],
-    route: '/payments'
-  },
-  { 
     key: 'accounts-payable', 
     label: 'Cuentas por Pagar', 
     icon: Landmark, 
@@ -173,6 +165,14 @@ export const APP_MODULES: AppModule[] = [
     description: 'Tarifas de servicios',
     defaultRoles: ['admin'],
     route: '/service-rates'
+  },
+  {
+    key: 'backup',
+    label: 'Respaldos',
+    icon: Database,
+    description: 'Respaldos manuales y herramientas avanzadas de reparación',
+    defaultRoles: ['admin'],
+    route: '/backup'
   },
   { 
     key: 'settings', 

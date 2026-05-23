@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
-import { useDeviceType } from '@/hooks/useDeviceType';
 import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,7 +12,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,7 +30,6 @@ export const Sidebar = ({
 }: SidebarProps) => {
   const { user, logout } = useUser();
   const { settings } = useSettings();
-  const { isTablet } = useDeviceType();
   const { hasModuleAccess } = useUserModulePermissions();
   const location = useLocation();
   const companyName = settings?.company?.name || 'TMS Grúas';
@@ -57,20 +55,19 @@ export const Sidebar = ({
     '/vehicles': 'cranes',
     '/inventory': 'inventory',
     '/suppliers': 'suppliers',
-    '/incomes': 'incomes',
     '/costs': 'finanzas',
     '/accounts-payable': 'finanzas',
     '/commissions': 'commissions',
     '/closures': 'closures',
     '/invoices': 'invoices',
-    '/income-projections': 'incomes',
+    '/income-projections': 'income-projections',
     '/reports': 'reports',
     '/service-types': 'settings',
     '/service-rates': 'service-rates',
     '/cost-centers': 'costs',
     '/quick-entries': 'settings',
+    '/backup': 'backup',
     '/settings': 'settings',
-    '/payments': 'payments',
     '/trip-calculator': 'trip-calculator',
   };
 
@@ -133,6 +130,7 @@ export const Sidebar = ({
       name: 'Análisis',
       icon: BarChart3,
       items: [
+        { name: 'Proyección de Ingresos', href: '/income-projections', icon: TrendingUp, adminOnly: false },
         { name: 'Reportes', href: '/reports', icon: BarChart3, adminOnly: false },
       ]
     },
@@ -145,6 +143,7 @@ export const Sidebar = ({
         { name: 'Tarifas de Servicio', href: '/service-rates', icon: DollarSign, adminOnly: false },
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
+        { name: 'Respaldos', href: '/backup', icon: Database, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
       ]
     }

@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { addDays, format } from 'date-fns';
 
 export interface ProjectedInvoice {
   id: string;
@@ -22,7 +21,7 @@ export interface ProjectedInvoice {
 }
 
 export interface ProjectionMetrics {
-  totalProjected30Days: number;
+  totalProjectedInRange: number;
   totalOverdue: number;
   totalInCollection: number;
   collectionRate: number;
@@ -41,7 +40,6 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
     queryKey: ['income-projections', dateRange, clientId, status],
     queryFn: async () => {
       const today = new Date();
-      const futureDate = addDays(today, dateRange);
 
       const validStatuses = (status || ['sent', 'partial', 'overdue']) as ('sent' | 'partial' | 'overdue')[];
       
@@ -98,8 +96,8 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
       });
 
       // Calcular métricas
-      const totalProjected30Days = invoices
-        .filter(inv => inv.days_until_due >= 0 && inv.days_until_due <= 30)
+      const totalProjectedInRange = invoices
+        .filter(inv => inv.days_until_due >= 0 && inv.days_until_due <= dateRange)
         .reduce((sum, inv) => sum + inv.remaining_amount, 0);
 
       const totalOverdue = invoices
@@ -110,13 +108,18 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
         .filter(inv => inv.status === 'sent' || inv.status === 'partial')
         .reduce((sum, inv) => sum + inv.remaining_amount, 0);
 
-      // Calcular tasa de cobro (simplificado por ahora)
-      const collectionRate = totalOverdue + totalInCollection > 0
-        ? (totalInCollection / (totalOverdue + totalInCollection)) * 100
+      // Refleja lo ya recuperado dentro de la cartera abierta actualmente analizada.
+      const totalOpenPortfolio = invoices.reduce((sum, inv) => sum + inv.total, 0);
+      const totalRecoveredInOpenPortfolio = invoices.reduce(
+        (sum, inv) => sum + Math.max(inv.total - inv.remaining_amount, 0),
+        0
+      );
+      const collectionRate = totalOpenPortfolio > 0
+        ? (totalRecoveredInOpenPortfolio / totalOpenPortfolio) * 100
         : 100;
 
       const metrics: ProjectionMetrics = {
-        totalProjected30Days,
+        totalProjectedInRange,
         totalOverdue,
         totalInCollection,
         collectionRate,

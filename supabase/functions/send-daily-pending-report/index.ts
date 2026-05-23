@@ -46,22 +46,57 @@ const isSameYearMonth = (dateStr: string, refStr: string): boolean => {
   return dateStr.substring(0, 7) === refStr.substring(0, 7);
 };
 
+const getHourInTimezone = (timeZone: string): number => {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "2-digit",
+      hour12: false,
+    }).format(new Date()),
+  );
+};
+
+const getDateInTimezone = (value: string | Date, timeZone: string): string => {
+  return new Date(value).toLocaleDateString("en-CA", { timeZone });
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const requestBody = await req.json().catch(() => ({}));
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     // ── Authentication: require CRON_SECRET or valid JWT ──
     const cronSecret = Deno.env.get("CRON_SECRET");
     const requestSecret = req.headers.get("x-cron-secret");
     const authHeader = req.headers.get("Authorization");
+    const forceSend = requestBody?.force === true;
 
     let authenticated = false;
 
     // Option 1: Cron secret header
     if (cronSecret && requestSecret && cronSecret === requestSecret) {
       authenticated = true;
+    }
+
+    // Option 1b: Cron secret stored in DB for pg_cron scheduled calls
+    if (!authenticated && requestSecret) {
+      const { data: schedulerSecret } = await supabase
+        .from("internal_scheduler_secrets")
+        .select("value")
+        .eq("key", "daily_pending_report_cron")
+        .maybeSingle();
+
+      if (schedulerSecret?.value && schedulerSecret.value === requestSecret) {
+        authenticated = true;
+      }
     }
 
     // Option 2: Valid JWT (for manual triggers from the app)
@@ -86,11 +121,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("🚀 Iniciando generación de reporte diario de pendientes...");
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     // Check if daily report is enabled + get business timezone from company_data (single source of truth)
     const { data: companyData, error: companyError } = await supabase
@@ -132,6 +162,66 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`🕐 Usando zona horaria de negocio: ${userTimezone}`);
 
     const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: userTimezone });
+    const currentBusinessHour = getHourInTimezone(userTimezone);
+    const configuredHour = Number.isInteger(companyData.daily_report_hour)
+      ? Number(companyData.daily_report_hour)
+      : 9;
+
+    if (!forceSend) {
+      if (currentBusinessHour !== configuredHour) {
+        console.log(
+          `⏭️ Hora actual ${currentBusinessHour}:00 distinta a la configurada ${configuredHour}:00. Omitiendo envío.`
+        );
+        return new Response(
+          JSON.stringify({
+            message: "Outside configured hour",
+            currentHour: currentBusinessHour,
+            configuredHour,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      if (companyData.daily_report_last_sent_at) {
+        const lastSentDate = getDateInTimezone(companyData.daily_report_last_sent_at, userTimezone);
+
+        if (lastSentDate === todayStr) {
+          console.log("📭 Reporte diario ya enviado hoy. Omitiendo duplicado.");
+          return new Response(
+            JSON.stringify({
+              message: "Daily report already sent today",
+              lastSentAt: companyData.daily_report_last_sent_at,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            }
+          );
+        }
+      }
+    }
+
+    const updateReportStatus = async (updates: Record<string, unknown>) => {
+      if (!companyData.id) return;
+      const { error } = await supabase
+        .from("company_data")
+        .update(updates)
+        .eq("id", companyData.id);
+
+      if (error) {
+        console.error("⚠️ Error actualizando estado del reporte diario:", error);
+      }
+    };
+
+    await updateReportStatus({
+      daily_report_last_attempt_at: new Date().toISOString(),
+      daily_report_last_status: "running",
+      daily_report_last_error: null,
+    });
+
     const todaySafe = safeParseDateOnly(todayStr);
     const closureThresholdDate = new Date(todaySafe);
     closureThresholdDate.setDate(closureThresholdDate.getDate() - 30);
@@ -601,6 +691,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("✅ Reporte enviado:", emailResponse);
 
+    await updateReportStatus({
+      daily_report_last_sent_at: new Date().toISOString(),
+      daily_report_last_status: "sent",
+      daily_report_last_error: null,
+    });
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -615,6 +711,25 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("❌ Error en reporte diario:", error);
+
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      await supabase
+        .from("company_data")
+        .update({
+          daily_report_last_attempt_at: new Date().toISOString(),
+          daily_report_last_status: "error",
+          daily_report_last_error: error?.message?.slice(0, 1000) ?? "Unknown error",
+        })
+        .not("id", "is", null);
+    } catch (statusError) {
+      console.error("⚠️ Error guardando estado de fallo del reporte diario:", statusError);
+    }
+
     return new Response(
       JSON.stringify({ error: "Error en el servicio de reporte diario" }),
       {
