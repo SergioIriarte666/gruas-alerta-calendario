@@ -6,9 +6,8 @@ import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 
-const fetchCosts = async (): Promise<Cost[]> => {
-  const PAGE_SIZE = 1000;
-  const selectClause = `
+const COSTS_PAGE_SIZE = 500;
+const COSTS_SELECT_CLAUSE = `
       *,
       cost_categories (*),
       cost_centers (*),
@@ -42,33 +41,65 @@ const fetchCosts = async (): Promise<Cost[]> => {
       )
     `;
 
-  const all: any[] = [];
-  let page = 0;
-  // Paginate to bypass Supabase's 1000-row default limit
-  // Cap at 50 pages (50k rows) as a safety guard.
-  while (page < 50) {
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const { data, error } = await supabase
-      .from('costs')
-      .select(selectClause)
-      .order('payment_date', { ascending: false, nullsFirst: false })
-      .order('date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .range(from, to);
+const buildCostsQuery = () =>
+  supabase
+    .from('costs')
+    .select(COSTS_SELECT_CLAUSE)
+    .order('payment_date', { ascending: false, nullsFirst: false })
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching costs:', error);
-      throw new Error(error.message);
-    }
+const fetchCostsCount = async () => {
+  const { count, error } = await supabase
+    .from('costs')
+    .select('*', { count: 'exact', head: true });
 
-    const rows = (data as any[]) || [];
-    all.push(...rows);
-    if (rows.length < PAGE_SIZE) break;
-    page += 1;
+  if (error) {
+    console.error('Error fetching costs count:', error);
+    throw new Error(error.message);
   }
 
-  return all as Cost[];
+  return count ?? 0;
+};
+
+const fetchCostsChunk = async (from: number, to: number): Promise<Cost[]> => {
+  const { data, error } = await buildCostsQuery().range(from, to);
+
+  if (error) {
+    console.error('Error fetching costs chunk:', error);
+    throw new Error(error.message);
+  }
+
+  return ((data as any[]) || []) as Cost[];
+};
+
+const fetchCosts = async (): Promise<Cost[]> => {
+  const totalCosts = await fetchCostsCount();
+
+  if (totalCosts === 0) {
+    return [];
+  }
+
+  const allCosts: Cost[] = [];
+  let from = 0;
+
+  while (allCosts.length < totalCosts) {
+    const chunk = await fetchCostsChunk(from, from + COSTS_PAGE_SIZE - 1);
+
+    if (chunk.length === 0) {
+      break;
+    }
+
+    allCosts.push(...chunk);
+    from += COSTS_PAGE_SIZE;
+
+    if (chunk.length < COSTS_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return allCosts;
 };
 
 export const useCosts = () => {
@@ -88,45 +119,11 @@ export const usePagedCosts = (page: number, pageSize: number) => {
 
       const { data, error, count } = await supabase
         .from('costs')
-        .select(
-          `
-          *,
-          cost_categories (*),
-          cost_centers (*),
-          cranes (*),
-          operators (*),
-          services (*, clients!services_client_id_fkey(*)),
-          crane_parts (
-            part_name,
-            supplier,
-            phone,
-            quantity,
-            unit_price,
-            total_value,
-            kilometraje
-          ),
-          crane_maintenance (
-            id,
-            description,
-            maintenance_type,
-            provider,
-            notes
-          ),
-          creator:profiles!costs_created_by_fkey (
-            id,
-            full_name,
-            email
-          ),
-          supplier_invoices!costs_supplier_invoice_id_fkey (
-            id,
-            supplier_invoice_items (id)
-          )
-        `,
-          { count: 'exact' }
-        )
+        .select(COSTS_SELECT_CLAUSE, { count: 'exact' })
         .order('payment_date', { ascending: false, nullsFirst: false })
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .range(from, to);
 
       if (error) {

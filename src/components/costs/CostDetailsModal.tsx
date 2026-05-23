@@ -20,7 +20,6 @@ import {
   Users,
   Car,
   Copy,
-  Printer,
   Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
-import { openDownloadTarget, showPdfInDownloadTarget } from '@/utils/fileDownload';
+import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -91,16 +90,13 @@ const CostHistoryTabContent: React.FC<{ costId: string }> = ({ costId }) => {
 const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
   const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
   const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
-  const [isPrinting, setIsPrinting] = React.useState(false);
-  const [pdfDownload, setPdfDownload] = React.useState<{ url: string; fileName: string } | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const { settings } = useSettings();
   const { toast } = useToast();
 
-  const handlePrint = async () => {
-    const pdfWindow = openDownloadTarget();
-
+  const handleDownloadPdf = async () => {
     try {
-      setIsPrinting(true);
+      setIsDownloadingPdf(true);
       const safeSettings = {
         ...(settings || {}),
         company: (settings as any)?.company || {
@@ -114,26 +110,16 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
       } as any;
       const { blob, fileName } = await generateCostDetailPDF({ cost, settings: safeSettings });
       const url = URL.createObjectURL(blob);
-      setPdfDownload((previous) => {
-        if (previous?.url) URL.revokeObjectURL(previous.url);
-        return { url, fileName };
-      });
-      showPdfInDownloadTarget(pdfWindow, url, fileName);
-      toast({ title: 'PDF abierto', description: 'Usa descargar o imprimir desde la ventana del PDF.', type: 'success' });
+      triggerFileDownload(url, fileName);
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      toast({ title: 'PDF generado', description: 'La descarga del detalle del costo ha comenzado.', type: 'success' });
     } catch (e) {
-      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
-      setIsPrinting(false);
+      setIsDownloadingPdf(false);
     }
   };
-
-  React.useEffect(() => {
-    return () => {
-      if (pdfDownload?.url) URL.revokeObjectURL(pdfDownload.url);
-    };
-  }, [pdfDownload?.url]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -203,24 +189,13 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handlePrint}
-                disabled={isPrinting}
-                className="flex items-center gap-1"
+                onClick={handleDownloadPdf}
+                disabled={isDownloadingPdf}
+                className="flex items-center gap-2"
               >
-                <Printer className="w-4 h-4" />
-                {isPrinting ? 'Generando...' : 'Imprimir'}
+                <Download className="w-4 h-4" />
+                {isDownloadingPdf ? 'Generando...' : 'Descargar PDF'}
               </Button>
-              {pdfDownload && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                    onClick={() => showPdfInDownloadTarget(openDownloadTarget(), pdfDownload.url, pdfDownload.fileName)}
-                  className="flex items-center gap-1"
-                >
-                  <Download className="w-4 h-4" />
-                    Abrir PDF
-                </Button>
-              )}
               {onDuplicate && (
                 <Button
                   variant="outline"

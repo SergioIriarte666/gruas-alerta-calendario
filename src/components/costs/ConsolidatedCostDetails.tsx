@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,6 @@ import {
   Car,
   StickyNote,
   History,
-  Printer,
   Download,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
@@ -35,7 +34,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
-import { openDownloadTarget, showPdfInDownloadTarget } from '@/utils/fileDownload';
+import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -57,23 +56,14 @@ export const ConsolidatedCostDetails = ({
   const [showAssociations, setShowAssociations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
-  const [pdfDownload, setPdfDownload] = useState<{ url: string; fileName: string } | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const { settings } = useSettings();
   const { toast } = useToast();
   const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
 
-  useEffect(() => {
-    return () => {
-      if (pdfDownload?.url) URL.revokeObjectURL(pdfDownload.url);
-    };
-  }, [pdfDownload?.url]);
-
-  const handlePrint = async () => {
-    const pdfWindow = openDownloadTarget();
-
+  const handleDownloadPdf = async () => {
     try {
-      setIsPrinting(true);
+      setIsDownloadingPdf(true);
       const safeSettings = {
         ...(settings || {}),
         company: (settings as any)?.company || {
@@ -87,18 +77,14 @@ export const ConsolidatedCostDetails = ({
       } as any;
       const { blob, fileName } = await generateCostDetailPDF({ cost, settings: safeSettings });
       const url = URL.createObjectURL(blob);
-      setPdfDownload((previous) => {
-        if (previous?.url) URL.revokeObjectURL(previous.url);
-        return { url, fileName };
-      });
-      showPdfInDownloadTarget(pdfWindow, url, fileName);
-      toast({ title: 'PDF abierto', description: 'Usa descargar o imprimir desde la ventana del PDF.', type: 'success' });
+      triggerFileDownload(url, fileName);
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      toast({ title: 'PDF generado', description: 'La descarga del detalle del costo ha comenzado.', type: 'success' });
     } catch (e) {
-      if (pdfWindow && !pdfWindow.closed) pdfWindow.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
-      setIsPrinting(false);
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -194,24 +180,13 @@ export const ConsolidatedCostDetails = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handlePrint}
-                  disabled={isPrinting}
-                  className="gap-1"
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloadingPdf}
+                  className="gap-2"
                 >
-                  <Printer className="w-4 h-4" />
-                  {isPrinting ? 'Generando...' : 'Imprimir'}
-                </Button>
-                {pdfDownload && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => showPdfInDownloadTarget(openDownloadTarget(), pdfDownload.url, pdfDownload.fileName)}
-                    className="gap-1"
-                  >
                     <Download className="w-4 h-4" />
-                    Abrir PDF
-                  </Button>
-                )}
+                  {isDownloadingPdf ? 'Generando...' : 'Descargar PDF'}
+                </Button>
               </div>
             </div>
           </div>
