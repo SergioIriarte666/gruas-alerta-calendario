@@ -5,7 +5,6 @@ import { es } from 'date-fns/locale';
 import { Cost } from '@/types/costs';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
-import { sendBlobToDownloadWindow } from '@/utils/reports/downloadWindow';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 
@@ -25,10 +24,9 @@ export interface GenerateCostDetailPdfArgs {
   cost: Cost;
   settings: Settings;
   logoUrl?: string | null;
-  downloadWindow?: Window | null;
 }
 
-export const generateCostDetailPDF = async ({ cost, settings, logoUrl, downloadWindow }: GenerateCostDetailPdfArgs) => {
+export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: GenerateCostDetailPdfArgs): Promise<{ blob: Blob; fileName: string }> => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const marginX = 14;
@@ -199,31 +197,6 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl, downloadW
 
   const safeDesc = (cost.description || 'costo').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   const fileName = `costo-${safeDesc}-${cost.date}.pdf`;
-
   const blob = doc.output('blob');
-
-  if (sendBlobToDownloadWindow(downloadWindow, blob, fileName)) {
-    return fileName;
-  }
-
-  // Fallback when the browser blocks the helper window.
-  try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.rel = 'noopener';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 1500);
-  } catch (err) {
-    console.warn('[costDetailPdf] Blob download failed, falling back to doc.save()', err);
-    doc.save(fileName);
-  }
-
-  return fileName;
+  return { blob, fileName };
 };

@@ -24,3 +24,16 @@ export const downloadTextFile = ({ content, fileName, contentType }: DownloadTex
     window.URL.revokeObjectURL(url);
   }, DOWNLOAD_URL_REVOKE_DELAY);
 };
+
+export const triggerFileDownload = (url: string, fileName: string) => {
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = fileName;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
