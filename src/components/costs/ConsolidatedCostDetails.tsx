@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
   StickyNote,
   History,
   Printer,
+  Download,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
@@ -34,7 +35,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
-import { openDownloadWindow } from '@/utils/reports/downloadWindow';
+import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -57,12 +58,18 @@ export const ConsolidatedCostDetails = ({
   const [showNotes, setShowNotes] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [pdfDownload, setPdfDownload] = useState<{ url: string; fileName: string } | null>(null);
   const { settings } = useSettings();
   const { toast } = useToast();
   const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
 
+  useEffect(() => {
+    return () => {
+      if (pdfDownload?.url) URL.revokeObjectURL(pdfDownload.url);
+    };
+  }, [pdfDownload?.url]);
+
   const handlePrint = async () => {
-    const downloadWindow = openDownloadWindow();
     try {
       setIsPrinting(true);
       const safeSettings = {
@@ -76,10 +83,15 @@ export const ConsolidatedCostDetails = ({
           website: '',
         },
       } as any;
-      await generateCostDetailPDF({ cost, settings: safeSettings, downloadWindow });
-      toast({ title: 'PDF listo', description: 'Se abrió la descarga del detalle del costo.', type: 'success' });
+      const { blob, fileName } = await generateCostDetailPDF({ cost, settings: safeSettings });
+      const url = URL.createObjectURL(blob);
+      setPdfDownload((previous) => {
+        if (previous?.url) URL.revokeObjectURL(previous.url);
+        return { url, fileName };
+      });
+      triggerFileDownload(url, fileName);
+      toast({ title: 'PDF listo', description: 'Si no se descargó automáticamente, usa el botón Descargar PDF.', type: 'success' });
     } catch (e) {
-      downloadWindow?.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
@@ -186,6 +198,17 @@ export const ConsolidatedCostDetails = ({
                   <Printer className="w-4 h-4" />
                   {isPrinting ? 'Generando...' : 'Imprimir'}
                 </Button>
+                {pdfDownload && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => triggerFileDownload(pdfDownload.url, pdfDownload.fileName)}
+                    className="gap-1"
+                  >
+                    <Download className="w-4 h-4" />
+                    Descargar PDF
+                  </Button>
+                )}
               </div>
             </div>
           </div>
