@@ -63,7 +63,18 @@ export const ConsolidatedCostDetails = ({
   const handlePrint = async () => {
     try {
       setIsPrinting(true);
-      await generateCostDetailPDF({ cost, settings: settings || ({} as any) });
+      const safeSettings = {
+        ...(settings || {}),
+        company: (settings as any)?.company || {
+          name: 'Empresa',
+          rut: '',
+          address: '',
+          phone: '',
+          email: '',
+          website: '',
+        },
+      } as any;
+      await generateCostDetailPDF({ cost, settings: safeSettings });
       toast({ title: 'PDF generado', description: 'El detalle del costo se descargó correctamente.', type: 'success' });
     } catch (e) {
       console.error('Error generating cost detail PDF', e);
