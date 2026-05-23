@@ -20,7 +20,8 @@ import {
   Users,
   Car,
   Copy,
-  Printer
+  Printer,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +32,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
-import { openDownloadWindow } from '@/utils/reports/downloadWindow';
+import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -91,11 +92,11 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
   const receiptPhotoPaths = (((cost as any).receipt_photo_paths as string[] | null) || []).filter(Boolean);
   const [receiptUrls, setReceiptUrls] = React.useState<string[]>([]);
   const [isPrinting, setIsPrinting] = React.useState(false);
+  const [pdfDownload, setPdfDownload] = React.useState<{ url: string; fileName: string } | null>(null);
   const { settings } = useSettings();
   const { toast } = useToast();
 
   const handlePrint = async () => {
-    const downloadWindow = openDownloadWindow();
     try {
       setIsPrinting(true);
       const safeSettings = {
@@ -109,16 +110,27 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
           website: '',
         },
       } as any;
-      await generateCostDetailPDF({ cost, settings: safeSettings, downloadWindow });
-      toast({ title: 'PDF listo', description: 'Se abrió la descarga del detalle del costo.', type: 'success' });
+      const { blob, fileName } = await generateCostDetailPDF({ cost, settings: safeSettings });
+      const url = URL.createObjectURL(blob);
+      setPdfDownload((previous) => {
+        if (previous?.url) URL.revokeObjectURL(previous.url);
+        return { url, fileName };
+      });
+      triggerFileDownload(url, fileName);
+      toast({ title: 'PDF listo', description: 'Si no se descargó automáticamente, usa el botón Descargar PDF.', type: 'success' });
     } catch (e) {
-      downloadWindow?.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
       setIsPrinting(false);
     }
   };
+
+  React.useEffect(() => {
+    return () => {
+      if (pdfDownload?.url) URL.revokeObjectURL(pdfDownload.url);
+    };
+  }, [pdfDownload?.url]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -195,6 +207,17 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 <Printer className="w-4 h-4" />
                 {isPrinting ? 'Generando...' : 'Imprimir'}
               </Button>
+              {pdfDownload && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => triggerFileDownload(pdfDownload.url, pdfDownload.fileName)}
+                  className="flex items-center gap-1"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar PDF
+                </Button>
+              )}
               {onDuplicate && (
                 <Button
                   variant="outline"
