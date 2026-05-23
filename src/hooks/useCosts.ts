@@ -7,9 +7,8 @@ import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 
 const fetchCosts = async (): Promise<Cost[]> => {
-  const { data, error } = await supabase
-    .from('costs')
-    .select(`
+  const PAGE_SIZE = 1000;
+  const selectClause = `
       *,
       cost_categories (*),
       cost_centers (*),
@@ -41,17 +40,35 @@ const fetchCosts = async (): Promise<Cost[]> => {
         id,
         supplier_invoice_items (id)
       )
-    `)
-    .order('payment_date', { ascending: false, nullsFirst: false })
-    .order('date', { ascending: false })
-    .order('created_at', { ascending: false });
+    `;
 
-  if (error) {
-    console.error('Error fetching costs:', error);
-    throw new Error(error.message);
+  const all: any[] = [];
+  let page = 0;
+  // Paginate to bypass Supabase's 1000-row default limit
+  // Cap at 50 pages (50k rows) as a safety guard.
+  while (page < 50) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from('costs')
+      .select(selectClause)
+      .order('payment_date', { ascending: false, nullsFirst: false })
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('Error fetching costs:', error);
+      throw new Error(error.message);
+    }
+
+    const rows = (data as any[]) || [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    page += 1;
   }
 
-  return (data as any) || [];
+  return all as Cost[];
 };
 
 export const useCosts = () => {
