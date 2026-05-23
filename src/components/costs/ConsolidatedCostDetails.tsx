@@ -34,6 +34,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
+import { openDownloadWindow } from '@/utils/reports/downloadWindow';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 
@@ -61,6 +62,7 @@ export const ConsolidatedCostDetails = ({
   const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
 
   const handlePrint = async () => {
+    const downloadWindow = openDownloadWindow();
     try {
       setIsPrinting(true);
       const safeSettings = {
@@ -74,9 +76,10 @@ export const ConsolidatedCostDetails = ({
           website: '',
         },
       } as any;
-      await generateCostDetailPDF({ cost, settings: safeSettings });
-      toast({ title: 'PDF generado', description: 'El detalle del costo se descargó correctamente.', type: 'success' });
+      await generateCostDetailPDF({ cost, settings: safeSettings, downloadWindow });
+      toast({ title: 'PDF listo', description: 'Se abrió la descarga del detalle del costo.', type: 'success' });
     } catch (e) {
+      downloadWindow?.close();
       console.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
