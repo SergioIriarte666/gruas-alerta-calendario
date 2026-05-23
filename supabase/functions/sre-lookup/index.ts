@@ -1,9 +1,10 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
+import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+const allowedRoles = ['admin', 'viewer'] as const;
 
 const SRE_API_URL = "https://sre.cl/api/company_info";
 const RUTS_INFO_API_URL = "https://ruts.info/api/company-info";
@@ -69,32 +70,15 @@ function mapRutsInfoResponse(data: any) {
   };
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Require authenticated caller to prevent third-party API quota abuse
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const jwt = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(jwt);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const authContext = await requireUserRoles(req, [...allowedRoles]);
+    if ('response' in authContext) {
+      return withHeaders(authContext.response, corsHeaders);
     }
 
     const token = Deno.env.get("SRE_API_TOKEN");
@@ -214,7 +198,8 @@ Deno.serve(async (req) => {
                 console.log("ruts.info enrich failed:", errText);
               }
             } catch (enrichErr) {
-              console.log("ruts.info enrich error (non-fatal):", enrichErr.message);
+              const enrichMessage = enrichErr instanceof Error ? enrichErr.message : String(enrichErr);
+              console.log("ruts.info enrich error (non-fatal):", enrichMessage);
             }
           }
 
@@ -227,7 +212,7 @@ Deno.serve(async (req) => {
     } catch (e) {
       console.error("SRE fetch error:", e);
       useFallback = true;
-      sreError = e.message || "SRE connection error";
+      sreError = e instanceof Error ? e.message : "SRE connection error";
     }
 
     // Fallback to ruts.info
@@ -263,8 +248,9 @@ Deno.serve(async (req) => {
         );
       } catch (fallbackError) {
         console.error("ruts.info fallback error:", fallbackError);
+        const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
         return new Response(
-          JSON.stringify({ error: `SRE: ${sreError}. ruts.info: ${fallbackError.message}` }),
+          JSON.stringify({ error: `SRE: ${sreError}. ruts.info: ${fallbackMessage}` }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

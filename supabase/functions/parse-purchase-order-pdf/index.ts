@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+const allowedRoles = ['admin', 'viewer'] as const;
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -200,26 +201,15 @@ const getOpenAiApiKey = () => {
   return key?.trim() || null;
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return jsonResponse({ error: 'No autorizado' }, 401);
-    }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      return jsonResponse({ error: 'No autorizado' }, 401);
+    const authContext = await requireUserRoles(req, [...allowedRoles]);
+    if ('response' in authContext) {
+      return withHeaders(authContext.response, corsHeaders);
     }
 
     const body = await req.json().catch(() => null);
@@ -416,7 +406,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
     
     if (extractedClientRut) {
       try {
-        const { data: companyData } = await supabase
+        const { data: companyData } = await authContext.supabaseAdmin
           .from('company_data')
           .select('rut')
           .limit(1)

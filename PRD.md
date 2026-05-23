@@ -510,6 +510,7 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 - peajes
 - busqueda/lookup externo de datos
 - backup y exportacion
+- endurecimiento progresivo de Edge Functions con validacion explicita de JWT y rol en backend
 
 ### Integraciones no confirmadas como activas en frontend actual
 
@@ -577,6 +578,12 @@ Capacidades observadas:
 - permisos granulares por modulo para usuarios administrativos
 - separacion de superficies entre backoffice, operador y portal cliente
 - uso de RLS y helpers seguros a nivel backend documentado en el repositorio
+- recuperacion de contraseña con respuesta generica y throttling por email + IP para reducir abuso y enumeracion
+- recuperacion de contraseña reforzada con desafio anti-bot `Turnstile` en frontend y validacion `siteverify` en backend
+- Edge Functions sensibles restringidas por rol real en backend, no solo por visibilidad del frontend
+- funciones expuestas a proveedores externos deben exigir JWT en configuracion y autorizacion interna por rol
+- CSP y headers de seguridad base para reducir impacto de XSS, clickjacking y cargas inseguras
+- OCR de comprobantes restringido a orígenes de storage permitidos o payloads `base64`, con validacion de tipo/tamano y timeout
 
 ### Requisito de producto
 

@@ -61,10 +61,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.check-vehicle-patent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.parse-purchase-order-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-invoice-email]
 verify_jwt = false
@@ -76,7 +76,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.mapbox-proxy]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-password-reset]
 verify_jwt = false
@@ -85,7 +85,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.parse-quote-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.tollroutes-proxy]
-verify_jwt = false
+verify_jwt = true
+
+[functions.parse-receipt-image]
+verify_jwt = true
+
+[functions.classify-cost]
+verify_jwt = true
+
+[functions.sre-lookup]
+verify_jwt = true

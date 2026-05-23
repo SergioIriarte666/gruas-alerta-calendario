@@ -4,10 +4,172 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 import { Resend } from "npm:resend@6";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const PASSWORD_RESET_WINDOW_MINUTES = 15;
+const PASSWORD_RESET_MAX_ATTEMPTS = 3;
+const PASSWORD_RESET_BLOCK_MINUTES = 30;
+const GENERIC_RESET_MESSAGE = "Si el email está registrado, recibirás un correo de recuperación.";
+const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+
+const successResponse = () =>
+  jsonResponse({ success: true, message: GENERIC_RESET_MESSAGE }, 200);
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const maskEmailForLogs = (email: string) => {
+  const [localPart = "", domainPart = ""] = email.split("@");
+  if (!domainPart) return "***";
+
+  const visibleLocal = localPart.slice(0, 2);
+  return `${visibleLocal}${"*".repeat(Math.max(localPart.length - visibleLocal.length, 1))}@${domainPart}`;
+};
+
+const getClientIp = (req: Request) => {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0]?.trim() || "unknown";
+  }
+
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("fly-client-ip") ||
+    "unknown"
+  );
+};
+
+const sha256Hex = async (value: string) => {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+};
+
+const getTurnstileSecretKey = () =>
+  Deno.env.get("TURNSTILE_SECRET_KEY") ||
+  Deno.env.get("CLOUDFLARE_TURNSTILE_SECRET_KEY") ||
+  "";
+
+const verifyTurnstileToken = async (captchaToken: string, clientIp: string) => {
+  const secretKey = getTurnstileSecretKey();
+
+  if (!secretKey) {
+    throw new Error("TURNSTILE_SECRET_KEY not configured");
+  }
+
+  const body = new URLSearchParams({
+    secret: secretKey,
+    response: captchaToken,
+    remoteip: clientIp,
+  });
+
+  const response = await fetch(TURNSTILE_VERIFY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Turnstile siteverify failed with HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+  return {
+    success: Boolean(result?.success),
+    errorCodes: Array.isArray(result?.["error-codes"]) ? result["error-codes"] : [],
+    action: typeof result?.action === "string" ? result.action : null,
+  };
+};
+
+const applyPasswordResetRateLimit = async (
+  supabaseAdmin: ReturnType<typeof createClient>,
+  email: string,
+  clientIp: string,
+) => {
+  const emailHash = await sha256Hex(email);
+  const ipHash = await sha256Hex(clientIp);
+  const now = new Date();
+
+  const { data: existingLimit, error: readError } = await supabaseAdmin
+    .from('password_reset_rate_limits')
+    .select('attempt_count, window_started_at, blocked_until')
+    .eq('email_hash', emailHash)
+    .eq('ip_hash', ipHash)
+    .maybeSingle();
+
+  if (readError) {
+    throw readError;
+  }
+
+  if (!existingLimit) {
+    const { error: insertError } = await supabaseAdmin
+      .from('password_reset_rate_limits')
+      .insert({
+        email_hash: emailHash,
+        ip_hash: ipHash,
+        attempt_count: 1,
+        window_started_at: now.toISOString(),
+        last_attempt_at: now.toISOString(),
+        blocked_until: null,
+        updated_at: now.toISOString(),
+      });
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    return { allowed: true };
+  }
+
+  const blockedUntil = existingLimit.blocked_until ? new Date(existingLimit.blocked_until) : null;
+  if (blockedUntil && blockedUntil > now) {
+    await supabaseAdmin
+      .from('password_reset_rate_limits')
+      .update({
+        last_attempt_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      })
+      .eq('email_hash', emailHash)
+      .eq('ip_hash', ipHash);
+
+    return { allowed: false };
+  }
+
+  const windowStartedAt = new Date(existingLimit.window_started_at);
+  const windowExpiresAt = new Date(windowStartedAt.getTime() + PASSWORD_RESET_WINDOW_MINUTES * 60 * 1000);
+  const withinCurrentWindow = windowExpiresAt > now;
+  const nextAttemptCount = withinCurrentWindow ? existingLimit.attempt_count + 1 : 1;
+  const shouldBlock = nextAttemptCount > PASSWORD_RESET_MAX_ATTEMPTS;
+
+  const { error: updateError } = await supabaseAdmin
+    .from('password_reset_rate_limits')
+    .update({
+      attempt_count: shouldBlock ? nextAttemptCount : nextAttemptCount,
+      window_started_at: withinCurrentWindow ? existingLimit.window_started_at : now.toISOString(),
+      last_attempt_at: now.toISOString(),
+      blocked_until: shouldBlock
+        ? new Date(now.getTime() + PASSWORD_RESET_BLOCK_MINUTES * 60 * 1000).toISOString()
+        : null,
+      updated_at: now.toISOString(),
+    })
+    .eq('email_hash', emailHash)
+    .eq('ip_hash', ipHash);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return { allowed: !shouldBlock };
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -16,22 +178,22 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email } = await req.json();
+    const { email, captchaToken } = await req.json();
+    const turnstileSecretKey = getTurnstileSecretKey();
+    const isTurnstileEnabled = turnstileSecretKey.length > 0;
 
     if (!email || typeof email !== 'string') {
-      return new Response(
-        JSON.stringify({ error: "Email es requerido" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Email es requerido" }, 400);
+    }
+    if (isTurnstileEnabled && (!captchaToken || typeof captchaToken !== 'string')) {
+      return jsonResponse({ error: "Verificación anti-bot requerida" }, 400);
     }
 
     // Validate email format to prevent abuse with invalid inputs
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim()) || email.trim().length > 254) {
-      return new Response(
-        JSON.stringify({ error: "Formato de email inválido" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    const normalizedEmail = normalizeEmail(email);
+    if (!emailRegex.test(normalizedEmail) || normalizedEmail.length > 254) {
+      return jsonResponse({ error: "Formato de email inválido" }, 400);
     }
 
     // Use service role to generate a recovery link
@@ -41,19 +203,36 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    const clientIp = getClientIp(req);
+    const { allowed } = await applyPasswordResetRateLimit(supabaseAdmin, normalizedEmail, clientIp);
+
+    if (!allowed) {
+      console.warn("Password reset rate limit triggered", { clientIp, email: maskEmailForLogs(normalizedEmail) });
+      return successResponse();
+    }
+
+    if (isTurnstileEnabled && typeof captchaToken === 'string') {
+      const captchaValidation = await verifyTurnstileToken(captchaToken, clientIp);
+      if (!captchaValidation.success || (captchaValidation.action && captchaValidation.action !== 'password_reset')) {
+        console.warn("Invalid Turnstile validation for password reset", {
+          clientIp,
+          email: maskEmailForLogs(normalizedEmail),
+          errorCodes: captchaValidation.errorCodes,
+          action: captchaValidation.action,
+        });
+        return jsonResponse({ error: "La verificación anti-bot es inválida o expiró" }, 400);
+      }
+    }
+
     // Generate recovery link
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
-      email: email.trim(),
+      email: normalizedEmail,
     });
 
     if (linkError) {
       console.error("Error generating recovery link:", linkError);
-      // Don't reveal if user exists or not
-      return new Response(
-        JSON.stringify({ success: true, message: "Si el email está registrado, recibirás un correo de recuperación." }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return successResponse();
     }
 
     // Build the redirect URL with the token
@@ -76,7 +255,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send branded email via Resend
     const emailResponse = await resend.emails.send({
       from: `${companyName} <noreply@gruas5norte.com>`,
-      to: [email.trim()],
+      to: [normalizedEmail],
       subject: `Recuperación de contraseña - ${companyName}`,
       html: `
         <!DOCTYPE html>
@@ -152,24 +331,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("Error sending email via Resend:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ error: "Error al enviar el correo" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonResponse({ error: "Error al enviar el correo" }, 500);
     }
 
-    console.log("Password reset email sent successfully to:", email);
+    console.log("Password reset email sent successfully to:", maskEmailForLogs(normalizedEmail));
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Correo de recuperación enviado exitosamente." }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return successResponse();
   } catch (error: any) {
     console.error("Error in send-password-reset:", error);
-    return new Response(
-      JSON.stringify({ error: "Error interno del servidor" }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 };
 

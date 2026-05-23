@@ -1,12 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const allowedRoles = ["admin"] as const;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const REMOTE_IMAGE_TIMEOUT_MS = 10_000;
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -29,27 +33,34 @@ const parseGatewayError = (raw: string) => {
   return raw;
 };
 
-serve(async (req) => {
+const isAllowedReceiptImageUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const allowedHosts = new Set<string>(["127.0.0.1", "localhost"]);
+
+    if (supabaseUrl) {
+      allowedHosts.add(new URL(supabaseUrl).hostname);
+    }
+
+    const isStoragePath = parsed.pathname.includes("/storage/v1/object/");
+    const isHttps = parsed.protocol === "https:" || allowedHosts.has(parsed.hostname);
+
+    return isHttps && allowedHosts.has(parsed.hostname) && isStoragePath;
+  } catch {
+    return false;
+  }
+};
+
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // 1. Auth check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return jsonResponse({ error: "No autorizado" }, 401);
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      return jsonResponse({ error: "No autorizado" }, 401);
+    const authContext = await requireUserRoles(req, [...allowedRoles]);
+    if ("response" in authContext) {
+      return withHeaders(authContext.response, corsHeaders);
     }
 
     // 2. Parse body
@@ -67,6 +78,17 @@ serve(async (req) => {
       return jsonResponse({ error: "Se requiere imageUrl o imageBase64" }, 400);
     }
 
+    if (imageUrl && !isAllowedReceiptImageUrl(imageUrl)) {
+      return jsonResponse({ error: "La URL de imagen no pertenece a un origen permitido" }, 400);
+    }
+
+    if (imageBase64) {
+      const estimatedBytes = Math.ceil((imageBase64.length * 3) / 4);
+      if (estimatedBytes > MAX_IMAGE_BYTES) {
+        return jsonResponse({ error: "La imagen excede el tamaño máximo permitido" }, 400);
+      }
+    }
+
     // 3. Check API key
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY")?.trim();
     if (!openaiApiKey) {
@@ -80,13 +102,25 @@ serve(async (req) => {
       dataUrl = `data:${imageMimeType};base64,${imageBase64}`;
     } else {
       try {
-        const res = await fetch(imageUrl!);
+        const res = await fetch(imageUrl!, {
+          signal: AbortSignal.timeout(REMOTE_IMAGE_TIMEOUT_MS),
+        });
         if (!res.ok) {
           console.error(`Failed to download image: HTTP ${res.status}`);
           return jsonResponse({ error: `No se pudo descargar la imagen (HTTP ${res.status})` }, 400);
         }
         const mime = res.headers.get("content-type") || "image/jpeg";
+        const contentLength = Number(res.headers.get("content-length") || "0");
+        if (!mime.startsWith("image/")) {
+          return jsonResponse({ error: "El archivo remoto no es una imagen válida" }, 400);
+        }
+        if (contentLength > MAX_IMAGE_BYTES) {
+          return jsonResponse({ error: "La imagen excede el tamaño máximo permitido" }, 400);
+        }
         const buf = new Uint8Array(await res.arrayBuffer());
+        if (buf.byteLength > MAX_IMAGE_BYTES) {
+          return jsonResponse({ error: "La imagen excede el tamaño máximo permitido" }, 400);
+        }
         dataUrl = `data:${mime};base64,${base64Encode(buf)}`;
       } catch (downloadErr) {
         console.error("Image download error:", downloadErr);

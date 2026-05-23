@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ChangeEvent, type FormEvent, useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { TurnstileWidget } from './TurnstileWidget';
 
 interface ForgotPasswordFormProps {
   onBack: () => void;
@@ -15,30 +16,51 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
+  const isTurnstileEnabled = turnstileSiteKey.length > 0;
+
+  const handleCaptchaTokenChange = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    if (isTurnstileEnabled && !captchaToken) {
+      toast.error('Completa la verificación anti-bot antes de continuar');
+      return;
+    }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email: email.trim() },
+      const { error } = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email: email.trim(),
+          ...(isTurnstileEnabled && captchaToken ? { captchaToken } : {}),
+        },
       });
 
       if (error) {
         console.error('Error calling send-password-reset:', error);
-        toast.error('Error al enviar el correo de recuperación');
+        toast.error(error.message || 'Error al enviar el correo de recuperación');
+        setCaptchaToken(null);
+        setCaptchaResetKey((current: number) => current + 1);
         return;
       }
 
       setSent(true);
+      setCaptchaToken(null);
       toast.success('Correo enviado', {
         description: 'Revisa tu bandeja de entrada para restablecer tu contraseña.',
       });
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error de conexión');
+      setCaptchaToken(null);
+      setCaptchaResetKey((current: number) => current + 1);
     } finally {
       setLoading(false);
     }
@@ -83,13 +105,25 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                 placeholder="m@example.com"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white"
               />
             </div>
+            {isTurnstileEnabled ? (
+              <div className="space-y-2">
+                <Label className="text-white">Verificación anti-bot</Label>
+                <TurnstileWidget
+                  siteKey={turnstileSiteKey}
+                  resetKey={captchaResetKey}
+                  theme="dark"
+                  action="password_reset"
+                  onTokenChange={handleCaptchaTokenChange}
+                />
+              </div>
+            ) : null}
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isTurnstileEnabled && !captchaToken)}
               className="w-full text-white font-semibold bg-transparent border-white/50 hover:bg-white/10"
               style={{ background: 'transparent' }}
             >

@@ -46,6 +46,7 @@ El módulo incluye utilidades para evitar inconsistencias entre storage/local st
 ### Rutas (frontend)
 - `/auth`: pantalla de login/registro.
 - `/reset-password`: flujo de reseteo/seteo de contraseña.
+- Recuperación de contraseña: formulario público protegido por `rate limiting` y, opcionalmente, `Cloudflare Turnstile` si las variables están configuradas.
 
 ### Hooks/exports públicos
 - `useAuth()` (hook) y `AuthProvider`:
@@ -106,6 +107,9 @@ await forceReAuthentication(supabase)
 - Supabase:
   - URL del proyecto y anon key deben estar disponibles por configuración (idealmente vía variables de entorno Vite).
   - La app persiste sesión en `localStorage` (ver opciones de `createClient`).
+- Turnstile:
+  - `VITE_TURNSTILE_SITE_KEY` en frontend para renderizar el widget cuando se quiera activar.
+  - `TURNSTILE_SECRET_KEY` en la Edge Function `send-password-reset` para validación `siteverify`.
 - Routing:
   - Redirecciones a `/auth` deben funcionar en hosting (rewrites a `index.html`).
 
@@ -141,4 +145,5 @@ sequenceDiagram
 ## Seguridad
 - El frontend no debe ser fuente de verdad de autorización: asegurar RLS en Supabase para cada tabla.
 - Evitar exponer tokens en logs; el módulo hace logs de diagnóstico, pero no imprime JWT.
+- La recuperación de contraseña puede operar solo con `rate limiting`; si se activa captcha, el widget visual por sí solo no es suficiente y backend debe validarlo.
 - La limpieza de storage debe ser cuidadosa: borra claves `sb-*` (impacta cualquier app Supabase en el mismo origin).
