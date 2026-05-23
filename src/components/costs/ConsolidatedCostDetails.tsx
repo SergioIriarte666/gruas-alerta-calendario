@@ -26,12 +26,16 @@ import {
   Car,
   StickyNote,
   History,
+  Printer,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
+import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
+import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/components/ui/custom-toast';
 
 interface ConsolidatedCostDetailsProps {
   cost: Cost;
@@ -51,7 +55,23 @@ export const ConsolidatedCostDetails = ({
   const [showAssociations, setShowAssociations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const { settings } = useSettings();
+  const { toast } = useToast();
   const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
+
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      await generateCostDetailPDF({ cost, settings: settings || ({} as any) });
+      toast({ title: 'PDF generado', description: 'El detalle del costo se descargó correctamente.', type: 'success' });
+    } catch (e) {
+      console.error('Error generating cost detail PDF', e);
+      toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -141,6 +161,18 @@ export const ConsolidatedCostDetails = ({
               <p className="break-words text-2xl font-bold text-violet-600 sm:text-3xl">
                 {formatCurrency(Number(cost.amount))}
               </p>
+              <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  disabled={isPrinting}
+                  className="gap-1"
+                >
+                  <Printer className="w-4 h-4" />
+                  {isPrinting ? 'Generando...' : 'Imprimir'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogHeader>
