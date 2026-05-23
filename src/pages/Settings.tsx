@@ -42,6 +42,26 @@ const Settings = () => {
   const { isAdmin } = useUserPermissions();
   const [activeTab, setActiveTab] = React.useState('company');
 
+  // Soporte para anchors: /settings#respaldos abre la pestaña Sistema
+  // y hace scroll a la sección de Gestión de Respaldos.
+  React.useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (!hash) return;
+      if (hash === 'respaldos') {
+        setActiveTab('system');
+        // Esperar a que la pestaña pinte
+        setTimeout(() => {
+          const el = document.getElementById('respaldos');
+          el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   const handleSystemSave = async () => {
     const result = await saveSystemSettings();
     if (result.success) {

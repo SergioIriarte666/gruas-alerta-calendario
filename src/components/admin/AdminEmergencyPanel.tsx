@@ -9,7 +9,8 @@ import { BulkStatusRepairTool } from './BulkStatusRepairTool';
 import { ServiceDeletionTool } from './ServiceDeletionTool';
 import { PaymentReassignmentTool } from './PaymentReassignmentTool';
 import { PurchaseVoidTool } from './PurchaseVoidTool';
-import { Unlock, RefreshCw, ScanSearch, Trash2, ArrowRightLeft, PackageX } from 'lucide-react';
+import { CommissionRepairTool } from './CommissionRepairTool';
+import { Unlock, RefreshCw, ScanSearch, Trash2, ArrowRightLeft, PackageX, Wrench } from 'lucide-react';
 
 export const AdminEmergencyPanel = () => {
   const { isAdmin } = useUserPermissions();
@@ -29,7 +30,7 @@ export const AdminEmergencyPanel = () => {
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-6 bg-card border h-auto p-1 gap-1">
+          <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-7 bg-card border h-auto p-1 gap-1">
             <TabsTrigger value="liberation" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
               <Unlock className="w-4 h-4" />
               <span>Liberación</span>
@@ -54,6 +55,10 @@ export const AdminEmergencyPanel = () => {
               <PackageX className="w-4 h-4" />
               <span>Anular Compra</span>
             </TabsTrigger>
+            <TabsTrigger value="commission-repair" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
+              <Wrench className="w-4 h-4" />
+              <span>Comisiones</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -74,6 +79,9 @@ export const AdminEmergencyPanel = () => {
         </TabsContent>
         <TabsContent value="void-purchase">
           <PurchaseVoidTool />
+        </TabsContent>
+        <TabsContent value="commission-repair">
+          <CommissionRepairTool />
         </TabsContent>
       </Tabs>
     </div>
