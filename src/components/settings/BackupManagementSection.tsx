@@ -9,6 +9,7 @@ import { useBackupManager } from '@/hooks/useBackupManager';
 import { BackupStatusSection } from './backup/BackupStatusSection';
 import { BackupControlsSection } from './backup/BackupControlsSection';
 import { BackupHistorySection } from './backup/BackupHistorySection';
+import { BackupEmailSchedulerSection } from './backup/BackupEmailSchedulerSection';
 
 export const BackupManagementSection = () => {
   const {
@@ -97,6 +98,7 @@ export const BackupManagementSection = () => {
           </AlertDescription>
         </Alert>
       </CardContent>
+      <BackupEmailSchedulerSection />
     </Card>
   );
 };

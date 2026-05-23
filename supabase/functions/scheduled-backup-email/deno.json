@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "resend": "npm:resend@6",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.50.0"
+  },
+  "nodeModulesDir": "auto"
+}
