@@ -309,10 +309,23 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
                 Marcar como pagado
               </label>
               <p className="text-xs text-muted-foreground">
-                Se registrará la fecha del costo como fecha de pago.
+                Por defecto, se usa la fecha del costo. Indica abajo la fecha real si fue distinta.
               </p>
             </div>
           </div>
+
+          {isPaid && (
+            <div className="space-y-2">
+              <Label>Fecha real de pago</Label>
+              <DatePickerInput
+                value={watchedPaymentDate || ''}
+                onChange={(date) => setValue('payment_date', date)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Si el pago se realizó en una fecha distinta a la de registro, indícala aquí.
+              </p>
+            </div>
+          )}
 
           {/* Sección expandible de detalles */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
