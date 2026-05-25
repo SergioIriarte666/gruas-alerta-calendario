@@ -1,50 +1,78 @@
-## Problema
+# Plan: reparación definitiva de fechas en toda la app
 
-Al importar Cotizaciones u Órdenes de Compra desde PDF en el pipeline VIP, si una misma patente tiene varios servicios (con distintos folios), el sistema elige automáticamente uno (el primero sin cotización/OC o el más reciente) y no expone los demás. El usuario no puede redirigir la actualización al servicio correcto, y los demás folios quedan "invisibles".
+## Objetivo
+Dejar una sola fuente de verdad para fechas y zona horaria en toda la aplicación: la configuración horaria definida en la app. Eliminar cualquier cálculo, filtro, comparación o renderizado que hoy dependa del navegador, de la zona del usuario o de parseos inseguros de `Date`.
 
-## Solución
+## Qué voy a cambiar
 
-En el paso "preview" del importador, cuando una patente tenga 2 o más servicios candidatos del cliente, mostrar un **selector de servicio** dentro de la fila (en la columna "Servicio") con todos los folios candidatos. El usuario podrá:
+1. **Consolidar una única fuente de verdad**
+   - Usar la configuración global de la app (`company_data.report_timezone` / `report_use_system_timezone`) como base para toda lógica de negocio.
+   - Mantener `dateFormat` como preferencia visual del usuario, pero dejar de usar `user_settings.timezone` para cálculos o conversiones de negocio.
+   - Alinear `timezoneUtils` con `businessClock` para que no existan dos caminos distintos compitiendo.
 
-- Mantener la sugerencia automática (default actual).
-- Cambiar el servicio destino a otro folio de la misma patente.
-- Ver fecha del servicio y si ya tiene cotización/OC asignada junto al folio en el dropdown.
+2. **Endurecer utilidades de fecha**
+   - Separar claramente:
+     - `date-only` (`YYYY-MM-DD`) para columnas tipo fecha.
+     - `timestamp` / `timestamptz` para eventos con hora.
+   - Centralizar helpers seguros para:
+     - parseo
+     - formato
+     - comparaciones
+     - rangos (hoy/semana/mes)
+     - diferencias en días
+   - Prohibir en la práctica los patrones inseguros detectados: `new Date('YYYY-MM-DD')`, `toISOString().split('T')[0]`, `toDateString()`, `toLocaleDateString()` para lógica.
 
-El badge de estado (Match / Cot. diferente / Ya asignada) se recalcula en vivo según la selección.
+3. **Auditar y corregir toda la app por módulos**
+   - Reemplazar usos inseguros en listados, filtros, badges, exportaciones, dashboards, portal, VIP, costos, facturas, servicios e inventario.
+   - Corregir especialmente los casos donde hoy se usan fechas directas del navegador para:
+     - “hoy”
+     - vencimientos
+     - overdue
+     - rango semanal/mensual
+     - ordenamiento
+     - matching por fecha
+   - Homologar componentes que muestran fechas para que formateen siempre con helpers comunes.
 
-## Cambios
+4. **Ajustar la pantalla de configuración horaria**
+   - Hacer explícito en UI y código que la zona horaria global de la app es la fuente de verdad.
+   - Evitar que la preview o el guardado mezclen configuración global con timezone personal.
+   - Disparar invalidación de caché de fecha/hora de forma consistente al guardar cambios.
 
-### 1. `src/hooks/vip/useQuotePDFImport.ts`
-- Extender `MatchedQuoteService` con `candidates: Service[]` (todos los servicios del cliente con la misma patente, ordenados por fecha desc).
-- En el matching por patente: además de elegir el "best" actual, adjuntar `candidates` con todos los servicios coincidentes (sin filtrar por `usedServiceIds`, ya que el usuario puede reasignar).
-- Exponer una acción `reassignMatch(index, serviceId)` que actualice el `service` del match, recalcule `status` (`matched` si no tiene cotización, `already_has_quote` si tiene una distinta, `same_quote` si coincide) y libere/ocupe IDs en `usedServiceIds`.
+5. **Inicialización y consistencia de runtime**
+   - Precargar la zona horaria global al iniciar la app para evitar renders iniciales con timezone equivocada.
+   - Asegurar que cambios de configuración refresquen cálculos derivados sin necesidad de recargar manualmente.
 
-### 2. `src/hooks/vip/usePurchaseOrderPDFImport.ts`
-- Mismos cambios análogos (campo `candidates`, acción `reassignMatch`, estados equivalentes para OC).
+6. **Validación final completa**
+   - Revisar flujos críticos con foco en regresiones:
+     - creación/edición de registros con fecha
+     - filtros por fecha
+     - vencimientos de facturas
+     - importadores PDF/XML/CSV
+     - exports
+     - vistas portal/VIP
+   - Confirmar que un mismo registro se vea igual en toda la app bajo la misma configuración horaria.
 
-### 3. `src/components/vip/QuotePDFImporter.tsx`
-- En la columna "Servicio", si `match.candidates.length > 1`, renderizar un `Select` (shadcn) con cada candidato:
-  - Label: `FOLIO (dd/MM) — Cot: COT-XXXX | Sin cotización`.
-  - Valor: `service.id`.
-- Si solo hay 1 candidato (o ninguno), mantener el botón actual con el folio enlazado al `ServiceDetailsModal`.
-- Mantener el botón "ver detalle" como ícono pequeño junto al Select para previsualizar el servicio seleccionado.
+## Resultado esperado
+- La misma fecha se verá y se calculará igual en toda la app.
+- No habrá desfases por navegador, GMT local o zona del usuario.
+- “Hoy”, “semana”, “mes”, vencimientos y comparaciones usarán siempre la configuración horaria definida en la app.
 
-### 4. `src/components/vip/PurchaseOrderPDFImporter.tsx`
-- Misma adaptación visual para OC.
+## Detalles técnicos
+- Base de negocio: `businessClock` + helpers seguros de `date-only`.
+- `user_settings.dateFormat` seguirá vivo solo para presentación del formato.
+- `user_settings.timezone` dejará de influir en lógica de fechas de negocio.
+- Reemplazos típicos:
+  - `new Date(dateString)` para `YYYY-MM-DD` → `safeParseDateOnly(...)`
+  - comparaciones con `new Date()` → `businessClock.today()` / helpers basados en TZ global
+  - formateo manual/local del navegador → helpers unificados de `timezoneUtils`
+- No voy a tocar alcance ajeno al problema salvo lo necesario para dejar la arquitectura consistente.
 
-## Diseño (consistente con Módulo Costos)
-- Usar `Select` de `@/components/ui/select` (mismo componente usado en los formularios de costos).
-- Texto en `text-xs`, fuente `font-mono` para folios.
-- Badges existentes (violeta/ámbar/azul/rojo) se preservan y se recalculan al cambiar la selección.
+## Archivos que probablemente tocaré
+- `src/utils/timezoneUtils.ts`
+- `src/utils/businessClock.ts`
+- `src/main.tsx` / arranque de la app
+- `src/components/settings/TimezoneSettingsTab.tsx`
+- páginas y hooks con filtros/comparaciones por fecha (`Costs`, `Invoices`, portal, VIP y módulos relacionados)
 
-## Fuera de alcance
-- No tocar parsing IA/local del PDF.
-- No tocar matching por VIN difuso ni por monto cuando no hay patente.
-- No modificar `applyMatches` más allá de leer el `service` ya reasignado.
-
-## Verificación
-1. Cliente con patente `VHVV-32` que tenga 3 servicios (SRV-6686, SRV-6700, SRV-6710). Importar cotización: la fila debe mostrar un Select con los 3 folios; default = el primero sin cotización.
-2. Cambiar la selección a otro folio → el badge cambia entre `Match` y `Cot. diferente` según el estado del servicio seleccionado.
-3. Aplicar → se actualiza el folio seleccionado por el usuario, no la sugerencia inicial.
-4. Patente con 1 solo servicio: comportamiento idéntico al actual (sin Select).
-5. Repetir flujo equivalente con Importador de OC.
+## Criterio de cierre
+Daré esto por resuelto solo cuando la app quede usando una sola lógica horaria global y los puntos críticos de fechas queden alineados de punta a punta.
