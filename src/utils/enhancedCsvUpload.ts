@@ -154,12 +154,12 @@ export class EnhancedCSVUploader {
         
         console.log('📋 Excel workbook loaded. Sheet:', sheetName);
         
-        // Convert to JSON with proper handling of dates and empty cells
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-          header: 1, 
-          defval: '', 
-          raw: false,
-          dateNF: 'yyyy-mm-dd'
+        // Convert to JSON with raw values so we can safely convert Date cells
+        // ourselves using UTC components (avoids local-TZ off-by-one days).
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          defval: '',
+          raw: true,
         });
         
         console.log('📊 Raw Excel data rows:', jsonData.length);
@@ -189,8 +189,25 @@ export class EnhancedCSVUploader {
             headers.forEach((header, headerIndex) => {
               let value = row[headerIndex];
               
-              // Handle date conversion for Excel (DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD)
-              if (typeof value === 'string') {
+              // Excel serial dates arrive as Date objects (cellDates:true).
+              // Use UTC components to preserve the literal day the user typed,
+              // regardless of the browser timezone.
+              if (value instanceof Date) {
+                const y = value.getUTCFullYear();
+                const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(value.getUTCDate()).padStart(2, '0');
+                value = `${y}-${m}-${d}`;
+              } else if (typeof value === 'number' && (XLSX as any).SSF?.parse_date_code) {
+                // Defensive: numeric Excel serial dates → YYYY-MM-DD
+                const parsed = (XLSX as any).SSF.parse_date_code(value);
+                if (parsed && parsed.y) {
+                  const y = parsed.y;
+                  const m = String(parsed.m).padStart(2, '0');
+                  const d = String(parsed.d).padStart(2, '0');
+                  value = `${y}-${m}-${d}`;
+                }
+              } else if (typeof value === 'string') {
+                // Handle DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD
                 const trimmed = value.trim();
                 const ddmmyyyy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
                 const yyyymmdd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
