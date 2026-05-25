@@ -182,11 +182,16 @@ export const BatchUploadAnimations: React.FC<BatchUploadAnimationsProps> = ({
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
 
+      const timeoutIds: ReturnType<typeof setTimeout>[] = [];
       for (let i = 0; i < 50; i++) {
-        setTimeout(() => {
+        const id = setTimeout(() => {
           confettiRef.current.push(createConfetti(centerX, centerY));
         }, i * 20);
+        timeoutIds.push(id);
       }
+      return () => {
+        timeoutIds.forEach((id) => clearTimeout(id));
+      };
     }
   }, [onComplete, createConfetti]);
 

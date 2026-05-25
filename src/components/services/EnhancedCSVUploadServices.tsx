@@ -142,7 +142,8 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
   useEffect(() => {
     if (uploadProgress?.percentage === 100) {
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+      const id = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(id);
     }
   }, [uploadProgress?.percentage]);
 
