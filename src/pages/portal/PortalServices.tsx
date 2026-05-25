@@ -4,8 +4,7 @@ import { useClientServices } from '@/hooks/portal/useClientServices';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
 import { AlertTriangle, History, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
@@ -24,7 +23,7 @@ const PortalServices = () => {
   const filteredServices = useMemo(() => {
     if (!services) return [];
     return services.filter(service => {
-      const serviceDate = new Date(service.service_date);
+      const serviceDate = safeParseDateOnly(service.service_date);
       if (dateFrom && serviceDate < dateFrom) return false;
       if (dateTo && serviceDate > dateTo) return false;
       return true;
@@ -104,7 +103,7 @@ const PortalServices = () => {
               <TableRow key={service.id} className="border-gray-700 hover:bg-gray-800/50">
                 <TableCell className="font-medium text-tms-green">{service.folio}</TableCell>
                 <TableCell className="text-gray-300">
-                  {format(new Date(service.service_date), 'dd/MM/yyyy', { locale: es })}
+                  {formatForDisplay(service.service_date)}
                 </TableCell>
                 <TableCell className="text-gray-300">{service.service_type_name}</TableCell>
                 <TableCell className="text-gray-300 max-w-xs truncate" title={`${service.origin} → ${service.destination}`}>
