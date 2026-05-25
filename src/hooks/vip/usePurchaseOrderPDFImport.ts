@@ -56,6 +56,7 @@ export interface MatchedService {
   status: 'matched' | 'no_match' | 'already_has_oc' | 'same_oc';
   matchReason?: string;
   topCandidates?: CandidateScore[];
+  candidates?: Service[];
 }
 
 interface ImportState {
@@ -527,6 +528,12 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       const top = scored.slice(0, 3);
       const winner = scored[0];
 
+      const allPatenteCandidates = patenteNorm
+        ? clientServices
+            .filter((s) => normalizePatente(s.licensePlate) === patenteNorm)
+            .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
+        : [];
+
       if (winner && winner.score >= MIN_SCORE) {
         const { service } = winner;
         const serviceOC = normalizeOC(service.purchaseOrder) || normalizeOC(service.purchaseOrderNumber);
@@ -534,6 +541,9 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           ? 'same_oc'
           : 'matched';
         usedServiceIds.add(service.id);
+        const candidates = allPatenteCandidates.length > 0
+          ? (allPatenteCandidates.some((c) => c.id === service.id) ? allPatenteCandidates : [service, ...allPatenteCandidates])
+          : [service];
         matches.push({
           parsedItem: item,
           service,
@@ -542,6 +552,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           status,
           matchReason: winner.reasons.join(' + '),
           topCandidates: top,
+          candidates,
         });
       } else {
         matches.push({
@@ -551,12 +562,31 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           fileName,
           status: 'no_match',
           topCandidates: top,
+          candidates: allPatenteCandidates,
         });
       }
     }
 
     setState((prev) => ({ ...prev, step: 'preview', matches }));
   }, [clientId, services]);
+
+  const reassignMatch = useCallback((index: number, serviceId: string) => {
+    setState((prev) => {
+      const match = prev.matches[index];
+      if (!match) return prev;
+      const newService = match.candidates?.find((s) => s.id === serviceId) ?? null;
+      if (!newService) return prev;
+      const serviceOC = normalizeOC(newService.purchaseOrder) || normalizeOC(newService.purchaseOrderNumber);
+      const incomingOC = normalizeOC(match.ocNumber);
+      let status: MatchedService['status'];
+      if (!serviceOC) status = 'matched';
+      else if (serviceOC === incomingOC) status = 'same_oc';
+      else status = 'already_has_oc';
+      const next = [...prev.matches];
+      next[index] = { ...match, service: newService, status };
+      return { ...prev, matches: next };
+    });
+  }, []);
 
   const applyMatches = useCallback(async (selectedMatches: MatchedService[]) => {
     const validMatches = selectedMatches.filter((match) => (match.status === 'matched' || match.status === 'already_has_oc') && match.service);
@@ -590,5 +620,5 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     toast.success(`${successCount} de ${validMatches.length} servicios actualizados con OC`);
   }, [updateService]);
 
-  return { state, processFiles, applyMatches, reset };
+  return { state, processFiles, applyMatches, reset, reassignMatch };
 }

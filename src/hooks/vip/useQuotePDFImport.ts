@@ -44,6 +44,7 @@ export interface MatchedQuoteService {
   quoteNumber: string;
   fileName: string;
   status: 'matched' | 'no_match' | 'already_has_quote' | 'same_quote';
+  candidates?: Service[];
 }
 
 interface ImportState {
@@ -423,6 +424,10 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
         .filter((service) => normalizePatente(service.licensePlate) === patenteNorm && !usedServiceIds.has(service.id))
         .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
 
+      const allPatenteCandidates = clientServices
+        .filter((service) => normalizePatente(service.licensePlate) === patenteNorm)
+        .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+
       if (matchingServices.length === 0) {
         const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
         if (fuzzyMatch) {
@@ -434,16 +439,17 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
             quoteNumber,
             fileName,
             status: hasQuote ? 'already_has_quote' : 'matched',
+            candidates: allPatenteCandidates.length > 0 ? allPatenteCandidates : [fuzzyMatch],
           });
         } else {
-          matches.push({ parsedItem: item, service: null, quoteNumber, fileName, status: 'no_match' });
+          matches.push({ parsedItem: item, service: null, quoteNumber, fileName, status: 'no_match', candidates: allPatenteCandidates });
         }
       } else {
         const serviceWithoutQuote = matchingServices.find((service) => !service.quoteNumber);
 
         if (serviceWithoutQuote) {
           usedServiceIds.add(serviceWithoutQuote.id);
-          matches.push({ parsedItem: item, service: serviceWithoutQuote, quoteNumber, fileName, status: 'matched' });
+          matches.push({ parsedItem: item, service: serviceWithoutQuote, quoteNumber, fileName, status: 'matched', candidates: allPatenteCandidates });
         } else {
           const topService = matchingServices[0];
           const hasSameQuote = normalizeQuote(topService.quoteNumber) === normalizeQuote(quoteNumber);
@@ -454,6 +460,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
             quoteNumber,
             fileName,
             status: hasSameQuote ? 'same_quote' : 'already_has_quote',
+            candidates: allPatenteCandidates,
           });
         }
       }
@@ -461,6 +468,24 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
 
     setState((prev) => ({ ...prev, step: 'preview', matches }));
   }, [clientId, services]);
+
+  const reassignMatch = useCallback((index: number, serviceId: string) => {
+    setState((prev) => {
+      const match = prev.matches[index];
+      if (!match) return prev;
+      const newService = match.candidates?.find((s) => s.id === serviceId) ?? null;
+      if (!newService) return prev;
+      const existingQuote = normalizeQuote(newService.quoteNumber);
+      const incomingQuote = normalizeQuote(match.quoteNumber);
+      let status: MatchedQuoteService['status'];
+      if (!existingQuote) status = 'matched';
+      else if (existingQuote === incomingQuote) status = 'same_quote';
+      else status = 'already_has_quote';
+      const next = [...prev.matches];
+      next[index] = { ...match, service: newService, status };
+      return { ...prev, matches: next };
+    });
+  }, []);
 
   const applyMatches = useCallback(async (selectedMatches: MatchedQuoteService[]) => {
     const validMatches = selectedMatches.filter((match) => (match.status === 'matched' || match.status === 'already_has_quote') && match.service);
@@ -494,5 +519,5 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     toast.success(`${successCount} de ${validMatches.length} servicios actualizados con cotización`);
   }, [updateService]);
 
-  return { state, processFiles, applyMatches, reset };
+  return { state, processFiles, applyMatches, reset, reassignMatch };
 }

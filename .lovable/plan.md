@@ -1,55 +1,50 @@
 ## Problema
 
-Al registrar un costo en el formulario principal (CostForm / QuickCostForm) y marcarlo como pagado, el sistema usa siempre la **fecha del costo** (`values.date`) como `payment_date`. No existe forma de indicar que el costo se ingresó en abril pero se pagó en mayo.
+Al importar Cotizaciones u Órdenes de Compra desde PDF en el pipeline VIP, si una misma patente tiene varios servicios (con distintos folios), el sistema elige automáticamente uno (el primero sin cotización/OC o el más reciente) y no expone los demás. El usuario no puede redirigir la actualización al servicio correcto, y los demás folios quedan "invisibles".
 
-El único lugar donde sí se permite indicar la fecha real de pago hoy es el importador XML (`XMLCostUpload.tsx`, vía `paidDateOverrides`: "Si ya fue pagado, indica la fecha real del pago.").
+## Solución
 
-## Objetivo
+En el paso "preview" del importador, cuando una patente tenga 2 o más servicios candidatos del cliente, mostrar un **selector de servicio** dentro de la fila (en la columna "Servicio") con todos los folios candidatos. El usuario podrá:
 
-Permitir capturar y editar la **fecha real de pago** al crear/editar un costo cuando se marca como pagado, manteniendo el comportamiento por defecto actual (si no se modifica, se usa la fecha del costo).
+- Mantener la sugerencia automática (default actual).
+- Cambiar el servicio destino a otro folio de la misma patente.
+- Ver fecha del servicio y si ya tiene cotización/OC asignada junto al folio en el dropdown.
 
-## Cambios propuestos
+El badge de estado (Match / Cot. diferente / Ya asignada) se recalcula en vivo según la selección.
 
-### 1. `src/schemas/costSchema.ts`
-Agregar campo opcional:
-```ts
-payment_date: z.string().optional().nullable(),
-```
+## Cambios
 
-### 2. `src/components/costs/form/CostAmountSection.tsx`
-- Cuando `is_paid === true`, mostrar un input `<Input type="date">` debajo del checkbox: **"Fecha real de pago"**.
-- Default = `form.getValues('date')` si no hay valor previo.
-- Texto auxiliar: "Si el pago se realizó en una fecha distinta a la de registro, indícala aquí."
-- Mantener el diseño actual (mismo Card / tokens semánticos del módulo de costos, sin colores hardcoded).
+### 1. `src/hooks/vip/useQuotePDFImport.ts`
+- Extender `MatchedQuoteService` con `candidates: Service[]` (todos los servicios del cliente con la misma patente, ordenados por fecha desc).
+- En el matching por patente: además de elegir el "best" actual, adjuntar `candidates` con todos los servicios coincidentes (sin filtrar por `usedServiceIds`, ya que el usuario puede reasignar).
+- Exponer una acción `reassignMatch(index, serviceId)` que actualice el `service` del match, recalcule `status` (`matched` si no tiene cotización, `already_has_quote` si tiene una distinta, `same_quote` si coincide) y libere/ocupe IDs en `usedServiceIds`.
 
-### 3. `src/components/costs/CostForm.tsx`
-- `reset(...)`:
-  - Edición: `payment_date: cost.payment_date ?? ''`.
-  - Prefilled / nuevo: `payment_date: ''` (se autocompletará al marcar pagado).
-- En el submit (`onSubmit`, línea ~463):
-  ```ts
-  payment_date: is_paid
-    ? (values.payment_date || cost?.payment_date || values.date)
-    : null,
-  ```
-- Cuando el usuario tilda `is_paid` y `payment_date` está vacío, prellenarlo con `values.date` (efecto `watch` en CostForm o en CostAmountSection).
+### 2. `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+- Mismos cambios análogos (campo `candidates`, acción `reassignMatch`, estados equivalentes para OC).
 
-### 4. `src/components/costs/QuickCostForm.tsx`
-Mismo tratamiento mínimo: agregar campo `payment_date` opcional al schema local, input visible si `is_paid`, y enviar `payment_date` real en lugar de derivarlo siempre de `date`.
+### 3. `src/components/vip/QuotePDFImporter.tsx`
+- En la columna "Servicio", si `match.candidates.length > 1`, renderizar un `Select` (shadcn) con cada candidato:
+  - Label: `FOLIO (dd/MM) — Cot: COT-XXXX | Sin cotización`.
+  - Valor: `service.id`.
+- Si solo hay 1 candidato (o ninguno), mantener el botón actual con el folio enlazado al `ServiceDetailsModal`.
+- Mantener el botón "ver detalle" como ícono pequeño junto al Select para previsualizar el servicio seleccionado.
 
-### 5. `src/components/services/form/ServiceCostDetailsSection.tsx`
-No cambia el flujo (los costos del servicio siguen heredando `serviceDate` como `payment_date`, según la regla `service-expenses-auto-payment`). Solo se respeta `payment_date` existente al editar (ya implementado).
+### 4. `src/components/vip/PurchaseOrderPDFImporter.tsx`
+- Misma adaptación visual para OC.
+
+## Diseño (consistente con Módulo Costos)
+- Usar `Select` de `@/components/ui/select` (mismo componente usado en los formularios de costos).
+- Texto en `text-xs`, fuente `font-mono` para folios.
+- Badges existentes (violeta/ámbar/azul/rojo) se preservan y se recalculan al cambiar la selección.
 
 ## Fuera de alcance
-
-- Importadores XML/CSV/bulk (ya manejan fecha real).
-- Comisiones, supplier payments, debts (flujos propios).
-- Migraciones de DB (la columna `payment_date` ya existe).
-- Recalcular costos históricos.
+- No tocar parsing IA/local del PDF.
+- No tocar matching por VIN difuso ni por monto cuando no hay patente.
+- No modificar `applyMatches` más allá de leer el `service` ya reasignado.
 
 ## Verificación
-
-1. Crear costo nuevo con fecha 22/04, marcar pagado, indicar 15/05 → en detalle aparece "Fecha de Pago: 15/05", "Fecha: 22/04".
-2. Crear costo pagado sin tocar la fecha real → se guarda con `payment_date = date` (comportamiento actual).
-3. Editar un costo ya pagado y cambiar solo la fecha real → se actualiza `payment_date` sin perder la fecha original.
-4. Desmarcar pagado → `payment_date = null`.
+1. Cliente con patente `VHVV-32` que tenga 3 servicios (SRV-6686, SRV-6700, SRV-6710). Importar cotización: la fila debe mostrar un Select con los 3 folios; default = el primero sin cotización.
+2. Cambiar la selección a otro folio → el badge cambia entre `Match` y `Cot. diferente` según el estado del servicio seleccionado.
+3. Aplicar → se actualiza el folio seleccionado por el usuario, no la sugerencia inicial.
+4. Patente con 1 solo servicio: comportamiento idéntico al actual (sin Select).
+5. Repetir flujo equivalente con Importador de OC.
