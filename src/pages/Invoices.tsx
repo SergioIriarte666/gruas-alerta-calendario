@@ -50,7 +50,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { supabase } from '@/integrations/supabase/client';
 import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 
-import { getTodayLocal } from '@/utils/timezoneUtils';
+import { getTodayLocal, getBusinessToday, safeParseDateOnly } from '@/utils/timezoneUtils';
 
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
@@ -468,10 +468,8 @@ const Invoices = () => {
     const pendingAmount = totalInvoiced - totalPaid;
     const overdueInvoices = filteredInvoices.filter(inv => {
       if (inv.status === 'paid' || !inv.dueDate) return false;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dueDate = new Date(inv.dueDate);
-      dueDate.setHours(0, 0, 0, 0);
+      const today = safeParseDateOnly(getBusinessToday());
+      const dueDate = safeParseDateOnly(inv.dueDate);
       return dueDate < today;
     }).length;
 
