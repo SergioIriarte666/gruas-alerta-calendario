@@ -86,6 +86,8 @@ export const costSchema = z.object({
     
     // Campo UI para indicar si el gasto ya fue pagado al proveedor
     is_paid: z.boolean().optional().default(false),
+    // Fecha real en la que se pagó (puede diferir de la fecha del costo)
+    payment_date: z.string().optional().nullable(),
 }).refine((data) => {
     // Si la subcategoría es "Piezas y Repuestos", validar campos requeridos
     if (data.subcategory === 'Piezas y Repuestos') {
