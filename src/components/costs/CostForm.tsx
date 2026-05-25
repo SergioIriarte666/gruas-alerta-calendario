@@ -285,7 +285,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: prefilledData.purchase_unit_cost ?? null,
                 immediate_consumption: Boolean(prefilledData.immediate_consumption),
                 supplier_id: prefilledData.supplier_id || 'none',
-                is_paid: false,
+                // Auto-marcar como pagado cuando hay un servicio preseleccionado
+                // (regla de negocio: gastos operativos de servicios se pagan por defecto)
+                is_paid: !!prefilledData.service_id,
             });
             setCalculatedServiceTotal(0);
         } else {
