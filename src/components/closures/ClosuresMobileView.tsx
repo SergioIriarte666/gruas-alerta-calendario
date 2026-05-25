@@ -58,7 +58,7 @@ export const ClosuresMobileView = ({
     return (
       <Card className="bg-card border">
         <CardContent className="p-6 text-center">
-          <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <FolderOpen className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron cierres</h3>
           <p className="text-muted-foreground">
             No hay cierres que mostrar
@@ -87,19 +87,19 @@ export const ClosuresMobileView = ({
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-foreground text-sm">
-                <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <Calendar className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>
                   {formatForDisplay(closure.dateRange.from)} - {formatForDisplay(closure.dateRange.to)}
                 </span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
-                <FileText className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <FileText className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>{closure.serviceIds.length} servicios</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm font-medium">
-                <DollarSign className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <DollarSign className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>{formatCurrency(closure.total)}</span>
               </div>
             </div>
@@ -114,7 +114,7 @@ export const ClosuresMobileView = ({
                 onClick={() => onViewDetails(closure)}
                 className={cn(isMobile ? "w-full" : "flex-1")}
               >
-                <Eye className="w-4 h-4 mr-1" />
+                <Eye className="size-4 mr-1" />
                 Ver
               </Button>
               
@@ -125,7 +125,7 @@ export const ClosuresMobileView = ({
                   onClick={() => onClose(closure.id, closure.folio)}
                   className={cn(isMobile ? "w-full" : "flex-1")}
                 >
-                  <FileText className="w-4 h-4 mr-1" />
+                  <FileText className="size-4 mr-1" />
                   Cerrar
                 </Button>
               )}
@@ -136,7 +136,7 @@ export const ClosuresMobileView = ({
                 onClick={() => onEdit(closure)}
                 className={cn(isMobile ? "w-full" : "flex-1")}
               >
-                <Edit className="w-4 h-4 mr-1" />
+                <Edit className="size-4 mr-1" />
                 Editar
               </Button>
               
@@ -149,7 +149,7 @@ export const ClosuresMobileView = ({
                   isMobile ? "w-full" : "px-3"
                 )}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
                 {isMobile && <span className="ml-1">Eliminar</span>}
               </Button>
             </div>

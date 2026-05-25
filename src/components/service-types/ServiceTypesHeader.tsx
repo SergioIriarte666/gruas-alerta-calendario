@@ -24,7 +24,7 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
           size="sm"
           disabled={refreshing}
         >
-          <RefreshCw className={`h-4 w-4 ${!isMobile ? 'mr-2' : ''} ${refreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`size-4 ${!isMobile ? 'mr-2' : ''} ${refreshing ? 'animate-spin' : ''}`} />
           {!isMobile && 'Actualizar'}
         </Button>
         <Button 
@@ -32,7 +32,7 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
           size="sm"
           className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
         >
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="size-4 mr-1" />
           Nuevo Tipo
         </Button>
       </div>

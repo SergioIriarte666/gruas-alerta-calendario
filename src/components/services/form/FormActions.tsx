@@ -25,7 +25,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
     <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4 pt-6 border-t">
       {hasValidationErrors && !loading && (
         <p className="text-sm text-destructive flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           {validationErrorCount} campo{validationErrorCount !== 1 ? 's' : ''} requerido{validationErrorCount !== 1 ? 's' : ''} sin completar
         </p>
       )}
@@ -45,9 +45,9 @@ export const FormActions: React.FC<FormActionsProps> = ({
                   className="min-w-[120px]"
                 >
                   {loading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="size-4 mr-2 animate-spin" />
                   ) : hasValidationErrors ? (
-                    <AlertCircle className="h-4 w-4 mr-2" />
+                    <AlertCircle className="size-4 mr-2" />
                   ) : null}
                   {loading ? 'Procesando...' : `${isEditing ? 'Actualizar' : 'Crear'} Servicio`}
                 </Button>

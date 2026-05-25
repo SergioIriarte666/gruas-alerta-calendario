@@ -37,7 +37,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
   if (stockLoading || movementLoading || costLoading || predictiveLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full size-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -88,20 +88,20 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-              <kpi.icon className="h-4 w-4 text-muted-foreground" />
+              <kpi.icon className="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{kpi.value}</div>
-              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-x-1 text-xs text-muted-foreground">
                 <span>{kpi.description}</span>
               </div>
               <div className="flex items-center mt-1">
                 {kpi.trendUp ? (
-                  <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                  <TrendingUp className="size-3 text-green-500 mr-1" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                  <TrendingDown className="size-3 text-red-500 mr-1" />
                 )}
                 <span className={`text-xs ${kpi.trendUp ? 'text-green-500' : 'text-red-500'}`}>
                   {kpi.trend}
@@ -221,7 +221,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <AlertTriangle className="size-5 text-orange-500" />
               Alertas de Stock Bajo
             </CardTitle>
             <CardDescription>Productos que requieren reposición inmediata</CardDescription>

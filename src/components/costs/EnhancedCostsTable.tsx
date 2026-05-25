@@ -232,10 +232,10 @@ export const EnhancedCostsTable = ({
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    if (sortField !== field) return <ArrowUpDown className="ml-2 size-4" />;
     return sortDirection === 'asc' ? 
-      <ArrowUp className="ml-2 h-4 w-4" /> : 
-      <ArrowDown className="ml-2 h-4 w-4" />;
+      <ArrowUp className="ml-2 size-4" /> : 
+      <ArrowDown className="ml-2 size-4" />;
   };
 
   const calculateTotals = () => {
@@ -293,7 +293,7 @@ export const EnhancedCostsTable = ({
             const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
             return itemsCount > 1 ? (
               <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
-                <Layers className="h-3 w-3 mr-0.5" />
+                <Layers className="size-3 mr-0.5" />
                 {itemsCount}
               </Badge>
             ) : null;
@@ -322,12 +322,12 @@ export const EnhancedCostsTable = ({
               <span className="inline-flex">
                 {cost.payment_date ? (
                   new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
-                    <CalendarClock className="h-5 w-5 text-amber-500" />
+                    <CalendarClock className="size-5 text-amber-500" />
                   ) : (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <CheckCircle className="size-5 text-green-500" />
                   )
                 ) : (
-                  <Circle className="h-5 w-5 text-red-400" />
+                  <Circle className="size-5 text-red-400" />
                 )}
               </span>
             </TooltipTrigger>
@@ -359,8 +359,8 @@ export const EnhancedCostsTable = ({
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewDetails(cost)}>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                <Button variant="ghost" size="icon" className="size-8" onClick={() => onViewDetails(cost)}>
+                  <Eye className="size-4 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Ver detalles</TooltipContent>
@@ -368,8 +368,8 @@ export const EnhancedCostsTable = ({
             
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(cost)}>
-                  <Edit className="h-4 w-4 text-muted-foreground" />
+                <Button variant="ghost" size="icon" className="size-8" onClick={() => onEdit(cost)}>
+                  <Edit className="size-4 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Editar</TooltipContent>
@@ -378,8 +378,8 @@ export const EnhancedCostsTable = ({
             {onDuplicate && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDuplicate(cost)}>
-                    <Copy className="h-4 w-4 text-muted-foreground" />
+                  <Button variant="ghost" size="icon" className="size-8" onClick={() => onDuplicate(cost)}>
+                    <Copy className="size-4 text-muted-foreground" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Duplicar</TooltipContent>
@@ -390,8 +390,8 @@ export const EnhancedCostsTable = ({
           {/* Menú para acciones secundarias */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="size-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -399,7 +399,7 @@ export const EnhancedCostsTable = ({
                 onClick={() => onDelete(cost)}
                 className="text-destructive focus:text-destructive"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className="mr-2 size-4" />
                 Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -425,7 +425,7 @@ export const EnhancedCostsTable = ({
       {/* Controles de agrupación y paginación */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-muted-foreground" />
+          <Layers className="size-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Agrupar por:</span>
           <Select value={groupBy} onValueChange={(v: GroupBy) => setGroupBy(v)}>
             <SelectTrigger className="w-[140px] h-9">
@@ -581,7 +581,7 @@ export const EnhancedCostsTable = ({
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
             </Button>
             <span className="text-sm text-foreground">
               Página {currentPage} de {totalPages}
@@ -592,7 +592,7 @@ export const EnhancedCostsTable = ({
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </div>
@@ -603,7 +603,7 @@ export const EnhancedCostsTable = ({
         <Card className="bg-muted/50">
           <CardContent className="p-4">
             <div className="flex justify-between items-center flex-wrap gap-4">
-              <div className="flex space-x-6">
+              <div className="flex gap-x-6">
                 <div>
                   <span className="text-sm text-muted-foreground">Total registros:</span>
                   <span className="ml-2 font-semibold text-foreground">{costs.length}</span>

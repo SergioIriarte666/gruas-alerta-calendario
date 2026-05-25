@@ -93,7 +93,7 @@ export const TopDebtorsCard = ({ invoices, onClientSelect }: TopDebtorsCardProps
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className="size-5 text-primary" />
           </div>
           <div className="flex-1">
             <CardTitle>Top 5 Clientes por Cobrar</CardTitle>
@@ -148,7 +148,7 @@ export const TopDebtorsCard = ({ invoices, onClientSelect }: TopDebtorsCardProps
                   className="w-full text-xs group-hover:bg-primary/10"
                 >
                   Ver facturas del cliente
-                  <TrendingUp className="ml-2 h-3 w-3" />
+                  <TrendingUp className="ml-2 size-3" />
                 </Button>
               </div>
             </div>

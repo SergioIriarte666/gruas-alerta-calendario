@@ -483,11 +483,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />;
+      return <ChevronsUpDown className="size-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc' 
-      ? <ChevronUp className="w-4 h-4 text-primary" />
-      : <ChevronDown className="w-4 h-4 text-primary" />;
+      ? <ChevronUp className="size-4 text-primary" />
+      : <ChevronDown className="size-4 text-primary" />;
   };
 
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
@@ -541,12 +541,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <BarChart3 className="w-5 h-5" />
+            <BarChart3 className="size-5" />
             Pipeline de Servicios por Estado
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por folio, tipo, cotización, orden de compra, N° fiscal..."
                 value={searchTerm}
@@ -561,10 +561,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 onClick={() => setIsAdvancedFiltersOpen(true)}
                 className="relative"
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="size-4 mr-2" />
                 Más Filtros
                 {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></span>
+                  <span className="absolute -top-1 -right-1 size-2 bg-primary rounded-full"></span>
                 )}
               </Button>
               {hasActiveFilters && (
@@ -573,7 +573,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   size="sm"
                   onClick={handleClearAdvancedFilters}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                 </Button>
               )}
               <Button variant="outline" size="sm" onClick={expandAll}>
@@ -588,7 +588,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 onClick={() => setShowExportModal(true)}
                 className="bg-primary/5 border-primary/20 hover:bg-primary/10"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="size-4 mr-2" />
                 Exportar
               </Button>
               {selectedServices.size > 0 && (
@@ -597,7 +597,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   size="sm" 
                   onClick={() => setShowBatchModal(true)}
                 >
-                  <Hash className="w-4 h-4 mr-2" />
+                  <Hash className="size-4 mr-2" />
                   Actualizar por Lotes ({selectedServices.size})
                 </Button>
               )}
@@ -611,7 +611,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
+              <FileText className="size-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">{services.length}</div>
                 <div className="text-sm text-muted-foreground">Total servicios</div>
@@ -623,7 +623,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
+              <TrendingUp className="size-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   {serviceGroups.length}
@@ -637,7 +637,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" />
+              <DollarSign className="size-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   ${services.reduce((sum, s) => sum + getDisplayServiceValue(s), 0).toLocaleString()}
@@ -654,7 +654,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         {serviceGroups.length === 0 ? (
           <Card className="bg-card border">
             <CardContent className="p-8 text-center text-muted-foreground">
-              <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <BarChart3 className="size-12 mx-auto mb-4 opacity-50" />
               <p>No se encontraron servicios en el pipeline</p>
               <p className="text-sm mt-2">
                 {searchTerm ? 'Intenta con diferentes términos de búsqueda' : 'Agrega servicios para ver el pipeline'}
@@ -674,9 +674,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {expandedGroups.has(group.status) ? (
-                          <ChevronDown className="w-4 h-4 text-foreground" />
+                          <ChevronDown className="size-4 text-foreground" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-foreground" />
+                          <ChevronRight className="size-4 text-foreground" />
                         )}
                         <div className="flex items-center gap-2">
                           <Checkbox
@@ -691,12 +691,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
                               <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
+                                <Clock className="size-3" />
                                 Promedio: {group.averageDays} días
                               </span>
                               {group.sortingDate && (
                                 <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" />
+                                  <Calendar className="size-3" />
                                   {group.sortingDateLabel}: {formatForDisplay(group.sortingDate)}
                                 </span>
                               )}
@@ -746,7 +746,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 text-muted-foreground">
-                                <Car className="w-3 h-3" />
+                                <Car className="size-3" />
                                 <span className="text-sm">
                                   {service.licensePlate || 'Sin vehículo'}
                                 </span>
@@ -795,19 +795,19 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onServiceSelect?.(service)}
-                                  className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300"
+                                  className="size-8 p-0 text-blue-400 hover:text-blue-300"
                                   title="Ver detalles del servicio"
                                 >
-                                  <Eye className="w-3 h-3" />
+                                  <Eye className="size-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onServiceEdit?.(service)}
-                                  className="h-8 w-8 p-0 text-green-400 hover:text-green-300"
+                                  className="size-8 p-0 text-green-400 hover:text-green-300"
                                   title="Editar servicio"
                                 >
-                                  <Edit className="w-3 h-3" />
+                                  <Edit className="size-3" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -819,7 +819,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                         <TableHeader>
                           <TableRow>
                             <TableHead className="text-muted-foreground w-12">
-                              <CheckSquare className="w-4 h-4" />
+                              <CheckSquare className="size-4" />
                             </TableHead>
                             <SortableHeader field="folio">Folio</SortableHeader>
                             <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
@@ -885,9 +885,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                       <div className="flex items-center justify-between py-0.5">
                                         <div className="flex items-center gap-2">
                                           {isExpanded ? (
-                                            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                                            <ChevronDown className="size-3.5 text-muted-foreground" />
                                           ) : (
-                                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                                            <ChevronRight className="size-3.5 text-muted-foreground" />
                                           )}
                                           {subGroup.poNumber === subGroupConfig.emptyLabel ? (
                                             <span className="text-sm font-medium text-muted-foreground">{subGroupConfig.emptyLabel}</span>

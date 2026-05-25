@@ -108,13 +108,13 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
           className="text-destructive border-destructive/40 hover:bg-destructive/10"
           title="Liberar cierre (Solo Admin)"
         >
-          <Unlock className="w-4 h-4" />
+          <Unlock className="size-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-card border">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-destructive flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="size-5" />
             LIBERACIÓN DE EMERGENCIA
           </AlertDialogTitle>
           <AlertDialogDescription className="text-foreground">

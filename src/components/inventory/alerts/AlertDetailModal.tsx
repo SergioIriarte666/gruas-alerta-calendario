@@ -40,13 +40,13 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-5 h-5 text-destructive" />;
+        return <XCircle className="size-5 text-destructive" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-warning" />;
+        return <AlertTriangle className="size-5 text-warning" />;
       case 'info':
-        return <CheckCircle className="w-5 h-5 text-primary" />;
+        return <CheckCircle className="size-5 text-primary" />;
       default:
-        return <CheckCircle className="w-5 h-5 text-primary" />;
+        return <CheckCircle className="size-5 text-primary" />;
     }
   };
 
@@ -108,7 +108,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
                alert.severity === 'warning' ? 'Advertencia' : 'Información'}
             </Badge>
             <Badge variant="outline" className="flex items-center gap-2">
-              <Settings className="w-3 h-3" />
+              <Settings className="size-3" />
               {alert.type.replace('_', ' ').toUpperCase()}
             </Badge>
           </div>
@@ -127,7 +127,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-primary" />
+                <Package className="size-4 text-primary" />
                 <span className="font-medium">Producto</span>
               </div>
               <p className="text-sm text-muted-foreground pl-6">{alert.item_name}</p>
@@ -136,7 +136,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
             {alert.location_name && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" />
+                  <MapPin className="size-4 text-primary" />
                   <span className="font-medium">Ubicación</span>
                 </div>
                 <p className="text-sm text-muted-foreground pl-6">{alert.location_name}</p>
@@ -145,7 +145,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
+                <Clock className="size-4 text-primary" />
                 <span className="font-medium">Detectada</span>
               </div>
               <p className="text-sm text-muted-foreground pl-6">
@@ -159,7 +159,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
             {alert.threshold_value && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-primary" />
+                  <TrendingDown className="size-4 text-primary" />
                   <span className="font-medium">Valores</span>
                 </div>
                 <div className="text-sm pl-6 space-y-1">
@@ -190,7 +190,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
             <ul className="space-y-2">
               {getRecommendations().map((recommendation, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="size-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-muted-foreground">{recommendation}</span>
                 </li>
               ))}
@@ -211,7 +211,7 @@ export const AlertDetailModal: React.FC<AlertDetailModalProps> = ({
               }}
               className="flex items-center gap-2"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="size-4" />
               Ver en Inventario
             </Button>
           </div>

@@ -26,7 +26,7 @@ const CraneInventoryIndicators = ({ crane }: { crane: Crane }) => {
   if (isLoading || !metrics) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Package className="w-3 h-3" />
+        <Package className="size-3" />
         <span>Cargando...</span>
       </div>
     );
@@ -35,25 +35,25 @@ const CraneInventoryIndicators = ({ crane }: { crane: Crane }) => {
   return (
     <div className="grid grid-cols-2 gap-2 mt-3">
       <div className="flex items-center gap-1 text-xs">
-        <Package className="w-3 h-3 text-primary" />
+        <Package className="size-3 text-primary" />
         <span className="text-foreground">{metrics.totalPartsInstalled || 0} piezas</span>
       </div>
       
       <div className="flex items-center gap-1 text-xs">
-        <DollarSign className="w-3 h-3 text-success" />
+        <DollarSign className="size-3 text-success" />
         <span className="text-foreground">${(metrics.totalValue / 1000).toFixed(0)}K</span>
       </div>
 
       {metrics.recentPurchases > 0 && (
         <div className="flex items-center gap-1 text-xs">
-          <TrendingUp className="w-3 h-3 text-info" />
+          <TrendingUp className="size-3 text-info" />
           <span className="text-info">{metrics.recentPurchases} recientes</span>
         </div>
       )}
 
       {metrics.pendingMaintenanceAlerts > 0 && (
         <div className="flex items-center gap-1 text-xs">
-          <AlertTriangle className="w-3 h-3 text-warning" />
+          <AlertTriangle className="size-3 text-warning" />
           <span className="text-warning">{metrics.pendingMaintenanceAlerts} alertas</span>
         </div>
       )}
@@ -76,13 +76,13 @@ export const CranesMobileView = ({
     return (
       <Card className="glass-card">
         <CardContent className="p-6 text-center">
-          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
           <p className="text-muted-foreground mb-4">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewCrane}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Grúa
           </Button>
         </CardContent>
@@ -94,13 +94,13 @@ export const CranesMobileView = ({
     return (
       <Card className="glass-card">
         <CardContent className="p-6 text-center">
-          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primera grúa al sistema
           </p>
           <Button onClick={onNewCrane}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Primera Grúa
           </Button>
         </CardContent>
@@ -139,17 +139,17 @@ export const CranesMobileView = ({
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-foreground text-sm">
-                <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <Calendar className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>Rev. Técnica: {format(new Date(crane.technicalReviewExpiry), 'dd/MM/yyyy', { locale: es })}</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
-                <Shield className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <Shield className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>Seguro: {format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es })}</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
-                <Wrench className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <Wrench className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>Permiso Circulación: {format(new Date(crane.circulationPermitExpiry), 'dd/MM/yyyy', { locale: es })}</span>
               </div>
             </div>
@@ -170,7 +170,7 @@ export const CranesMobileView = ({
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
-                <Eye className="w-4 h-4 mr-1" />
+                <Eye className="size-4 mr-1" />
                 Ver
               </Button>
               
@@ -183,7 +183,7 @@ export const CranesMobileView = ({
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
-                <Edit className="w-4 h-4 mr-1" />
+                <Edit className="size-4 mr-1" />
                 Editar
               </Button>
               
@@ -196,7 +196,7 @@ export const CranesMobileView = ({
                   isMobile ? "w-full" : "px-3"
                 )}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
                 {isMobile && <span className="ml-1">Eliminar</span>}
               </Button>
             </div>

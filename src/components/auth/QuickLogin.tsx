@@ -58,7 +58,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({ onLoginSuccess }) => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <LogIn className="w-5 h-5" />
+          <LogIn className="size-5" />
           Iniciar Sesión
         </CardTitle>
         <CardDescription>
@@ -69,7 +69,7 @@ export const QuickLogin: React.FC<QuickLoginProps> = ({ onLoginSuccess }) => {
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="size-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

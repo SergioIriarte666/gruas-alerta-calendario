@@ -53,16 +53,16 @@ export const OperatorLayout = () => {
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-x-3">
             {companyData?.logo_url ? (
               <img 
                 src={companyData.logo_url} 
                 alt={companyData.business_name || 'Logo empresa'} 
-                className="w-10 h-10 rounded-lg object-contain"
+                className="size-10 rounded-lg object-contain"
               />
             ) : (
-              <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-white" />
+              <div className="size-10 bg-violet-600 rounded-lg flex items-center justify-center">
+                <Truck className="size-6 text-white" />
               </div>
             )}
             <div>
@@ -73,9 +73,9 @@ export const OperatorLayout = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 text-foreground">
-              <User className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-center gap-x-2 sm:gap-x-4">
+            <div className="hidden sm:flex items-center gap-x-2 text-foreground">
+              <User className="size-4 flex-shrink-0" />
               <span className="text-sm truncate max-w-[120px]">{user?.name}</span>
             </div>
             <Button

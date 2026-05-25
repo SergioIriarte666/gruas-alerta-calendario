@@ -66,7 +66,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <IconComponent className="w-5 h-5" />
+            <IconComponent className="size-5" />
             {event.title}
           </DialogTitle>
         </DialogHeader>
@@ -84,7 +84,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
           <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <div className="p-1 rounded bg-blue-500/10 text-blue-600">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="size-4" />
               </div>
               Información Básica
             </h3>
@@ -107,7 +107,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
             <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
                 <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
-                  <User className="w-4 h-4" />
+                  <User className="size-4" />
                 </div>
                 Participantes
               </h3>
@@ -133,7 +133,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
             <div className="rounded-lg border border-border border-l-4 border-l-orange-500 bg-orange-500/5 p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-orange-700 dark:text-orange-300">
                 <div className="p-1 rounded bg-orange-500/10 text-orange-600">
-                  <Wrench className="w-4 h-4" />
+                  <Wrench className="size-4" />
                 </div>
                 Información del Equipo
               </h3>
@@ -146,7 +146,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
             <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-cyan-700 dark:text-cyan-300">
                 <div className="p-1 rounded bg-cyan-500/10 text-cyan-600">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="size-4" />
                 </div>
                 Ubicación
               </h3>
@@ -159,7 +159,7 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
             <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
                 <div className="p-1 rounded bg-amber-500/10 text-amber-600">
-                  <FileText className="w-4 h-4" />
+                  <FileText className="size-4" />
                 </div>
                 Descripción
               </h3>

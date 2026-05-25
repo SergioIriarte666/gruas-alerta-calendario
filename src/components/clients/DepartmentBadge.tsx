@@ -32,7 +32,7 @@ export function DepartmentBadge({ department, clientName, clientRut, allClients,
                 : 'text-muted-foreground'
             } ${className ?? ''}`}
           >
-            <Building2 className="h-3 w-3" />
+            <Building2 className="size-3" />
             {department}
           </Badge>
         </TooltipTrigger>

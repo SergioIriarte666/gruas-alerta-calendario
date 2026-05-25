@@ -40,7 +40,7 @@ export const ClientBatchActionBar = ({
               disabled={isProcessing}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              <UserCheck className="h-4 w-4 mr-2" />
+              <UserCheck className="size-4 mr-2" />
               Activar
             </Button>
             <Button
@@ -49,7 +49,7 @@ export const ClientBatchActionBar = ({
               onClick={onBatchDeactivate}
               disabled={isProcessing}
             >
-              <UserX className="h-4 w-4 mr-2" />
+              <UserX className="size-4 mr-2" />
               Desactivar
             </Button>
             <Button
@@ -58,7 +58,7 @@ export const ClientBatchActionBar = ({
               onClick={onBatchEdit}
               disabled={isProcessing}
             >
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="size-4 mr-2" />
               Editar
             </Button>
             <Button
@@ -67,7 +67,7 @@ export const ClientBatchActionBar = ({
               onClick={onBatchDelete}
               disabled={isProcessing}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="size-4 mr-2" />
               Eliminar
             </Button>
             <Button
@@ -76,7 +76,7 @@ export const ClientBatchActionBar = ({
               onClick={onClearSelection}
               disabled={isProcessing}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="size-4 mr-2" />
               Limpiar
             </Button>
           </div>

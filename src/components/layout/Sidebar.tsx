@@ -203,7 +203,7 @@ export const Sidebar = ({
             : "text-violet-600 hover:bg-muted/50 hover:text-violet-800"
         )}
       >
-        <item.icon className="h-4 w-4 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+        <item.icon className="size-4 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
         {!collapsed && <span className="truncate">{item.name}</span>}
       </Link>
     );
@@ -227,7 +227,7 @@ export const Sidebar = ({
     <div className="flex flex-col h-full bg-background border-r border-border">
       {/* Profile header */}
       <div className={cn("flex items-center gap-3 border-b border-border", isCollapsed ? "justify-center p-3" : "p-4")}>
-        <Avatar className="h-9 w-9 shrink-0 border border-border">
+        <Avatar className="size-9 shrink-0 border border-border">
           <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
@@ -245,23 +245,23 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="hidden lg:flex size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
         >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="lg:hidden h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="lg:hidden size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
         <TooltipProvider disableHoverableContent>
           {navigationGroups.map(group => {
             const filteredItems = filterItems(group.items);
@@ -291,8 +291,8 @@ export const Sidebar = ({
                     <span>{group.name}</span>
                     {!group.alwaysExpanded && (
                       isExpanded
-                        ? <ChevronUp className="h-3 w-3" />
-                        : <ChevronDown className="h-3 w-3" />
+                        ? <ChevronUp className="size-3" />
+                        : <ChevronDown className="size-3" />
                     )}
                   </button>
                 )}
@@ -327,7 +327,7 @@ export const Sidebar = ({
           )}
           size="sm"
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="size-4 shrink-0" />
           {!isCollapsed && <span className="ml-2">Cerrar Sesión</span>}
         </Button>
 
@@ -343,7 +343,7 @@ export const Sidebar = ({
     <div className="flex flex-col h-full bg-background border-r border-border">
       {/* Profile header */}
       <div className="flex items-center gap-3 p-4 border-b border-border">
-        <Avatar className="h-9 w-9 shrink-0 border border-border">
+        <Avatar className="size-9 shrink-0 border border-border">
           <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
@@ -357,14 +357,14 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
         {navigationGroups.map(group => {
           const filteredItems = filterItems(group.items);
           if (filteredItems.length === 0) return null;
@@ -381,8 +381,8 @@ export const Sidebar = ({
                 <span>{group.name}</span>
                 {!group.alwaysExpanded && (
                   isExpanded
-                    ? <ChevronUp className="h-3 w-3" />
-                    : <ChevronDown className="h-3 w-3" />
+                    ? <ChevronUp className="size-3" />
+                    : <ChevronDown className="size-3" />
                 )}
               </button>
               {isExpanded && (
@@ -410,7 +410,7 @@ export const Sidebar = ({
           className="w-full justify-start px-3 text-muted-foreground hover:text-foreground hover:bg-muted/50"
           size="sm"
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="size-4 shrink-0" />
           <span className="ml-2">Cerrar Sesión</span>
         </Button>
         <p className="text-[10px] text-center text-muted-foreground">{companyName}</p>

@@ -102,16 +102,16 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
             </span>
           </span>
           {isValid ? (
-            <CheckCircle2 className="w-4 h-4 text-tms-green" />
+            <CheckCircle2 className="size-4 text-tms-green" />
           ) : (
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="size-4 text-amber-600" />
           )}
         </div>
       </div>
 
       {!isValid && (
         <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <AlertTriangle className="size-4 text-amber-600 flex-shrink-0" />
           <span className="text-sm text-amber-800">
             El total de anchos debe sumar 100%. Actual: {totalWidth}%
           </span>
@@ -121,7 +121,7 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
             onClick={handleAutoBalance}
             className="ml-auto text-xs"
           >
-            <RefreshCw className="w-3 h-3 mr-1" />
+            <RefreshCw className="size-3 mr-1" />
             Auto-balancear
           </Button>
         </div>
@@ -241,7 +241,7 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
           className="flex-1"
           size="sm"
         >
-          <RefreshCw className="w-4 h-4 mr-2" />
+          <RefreshCw className="size-4 mr-2" />
           Auto-balancear
         </Button>
         <Button

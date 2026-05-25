@@ -19,7 +19,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full size-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -39,9 +39,9 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stockData.totalItems}</div>
@@ -50,9 +50,9 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stockData.totalValue)}</div>
@@ -61,9 +61,9 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertTriangle className="size-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-500">{stockData.lowStockItems}</div>
@@ -72,9 +72,9 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="size-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">{stockData.outOfStockItems}</div>
@@ -171,7 +171,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            <AlertTriangle className="size-5 text-orange-500" />
             Alertas de Stock Bajo
           </CardTitle>
           <CardDescription>
@@ -181,7 +181,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         <CardContent>
           {stockData.lowStockAlert.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <Package className="size-12 mx-auto mb-4 opacity-50" />
               <p>No hay productos con stock bajo</p>
               <p className="text-sm">Todos los productos tienen stock suficiente</p>
             </div>
@@ -196,7 +196,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
+                        <MapPin className="size-3" />
                         {item.location_name}
                       </span>
                       <span>Stock actual: {item.current_quantity}</span>

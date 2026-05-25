@@ -167,7 +167,7 @@ export const PaymentList: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -193,11 +193,11 @@ export const PaymentList: React.FC = () => {
             }}
           />
           <Button onClick={() => updateOverduePayments()} variant="outline" size="sm">
-            <Clock className="h-4 w-4 mr-2" />
+            <Clock className="size-4 mr-2" />
             Actualizar Vencidos
           </Button>
           <Button onClick={() => setShowForm(true)} variant="default" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Nuevo Pago
           </Button>
         </div>
@@ -209,14 +209,14 @@ export const PaymentList: React.FC = () => {
           <CardContent className="p-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full mb-3">
               <h3 className="text-sm font-medium text-foreground">Filtros</h3>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="size-4 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Buscar</label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                     <Input placeholder="Descripción, proveedor..." value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-9 text-sm" />
                   </div>
@@ -288,7 +288,7 @@ export const PaymentList: React.FC = () => {
                 {(dateFrom || dateTo || searchTerm || selectedStatus !== 'all' || selectedSupplier !== 'all') && (
                   <Button variant="ghost" size="sm" className="text-xs h-7 px-2 text-destructive ml-auto" onClick={() => {
                     clearDateFilters(); setSearchTerm(''); setSelectedStatus('all'); setSelectedSupplier('all');
-                  }}><X className="h-3 w-3 mr-1" />Limpiar todo</Button>
+                  }}><X className="size-3 mr-1" />Limpiar todo</Button>
                 )}
               </div>
             </CollapsibleContent>
@@ -301,7 +301,7 @@ export const PaymentList: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="py-12">
             <div className="text-center">
-              <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <CreditCard className="size-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron pagos</h3>
               <p className="text-muted-foreground">
                 {searchTerm || selectedStatus !== 'all' || selectedSupplier !== 'all'
@@ -337,13 +337,13 @@ export const PaymentList: React.FC = () => {
                   className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors rounded-t-lg text-left"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-                    <Building2 className="h-4 w-4 text-primary shrink-0" />
+                    {isExpanded ? <ChevronDown className="size-4 text-muted-foreground shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+                    <Building2 className="size-4 text-primary shrink-0" />
                     <span className="font-semibold text-foreground truncate">{group.supplierName}</span>
                     <Badge variant="outline" className="text-xs shrink-0">{group.payments.length} pagos</Badge>
                     {group.hasOverdue && (
                       <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs shrink-0">
-                        <AlertTriangle className="h-3 w-3 mr-1" />{group.overdueCount} vencidos
+                        <AlertTriangle className="size-3 mr-1" />{group.overdueCount} vencidos
                       </Badge>
                     )}
                   </div>
@@ -378,12 +378,12 @@ export const PaymentList: React.FC = () => {
                             {payment.paid_date && <div className="text-xs text-green-600 dark:text-green-400">Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}</div>}
                             <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
                               {(payment.status === 'pending' || payment.status === 'overdue') && (
-                                <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary h-7"><CheckCircle className="h-3.5 w-3.5" /></Button>
+                                <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary h-7"><CheckCircle className="size-3.5" /></Button>
                               )}
-                              <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary h-7"><Edit2 className="h-3.5 w-3.5" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary h-7"><Edit2 className="size-3.5" /></Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="text-destructive h-7"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                  <Button variant="ghost" size="sm" className="text-destructive h-7"><Trash2 className="size-3.5" /></Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent className="bg-card border">
                                   <AlertDialogHeader>
@@ -446,16 +446,16 @@ export const PaymentList: React.FC = () => {
                                 <TableCell>
                                   <div className="flex items-center gap-1">
                                     {(payment.status === 'pending' || payment.status === 'overdue') && (
-                                      <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary hover:text-primary/80 h-7 w-7 p-0" title="Marcar como pagado">
-                                        <CheckCircle className="h-4 w-4" />
+                                      <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary hover:text-primary/80 size-7 p-0" title="Marcar como pagado">
+                                        <CheckCircle className="size-4" />
                                       </Button>
                                     )}
-                                    <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary hover:text-primary/80 h-7 w-7 p-0">
-                                      <Edit2 className="h-4 w-4" />
+                                    <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary hover:text-primary/80 size-7 p-0">
+                                      <Edit2 className="size-4" />
                                     </Button>
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80 h-7 w-7 p-0"><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80 size-7 p-0"><Trash2 className="size-4" /></Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent className="bg-card border">
                                         <AlertDialogHeader>

@@ -146,7 +146,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 </p>
               </div>
               <div className="bg-violet-600/10 p-3 rounded-xl">
-                <DollarSign className="w-6 h-6 text-violet-600" />
+                <DollarSign className="size-6 text-violet-600" />
               </div>
             </div>
           </CardContent>
@@ -166,7 +166,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 </p>
               </div>
               <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
-                <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <BarChart3 className="size-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
@@ -184,9 +184,9 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 {metrics.monthVariation !== 0 && (
                   <div className="flex items-center gap-1 mt-1">
                     {metrics.monthVariation > 0 ? (
-                      <TrendingUp className="w-3 h-3 text-red-500" />
+                      <TrendingUp className="size-3 text-red-500" />
                     ) : (
-                      <TrendingDown className="w-3 h-3 text-green-500" />
+                      <TrendingDown className="size-3 text-green-500" />
                     )}
                     <span className={cn(
                       'text-xs font-medium',
@@ -198,7 +198,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 )}
               </div>
               <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
-                <FileText className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <FileText className="size-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
@@ -218,7 +218,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 </p>
               </div>
               <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
-                <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <DollarSign className="size-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -234,7 +234,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Top Categorías ({getPeriodLabel()})
                 </h3>
-                <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4">
                 <div className="space-y-3">

@@ -69,7 +69,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
   if (isPendingCommissions) {
     return (
       <Button variant="outline" size="sm" disabled>
-        <Edit className="h-4 w-4 mr-2" />
+        <Edit className="size-4 mr-2" />
         Solo comisiones pagadas
       </Button>
     );
@@ -77,7 +77,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
-      <Edit className="h-4 w-4 mr-2" />
+      <Edit className="size-4 mr-2" />
       {paidCommissions.length === 1 ? 'Editar fecha' : `Editar ${paidCommissions.length} fechas`}
     </Button>
   );
@@ -117,7 +117,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
                     !paymentDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {paymentDate ? formatForDisplay(paymentDate) : "Seleccionar fecha"}
                 </Button>
               </PopoverTrigger>
@@ -150,7 +150,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
             />
           </div>
 
-          <div className="flex space-x-3 pt-4">
+          <div className="flex gap-x-3 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -167,7 +167,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
             >
               {isUpdatingPaymentDate ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                   Actualizando...
                 </>
               ) : (

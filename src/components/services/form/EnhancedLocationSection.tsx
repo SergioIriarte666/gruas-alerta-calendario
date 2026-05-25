@@ -35,7 +35,7 @@ export const EnhancedLocationSection = ({
           {!originRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
           {originError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+              <AlertTriangle className="size-3" />
               Requerido
             </span>
           )}
@@ -57,7 +57,7 @@ export const EnhancedLocationSection = ({
           {!destinationRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
           {destinationError && (
             <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+              <AlertTriangle className="size-3" />
               Requerido
             </span>
           )}

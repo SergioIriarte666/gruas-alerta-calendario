@@ -37,7 +37,7 @@ const ServicesSelector = ({
       <div className="flex items-center justify-between">
         <Label className="text-gray-300">Servicios Disponibles para Cierre</Label>
         {selectedServiceIds.length > 0 && <div className="flex items-center gap-1 text-sm text-tms-green">
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="size-4" />
             <span>{selectedServiceIds.length} seleccionado{selectedServiceIds.length !== 1 ? 's' : ''}</span>
           </div>}
       </div>
@@ -60,7 +60,7 @@ const ServicesSelector = ({
                 </span>
               </p>}
           </div> : <div className="space-y-1">
-            {filteredServices.map(service => <div key={service.id} className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${selectedServiceIds.includes(service.id) ? 'bg-tms-green/10 border border-tms-green/30' : 'hover:bg-white/5'}`}>
+            {filteredServices.map(service => <div key={service.id} className={`flex items-center gap-x-2 py-2 px-1 rounded transition-colors ${selectedServiceIds.includes(service.id) ? 'bg-tms-green/10 border border-tms-green/30' : 'hover:bg-white/5'}`}>
                 <input type="checkbox" id={service.id} checked={selectedServiceIds.includes(service.id)} onChange={e => onServiceToggle(service.id, e.target.checked)} className="text-tms-green rounded" />
                 <label htmlFor={service.id} className="text-sm text-gray-300 flex-1 cursor-pointer">
                   <div className="flex justify-between items-center">

@@ -263,7 +263,7 @@ const ClosureForm = ({
                       <div className="space-y-4">
                         <ColoredSectionCard
                           title="Servicios Disponibles"
-                          icon={<AlertCircle className="h-4 w-4" />}
+                          icon={<AlertCircle className="size-4" />}
                           color="green"
                           required
                         >
@@ -290,7 +290,7 @@ const ClosureForm = ({
 
                         <ColoredSectionCard
                           title="Cliente (Opcional)"
-                          icon={<AlertCircle className="h-4 w-4" />}
+                          icon={<AlertCircle className="size-4" />}
                           color="blue"
                         >
                           <ClientSelector 
@@ -305,7 +305,7 @@ const ClosureForm = ({
                     {currentStep === 2 && (
                       <div className="space-y-4">
                         <Alert className="border border-violet-500/30 bg-violet-500/5">
-                          <AlertCircle className="h-4 w-4 text-violet-600" />
+                          <AlertCircle className="size-4 text-violet-600" />
                           <AlertDescription className="text-muted-foreground">
                             Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
                           </AlertDescription>
@@ -313,7 +313,7 @@ const ClosureForm = ({
 
                         <ColoredSectionCard
                           title="Período del Cierre"
-                          icon={<AlertCircle className="h-4 w-4" />}
+                          icon={<AlertCircle className="size-4" />}
                           color="purple"
                           required
                         >
@@ -332,7 +332,7 @@ const ClosureForm = ({
                       <div className="space-y-4">
                         <ColoredSectionCard
                           title="Orden de Compra"
-                          icon={<AlertCircle className="h-4 w-4" />}
+                          icon={<AlertCircle className="size-4" />}
                           color="orange"
                         >
                           <div className="space-y-2">
@@ -363,7 +363,7 @@ const ClosureForm = ({
 
                         <ColoredSectionCard
                           title="Total y Estado"
-                          icon={<AlertCircle className="h-4 w-4" />}
+                          icon={<AlertCircle className="size-4" />}
                           color="cyan"
                         >
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -413,7 +413,7 @@ const ClosureForm = ({
                       disabled={currentStep === 1}
                       className="gap-2"
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <ChevronLeft className="size-4" />
                       Anterior
                     </Button>
 
@@ -429,7 +429,7 @@ const ClosureForm = ({
                           className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                         >
                           Siguiente
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="size-4" />
                         </Button>
                       ) : (
                         <Button
@@ -440,12 +440,12 @@ const ClosureForm = ({
                         >
                           {loading ? (
                             <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className="size-4 animate-spin" />
                               Creando...
                             </>
                           ) : (
                             <>
-                              <Save className="h-4 w-4" />
+                              <Save className="size-4" />
                               Crear Cierre
                             </>
                           )}

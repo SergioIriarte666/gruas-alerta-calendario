@@ -207,11 +207,11 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'demand': return <BarChart3 className="w-4 h-4" />;
-      case 'revenue': return <DollarSign className="w-4 h-4" />;
-      case 'bottleneck': return <AlertTriangle className="w-4 h-4" />;
-      case 'opportunity': return <Zap className="w-4 h-4" />;
-      default: return <Brain className="w-4 h-4" />;
+      case 'demand': return <BarChart3 className="size-4" />;
+      case 'revenue': return <DollarSign className="size-4" />;
+      case 'bottleneck': return <AlertTriangle className="size-4" />;
+      case 'opportunity': return <Zap className="size-4" />;
+      default: return <Brain className="size-4" />;
     }
   };
 
@@ -240,7 +240,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-black flex items-center gap-2">
-            <Brain className="w-5 h-5 text-black" />
+            <Brain className="size-5 text-black" />
             Insights Predictivos - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-black">
@@ -249,7 +249,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
         </div>
 
         <Badge variant="outline" className="text-black">
-          <Activity className="w-3 h-3 mr-1" />
+          <Activity className="size-3 mr-1" />
           Análisis en Tiempo Real
         </Badge>
       </div>
@@ -258,7 +258,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="glass-card border-purple-500/20">
           <CardContent className="p-4 text-center">
-            <Brain className="w-6 h-6 text-black mx-auto mb-2" />
+            <Brain className="size-6 text-black mx-auto mb-2" />
             <p className="text-2xl font-bold text-black">{predictions.length}</p>
             <p className="text-xs text-black">Insights Activos</p>
           </CardContent>
@@ -266,7 +266,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
         <Card className="glass-card border-green-500/20">
           <CardContent className="p-4 text-center">
-            <Target className="w-6 h-6 text-black mx-auto mb-2" />
+            <Target className="size-6 text-black mx-auto mb-2" />
             <p className="text-2xl font-bold text-black">
               {Math.round(predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length)}%
             </p>
@@ -276,7 +276,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
         <Card className="glass-card border-red-500/20">
           <CardContent className="p-4 text-center">
-            <AlertTriangle className="w-6 h-6 text-black mx-auto mb-2" />
+            <AlertTriangle className="size-6 text-black mx-auto mb-2" />
             <p className="text-2xl font-bold text-black">
               {predictions.filter(p => p.impact === 'high').length}
             </p>
@@ -286,7 +286,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
         <Card className="glass-card border-blue-500/20">
           <CardContent className="p-4 text-center">
-            <CheckCircle2 className="w-6 h-6 text-black mx-auto mb-2" />
+            <CheckCircle2 className="size-6 text-black mx-auto mb-2" />
             <p className="text-2xl font-bold text-black">
               {predictions.filter(p => p.actionable).length}
             </p>
@@ -299,7 +299,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-black flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-black" />
+            <TrendingUp className="size-5 text-black" />
             Predicción de Demanda - Próximas 6 Semanas
           </CardTitle>
         </CardHeader>
@@ -369,13 +369,13 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
                 {/* Metadata */}
                 <div className="flex items-center justify-between text-xs text-black">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-3 h-3" />
+                    <Calendar className="size-3" />
                     <span>{prediction.timeframe}</span>
                   </div>
                   
                   {prediction.actionable && (
                     <div className="flex items-center gap-1 text-black">
-                      <Zap className="w-3 h-3" />
+                      <Zap className="size-3" />
                       <span>Accionable</span>
                     </div>
                   )}
@@ -389,7 +389,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
                       <ul className="space-y-1">
                         {prediction.recommendations.map((rec, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm text-black">
-                            <CheckCircle2 className="w-3 h-3 text-black mt-0.5 flex-shrink-0" />
+                            <CheckCircle2 className="size-3 text-black mt-0.5 flex-shrink-0" />
                             <span>{rec}</span>
                           </li>
                         ))}
@@ -416,7 +416,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       <Card className="glass-card border-purple-500/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-400" />
+            <Brain className="size-5 text-purple-400" />
             Resumen Inteligente
           </CardTitle>
         </CardHeader>
@@ -424,7 +424,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
             <div className="flex items-start gap-3 text-black">
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Brain className="w-5 h-5 text-purple-400" />
+                <Brain className="size-5 text-purple-400" />
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium text-white">Análisis Principal</h4>

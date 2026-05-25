@@ -21,13 +21,13 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="size-4 text-green-500" />;
       case 'failed':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="size-4 text-red-500" />;
       case 'started':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="size-4 text-yellow-500" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="size-4 text-gray-500" />;
     }
   };
 
@@ -52,14 +52,14 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {backupLogs.map(log => (
             <div key={log.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-x-3">
                 {getStatusIcon(log.status)}
                 <div>
-                  <div className="flex items-center space-x-2 mb-1">
+                  <div className="flex items-center gap-x-2 mb-1">
                     {log.backup_type === 'full' ? (
-                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <FileText className="size-4 text-muted-foreground" />
                     ) : (
-                      <Zap className="w-4 h-4 text-muted-foreground" />
+                      <Zap className="size-4 text-muted-foreground" />
                     )}
                     <span className="text-sm font-medium text-foreground">
                       {log.backup_type === 'full' ? 'Completo' : 'Rápido'}
@@ -87,7 +87,7 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-card py-8 text-center">
-          <Database className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+          <Database className="mx-auto mb-2 size-12 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             No hay respaldos registrados
           </p>

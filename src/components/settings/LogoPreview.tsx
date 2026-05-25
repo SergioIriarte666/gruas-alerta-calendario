@@ -20,8 +20,8 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
   return (
     <Card className="glass-card">
       <CardContent className="p-4">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+        <div className="flex items-center gap-x-4">
+          <div className="size-16 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
             <img
               src={currentLogo}
               alt="Company Logo"
@@ -32,7 +32,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
             <p className="text-white text-sm">Logotipo actual</p>
             <p className="text-gray-400 text-xs">Se muestra en informes y facturas</p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             <Button
               variant="outline"
               size="sm"
@@ -40,7 +40,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
               disabled={disabled}
               className="border-gray-700 text-gray-300"
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="size-4 mr-2" />
               Cambiar
             </Button>
             <Button
@@ -49,7 +49,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
               onClick={onRemove}
               disabled={disabled}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="size-4" />
             </Button>
           </div>
         </div>

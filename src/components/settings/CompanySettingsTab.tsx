@@ -399,7 +399,7 @@ export const CompanySettingsTab = () => {
 
           <div className="flex justify-end gap-2">
             <Button onClick={saveCompanyProfile} disabled={savingProfile} className="bg-tms-green hover:bg-tms-green/90 text-black">
-              {savingProfile && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {savingProfile && <Loader2 className="size-4 mr-2 animate-spin" />}
               Guardar Empresa
             </Button>
           </div>
@@ -412,7 +412,7 @@ export const CompanySettingsTab = () => {
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green/90 text-black"
         >
-          {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
           Guardar Configuración
         </Button>
       </div>

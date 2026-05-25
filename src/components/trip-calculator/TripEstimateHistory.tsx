@@ -39,7 +39,7 @@ export const TripEstimateHistory = () => {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-          <History className="h-12 w-12 mb-4 opacity-50" />
+          <History className="size-12 mb-4 opacity-50" />
           <p className="text-lg font-medium">Sin estimaciones guardadas</p>
           <p className="text-sm">Las estimaciones calculadas aparecerán aquí cuando las guardes</p>
         </CardContent>
@@ -77,8 +77,8 @@ export const TripEstimateHistory = () => {
                 </p>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                      <Trash2 className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="size-8 text-destructive">
+                      <Trash2 className="size-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

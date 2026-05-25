@@ -69,10 +69,10 @@ export const HistoricalSalesTable = ({
   onSelectAll,
 }: HistoricalSalesTableProps) => {
   const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
-    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-3 w-3 opacity-30" />;
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 size-3 opacity-30" />;
     return sortConfig.direction === 'asc' ? 
-      <ArrowUp className="ml-2 h-3 w-3 text-primary" /> : 
-      <ArrowDown className="ml-2 h-3 w-3 text-primary" />;
+      <ArrowUp className="ml-2 size-3 text-primary" /> : 
+      <ArrowDown className="ml-2 size-3 text-primary" />;
   };
 
   const SortableHead = ({ columnKey, label, className }: { columnKey: SortKey, label: string, className?: string }) => (
@@ -184,7 +184,7 @@ export const HistoricalSalesTable = ({
             <TableRow>
               <TableCell colSpan={hideClientColumn ? 7 : 8} className="h-32 text-center text-muted-foreground">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <FileText className="h-8 w-8 text-muted-foreground/30" />
+                  <FileText className="size-8 text-muted-foreground/30" />
                   <p>No se encontraron registros.</p>
                 </div>
               </TableCell>
@@ -263,7 +263,7 @@ export const HistoricalSalesTable = ({
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Lock className="h-3.5 w-3.5 text-amber-500 mr-1" />
+                        <Lock className="size-3.5 text-amber-500 mr-1" />
                       </TooltipTrigger>
                       <TooltipContent side="left" className="max-w-[200px] text-xs">
                         Factura del sistema — edición limitada a notas y metadatos
@@ -274,21 +274,21 @@ export const HistoricalSalesTable = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                  className="size-8 text-muted-foreground hover:text-primary"
                   onClick={() => onEdit(invoice)}
                   title="Ver detalles / Editar"
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="size-4" />
                 </Button>
                 {onDelete && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={() => onDelete(invoice.id)}
                     title="Eliminar factura"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="size-4" />
                   </Button>
                 )}
               </TableCell>

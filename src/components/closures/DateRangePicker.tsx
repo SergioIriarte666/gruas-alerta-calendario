@@ -48,7 +48,7 @@ const DateRangePicker = ({ dateFrom, dateTo, onDateFromChange, onDateToChange }:
                 !dateFrom && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 size-4" />
               {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Seleccionar fecha"}
             </Button>
           </PopoverTrigger>
@@ -75,7 +75,7 @@ const DateRangePicker = ({ dateFrom, dateTo, onDateFromChange, onDateToChange }:
                 !dateTo && "text-muted-foreground"
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 size-4" />
               {dateTo ? format(dateTo, "dd/MM/yyyy") : "Seleccionar fecha"}
             </Button>
           </PopoverTrigger>

@@ -122,12 +122,12 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between text-foreground">
             <span className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+              <FileText className="size-5" />
               {type.label}
             </span>
             {expiryDate && (
               <div className="flex items-center gap-2">
-                  <StatusIcon className={`w-4 h-4 ${statusLabelColors[status]}`} />
+                  <StatusIcon className={`size-4 ${statusLabelColors[status]}`} />
                   <StatusBadge tone={status === 'success' ? 'completed' : status === 'warning' ? 'pending' : 'overdue'}>
                   {daysUntilExpiry} días
                   </StatusBadge>
@@ -173,7 +173,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
                 onClick={() => downloadDocument(document)}
                 className="flex-1"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="size-4 mr-2" />
                 Descargar
               </Button>
               <Button
@@ -182,7 +182,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
                 onClick={() => window.open(document.fileUrl, '_blank')}
                 className="flex-1"
               >
-                <Eye className="w-4 h-4 mr-2" />
+                <Eye className="size-4 mr-2" />
                 Ver
               </Button>
             </div>
@@ -227,12 +227,12 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
             >
               {isUploading ? (
                 <>
-                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  <Clock className="size-4 mr-2 animate-spin" />
                   Subiendo...
                 </>
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
+                  <Upload className="size-4 mr-2" />
                   {document ? 'Actualizar' : 'Subir'}
                 </>
               )}
@@ -277,7 +277,7 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
         <Card className="mt-6 border-warning/30 bg-warning-soft/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Documentos por Vencer
             </CardTitle>
           </CardHeader>

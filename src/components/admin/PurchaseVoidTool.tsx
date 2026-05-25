@@ -73,7 +73,7 @@ export const PurchaseVoidTool = () => {
       <Card className="border-l-4 border-l-violet-500">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-violet-700 dark:text-violet-400">
-            <PackageX className="h-5 w-5" />
+            <PackageX className="size-5" />
             Anular Compra de Bodega
           </CardTitle>
           <CardDescription>
@@ -85,7 +85,7 @@ export const PurchaseVoidTool = () => {
         <CardContent className="space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por folio, descripción, proveedor..."
                 value={search}
@@ -97,14 +97,14 @@ export const PurchaseVoidTool = () => {
 
           {(searching || searchFetching) && (
             <div className="flex items-center justify-center py-6 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              <Loader2 className="size-5 animate-spin mr-2" />
               Buscando...
             </div>
           )}
 
           {!searching && !searchFetching && searchError && (
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="size-4" />
               <AlertTitle>Error al buscar compras</AlertTitle>
               <AlertDescription>
                 {(searchError as any)?.message || 'No se pudo consultar la base de datos.'}
@@ -178,7 +178,7 @@ export const PurchaseVoidTool = () => {
         <Card className="border-l-4 border-l-red-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="size-5" />
               Vista previa del impacto
             </CardTitle>
             <CardDescription>
@@ -188,7 +188,7 @@ export const PurchaseVoidTool = () => {
           <CardContent className="space-y-4">
             {loadingImpact && (
               <div className="flex items-center justify-center py-4 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="size-4 animate-spin mr-2" />
                 Calculando impacto...
               </div>
             )}
@@ -290,14 +290,14 @@ export const PurchaseVoidTool = () => {
                     {stockNegative ? (
                       <Badge variant="destructive">Stock negativo</Badge>
                     ) : (
-                      <CheckCircle2 className="h-4 w-4 text-violet-600" />
+                      <CheckCircle2 className="size-4 text-violet-600" />
                     )}
                   </div>
                 )}
 
                 {stockNegative && (
                   <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTriangle className="size-4" />
                     <AlertTitle>No es posible anular</AlertTitle>
                     <AlertDescription>
                       El producto ya fue consumido por otros movimientos posteriores. Resuelve
@@ -362,7 +362,7 @@ export const PurchaseVoidTool = () => {
                       disabled={stockNegative || reason.trim().length < 5}
                       onClick={() => setConfirmOpen(true)}
                     >
-                      <PackageX className="h-4 w-4 mr-2" />
+                      <PackageX className="size-4 mr-2" />
                       Anular compra
                     </Button>
                   </div>
@@ -377,7 +377,7 @@ export const PurchaseVoidTool = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="size-5" />
               Confirmación final
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -404,7 +404,7 @@ export const PurchaseVoidTool = () => {
             >
               {voidMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Anulando...
                 </>
               ) : (

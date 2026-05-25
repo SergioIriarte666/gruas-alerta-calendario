@@ -27,8 +27,8 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
   return (
     <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-foreground">
-          <Palette className="w-5 h-5 text-primary" />
+        <CardTitle className="flex items-center gap-x-2 text-foreground">
+          <Palette className="size-5 text-primary" />
           <span className="text-foreground">Preferencias de Usuario</span>
         </CardTitle>
       </CardHeader>
@@ -132,7 +132,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green/80 text-black"
         >
-          <Save className="w-4 h-4 mr-2" />
+          <Save className="size-4 mr-2" />
           {saving ? 'Guardando...' : 'Guardar Preferencias'}
         </Button>
       </CardContent>

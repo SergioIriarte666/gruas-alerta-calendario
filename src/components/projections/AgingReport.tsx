@@ -34,7 +34,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       amount: 0,
       count: 0,
       color: "text-yellow-600",
-      icon: <Clock className="h-5 w-5" />,
+      icon: <Clock className="size-5" />,
     },
     {
       label: "31-60 días",
@@ -42,7 +42,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       amount: 0,
       count: 0,
       color: "text-orange-600",
-      icon: <AlertCircle className="h-5 w-5" />,
+      icon: <AlertCircle className="size-5" />,
     },
     {
       label: "61-90 días",
@@ -50,7 +50,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       amount: 0,
       count: 0,
       color: "text-red-600",
-      icon: <AlertTriangle className="h-5 w-5" />,
+      icon: <AlertTriangle className="size-5" />,
     },
     {
       label: "+90 días",
@@ -58,7 +58,7 @@ export const AgingReport = ({ invoices }: AgingReportProps) => {
       amount: 0,
       count: 0,
       color: "text-destructive",
-      icon: <XCircle className="h-5 w-5" />,
+      icon: <XCircle className="size-5" />,
     },
   ];
 

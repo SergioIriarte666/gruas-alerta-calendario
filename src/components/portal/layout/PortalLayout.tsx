@@ -46,7 +46,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
               onClick={() => setIsMobileMenuOpen(true)}
               className="text-white hover:bg-gray-800"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="size-6" />
             </Button>
             <span className="ml-3 text-lg font-semibold text-tms-green">Portal de Clientes</span>
           </div>

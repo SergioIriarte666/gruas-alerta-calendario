@@ -59,7 +59,7 @@ export const ClientFormStep3 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Departamentos"
-        icon={<FolderTree className="h-5 w-5" />}
+        icon={<FolderTree className="size-5" />}
         color="orange"
         required
       >
@@ -74,7 +74,7 @@ export const ClientFormStep3 = ({
                 onClick={() => onIsAddingDepartmentChange(!isAddingDepartment)}
                 className="border-violet-500/50 text-violet-600 hover:bg-violet-500/10"
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="size-4 mr-1" />
                 Agregar Departamento
               </Button>
             </div>
@@ -115,7 +115,7 @@ export const ClientFormStep3 = ({
                   onClick={addDepartment}
                   className="border-violet-500/50 text-violet-600 hover:bg-violet-500/10"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
+                  <Plus className="size-4 mr-1" />
                   Agregar
                 </Button>
               )}
@@ -139,7 +139,7 @@ export const ClientFormStep3 = ({
                       onClick={() => removeDepartment(index)}
                       className="border-destructive/50 text-destructive hover:bg-destructive/10 px-2"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="size-4" />
                     </Button>
                   )}
                 </div>
@@ -155,7 +155,7 @@ export const ClientFormStep3 = ({
 
       <ColoredSectionCard
         title="Facturación"
-        icon={<Receipt className="h-5 w-5" />}
+        icon={<Receipt className="size-5" />}
         color="blue"
       >
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
@@ -177,7 +177,7 @@ export const ClientFormStep3 = ({
 
       <ColoredSectionCard
         title="Estado del Cliente"
-        icon={<Power className="h-5 w-5" />}
+        icon={<Power className="size-5" />}
         color="green"
       >
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">

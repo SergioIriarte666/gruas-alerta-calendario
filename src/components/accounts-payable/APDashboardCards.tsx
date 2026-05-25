@@ -83,7 +83,7 @@ export const APDashboardCards = () => {
                 )}
               </div>
               <div className={`p-2 rounded-lg ${card.bg}`}>
-                <card.icon className={`h-5 w-5 ${card.color}`} />
+                <card.icon className={`size-5 ${card.color}`} />
               </div>
             </div>
           </CardContent>

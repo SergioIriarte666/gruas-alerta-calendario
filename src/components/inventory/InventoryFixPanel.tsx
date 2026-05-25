@@ -49,7 +49,7 @@ export function InventoryFixPanel() {
     <Card className="max-w-2xl">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-warning" />
+          <AlertTriangle className="size-5 text-warning" />
           <CardTitle>Corrección de Costos de Inventario</CardTitle>
         </div>
         <CardDescription>
@@ -71,7 +71,7 @@ export function InventoryFixPanel() {
         >
           {isExecuting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
               Ejecutando corrección...
             </>
           ) : (
@@ -83,7 +83,7 @@ export function InventoryFixPanel() {
           <Card className="bg-accent/5 border-accent">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success" />
+                <CheckCircle className="size-4 text-success" />
                 <CardTitle className="text-base">Resultado de la Corrección</CardTitle>
               </div>
             </CardHeader>

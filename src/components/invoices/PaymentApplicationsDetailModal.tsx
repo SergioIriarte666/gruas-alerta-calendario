@@ -89,7 +89,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
     
     return (
       <Badge style={config.style} className="text-white flex items-center gap-1">
-        <Icon className="h-3 w-3" />
+        <Icon className="size-3" />
         {config.label}
       </Badge>
     );
@@ -109,7 +109,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Receipt className="h-5 w-5" />
+            <Receipt className="size-5" />
             Detalle del Pago
           </DialogTitle>
         </DialogHeader>
@@ -127,7 +127,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-6">
               <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <DollarSign className="size-4" />
                 Resumen del Pago
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -159,7 +159,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
+                <CreditCard className="size-4" />
                 Información del Pago
               </h3>
               <div className="space-y-2 text-sm">
@@ -197,13 +197,13 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           {/* Facturas Aplicadas */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+              <FileText className="size-4" />
               Facturas Aplicadas ({applications.length})
             </h3>
 
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
               </div>
             ) : applications.length > 0 ? (
               <div className="border rounded-lg overflow-hidden">
@@ -244,7 +244,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                <FileText className="size-12 mx-auto mb-2 opacity-30" />
                 <p className="text-sm">No hay facturas aplicadas a este pago</p>
               </div>
             )}
@@ -253,12 +253,12 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           {/* Fecha de Creación */}
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
             <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="size-3" />
               Creado: {new Date(payment.created_at).toLocaleString()}
             </div>
             {payment.updated_at !== payment.created_at && (
               <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
+                <Calendar className="size-3" />
                 Actualizado: {new Date(payment.updated_at).toLocaleString()}
               </div>
             )}

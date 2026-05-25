@@ -36,7 +36,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
       <h3 className="text-base font-semibold text-foreground">Identificación del Servicio</h3>
       
       {!isEditing && (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-x-3">
           <Switch
             id="manual-folio"
             checked={isManualFolio}
@@ -70,7 +70,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
             disabled={isLoading || disabled}
             className="self-end sm:mt-6 h-10"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Regenerar
           </Button>
         )}

@@ -26,9 +26,9 @@ export const PhotoGrid = ({ photos, onRemovePhoto }: PhotoGridProps) => {
             variant="destructive"
             size="sm"
             onClick={() => onRemovePhoto(index)}
-            className="absolute -top-2 -right-2 w-6 h-6 p-0"
+            className="absolute -top-2 -right-2 size-6 p-0"
           >
-            <X className="w-3 h-3" />
+            <X className="size-3" />
           </Button>
         </div>
       ))}

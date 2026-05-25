@@ -365,9 +365,9 @@ const Commissions = () => {
 
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pendiente</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
@@ -384,9 +384,9 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
@@ -403,9 +403,9 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Operadores</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{commissionsByOperator.length}</div>
@@ -416,9 +416,9 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total General</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
@@ -451,7 +451,7 @@ const Commissions = () => {
               onClick={handleRefreshData}
               disabled={isFetching}
             >
-              <RefreshCw className={`h-4 w-4 ${isMobile ? '' : 'mr-2'} ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`size-4 ${isMobile ? '' : 'mr-2'} ${isFetching ? 'animate-spin' : ''}`} />
               {!isMobile && 'Actualizar'}
             </Button>
             
@@ -574,7 +574,7 @@ const Commissions = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-x-2">
                       <CommissionExportButton
                         commissions={operatorGroup.commissions}
                         filters={{

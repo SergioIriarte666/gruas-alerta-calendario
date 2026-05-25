@@ -28,7 +28,7 @@ export const Suppliers: React.FC = () => {
         <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
           <div>
             <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold flex items-center gap-3`}>
-              <Building2 className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
+              <Building2 className={`${isMobile ? 'size-6' : 'size-8'} text-primary`} />
               Gestión de Proveedores
             </h1>
             {!isMobile && (
@@ -44,7 +44,7 @@ export const Suppliers: React.FC = () => {
               onClick={() => setShowXMLUpload(true)}
               className="flex items-center gap-2"
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="size-4" />
               <span className="hidden sm:inline">Importar XML</span>
               <span className="sm:hidden">XML</span>
             </Button>
@@ -53,7 +53,7 @@ export const Suppliers: React.FC = () => {
               onClick={() => setShowRegisterPayment(true)}
               className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <Receipt className="w-4 h-4" />
+              <Receipt className="size-4" />
               <span className="hidden sm:inline">Registrar Pago</span>
               <span className="sm:hidden">Pago</span>
             </Button>
@@ -63,7 +63,7 @@ export const Suppliers: React.FC = () => {
               onClick={() => setShowSupplierForm(true)}
               className="flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="size-4" />
               <span className="hidden sm:inline">Nuevo Proveedor</span>
               <span className="sm:hidden">+ Prov.</span>
             </Button>
@@ -74,9 +74,9 @@ export const Suppliers: React.FC = () => {
         {stats && (
           <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'}`}>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Proveedores</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <Building2 className="size-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total_suppliers}</div>
@@ -87,9 +87,9 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
+                <Clock className="size-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.total_pending_payments}</div>
@@ -100,9 +100,9 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card className={stats.total_overdue_payments > 0 ? 'border-destructive/50 bg-destructive/5' : ''}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
-                <AlertTriangle className={`h-4 w-4 ${stats.total_overdue_payments > 0 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+                <AlertTriangle className={`size-4 ${stats.total_overdue_payments > 0 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
               </CardHeader>
               <CardContent>
                 <div className={`text-2xl font-bold ${stats.total_overdue_payments > 0 ? 'text-destructive' : ''}`}>
@@ -115,9 +115,9 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pagado este Mes</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="size-4 text-green-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.paid_count_this_month}</div>
@@ -128,9 +128,9 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Categorías</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <TrendingUp className="size-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -148,15 +148,15 @@ export const Suppliers: React.FC = () => {
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
           <CustomTabsList className="grid w-full grid-cols-3 gap-1">
             <CustomTabsTrigger value="payments">
-              <CreditCard className="w-4 h-4 sm:mr-2" />
+              <CreditCard className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Pagos</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="suppliers">
-              <Building2 className="w-4 h-4 sm:mr-2" />
+              <Building2 className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Proveedores</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
-              <Calendar className="w-4 h-4 sm:mr-2" />
+              <Calendar className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Calendario</span>
             </CustomTabsTrigger>
           </CustomTabsList>

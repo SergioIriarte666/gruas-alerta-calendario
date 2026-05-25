@@ -117,7 +117,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
       <Collapsible open={inventoryOpen} onOpenChange={setInventoryOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-primary" />
+            <Package className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">
               Movimientos de Inventario ({movements.length})
             </span>
@@ -127,12 +127,12 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
               </Badge>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${inventoryOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform ${inventoryOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-3">
           {movements.length > 3 && (
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar artículo o documento..."
                 value={searchMovements}
@@ -143,7 +143,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
           )}
           {movements.length === 0 ? (
             <div className="text-center py-6">
-              <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <Package className="size-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Sin movimientos de inventario</p>
             </div>
           ) : (
@@ -195,7 +195,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
       <Collapsible open={partsOpen} onOpenChange={setPartsOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-primary" />
+            <Wrench className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">
               Piezas de Grúas ({parts.length})
             </span>
@@ -205,12 +205,12 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
               </Badge>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${partsOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`size-4 text-muted-foreground transition-transform ${partsOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-3">
           {parts.length > 3 && (
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar pieza o patente..."
                 value={searchParts}
@@ -221,7 +221,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
           )}
           {parts.length === 0 ? (
             <div className="text-center py-6">
-              <Wrench className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <Wrench className="size-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm text-muted-foreground">Sin piezas registradas</p>
             </div>
           ) : (

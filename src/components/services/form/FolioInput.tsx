@@ -60,15 +60,15 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     if (!hasValidated || !folio.trim()) return null;
     
     if (validation.isValidating) {
-      return <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />;
+      return <Loader2 className="size-4 animate-spin text-yellow-500" />;
     }
     
     if (validation.isValid) {
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
+      return <CheckCircle className="size-4 text-green-500" />;
     }
     
     if (validation.error) {
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
+      return <AlertCircle className="size-4 text-red-500" />;
     }
     
     return null;

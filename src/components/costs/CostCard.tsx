@@ -44,18 +44,18 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
         {/* Header con fecha y monto */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="size-4" />
             <span className="font-medium">{formatDate(cost.date)}</span>
           </div>
           <div className="flex items-center gap-1 text-lg font-bold text-tms-green">
-            <DollarSign className="w-5 h-5" />
+            <DollarSign className="size-5" />
             <span>{formatCurrency(Number(cost.amount))}</span>
           </div>
         </div>
 
         {/* Categorización */}
         <div className="flex items-center gap-2 mb-2">
-          <Tag className="w-4 h-4 text-gray-500" />
+          <Tag className="size-4 text-gray-500" />
           <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
             {getCategoryDisplay()}
           </span>
@@ -71,7 +71,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-3 space-y-2">
             {cost.cranes && (
               <div className="flex items-center gap-2 text-sm">
-                <Truck className="w-4 h-4 text-gray-500" />
+                <Truck className="size-4 text-gray-500" />
                 <span className="text-gray-700 dark:text-gray-300">
                   <strong>Grúa:</strong> {cost.cranes.license_plate}
                 </span>
@@ -80,7 +80,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             
             {cost.operators && (
               <div className="flex items-center gap-2 text-sm">
-                <User className="w-4 h-4 text-gray-500" />
+                <User className="size-4 text-gray-500" />
                 <span className="text-gray-700 dark:text-gray-300">
                   <strong>Operador:</strong> {cost.operators.name}
                 </span>
@@ -89,7 +89,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             
             {cost.service_folio && (
               <div className="flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4 text-gray-500" />
+                <FileText className="size-4 text-gray-500" />
                 <span className="text-gray-700 dark:text-gray-300">
                   <strong>Folio:</strong> {cost.service_folio}
                 </span>
@@ -113,7 +113,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             onClick={() => onEdit(cost)}
             className="flex-1 hover-scale"
           >
-            <Edit className="w-4 h-4 mr-1" />
+            <Edit className="size-4 mr-1" />
             Editar
           </Button>
           
@@ -125,7 +125,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
               className="hover-scale"
               title="Duplicar costo"
             >
-              <Copy className="w-4 h-4" />
+              <Copy className="size-4" />
             </Button>
           )}
           
@@ -146,7 +146,7 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
             onClick={() => onDelete(cost)}
             className="text-red-600 hover:text-red-700 hover:border-red-300"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="size-4" />
           </Button>
         </div>
       </CardContent>

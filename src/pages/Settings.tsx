@@ -105,43 +105,43 @@ const Settings = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="overflow-x-auto">
           <TabsList className={`inline-flex w-auto min-w-full ${isAdmin ? 'md:grid-cols-9' : 'md:grid-cols-7'} md:grid bg-card border h-auto p-1 gap-1`}>
-            <TabsTrigger value="company" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <Building2 className="w-4 h-4" />
+            <TabsTrigger value="company" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <Building2 className="size-4" />
               <span>Empresa</span>
             </TabsTrigger>
-            <TabsTrigger value="timezone" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <Globe className="w-4 h-4" />
+            <TabsTrigger value="timezone" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <Globe className="size-4" />
               <span>Zona Horaria</span>
             </TabsTrigger>
-            <TabsTrigger value="system" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <SettingsIcon className="w-4 h-4" />
+            <TabsTrigger value="system" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <SettingsIcon className="size-4" />
               <span>Sistema</span>
             </TabsTrigger>
-            <TabsTrigger value="payment-terms" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <CreditCard className="w-4 h-4" />
+            <TabsTrigger value="payment-terms" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <CreditCard className="size-4" />
               <span>Cond. Pago</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <Bell className="w-4 h-4" />
+            <TabsTrigger value="notifications" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <Bell className="size-4" />
               <span>Alertas</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <Users className="w-4 h-4" />
+            <TabsTrigger value="users" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <Users className="size-4" />
               <span>Usuarios</span>
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-              <Tag className="w-4 h-4" />
+            <TabsTrigger value="categories" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+              <Tag className="size-4" />
               <span>Categorías</span>
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="integrity" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-                <Shield className="w-4 h-4" />
+              <TabsTrigger value="integrity" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+                <Shield className="size-4" />
                 <span>Integridad</span>
               </TabsTrigger>
             )}
             {isAdmin && (
-              <TabsTrigger value="liberation" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
-                <Unlock className="w-4 h-4" />
+              <TabsTrigger value="liberation" className="flex-shrink-0 flex flex-col items-center justify-center gap-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+                <Unlock className="size-4" />
                 <span>Liberación</span>
               </TabsTrigger>
             )}

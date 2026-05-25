@@ -184,7 +184,7 @@ export const ConsolidatedCostDetails = ({
                   disabled={isDownloadingPdf}
                   className="gap-2"
                 >
-                    <Download className="w-4 h-4" />
+                    <Download className="size-4" />
                   {isDownloadingPdf ? 'Generando...' : 'Descargar PDF'}
                 </Button>
               </div>
@@ -198,7 +198,7 @@ export const ConsolidatedCostDetails = ({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex items-center gap-3">
                 <div className="bg-violet-100 dark:bg-violet-900/30 p-2 rounded-lg">
-                  <Calendar className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <Calendar className="size-4 text-violet-600 dark:text-violet-400" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha</p>
@@ -210,7 +210,7 @@ export const ConsolidatedCostDetails = ({
 
               <div className="flex items-center gap-3">
                 <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
-                  <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <DollarSign className="size-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Monto</p>
@@ -225,8 +225,8 @@ export const ConsolidatedCostDetails = ({
                   ? 'bg-green-100 dark:bg-green-900/30' 
                   : 'bg-orange-100 dark:bg-orange-900/30'}`}>
                   {cost.payment_date 
-                    ? <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    : <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
+                    ? <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+                    : <Clock className="size-4 text-orange-600 dark:text-orange-400" />}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha de Pago</p>
@@ -241,7 +241,7 @@ export const ConsolidatedCostDetails = ({
               {cost.service_folio && (
                 <div className="flex items-center gap-3">
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
-                    <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <FileText className="size-4 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Folio Servicio</p>
@@ -253,7 +253,7 @@ export const ConsolidatedCostDetails = ({
               {cost.cost_center_id && (
                 <div className="flex items-center gap-3">
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
-                    <Building className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <Building className="size-4 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Centro de Costo</p>
@@ -272,13 +272,13 @@ export const ConsolidatedCostDetails = ({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Wrench className="w-4 h-4 text-violet-600" />
+                    <Wrench className="size-4 text-violet-600" />
                     Asociaciones
                   </span>
                   {showAssociations ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    <ChevronUp className="size-4 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <ChevronDown className="size-4 text-muted-foreground" />
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -286,7 +286,7 @@ export const ConsolidatedCostDetails = ({
                 <div className="bg-muted/30 rounded-lg p-4 space-y-4">
                   {cost.cranes && (
                     <div className="flex items-start gap-3">
-                      <Truck className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <Truck className="size-5 text-blue-600 mt-0.5" />
                       <div>
                         <p className="text-xs text-muted-foreground">Grúa</p>
                         <p className="font-medium text-foreground">
@@ -301,7 +301,7 @@ export const ConsolidatedCostDetails = ({
 
                   {cost.operators && (
                     <div className="flex items-start gap-3">
-                      <User className="w-5 h-5 text-green-600 mt-0.5" />
+                      <User className="size-5 text-green-600 mt-0.5" />
                       <div>
                         <p className="text-xs text-muted-foreground">Operador</p>
                         <p className="font-medium text-foreground">{cost.operators.name}</p>
@@ -313,7 +313,7 @@ export const ConsolidatedCostDetails = ({
                   {cost.services && (
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <Wrench className="w-5 h-5 text-purple-600 mt-0.5" />
+                        <Wrench className="size-5 text-purple-600 mt-0.5" />
                         <div className="flex-1">
                           <p className="text-xs text-muted-foreground">Servicio</p>
                           <p className="font-medium text-foreground">
@@ -331,14 +331,14 @@ export const ConsolidatedCostDetails = ({
                         <div className="ml-8 space-y-1">
                           {cost.services.origin && (
                             <div className="flex items-center gap-2 text-sm">
-                              <MapPin className="w-3 h-3 text-muted-foreground" />
+                              <MapPin className="size-3 text-muted-foreground" />
                               <span className="text-muted-foreground">Origen:</span>
                               <span className="text-foreground">{cost.services.origin}</span>
                             </div>
                           )}
                           {cost.services.destination && (
                             <div className="flex items-center gap-2 text-sm">
-                              <MapPin className="w-3 h-3 text-muted-foreground" />
+                              <MapPin className="size-3 text-muted-foreground" />
                               <span className="text-muted-foreground">Destino:</span>
                               <span className="text-foreground">{cost.services.destination}</span>
                             </div>
@@ -348,7 +348,7 @@ export const ConsolidatedCostDetails = ({
 
                       {cost.services.license_plate && (
                         <div className="ml-8 flex items-center gap-2 text-sm">
-                          <Car className="w-3 h-3 text-muted-foreground" />
+                          <Car className="size-3 text-muted-foreground" />
                           <span className="text-muted-foreground">Patente:</span>
                           <span className="text-foreground font-mono">{cost.services.license_plate}</span>
                         </div>
@@ -366,13 +366,13 @@ export const ConsolidatedCostDetails = ({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <StickyNote className="w-4 h-4 text-amber-600" />
+                    <StickyNote className="size-4 text-amber-600" />
                     Notas
                   </span>
                   {showNotes ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    <ChevronUp className="size-4 text-muted-foreground" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <ChevronDown className="size-4 text-muted-foreground" />
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -473,16 +473,16 @@ export const ConsolidatedCostDetails = ({
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                 <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <History className="w-4 h-4 text-violet-600" />
+                  <History className="size-4 text-violet-600" />
                   Historial de cambios
                   {changeHistory && changeHistory.length > 0 && (
                     <Badge variant="outline" className="ml-1">{changeHistory.length}</Badge>
                   )}
                 </span>
                 {showHistory ? (
-                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  <ChevronUp className="size-4 text-muted-foreground" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <ChevronDown className="size-4 text-muted-foreground" />
                 )}
               </Button>
             </CollapsibleTrigger>
@@ -501,7 +501,7 @@ export const ConsolidatedCostDetails = ({
                   onClose();
                 }}
               >
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit className="size-4 mr-2" />
                 Editar
               </Button>
             )}
@@ -514,7 +514,7 @@ export const ConsolidatedCostDetails = ({
                   onClose();
                 }}
               >
-                <Copy className="w-4 h-4 mr-2" />
+                <Copy className="size-4 mr-2" />
                 Duplicar
               </Button>
             )}

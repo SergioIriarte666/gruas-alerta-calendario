@@ -252,7 +252,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-primary" />
+            <Code className="size-5 text-primary" />
             Importar Proveedores desde XML
           </DialogTitle>
         </DialogHeader>
@@ -262,7 +262,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
           <Card className="border-blue-200/50 bg-blue-50/30">
             <CardContent className="pt-4">
               <div className="flex items-center gap-2 text-sm text-blue-700">
-                <FileX className="w-4 h-4" />
+                <FileX className="size-4" />
                 <span>Soporta facturas electrónicas (DTE), archivos XML de proveedores y formatos personalizados</span>
               </div>
             </CardContent>
@@ -272,7 +272,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
+                <Upload className="size-5" />
                 Seleccionar Archivo XML
               </CardTitle>
             </CardHeader>
@@ -283,7 +283,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 onDragOver={handleDragOver}
                 onClick={() => document.getElementById('xml-supplier-upload')?.click()}
               >
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <FileText className="size-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
                   Arrastra tu archivo XML aquí o haz clic para seleccionar
                 </p>
@@ -303,7 +303,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 <div className="mt-4 p-4 bg-muted/30 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-primary" />
+                      <FileText className="size-5 text-primary" />
                       <div>
                         <p className="font-medium">{file.name}</p>
                         <p className="text-muted-foreground text-sm">{formatFileSize(file.size)}</p>
@@ -311,7 +311,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={handleAnalyzeFile} disabled={!file}>
-                        <Code className="w-4 h-4 mr-2" />
+                        <Code className="size-4 mr-2" />
                         Analizar XML
                       </Button>
                       <Button variant="outline" onClick={reset}>
@@ -329,7 +329,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
+                  <Database className="size-5" />
                   Creando Proveedores...
                 </CardTitle>
               </CardHeader>
@@ -351,9 +351,9 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {parseResult.success ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <CheckCircle className="size-5 text-green-500" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-destructive" />
+                    <AlertCircle className="size-5 text-destructive" />
                   )}
                   Resultado del Análisis
                 </CardTitle>
@@ -363,7 +363,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-blue-50/50 p-4 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-500" />
+                      <FileText className="size-5 text-blue-500" />
                       <div>
                         <p className="text-sm text-blue-600">Total Registros</p>
                         <p className="text-xl font-bold">{parseResult.totalRows}</p>
@@ -372,7 +372,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                   </div>
                   <div className="bg-green-50/50 p-4 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <CheckCircle className="size-5 text-green-500" />
                       <div>
                         <p className="text-sm text-green-600">Válidos</p>
                         <p className="text-xl font-bold">{parseResult.validRows}</p>
@@ -381,7 +381,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                   </div>
                   <div className="bg-red-50/50 p-4 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-destructive" />
+                      <AlertTriangle className="size-5 text-destructive" />
                       <div>
                         <p className="text-sm text-destructive">Errores</p>
                         <p className="text-xl font-bold">{parseResult.errors.length}</p>
@@ -393,7 +393,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 {/* Duplicate Warning Banner */}
                 {duplicateResults.length > 0 && showDuplicateWarning && (
                   <Alert className="border-amber-300 bg-amber-50">
-                    <ShieldAlert className="h-4 w-4 text-amber-600" />
+                    <ShieldAlert className="size-4 text-amber-600" />
                     <AlertDescription className="text-amber-800">
                       <strong>⚠️ Se detectaron {duplicateResults.length} posibles proveedores duplicados.</strong>
                       <span className="ml-2">
@@ -423,7 +423,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 {/* Checking duplicates indicator */}
                 {isCheckingDuplicates && (
                   <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                    <Loader2 className="size-4 animate-spin text-blue-600" />
                     <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
                   </div>
                 )}
@@ -459,7 +459,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium flex items-center gap-2">
-                        <Building2 className="w-4 h-4" />
+                        <Building2 className="size-4" />
                         Vista Previa ({selectedSuppliers.size} de {parseResult.data.length} seleccionados)
                       </h4>
                       <Button 
@@ -497,11 +497,11 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => toggleSupplierSelection(index)}
-                                  className="w-4 h-4 rounded border-gray-300"
+                                  className="size-4 rounded border-gray-300"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <Building2 className="size-4 text-muted-foreground flex-shrink-0" />
                                     <span className="font-medium truncate">{supplier.name}</span>
                                     {isDuplicate && (
                                       <Badge 
@@ -521,13 +521,13 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                                     <span className="font-mono">{supplier.rut || '-'}</span>
                                     {supplier.email && (
                                       <span className="flex items-center gap-1">
-                                        <Mail className="w-3 h-3" />
+                                        <Mail className="size-3" />
                                         {supplier.email}
                                       </span>
                                     )}
                                     {supplier.phone && (
                                       <span className="flex items-center gap-1">
-                                        <Phone className="w-3 h-3" />
+                                        <Phone className="size-3" />
                                         {supplier.phone}
                                       </span>
                                     )}
@@ -581,12 +581,12 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                     >
                       {isUploading ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="size-4 mr-2 animate-spin" />
                           Creando...
                         </>
                       ) : (
                         <>
-                          <Users className="w-4 h-4 mr-2" />
+                          <Users className="size-4 mr-2" />
                           Crear {selectedSuppliers.size} Proveedores
                         </>
                       )}

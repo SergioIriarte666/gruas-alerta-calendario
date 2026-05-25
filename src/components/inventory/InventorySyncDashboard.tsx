@@ -19,7 +19,7 @@ export const InventorySyncDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
@@ -42,12 +42,12 @@ export const InventorySyncDashboard = () => {
           >
             {migrateMutation.isPending ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
                 Migrando...
               </>
             ) : (
               <>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="size-4 mr-2" />
                 Migrar Piezas
               </>
             )}
@@ -58,7 +58,7 @@ export const InventorySyncDashboard = () => {
       {/* Status Alert */}
       {!stats?.trigger_exists && (
         <Alert className="border-destructive">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="size-4" />
           <AlertDescription>
             El trigger de sincronización automática no está activo. Las nuevas piezas no se sincronizarán automáticamente.
           </AlertDescription>
@@ -67,7 +67,7 @@ export const InventorySyncDashboard = () => {
 
       {needsMigration && (
         <Alert className="border-warning">
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="size-4" />
           <AlertDescription>
             Hay {stats?.unsynced_parts} piezas que no están sincronizadas con el inventario. Se recomienda ejecutar la migración.
           </AlertDescription>
@@ -76,7 +76,7 @@ export const InventorySyncDashboard = () => {
 
       {syncPercentage === 100 && (
         <Alert className="border-success">
-          <CheckCircle className="h-4 w-4" />
+          <CheckCircle className="size-4" />
           <AlertDescription>
             ¡Todas las piezas están sincronizadas correctamente con el inventario!
           </AlertDescription>
@@ -86,9 +86,9 @@ export const InventorySyncDashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Progreso de Sincronización</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -102,9 +102,9 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Items Auto-creados</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.auto_created_items || 0}</div>
@@ -115,9 +115,9 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Inventario</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.total_inventory_items || 0}</div>
@@ -128,9 +128,9 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Piezas Pendientes</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <AlertTriangle className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-warning">{stats?.unsynced_parts || 0}</div>

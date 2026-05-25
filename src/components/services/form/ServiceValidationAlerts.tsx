@@ -23,7 +23,7 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
     <div className={`space-y-3 mb-4 ${className}`}>
       {criticalErrors.length > 0 && (
         <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
-          <XCircle className="h-4 w-4 flex-shrink-0" />
+          <XCircle className="size-4 flex-shrink-0" />
           <AlertTitle className="font-semibold text-sm">
             Campos requeridos ({criticalErrors.length})
           </AlertTitle>
@@ -42,7 +42,7 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
 
       {warnings.length > 0 && (
         <Alert className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+          <AlertTriangle className="size-4 text-yellow-600 flex-shrink-0" />
           <AlertTitle className="font-semibold text-yellow-800 dark:text-yellow-200 text-sm">
             Advertencias ({warnings.length})
           </AlertTitle>

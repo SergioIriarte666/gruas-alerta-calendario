@@ -180,7 +180,7 @@ export const ProductSalesSection = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Package className="h-5 w-5" />
+          <Package className="size-5" />
           Productos a Vender
         </CardTitle>
       </CardHeader>
@@ -264,7 +264,7 @@ export const ProductSalesSection = ({
               }
               className="w-full"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="size-4 mr-2" />
               Agregar
             </Button>
           </div>
@@ -332,7 +332,7 @@ export const ProductSalesSection = ({
                       disabled={disabled}
                       className="text-red-600 hover:text-red-700"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="size-4" />
                     </Button>
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export const ProductSalesSection = ({
 
         {salesItems.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <Package className="size-12 mx-auto mb-4 opacity-50" />
             <p>No hay productos agregados a la venta</p>
             <p className="text-sm">Selecciona productos del inventario para comenzar</p>
           </div>

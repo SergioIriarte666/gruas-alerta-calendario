@@ -676,9 +676,9 @@ export const EnhancedServiceForm = ({
             service ? "bg-amber-500/10" : "bg-violet-500/10"
           )}>
             {service ? (
-              <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              <FileText className="size-6 text-amber-600 dark:text-amber-400" />
             ) : (
-              <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              <Sparkles className="size-6 text-violet-600 dark:text-violet-400" />
             )}
           </div>
           <div className="flex-1">
@@ -691,7 +691,7 @@ export const EnhancedServiceForm = ({
           </div>
           {isDuplicating && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg">
-              <Copy className="h-4 w-4 text-secondary-foreground" />
+              <Copy className="size-4 text-secondary-foreground" />
               <span className="text-sm font-medium text-secondary-foreground">
                 Duplicando {originalFolio}
               </span>
@@ -744,7 +744,7 @@ export const EnhancedServiceForm = ({
               <div className="space-y-4 animate-fade-in">
                 <ColoredSectionCard
                   title="Identificación"
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={<FileText className="size-5" />}
                   color="blue"
                 >
                   <FolioSection
@@ -771,7 +771,7 @@ export const EnhancedServiceForm = ({
 
                 <ColoredSectionCard
                   title="Fechas y Horarios"
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={<FileText className="size-5" />}
                   color="cyan"
                 >
                   <DateSection
@@ -791,7 +791,7 @@ export const EnhancedServiceForm = ({
 
                 <ColoredSectionCard
                   title="Cliente y Servicio"
-                  icon={<Users className="h-5 w-5" />}
+                  icon={<Users className="size-5" />}
                   color="purple"
                 >
                   <ClientServiceSection
@@ -821,7 +821,7 @@ export const EnhancedServiceForm = ({
               <div className="space-y-4 animate-fade-in">
                 <ColoredSectionCard
                   title="Datos del Vehículo"
-                  icon={<Truck className="h-5 w-5" />}
+                  icon={<Truck className="size-5" />}
                   color="green"
                   hasError={isFieldInvalid('vehicleBrand') || isFieldInvalid('vehicleModel') || isFieldInvalid('licensePlate')}
                 >
@@ -845,7 +845,7 @@ export const EnhancedServiceForm = ({
 
                 <ColoredSectionCard
                   title="Ubicación"
-                  icon={<MapPin className="h-5 w-5" />}
+                  icon={<MapPin className="size-5" />}
                   color="orange"
                   hasError={isFieldInvalid('origin') || isFieldInvalid('destination')}
                 >
@@ -871,7 +871,7 @@ export const EnhancedServiceForm = ({
                 {selectedServiceType?.isOutsourced && (
                   <ColoredSectionCard
                     title="Proveedor Tercero"
-                    icon={<Building2 className="h-5 w-5" />}
+                    icon={<Building2 className="size-5" />}
                     color="orange"
                     required={true}
                   >
@@ -893,7 +893,7 @@ export const EnhancedServiceForm = ({
                 {!selectedServiceType?.isOutsourced && (
                   <ColoredSectionCard
                     title="Grúa Asignada"
-                    icon={<Truck className="h-5 w-5" />}
+                    icon={<Truck className="size-5" />}
                     color="amber"
                     hasError={isFieldInvalid('crane')}
                     required={selectedServiceType?.craneRequired}
@@ -922,7 +922,7 @@ export const EnhancedServiceForm = ({
                       </Select>
                       {isFieldInvalid('crane') && (
                         <p className="text-sm text-destructive flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
+                          <AlertTriangle className="size-3" />
                           {getFieldError('crane')?.message}
                         </p>
                       )}
@@ -934,7 +934,7 @@ export const EnhancedServiceForm = ({
                 {!selectedServiceType?.isOutsourced && (
                   <ColoredSectionCard
                     title="Operadores"
-                    icon={<Users className="h-5 w-5" />}
+                    icon={<Users className="size-5" />}
                     color="pink"
                     hasError={isFieldInvalid('operators')}
                     required={selectedServiceType?.operatorRequired}
@@ -983,7 +983,7 @@ export const EnhancedServiceForm = ({
                 {/* Marcar como pagado al crear */}
                 <ColoredSectionCard
                   title="Pago de costos al crear"
-                  icon={<DollarSign className="h-5 w-5" />}
+                  icon={<DollarSign className="size-5" />}
                   color="orange"
                 >
                   <div className="flex items-center justify-between">
@@ -1009,7 +1009,7 @@ export const EnhancedServiceForm = ({
               <div className="space-y-4 animate-fade-in">
                 <ColoredSectionCard
                   title="Información Financiera"
-                  icon={<DollarSign className="h-5 w-5" />}
+                  icon={<DollarSign className="size-5" />}
                   color="green"
                 >
                   <EnhancedFinancialSection
@@ -1038,7 +1038,7 @@ export const EnhancedServiceForm = ({
                 {/* Toggle para habilitar Custodia/Arriendo */}
                 <ColoredSectionCard
                   title="Configuración Adicional"
-                  icon={<Shield className="h-5 w-5" />}
+                  icon={<Shield className="size-5" />}
                   color="purple"
                 >
                   <div className="flex items-center justify-between">
@@ -1095,7 +1095,7 @@ export const EnhancedServiceForm = ({
                 {/* Observaciones */}
                 <ColoredSectionCard
                   title="Estado y Observaciones"
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={<FileText className="size-5" />}
                   color="cyan"
                 >
                   <ObservationsSection
@@ -1137,7 +1137,7 @@ export const EnhancedServiceForm = ({
                 disabled={isCreating || isUpdating}
                 className="text-xs sm:text-sm px-2 sm:px-3"
               >
-                <ChevronLeft className="h-4 w-4 mr-0.5 sm:mr-1" />
+                <ChevronLeft className="size-4 mr-0.5 sm:mr-1" />
                 Anterior
               </Button>
             )}
@@ -1154,7 +1154,7 @@ export const EnhancedServiceForm = ({
                 className="text-xs sm:text-sm px-2 sm:px-3"
               >
                 Siguiente
-                <ChevronRight className="h-4 w-4 ml-0.5 sm:ml-1" />
+                <ChevronRight className="size-4 ml-0.5 sm:ml-1" />
               </Button>
             ) : (
               <Button

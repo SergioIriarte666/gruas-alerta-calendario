@@ -18,7 +18,7 @@ export const InspectionLoadingState = ({ serviceId, onBack }: InspectionLoadingS
         <h1 className="text-2xl font-bold text-foreground">Inspección Pre-Servicio</h1>
       </div>
       <div className="text-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+        <div className="animate-spin rounded-full size-12 border-b-2 border-primary mx-auto"></div>
         <p className="mt-4 text-foreground">Cargando servicio...</p>
         <p className="text-sm text-muted-foreground mt-2">ID: {serviceId}</p>
       </div>

@@ -320,7 +320,7 @@ const EnhancedServicesSelector = ({
         </div>
         {selectedServiceIds.length > 0 && (
           <div className="flex items-center gap-1 text-sm text-primary">
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="size-4" />
             <span>{selectedServiceIds.length} seleccionado{selectedServiceIds.length !== 1 ? 's' : ''}</span>
           </div>
         )}
@@ -330,7 +330,7 @@ const EnhancedServicesSelector = ({
       {isGlobalSearch && (
         <Alert className="border border-amber-500/30 bg-amber-500/5">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+            <AlertTriangle className="size-4 text-amber-600 mt-0.5" />
             <div className="flex-1">
               <AlertDescription className="text-foreground">
                 <div className="font-medium text-amber-700">Búsqueda Global Activa</div>
@@ -345,7 +345,7 @@ const EnhancedServicesSelector = ({
                     onClick={handleAutoFillDates}
                     className="mt-2 text-amber-700 border-amber-500/30 hover:bg-amber-500/10"
                   >
-                    <CalendarDays className="h-4 w-4 mr-2" />
+                    <CalendarDays className="size-4 mr-2" />
                     Auto-rellenar fechas ({selectedServiceIds.length} servicio{selectedServiceIds.length !== 1 ? 's' : ''})
                   </Button>
                 )}
@@ -358,7 +358,7 @@ const EnhancedServicesSelector = ({
       {/* Search Input */}
       <div className="space-y-2">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Buscar por cotización, orden de compra, patente, folio, cliente..."
@@ -370,10 +370,10 @@ const EnhancedServicesSelector = ({
             <Button
               variant="ghost"
               size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 size-7 p-0"
               onClick={() => setSearchTerm('')}
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           )}
         </div>
@@ -384,11 +384,11 @@ const EnhancedServicesSelector = ({
         <Alert className="border">
           <div className="flex items-start gap-2">
             {statusMessage.type === 'warning' ? (
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+              <AlertTriangle className="size-4 text-destructive mt-0.5" />
             ) : statusMessage.type === 'success' ? (
-              <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
+              <CheckCircle className="size-4 text-primary mt-0.5" />
             ) : (
-              <InfoIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <InfoIcon className="size-4 text-muted-foreground mt-0.5" />
             )}
             <div className="flex-1">
               <AlertDescription className="text-foreground">
@@ -398,7 +398,7 @@ const EnhancedServicesSelector = ({
                   <ul className="text-xs mt-2 space-y-1 text-muted-foreground">
                     {statusMessage.suggestions.map((suggestion, index) => (
                       <li key={index} className="flex items-center gap-1">
-                        <span className="w-1 h-1 bg-current rounded-full"></span>
+                        <span className="size-1 bg-current rounded-full"></span>
                         {suggestion}
                       </li>
                     ))}
@@ -416,7 +416,7 @@ const EnhancedServicesSelector = ({
           {searchingProcessed ? (
             <Alert className="border border-blue-500/30 bg-blue-500/5">
               <div className="flex items-center gap-2">
-                <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <div className="animate-spin size-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
                 <AlertDescription className="text-foreground">
                   Buscando en servicios ya procesados...
                 </AlertDescription>
@@ -425,7 +425,7 @@ const EnhancedServicesSelector = ({
           ) : processedServices.length > 0 ? (
             <Alert className="border border-blue-500/30 bg-blue-500/5">
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
+                <FileText className="size-4 text-blue-600 mt-0.5" />
                 <div className="flex-1">
                   <AlertDescription className="text-foreground">
                     <div className="font-medium text-blue-700 mb-2">
@@ -458,7 +458,7 @@ const EnhancedServicesSelector = ({
                           {ps.invoiceFolio ? (
                             <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <Receipt className="h-4 w-4 text-green-600" />
+                                <Receipt className="size-4 text-green-600" />
                                 <span className="text-muted-foreground">Factura:</span>
                                 <span className="font-medium">{ps.invoiceFolio}</span>
                                 {ps.invoiceNumeroFiscal && (
@@ -484,7 +484,7 @@ const EnhancedServicesSelector = ({
                             </div>
                           ) : (
                             <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-amber-600" />
+                              <Clock className="size-4 text-amber-600" />
                               <span className="text-amber-700 text-sm">Sin facturar aún</span>
                             </div>
                           )}
@@ -515,7 +515,7 @@ const EnhancedServicesSelector = ({
               onCheckedChange={handleSelectAllPending}
               disabled={filteredPendingServices.length === 0}
             />
-              <Clock className="h-4 w-4 text-secondary-foreground" />
+              <Clock className="size-4 text-secondary-foreground" />
               <Label htmlFor="select-all-pending" className="text-foreground cursor-pointer">
                 Servicios Pendientes
               </Label>
@@ -539,7 +539,7 @@ const EnhancedServicesSelector = ({
               <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted">
                 <div className="space-y-1">
                   {visiblePendingServices.map(service => (
-                    <div key={service.id} className="flex items-center space-x-2 py-1 px-1 rounded hover:bg-background">
+                    <div key={service.id} className="flex items-center gap-x-2 py-1 px-1 rounded hover:bg-background">
                       <input
                         type="checkbox"
                         id={`pending-${service.id}`}
@@ -586,7 +586,7 @@ const EnhancedServicesSelector = ({
                   size="sm"
                   className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                 >
-                  <Zap className="h-4 w-4 mr-2" />
+                  <Zap className="size-4 mr-2" />
                   Completar {selectedPendingIds.length} servicio{selectedPendingIds.length !== 1 ? 's' : ''}
                 </Button>
               )}
@@ -646,7 +646,7 @@ const EnhancedServicesSelector = ({
               {visibleServices.map(service => (
                 <div
                   key={service.id}
-                  className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${
+                  className={`flex items-center gap-x-2 py-2 px-1 rounded transition-colors ${
                     selectedServiceIds.includes(service.id) 
                       ? 'bg-primary/10 border border-primary/30' 
                       : 'hover:bg-background'

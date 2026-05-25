@@ -146,9 +146,9 @@ export const VehicleModelsPipelineView: React.FC<VehicleModelsPipelineViewProps>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        <ChevronDown className="size-5 text-muted-foreground" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <ChevronRight className="size-5 text-muted-foreground" />
                       )}
                       <h3 className="text-lg font-semibold">{group.brand.name}</h3>
                       <Badge variant="secondary" className="ml-2">
@@ -182,7 +182,7 @@ export const VehicleModelsPipelineView: React.FC<VehicleModelsPipelineViewProps>
                               onEdit(model);
                             }}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="size-4" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -192,7 +192,7 @@ export const VehicleModelsPipelineView: React.FC<VehicleModelsPipelineViewProps>
                                 className="text-destructive hover:text-destructive"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="size-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>

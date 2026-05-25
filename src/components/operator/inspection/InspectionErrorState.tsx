@@ -21,7 +21,7 @@ export const InspectionErrorState = ({ error, serviceId, onRetry, onBack }: Insp
       </div>
       
       <div className="text-center p-8 bg-destructive/10 rounded-lg border border-destructive/30">
-        <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+        <AlertTriangle className="size-16 mx-auto mb-4 text-destructive" />
         <h2 className="text-xl font-semibold mb-2 text-destructive">Error al cargar el servicio</h2>
         <p className="text-muted-foreground mb-4">
           {error?.message || 'No se pudo cargar la información del servicio.'}
@@ -36,11 +36,11 @@ export const InspectionErrorState = ({ error, serviceId, onRetry, onBack }: Insp
         </div>
         <div className="space-x-4">
           <Button onClick={onRetry} variant="destructive">
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="size-4 mr-2" />
             Reintentar
           </Button>
           <Button onClick={onBack} variant="outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="size-4 mr-2" />
             Volver al Dashboard
           </Button>
         </div>

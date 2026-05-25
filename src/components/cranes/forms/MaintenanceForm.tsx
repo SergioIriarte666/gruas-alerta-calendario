@@ -186,7 +186,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
       <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-violet-500" />
+            <Wrench className="size-5 text-violet-500" />
             {editingRecord ? 'Editar Mantenimiento' : 'Agregar Mantenimiento'}
           </DialogTitle>
         </DialogHeader>
@@ -195,7 +195,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description" className="text-foreground flex items-center gap-2">
-              <FileText className="w-4 h-4" />
+              <FileText className="size-4" />
               Descripción
             </Label>
             <Textarea
@@ -246,7 +246,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cost" className="text-foreground flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="size-4" />
                 Costo
               </Label>
               <Input
@@ -281,7 +281,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label htmlFor="kilometraje" className="text-foreground flex items-center gap-2">
-                <Gauge className="w-4 h-4" />
+                <Gauge className="size-4" />
                 Kilometraje (Opcional)
               </Label>
               <Input
@@ -302,7 +302,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label htmlFor="provider" className="text-foreground flex items-center gap-2">
-                <Wrench className="w-4 h-4" />
+                <Wrench className="size-4" />
                 Proveedor (Opcional)
               </Label>
               <Input
@@ -315,7 +315,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
             <div className="space-y-2">
               <Label htmlFor="performed_by" className="text-foreground flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <User className="size-4" />
                 Realizado por (Opcional)
               </Label>
               <Input
@@ -332,7 +332,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             {/* Scheduled Date */}
             <div className="space-y-2">
               <Label className="text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
+                <CalendarIcon className="size-4" />
                 Fecha Programada
               </Label>
               <Popover>
@@ -341,7 +341,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                     variant="outline"
                     className="w-full justify-start text-left font-normal"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {scheduledDate ? formatForDisplayLong(scheduledDate) : 'Seleccionar fecha'}
                   </Button>
                 </PopoverTrigger>
@@ -359,7 +359,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             {/* Completed Date */}
             <div className="space-y-2">
               <Label className="text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
+                <CalendarIcon className="size-4" />
                 Fecha Completado
               </Label>
               <Popover>
@@ -368,7 +368,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                     variant="outline"
                     className="w-full justify-start text-left font-normal"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {completedDate ? formatForDisplayLong(completedDate) : 'Sin completar'}
                   </Button>
                 </PopoverTrigger>
@@ -386,7 +386,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             {/* Next Maintenance Date */}
             <div className="space-y-2">
               <Label className="text-foreground flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
+                <CalendarIcon className="size-4" />
                 Próximo Mantenimiento
               </Label>
               <Popover>
@@ -395,7 +395,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
                     variant="outline"
                     className="w-full justify-start text-left font-normal"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {nextMaintenanceDate ? formatForDisplayLong(nextMaintenanceDate) : 'Sin programar'}
                   </Button>
                 </PopoverTrigger>
@@ -415,7 +415,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           {editingRecord?.creatorName && (
             <div className="space-y-2">
               <Label className="text-foreground flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <User className="size-4" />
                 Registrado por
               </Label>
               <Input
@@ -429,7 +429,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-foreground flex items-center gap-2">
-              <FileText className="w-4 h-4" />
+              <FileText className="size-4" />
               Notas (Opcional)
             </Label>
             <Textarea

@@ -38,8 +38,8 @@ interface DetailItemProps {
 }
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
-  <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
+  <div className={`flex items-start gap-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
+    <Icon className="size-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-medium text-foreground ${valueClass}`}>{value || 'N/A'}</p>
@@ -56,7 +56,7 @@ interface DetailSectionProps {
 const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   <div>
     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-primary" />
+      <Icon className="size-5 mr-2 text-primary" />
       {title}
     </h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -188,7 +188,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
+              <Package className="size-5" />
               Cierre {closure.folio}
             </span>
             <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
@@ -247,7 +247,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
           <TabsContent value="services" className="mt-6">
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-foreground flex items-center">
-                <Wrench className="w-5 h-5 mr-2 text-primary" />
+                <Wrench className="size-5 mr-2 text-primary" />
                 Servicios del Cierre
                 {services.length > 0 && (
                   <Badge variant="outline" className="ml-2 text-xs">{services.length}</Badge>
@@ -256,12 +256,12 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
 
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="w-8 h-8 mx-auto mb-2 animate-spin opacity-50" />
+                  <Clock className="size-8 mx-auto mb-2 animate-spin opacity-50" />
                   <p className="text-sm">Cargando servicios...</p>
                 </div>
               ) : services.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Wrench className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <Wrench className="size-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No hay servicios en este cierre</p>
                 </div>
               ) : (
@@ -307,7 +307,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
           <TabsContent value="invoices" className="mt-6">
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-foreground flex items-center">
-                <Receipt className="w-5 h-5 mr-2 text-primary" />
+                <Receipt className="size-5 mr-2 text-primary" />
                 Facturas Asociadas
                 {invoices.length > 0 && (
                   <Badge variant="outline" className="ml-2 text-xs">{invoices.length}</Badge>
@@ -316,12 +316,12 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
 
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="w-8 h-8 mx-auto mb-2 animate-spin opacity-50" />
+                  <Clock className="size-8 mx-auto mb-2 animate-spin opacity-50" />
                   <p className="text-sm">Cargando facturas...</p>
                 </div>
               ) : invoices.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Receipt className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <Receipt className="size-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No hay facturas asociadas a este cierre</p>
                 </div>
               ) : (

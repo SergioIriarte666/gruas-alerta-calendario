@@ -31,11 +31,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 export const CranesTable = ({
@@ -73,13 +73,13 @@ export const CranesTable = ({
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
           <p className="text-muted-foreground mb-4">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewCrane}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Grúa
           </Button>
         </CardContent>
@@ -91,13 +91,13 @@ export const CranesTable = ({
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primera grúa al sistema
           </p>
           <Button onClick={onNewCrane}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Primera Grúa
           </Button>
         </CardContent>
@@ -222,7 +222,7 @@ export const CranesTable = ({
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center justify-center gap-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -230,7 +230,7 @@ export const CranesTable = ({
                         className="border border-info/30 text-info hover:bg-info-soft/60 hover:text-info"
                         title="Ver detalles"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -239,7 +239,7 @@ export const CranesTable = ({
                         className="border border-primary/30 text-primary hover:bg-primary-soft hover:text-primary"
                         title="Editar grúa"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -248,7 +248,7 @@ export const CranesTable = ({
                         className="border border-danger/30 text-danger hover:bg-danger-soft/70 hover:text-danger"
                         title="Eliminar grúa"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </td>

@@ -47,9 +47,9 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
 
   const getSectionIcon = (name: string) => {
     const lower = name.toLowerCase();
-    if (lower.includes('combustible')) return <Fuel className="w-5 h-5 text-red-500" />;
-    if (lower.includes('peaje')) return <Car className="w-5 h-5 text-orange-500" />;
-    return <Tag className="w-5 h-5 text-primary" />;
+    if (lower.includes('combustible')) return <Fuel className="size-5 text-red-500" />;
+    if (lower.includes('peaje')) return <Car className="size-5 text-orange-500" />;
+    return <Tag className="size-5 text-primary" />;
   };
 
   const getDefaultDescription = (subcategoryName: string) => {
@@ -146,7 +146,7 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calculator className="w-5 h-5 text-green-400" />
+                  <Calculator className="size-5 text-green-400" />
                   <span className="font-medium text-green-200">Total Calculado:</span>
                 </div>
                 <span className="text-2xl font-bold text-green-400">${currentTotal.toLocaleString()}</span>

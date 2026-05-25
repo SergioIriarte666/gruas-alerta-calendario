@@ -35,15 +35,15 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
             </div>
             <div className="space-y-1.5 text-sm">
               <div className="flex items-center text-foreground">
-                <Calendar className="w-3.5 h-3.5 mr-2 text-muted-foreground flex-shrink-0" />
+                <Calendar className="size-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                 {formatForDisplay(service.serviceDate)}
               </div>
               <div className="flex items-center text-foreground">
-                <User className="w-3.5 h-3.5 mr-2 text-muted-foreground flex-shrink-0" />
+                <User className="size-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</span>
               </div>
               <div className="flex items-center text-tms-green font-semibold">
-                <DollarSign className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
+                <DollarSign className="size-3.5 mr-2 flex-shrink-0" />
                 {formatCurrency(getDisplayServiceValue(service))}
               </div>
             </div>
@@ -53,7 +53,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
               className="w-full mt-2 text-tms-green hover:text-tms-green hover:bg-tms-green/10"
               onClick={() => onViewDetails(service.id)}
             >
-              <Eye className="w-4 h-4 mr-1" />
+              <Eye className="size-4 mr-1" />
               Ver detalles
             </Button>
           </CardContent>
@@ -65,9 +65,9 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   return (
     <Card className="bg-white border border-gray-200 shadow-sm">
       <CardHeader className={isMobile ? "pb-2 px-3 pt-3" : "pb-4"}>
-        <CardTitle className={`flex items-center space-x-3 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
+        <CardTitle className={`flex items-center gap-x-3 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
           <div className="p-2 bg-tms-green/10 rounded-lg">
-            <Truck className={`${isMobile ? 'w-4 h-4' : 'w-6 h-6'} text-tms-green`} />
+            <Truck className={`${isMobile ? 'size-4' : 'size-6'} text-tms-green`} />
           </div>
           <span>Servicios Recientes</span>
         </CardTitle>
@@ -76,7 +76,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
         {services.length === 0 ? (
           <div className="text-center py-12 px-6">
             <div className="p-4 bg-gray-50 rounded-xl inline-block mb-4">
-              <Truck className="w-12 h-12 mx-auto text-gray-400" />
+              <Truck className="size-12 mx-auto text-gray-400" />
             </div>
             <p className="text-gray-600 text-lg">No hay servicios registrados</p>
             <p className="text-gray-500 text-sm mt-2">Los servicios aparecerán aquí una vez que se registren</p>
@@ -133,7 +133,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                         onClick={() => onViewDetails(service.id)}
                         title="Ver detalles del servicio"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="size-4" />
                       </Button>
                     </TableCell>
                   </TableRow>

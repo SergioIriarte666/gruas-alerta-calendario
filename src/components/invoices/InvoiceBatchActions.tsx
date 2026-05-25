@@ -103,7 +103,7 @@ const InvoiceBatchActions = ({
             
             {protectedCount > 0 && (
               <div className="flex items-center gap-1.5 text-amber-400 text-xs">
-                <ShieldAlert className="w-4 h-4" />
+                <ShieldAlert className="size-4" />
                 <span>{protectedCount} factura(s) protegida(s) — requieren confirmación reforzada</span>
               </div>
             )}
@@ -117,7 +117,7 @@ const InvoiceBatchActions = ({
               className="border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
               disabled={selectedInvoices.every(inv => inv.status === 'paid')}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
+              <CheckCircle className="size-4 mr-2" />
               Marcar como Pagadas
             </Button>
 
@@ -127,7 +127,7 @@ const InvoiceBatchActions = ({
               onClick={handleExport}
               className="border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"
             >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              <FileSpreadsheet className="size-4 mr-2" />
               Exportar
             </Button>
 
@@ -137,7 +137,7 @@ const InvoiceBatchActions = ({
               onClick={handleDelete}
               className="border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="size-4 mr-2" />
               Eliminar
             </Button>
 
@@ -147,7 +147,7 @@ const InvoiceBatchActions = ({
               onClick={onClearSelection}
               className="text-gray-400 hover:text-white hover:bg-white/10"
             >
-              <X className="w-4 h-4 mr-2" />
+              <X className="size-4 mr-2" />
               Limpiar
             </Button>
           </div>

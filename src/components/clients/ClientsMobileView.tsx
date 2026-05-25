@@ -43,7 +43,7 @@ export const ClientsMobileView = ({
     return (
       <Card className="glass-card">
         <CardContent className="p-6 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">
             {searchTerm ? 'No se encontraron clientes' : 'No hay clientes registrados'}
           </h3>
@@ -51,7 +51,7 @@ export const ClientsMobileView = ({
             {searchTerm ? `No hay clientes que coincidan con "${searchTerm}"` : 'Comienza agregando tu primer cliente al sistema'}
           </p>
           <Button onClick={onNewClient} className="bg-primary hover:bg-primary/80 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />{searchTerm ? 'Agregar Cliente' : 'Agregar Primer Cliente'}
+            <Plus className="size-4 mr-2" />{searchTerm ? 'Agregar Cliente' : 'Agregar Primer Cliente'}
           </Button>
         </CardContent>
       </Card>
@@ -94,7 +94,7 @@ export const ClientsMobileView = ({
                 <div className="flex items-center gap-2">
                   {svcCount > 0 && (
                     <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
-                      {svcCount} <TrendingUp className="w-3 h-3 ml-0.5" />
+                      {svcCount} <TrendingUp className="size-3 ml-0.5" />
                     </Badge>
                   )}
                   <Badge variant={client.isActive ? "default" : "secondary"} className={client.isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}>
@@ -107,19 +107,19 @@ export const ClientsMobileView = ({
               <div className="space-y-1.5 mb-3">
                 {client.email && (
                   <div className="flex items-center text-foreground text-sm">
-                    <Mail className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <Mail className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                     <span className="truncate">{client.email}</span>
                   </div>
                 )}
                 {client.phone && (
                   <div className="flex items-center text-foreground text-sm">
-                    <Phone className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <Phone className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                     <span>{client.phone}</span>
                   </div>
                 )}
                 {client.contactName && (
                   <div className="flex items-center text-foreground text-sm">
-                    <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <User className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                     <span className="truncate">{toTitleCase(client.contactName)}</span>
                   </div>
                 )}
@@ -128,26 +128,26 @@ export const ClientsMobileView = ({
               {/* Simplified actions: View, Edit, Menu */}
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 border border-blue-500/50 flex-1">
-                  <Eye className="w-4 h-4 mr-1" />Ver
+                  <Eye className="size-4 mr-1" />Ver
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onEdit(client)} className="text-primary hover:text-primary/80 hover:bg-primary/10 border border-primary/50 flex-1">
-                  <Edit className="w-4 h-4 mr-1" />Editar
+                  <Edit className="size-4 mr-1" />Editar
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground border border-border">
-                      <MoreHorizontal className="w-4 h-4" />
+                      <MoreHorizontal className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleViewPipeline(client)}>
-                      <TrendingUp className="w-4 h-4 mr-2 text-purple-500" />Pipeline VIP
+                      <TrendingUp className="size-4 mr-2 text-purple-500" />Pipeline VIP
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onToggleStatus(client)}>
-                      {client.isActive ? <><UserX className="w-4 h-4 mr-2 text-red-500" />Desactivar</> : <><UserCheck className="w-4 h-4 mr-2 text-green-500" />Activar</>}
+                      {client.isActive ? <><UserX className="size-4 mr-2 text-red-500" />Desactivar</> : <><UserCheck className="size-4 mr-2 text-green-500" />Activar</>}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDelete(client)} className="text-destructive">
-                      <Trash2 className="w-4 h-4 mr-2" />Eliminar
+                      <Trash2 className="size-4 mr-2" />Eliminar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

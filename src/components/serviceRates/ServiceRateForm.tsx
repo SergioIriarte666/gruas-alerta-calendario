@@ -282,7 +282,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
                 className="bg-violet-600 hover:bg-violet-700"
               >
                 {form.formState.isSubmitting && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                 )}
                 {isEditing ? 'Actualizar' : 'Crear'}
               </Button>

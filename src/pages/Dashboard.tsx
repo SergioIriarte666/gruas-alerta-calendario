@@ -106,7 +106,7 @@ const Dashboard: React.FC = () => {
                 Dashboard Principal
               </h1>
               <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
+                <span className="size-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
                 En vivo
               </Badge>
             </div>
@@ -117,7 +117,7 @@ const Dashboard: React.FC = () => {
               disabled={downloadingReport}
               className="w-fit"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="size-4 mr-2" />
               {downloadingReport ? 'Generando...' : 'Reporte Pendientes'}
             </Button>
           </div>

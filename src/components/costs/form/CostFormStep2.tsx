@@ -118,7 +118,7 @@ export const CostFormStep2 = ({
       {/* Sección de Monto */}
       <ColoredSectionCard
         title="Monto"
-        icon={<DollarSign className="h-4 w-4" />}
+        icon={<DollarSign className="size-4" />}
         color="green"
         required
       >
@@ -140,7 +140,7 @@ export const CostFormStep2 = ({
       {selectedCategoryId && (
         <ColoredSectionCard
           title="Subcategoría"
-          icon={<Tag className="h-4 w-4" />}
+          icon={<Tag className="size-4" />}
           color="cyan"
         >
           <FormField name="subcategory" control={form.control} render={({ field }) => (
@@ -250,7 +250,7 @@ export const CostFormStep2 = ({
       {selectedSubcategoryRow?.requires_location && (
         <ColoredSectionCard
           title="Ubicación / Tramo"
-          icon={<Tag className="h-4 w-4" />}
+          icon={<Tag className="size-4" />}
           color="cyan"
           required
         >
@@ -273,7 +273,7 @@ export const CostFormStep2 = ({
       {selectedSubcategoryRow?.requires_document && (
         <ColoredSectionCard
           title="Documento"
-          icon={<Tag className="h-4 w-4" />}
+          icon={<Tag className="size-4" />}
           color="cyan"
           required
         >
@@ -317,7 +317,7 @@ export const CostFormStep2 = ({
       {selectedSubcategoryRow?.requires_other_reason && (
         <ColoredSectionCard
           title="Motivo"
-          icon={<Tag className="h-4 w-4" />}
+          icon={<Tag className="size-4" />}
           color="cyan"
           required
         >
@@ -357,7 +357,7 @@ export const CostFormStep2 = ({
       {isPiezasYRepuestos && (
         <ColoredSectionCard
           title="Información de Piezas y Repuestos"
-          icon={<Package className="h-4 w-4" />}
+          icon={<Package className="size-4" />}
           color="blue"
           required
         >
@@ -368,7 +368,7 @@ export const CostFormStep2 = ({
             <FormField name="part_name" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2">
-                  <Package className="w-4 h-4" />
+                  <Package className="size-4" />
                   Nombre de la Pieza *
                 </Label>
                 <FormControl>
@@ -386,7 +386,7 @@ export const CostFormStep2 = ({
             <FormField name="supplier_phone" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
+                  <Phone className="size-4" />
                   Teléfono del Proveedor
                 </Label>
                 <FormControl>
@@ -403,7 +403,7 @@ export const CostFormStep2 = ({
             <FormField name="quantity" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
+                  <Hash className="size-4" />
                   Cantidad *
                 </Label>
                 <FormControl>
@@ -422,7 +422,7 @@ export const CostFormStep2 = ({
             <FormField name="unit_price" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="size-4" />
                   Precio Unitario *
                 </Label>
                 <FormControl>
@@ -442,7 +442,7 @@ export const CostFormStep2 = ({
             <FormField name="kilometraje" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2">
-                  <Gauge className="w-4 h-4" />
+                  <Gauge className="size-4" />
                   Kilometraje (Opcional)
                 </Label>
                 <FormControl>

@@ -49,7 +49,7 @@ export const ClosureSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-violet-500" />
+            <Receipt className="size-4 text-violet-500" />
             Resumen del Cierre
           </span>
           <Badge className={statusConfig.className}>
@@ -60,7 +60,7 @@ export const ClosureSummaryPanel = ({
       <CardContent className="space-y-4">
         {/* Período */}
         <div className="flex items-start gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
+          <Calendar className="size-4 text-muted-foreground mt-0.5" />
           <div className="flex-1">
             <span className="text-xs text-muted-foreground block">Período:</span>
             <span className="text-sm font-medium">
@@ -72,7 +72,7 @@ export const ClosureSummaryPanel = ({
         {/* Cliente */}
         {clientName && (
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cliente:</span>
             <span className="text-sm font-medium truncate">{toTitleCase(clientName)}</span>
           </div>
@@ -80,7 +80,7 @@ export const ClosureSummaryPanel = ({
 
         {/* Servicios */}
         <div className="flex items-center gap-2">
-          <ListChecks className="h-4 w-4 text-muted-foreground" />
+          <ListChecks className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Servicios:</span>
           <Badge variant={selectedCount > 0 ? "default" : "secondary"} className={cn(
             selectedCount > 0 && "bg-violet-600 text-white"
@@ -92,7 +92,7 @@ export const ClosureSummaryPanel = ({
         {/* Orden de Compra */}
         {purchaseOrder && (
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">OC:</span>
             <span className="text-sm font-mono">{purchaseOrder}</span>
           </div>
@@ -103,7 +103,7 @@ export const ClosureSummaryPanel = ({
         {/* Total */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Total:</span>
           </div>
           <span className={cn(

@@ -93,7 +93,7 @@ export const UserManagementTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-foreground" />
+        <Loader2 className="size-6 animate-spin text-foreground" />
         <span className="ml-2 text-foreground">Cargando usuarios...</span>
       </div>
     );
@@ -118,10 +118,10 @@ export const UserManagementTab = () => {
                 disabled={creating}
               >
                 {creating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
                   <>
-                    <UserPlus className="w-4 h-4 mr-1" />
+                    <UserPlus className="size-4 mr-1" />
                     {isMobile ? "Nuevo" : "Nuevo Usuario"}
                   </>
                 )}
@@ -131,7 +131,7 @@ export const UserManagementTab = () => {
                 variant="outline"
                 size="sm"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="size-4" />
                 {!isMobile && <span className="ml-1">Actualizar</span>}
               </Button>
             </div>
@@ -201,8 +201,8 @@ export const UserManagementTab = () => {
                           if (!open) setSelectedUser(null);
                         }}>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedUser(user)}>
-                              <Settings className="w-4 h-4" />
+                            <Button variant="ghost" size="icon" className="size-8" onClick={() => setSelectedUser(user)}>
+                              <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="bg-card w-[90vw] max-w-md">
@@ -222,11 +222,11 @@ export const UserManagementTab = () => {
                           </DialogContent>
                         </Dialog>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-violet-600" onClick={() => setUserForPermissions(user)}>
-                        <Shield className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="size-8 text-violet-600" onClick={() => setUserForPermissions(user)}>
+                        <Shield className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600" onClick={() => setUserToDelete(user)}>
-                        <Trash2 className="w-4 h-4" />
+                      <Button variant="ghost" size="icon" className="size-8 text-red-600" onClick={() => setUserToDelete(user)}>
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </CardContent>
@@ -269,8 +269,8 @@ export const UserManagementTab = () => {
                               if (!open) setSelectedUser(null);
                             }}>
                               <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setSelectedUser(user)} disabled={updating === user.id}>
-                                  <Settings className="w-3 h-3" />
+                                <Button variant="ghost" size="sm" className="size-6 p-0" onClick={() => setSelectedUser(user)} disabled={updating === user.id}>
+                                  <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="bg-card">
@@ -296,7 +296,7 @@ export const UserManagementTab = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-x-2">
                           <Switch checked={user.is_active} onCheckedChange={(checked) => toggleUserStatus(user.id, checked)} disabled={updating === user.id} />
                           <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
                             {user.is_active ? 'Activo' : 'Inactivo'}
@@ -308,7 +308,7 @@ export const UserManagementTab = () => {
                           {getInvitationStatusBadge(user)}
                           {getInvitationStatus(user.id)?.status === 'sent' && (
                             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => resendInvitation(user.id)} disabled={sendingInvitation === user.id}>
-                              {sendingInvitation === user.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Reenviar'}
+                              {sendingInvitation === user.id ? <Loader2 className="size-3 animate-spin" /> : 'Reenviar'}
                             </Button>
                           )}
                         </div>
@@ -328,10 +328,10 @@ export const UserManagementTab = () => {
                             </SelectContent>
                           </Select>
                           <Button variant="ghost" size="icon" className="text-violet-600 hover:text-violet-700 hover:bg-violet-50" onClick={() => setUserForPermissions(user)} disabled={updating === user.id} title="Configurar permisos de módulos">
-                            <Shield className="w-4 h-4" />
+                            <Shield className="size-4" />
                           </Button>
                           <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setUserToDelete(user)} disabled={updating === user.id}>
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -401,7 +401,7 @@ export const UserManagementTab = () => {
               disabled={updating === userToDelete?.id}
             >
               {updating === userToDelete?.id ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</>
+                <><Loader2 className="size-4 mr-2 animate-spin" />Eliminando...</>
               ) : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>

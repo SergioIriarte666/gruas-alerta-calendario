@@ -181,12 +181,12 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
       >
         {isUploading ? (
           <>
-            <Upload className="h-4 w-4 mr-2 animate-spin" />
+            <Upload className="size-4 mr-2 animate-spin" />
             Procesando...
           </>
         ) : (
           <>
-            <Camera className="h-4 w-4 mr-2" />
+            <Camera className="size-4 mr-2" />
             {photos.length === 0 ? 'Tomar Foto' : `Agregar Foto (${photos.length}/${maxPhotos})`}
           </>
         )}
@@ -205,10 +205,10 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-2 -right-2 size-6 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => removePhoto(index)}
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="size-3" />
               </Button>
             </div>
           ))}

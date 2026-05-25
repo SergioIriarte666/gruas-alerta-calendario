@@ -42,7 +42,7 @@ export const CommissionExportButton: React.FC<CommissionExportButtonProps> = ({
           disabled={isDisabled}
           className={className}
         >
-          <Download className="h-4 w-4 mr-2" />
+          <Download className="size-4 mr-2" />
           {isExporting ? 'Exportando...' : 'Exportar'}
         </Button>
       </DropdownMenuTrigger>
@@ -51,14 +51,14 @@ export const CommissionExportButton: React.FC<CommissionExportButtonProps> = ({
           onClick={() => handleExport('pdf')}
           disabled={isDisabled}
         >
-          <FileText className="h-4 w-4 mr-2" />
+          <FileText className="size-4 mr-2" />
           Exportar PDF
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleExport('excel')}
           disabled={isDisabled}
         >
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          <FileSpreadsheet className="size-4 mr-2" />
           Exportar Excel
         </DropdownMenuItem>
       </DropdownMenuContent>

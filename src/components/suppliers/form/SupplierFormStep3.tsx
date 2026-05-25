@@ -94,7 +94,7 @@ export const SupplierFormStep3 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Categoría"
-        icon={<Tag className="h-5 w-5" />}
+        icon={<Tag className="size-5" />}
         color="orange"
         required
         hasError={!!errors.category}
@@ -168,7 +168,7 @@ export const SupplierFormStep3 = ({
 
       <ColoredSectionCard
         title="Evaluación y Notas"
-        icon={<FileText className="h-5 w-5" />}
+        icon={<FileText className="size-5" />}
         color="blue"
       >
         <div className="space-y-4">
@@ -184,7 +184,7 @@ export const SupplierFormStep3 = ({
                 >
                   <Star 
                     className={cn(
-                      "h-6 w-6 transition-colors", 
+                      "size-6 transition-colors", 
                       star <= currentRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
                     )} 
                   />
@@ -233,7 +233,7 @@ export const SupplierFormStep3 = ({
 
       <ColoredSectionCard
         title="Estado del Proveedor"
-        icon={<Power className="h-5 w-5" />}
+        icon={<Power className="size-5" />}
         color="green"
       >
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">

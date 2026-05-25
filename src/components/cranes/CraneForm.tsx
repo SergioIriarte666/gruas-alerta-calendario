@@ -222,7 +222,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <Switch
             id="isActive"
             checked={formData.isActive}

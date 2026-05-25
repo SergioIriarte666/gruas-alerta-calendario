@@ -74,7 +74,7 @@ const ResetPassword = () => {
     return (
       <AuthBackground>
         <div className="text-center text-white">
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="size-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p>Verificando enlace...</p>
         </div>
       </AuthBackground>
@@ -86,8 +86,8 @@ const ResetPassword = () => {
       <div className="w-full max-w-[400px]">
         <Card className="bg-transparent border-white/20 shadow-none" style={{ background: 'transparent' }}>
           <CardHeader className="bg-transparent text-center" style={{ background: 'transparent' }}>
-            <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-2">
-              <Lock className="w-8 h-8 text-tms-green" />
+            <div className="size-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Lock className="size-8 text-tms-green" />
             </div>
             <CardTitle className="text-white">Nueva Contraseña</CardTitle>
             <CardDescription className="text-white/80">
@@ -113,7 +113,7 @@ const ResetPassword = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
               </div>
@@ -135,23 +135,23 @@ const ResetPassword = () => {
                 <p className="font-medium text-white/80">La contraseña debe tener:</p>
                 <ul className="list-none space-y-1">
                   <li className={`flex items-center gap-2 ${password.length >= 12 ? 'text-tms-green' : ''}`}>
-                    <Check className={`w-3 h-3 ${password.length >= 12 ? 'opacity-100' : 'opacity-30'}`} />
+                    <Check className={`size-3 ${password.length >= 12 ? 'opacity-100' : 'opacity-30'}`} />
                     Al menos 12 caracteres
                   </li>
                   <li className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-tms-green' : ''}`}>
-                    <Check className={`w-3 h-3 ${/[A-Z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
+                    <Check className={`size-3 ${/[A-Z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Una letra mayúscula
                   </li>
                   <li className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-tms-green' : ''}`}>
-                    <Check className={`w-3 h-3 ${/[a-z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
+                    <Check className={`size-3 ${/[a-z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Una letra minúscula
                   </li>
                   <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-tms-green' : ''}`}>
-                    <Check className={`w-3 h-3 ${/[0-9]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
+                    <Check className={`size-3 ${/[0-9]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Un número
                   </li>
                   <li className={`flex items-center gap-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-tms-green' : ''}`}>
-                    <Check className={`w-3 h-3 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
+                    <Check className={`size-3 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
                     Un símbolo especial
                   </li>
                 </ul>

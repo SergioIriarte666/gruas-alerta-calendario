@@ -48,7 +48,7 @@ export const PhotoCaptureControls = ({
             color: '#3b82f6'
           }}
         >
-          <Camera className="w-4 h-4" />
+          <Camera className="size-4" />
           Tomar Foto
         </Button>
         <Button
@@ -64,7 +64,7 @@ export const PhotoCaptureControls = ({
             color: '#22c55e'
           }}
         >
-          <Upload className="w-4 h-4" />
+          <Upload className="size-4" />
           Subir Foto
         </Button>
         {showRefresh && (
@@ -81,7 +81,7 @@ export const PhotoCaptureControls = ({
               color: '#d1d5db'
             }}
           >
-            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-3 ${isLoading ? 'animate-spin' : ''}`} />
             Sincronizar
           </Button>
         )}

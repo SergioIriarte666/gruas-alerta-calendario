@@ -17,7 +17,7 @@ export const CostFormStep4 = ({ form, receiptUrls = [] }: CostFormStep4Props) =>
     <div className="space-y-4">
       <ColoredSectionCard
         title="Información Adicional"
-        icon={<StickyNote className="h-4 w-4" />}
+        icon={<StickyNote className="size-4" />}
         color="amber"
       >
         <FormField name="notes" control={form.control} render={({ field }) => (
@@ -38,7 +38,7 @@ export const CostFormStep4 = ({ form, receiptUrls = [] }: CostFormStep4Props) =>
       {receiptUrls.length > 0 && (
         <ColoredSectionCard
           title="Comprobante"
-          icon={<FileText className="h-4 w-4" />}
+          icon={<FileText className="size-4" />}
           color="purple"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

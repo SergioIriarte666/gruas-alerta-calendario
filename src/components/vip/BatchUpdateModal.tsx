@@ -301,8 +301,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         {/* Header */}
         <DialogHeader className="flex-shrink-0 px-6 py-4 border-b bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Layers className="w-5 h-5 text-primary" />
+            <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Layers className="size-5 text-primary" />
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold text-foreground">
@@ -328,7 +328,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               {/* Suma total de servicios activos */}
               <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-violet-500" />
+                  <DollarSign className="size-3.5 text-violet-500" />
                   <span className="text-xs text-muted-foreground">Valor Total:</span>
                 </div>
                 <span className="text-sm font-semibold text-violet-600">
@@ -343,7 +343,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   className="h-7 text-xs flex-1"
                   onClick={selectAll}
                 >
-                  <CheckSquare className="w-3 h-3 mr-1" />
+                  <CheckSquare className="size-3 mr-1" />
                   Todos
                 </Button>
                 <Button 
@@ -352,7 +352,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   className="h-7 text-xs flex-1"
                   onClick={deselectAll}
                 >
-                  <Square className="w-3 h-3 mr-1" />
+                  <Square className="size-3 mr-1" />
                   Ninguno
                 </Button>
               </div>
@@ -404,7 +404,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                                     ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' 
                                     : 'bg-muted text-muted-foreground border-border'
                                 }`}>
-                                  {enableQuote && !overwriteQuote && <Lock className="w-2.5 h-2.5" />}
+                                  {enableQuote && !overwriteQuote && <Lock className="size-2.5" />}
                                   COT: {service.quoteNumber}
                                 </Badge>
                               )}
@@ -414,7 +414,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                                     ? 'bg-green-500/10 text-green-500 border-green-500/30' 
                                     : 'bg-muted text-muted-foreground border-border'
                                 }`}>
-                                  {enablePurchaseOrder && !overwritePO && <Lock className="w-2.5 h-2.5" />}
+                                  {enablePurchaseOrder && !overwritePO && <Lock className="size-2.5" />}
                                   OC: {service.purchaseOrderNumber}
                                 </Badge>
                               )}
@@ -423,7 +423,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                           {/* Datos del vehículo y servicio */}
                           {(service.vehicleBrand || service.vehicleModel || service.licensePlate) && (
                             <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground min-w-0">
-                              <Car className="w-3 h-3 flex-shrink-0" />
+                              <Car className="size-3 flex-shrink-0" />
                               <span className="truncate">
                                 {[service.vehicleBrand, service.vehicleModel].filter(Boolean).join(' ')}
                                 {(service.vehicleBrand || service.vehicleModel) && service.licensePlate && ' · '}
@@ -438,7 +438,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                               className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0"
                               title={`${service.origin || '?'} → ${service.destination || '?'}`}
                             >
-                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              <MapPin className="size-3 flex-shrink-0" />
                               <span className="truncate">
                                 {service.origin || '—'} → {service.destination || '—'}
                               </span>
@@ -446,7 +446,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                           )}
                           {(service.operator?.name || service.crane?.licensePlate) && (
                             <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground min-w-0">
-                              <User className="w-3 h-3 flex-shrink-0" />
+                              <User className="size-3 flex-shrink-0" />
                               <span className="truncate">
                                 {service.operator?.name || 'Sin operador'}
                                 {' · '}
@@ -483,10 +483,10 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className={`size-10 rounded-full flex items-center justify-center ${
                           enableQuote ? 'bg-blue-500/20' : 'bg-muted'
                         }`}>
-                          <FileText className={`w-5 h-5 ${enableQuote ? 'text-blue-400' : 'text-muted-foreground'}`} />
+                          <FileText className={`size-5 ${enableQuote ? 'text-blue-400' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Cotizaciones</h3>
@@ -546,7 +546,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                           <div className="col-span-3 mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                <AlertTriangle className="size-4 text-amber-500" />
                                 <span className="text-xs text-amber-500">
                                   {servicesWithQuote.length} servicio(s) ya tienen COT asignado
                                 </span>
@@ -581,10 +581,10 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className={`size-10 rounded-full flex items-center justify-center ${
                           enablePurchaseOrder ? 'bg-green-500/20' : 'bg-muted'
                         }`}>
-                          <ShoppingCart className={`w-5 h-5 ${enablePurchaseOrder ? 'text-green-400' : 'text-muted-foreground'}`} />
+                          <ShoppingCart className={`size-5 ${enablePurchaseOrder ? 'text-green-400' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Órdenes de Compra</h3>
@@ -644,7 +644,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                           <div className="col-span-3 mt-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-green-500" />
+                                <AlertTriangle className="size-4 text-green-500" />
                                 <span className="text-xs text-green-500">
                                   {servicesWithPO.length} servicio(s) ya tienen OC asignado
                                 </span>
@@ -679,10 +679,10 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className={`size-10 rounded-full flex items-center justify-center ${
                           autoUpdateStatus ? 'bg-purple-500/20' : 'bg-muted'
                         }`}>
-                          <RefreshCw className={`w-5 h-5 ${autoUpdateStatus ? 'text-purple-400' : 'text-muted-foreground'}`} />
+                          <RefreshCw className={`size-5 ${autoUpdateStatus ? 'text-purple-400' : 'text-muted-foreground'}`} />
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground">Gestión Automática de Estado</h3>
@@ -695,7 +695,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     {autoUpdateStatus && (enableQuote || enablePurchaseOrder) && (
                       <div className="mt-3 p-3 rounded-lg bg-purple-500/10 animate-fade-in">
                       <div className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <AlertCircle className="size-4 text-purple-600 dark:text-purple-400" />
                           <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Estado resultante:</span>
                           <Badge className={`${
                             enablePurchaseOrder 
@@ -738,14 +738,14 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-                <X className="w-4 h-4 mr-2" />
+                <X className="size-4 mr-2" />
                 Cancelar
               </Button>
               <Button 
                 onClick={handleSubmit} 
                 disabled={isLoading || activeServices.length === 0 || (!enableQuote && !enablePurchaseOrder)}
               >
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="size-4 mr-2" />
                 {isLoading ? 'Actualizando...' : 'Actualizar Servicios'}
               </Button>
             </div>

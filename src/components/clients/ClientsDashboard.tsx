@@ -28,7 +28,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
               <p className="text-xs text-muted-foreground mt-1">{inactiveClients} inactivos</p>
             </div>
             <div className="bg-violet-600/10 p-3 rounded-xl">
-              <Users className="w-6 h-6 text-violet-600" />
+              <Users className="size-6 text-violet-600" />
             </div>
           </div>
         </CardContent>
@@ -44,7 +44,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
               <p className="text-xs text-muted-foreground mt-1">por RUT único</p>
             </div>
             <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-xl">
-              <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <Building2 className="size-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </CardContent>
@@ -60,7 +60,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
               <p className="text-xs text-muted-foreground mt-1">en pipeline</p>
             </div>
             <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <TrendingUp className="size-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </CardContent>
@@ -76,7 +76,7 @@ export const ClientsDashboard = ({ activeClients, inactiveClients, uniqueCompani
               <p className="text-xs text-muted-foreground mt-1">por cobrar</p>
             </div>
             <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-xl">
-              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <DollarSign className="size-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </CardContent>

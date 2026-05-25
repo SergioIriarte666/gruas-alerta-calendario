@@ -40,7 +40,7 @@ export const SupplierPartsTab: React.FC<SupplierPartsTabProps> = ({ parts, isLoa
   if (parts.length === 0) {
     return (
       <div className="text-center py-12">
-        <Wrench className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <Wrench className="size-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">Sin piezas</h3>
         <p className="text-muted-foreground">
           No hay piezas de grúas registradas para este proveedor

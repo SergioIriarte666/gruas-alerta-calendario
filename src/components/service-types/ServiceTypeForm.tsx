@@ -116,7 +116,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 />
               </div>
 
-              <div className="flex items-center space-x-3 py-2">
+              <div className="flex items-center gap-x-3 py-2">
                 <Switch
                   id="isActive"
                   checked={formData.isActive}
@@ -125,7 +125,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 <Label htmlFor="isActive" className="text-muted-foreground text-sm">Tipo de servicio activo</Label>
               </div>
 
-              <div className="flex items-center space-x-3 py-2">
+              <div className="flex items-center gap-x-3 py-2">
                 <Switch
                   id="vehicleInfoOptional"
                   checked={formData.vehicleInfoOptional}
@@ -136,7 +136,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 </Label>
               </div>
 
-              <div className="flex items-center space-x-3 py-2 bg-amber-500/10 rounded-lg px-3 border border-amber-500/20">
+              <div className="flex items-center gap-x-3 py-2 bg-amber-500/10 rounded-lg px-3 border border-amber-500/20">
                 <Switch
                   id="isOutsourced"
                   checked={formData.isOutsourced}
@@ -170,7 +170,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <Switch
                     id="purchaseOrderRequired"
                     checked={formData.purchaseOrderRequired}
@@ -181,7 +181,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                   </Label>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <Switch
                     id="originRequired"
                     checked={formData.originRequired}
@@ -192,7 +192,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                   </Label>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <Switch
                     id="destinationRequired"
                     checked={formData.destinationRequired}
@@ -203,7 +203,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                   </Label>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <Switch
                     id="craneRequired"
                     checked={formData.craneRequired}
@@ -214,7 +214,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                   </Label>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <Switch
                     id="operatorRequired"
                     checked={formData.operatorRequired}
@@ -231,7 +231,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
               <div className="space-y-4">
                 <h4 className="text-foreground font-medium text-sm">Información del Vehículo</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-x-3">
                     <Switch
                       id="vehicleBrandRequired"
                       checked={formData.vehicleBrandRequired}
@@ -242,7 +242,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                     </Label>
                   </div>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-x-3">
                     <Switch
                       id="vehicleModelRequired"
                       checked={formData.vehicleModelRequired}
@@ -253,7 +253,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                     </Label>
                   </div>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-x-3">
                     <Switch
                       id="licensePlateRequired"
                       checked={formData.licensePlateRequired}

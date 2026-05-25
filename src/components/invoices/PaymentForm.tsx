@@ -155,7 +155,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Registrar Nuevo Pago</CardTitle>
           <Button variant="ghost" size="sm" onClick={onCancel}>
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </CardHeader>
         <CardContent>
@@ -164,7 +164,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
             <div>
               <Label>Tipo de Pago</Label>
               <div className="flex gap-4 mt-2">
-                <label className="flex items-center space-x-2">
+                <label className="flex items-center gap-x-2">
                   <input
                     type="radio"
                     name="paymentType"
@@ -175,7 +175,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                   />
                   <span>Pago a facturas específicas</span>
                 </label>
-                <label className="flex items-center space-x-2">
+                <label className="flex items-center gap-x-2">
                   <input
                     type="radio"
                     name="paymentType"
@@ -230,14 +230,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                       const selectedInvoice = selectedInvoices.find(sel => sel.invoice_id === invoice.id);
                       
                       return (
-                        <div key={invoice.id} className="flex items-center space-x-3 p-2 border rounded">
+                        <div key={invoice.id} className="flex items-center gap-x-3 p-2 border rounded">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <FileText className="size-4 text-muted-foreground" />
                               <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
                               <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
                                 {invoice.status}
@@ -245,7 +245,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                             </div>
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
+                                <Calendar className="size-3" />
                                 Vence: {new Date(invoice.due_date).toLocaleDateString()}
                               </span>
                               <span>Total: ${invoice.total.toLocaleString()}</span>

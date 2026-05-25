@@ -55,7 +55,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                   !filters.dateFrom && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 size-4" />
                 {filters.dateFrom ? (
                   format(new Date(filters.dateFrom), "dd/MM/yyyy")
                 ) : (
@@ -89,7 +89,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                   !filters.dateTo && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 size-4" />
                 {filters.dateTo ? (
                   format(new Date(filters.dateTo), "dd/MM/yyyy")
                 ) : (
@@ -203,7 +203,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             onClick={clearFilters}
             className="flex items-center gap-2"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             Limpiar Filtros
           </Button>
         </div>

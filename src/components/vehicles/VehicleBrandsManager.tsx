@@ -94,10 +94,10 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    if (sortField !== field) return <ArrowUpDown className="ml-2 size-4 opacity-50" />;
     return sortDirection === 'asc' ? 
-      <ArrowUp className="ml-2 h-4 w-4" /> : 
-      <ArrowDown className="ml-2 h-4 w-4" />;
+      <ArrowUp className="ml-2 size-4" /> : 
+      <ArrowDown className="ml-2 size-4" />;
   };
 
   const sortedBrands = useMemo(() => {
@@ -161,7 +161,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-amber-600 shadow-sm hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500">
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="size-4 mr-2" />
               Nueva Marca
             </Button>
           </DialogTrigger>
@@ -182,7 +182,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                   placeholder="Ej: Toyota, Ford, Chevrolet..."
                 />
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end gap-x-2">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -234,13 +234,13 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                   {new Date(brand.created_at).toLocaleDateString('es-CL')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end gap-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(brand)}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="size-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -249,7 +249,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                           size="sm"
                           className="text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -305,7 +305,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                 placeholder="Ej: Toyota, Ford, Chevrolet..."
               />
             </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-x-2">
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}

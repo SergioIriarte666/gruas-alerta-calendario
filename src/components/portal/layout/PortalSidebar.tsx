@@ -49,12 +49,12 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
     <aside className="w-64 h-full bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-x-3">
             {settings?.company?.logo && (
               <img 
                 src={settings.company.logo} 
                 alt="Logo empresa" 
-                className="h-10 w-10 object-contain" 
+                className="size-10 object-contain" 
               />
             )}
             <div>
@@ -69,12 +69,12 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               onClick={onClose}
               className="text-gray-400 hover:text-white hover:bg-gray-800"
             >
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             </Button>
           )}
         </div>
       </div>
-      <nav className="flex flex-col space-y-2">
+      <nav className="flex flex-col gap-y-2">
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.href;
           return (
@@ -89,7 +89,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="size-5" />
               <span>{item.name}</span>
             </Link>
           );

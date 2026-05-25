@@ -97,10 +97,10 @@ export const ConvertEventToServiceModal = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              <ArrowRight className="w-4 h-4 text-muted-foreground" />
-              <Truck className="w-5 h-5 text-primary" />
+            <DialogTitle className="flex items-center gap-x-2">
+              <Calendar className="size-5 text-primary" />
+              <ArrowRight className="size-4 text-muted-foreground" />
+              <Truck className="size-5 text-primary" />
               <span>Convertir Evento a Servicio</span>
             </DialogTitle>
           </DialogHeader>
@@ -122,10 +122,10 @@ export const ConvertEventToServiceModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            <ArrowRight className="w-4 h-4 text-muted-foreground" />
-            <Truck className="w-5 h-5 text-primary" />
+          <DialogTitle className="flex items-center gap-x-2">
+            <Calendar className="size-5 text-primary" />
+            <ArrowRight className="size-4 text-muted-foreground" />
+            <Truck className="size-5 text-primary" />
             <span>Convertir Evento a Servicio</span>
           </DialogTitle>
         </DialogHeader>
@@ -134,7 +134,7 @@ export const ConvertEventToServiceModal = ({
           {/* Event Preview */}
           <div className="p-4 bg-muted rounded-lg border">
             <h3 className="font-medium mb-3 flex items-center">
-              <Calendar className="w-4 h-4 mr-2 text-primary" />
+              <Calendar className="size-4 mr-2 text-primary" />
               Datos del Evento
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -149,7 +149,7 @@ export const ConvertEventToServiceModal = ({
               <div>
                 <span className="text-muted-foreground">Horario:</span>
                 <p className="font-medium flex items-center">
-                  <Clock className="w-3 h-3 mr-1" />
+                  <Clock className="size-3 mr-1" />
                   {event.startTime} - {event.endTime}
                 </p>
               </div>
@@ -171,7 +171,7 @@ export const ConvertEventToServiceModal = ({
               Este evento se convertirá en un servicio. Podrás completar todos los detalles en el formulario de servicios.
             </p>
             
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center gap-x-3">
               <Button 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
@@ -182,7 +182,7 @@ export const ConvertEventToServiceModal = ({
                 onClick={handleShowForm}
                 className="bg-primary hover:bg-primary/90"
               >
-                <ArrowRight className="w-4 h-4 mr-2" />
+                <ArrowRight className="size-4 mr-2" />
                 Convertir a Servicio
               </Button>
             </div>

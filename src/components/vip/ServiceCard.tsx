@@ -82,7 +82,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
                   // Trigger purchase order registration
                 }}
               >
-                <FileText className="w-3 h-3" />
+                <FileText className="size-3" />
               </Button>
             )}
             <Button 
@@ -90,7 +90,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
               size="sm"
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
             >
-              <Eye className="w-3 h-3" />
+              <Eye className="size-3" />
             </Button>
           </div>
         </div>
@@ -99,7 +99,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         <div className="space-y-2 text-xs">
           {/* Date and Time */}
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Calendar className="w-3 h-3" />
+            <Calendar className="size-3" />
             <span>{format(serviceDate, 'dd/MM/yyyy', { locale: es })}</span>
             <span className={`ml-auto font-medium ${getUrgencyColor()}`}>
               {daysSince === 0 ? 'Hoy' : 
@@ -110,7 +110,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Route */}
           <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <MapPin className="size-3 flex-shrink-0" />
             <div className="truncate">
               <span className="truncate">{service.origin}</span>
               {service.destination !== service.origin && (
@@ -125,7 +125,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Vehicle Info */}
           {(service.vehicleBrand || service.licensePlate) && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Truck className="w-3 h-3" />
+              <Truck className="size-3" />
               <span className="truncate">
                 {service.vehicleBrand} {service.vehicleModel} • {service.licensePlate}
               </span>
@@ -135,7 +135,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Operator */}
           {service.operator && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <User className="w-3 h-3" />
+              <User className="size-3" />
               <span className="truncate">{service.operator.name}</span>
             </div>
           )}
@@ -143,7 +143,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Value */}
           <div className="flex items-center justify-between pt-1 border-t">
           <div className="flex items-center gap-2 text-foreground">
-            <DollarSign className="w-3 h-3" />
+            <DollarSign className="size-3" />
             <span className="font-medium">
               ${getDisplayServiceValue(service).toLocaleString()}
             </span>
@@ -161,7 +161,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Purchase Order Number (if exists) */}
           {service.purchaseOrder && (
             <div className="flex items-center gap-2 bg-secondary text-secondary-foreground rounded px-2 py-1">
-              <FileText className="w-3 h-3" />
+              <FileText className="size-3" />
               <span className="text-xs font-semibold">O.C: {service.purchaseOrder}</span>
             </div>
           )}
@@ -169,7 +169,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Quote Number (if exists) */}
           {service.quoteNumber && (
             <div className="flex items-center gap-2 bg-primary text-primary-foreground rounded px-2 py-1">
-              <FileText className="w-3 h-3" />
+              <FileText className="size-3" />
               <span className="text-xs font-semibold">COT: {service.quoteNumber}</span>
             </div>
           )}
@@ -177,7 +177,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           {/* Time indicators for special states */}
           {(service.status === 'quoted' || service.status === 'purchase_order_pending') && (
             <div className="flex items-center gap-2 bg-accent text-accent-foreground rounded px-2 py-1">
-              <Clock className="w-3 h-3" />
+              <Clock className="size-3" />
               <span className="text-xs font-medium">
                 {service.status === 'quoted' ? 'Esperando respuesta' : 'Esperando orden de compra'}
               </span>

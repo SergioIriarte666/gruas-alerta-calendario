@@ -36,7 +36,7 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Truck className="w-5 h-5 text-tms-green" />
+            <Truck className="size-5 text-tms-green" />
             Información Básica
           </CardTitle>
         </CardHeader>
@@ -94,7 +94,7 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-tms-green" />
+            <FileText className="size-5 text-tms-green" />
             Documentación Legal
           </CardTitle>
         </CardHeader>
@@ -149,7 +149,7 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-tms-green" />
+            <Calendar className="size-5 text-tms-green" />
             Historial de Registro
           </CardTitle>
         </CardHeader>

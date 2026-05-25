@@ -40,7 +40,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                   !dateFrom && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 size-4" />
                 {dateFrom ? (
                   format(dateFrom, "dd/MM/yyyy", { locale: es })
                 ) : (
@@ -73,7 +73,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                   !dateTo && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 size-4" />
                 {dateTo ? (
                   format(dateTo, "dd/MM/yyyy", { locale: es })
                 ) : (
@@ -102,7 +102,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
             onClick={onClearFilters}
             className="text-gray-400 hover:text-white"
           >
-            <X className="w-4 h-4 mr-1" />
+            <X className="size-4 mr-1" />
             Limpiar filtros
           </Button>
         )}

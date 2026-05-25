@@ -112,7 +112,7 @@ export const CreditorList = () => {
                       category_id: ((c.metadata as any)?.category_id as string) || 'none',
                       subcategory: ((c.metadata as any)?.subcategory as string) || 'none',
                     })}>
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="size-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -62,7 +62,7 @@ export const ClientsHeader = ({
           onClick={handleNewClient}
           className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuevo Cliente
         </Button>
       </div>
@@ -82,7 +82,7 @@ export const ClientsHeader = ({
               className="absolute right-4 top-4 text-gray-600 hover:text-black z-10 p-1 rounded-full hover:bg-gray-100 transition-colors"
               aria-label="Cerrar modal"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
             
             <ClientForm

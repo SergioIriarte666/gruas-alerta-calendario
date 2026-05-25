@@ -46,7 +46,7 @@ export const ClientFormStepNavigation = ({
           >
             <div
               className={cn(
-                "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                "flex-shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
                 isActive && "bg-violet-600 text-white",
                 step.isCompleted && !isActive && "bg-violet-500 text-white",
                 step.hasError && "bg-destructive text-destructive-foreground",
@@ -54,7 +54,7 @@ export const ClientFormStepNavigation = ({
               )}
             >
               {step.isCompleted && !step.hasError ? (
-                <Check className="h-4 w-4" />
+                <Check className="size-4" />
               ) : (
                 step.id
               )}
@@ -95,18 +95,18 @@ export const getClientFormSteps = (): Omit<ClientFormStep, 'isCompleted' | 'hasE
     id: 1,
     title: 'Datos Básicos',
     description: 'Nombre y RUT',
-    icon: <Building2 className="h-4 w-4" />,
+    icon: <Building2 className="size-4" />,
   },
   {
     id: 2,
     title: 'Contacto',
     description: 'Teléfono, email y dirección',
-    icon: <Phone className="h-4 w-4" />,
+    icon: <Phone className="size-4" />,
   },
   {
     id: 3,
     title: 'Departamentos',
     description: 'Áreas y estado',
-    icon: <FolderTree className="h-4 w-4" />,
+    icon: <FolderTree className="size-4" />,
   },
 ];

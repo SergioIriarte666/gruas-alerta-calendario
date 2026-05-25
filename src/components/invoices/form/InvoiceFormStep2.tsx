@@ -53,7 +53,7 @@ export const InvoiceFormStep2 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Condiciones de Pago"
-        icon={<CreditCard className="h-5 w-5" />}
+        icon={<CreditCard className="size-5" />}
         color="orange"
         hasError={!!errors.paymentTermId}
       >
@@ -87,7 +87,7 @@ export const InvoiceFormStep2 = ({
 
       <ColoredSectionCard
         title="Fechas"
-        icon={<Calendar className="h-5 w-5" />}
+        icon={<Calendar className="size-5" />}
         color="cyan"
         hasError={!!errors.issueDate || !!errors.dueDate}
       >
@@ -125,7 +125,7 @@ export const InvoiceFormStep2 = ({
       {status === 'paid' && (
         <ColoredSectionCard
           title="Fecha de Pago"
-          icon={<Calendar className="h-5 w-5" />}
+          icon={<Calendar className="size-5" />}
           color="green"
           required
           hasError={!!errors.paymentDate}

@@ -38,7 +38,7 @@ export const PushNotificationManager: React.FC = () => {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3 p-4 bg-card border rounded-lg">
-          <AlertCircle className="w-5 h-5 text-amber-500" />
+          <AlertCircle className="size-5 text-amber-500" />
           <div>
             <h3 className="font-medium text-foreground">Notificaciones Push No Disponibles</h3>
             <p className="text-sm text-muted-foreground">
@@ -137,14 +137,14 @@ export const PushNotificationManager: React.FC = () => {
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Smartphone className="w-5 h-5" />
+            <Smartphone className="size-5" />
             Estado de Notificaciones Push
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <PermissionIcon className={`w-5 h-5 ${permissionStatus.color}`} />
+              <PermissionIcon className={`size-5 ${permissionStatus.color}`} />
               <div>
                 <p className="font-medium text-foreground">Estado: {permissionStatus.text}</p>
                 <p className="text-sm text-muted-foreground">
@@ -196,7 +196,7 @@ export const PushNotificationManager: React.FC = () => {
                 size="sm"
                 className="border-amber-600 text-amber-600 hover:bg-amber-50"
               >
-                <RefreshCw className="w-4 h-4 mr-1" />
+                <RefreshCw className="size-4 mr-1" />
                 Reintentar
               </Button>
             )}

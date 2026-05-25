@@ -558,7 +558,7 @@ const Invoices = () => {
               />
             </div>
             <div className="overflow-x-auto w-full">
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
+              <div className="flex items-center gap-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
                 {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
                   <Button
                     key={statusKey}
@@ -668,7 +668,7 @@ const Invoices = () => {
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="w-5 h-5" />
+              <ShieldAlert className="size-5" />
               Eliminar factura protegida
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">

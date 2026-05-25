@@ -91,7 +91,7 @@ export const CostCentersTable = ({ costCenters, onEdit, loading }: CostCentersTa
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs text-muted-foreground">{center.code}</span>
                     {center.children && center.children.length > 0 && (
-                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <Users className="size-3 text-muted-foreground" />
                     )}
                   </div>
                   <p className="font-semibold text-foreground text-sm truncate">{center.name}</p>
@@ -129,10 +129,10 @@ export const CostCentersTable = ({ costCenters, onEdit, loading }: CostCentersTa
               {/* Actions */}
               <div className="flex items-center justify-end gap-2 pt-1 border-t">
                 <Button variant="ghost" size="sm" onClick={() => onEdit(center)}>
-                  <Edit className="w-4 h-4 mr-1" /> Editar
+                  <Edit className="size-4 mr-1" /> Editar
                 </Button>
                 <Button variant="ghost" size="sm">
-                  <Eye className="w-4 h-4 mr-1" /> Ver
+                  <Eye className="size-4 mr-1" /> Ver
                 </Button>
               </div>
             </CardContent>
@@ -152,7 +152,7 @@ export const CostCentersTable = ({ costCenters, onEdit, loading }: CostCentersTa
           <div className="flex items-center gap-2">
             <span className="font-medium">{center.code}</span>
             {center.children && center.children.length > 0 && (
-              <Users className="w-4 h-4 text-muted-foreground" />
+              <Users className="size-4 text-muted-foreground" />
             )}
           </div>
         </TableCell>
@@ -190,10 +190,10 @@ export const CostCentersTable = ({ costCenters, onEdit, loading }: CostCentersTa
         <TableCell>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => onEdit(center)}>
-              <Edit className="w-4 h-4" />
+              <Edit className="size-4" />
             </Button>
             <Button variant="ghost" size="sm">
-              <Eye className="w-4 h-4" />
+              <Eye className="size-4" />
             </Button>
           </div>
         </TableCell>

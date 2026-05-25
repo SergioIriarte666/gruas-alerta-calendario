@@ -57,18 +57,18 @@ export const SyncIndicator = () => {
           {syncStatus.isOnline ? (
             offlineActions > 0 ? (
               <>
-                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                <RefreshCw className="size-3 mr-1 animate-spin" />
                 Sincronizando {offlineActions}
               </>
             ) : (
               <>
-                <CheckCircle className="w-3 h-3 mr-1 text-green-400" />
+                <CheckCircle className="size-3 mr-1 text-green-400" />
                 Sincronizado
               </>
             )
           ) : (
             <>
-              <AlertCircle className="w-3 h-3 mr-1 text-yellow-400" />
+              <AlertCircle className="size-3 mr-1 text-yellow-400" />
               Offline - {offlineActions} pendientes
             </>
           )}
@@ -82,7 +82,7 @@ export const SyncIndicator = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDetails(false)}
-                className="text-gray-400 hover:text-white h-6 w-6 p-0"
+                className="text-gray-400 hover:text-white size-6 p-0"
               >
                 ×
               </Button>
@@ -106,7 +106,7 @@ export const SyncIndicator = () => {
                     size="sm"
                     className="w-full bg-tms-green hover:bg-tms-green/90 text-slate-900"
                   >
-                    <RefreshCw className="w-3 h-3 mr-1" />
+                    <RefreshCw className="size-3 mr-1" />
                     Sincronizar ahora
                   </Button>
                 )}
@@ -120,14 +120,14 @@ export const SyncIndicator = () => {
                   {syncHistory.slice().reverse().map((entry, index) => (
                     <div key={index} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1 text-gray-400">
-                        <Clock className="w-3 h-3" />
+                        <Clock className="size-3" />
                         {entry.time.toLocaleTimeString()}
                       </div>
                       <div className="flex items-center gap-1">
                         {entry.success ? (
-                          <CheckCircle className="w-3 h-3 text-green-400" />
+                          <CheckCircle className="size-3 text-green-400" />
                         ) : (
-                          <AlertCircle className="w-3 h-3 text-red-400" />
+                          <AlertCircle className="size-3 text-red-400" />
                         )}
                         <span className="text-gray-400">{entry.count} items</span>
                       </div>

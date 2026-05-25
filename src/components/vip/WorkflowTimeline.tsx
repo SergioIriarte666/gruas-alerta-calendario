@@ -167,7 +167,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       <Card className="glass-card border-blue-500/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Timer className="w-5 h-5 text-blue-400" />
+            <Timer className="size-5 text-blue-400" />
             Progreso del Workflow - {service.folio}
           </CardTitle>
         </CardHeader>
@@ -228,11 +228,11 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                   <div className="flex items-start gap-4">
                     {/* Step Icon */}
                     <div className={`flex-shrink-0 p-3 rounded-lg ${colors.bg}`}>
-                      <StepIcon className={`w-5 h-5 ${colors.icon}`} />
+                      <StepIcon className={`size-5 ${colors.icon}`} />
                     </div>
 
                     {/* Step Content */}
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 gap-y-2">
                       <div className="flex items-center justify-between">
                         <h4 className={`font-medium ${colors.text}`}>
                           {step.label}
@@ -243,7 +243,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                           )}
                           {step.hasWarning && (
                             <Badge variant="outline" className="ml-2 bg-red-500/20 text-red-300 border-red-500/30">
-                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              <AlertTriangle className="size-3 mr-1" />
                               Atención
                             </Badge>
                           )}
@@ -267,7 +267,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                       {/* Warning Message */}
                       {step.hasWarning && step.warningMessage && (
                         <div className="flex items-center gap-2 text-sm text-red-300 bg-red-500/10 p-2 rounded">
-                          <AlertTriangle className="w-4 h-4" />
+                          <AlertTriangle className="size-4" />
                           <span>{step.warningMessage}</span>
                         </div>
                       )}
@@ -287,7 +287,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
                     {/* Next Arrow */}
                     {!isLast && step.isCompleted && (
-                      <ArrowRight className="w-4 h-4 text-gray-500 mt-3" />
+                      <ArrowRight className="size-4 text-gray-500 mt-3" />
                     )}
                   </div>
                 </CardContent>
@@ -303,7 +303,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <ShoppingCart className="w-4 h-4 text-purple-400" />
+                <ShoppingCart className="size-4 text-purple-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-white">

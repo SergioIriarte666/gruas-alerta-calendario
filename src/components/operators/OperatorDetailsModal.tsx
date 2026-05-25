@@ -28,7 +28,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
+            <User className="size-5" />
             {operator.name}
           </DialogTitle>
         </DialogHeader>
@@ -39,14 +39,14 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
             <Badge variant={operator.isActive ? "default" : "secondary"}>
               {operator.isActive ? 'Activo' : 'Inactivo'}
             </Badge>
-            {operator.isActive && <CheckCircle className="w-4 h-4 text-green-500" />}
+            {operator.isActive && <CheckCircle className="size-4 text-green-500" />}
           </div>
 
           {/* Información de Contacto */}
           <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <div className="p-1 rounded bg-blue-500/10 text-blue-600">
-                <Phone className="w-4 h-4" />
+                <Phone className="size-4" />
               </div>
               Información de Contacto
             </h3>
@@ -68,7 +68,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
               <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
-                <FileText className="w-4 h-4" />
+                <FileText className="size-4" />
               </div>
               Servicios del Día
               <Badge variant="outline">{operator.services?.length || 0}</Badge>
@@ -79,7 +79,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
                 {operator.services.slice(0, 5).map((service: any, index: number) => (
                   <div key={service.id || index} className="flex items-center justify-between p-2 bg-background rounded border">
                     <div className="flex items-center gap-2">
-                      <Truck className="w-3 h-3 text-muted-foreground" />
+                      <Truck className="size-3 text-muted-foreground" />
                       <span className="text-sm">Servicio {service.id?.slice(0, 8) || `#${index + 1}`}</span>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -103,7 +103,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
             <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
                 <div className="p-1 rounded bg-amber-500/10 text-amber-600">
-                  <FileText className="w-4 h-4" />
+                  <FileText className="size-4" />
                 </div>
                 Licencias y Exámenes
               </h3>

@@ -26,7 +26,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
                 {closures.filter(c => c.status === 'open').length}
               </p>
             </div>
-            <FileText className="w-8 h-8 text-primary" />
+            <FileText className="size-8 text-primary" />
           </div>
         </CardContent>
       </Card>
@@ -40,7 +40,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
                 {closures.filter(c => c.status === 'closed').length}
               </p>
             </div>
-            <Calendar className="w-8 h-8 text-blue-500" />
+            <Calendar className="size-8 text-blue-500" />
           </div>
         </CardContent>
       </Card>
@@ -54,7 +54,7 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
                 {formatCurrency(closures.filter(c => c.status === 'invoiced').reduce((sum, c) => sum + c.total, 0))}
               </p>
             </div>
-            <DollarSign className="w-8 h-8 text-green-500" />
+            <DollarSign className="size-8 text-green-500" />
           </div>
         </CardContent>
       </Card>

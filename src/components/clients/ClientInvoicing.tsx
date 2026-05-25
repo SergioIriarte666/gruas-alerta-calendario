@@ -18,9 +18,9 @@ interface MetricCardProps {
 const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
   <Card className="bg-card border-border">
     <CardContent className="p-4">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center gap-x-3">
         <div className="p-2 bg-primary/10 rounded-lg">
-          <Icon className="h-5 w-5 text-primary" />
+          <Icon className="size-5 text-primary" />
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>

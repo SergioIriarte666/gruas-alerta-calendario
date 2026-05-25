@@ -50,8 +50,8 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
         <input {...getInputProps()} />
-        <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-          <Upload className="h-8 w-8" />
+        <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+          <Upload className="size-8" />
         </div>
         <p className="relative font-semibold text-base">
           {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
@@ -71,22 +71,22 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
       <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <FileText className="h-8 w-8 text-primary" />
+            <div className="flex items-center gap-x-3">
+              <FileText className="size-8 text-primary" />
               <div>
                 <p className="text-foreground font-medium">{selectedFile.name}</p>
                 <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
               </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex gap-x-2">
               <Button onClick={onAnalyze} disabled={isAnalyzing} variant="default">
                 {isAnalyzing
-                  ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  : <FileText className="h-4 w-4 mr-2" />}
+                  ? <Loader2 className="size-4 mr-2 animate-spin" />
+                  : <FileText className="size-4 mr-2" />}
                 Analizar XML
               </Button>
               <Button variant="outline" onClick={onReset}>
-                <X className="h-4 w-4 mr-2" />
+                <X className="size-4 mr-2" />
                 Quitar
               </Button>
             </div>

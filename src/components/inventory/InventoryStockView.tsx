@@ -187,7 +187,7 @@ export const InventoryStockView = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
+              <Package className="size-5" />
               Stock de Productos
             </CardTitle>
             <div className="flex gap-2">
@@ -198,7 +198,7 @@ export const InventoryStockView = () => {
                   onClick={() => setShowCreateProductForm(true)}
                   className="gap-2"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="size-4" />
                   Nuevo Producto
                 </Button>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -215,7 +215,7 @@ export const InventoryStockView = () => {
                   onClick={() => setShowEntryForm(true)}
                   className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="size-4" />
                   Nueva Entrada
                 </Button>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -233,7 +233,7 @@ export const InventoryStockView = () => {
                   onClick={() => setShowExitForm(true)}
                   className="gap-2"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="size-4" />
                   Nueva Salida
                 </Button>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -344,7 +344,7 @@ export const InventoryStockView = () => {
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por nombre o SKU..."
                 value={searchTerm}
@@ -437,7 +437,7 @@ export const InventoryStockView = () => {
                             <td className="py-2 px-3 text-right">{totalStock} {item.unit_of_measure}</td>
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-2">
-                                <StatusIcon className="w-4 h-4" />
+                                <StatusIcon className="size-4" />
                                 <Badge variant="outline" className={cn("text-2xs font-semibold", status.className)}>{status.label}</Badge>
                               </div>
                             </td>
@@ -486,7 +486,7 @@ export const InventoryStockView = () => {
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-2 justify-end">
-                            <StatusIcon className="w-4 h-4" />
+                            <StatusIcon className="size-4" />
                             <span className="text-2xl font-bold">{totalStock}</span>
                             <span className="text-sm text-muted-foreground">
                               {item.unit_of_measure}

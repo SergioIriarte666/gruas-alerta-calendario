@@ -79,7 +79,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="size-4 animate-spin text-muted-foreground" />
         <span className="ml-2 text-sm text-muted-foreground">Cargando trazabilidad...</span>
       </div>
     );
@@ -102,23 +102,23 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-        <ArrowRight className="h-4 w-4 text-primary" />
+        <ArrowRight className="size-4 text-primary" />
         Cadena de Trazabilidad
       </h4>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {/* Cost node */}
         <Badge variant="outline" className="gap-1 border-destructive/30 text-destructive">
-          <DollarSign className="h-3 w-3" />
+          <DollarSign className="size-3" />
           Costo: {formatCurrency(Number(cost.amount))}
         </Badge>
 
         {/* Payment link */}
         {payment && (
           <>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <ArrowRight className="size-3 text-muted-foreground" />
             <Badge variant="outline" className="gap-1 border-violet-500/30 text-violet-600">
-              <CreditCard className="h-3 w-3" />
+              <CreditCard className="size-3" />
               Pago: {payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
               {payment.paid_date && ` (${format(new Date(payment.paid_date), 'dd/MM', { locale: es })})`}
             </Badge>
@@ -128,9 +128,9 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {/* Inventory link */}
         {movement && (
           <>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <ArrowRight className="size-3 text-muted-foreground" />
             <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
-              <Package className="h-3 w-3" />
+              <Package className="size-3" />
               Inventario: {(movement as any).inventory_items?.name || 'Item'} ({(movement as any).quantity} uds)
             </Badge>
           </>
@@ -138,9 +138,9 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
 
         {!movement && invoiceMovements.length > 0 && (
           <>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <ArrowRight className="size-3 text-muted-foreground" />
             <Badge variant="outline" className="gap-1 border-blue-500/30 text-blue-600">
-              <Package className="h-3 w-3" />
+              <Package className="size-3" />
               Inventario: {invoiceMovements.length} movimiento(s) de factura
             </Badge>
           </>
@@ -149,9 +149,9 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
         {/* Crane parts link */}
         {parts.length > 0 && (
           <>
-            <ArrowRight className="h-3 w-3 text-muted-foreground" />
+            <ArrowRight className="size-3 text-muted-foreground" />
             <Badge variant="outline" className="gap-1 border-green-500/30 text-green-600">
-              <Wrench className="h-3 w-3" />
+              <Wrench className="size-3" />
               Pieza: {parts[0].part_name}
               {parts[0].cranes && ` → ${parts[0].cranes.license_plate}`}
             </Badge>

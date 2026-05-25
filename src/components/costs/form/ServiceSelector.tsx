@@ -49,7 +49,7 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading }: S
         {/* Campo de búsqueda */}
         <div className="p-2 border-b border-gray-200">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-2 top-2.5 size-4 text-gray-400" />
             <Input
               placeholder="Buscar por folio, cliente o fecha..."
               value={searchTerm}

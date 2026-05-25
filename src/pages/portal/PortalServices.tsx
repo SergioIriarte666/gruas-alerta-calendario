@@ -51,7 +51,7 @@ const PortalServices = () => {
     if (isError) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-red-900/20 rounded-lg">
-          <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+          <AlertTriangle className="size-12 text-red-500 mb-4" />
           <h3 className="text-lg font-semibold text-white">Error al cargar servicios</h3>
           <p className="text-red-400">{error?.message || 'Ocurrió un error inesperado.'}</p>
         </div>
@@ -61,7 +61,7 @@ const PortalServices = () => {
     if (!filteredServices || filteredServices.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-800/50 rounded-lg">
-          <History className="w-12 h-12 text-gray-400 mb-4" />
+          <History className="size-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-white">Sin servicios en el rango seleccionado</h3>
           <p className="text-gray-400">
             {dateFrom || dateTo 
@@ -138,7 +138,7 @@ const PortalServices = () => {
               onClick={exportToPDF}
               disabled={isLoadingServices || !filteredServices || filteredServices.length === 0}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="size-4 mr-2" />
               PDF
             </Button>
             <Button
@@ -147,7 +147,7 @@ const PortalServices = () => {
               onClick={exportToExcel}
               disabled={isLoadingServices || !filteredServices || filteredServices.length === 0}
             >
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              <FileSpreadsheet className="size-4 mr-2" />
               Excel
             </Button>
             <Button
@@ -155,14 +155,14 @@ const PortalServices = () => {
               size="sm"
               onClick={() => setViewMode('table')}
             >
-              <List className="w-4 h-4" />
+              <List className="size-4" />
             </Button>
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('grid')}
             >
-              <Grid className="w-4 h-4" />
+              <Grid className="size-4" />
             </Button>
           </div>
         </div>

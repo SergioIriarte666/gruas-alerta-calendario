@@ -47,7 +47,7 @@ export const ServiceBatchActionBar = ({
               disabled={isProcessing}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              <Check className="h-4 w-4 mr-2" />
+              <Check className="size-4 mr-2" />
               Cerrar
             </Button>
             <Button
@@ -56,7 +56,7 @@ export const ServiceBatchActionBar = ({
               onClick={onBatchUpdate}
               disabled={isProcessing}
             >
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="size-4 mr-2" />
               Editar
             </Button>
             <Button
@@ -65,7 +65,7 @@ export const ServiceBatchActionBar = ({
               onClick={onBatchDuplicate}
               disabled={isProcessing}
             >
-              <Copy className="h-4 w-4 mr-2" />
+              <Copy className="size-4 mr-2" />
               Duplicar
             </Button>
             {canDelete && (
@@ -75,7 +75,7 @@ export const ServiceBatchActionBar = ({
                 onClick={onBatchDelete}
                 disabled={isProcessing}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="size-4 mr-2" />
                 Eliminar
               </Button>
             )}
@@ -85,7 +85,7 @@ export const ServiceBatchActionBar = ({
               onClick={onClearSelection}
               disabled={isProcessing}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="size-4 mr-2" />
               Limpiar
             </Button>
           </div>

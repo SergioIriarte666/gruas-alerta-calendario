@@ -136,7 +136,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
 
           {/* Filtro de proveedor y botón de limpiar - Tercera fila */}
           <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="space-y-2 flex-1 max-w-sm">
+            <div className="gap-y-2 flex-1 max-w-sm">
               <Label htmlFor="provider" className="text-sm text-black">
                 Proveedor
               </Label>
@@ -155,7 +155,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
               onClick={handleReset}
               className="h-10 gap-2 shrink-0 px-6"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="size-4" />
               Limpiar Filtros
             </Button>
           </div>

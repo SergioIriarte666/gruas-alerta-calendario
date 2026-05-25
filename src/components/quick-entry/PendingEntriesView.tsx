@@ -177,7 +177,7 @@ export function PendingEntriesView() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full size-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -186,7 +186,7 @@ export function PendingEntriesView() {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <Clock className="size-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No hay registros pendientes</h3>
           <p className="text-muted-foreground">
             Los registros rápidos aparecerán aquí para ser completados
@@ -207,7 +207,7 @@ export function PendingEntriesView() {
             size="sm"
             className="flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             Nueva Entrada
           </Button>
         </div>
@@ -233,9 +233,9 @@ export function PendingEntriesView() {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDelete(entry.id!)}
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  className="size-8 text-muted-foreground hover:text-destructive"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               </div>
               <CardTitle className="text-base">{entry.description}</CardTitle>
@@ -273,7 +273,7 @@ export function PendingEntriesView() {
                     onClick={() => handleShowPreview(entry)}
                     className="flex-1"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
+                    <Eye className="size-4 mr-2" />
                     Ver detalle
                   </Button>
                   <Button
@@ -282,7 +282,7 @@ export function PendingEntriesView() {
                     onClick={() => handleComplete(entry)}
                     className="flex-1"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="size-4 mr-2" />
                     Completar
                   </Button>
                   <Button
@@ -294,7 +294,7 @@ export function PendingEntriesView() {
                     }}
                     className="flex-1"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className="size-4 mr-2" />
                     Descartar
                   </Button>
                 </div>
@@ -341,7 +341,7 @@ export function PendingEntriesView() {
                     setSelectedEntry(null);
                   }}
                 >
-                  <XCircle className="h-4 w-4" />
+                  <XCircle className="size-4" />
                 </Button>
               </div>
               <EnhancedServiceForm

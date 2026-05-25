@@ -114,7 +114,7 @@ export const DateSection = ({
                 htmlFor="enable_start_time" 
                 className="flex items-center gap-2 cursor-pointer font-medium text-foreground"
               >
-                <Clock className="w-4 h-4 text-blue-500" />
+                <Clock className="size-4 text-blue-500" />
                 Hora de Inicio del Servicio
               </Label>
               <p className="text-sm text-muted-foreground mt-1">
@@ -179,7 +179,7 @@ export const DateSection = ({
                 htmlFor="enable_end_time" 
                 className="flex items-center gap-2 cursor-pointer font-medium text-foreground"
               >
-                <Timer className="w-4 h-4 text-orange-500" />
+                <Timer className="size-4 text-orange-500" />
                 Hora de Término del Servicio
               </Label>
               <p className="text-sm text-muted-foreground mt-1">
@@ -244,7 +244,7 @@ export const DateSection = ({
                 htmlFor="enable_crane_mileage" 
                 className="flex items-center gap-2 cursor-pointer font-medium text-foreground"
               >
-                <Gauge className="w-4 h-4 text-green-500" />
+                <Gauge className="size-4 text-green-500" />
                 Kilómetros recorridos en servicio
               </Label>
               <p className="text-sm text-muted-foreground mt-1">

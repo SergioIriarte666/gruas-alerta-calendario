@@ -92,7 +92,7 @@ const LocationInput = ({ label, icon, value, onSelect, savedLocations }: Locatio
         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
       />
       {loading && (
-        <Loader2 className="absolute right-3 top-9 h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="absolute right-3 top-9 size-4 animate-spin text-muted-foreground" />
       )}
       {showDropdown && hasResults && (
         <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
@@ -100,7 +100,7 @@ const LocationInput = ({ label, icon, value, onSelect, savedLocations }: Locatio
           {filteredSaved.length > 0 && (
             <>
               <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b">
-                <Star className="h-3 w-3" />
+                <Star className="size-3" />
                 Guardadas
               </div>
               {filteredSaved.map((loc) => (
@@ -116,7 +116,7 @@ const LocationInput = ({ label, icon, value, onSelect, savedLocations }: Locatio
                     setShowDropdown(false);
                   }}
                 >
-                  <Star className="h-3 w-3 shrink-0 text-amber-500" />
+                  <Star className="size-3 shrink-0 text-amber-500" />
                   <span className="truncate">{loc.name}</span>
                 </button>
               ))}
@@ -127,7 +127,7 @@ const LocationInput = ({ label, icon, value, onSelect, savedLocations }: Locatio
             <>
               {filteredSaved.length > 0 && (
                 <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b border-t">
-                  <MapPin className="h-3 w-3" />
+                  <MapPin className="size-3" />
                   Mapa
                 </div>
               )}
@@ -269,7 +269,7 @@ export const TripCalculatorForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <LocationInput
               label="Origen"
-              icon={<MapPin className="h-4 w-4 text-green-600" />}
+              icon={<MapPin className="size-4 text-green-600" />}
               value={originName}
               savedLocations={savedLocations}
               onSelect={(name, coords) => {
@@ -282,7 +282,7 @@ export const TripCalculatorForm = () => {
             />
             <LocationInput
               label="Destino"
-              icon={<Navigation className="h-4 w-4 text-red-600" />}
+              icon={<Navigation className="size-4 text-red-600" />}
               value={destName}
               savedLocations={savedLocations}
               onSelect={(name, coords) => {
@@ -356,7 +356,7 @@ export const TripCalculatorForm = () => {
           >
             {isCalculating || tollLoading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
                 Calculando...
               </>
             ) : (

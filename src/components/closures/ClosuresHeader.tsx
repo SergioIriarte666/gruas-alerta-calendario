@@ -19,7 +19,7 @@ const ClosuresHeader = ({ onCreateClosure }: ClosuresHeaderProps) => {
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
           title="Crear un nuevo cierre de servicios"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuevo Cierre
         </Button>
       </div>

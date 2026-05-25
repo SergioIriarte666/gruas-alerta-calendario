@@ -97,7 +97,7 @@ export const HistoricalSalesFilters = ({
         
         {/* Search Bar */}
         <div className="relative flex-1 w-full lg:max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por N° fiscal, cliente o folio..."
             value={localFilters.searchTerm || ''}
@@ -117,10 +117,10 @@ export const HistoricalSalesFilters = ({
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("ml-auto lg:ml-0 gap-2", activeFilterCount > 0 && "border-primary text-primary")}>
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="size-4" />
                 Filtros
                 {activeFilterCount > 0 && (
-                  <Badge variant="default" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  <Badge variant="default" className="ml-1 rounded-full size-5 p-0 flex items-center justify-center text-[10px]">
                     {activeFilterCount}
                   </Badge>
                 )}
@@ -140,7 +140,7 @@ export const HistoricalSalesFilters = ({
                     }}
                   >
                     Limpiar todo
-                    <X className="ml-2 h-3 w-3" />
+                    <X className="ml-2 size-3" />
                   </Button>
                 </div>
                 
@@ -161,7 +161,7 @@ export const HistoricalSalesFilters = ({
                               !localFilters.dateFrom && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            <CalendarIcon className="mr-2 size-3" />
                             {localFilters.dateFrom ? format(localFilters.dateFrom, "P", { locale: es }) : "Seleccionar"}
                           </Button>
                         </PopoverTrigger>
@@ -188,7 +188,7 @@ export const HistoricalSalesFilters = ({
                               !localFilters.dateTo && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            <CalendarIcon className="mr-2 size-3" />
                             {localFilters.dateTo ? format(localFilters.dateTo, "P", { locale: es }) : "Seleccionar"}
                           </Button>
                         </PopoverTrigger>
@@ -269,10 +269,10 @@ export const HistoricalSalesFilters = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto w-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
                 onClick={() => handleChange('dateFrom', undefined)}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </Badge>
           )}
@@ -282,10 +282,10 @@ export const HistoricalSalesFilters = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto w-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
                 onClick={() => handleChange('dateTo', undefined)}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </Badge>
           )}
@@ -295,10 +295,10 @@ export const HistoricalSalesFilters = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto w-auto p-0 ml-2 hover:bg-transparent text-orange-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-orange-700"
                 onClick={() => handleChange('status', 'all')}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </Badge>
           )}
@@ -308,13 +308,13 @@ export const HistoricalSalesFilters = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto w-auto p-0 ml-2 hover:bg-transparent text-green-700"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-green-700"
                 onClick={() => {
                   handleChange('minAmount', '');
                   handleChange('maxAmount', '');
                 }}
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </Badge>
           )}

@@ -192,7 +192,7 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
         <Card className="border-warning/30 bg-warning-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Alertas del Sistema
             </CardTitle>
           </CardHeader>

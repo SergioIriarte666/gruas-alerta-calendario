@@ -44,13 +44,13 @@ export const MonthlyInstallments = () => {
         <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="size-4" />
             </Button>
             <CardTitle className="text-base font-semibold text-foreground capitalize">
               {format(currentMonth, 'MMMM yyyy', { locale: es })}
             </CardTitle>
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </CardHeader>
@@ -96,7 +96,7 @@ export const MonthlyInstallments = () => {
                           size="sm"
                           onClick={() => setPayingInstallment(inst)}
                         >
-                          <CreditCard className="h-3.5 w-3.5 mr-1" />
+                          <CreditCard className="size-3.5 mr-1" />
                           Pagar
                         </Button>
                       )}

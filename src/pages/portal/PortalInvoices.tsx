@@ -152,7 +152,7 @@ const PortalInvoices = () => {
     if (isError) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-red-900/20 rounded-lg">
-          <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+          <AlertTriangle className="size-12 text-red-500 mb-4" />
           <h3 className="text-lg font-semibold text-white">Error al cargar facturas</h3>
           <p className="text-red-400">{error?.message || 'Ocurrió un error inesperado.'}</p>
         </div>
@@ -162,7 +162,7 @@ const PortalInvoices = () => {
     if (!invoices || invoices.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-800/50 rounded-lg">
-          <FileText className="w-12 h-12 text-gray-400 mb-4" />
+          <FileText className="size-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-white">Sin facturas</h3>
           <p className="text-gray-400">No hemos encontrado facturas asociadas a su cuenta.</p>
         </div>
@@ -216,7 +216,7 @@ const PortalInvoices = () => {
                     className="text-tms-green hover:text-white"
                     title="Descargar PDF"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="size-4" />
                   </Button>
                 </TableCell>
               </TableRow>

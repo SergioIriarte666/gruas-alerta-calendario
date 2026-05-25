@@ -35,7 +35,7 @@ export const PDFProgress = ({
       <CardContent className="p-4">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Download className="w-4 h-4 text-primary animate-spin" />
+            <Download className="size-4 text-primary animate-spin" />
             <span className="text-foreground font-medium">Generando PDF de Inspección</span>
           </div>
           
@@ -59,9 +59,9 @@ export const PDFProgress = ({
                     isCompleted ? 'text-emerald-500' : 'text-muted-foreground'
                   }`}
                 >
-                  <Icon className={`w-3 h-3 ${isActive ? 'animate-pulse' : ''}`} />
+                  <Icon className={`size-3 ${isActive ? 'animate-pulse' : ''}`} />
                   <span>{step.label}</span>
-                  {isCompleted && <CheckCircle className="w-3 h-3 text-emerald-500 ml-auto" />}
+                  {isCompleted && <CheckCircle className="size-3 text-emerald-500 ml-auto" />}
                 </div>
               );
             })}
@@ -73,7 +73,7 @@ export const PDFProgress = ({
                 onClick={onManualDownload}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded flex items-center justify-center gap-2"
               >
-                <Download className="w-4 h-4" />
+                <Download className="size-4" />
                 Descargar PDF
               </button>
             </div>

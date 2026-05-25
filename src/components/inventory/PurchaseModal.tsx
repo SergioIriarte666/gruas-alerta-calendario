@@ -267,7 +267,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end gap-x-2 pt-4">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>

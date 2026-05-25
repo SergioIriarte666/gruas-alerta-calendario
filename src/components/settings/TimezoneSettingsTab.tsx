@@ -146,7 +146,7 @@ export const TimezoneSettingsTab: React.FC = () => {
     return (
       <Card className="bg-card border">
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="size-6 animate-spin text-primary" />
           <span className="ml-2 text-foreground">Cargando configuraciones...</span>
         </CardContent>
       </Card>
@@ -158,8 +158,8 @@ export const TimezoneSettingsTab: React.FC = () => {
   return (
     <Card className="bg-card border">
       <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
-          <Globe className="w-5 h-5 text-primary" />
+        <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
+          <Globe className="size-5 text-primary" />
           <span>Zona Horaria</span>
         </CardTitle>
         <CardDescription className="text-muted-foreground text-sm">
@@ -170,7 +170,7 @@ export const TimezoneSettingsTab: React.FC = () => {
         {/* Información actual */}
         <div className="bg-muted/50 border rounded-lg p-4">
           <h3 className="text-foreground font-medium mb-2 flex items-center">
-            <Clock className="w-4 h-4 mr-2 text-primary" />
+            <Clock className="size-4 mr-2 text-primary" />
             Configuración Actual
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -238,7 +238,7 @@ export const TimezoneSettingsTab: React.FC = () => {
           {reportUseSystem && (
             <div className="bg-accent/50 border rounded-lg p-3">
               <p className="text-accent-foreground text-sm">
-                <Clock className="w-4 h-4 inline mr-1" />
+                <Clock className="size-4 inline mr-1" />
                 Zona horaria del sistema detectada y congelada: <strong>{reportTimezone}</strong>
               </p>
             </div>
@@ -290,7 +290,7 @@ export const TimezoneSettingsTab: React.FC = () => {
         {/* Vista previa */}
         <div className="bg-muted/30 border rounded-lg p-4">
           <h4 className="text-foreground font-medium mb-2 flex items-center">
-            <Calendar className="w-4 h-4 mr-2 text-primary" />
+            <Calendar className="size-4 mr-2 text-primary" />
             Vista Previa
           </h4>
           <p className="text-muted-foreground text-sm mb-1">
@@ -303,7 +303,7 @@ export const TimezoneSettingsTab: React.FC = () => {
 
         {isSaving && (
           <div className="flex items-center justify-center py-2">
-            <Loader2 className="w-4 h-4 animate-spin text-primary mr-2" />
+            <Loader2 className="size-4 animate-spin text-primary mr-2" />
             <span className="text-foreground text-sm">Guardando configuraciones...</span>
           </div>
         )}

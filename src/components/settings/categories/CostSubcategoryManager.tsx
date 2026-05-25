@@ -139,7 +139,7 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
           disabled={isCreating || !newSubcategoryName.trim()}
           className="gap-2 flex-shrink-0"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Agregar
         </Button>
       </div>
@@ -166,7 +166,7 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
               {allSubcategories.map((subcategory) => (
                 <TableRow key={subcategory.id}>
                   <TableCell>
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <GripVertical className="size-4 text-muted-foreground" />
                   </TableCell>
                   <TableCell className="font-medium">
                     {subcategory.name}
@@ -182,23 +182,23 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
                         variant="ghost"
                         size="sm"
                         onClick={() => openRulesEditor(subcategory)}
-                        className="h-8 w-8 p-0"
+                        className="size-8 p-0"
                         title="Reglas"
                       >
-                        <SlidersHorizontal className="h-4 w-4" />
+                        <SlidersHorizontal className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleStatus(subcategory.id)}
                         disabled={isToggling}
-                        className="h-8 w-8 p-0"
+                        className="size-8 p-0"
                         title={subcategory.is_active ? 'Desactivar' : 'Activar'}
                       >
                         {subcategory.is_active ? (
-                          <PowerOff className="h-4 w-4" />
+                          <PowerOff className="size-4" />
                         ) : (
-                          <Power className="h-4 w-4" />
+                          <Power className="size-4" />
                         )}
                       </Button>
                       <AlertDialog>
@@ -206,9 +206,9 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="size-8 p-0 text-destructive hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="size-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

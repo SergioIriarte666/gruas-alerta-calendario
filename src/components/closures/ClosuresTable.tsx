@@ -33,11 +33,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 const ITEMS_PER_PAGE = 50;
@@ -151,7 +151,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
 
   return (
     <Card className="bg-card border" id="closures-table-top">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex flex-row items-center justify-between gap-y-0">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
@@ -163,20 +163,20 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="size-8"
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="size-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="size-8"
                   onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="size-4" />
                 </Button>
               </div>
             </div>
@@ -188,7 +188,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             className="gap-2"
             title={groupByClient ? 'Vista plana' : 'Agrupar por cliente'}
           >
-            {groupByClient ? <List className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+            {groupByClient ? <List className="size-4" /> : <Users className="size-4" />}
             {groupByClient ? 'Vista plana' : 'Por cliente'}
           </Button>
         </div>
@@ -291,14 +291,14 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                       {getStatusBadge(closure.status)}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end gap-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => onViewDetails(closure)}
                           title="Ver detalles"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="size-4" />
                         </Button>
                         {closure.status === 'open' && (
                           <Button
@@ -307,7 +307,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                             onClick={() => onClose(closure.id, closure.folio)}
                             title="Cerrar periodo"
                           >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="size-4" />
                           </Button>
                         )}
                         <Button
@@ -316,7 +316,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                           onClick={() => onEdit(closure)}
                           title="Editar cierre"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="size-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -325,7 +325,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                           className="text-destructive border-destructive/40 hover:bg-destructive/10"
                           title="Eliminar cierre"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -336,14 +336,14 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             
             {/* Bottom Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="flex items-center justify-end gap-x-2 py-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                 >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  <ChevronLeft className="size-4 mr-2" />
                   Anterior
                 </Button>
                 <div className="text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                   disabled={currentPage === totalPages}
                 >
                   Siguiente
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="size-4 ml-2" />
                 </Button>
               </div>
             )}

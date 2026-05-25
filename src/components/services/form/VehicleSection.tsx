@@ -473,7 +473,7 @@ export const VehicleSection = ({
             Marca del Vehículo {vehicleBrandRequired && <span className="text-red-500">*</span>}
             {vehicleBrandError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="size-3" />
                 Requerido
               </span>
             )}
@@ -505,7 +505,7 @@ export const VehicleSection = ({
             onClick={() => setIsNewBrandDialogOpen(true)}
             disabled={disabled}
           >
-            <Plus className="h-3 w-3 mr-1" />
+            <Plus className="size-3 mr-1" />
             Nueva marca
           </Button>
         </div>
@@ -516,7 +516,7 @@ export const VehicleSection = ({
             Modelo del Vehículo {vehicleModelRequired && <span className="text-red-500">*</span>}
             {vehicleModelError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="size-3" />
                 Requerido
               </span>
             )}
@@ -554,7 +554,7 @@ export const VehicleSection = ({
             onClick={() => setIsNewModelDialogOpen(true)}
             disabled={disabled || !selectedBrandId}
           >
-            <Plus className="h-3 w-3 mr-1" />
+            <Plus className="size-3 mr-1" />
             Nuevo modelo
           </Button>
         </div>
@@ -565,7 +565,7 @@ export const VehicleSection = ({
             Patente {licensePlateRequired && <span className="text-red-500">*</span>}
             {licensePlateError && (
               <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="size-3" />
                 Requerido
               </span>
             )}
@@ -588,7 +588,7 @@ export const VehicleSection = ({
             />
             {patentLoading && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
               </div>
             )}
           </div>
@@ -599,7 +599,7 @@ export const VehicleSection = ({
       {mismatchWarning && !warningDismissed && (
         <div className="flex flex-col gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 mt-2">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <ShieldAlert className="size-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-yellow-800 dark:text-yellow-200">
                 Verificación de patente: datos no coinciden
@@ -663,7 +663,7 @@ export const VehicleSection = ({
       {/* Banner de verificación exitosa */}
       {verificationSuccess && !mismatchWarning && (
         <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-950/20 p-3 mt-2">
-          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+          <CheckCircle2 className="size-5 text-green-600 flex-shrink-0" />
           <p className="text-sm font-medium text-green-700 dark:text-green-300">
             Patente verificada: los datos coinciden con el registro oficial
           </p>
@@ -763,7 +763,7 @@ export const VehicleSection = ({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
-              <AlertCircle className="h-5 w-5" />
+              <AlertCircle className="size-5" />
               Vehículo con Historial
             </DialogTitle>
             <DialogDescription>
@@ -778,7 +778,7 @@ export const VehicleSection = ({
               </p>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="size-4 text-muted-foreground" />
                   <span>
                     {format(parseFromDatabase(history[0].serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
                     {history[0].startTime && (
@@ -790,34 +790,34 @@ export const VehicleSection = ({
                 </div>
                 {history[0].createdAt && (
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="size-4 text-muted-foreground" />
                     <span className="text-muted-foreground">
                       Registrado {formatDistanceToNow(new Date(history[0].createdAt), { addSuffix: true, locale: es })}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-green-600" />
+                  <MapPin className="size-4 text-green-600" />
                   <span className="text-muted-foreground">Origen:</span>
                   <span>{history[0].origin || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-red-600" />
+                  <MapPin className="size-4 text-red-600" />
                   <span className="text-muted-foreground">Destino:</span>
                   <span>{history[0].destination || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Cliente:</span>
                   <span>{history[0].client?.name || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Folio:</span>
                   <span className="font-mono">{history[0].folio}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Car className="h-4 w-4 text-muted-foreground" />
+                  <Car className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Tipo:</span>
                   <span>{history[0].serviceType?.name || 'No especificado'}</span>
                 </div>
@@ -856,7 +856,7 @@ export const VehicleSection = ({
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-primary">
-                  <Lightbulb className="h-5 w-5" />
+                  <Lightbulb className="size-5" />
                   Datos del Vehículo Encontrados
                 </DialogTitle>
                 <DialogDescription>
@@ -910,7 +910,7 @@ export const VehicleSection = ({
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Plus className="h-5 w-5" />
+                  <Plus className="size-5" />
                   Crear Marca / Modelo
                 </DialogTitle>
                 <DialogDescription>

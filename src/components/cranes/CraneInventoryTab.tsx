@@ -510,11 +510,11 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
   const getMovementTypeIcon = (type: string) => {
     switch (type) {
       case 'entry':
-        return <ArrowUpDown className="w-4 h-4 text-success" />;
+        return <ArrowUpDown className="size-4 text-success" />;
       case 'exit':
-        return <ArrowUpDown className="w-4 h-4 text-danger" />;
+        return <ArrowUpDown className="size-4 text-danger" />;
       default:
-        return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
+        return <ArrowUpDown className="size-4 text-muted-foreground" />;
     }
   };
 
@@ -538,7 +538,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <FileDown className="w-5 h-5 text-primary" />
+            <FileDown className="size-5 text-primary" />
             Reporte PDF de Movimientos
           </CardTitle>
         </CardHeader>
@@ -571,12 +571,12 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
               >
                 {isGeneratingPdf ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Generando...
                   </>
                 ) : (
                   <>
-                    <FileDown className="h-4 w-4" />
+                    <FileDown className="size-4" />
                     Generar PDF
                   </>
                 )}
@@ -612,7 +612,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Activity className="w-8 h-8 text-blue-500" />
+                <Activity className="size-8 text-blue-500" />
                 <div>
                   <p className="text-sm text-muted-foreground">Sincronización</p>
                   <p className="text-2xl font-bold text-foreground">
@@ -632,9 +632,9 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
                   className="ml-2"
                 >
                   {migrateMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="size-4" />
                   )}
                 </Button>
               )}
@@ -647,7 +647,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
+            <TrendingUp className="size-5 text-primary" />
             Estado de Integración
           </CardTitle>
         </CardHeader>
@@ -677,7 +677,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
             <div className="flex items-center justify-between rounded-lg border border-warning/30 bg-warning-soft/40 p-3">
               <span className="text-sm text-warning">Mantenimientos Pendientes</span>
               <StatusBadge tone="pending">
-                <AlertTriangle className="w-3 h-3 mr-1" />
+                <AlertTriangle className="size-3 mr-1" />
                 {metrics.pendingMaintenanceAlerts} alertas
               </StatusBadge>
             </div>
@@ -714,7 +714,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
               {traceabilityData.slice(0, 5).map((item, index) => (
                 <div key={`${item.part_id}-${index}`} className="flex items-center justify-between rounded-lg bg-muted p-3">
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-primary" />
+                    <Package className="size-4 text-primary" />
                     <div>
                       <p className="font-medium text-foreground">{item.part_name}</p>
                       <p className="text-sm text-muted-foreground">
@@ -743,7 +743,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
             </div>
           ) : (
             <div className="text-center py-6">
-              <Package className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+              <Package className="mx-auto mb-3 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold text-foreground">Sin datos de trazabilidad</h3>
               <p className="text-sm text-muted-foreground">
                 No se encontraron piezas registradas para esta grúa.
@@ -757,7 +757,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <ArrowUpDown className="w-5 h-5 text-tms-green" />
+              <ArrowUpDown className="size-5 text-tms-green" />
               Consumos de Inventario de esta Grúa
             </CardTitle>
           </CardHeader>
@@ -814,7 +814,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-tms-green" />
+              <Calendar className="size-5 text-tms-green" />
               Último Consumo
             </CardTitle>
           </CardHeader>
@@ -834,7 +834,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-white/5 border-tms-green/30">
           <CardContent className="p-6">
             <div className="text-center">
-              <ArrowUpDown className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+              <ArrowUpDown className="size-12 text-gray-500 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-white mb-2">Sin consumos registrados</h3>
               <p className="text-gray-400 text-sm mb-4">
                 Esta grúa aún no tiene consumos de inventario registrados.

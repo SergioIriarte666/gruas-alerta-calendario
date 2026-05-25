@@ -81,7 +81,7 @@ export const InvoiceCancellationsHistory = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Ban className="h-6 w-6 text-destructive" />
+            <Ban className="size-6 text-destructive" />
             Historial de Anulaciones
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
@@ -98,7 +98,7 @@ export const InvoiceCancellationsHistory = () => {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por folio, NC, cliente..."
           value={searchTerm}
@@ -111,7 +111,7 @@ export const InvoiceCancellationsHistory = () => {
       {filteredCancellations.length === 0 ? (
         <Card className="bg-card border">
           <CardContent className="p-8 text-center">
-            <Ban className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <Ban className="mx-auto size-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
               {searchTerm ? 'No se encontraron resultados' : 'No hay anulaciones registradas'}
             </h3>
@@ -183,7 +183,7 @@ export const InvoiceCancellationsHistory = () => {
                           onClick={() => setSelectedCancellation(cancellation)}
                           title="Ver detalles"
                         >
-                          <Info className="h-4 w-4" />
+                          <Info className="size-4" />
                         </Button>
                       </td>
                     </tr>
@@ -200,7 +200,7 @@ export const InvoiceCancellationsHistory = () => {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Ban className="h-5 w-5 text-destructive" />
+              <Ban className="size-5 text-destructive" />
               Detalle de Anulación
             </DialogTitle>
             <DialogDescription>
@@ -213,14 +213,14 @@ export const InvoiceCancellationsHistory = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
+                    <FileText className="size-4" />
                     Folio Original
                   </div>
                   <p className="font-medium">{selectedCancellation.originalFolio}</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
+                    <FileText className="size-4" />
                     N° Fiscal
                   </div>
                   <p className="font-medium text-violet-600">
@@ -231,7 +231,7 @@ export const InvoiceCancellationsHistory = () => {
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Ban className="h-4 w-4" />
+                  <Ban className="size-4" />
                   Nota de Crédito
                 </div>
                 <p className="font-medium text-destructive">{selectedCancellation.creditNoteNumber}</p>
@@ -239,7 +239,7 @@ export const InvoiceCancellationsHistory = () => {
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Building2 className="h-4 w-4" />
+                  <Building2 className="size-4" />
                   Cliente
                 </div>
                 <p className="font-medium">{toTitleCase(selectedCancellation.clientName)}</p>
@@ -247,7 +247,7 @@ export const InvoiceCancellationsHistory = () => {
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
+                  <DollarSign className="size-4" />
                   Monto Anulado
                 </div>
                 <p className="font-bold text-lg">{formatCurrency(selectedCancellation.originalTotal)}</p>
@@ -266,14 +266,14 @@ export const InvoiceCancellationsHistory = () => {
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
+                    <User className="size-4" />
                     Anulado por
                   </div>
                   <p className="text-sm">{selectedCancellation.cancelledByName}</p>
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="size-4" />
                     Fecha
                   </div>
                   <p className="text-sm">{formatDate(selectedCancellation.cancelledAt)}</p>

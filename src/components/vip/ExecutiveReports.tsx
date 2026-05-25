@@ -377,7 +377,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-400" />
+            <FileText className="size-5 text-purple-400" />
             Reportes Ejecutivos - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -415,7 +415,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
             onClick={() => exportReport('pdf')}
             className="border-purple-500/30 text-purple-300"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             PDF
           </Button>
 
@@ -424,7 +424,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
             onClick={() => exportReport('excel')}
             className="border-green-500/30 text-green-300"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Excel
           </Button>
         </div>
@@ -436,7 +436,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Target className="w-5 h-5 text-blue-400" />
+                <Target className="size-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">{metrics.totalServices}</p>
@@ -451,7 +451,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-500/20 rounded-lg">
-                <DollarSign className="w-5 h-5 text-green-400" />
+                <DollarSign className="size-5 text-green-400" />
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
@@ -470,7 +470,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Clock className="w-5 h-5 text-purple-400" />
+                <Clock className="size-5 text-purple-400" />
               </div>
               <div>
                 <p className="text-lg font-bold text-white">
@@ -487,7 +487,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-500/20 rounded-lg">
-                <Award className="w-5 h-5 text-amber-400" />
+                <Award className="size-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-lg font-bold text-white">
@@ -507,7 +507,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-green-400" />
+            <TrendingUp className="size-5 text-green-400" />
             Indicadores de Rendimiento
           </CardTitle>
         </CardHeader>
@@ -518,9 +518,9 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-black">{indicator.title}</span>
                   {indicator.trend === 'up' ? (
-                    <TrendingUp className="w-4 h-4 text-green-400" />
+                    <TrendingUp className="size-4 text-green-400" />
                   ) : (
-                    <TrendingDown className="w-4 h-4 text-red-400" />
+                    <TrendingDown className="size-4 text-red-400" />
                   )}
                 </div>
                 <div className="flex items-baseline gap-2">
@@ -650,7 +650,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       <Card className="glass-card border-purple-500/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-purple-400" />
+            <FileText className="size-5 text-purple-400" />
             Resumen Ejecutivo
           </CardTitle>
         </CardHeader>
@@ -660,15 +660,15 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
               <h4 className="font-medium text-white">Destacados del Período</h4>
               <ul className="space-y-2 text-sm text-gray-300">
                 <li className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-green-400" />
+                  <Award className="size-4 text-green-400" />
                   Tasa de completación superior al 85%
                 </li>
                 <li className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                  <TrendingUp className="size-4 text-blue-400" />
                   Tiempo de respuesta mejorado en 15%
                 </li>
                 <li className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-400" />
+                  <DollarSign className="size-4 text-green-400" />
                   Ingresos estables con tendencia positiva
                 </li>
               </ul>
@@ -678,15 +678,15 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
               <h4 className="font-medium text-white">Áreas de Mejora</h4>
               <ul className="space-y-2 text-sm text-gray-300">
                 <li className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <AlertTriangle className="size-4 text-amber-400" />
                   Reducir servicios completados sin facturar
                 </li>
                 <li className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-orange-400" />
+                  <Clock className="size-4 text-orange-400" />
                   Optimizar proceso de órdenes de compra
                 </li>
                 <li className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-purple-400" />
+                  <Target className="size-4 text-purple-400" />
                   Implementar seguimiento automatizado
                 </li>
               </ul>

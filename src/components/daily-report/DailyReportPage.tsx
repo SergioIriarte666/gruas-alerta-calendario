@@ -181,7 +181,7 @@ const DailyReportPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+        <RefreshCw className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -199,17 +199,17 @@ const DailyReportPage = () => {
 
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => refetch()} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
 
           <Button variant="outline" onClick={handleExportPDF} disabled={isExporting || !data}>
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             PDF
           </Button>
 
           <Button variant="outline" onClick={handleExportExcel} disabled={isExporting || !data}>
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Excel
           </Button>
         </div>
@@ -220,7 +220,7 @@ const DailyReportPage = () => {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={handlePreviousDay}>
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
               <span className="hidden sm:inline ml-1">Día Anterior</span>
             </Button>
 
@@ -237,7 +237,7 @@ const DailyReportPage = () => {
 
             <Button variant="outline" size="sm" onClick={handleNextDay}>
               <span className="hidden sm:inline mr-1">Día Siguiente</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
         </CardContent>
@@ -253,7 +253,7 @@ const DailyReportPage = () => {
                   <p className="text-sm font-medium text-muted-foreground">Total Tareas</p>
                   <p className="text-2xl font-bold">{data.summary.totalTasks}</p>
                 </div>
-                <FileText className="w-8 h-8 text-blue-500" />
+                <FileText className="size-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -265,7 +265,7 @@ const DailyReportPage = () => {
                   <p className="text-sm font-medium text-muted-foreground">Tareas Críticas</p>
                   <p className="text-2xl font-bold text-red-500">{data.summary.criticalTasks}</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <AlertTriangle className="size-8 text-red-500" />
               </div>
             </CardContent>
           </Card>
@@ -279,7 +279,7 @@ const DailyReportPage = () => {
                     {data.summary.completionRate.toFixed(1)}%
                   </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
+                <TrendingUp className="size-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
@@ -291,7 +291,7 @@ const DailyReportPage = () => {
                   <p className="text-sm font-medium text-muted-foreground">Alertas</p>
                   <p className="text-2xl font-bold text-orange-500">{data.summary.alerts}</p>
                 </div>
-                <AlertTriangle className="w-8 h-8 text-orange-500" />
+                <AlertTriangle className="size-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
@@ -302,7 +302,7 @@ const DailyReportPage = () => {
       <Tabs defaultValue="services" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           <TabsTrigger value="services" className="flex items-center gap-2">
-            <Truck className="w-4 h-4" />
+            <Truck className="size-4" />
             Servicios
             {data && data.services.total > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -312,7 +312,7 @@ const DailyReportPage = () => {
           </TabsTrigger>
           
           <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="size-4" />
             Agenda
             {data && data.calendar.total > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -322,7 +322,7 @@ const DailyReportPage = () => {
           </TabsTrigger>
           
           <TabsTrigger value="financial" className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
+            <DollarSign className="size-4" />
             Financiero
             {data && (data.financial.invoicesDue.length + data.financial.paymentsToMake.length) > 0 && (
               <Badge variant="secondary" className="ml-1">
@@ -332,7 +332,7 @@ const DailyReportPage = () => {
           </TabsTrigger>
           
           <TabsTrigger value="suppliers" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
+            <Building2 className="size-4" />
             Proveedores
             {data && data.financial.supplierPayments && (
               (data.financial.supplierPayments.overdue?.length || 0) + 
@@ -348,7 +348,7 @@ const DailyReportPage = () => {
           </TabsTrigger>
           
           <TabsTrigger value="operations" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
+            <Users className="size-4" />
             Operaciones
             {data && data.operations.documentAlerts.length > 0 && (
               <Badge variant="destructive" className="ml-1">

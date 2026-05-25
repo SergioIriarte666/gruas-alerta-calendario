@@ -50,10 +50,10 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="relative">
-          <Filter className="w-4 h-4 mr-2" />
+          <Filter className="size-4 mr-2" />
           Filtros
           {hasActiveFilters && (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <span className="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full" />
           )}
         </Button>
       </PopoverTrigger>
@@ -63,7 +63,7 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
             <h3 className="font-medium text-gray-900 dark:text-gray-100">Filtros Avanzados</h3>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={onClearFilters}>
-                <X className="w-4 h-4 mr-1" />
+                <X className="size-4 mr-1" />
                 Limpiar
               </Button>
             )}
@@ -114,7 +114,7 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {filters.dateFrom ? format(filters.dateFrom, 'dd/MM/yyyy', { locale: es }) : 'Desde'}
                   </Button>
                 </PopoverTrigger>
@@ -131,7 +131,7 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 size-4" />
                     {filters.dateTo ? format(filters.dateTo, 'dd/MM/yyyy', { locale: es }) : 'Hasta'}
                   </Button>
                 </PopoverTrigger>

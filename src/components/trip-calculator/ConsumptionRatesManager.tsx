@@ -123,7 +123,7 @@ export const ConsumptionRatesManager = () => {
           <p className="text-sm text-muted-foreground">Configura las tasas de consumo de combustible por tipo de grúa</p>
         </div>
         <Button onClick={openNew} className="bg-tms-green hover:bg-tms-green/90 text-white">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nueva Tasa
         </Button>
       </div>
@@ -131,7 +131,7 @@ export const ConsumptionRatesManager = () => {
       {rates.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Settings2 className="h-12 w-12 mb-4 opacity-50" />
+            <Settings2 className="size-12 mb-4 opacity-50" />
             <p className="text-lg font-medium">Sin tasas configuradas</p>
             <p className="text-sm">Agregue tasas de consumo para cada tipo de grúa</p>
           </CardContent>
@@ -165,13 +165,13 @@ export const ConsumptionRatesManager = () => {
                       </td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(rate)}>
-                            <Pencil className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(rate)}>
+                            <Pencil className="size-3.5" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                                <Trash2 className="h-3.5 w-3.5" />
+                              <Button variant="ghost" size="icon" className="size-8 text-destructive">
+                                <Trash2 className="size-3.5" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>

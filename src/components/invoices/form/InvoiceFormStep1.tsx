@@ -38,7 +38,7 @@ export const InvoiceFormStep1 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Estado de la Factura"
-        icon={<Settings className="h-5 w-5" />}
+        icon={<Settings className="size-5" />}
         color="purple"
         hasError={!!errors.status}
       >
@@ -68,7 +68,7 @@ export const InvoiceFormStep1 = ({
 
       <ColoredSectionCard
         title="Número Fiscal"
-        icon={<FileText className="h-5 w-5" />}
+        icon={<FileText className="size-5" />}
         color="blue"
         hasError={!!errors.numeroFiscal}
       >
@@ -94,7 +94,7 @@ export const InvoiceFormStep1 = ({
 
       <ColoredSectionCard
         title="Descripción de Producto o Servicio"
-        icon={<AlignLeft className="h-5 w-5" />}
+        icon={<AlignLeft className="size-5" />}
         color="green"
         hasError={!!errors.productServiceDescription}
       >

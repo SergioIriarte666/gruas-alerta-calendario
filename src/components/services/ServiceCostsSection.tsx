@@ -70,8 +70,8 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
   if (error) {
     return (
-      <div className="flex items-center space-x-2 text-destructive">
-        <AlertTriangle className="w-4 h-4" />
+      <div className="flex items-center gap-x-2 text-destructive">
+        <AlertTriangle className="size-4" />
         <span className="text-sm">Error al cargar los costos del servicio</span>
       </div>
     );
@@ -82,7 +82,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
   if (!allCosts || (allCosts.length === 0 && !hasCommissions)) {
     return (
       <div className="text-center py-6 text-muted-foreground">
-        <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        <FileText className="size-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No hay costos ni comisiones registrados para este servicio</p>
         <p className="text-xs text-muted-foreground mt-1">
           Los costos se pueden agregar desde el formulario de edición del servicio
@@ -96,9 +96,9 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       {/* Resumen total */}
       <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <div className="p-1.5 rounded-lg bg-destructive/15">
-              <Calculator className="w-5 h-5 text-destructive" />
+              <Calculator className="size-5 text-destructive" />
             </div>
             <span className="font-semibold text-foreground">Total de Costos</span>
           </div>
@@ -115,15 +115,15 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       {/* Resumen por categorías */}
       {(categoryKeys.length > 1 || hasCommissions) && (
         <div className="bg-muted/50 rounded-lg p-4 border border-border">
-          <div className="flex items-center space-x-2 mb-3">
-            <TrendingDown className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-x-2 mb-3">
+            <TrendingDown className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">Resumen por Categoría</span>
           </div>
           <div className="space-y-2">
             {hasCommissions && (
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${COMMISSION_COLOR.dot}`} />
+                  <span className={`size-2.5 rounded-full ${COMMISSION_COLOR.dot}`} />
                   <span className="text-muted-foreground">Comisión Operador</span>
                 </div>
                 <span className={`font-semibold ${COMMISSION_COLOR.text}`}>{formatCurrency(totalCommissions)}</span>
@@ -135,7 +135,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
               return (
                 <div key={category} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${color.dot}`} />
+                    <span className={`size-2.5 rounded-full ${color.dot}`} />
                     <span className="text-muted-foreground truncate">{category}</span>
                   </div>
                   <span className={`font-semibold ${color.text}`}>{formatCurrency(categoryTotal)}</span>
@@ -158,7 +158,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
             <div key={operatorData.id} className={`rounded-lg p-4 border border-border border-l-4 ${COMMISSION_COLOR.border} ${COMMISSION_COLOR.bg}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="flex items-center gap-x-2 mb-2">
                     <h5 className="font-medium text-foreground">Comisión operador - Servicio {enhancedService?.folio || serviceId}</h5>
                     <Badge className={`text-xs border-0 ${COMMISSION_COLOR.badge}`}>
                       comisiones
@@ -208,7 +208,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                   <div key={cost.id} className={`rounded-lg p-4 border border-border border-l-4 ${color.border} ${color.bg}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center gap-x-2 mb-2">
                           <h5 className="font-medium text-foreground">{cost.description}</h5>
                           {cost.subcategory && (
                             <Badge className={`text-xs border-0 ${color.badge}`}>

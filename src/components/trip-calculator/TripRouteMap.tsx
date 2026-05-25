@@ -119,7 +119,7 @@ export const TripRouteMap = ({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
-                <MapIcon className="h-5 w-5 text-violet-600" />
+                <MapIcon className="size-5 text-violet-600" />
                 Mapa de Ruta
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
@@ -133,7 +133,7 @@ export const TripRouteMap = ({
                 className="gap-1.5"
                 onClick={() => setModalOpen(true)}
               >
-                <Maximize2 className="h-3.5 w-3.5" />
+                <Maximize2 className="size-3.5" />
                 Ver completo
               </Button>
               <Button
@@ -142,7 +142,7 @@ export const TripRouteMap = ({
                 className="gap-1.5"
                 onClick={() => window.open(googleMapsUrl, '_blank')}
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="size-3.5" />
                 Google Maps
               </Button>
             </div>
@@ -152,14 +152,14 @@ export const TripRouteMap = ({
           <div className="relative rounded-lg overflow-hidden border bg-muted" style={{ height: 280 }}>
             {loading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-violet-600" />
+                <Loader2 className="size-6 animate-spin text-violet-600" />
               </div>
             )}
             {previewUrl && (
               <img
                 src={previewUrl}
                 alt={`Ruta de ${originName} a ${destinationName}`}
-                className="w-full h-full object-contain cursor-pointer"
+                className="size-full object-contain cursor-pointer"
                 onClick={() => setModalOpen(true)}
                 onLoad={() => setLoading(false)}
                 onError={() => { setError(true); }}
@@ -174,7 +174,7 @@ export const TripRouteMap = ({
         <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DlgTitle className="flex items-center gap-2 text-lg">
-              <MapIcon className="h-5 w-5 text-violet-600" />
+              <MapIcon className="size-5 text-violet-600" />
               Mapa de Ruta Completo
             </DlgTitle>
             <DialogDescription>
@@ -184,7 +184,7 @@ export const TripRouteMap = ({
           <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto">
             {fullLoading && (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+                <Loader2 className="size-8 animate-spin text-violet-600" />
               </div>
             )}
             {fullUrl && (
@@ -203,7 +203,7 @@ export const TripRouteMap = ({
                   className="mt-3 gap-1.5"
                   onClick={() => window.open(googleMapsUrl, '_blank')}
                 >
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="size-3.5" />
                   Ver en Google Maps
                 </Button>
               </div>

@@ -29,7 +29,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
       {/* Quick Filters */}
       <div className="space-y-2">
         <Label className="text-sm font-medium flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+          <Calendar className="size-4" />
           Filtros Rápidos
         </Label>
         <div className="flex flex-wrap gap-2">
@@ -120,7 +120,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
       <div className="space-y-3">
         <Label className="text-sm font-medium">✅ OPCIONES ADICIONALES</Label>
         <div className="space-y-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includePaymentHistory"
               checked={filters.includePaymentHistory}
@@ -133,7 +133,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               Incluir historial de pagos detallado
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="groupByMonth"
               checked={filters.groupByMonth}
@@ -146,7 +146,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               Agrupar por mes
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includeNotes"
               checked={filters.includeNotes}
@@ -170,23 +170,23 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
           onValueChange={(value) => onFilterChange('format', value as 'pdf' | 'excel')}
           className="flex gap-4"
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <RadioGroupItem value="pdf" id="pdf" />
             <label
               htmlFor="pdf"
               className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
             >
-              <FileText className="h-4 w-4" />
+              <FileText className="size-4" />
               PDF
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <RadioGroupItem value="excel" id="excel" />
             <label
               htmlFor="excel"
               className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
             >
-              <FileSpreadsheet className="h-4 w-4" />
+              <FileSpreadsheet className="size-4" />
               Excel
             </label>
           </div>

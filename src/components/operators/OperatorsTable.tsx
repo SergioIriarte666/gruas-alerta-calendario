@@ -30,11 +30,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 export const OperatorsTable = ({
@@ -71,13 +71,13 @@ export const OperatorsTable = ({
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
           <p className="text-muted-foreground mb-4">
             No hay operadores que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Operador
           </Button>
         </CardContent>
@@ -89,13 +89,13 @@ export const OperatorsTable = ({
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer operador al sistema
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Primer Operador
           </Button>
         </CardContent>
@@ -217,7 +217,7 @@ export const OperatorsTable = ({
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center justify-center gap-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -225,7 +225,7 @@ export const OperatorsTable = ({
                         className="text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
                         title="Ver detalles"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -234,7 +234,7 @@ export const OperatorsTable = ({
                         className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
                         title="Editar"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -247,7 +247,7 @@ export const OperatorsTable = ({
                         }`}
                         title={operator.isActive ? 'Desactivar' : 'Activar'}
                       >
-                        {operator.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                        {operator.isActive ? <UserX className="size-4" /> : <UserCheck className="size-4" />}
                       </Button>
                       <Button
                         variant="ghost"
@@ -256,7 +256,7 @@ export const OperatorsTable = ({
                         className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
                         title="Eliminar"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </td>

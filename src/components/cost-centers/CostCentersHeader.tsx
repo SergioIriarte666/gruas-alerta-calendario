@@ -26,7 +26,7 @@ export const CostCentersHeader = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
-            <Target className="w-8 h-8 text-primary" />
+            <Target className="size-8 text-primary" />
             Centros de Costo
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -42,12 +42,12 @@ export const CostCentersHeader = ({
               disabled={isLoading}
               className="flex items-center gap-2"
             >
-              <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCcw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
           )}
           <Button onClick={onAddCostCenter} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" />
             Nuevo Centro
           </Button>
         </div>
@@ -57,7 +57,7 @@ export const CostCentersHeader = ({
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por nombre, código o descripción..."
                 value={searchTerm}

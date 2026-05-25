@@ -74,7 +74,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
     return {
       badge: (
         <Badge variant={config.variant} className="flex items-center gap-1">
-          <Icon className="w-3 h-3" />
+          <Icon className="size-3" />
           {config.label}
         </Badge>
       ),
@@ -89,7 +89,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Package className="w-6 h-6 text-primary" />
+          <Package className="size-6 text-primary" />
           <div>
             <h3 className="text-lg font-semibold">Detalles del Movimiento</h3>
             <p className="text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
+              <Package className="size-4" />
               Información del Movimiento
             </CardTitle>
           </CardHeader>
@@ -144,7 +144,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <Calendar className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Fecha del Movimiento:</span>
               </div>
               <p className="text-sm ml-6">
@@ -154,7 +154,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <MapPin className="size-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Ubicación:</span>
               </div>
               <p className="text-sm ml-6">
@@ -171,7 +171,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
+              <Package className="size-4" />
               Producto
             </CardTitle>
           </CardHeader>
@@ -232,7 +232,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {movement.supplier && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-muted-foreground" />
+                  <Truck className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Proveedor:</span>
                 </div>
                 <p className="text-sm ml-6">{movement.supplier.name}</p>
@@ -242,7 +242,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {movement.crane && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-muted-foreground" />
+                  <Truck className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Grúa:</span>
                 </div>
                 <p className="text-sm ml-6">{movement.crane.license_plate}</p>
@@ -252,7 +252,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {movement.reference_document && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Documento de Referencia:</span>
                 </div>
                 <code className="text-sm bg-muted px-2 py-1 rounded ml-6">
@@ -264,7 +264,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {(movement.supplier_invoice_id || movement.supplier_invoice_item_id) && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Trazabilidad de Factura:</span>
                 </div>
                 <div className="ml-6 space-y-1 text-sm">
@@ -281,7 +281,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {movement.reason && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                  <AlertTriangle className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Motivo:</span>
                 </div>
                 <p className="text-sm ml-6">{movement.reason}</p>
@@ -291,7 +291,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             {movement.observations && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Observaciones:</span>
                 </div>
                 <p className="text-sm ml-6 whitespace-pre-wrap">{movement.observations}</p>
@@ -309,7 +309,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="w-4 h-4 text-primary" />
+            <Clock className="size-4 text-primary" />
             Historial de cambios
           </CardTitle>
         </CardHeader>
@@ -328,7 +328,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
               variant="outline" 
               onClick={() => setShowEditModal(true)}
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="size-4 mr-2" />
               Editar
             </Button>
             <Button 

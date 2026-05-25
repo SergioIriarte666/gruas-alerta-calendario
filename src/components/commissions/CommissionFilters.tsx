@@ -43,7 +43,7 @@ export const CommissionFiltersComponent: React.FC<CommissionFiltersProps> = ({
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4" />
+          <Filter className="size-4" />
           <span className="font-medium">Filtros</span>
         </div>
         {hasActiveFilters && (
@@ -53,7 +53,7 @@ export const CommissionFiltersComponent: React.FC<CommissionFiltersProps> = ({
             onClick={clearFilters}
             className="text-muted-foreground hover:text-foreground"
           >
-            <X className="w-4 h-4 mr-1" />
+            <X className="size-4 mr-1" />
             Limpiar
           </Button>
         )}

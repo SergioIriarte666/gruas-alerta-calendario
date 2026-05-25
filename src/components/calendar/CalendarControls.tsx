@@ -21,14 +21,14 @@ export const CalendarControls = ({
     <Card className="glass-card">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-x-4">
             <Button 
               variant="outline" 
               size="sm" 
               className="border-gray-700 text-gray-300"
               onClick={() => onNavigate('prev')}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
             </Button>
             <h2 className="text-xl font-semibold text-foreground min-w-48 sm:min-w-64 text-center">
               {viewTitle}
@@ -39,10 +39,10 @@ export const CalendarControls = ({
               className="border-gray-700 text-gray-300"
               onClick={() => onNavigate('next')}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             <Button 
               variant={viewMode === 'day' ? 'default' : 'outline'} 
               size="sm" 

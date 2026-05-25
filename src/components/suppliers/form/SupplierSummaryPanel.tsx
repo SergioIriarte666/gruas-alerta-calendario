@@ -42,7 +42,7 @@ export const SupplierSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-violet-500" />
+            <Building2 className="size-4 text-violet-500" />
             Resumen del Proveedor
           </span>
           <Badge className={cn(
@@ -58,7 +58,7 @@ export const SupplierSummaryPanel = ({
         {/* Nombre */}
         {name && (
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Nombre:</span>
             <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 truncate">
               {name}
@@ -69,7 +69,7 @@ export const SupplierSummaryPanel = ({
         {/* RUT */}
         {rut && (
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">RUT:</span>
             <span className="text-sm font-mono">{rut}</span>
           </div>
@@ -78,7 +78,7 @@ export const SupplierSummaryPanel = ({
         {/* Categoría */}
         {categoryLabel && (
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-muted-foreground" />
+            <Tag className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Categoría:</span>
             <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300">
               {categoryLabel}
@@ -95,7 +95,7 @@ export const SupplierSummaryPanel = ({
                 <Star 
                   key={s} 
                   className={cn(
-                    "w-3.5 h-3.5", 
+                    "size-3.5", 
                     s <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"
                   )} 
                 />
@@ -111,7 +111,7 @@ export const SupplierSummaryPanel = ({
         <div className="space-y-2">
           {contactName && (
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="size-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Contacto:</span>
               <span className="text-sm truncate">{contactName}</span>
             </div>
@@ -119,7 +119,7 @@ export const SupplierSummaryPanel = ({
 
           {phone && (
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
+              <Phone className="size-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Teléfono:</span>
               <span className="text-sm">{phone}</span>
             </div>
@@ -127,7 +127,7 @@ export const SupplierSummaryPanel = ({
 
           {email && (
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Mail className="size-4 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Email:</span>
               <span className="text-sm truncate">{email}</span>
             </div>
@@ -135,7 +135,7 @@ export const SupplierSummaryPanel = ({
 
           {address && (
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <MapPin className="size-4 text-muted-foreground mt-0.5" />
               <span className="text-xs text-muted-foreground">Dirección:</span>
               <span className="text-sm truncate">{address}</span>
             </div>
@@ -148,7 +148,7 @@ export const SupplierSummaryPanel = ({
             <Separator className="my-3" />
             <div className="space-y-2">
               <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <FileText className="size-4 text-muted-foreground mt-0.5" />
                 <div>
                   <span className="text-xs text-muted-foreground block">Notas:</span>
                   <span className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">{cleanNotes}</span>

@@ -121,7 +121,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
                     !paymentDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {paymentDate ? formatForDisplay(paymentDate) : "Seleccionar fecha"}
                 </Button>
               </PopoverTrigger>
@@ -181,7 +181,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
             />
           </div>
           
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end gap-x-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancelar
             </Button>

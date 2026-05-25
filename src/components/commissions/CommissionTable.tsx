@@ -61,10 +61,10 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   };
 
   const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="w-4 h-4" />;
-    if (sortDirection === 'asc') return <ArrowUp className="w-4 h-4" />;
-    if (sortDirection === 'desc') return <ArrowDown className="w-4 h-4" />;
-    return <ArrowUpDown className="w-4 h-4" />;
+    if (sortField !== field) return <ArrowUpDown className="size-4" />;
+    if (sortDirection === 'asc') return <ArrowUp className="size-4" />;
+    if (sortDirection === 'desc') return <ArrowDown className="size-4" />;
+    return <ArrowUpDown className="size-4" />;
   };
 
   const SortButton: React.FC<{ field: SortField; children: React.ReactNode }> = ({ field, children }) => (

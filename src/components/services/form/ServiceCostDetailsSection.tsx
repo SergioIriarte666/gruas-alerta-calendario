@@ -461,12 +461,12 @@ export const ServiceCostDetailsSection = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Receipt className="h-5 w-5" />
+          <Receipt className="size-5" />
           Costos Detallados del Servicio
         </CardTitle>
         {/* Información sobre comisiones */}
         <div className="flex items-start gap-2 p-3 bg-muted border border-border rounded-lg text-sm">
-          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <Info className="size-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="text-muted-foreground">
             <strong>Nota:</strong> Las comisiones de operadores se manejan en la sección "Operadores del Servicio" arriba. 
             Esta sección es para otros costos operacionales como combustible, peajes, materiales, etc.
@@ -502,7 +502,7 @@ export const ServiceCostDetailsSection = ({
                   disabled={disabled}
                   className="text-red-600 hover:text-red-700"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               </div>
             </div>
@@ -797,14 +797,14 @@ export const ServiceCostDetailsSection = ({
             disabled={disabled || isAddingCost}
             className="flex items-center gap-2 bg-green-100 hover:bg-green-200"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             {isAddingCost ? 'Agregando...' : 'Agregar Costo'}
           </Button>
 
           {/* Resumen de costos */}
           <div className="text-right space-y-1">
             <div className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
+              <Calculator className="size-4" />
               <Label className="text-sm text-muted-foreground">Total Costos:</Label>
             </div>
             <div className="text-lg font-semibold text-blue-600">

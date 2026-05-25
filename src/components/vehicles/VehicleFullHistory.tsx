@@ -73,7 +73,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
     return (
       <Card className="border-destructive/50 bg-destructive/5">
         <CardContent className="flex items-center gap-3 py-6">
-          <AlertCircle className="h-5 w-5 text-destructive" />
+          <AlertCircle className="size-5 text-destructive" />
           <p className="text-destructive">Error al cargar el historial: {error.message}</p>
         </CardContent>
       </Card>
@@ -84,7 +84,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Car className="h-12 w-12 text-muted-foreground mb-4" />
+          <Car className="size-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">
             No se encontraron registros para este vehículo.
           </p>
@@ -100,7 +100,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Car className="h-5 w-5 text-primary" />
+              <Car className="size-5 text-primary" />
             </div>
             <div>
               <CardTitle className="text-lg font-mono">{data.licensePlate.toUpperCase()}</CardTitle>
@@ -120,7 +120,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Car className="h-4 w-4 text-blue-600" />
+                <Car className="size-4 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.totalServices}</p>
@@ -134,7 +134,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <Receipt className="h-4 w-4 text-green-600" />
+                <Receipt className="size-4 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.totalInvoices}</p>
@@ -148,7 +148,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <CheckCircle2 className="size-4 text-emerald-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{data.summary.completedServices}</p>
@@ -162,7 +162,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <TrendingUp className="size-4 text-primary" />
               </div>
               <div>
                 <p className="text-lg font-bold">{formatCurrency(data.summary.totalValue)}</p>
@@ -177,19 +177,19 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
       <div className="flex flex-wrap gap-2">
         {data.summary.totalQuotes > 0 && (
           <Badge variant="outline" className="gap-1">
-            <ClipboardList className="h-3 w-3" />
+            <ClipboardList className="size-3" />
             {data.summary.totalQuotes} Cotizaciones
           </Badge>
         )}
         {data.summary.totalPurchaseOrders > 0 && (
           <Badge variant="outline" className="gap-1">
-            <FileText className="h-3 w-3" />
+            <FileText className="size-3" />
             {data.summary.totalPurchaseOrders} Órdenes de Compra
           </Badge>
         )}
         {data.summary.cancelledServices > 0 && (
           <Badge variant="destructive" className="gap-1">
-            <XCircle className="h-3 w-3" />
+            <XCircle className="size-3" />
             {data.summary.cancelledServices} Cancelados
           </Badge>
         )}
@@ -252,13 +252,13 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                         <div className="space-y-0.5">
                           {service.quoteNumber && (
                             <div className="flex items-center gap-1">
-                              <ClipboardList className="h-3 w-3" />
+                              <ClipboardList className="size-3" />
                               {service.quoteNumber}
                             </div>
                           )}
                           {service.purchaseOrder && (
                             <div className="flex items-center gap-1">
-                              <FileText className="h-3 w-3" />
+                              <FileText className="size-3" />
                               {service.purchaseOrder}
                             </div>
                           )}
@@ -268,7 +268,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                       <TableCell>
                         {service.relatedInvoice ? (
                           <div className="flex items-center gap-2">
-                            <Receipt className="h-4 w-4 text-green-600" />
+                            <Receipt className="size-4 text-green-600" />
                             <div className="text-xs font-medium">
                               {service.relatedInvoice.numeroFiscal || 'Pendiente'}
                             </div>

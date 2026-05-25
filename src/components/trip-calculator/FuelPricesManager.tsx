@@ -137,7 +137,7 @@ export const FuelPricesManager = () => {
           onClick={() => setIsFormOpen(true)}
           className="bg-violet-600 hover:bg-violet-700 text-white"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuevo Precio
         </Button>
       </div>
@@ -151,7 +151,7 @@ export const FuelPricesManager = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Fuel className="h-4 w-4" />
+                    <Fuel className="size-4" />
                     {label}
                   </span>
                   {price && <Badge className="bg-green-600 text-white text-xs">Vigente</Badge>}
@@ -211,7 +211,7 @@ export const FuelPricesManager = () => {
                     <TableRow key={value}>
                       <TableCell className="sticky left-0 bg-background z-10 font-medium">
                         <span className="flex items-center gap-2">
-                          <Fuel className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Fuel className="size-3.5 text-muted-foreground" />
                           {label}
                         </span>
                       </TableCell>
@@ -240,9 +240,9 @@ export const FuelPricesManager = () => {
                                         variation > 0 ? 'text-destructive' : 'text-green-600'
                                       }`}>
                                         {variation > 0 ? (
-                                          <TrendingUp className="h-3 w-3" />
+                                          <TrendingUp className="size-3" />
                                         ) : (
-                                          <TrendingDown className="h-3 w-3" />
+                                          <TrendingDown className="size-3" />
                                         )}
                                         {Math.abs(variation).toFixed(1)}%
                                       </span>
@@ -263,7 +263,7 @@ export const FuelPricesManager = () => {
                                         className="h-7 text-xs flex-1"
                                         onClick={() => handleEdit(fp)}
                                       >
-                                        <Pencil className="h-3 w-3 mr-1" />
+                                        <Pencil className="size-3 mr-1" />
                                         Editar
                                       </Button>
                                       <AlertDialog>
@@ -273,7 +273,7 @@ export const FuelPricesManager = () => {
                                             size="sm"
                                             className="h-7 text-xs text-destructive flex-1"
                                           >
-                                            <Trash2 className="h-3 w-3 mr-1" />
+                                            <Trash2 className="size-3 mr-1" />
                                             Eliminar
                                           </Button>
                                         </AlertDialogTrigger>

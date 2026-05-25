@@ -53,14 +53,14 @@ export const SavedLocationsManager = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <Star className="h-4 w-4" />
+          <Star className="size-4" />
           <span className="hidden md:inline">Ubicaciones Guardadas</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-violet-600" />
+            <MapPin className="size-5 text-violet-600" />
             Ubicaciones Guardadas
           </DialogTitle>
         </DialogHeader>
@@ -107,7 +107,7 @@ export const SavedLocationsManager = () => {
             className="w-full bg-violet-600 hover:bg-violet-700 text-white gap-2"
             size="sm"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             Guardar Ubicación
           </Button>
         </div>
@@ -140,7 +140,7 @@ export const SavedLocationsManager = () => {
                 onClick={() => handleDelete(loc.id)}
                 disabled={deleteLocation.isPending}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="size-4" />
               </Button>
             </div>
           ))}

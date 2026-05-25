@@ -26,19 +26,19 @@ export const TripCalculatorPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
           <TabsTrigger value="calculator" className="gap-2">
-            <Calculator className="h-4 w-4" />
+            <Calculator className="size-4" />
             <span className="hidden md:inline">Calculadora</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
-            <History className="h-4 w-4" />
+            <History className="size-4" />
             <span className="hidden md:inline">Historial</span>
           </TabsTrigger>
           <TabsTrigger value="fuel" className="gap-2">
-            <Fuel className="h-4 w-4" />
+            <Fuel className="size-4" />
             <span className="hidden md:inline">Combustible</span>
           </TabsTrigger>
           <TabsTrigger value="consumption" className="gap-2">
-            <Settings2 className="h-4 w-4" />
+            <Settings2 className="size-4" />
             <span className="hidden md:inline">Consumos</span>
           </TabsTrigger>
         </TabsList>

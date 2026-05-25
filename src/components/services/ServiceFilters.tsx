@@ -46,7 +46,7 @@ export const ServiceFilters = ({
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por folio, cliente, patente, marca, origen, destino, cotización, orden de compra..."
                   value={searchTerm}
@@ -100,10 +100,10 @@ export const ServiceFilters = ({
                   hasActiveFilters ? 'border-primary/30 bg-primary-soft text-foreground hover:bg-primary-soft/80' : ''
                 }`}
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="size-4 mr-2" />
                 Más Filtros
                 {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary"></span>
+                  <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary"></span>
                 )}
               </Button>
               {hasActiveFilters && (
@@ -113,7 +113,7 @@ export const ServiceFilters = ({
                   onClick={handleClearFilters}
                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                 </Button>
               )}
             </div>

@@ -58,10 +58,10 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-muted-foreground" />
+              <Truck className="size-4 text-muted-foreground" />
               <span className="font-medium">{service.folio}</span>
               {getStatusBadge(service.status)}
-              {showAlert && <AlertTriangle className="w-4 h-4 text-red-500" />}
+              {showAlert && <AlertTriangle className="size-4 text-red-500" />}
             </div>
             
             <div className="text-sm text-muted-foreground space-y-1">
@@ -75,7 +75,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
           </div>
           
           <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
-            <Eye className="w-4 h-4" />
+            <Eye className="size-4" />
           </Button>
         </div>
       </CardContent>
@@ -88,7 +88,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" />
+            <Calendar className="size-5 text-blue-500" />
             Servicios Programados Hoy
             <Badge variant="outline">{data.scheduled.length}</Badge>
           </CardTitle>
@@ -113,7 +113,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
         <Card className="border-amber-500 bg-amber-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-700">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               ⚠️ Servicios Completados SIN Orden de Compra
               <Badge variant="destructive" className="bg-amber-500">
                 {data.overdueWithoutPO.length}
@@ -131,7 +131,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
                     <div className="flex items-start justify-between">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-amber-600" />
+                          <Truck className="size-4 text-amber-600" />
                           <span className="font-medium">{service.folio}</span>
                           {getStatusBadge(service.status)}
                           <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
@@ -155,7 +155,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
                       </div>
                       
                       <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
-                        <Eye className="w-4 h-4" />
+                        <Eye className="size-4" />
                       </Button>
                     </div>
                   </CardContent>
@@ -171,7 +171,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
         <Card className="border-green-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="size-5" />
               ✅ Servicios Listos para Facturar (Con O.C.)
               <Badge variant="default" className="bg-green-500">{data.overdue.length}</Badge>
             </CardTitle>
@@ -193,7 +193,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-orange-500" />
+            <Clock className="size-5 text-orange-500" />
             Servicios Pendientes
             <Badge variant="secondary">{data.pending.length}</Badge>
           </CardTitle>
@@ -222,7 +222,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-green-500" />
+            <Calendar className="size-5 text-green-500" />
             Próximos 7 Días
             <Badge variant="outline">{data.nextWeek.length}</Badge>
           </CardTitle>
@@ -244,7 +244,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
                         </p>
                       </div>
                   <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
-                    <Eye className="w-4 h-4" />
+                    <Eye className="size-4" />
                   </Button>
                     </div>
                   </CardContent>

@@ -1375,7 +1375,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         />
 
         <div className="grid min-h-0 flex-1 gap-4 px-6 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-h-0 space-y-4 lg:flex lg:flex-col">
+          <div className="min-h-0 gap-y-4 lg:flex lg:flex-col">
             <div
               {...getRootProps()}
               className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
@@ -1386,8 +1386,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             >
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
               <input {...getInputProps()} />
-              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-                <Upload className="h-8 w-8" />
+              <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
+                <Upload className="size-8" />
               </div>
               <p className="relative font-semibold text-base">
                 {selectedFile ? selectedFile.name : 'Arrastra un XML o haz clic para seleccionarlo'}
@@ -1436,7 +1436,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
               <div className="space-y-4 p-4">
                 {parseResult?.errors?.length ? (
                   <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className="size-4" />
                     <AlertDescription>{parseResult.errors.join(' ')}</AlertDescription>
                   </Alert>
                 ) : null}
@@ -1445,7 +1445,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                   <Card className="border-dashed border-primary/20 bg-gradient-to-br from-background to-primary/5 shadow-none">
                     <CardContent className="flex min-h-[260px] flex-col items-center justify-center text-center">
                       <div className="mb-4 rounded-2xl bg-primary/10 p-4 text-primary">
-                        <FileText className="h-10 w-10" />
+                        <FileText className="size-10" />
                       </div>
                       <p className="font-semibold text-lg">Aún no hay facturas cargadas</p>
                       <p className="mt-2 max-w-md text-sm text-muted-foreground">
@@ -1473,7 +1473,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                           />
                           <div>
                             <CardTitle className="text-base flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
+                              <FileText className="size-4" />
                               {validatedDoc.doc.folio}
                             </CardTitle>
                             <Textarea
@@ -1507,14 +1507,14 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                     <CardContent className="space-y-3">
                       {validatedDoc.errors.length > 0 && (
                         <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
+                          <AlertCircle className="size-4" />
                           <AlertDescription>{validatedDoc.errors.join(' ')}</AlertDescription>
                         </Alert>
                       )}
 
                       {validatedDoc.warnings.length > 0 && (
                         <Alert>
-                          <AlertCircle className="h-4 w-4" />
+                          <AlertCircle className="size-4" />
                           <AlertDescription>{validatedDoc.warnings.join(' ')}</AlertDescription>
                         </Alert>
                       )}
@@ -1581,7 +1581,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                           })}
                                           disabled={isImporting}
                                         >
-                                          <X className="h-3 w-3 mr-0.5" />
+                                          <X className="size-3 mr-0.5" />
                                           Quitar selección
                                         </Button>
                                       )}
@@ -1614,7 +1614,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                                     [line.key]: candidate,
                                                   }))}
                                                 >
-                                                  <Check className="h-3 w-3 mr-0.5" />
+                                                  <Check className="size-3 mr-0.5" />
                                                   Usar
                                                 </Button>
                                               </div>
@@ -1639,7 +1639,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                             disabled={isImporting}
                                           >
                                             <span>Buscar en catálogo...</span>
-                                            <ChevronsUpDown className="h-3 w-3 opacity-50" />
+                                            <ChevronsUpDown className="size-3 opacity-50" />
                                           </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="p-0 w-[280px]" align="start">
@@ -1683,12 +1683,12 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                       >
                                         {creatingProductKeys.has(line.key) ? (
                                           <>
-                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            <Loader2 className="size-3 animate-spin" />
                                             Creando...
                                           </>
                                         ) : (
                                           <>
-                                            <Plus className="h-3 w-3" />
+                                            <Plus className="size-3" />
                                             Crear producto
                                           </>
                                         )}
@@ -1703,7 +1703,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                     <Badge variant="secondary">{line.warning}</Badge>
                                   ) : (
                                     <Badge variant="default" className="gap-1">
-                                      <CheckCircle2 className="h-3 w-3" />
+                                      <CheckCircle2 className="size-3" />
                                       OK
                                     </Badge>
                                   )}
@@ -1714,24 +1714,24 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                       type="button"
                                       size="sm"
                                       variant="ghost"
-                                      className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                      className="size-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                       onClick={() => setDiscardedLines(prev => { const next = new Set(prev); next.delete(line.key); return next; })}
                                       disabled={isImporting}
                                       title="Restaurar línea"
                                     >
-                                      <RotateCcw className="h-3.5 w-3.5" />
+                                      <RotateCcw className="size-3.5" />
                                     </Button>
                                   ) : (
                                     <Button
                                       type="button"
                                       size="sm"
                                       variant="ghost"
-                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="size-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                                       onClick={() => setDiscardedLines(prev => new Set(prev).add(line.key))}
                                       disabled={isImporting}
                                       title="Descartar línea"
                                     >
-                                      <X className="h-3.5 w-3.5" />
+                                      <X className="size-3.5" />
                                     </Button>
                                   )}
                                 </td>
@@ -1754,7 +1754,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <span className="rounded-lg bg-primary/10 p-2 text-primary">
-                      <Package className="h-4 w-4" />
+                      <Package className="size-4" />
                     </span>
                     Parametros de Ingreso
                   </CardTitle>
@@ -1772,7 +1772,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="min-h-0 space-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
+            <CardContent className="min-h-0 gap-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
               <ScrollArea className="h-full pr-3">
                 <div className="space-y-4 pb-4">
                     <div className="space-y-2">
@@ -1847,13 +1847,13 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                             className="flex w-full items-center justify-between px-3 py-2 h-auto hover:bg-transparent"
                           >
                             <span className="flex items-center gap-2 text-sm font-medium">
-                              <Link2 className="h-4 w-4 text-muted-foreground" />
+                              <Link2 className="size-4 text-muted-foreground" />
                               Asociaciones avanzadas
                             </span>
                             {showAdvancedAssociations ? (
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                              <ChevronUp className="size-4 text-muted-foreground" />
                             ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              <ChevronDown className="size-4 text-muted-foreground" />
                             )}
                           </Button>
                         </CollapsibleTrigger>
@@ -1902,7 +1902,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                       ? `${selectedService.folio} - ${toTitleCase(selectedService.client.name)}`
                                       : 'Sin asociar'}
                                   </span>
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-[420px] p-0" align="start">
@@ -1929,7 +1929,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                           setServiceSearchOpen(false);
                                         }}
                                       >
-                                        <Check className={cn('mr-2 h-4 w-4', !selectedServiceId ? 'opacity-100' : 'opacity-0')} />
+                                        <Check className={cn('mr-2 size-4', !selectedServiceId ? 'opacity-100' : 'opacity-0')} />
                                         Sin asociar
                                       </CommandItem>
                                       {serviceSearchResults.map((service) => (
@@ -1944,7 +1944,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                         >
                                           <Check
                                             className={cn(
-                                              'mr-2 mt-0.5 h-4 w-4 shrink-0',
+                                              'mr-2 mt-0.5 size-4 shrink-0',
                                               selectedServiceId === service.id ? 'opacity-100' : 'opacity-0'
                                             )}
                                           />
@@ -2062,7 +2062,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                           >
                             <div className="flex items-center gap-2 text-left">
                               <span className="rounded-md bg-primary/10 p-1.5 text-primary">
-                                <Receipt className="h-4 w-4" />
+                                <Receipt className="size-4" />
                               </span>
                               <div>
                                 <p className="text-sm font-semibold text-foreground">Resumen activo</p>
@@ -2071,7 +2071,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                 </p>
                               </div>
                             </div>
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            <ChevronDown className="size-4 text-muted-foreground" />
                           </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="border-t px-3 py-3">
@@ -2139,7 +2139,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
               >
                 {isImporting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 size-4 animate-spin" />
                     Importando...
                   </>
                 ) : (

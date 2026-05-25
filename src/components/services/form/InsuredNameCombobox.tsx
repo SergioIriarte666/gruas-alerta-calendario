@@ -62,7 +62,7 @@ export const InsuredNameCombobox = ({
           <span className="truncate text-left">
             {value || <span className="text-muted-foreground">Nombre del asegurado</span>}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
@@ -88,7 +88,7 @@ export const InsuredNameCombobox = ({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "mr-2 size-4",
                         value === item.name ? "opacity-100" : "opacity-0"
                       )}
                     />

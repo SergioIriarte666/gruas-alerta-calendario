@@ -97,34 +97,34 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
   );
 
   return (
-    <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
+    <Tabs defaultValue="overview" className="size-full flex flex-col">
       <TabsList className="flex w-full overflow-x-auto h-auto border border-border bg-muted/60 p-1">
         <TabsTrigger value="overview" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <BarChart3 className="w-4 h-4 sm:mr-2" />
+          <BarChart3 className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Resumen</span>
         </TabsTrigger>
         <TabsTrigger value="services" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Wrench className="w-4 h-4 sm:mr-2" />
+          <Wrench className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Servicios</span>
           <CounterBadge count={counters?.services || 0} />
         </TabsTrigger>
         <TabsTrigger value="costs" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <DollarSign className="w-4 h-4 sm:mr-2" />
+          <DollarSign className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Costos</span>
           <CounterBadge count={counters?.costs || 0} />
         </TabsTrigger>
         <TabsTrigger value="parts" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Package className="w-4 h-4 sm:mr-2" />
+          <Package className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Piezas</span>
           <CounterBadge count={counters?.parts || 0} />
         </TabsTrigger>
         <TabsTrigger value="maintenance" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Settings className="w-4 h-4 sm:mr-2" />
+          <Settings className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Mant.</span>
           <CounterBadge count={counters?.maintenance || 0} />
         </TabsTrigger>
         <TabsTrigger value="inventory" className="hidden lg:flex flex-shrink-0 min-w-0 gap-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Warehouse className="w-4 h-4 sm:mr-2" />
+          <Warehouse className="size-4 sm:mr-2" />
           <span className="hidden sm:inline">Inventario</span>
         </TabsTrigger>
       </TabsList>

@@ -18,7 +18,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full size-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -32,9 +32,9 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total Inventario</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(costData.totalInventoryValue)}</div>
@@ -43,9 +43,9 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Costo Promedio Unitario</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(costData.averageUnitCost)}</div>
@@ -54,9 +54,9 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Proveedores Únicos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{costData.supplierAnalysis.length}</div>
@@ -101,7 +101,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
           <div className="space-y-4">
             {costData.supplierAnalysis.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <Users className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay datos de proveedores</p>
                 <p className="text-sm">Los datos aparecerán cuando se registren movimientos con proveedores</p>
               </div>
@@ -113,7 +113,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
                   .map((supplier, index) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 bg-primary/10 text-primary rounded-full font-bold text-sm">
+                        <div className="flex items-center justify-center size-8 bg-primary/10 text-primary rounded-full font-bold text-sm">
                           {index + 1}
                         </div>
                         <div>

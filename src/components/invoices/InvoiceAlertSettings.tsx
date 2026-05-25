@@ -33,7 +33,7 @@ export const InvoiceAlertSettings = () => {
     <Card className="bg-card border">
       <CardHeader className="p-4 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl">
-          <Bell className="h-5 w-5" />
+          <Bell className="size-5" />
           Alertas de Facturas
         </CardTitle>
         <CardDescription className="text-muted-foreground text-sm">
@@ -106,7 +106,7 @@ export const InvoiceAlertSettings = () => {
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Smartphone className="h-4 w-4" />
+              <Smartphone className="size-4" />
               <Label>Notificaciones Push</Label>
             </div>
             <Switch
@@ -119,7 +119,7 @@ export const InvoiceAlertSettings = () => {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
+              <Mail className="size-4" />
               <Label>Notificaciones por Email</Label>
             </div>
             <Switch
@@ -146,7 +146,7 @@ export const InvoiceAlertSettings = () => {
             disabled={isUpdating}
             className="flex items-center justify-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 ${isUpdating ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
         </div>

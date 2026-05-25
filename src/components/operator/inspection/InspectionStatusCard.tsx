@@ -29,7 +29,7 @@ export const InspectionStatusCard = ({
     <Card className="mb-6 border-orange-200 bg-orange-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-orange-600" />
+          <Clock className="size-5 text-orange-600" />
           Estado de Inspección
           <Badge variant="secondary" className="bg-orange-500/80 text-white">
             {metadata.inspection_phase === 'initial' ? 'Fase Inicial' : 'Fase Final'}
@@ -49,19 +49,19 @@ export const InspectionStatusCard = ({
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-1">
               <CheckCircle 
-                className={`h-4 w-4 ${metadata.signatures_status.operator ? 'text-green-600' : 'text-gray-400'}`} 
+                className={`size-4 ${metadata.signatures_status.operator ? 'text-green-600' : 'text-gray-400'}`} 
               />
               <span className="text-sm">Firma Operador</span>
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle 
-                className={`h-4 w-4 ${metadata.signatures_status.client ? 'text-green-600' : 'text-gray-400'}`} 
+                className={`size-4 ${metadata.signatures_status.client ? 'text-green-600' : 'text-gray-400'}`} 
               />
               <span className="text-sm">Firma Cliente</span>
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle 
-                className={`h-4 w-4 ${metadata.signatures_status.reception ? 'text-green-600' : 'text-gray-400'}`} 
+                className={`size-4 ${metadata.signatures_status.reception ? 'text-green-600' : 'text-gray-400'}`} 
               />
               <span className="text-sm">Firma Recepción</span>
             </div>
@@ -78,7 +78,7 @@ export const InspectionStatusCard = ({
               className="flex items-center gap-1 border-violet-300 text-violet-700 hover:bg-violet-50"
               disabled={isGeneratingInitialPDF}
             >
-              <Download className="h-4 w-4" />
+              <Download className="size-4" />
               {isGeneratingInitialPDF ? 'Generando...' : 'PDF Inspección Inicial'}
             </Button>
           )}
@@ -91,7 +91,7 @@ export const InspectionStatusCard = ({
                 size="sm"
                 className="flex items-center gap-1"
               >
-                <FileText className="h-4 w-4" />
+                <FileText className="size-4" />
                 Generar PDF de Retiro
               </Button>
               <Button 
@@ -99,7 +99,7 @@ export const InspectionStatusCard = ({
                 size="sm"
                 className="flex items-center gap-1"
               >
-                <Clock className="h-4 w-4" />
+                <Clock className="size-4" />
                 Continuar a Entrega
               </Button>
             </>

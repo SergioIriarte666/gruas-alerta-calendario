@@ -100,12 +100,12 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                                 <TooltipTrigger>
                                                     {cost.payment_date ? (
                                                         new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
-                                                            <CalendarClock className="h-5 w-5 text-amber-500 mx-auto" />
+                                                            <CalendarClock className="size-5 text-amber-500 mx-auto" />
                                                         ) : (
-                                                            <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                                                            <CheckCircle className="size-5 text-green-400 mx-auto" />
                                                         )
                                                     ) : (
-                                                        <Circle className="h-5 w-5 text-red-400 mx-auto" />
+                                                        <Circle className="size-5 text-red-400 mx-auto" />
                                                     )}
                                                 </TooltipTrigger>
                                                 <TooltipContent>
@@ -122,22 +122,22 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white">
+                                                <Button variant="ghost" className="size-8 p-0 text-white hover:bg-white/20 hover:text-white">
                                                     <span className="sr-only">Abrir menú</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <MoreHorizontal className="size-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
                                                 <DropdownMenuItem onClick={() => onViewDetails(cost)} className="text-white hover:bg-gray-700">
-                                                    <Eye className="mr-2 h-4 w-4" />
+                                                    <Eye className="mr-2 size-4" />
                                                     <span>Ver Detalles</span>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => onEdit(cost)} className="text-white hover:bg-gray-700">
-                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    <Edit className="mr-2 size-4" />
                                                     <span>Editar</span>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleDelete(cost.id)} className="text-red-500 focus:text-red-400 focus:bg-red-800/50">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <Trash2 className="mr-2 size-4" />
                                                     <span>Eliminar</span>
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

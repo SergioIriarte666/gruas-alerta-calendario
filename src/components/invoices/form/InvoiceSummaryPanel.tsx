@@ -59,7 +59,7 @@ export const InvoiceSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-violet-500" />
+            <Receipt className="size-4 text-violet-500" />
             Resumen de Factura
           </span>
           {getStatusBadge()}
@@ -69,7 +69,7 @@ export const InvoiceSummaryPanel = ({
         {/* Número Fiscal */}
         {numeroFiscal && (
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">N° Fiscal:</span>
             <span className="text-sm font-mono font-semibold text-violet-600 dark:text-violet-400">
               {numeroFiscal}
@@ -80,7 +80,7 @@ export const InvoiceSummaryPanel = ({
         {/* Cliente */}
         {clientName && (
           <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cliente:</span>
             <span className="text-sm font-medium truncate">{toTitleCase(clientName)}</span>
           </div>
@@ -89,7 +89,7 @@ export const InvoiceSummaryPanel = ({
         {/* Cierre */}
         {closureFolio && (
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cierre:</span>
             <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300">
               {closureFolio}
@@ -102,7 +102,7 @@ export const InvoiceSummaryPanel = ({
         {/* Fechas */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Fechas:</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs ml-6">
@@ -128,7 +128,7 @@ export const InvoiceSummaryPanel = ({
         {/* Totales */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Montos:</span>
           </div>
           

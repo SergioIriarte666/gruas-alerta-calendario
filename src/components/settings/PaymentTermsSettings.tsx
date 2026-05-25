@@ -43,7 +43,7 @@ export const PaymentTermsSettings = () => {
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2" size={isMobile ? "sm" : "default"}>
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           {isMobile ? "Agregar" : "Agregar Condición"}
         </Button>
       </div>
@@ -92,7 +92,7 @@ export const PaymentTermsSettings = () => {
                   onClick={() => handleEdit(term)}
                   className="gap-1"
                 >
-                  <Pencil className="h-3 w-3" />
+                  <Pencil className="size-3" />
                   {!isMobile && "Editar"}
                 </Button>
               </div>
@@ -105,7 +105,7 @@ export const PaymentTermsSettings = () => {
         <Card className="p-8 text-center border border-border bg-card">
           <p className="text-muted-foreground">No hay condiciones de pago configuradas</p>
           <Button onClick={handleCreate} className="mt-4 gap-2">
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             Crear Primera Condición
           </Button>
         </Card>

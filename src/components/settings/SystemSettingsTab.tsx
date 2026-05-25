@@ -99,8 +99,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Configuración del Sistema */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
-            <Database className="w-5 h-5 text-tms-green" />
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
+            <Database className="size-5 text-tms-green" />
             <span>Configuración del Sistema</span>
           </CardTitle>
         </CardHeader>
@@ -162,17 +162,17 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             
             <div className="flex items-center justify-between">
               <div>
-                <Label className="flex items-center space-x-2 text-black">
+                <Label className="flex items-center gap-x-2 text-black">
                   <span>Modo Mantenimiento</span>
                   {settings.maintenanceMode && (
-                    <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                    <AlertTriangle className="size-4 text-yellow-500" />
                   )}
                 </Label>
                 <p className="text-sm text-gray-600">
                   Activar para realizar mantenimiento del sistema
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 {settings.maintenanceMode && (
                   <Badge variant="destructive">Activo</Badge>
                 )}
@@ -189,7 +189,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             disabled={saving}
             className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="size-4 mr-2" />
             {saving ? 'Guardando...' : 'Guardar Configuración'}
           </Button>
         </CardContent>
@@ -198,8 +198,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Reporte Diario de Pendientes */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
-            <Mail className="w-5 h-5 text-tms-green" />
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
+            <Mail className="size-5 text-tms-green" />
             <span>Reporte Diario de Pendientes</span>
           </CardTitle>
         </CardHeader>
@@ -240,8 +240,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             <Separator className="bg-gray-200" />
 
             <div className="space-y-2">
-              <Label className="flex items-center space-x-2 text-black">
-                <Clock className="w-4 h-4" />
+              <Label className="flex items-center gap-x-2 text-black">
+                <Clock className="size-4" />
                 <span>Hora de Envío</span>
               </Label>
               <Select
@@ -269,7 +269,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
               disabled={saveDailyReport.isPending}
               className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="size-4 mr-2" />
               {saveDailyReport.isPending ? 'Guardando...' : 'Guardar Configuración'}
             </Button>
             <Button
@@ -277,7 +277,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
               onClick={() => sendTestReport.mutate()}
               disabled={sendTestReport.isPending || !localDailyEnabled}
             >
-              <Send className="w-4 h-4 mr-2" />
+              <Send className="size-4 mr-2" />
               {sendTestReport.isPending ? 'Enviando...' : 'Enviar Reporte de Prueba'}
             </Button>
           </div>
@@ -291,8 +291,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Configuración de Columnas de Reportes PDF */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
-            <FileText className="w-5 h-5 text-tms-green" />
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
+            <FileText className="size-5 text-tms-green" />
             <span>Reportes PDF</span>
           </CardTitle>
         </CardHeader>
@@ -310,7 +310,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             disabled={saving}
             className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save className="size-4 mr-2" />
             {saving ? 'Guardando...' : 'Guardar Configuración de Reportes'}
           </Button>
         </CardContent>

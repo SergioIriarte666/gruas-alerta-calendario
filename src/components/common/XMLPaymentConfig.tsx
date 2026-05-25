@@ -34,7 +34,7 @@ const XMLPaymentConfig: React.FC<XMLPaymentConfigProps> = ({
       {/* Condición de Pago */}
       <div className="space-y-2">
         <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <CreditCard className="w-4 h-4" />
+          <CreditCard className="size-4" />
           Condición de Pago (Opcional)
         </Label>
         <Select
@@ -62,7 +62,7 @@ const XMLPaymentConfig: React.FC<XMLPaymentConfigProps> = ({
       {/* Fechas */}
       <div className="space-y-2">
         <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
+          <Calendar className="size-4" />
           Fechas
         </Label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

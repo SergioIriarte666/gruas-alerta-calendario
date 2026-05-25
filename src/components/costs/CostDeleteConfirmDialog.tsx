@@ -125,7 +125,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="size-5" />
             Eliminar Costo
           </DialogTitle>
           <DialogDescription>
@@ -146,20 +146,20 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
             {/* Related data impact */}
             {loading ? (
               <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
                 <span className="text-sm">Verificando datos relacionados...</span>
               </div>
             ) : hasRelatedData ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                  <ShieldAlert className="w-4 h-4" />
+                  <ShieldAlert className="size-4" />
                   <span className="text-sm font-medium">Este costo tiene datos relacionados:</span>
                 </div>
 
                 <div className="space-y-2 pl-6">
                   {relatedData!.supplierPayments > 0 && (
                     <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-muted-foreground" />
+                      <CreditCard className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
                         {relatedData!.supplierPayments} pago(s) de proveedor
                       </span>
@@ -168,7 +168,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
                   )}
                   {relatedData!.inventoryMovements > 0 && (
                     <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-muted-foreground" />
+                      <Package className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
                         {relatedData!.inventoryMovements} movimiento(s) de inventario
                       </span>
@@ -177,7 +177,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
                   )}
                   {relatedData!.craneParts > 0 && (
                     <div className="flex items-center gap-2">
-                      <Wrench className="w-4 h-4 text-muted-foreground" />
+                      <Wrench className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
                         {relatedData!.craneParts} pieza(s) de grúa
                       </span>
@@ -226,12 +226,12 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
           >
             {verifying ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
                 Verificando...
               </>
             ) : (
               <>
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="size-4 mr-2" />
                 Eliminar
               </>
             )}

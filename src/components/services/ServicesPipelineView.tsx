@@ -167,7 +167,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       <Card className="bg-white">
         <CardContent className="text-center py-12">
           <div className="text-gray-500 mb-4">
-            <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
+            <Calendar className="size-16 mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-medium">No hay servicios registrados</h3>
             <p className="text-sm mt-2">Crea tu primer servicio para comenzar</p>
           </div>
@@ -189,9 +189,9 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       {/* Filtros */}
       <Card className="bg-white">
         <CardContent className="p-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-x-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
               <Input
                 placeholder="Buscar por folio, cliente, origen o destino..."
                 value={searchTerm}
@@ -214,14 +214,14 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center gap-x-3">
                       {expandedGroups.has(group.status) ? (
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                        <ChevronDown className="size-5 text-gray-500" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-500" />
+                        <ChevronRight className="size-5 text-gray-500" />
                       )}
                       <div>
-                        <CardTitle className="text-lg flex items-center space-x-2">
+                        <CardTitle className="text-lg flex items-center gap-x-2">
                           <span>{group.title}</span>
                           <Badge className={group.color}>
                             {group.services.length}
@@ -238,7 +238,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                       </div>
                       {group.avgDays > 0 && (
                         <div className="text-gray-500 flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
+                          <Clock className="size-3 mr-1" />
                           {group.avgDays} días prom.
                         </div>
                       )}
@@ -262,13 +262,13 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 Folio: {service.folio}
                               </div>
                               <div className="text-gray-600 flex items-center">
-                                <User className="w-3 h-3 mr-1" />
+                                <User className="size-3 mr-1" />
                                 {toTitleCase(service.client.name)}
                               </div>
                             </div>
                             <div>
                               <div className="text-gray-600 flex items-center">
-                                <MapPin className="w-3 h-3 mr-1" />
+                                <MapPin className="size-3 mr-1" />
                                 {service.origin}
                               </div>
                               <div className="text-gray-600">
@@ -277,17 +277,17 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                             </div>
                             <div>
                               <div className="text-gray-600 flex items-center">
-                                <Calendar className="w-3 h-3 mr-1" />
+                                <Calendar className="size-3 mr-1" />
                                 {formatForDisplay(service.serviceDate)}
                               </div>
                               <div className="text-gray-600 flex items-center">
-                                <Truck className="w-3 h-3 mr-1" />
+                                <Truck className="size-3 mr-1" />
                                 {service.crane?.licensePlate || 'Sin asignar'}
                               </div>
                             </div>
                             <div>
                               <div className="font-semibold text-gray-900 flex items-center">
-                                <DollarSign className="w-3 h-3 mr-1" />
+                                <DollarSign className="size-3 mr-1" />
                                 ${getDisplayServiceValue(service).toLocaleString()}
                               </div>
                               <div className="text-gray-600">
@@ -297,14 +297,14 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                           </div>
                           
                           {/* Actions */}
-                          <div className="flex items-center space-x-2 ml-4">
+                          <div className="flex items-center gap-x-2 ml-4">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => onViewDetails(service)}
                               title="Ver detalles"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="size-4" />
                             </Button>
                             {onEdit && (
                               <Button
@@ -313,7 +313,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 onClick={() => onEdit(service)}
                                 title="Editar servicio"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="size-4" />
                               </Button>
                             )}
                             {service.status === 'completed' && (
@@ -324,7 +324,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 title="Cerrar servicio"
                                 className="border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
                               >
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="size-4" />
                               </Button>
                             )}
                             {onDelete && (
@@ -335,7 +335,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 title="Eliminar servicio"
                                 className="border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="size-4" />
                               </Button>
                             )}
                           </div>

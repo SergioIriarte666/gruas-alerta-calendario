@@ -41,7 +41,7 @@ export const QuickDateFilters = ({
               transition-all duration-200
             `}
           >
-            <Icon className="w-4 h-4 mr-2" />
+            <Icon className="size-4 mr-2" />
             {filter.label}
             {filter.count !== undefined && filter.count > 0 && (
               <span className={`

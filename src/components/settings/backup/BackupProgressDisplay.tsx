@@ -28,7 +28,7 @@ export const BackupProgressDisplay: React.FC<BackupProgressDisplayProps> = ({ pr
 
       {progress.error && (
         <Alert variant="destructive">
-          <XCircle className="w-4 h-4 text-danger" />
+          <XCircle className="size-4 text-danger" />
           <AlertDescription className="text-foreground">
             Error: {progress.error}
           </AlertDescription>

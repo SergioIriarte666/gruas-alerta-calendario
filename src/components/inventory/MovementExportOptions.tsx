@@ -140,7 +140,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       </div>
 
@@ -157,8 +157,8 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
               onClick={() => setExportFormat(option.value as any)}
             >
               <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <option.icon className="h-5 w-5 text-muted-foreground" />
+                <div className="flex items-center gap-x-3">
+                  <option.icon className="size-5 text-muted-foreground" />
                   <div>
                     <div className="font-medium">{option.label}</div>
                     <div className="text-xs text-muted-foreground">{option.description}</div>
@@ -175,7 +175,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
         <Label className="text-sm font-medium">Opciones de Contenido</Label>
         
         <div className="space-y-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includeDetails" 
               checked={includeDetails}
@@ -232,19 +232,19 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
       </Card>
 
       {/* Export Button */}
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-x-2">
         <Button variant="outline" onClick={onClose}>
           Cancelar
         </Button>
         <Button onClick={handleExport} disabled={isExporting}>
           {isExporting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="animate-spin rounded-full size-4 border-b-2 border-white mr-2"></div>
               Exportando...
             </>
           ) : (
             <>
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="size-4 mr-2" />
               Exportar {exportFormat.toUpperCase()}
             </>
           )}

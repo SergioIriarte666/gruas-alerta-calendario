@@ -47,7 +47,7 @@ export const CostFormStepNavigation = ({
             {/* Step indicator */}
             <div
               className={cn(
-                "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                "flex-shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
                 isActive && "bg-violet-600 text-white",
                 step.isCompleted && !isActive && "bg-violet-500 text-white",
                 step.hasError && "bg-destructive text-destructive-foreground",
@@ -55,7 +55,7 @@ export const CostFormStepNavigation = ({
               )}
             >
               {step.isCompleted && !step.hasError ? (
-                <Check className="h-4 w-4" />
+                <Check className="size-4" />
               ) : (
                 step.id
               )}
@@ -98,24 +98,24 @@ export const getCostFormSteps = (): Omit<CostFormStep, 'isCompleted' | 'hasError
     id: 1,
     title: 'Información Básica',
     description: 'Fecha, categoría y descripción',
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
   },
   {
     id: 2,
     title: 'Monto y Detalles',
     description: 'Valor y subcategoría',
-    icon: <DollarSign className="h-4 w-4" />,
+    icon: <DollarSign className="size-4" />,
   },
   {
     id: 3,
     title: 'Asociaciones',
     description: 'Grúa, servicio, proveedor',
-    icon: <Building2 className="h-4 w-4" />,
+    icon: <Building2 className="size-4" />,
   },
   {
     id: 4,
     title: 'Notas',
     description: 'Información adicional',
-    icon: <StickyNote className="h-4 w-4" />,
+    icon: <StickyNote className="size-4" />,
   },
 ];

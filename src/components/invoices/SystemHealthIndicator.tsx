@@ -24,17 +24,17 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
   loading = false 
 }) => {
   const getHealthIcon = () => {
-    if (loading) return <Activity className="h-5 w-5 animate-spin text-muted-foreground" />;
+    if (loading) return <Activity className="size-5 animate-spin text-muted-foreground" />;
     
     switch (diagnosis.system_health) {
       case 'HEALTHY':
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
+        return <CheckCircle className="size-5 text-green-600" />;
       case 'NEEDS_REPAIR':
-        return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
+        return <AlertTriangle className="size-5 text-yellow-600" />;
       case 'ERROR':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="size-5 text-red-600" />;
       default:
-        return <Activity className="h-5 w-5 text-muted-foreground" />;
+        return <Activity className="size-5 text-muted-foreground" />;
     }
   };
 

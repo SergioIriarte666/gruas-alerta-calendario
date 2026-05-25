@@ -103,7 +103,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
     <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2 text-base">
-          <Upload className="w-5 h-5" />
+          <Upload className="size-5" />
           Importar OC desde PDF - {toTitleCase(clientName)}
         </CardTitle>
       </CardHeader>
@@ -119,7 +119,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
             }`}
           >
             <input {...getInputProps()} />
-            <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <FileText className="size-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-foreground font-medium mb-1">
               Arrastra PDFs de órdenes de compra aquí
             </p>
@@ -133,7 +133,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
         {(state.step === 'uploading' || state.step === 'matching') && (
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <Loader2 className="size-5 text-primary animate-spin" />
               <span className="text-sm text-foreground">
                 {state.step === 'uploading'
                   ? `Procesando PDF ${state.progress.current}/${state.progress.total}...`
@@ -156,24 +156,24 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
             {/* Summary badges */}
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 border-violet-600/20">
-                <CheckCircle className="w-3 h-3 mr-1" />
+                <CheckCircle className="size-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
               {sameOCCount > 0 && (
                 <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                  <CheckCheck className="w-3 h-3 mr-1" />
+                  <CheckCheck className="size-3 mr-1" />
                   {sameOCCount} ya asignada
                 </Badge>
               )}
               {alreadyHasOCCount > 0 && (
                 <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  <AlertTriangle className="size-3 mr-1" />
                   {alreadyHasOCCount} OC diferente
                 </Badge>
               )}
               {noMatchCount > 0 && (
                 <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive/20">
-                  <XCircle className="w-3 h-3 mr-1" />
+                  <XCircle className="size-3 mr-1" />
                   {noMatchCount} sin match
                 </Badge>
               )}
@@ -241,7 +241,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                 className="text-violet-600 hover:text-violet-600/80"
                                 title="Ver detalle"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                <Eye className="size-3.5" />
                               </button>
                             )}
                           </div>
@@ -281,19 +281,19 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                             className="bg-violet-600/10 text-violet-600 text-xs"
                             title={match.matchReason || 'Match'}
                           >
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                            <CheckCircle className="size-3 mr-1" />
                             {match.matchReason || 'Match'}
                           </Badge>
                         )}
                         {match.status === 'same_oc' && (
                           <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 text-xs">
-                            <CheckCheck className="w-3 h-3 mr-1" />
+                            <CheckCheck className="size-3 mr-1" />
                             Ya asignada
                           </Badge>
                         )}
                         {match.status === 'already_has_oc' && (
                           <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            <AlertTriangle className="size-3 mr-1" />
                             OC diferente
                           </Badge>
                         )}
@@ -304,7 +304,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                 variant="secondary"
                                 className="bg-destructive/10 text-destructive text-xs cursor-pointer hover:bg-destructive/20"
                               >
-                                <XCircle className="w-3 h-3 mr-1" />
+                                <XCircle className="size-3 mr-1" />
                                 Sin match
                                 {match.topCandidates && match.topCandidates.length > 0 && (
                                   <span className="ml-1 opacity-70">({match.topCandidates.length})</span>
@@ -346,7 +346,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
             {/* Actions */}
             <div className="flex items-center justify-between pt-2">
               <Button variant="outline" size="sm" onClick={reset}>
-                <RotateCcw className="w-3 h-3 mr-2" />
+                <RotateCcw className="size-3 mr-2" />
                 Cancelar
               </Button>
               <Button
@@ -355,7 +355,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                 disabled={selectedMatches.size === 0}
               >
                 Aplicar {selectedMatches.size} OC
-                <ArrowRight className="w-3 h-3 ml-2" />
+                <ArrowRight className="size-3 ml-2" />
               </Button>
             </div>
           </div>
@@ -365,7 +365,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
         {state.step === 'applying' && (
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <Loader2 className="size-5 text-primary animate-spin" />
               <span className="text-sm text-foreground">
                 Actualizando servicios {state.progress.current}/{state.progress.total}...
               </span>
@@ -380,10 +380,10 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
         {/* Step: Done */}
         {state.step === 'done' && (
           <div className="text-center py-6 space-y-3">
-            <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+            <CheckCircle className="size-10 text-primary mx-auto" />
             <p className="text-sm text-foreground font-medium">Importación completada</p>
             <Button size="sm" onClick={handleDone}>
-              <RotateCcw className="w-3 h-3 mr-2" />
+              <RotateCcw className="size-3 mr-2" />
               Importar más
             </Button>
           </div>
@@ -393,12 +393,12 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
         {state.error && (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
             <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-              <XCircle className="w-4 h-4 shrink-0" />
+              <XCircle className="size-4 shrink-0" />
               Error al importar OC
             </div>
             <p className="text-xs text-muted-foreground ml-6">{state.error}</p>
             <Button variant="outline" size="sm" className="ml-6 mt-1" onClick={reset}>
-              <RotateCcw className="w-3 h-3 mr-2" />
+              <RotateCcw className="size-3 mr-2" />
               Reintentar
             </Button>
           </div>

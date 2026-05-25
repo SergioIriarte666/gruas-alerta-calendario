@@ -28,8 +28,8 @@ export const BackupManagementSection = () => {
     <Card id="respaldos" className="bg-card border mt-6 scroll-mt-24">
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
-          <div className="flex items-center space-x-2">
-            <Database className="w-5 h-5 text-tms-green" />
+          <div className="flex items-center gap-x-2">
+            <Database className="size-5 text-tms-green" />
             <span className="text-lg sm:text-xl">Gestión de Respaldos</span>
           </div>
           <Button 
@@ -37,7 +37,7 @@ export const BackupManagementSection = () => {
             size="sm" 
             onClick={() => refetchLogs()} 
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="size-4" />
           </Button>
         </CardTitle>
       </CardHeader>
@@ -72,7 +72,7 @@ export const BackupManagementSection = () => {
 
         {/* Información adicional */}
         <Alert className="border-info/30 bg-info-soft">
-          <AlertTriangle className="w-4 h-4 text-info" />
+          <AlertTriangle className="size-4 text-info" />
           <AlertDescription className="flex flex-col gap-3 text-sm text-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema.
@@ -91,7 +91,7 @@ export const BackupManagementSection = () => {
                   lastGeneratedBackup.type!,
                 )}
               >
-                <Download className="mr-2 h-4 w-4" />
+                <Download className="mr-2 size-4" />
                 Descargar archivo
               </Button>
             ) : null}

@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <Alert variant="destructive" className="my-4">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <AlertTitle>Algo salió mal en {this.props.name || 'este componente'}</AlertTitle>
           <AlertDescription className="mt-2 space-y-4">
             <p>Se ha producido un error inesperado.</p>
@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </pre>
             )}
             <Button onClick={this.handleReset} variant="outline" size="sm" className="mt-2">
-              <RefreshCw className="mr-2 h-3 w-3" />
+              <RefreshCw className="mr-2 size-3" />
               Intentar de nuevo
             </Button>
           </AlertDescription>

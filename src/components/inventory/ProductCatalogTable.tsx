@@ -98,7 +98,7 @@ export const ProductCatalogTable = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex flex-1 gap-4 items-center">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
             <Input
               placeholder="Buscar productos..."
               value={searchTerm}
@@ -137,7 +137,7 @@ export const ProductCatalogTable = () => {
         <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="size-4 mr-2" />
               Nuevo Producto
             </Button>
           </DialogTrigger>
@@ -222,16 +222,16 @@ export const ProductCatalogTable = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
+                            <MoreHorizontal className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleView(product)}>
-                            <Eye className="w-4 h-4 mr-2" />
+                            <Eye className="size-4 mr-2" />
                             Ver detalles
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEdit(product)}>
-                            <Edit className="w-4 h-4 mr-2" />
+                            <Edit className="size-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
                           <AlertDialog>
@@ -240,7 +240,7 @@ export const ProductCatalogTable = () => {
                                 className="text-destructive"
                                 onSelect={(e) => e.preventDefault()}
                               >
-                                <Trash2 className="w-4 h-4 mr-2" />
+                                <Trash2 className="size-4 mr-2" />
                                 Eliminar
                               </DropdownMenuItem>
                             </AlertDialogTrigger>

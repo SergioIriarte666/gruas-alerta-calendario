@@ -146,7 +146,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       {/* Current Status */}
       <div className="flex items-center gap-2">
         <Badge variant="outline" className={currentConfig.color}>
-          <CurrentIcon className="w-3 h-3 mr-1" />
+          <CurrentIcon className="size-3 mr-1" />
           {currentConfig.label}
         </Badge>
         {service.purchaseOrderNumber && (
@@ -159,11 +159,11 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       {/* Transition Arrow & Button */}
       {nextConfig && (
         <>
-          <ArrowRight className="w-4 h-4 text-gray-400" />
+          <ArrowRight className="size-4 text-gray-400" />
           
           <div className="flex items-center gap-3">
             <Badge variant="outline" className={`${nextConfig.color} opacity-50`}>
-              <NextIcon className="w-3 h-3 mr-1" />
+              <NextIcon className="size-3 mr-1" />
               {nextConfig.label}
             </Badge>
 

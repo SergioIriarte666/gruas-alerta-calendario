@@ -103,7 +103,7 @@ export const InvoicesMobileView = ({
     return (
       <Card className="bg-card border">
         <CardContent className="p-6 text-center">
-          <FileText className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+          <FileText className="mx-auto size-10 text-muted-foreground mb-3" />
           <h3 className="text-base font-medium text-foreground mb-1">No hay facturas</h3>
           <p className="text-sm text-muted-foreground">No se encontraron facturas con los filtros aplicados</p>
         </CardContent>
@@ -114,7 +114,7 @@ export const InvoicesMobileView = ({
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground px-1">
-        <FileText className="w-4 h-4 inline mr-1" />
+        <FileText className="size-4 inline mr-1" />
         {invoices.length} factura{invoices.length !== 1 ? 's' : ''}
       </p>
 
@@ -143,18 +143,18 @@ export const InvoicesMobileView = ({
               {/* Details */}
               <div className="space-y-1.5 text-sm mb-3">
                 <div className="flex items-center text-foreground">
-                  <User className="w-3.5 h-3.5 mr-2 text-muted-foreground flex-shrink-0" />
+                  <User className="size-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                   <span className="truncate">{clientName}</span>
                 </div>
                 <div className="flex items-center text-foreground">
-                  <Calendar className="w-3.5 h-3.5 mr-2 text-muted-foreground flex-shrink-0" />
+                  <Calendar className="size-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{formatSafeDate(invoice.issueDate)}</span>
                   {invoice.dueDate && (
                     <span className="text-muted-foreground ml-1">→ {formatSafeDate(invoice.dueDate)}</span>
                   )}
                 </div>
                 <div className="flex items-center text-violet-600 font-bold">
-                  <DollarSign className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
+                  <DollarSign className="size-3.5 mr-2 flex-shrink-0" />
                   {formatSafeAmount(invoice.total)}
                 </div>
               </div>
@@ -167,7 +167,7 @@ export const InvoicesMobileView = ({
                   className="flex-1 text-xs"
                   onClick={() => setViewingInvoice(getInvoiceWithDetails(invoice))}
                 >
-                  <Eye className="w-3.5 h-3.5 mr-1" />
+                  <Eye className="size-3.5 mr-1" />
                   Ver
                 </Button>
                 <Button
@@ -176,7 +176,7 @@ export const InvoicesMobileView = ({
                   className="flex-1 text-xs"
                   onClick={() => onEdit(invoice)}
                 >
-                  <Edit className="w-3.5 h-3.5 mr-1" />
+                  <Edit className="size-3.5 mr-1" />
                   Editar
                 </Button>
                 {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
@@ -186,7 +186,7 @@ export const InvoicesMobileView = ({
                     className="text-xs px-2"
                     onClick={() => onMarkAsPaid(invoice.id)}
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
+                    <CheckCircle className="size-3.5" />
                   </Button>
                 )}
                 {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
@@ -196,7 +196,7 @@ export const InvoicesMobileView = ({
                     className="text-xs px-2 text-destructive border-destructive/40 hover:bg-destructive/10"
                     onClick={() => setCancellingInvoice(invoice)}
                   >
-                    <Ban className="w-3.5 h-3.5" />
+                    <Ban className="size-3.5" />
                   </Button>
                 )}
               </div>

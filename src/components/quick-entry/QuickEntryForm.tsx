@@ -126,7 +126,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background">
           <h2 className="text-lg font-semibold">Registro Rápido</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </div>
 
@@ -230,7 +230,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
             >
               {isExtracting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Extrayendo datos...
                 </>
               ) : isLoading ? 'Guardando...' : 'Guardar'}

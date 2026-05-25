@@ -70,7 +70,7 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
 
           <div className="flex justify-end mb-3">
             <Button variant="outline" size="sm" onClick={() => setEditing((v) => !v)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />
+              <Pencil className="size-3.5 mr-1" />
               {editing ? 'Cancelar edición' : 'Editar Deuda'}
             </Button>
           </div>
@@ -215,7 +215,7 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
                   <TableCell>
                     {inst.status === 'pending' && (
                       <Button variant="outline" size="sm" onClick={() => setPayingInstallment(inst)}>
-                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Pagar
+                        <CreditCard className="size-3.5 mr-1" /> Pagar
                       </Button>
                     )}
                   </TableCell>

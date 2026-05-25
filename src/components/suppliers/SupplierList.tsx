@@ -34,11 +34,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 
@@ -215,7 +215,7 @@ export const SupplierList: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+        <Loader2 className="size-8 animate-spin text-blue-400" />
       </div>
     );
   }
@@ -234,7 +234,7 @@ export const SupplierList: React.FC = () => {
             onClick={() => setShowForm(true)}
             variant="default"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Nuevo Proveedor
           </Button>
         </div>
@@ -247,7 +247,7 @@ export const SupplierList: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nombre, RUT o email..."
                   value={searchTerm}
@@ -318,7 +318,7 @@ export const SupplierList: React.FC = () => {
         <CardContent>
           {filteredAndSortedSuppliers.length === 0 ? (
             <div className="text-center py-8">
-              <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <Building2 className="size-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
                 No se encontraron proveedores
               </h3>
@@ -347,12 +347,12 @@ export const SupplierList: React.FC = () => {
                         >
                           {supplier.is_active ? (
                             <div className="flex items-center text-green-800">
-                              <ToggleRight className="h-4 w-4 mr-1" />
+                              <ToggleRight className="size-4 mr-1" />
                               <span className="text-xs">Activo</span>
                             </div>
                           ) : (
                             <div className="flex items-center text-muted-foreground">
-                              <ToggleLeft className="h-4 w-4 mr-1" />
+                              <ToggleLeft className="size-4 mr-1" />
                               <span className="text-xs">Inactivo</span>
                             </div>
                           )}
@@ -370,15 +370,15 @@ export const SupplierList: React.FC = () => {
 
                       {(supplier.email || supplier.phone) && (
                         <div className="text-xs text-muted-foreground space-y-0.5">
-                          {supplier.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{supplier.email}</div>}
-                          {supplier.phone && <div className="flex items-center gap-1"><Phone className="h-3 w-3" />{supplier.phone}</div>}
+                          {supplier.email && <div className="flex items-center gap-1"><Mail className="size-3" />{supplier.email}</div>}
+                          {supplier.phone && <div className="flex items-center gap-1"><Phone className="size-3" />{supplier.phone}</div>}
                         </div>
                       )}
 
                       <div className="flex items-center justify-end gap-1 pt-1 border-t" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary"><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400"><Edit2 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary"><Eye className="size-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400"><Edit2 className="size-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400"><Trash2 className="size-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -432,8 +432,8 @@ export const SupplierList: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {supplier.email && <div className="flex items-center text-sm text-foreground"><Mail className="h-3 w-3 mr-1" />{supplier.email}</div>}
-                          {supplier.phone && <div className="flex items-center text-sm text-foreground"><Phone className="h-3 w-3 mr-1" />{supplier.phone}</div>}
+                          {supplier.email && <div className="flex items-center text-sm text-foreground"><Mail className="size-3 mr-1" />{supplier.email}</div>}
+                          {supplier.phone && <div className="flex items-center text-sm text-foreground"><Phone className="size-3 mr-1" />{supplier.phone}</div>}
                           {supplier.contact_name && <div className="text-sm text-foreground font-medium">{supplier.contact_name}</div>}
                         </div>
                       </TableCell>
@@ -448,7 +448,7 @@ export const SupplierList: React.FC = () => {
                           )}
                           {stats?.overdue_count > 0 && (
                             <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">
-                              <AlertTriangle className="h-3 w-3 mr-0.5" />{stats.overdue_count} vencidos
+                              <AlertTriangle className="size-3 mr-0.5" />{stats.overdue_count} vencidos
                             </Badge>
                           )}
                         </div>
@@ -456,17 +456,17 @@ export const SupplierList: React.FC = () => {
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
                           {supplier.is_active ? (
-                            <div className="flex items-center text-green-800"><ToggleRight className="h-4 w-4 mr-1" />Activo</div>
+                            <div className="flex items-center text-green-800"><ToggleRight className="size-4 mr-1" />Activo</div>
                           ) : (
-                            <div className="flex items-center text-muted-foreground"><ToggleLeft className="h-4 w-4 mr-1" />Inactivo</div>
+                            <div className="flex items-center text-muted-foreground"><ToggleLeft className="size-4 mr-1" />Inactivo</div>
                           )}
                         </Button>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex items-center gap-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="size-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="size-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400 hover:text-red-300"><Trash2 className="size-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -499,7 +499,7 @@ export const SupplierList: React.FC = () => {
               className="h-8 gap-2"
               onClick={() => setIsBatchEditOpen(true)}
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="size-4" />
               Editar Lote
             </Button>
 
@@ -509,18 +509,18 @@ export const SupplierList: React.FC = () => {
               className="h-8 gap-2"
               onClick={confirmBatchDelete}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="size-4" />
               Eliminar
             </Button>
 
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              className="size-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
               onClick={() => setSelectedIds([])}
               title="Cancelar selección"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           </div>
         </div>,

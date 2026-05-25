@@ -42,7 +42,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
+              <Package className="size-5" />
               {product.name}
             </SheetTitle>
           </SheetHeader>
@@ -96,7 +96,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
+                    <MapPin className="size-4" />
                     Stock por Ubicación
                   </span>
                   <span className="text-2xl font-bold text-primary">
@@ -140,7 +140,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
                 onClick={() => setShowEntryForm(true)} 
                 className="flex-1 gap-2"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="size-4" />
                 Agregar Stock
               </Button>
               <Button 
@@ -148,7 +148,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
                 variant="destructive"
                 className="flex-1 gap-2"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="size-4" />
                 Registrar Salida
               </Button>
             </div>
@@ -157,7 +157,7 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="size-4" />
                   Últimos Movimientos
                 </CardTitle>
               </CardHeader>
@@ -188,12 +188,12 @@ export const ProductDrawer: React.FC<ProductDrawerProps> = ({ productId, open, o
                             >
                               {movement.movement_type === 'entry' ? (
                                 <>
-                                  <TrendingUp className="w-3 h-3 mr-1" />
+                                  <TrendingUp className="size-3 mr-1" />
                                   Entrada
                                 </>
                               ) : (
                                 <>
-                                  <TrendingDown className="w-3 h-3 mr-1" />
+                                  <TrendingDown className="size-3 mr-1" />
                                   Salida
                                 </>
                               )}

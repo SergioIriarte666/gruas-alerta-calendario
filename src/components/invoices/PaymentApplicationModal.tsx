@@ -151,13 +151,13 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
               </p>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 mb-3">
-                <Calculator className="h-4 w-4 text-blue-600" />
+                <Calculator className="size-4 text-blue-600" />
                 <span className="font-medium text-blue-900">Resumen de Aplicación</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
@@ -242,7 +242,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
                 disabled={loading || applications.length === 0}
                 className="bg-green-600 hover:bg-green-700"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="size-4 mr-2" />
                 {loading ? 'Aplicando...' : 'Aplicar Pago'}
               </Button>
             </div>

@@ -39,33 +39,33 @@ export const AssignedServiceCard = ({
           <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusChip(service.status)}
-            <CheckCircle className="w-5 h-5 text-green-400" />
+            <CheckCircle className="size-5 text-green-400" />
           </div>
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
-            <Truck className="w-4 h-4 text-muted-foreground" />
+            <Truck className="size-4 text-muted-foreground" />
             <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <User className="w-4 h-4 text-muted-foreground" />
+            <User className="size-4 text-muted-foreground" />
             <span>{service.client?.name ?? 'Cliente no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <Calendar className="size-4 text-muted-foreground" />
             <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
               locale: es
             })}</span>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <MapPin className="size-4 text-muted-foreground" />
             <div className="text-sm">
               <p><span className="font-semibold">Origen:</span> {service.origin}</p>
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
           <div className="text-center text-sm text-emerald-500 font-medium mt-4">
-            <CheckCircle className="w-4 h-4 inline mr-2" />
+            <CheckCircle className="size-4 inline mr-2" />
             Servicio finalizado
           </div>
         </CardContent>
@@ -79,33 +79,33 @@ export const AssignedServiceCard = ({
           <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusChip(service.status)}
-            <Play className="w-5 h-5 text-blue-400" />
+            <Play className="size-5 text-blue-400" />
           </div>
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
-            <Truck className="w-4 h-4 text-muted-foreground" />
+            <Truck className="size-4 text-muted-foreground" />
             <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <User className="w-4 h-4 text-muted-foreground" />
+            <User className="size-4 text-muted-foreground" />
             <span>{service.client?.name ?? 'Cliente no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <Calendar className="size-4 text-muted-foreground" />
             <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
               locale: es
             })}</span>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <MapPin className="size-4 text-muted-foreground" />
             <div className="text-sm">
               <p><span className="font-semibold">Origen:</span> {service.origin}</p>
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
           <div className="text-center text-sm text-blue-600 font-medium mt-4">
-            <Play className="w-4 h-4 inline mr-2" />
+            <Play className="size-4 inline mr-2" />
             Servicio en progreso
           </div>
         </CardContent>
@@ -120,33 +120,33 @@ export const AssignedServiceCard = ({
             <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
               {getStatusChip(service.status)}
-              <Package className="w-5 h-5 text-orange-400" />
+              <Package className="size-5 text-orange-400" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <Truck className="w-4 h-4 text-muted-foreground" />
+              <Truck className="size-4 text-muted-foreground" />
               <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-muted-foreground" />
+              <User className="size-4 text-muted-foreground" />
               <span>{service.client?.name ?? 'Cliente no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Calendar className="size-4 text-muted-foreground" />
               <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
                 locale: es
               })}</span>
             </div>
             <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <MapPin className="size-4 text-muted-foreground" />
               <div className="text-sm">
                 <p><span className="font-semibold">Origen:</span> {service.origin}</p>
                 <p><span className="font-semibold">Destino:</span> {service.destination}</p>
               </div>
             </div>
             <div className="text-center text-sm text-accent font-medium mt-4 p-2 bg-accent/10 rounded">
-              <Package className="w-4 h-4 inline mr-2" />
+              <Package className="size-4 inline mr-2" />
               Hacer clic para completar entrega
             </div>
           </CardContent>
@@ -162,26 +162,26 @@ export const AssignedServiceCard = ({
             <CardTitle className="text-lg font-bold text-foreground">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
               {getStatusChip(service.status)}
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <ChevronRight className="size-5 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <Truck className="w-4 h-4 text-muted-foreground" />
+              <Truck className="size-4 text-muted-foreground" />
               <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-muted-foreground" />
+              <User className="size-4 text-muted-foreground" />
               <span>{service.client?.name ?? 'Cliente no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Calendar className="size-4 text-muted-foreground" />
               <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
                 locale: es
               })}</span>
             </div>
             <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
+              <MapPin className="size-4 text-muted-foreground" />
               <div className="text-sm">
                 <p><span className="font-semibold">Origen:</span> {service.origin}</p>
                 <p><span className="font-semibold">Destino:</span> {service.destination}</p>
@@ -202,21 +202,21 @@ export const AssignedServiceCard = ({
       </CardHeader>
       <CardContent className="space-y-3 pt-2">
         <div className="flex items-center gap-3">
-          <Truck className="w-4 h-4 text-muted-foreground" />
+          <Truck className="size-4 text-muted-foreground" />
           <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
         </div>
         <div className="flex items-center gap-3">
-          <User className="w-4 h-4 text-muted-foreground" />
+          <User className="size-4 text-muted-foreground" />
           <span>{service.client?.name ?? 'Cliente no especificado'}</span>
         </div>
         <div className="flex items-center gap-3">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
+          <Calendar className="size-4 text-muted-foreground" />
           <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
             locale: es
           })}</span>
         </div>
         <div className="flex items-center gap-3">
-          <MapPin className="w-4 h-4 text-muted-foreground" />
+          <MapPin className="size-4 text-muted-foreground" />
           <div className="text-sm">
             <p><span className="font-semibold">Origen:</span> {service.origin}</p>
             <p><span className="font-semibold">Destino:</span> {service.destination}</p>

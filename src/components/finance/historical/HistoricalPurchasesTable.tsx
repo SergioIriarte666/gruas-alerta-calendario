@@ -72,10 +72,10 @@ export const HistoricalPurchasesTable = ({
 }: HistoricalPurchasesTableProps) => {
   const emptyColSpan = hideSupplierColumn ? 8 : 9;
   const SortIcon = ({ columnKey }: { columnKey: PurchaseSortKey }) => {
-    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 h-3 w-3 opacity-30" />;
+    if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 size-3 opacity-30" />;
     return sortConfig.direction === 'asc' ? 
-      <ArrowUp className="ml-2 h-3 w-3 text-primary" /> : 
-      <ArrowDown className="ml-2 h-3 w-3 text-primary" />;
+      <ArrowUp className="ml-2 size-3 text-primary" /> : 
+      <ArrowDown className="ml-2 size-3 text-primary" />;
   };
 
   return (
@@ -185,7 +185,7 @@ export const HistoricalPurchasesTable = ({
             <TableRow>
               <TableCell colSpan={emptyColSpan} className="h-32 text-center text-muted-foreground">
                 <div className="flex flex-col items-center justify-center gap-2">
-                  <FileText className="h-8 w-8 text-muted-foreground/30" />
+                  <FileText className="size-8 text-muted-foreground/30" />
                   <p>No se encontraron registros.</p>
                 </div>
               </TableCell>
@@ -273,9 +273,9 @@ export const HistoricalPurchasesTable = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => onReceiveInventory?.(invoice)}
-                            className={`h-8 w-8 ${hasInventory ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
+                            className={`size-8 ${hasInventory ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'}`}
                           >
-                            <Package className="h-4 w-4" />
+                            <Package className="size-4" />
                           </Button>
                         </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
@@ -317,9 +317,9 @@ export const HistoricalPurchasesTable = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEdit(invoice)}
-                      className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      className="size-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="size-4" />
                       <span className="sr-only">Editar</span>
                     </Button>
                     {onDelete && (
@@ -327,9 +327,9 @@ export const HistoricalPurchasesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(invoice.id)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="size-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="size-4" />
                         <span className="sr-only">Eliminar</span>
                       </Button>
                     )}

@@ -26,7 +26,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
+            <CreditCard className="size-5" />
             Pago {formatCurrency(payment.amount)}
           </DialogTitle>
         </DialogHeader>
@@ -43,7 +43,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <DollarSign className="size-4 text-muted-foreground" />
                 <span className="font-medium">Monto</span>
               </div>
               <p className="text-sm font-semibold">{formatCurrency(payment.amount)}</p>
@@ -51,7 +51,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                <CreditCard className="size-4 text-muted-foreground" />
                 <span className="font-medium">Método de Pago</span>
               </div>
               <p className="text-sm">{payment.payment_method || 'N/A'}</p>
@@ -62,7 +62,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
           {payment.supplier_invoice && (
             <div className="bg-muted/50 p-4 rounded-lg space-y-3">
               <div className="flex items-center gap-2">
-                <Building className="w-4 h-4 text-muted-foreground" />
+                <Building className="size-4 text-muted-foreground" />
                 <span className="font-medium">Información del Proveedor</span>
               </div>
               
@@ -91,7 +91,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
             {payment.due_date && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <Calendar className="size-4 text-muted-foreground" />
                   <span className="font-medium">Fecha de Vencimiento</span>
                 </div>
                 <p className="text-sm">{formatForDisplay(payment.due_date)}</p>
@@ -101,7 +101,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
             {payment.scheduled_date && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Clock className="size-4 text-muted-foreground" />
                   <span className="font-medium">Fecha Programada</span>
                 </div>
                 <p className="text-sm">{formatForDisplay(payment.scheduled_date)}</p>

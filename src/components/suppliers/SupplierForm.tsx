@@ -216,12 +216,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground/40 p-4 sm:p-6">
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex size-full items-center justify-center">
         <Card className="flex h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden border bg-card shadow-xl sm:h-[calc(100dvh-3rem)] lg:max-h-[95vh]">
           <CardHeader className="flex-shrink-0 rounded-t-lg bg-primary text-primary-foreground">
             <div className="flex items-center justify-between gap-4">
               <CardTitle className="flex items-center gap-2 text-primary-foreground">
-                <Building2 className="h-5 w-5" />
+                <Building2 className="size-5" />
                 {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
               </CardTitle>
               <Button 
@@ -230,7 +230,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 onClick={onClose}
                 className="text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" />
               </Button>
             </div>
             <p className="mt-1 text-sm text-primary-foreground/80">
@@ -279,7 +279,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                     disabled={currentStep === 1 || isSubmitting}
                     className="gap-2"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="size-4" />
                     Anterior
                   </Button>
 
@@ -301,7 +301,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                         className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         Siguiente
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="size-4" />
                       </Button>
                     ) : (
                       <Button
@@ -312,12 +312,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                       >
                         {isSubmitting ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="size-4 animate-spin" />
                             {isEditing ? 'Actualizando...' : 'Creando...'}
                           </>
                         ) : (
                           <>
-                            <Save className="h-4 w-4" />
+                            <Save className="size-4" />
                             {isEditing ? 'Actualizar' : 'Crear'}
                           </>
                         )}

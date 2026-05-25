@@ -125,7 +125,7 @@ export const MovementsHistoryTable = () => {
     
     return (
       <Badge variant="outline" className={cn("flex items-center gap-1 font-semibold", config.className)}>
-        <Icon className="w-3 h-3" />
+        <Icon className="size-3" />
         {config.label}
       </Badge>
     );
@@ -183,7 +183,7 @@ export const MovementsHistoryTable = () => {
             <div className="flex flex-col md:flex-row gap-3 md:items-center">
               {/* Simple Filters */}
               <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
@@ -202,7 +202,7 @@ export const MovementsHistoryTable = () => {
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={handleExportData} className="border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20">
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="size-4 mr-2" />
                 Exportar
               </Button>
             </div>
@@ -219,22 +219,22 @@ export const MovementsHistoryTable = () => {
                     className="h-auto p-0 font-semibold"
                   >
                     Fecha
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
-                    Tipo <ArrowUpDown className="ml-2 h-4 w-4" />
+                    Tipo <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
-                    Producto <ArrowUpDown className="ml-2 h-4 w-4" />
+                    Producto <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
-                    Ubicación <ArrowUpDown className="ml-2 h-4 w-4" />
+                    Ubicación <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
@@ -244,7 +244,7 @@ export const MovementsHistoryTable = () => {
                     className="h-auto p-0 font-semibold"
                   >
                     Cantidad
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
@@ -254,12 +254,12 @@ export const MovementsHistoryTable = () => {
                     className="h-auto p-0 font-semibold"
                   >
                     Costo
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
-                    Documento <ArrowUpDown className="ml-2 h-4 w-4" />
+                    Documento <ArrowUpDown className="ml-2 size-4" />
                   </Button>
                 </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -355,17 +355,17 @@ export const MovementsHistoryTable = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
+                            <MoreHorizontal className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
-                            <Eye className="w-4 h-4 mr-2" />
+                            <Eye className="size-4 mr-2" />
                             Ver detalles
                           </DropdownMenuItem>
                           {movement.status === 'active' && (
                             <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
-                              <Edit className="w-4 h-4 mr-2" />
+                              <Edit className="size-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
                           )}

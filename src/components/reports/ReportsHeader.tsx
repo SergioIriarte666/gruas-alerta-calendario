@@ -38,24 +38,24 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
           disabled={isLoading}
           className="border hover:bg-muted/10"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`size-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar
         </Button>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-primary hover:bg-primary/90">
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Exportar Métricas
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onExport('pdf')}>
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText className="size-4 mr-2" />
             Exportar como PDF
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onExport('excel')}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            <FileSpreadsheet className="size-4 mr-2" />
             Exportar como Excel
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -64,17 +64,17 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-secondary hover:bg-secondary/90 text-foreground">
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Informe de Servicios
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onExportServiceReport('pdf')}>
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText className="size-4 mr-2" />
             Exportar como PDF
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onExportServiceReport('excel')}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            <FileSpreadsheet className="size-4 mr-2" />
             Exportar como Excel
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -83,17 +83,17 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button className="bg-accent hover:bg-accent/90 text-foreground">
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Informe de Costos
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onExportCostReport('pdf')}>
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText className="size-4 mr-2" />
             Exportar como PDF
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onExportCostReport('excel')}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            <FileSpreadsheet className="size-4 mr-2" />
             Exportar como Excel
           </DropdownMenuItem>
         </DropdownMenuContent>

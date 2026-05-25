@@ -122,7 +122,7 @@ export const NotificationSettingsTab = () => {
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green/90 text-white"
         >
-          {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
           Guardar Configuración
         </Button>
       </div>

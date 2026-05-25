@@ -54,15 +54,15 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
   const getAlertTypeIcon = (type: string) => {
     switch (type) {
       case 'low_stock':
-        return <Package className="w-4 h-4" />;
+        return <Package className="size-4" />;
       case 'expiring_soon':
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="size-4" />;
       case 'overstock':
-        return <TrendingDown className="w-4 h-4" />;
+        return <TrendingDown className="size-4" />;
       case 'no_movement':
-        return <Bell className="w-4 h-4" />;
+        return <Bell className="size-4" />;
       default:
-        return <AlertTriangle className="w-4 h-4" />;
+        return <AlertTriangle className="size-4" />;
     }
   };
 
@@ -110,7 +110,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
         <Card>
           <CardContent className="pt-6">
             <Alert className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="size-4" />
               <AlertDescription>
                 Debes iniciar sesión para gestionar las configuraciones de alertas.
               </AlertDescription>
@@ -129,7 +129,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
       <Card>
         <CardContent className="pt-6">
           <Alert>
-            <Shield className="h-4 w-4" />
+            <Shield className="size-4" />
             <AlertDescription className="space-y-2">
               <p>
                 No tienes permisos para gestionar configuraciones de alertas. 
@@ -155,7 +155,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
+              <Settings className="size-5" />
               {editingAlert ? 'Editar Configuración de Alerta' : 'Nueva Configuración de Alerta'}
             </CardTitle>
             <CardDescription>
@@ -184,7 +184,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
+            <Settings className="size-5" />
             Configuraciones de Alertas
           </CardTitle>
           <CardDescription>
@@ -194,7 +194,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
         <CardContent>
           {alerts.length === 0 ? (
             <div className="text-center py-8">
-              <Settings className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <Settings className="size-12 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 No hay configuraciones de alerta
               </h3>
@@ -209,7 +209,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                 className="flex items-center gap-2"
                 disabled={!canCreateAlerts}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="size-4" />
                 Crear Primera Alerta
               </Button>
             </div>
@@ -223,7 +223,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                   }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 gap-y-3">
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="flex items-center gap-1">
                           {getAlertTypeIcon(alert.alert_type)}
@@ -237,7 +237,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                       
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-muted-foreground" />
+                          <Package className="size-4 text-muted-foreground" />
                           <span className="font-medium">{alert.item?.name || 'Todos los productos'}</span>
                           {alert.item?.sku && (
                             <span className="text-sm text-muted-foreground">({alert.item.sku})</span>
@@ -259,7 +259,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                         )}
                         
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <Clock className="size-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             Creada {formatDistanceToNow(new Date(alert.created_at), { 
                               addSuffix: true, 
@@ -270,7 +270,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                         
                         {alert.last_triggered && (
                           <div className="flex items-center gap-2">
-                            <Bell className="w-4 h-4 text-muted-foreground" />
+                            <Bell className="size-4 text-muted-foreground" />
                             <span className="text-sm text-muted-foreground">
                               Última activación: {formatDistanceToNow(new Date(alert.last_triggered), { 
                                 addSuffix: true, 
@@ -296,7 +296,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                         className="flex items-center gap-1"
                         disabled={!canModifyAlerts}
                       >
-                        <Edit className="w-3 h-3" />
+                        <Edit className="size-3" />
                         Editar
                       </Button>
                       
@@ -307,7 +307,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                         disabled={deleteAlert.isPending || !canModifyAlerts}
                         className="flex items-center gap-1 text-destructive hover:text-destructive"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="size-3" />
                         Eliminar
                       </Button>
                     </div>

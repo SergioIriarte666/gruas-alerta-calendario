@@ -166,7 +166,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
       <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+            <Building2 className="size-5" />
             {isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}
           </CardTitle>
         </div>
@@ -216,7 +216,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
               disabled={currentStep === 1}
               className="gap-2"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="size-4" />
               Anterior
             </Button>
 
@@ -237,7 +237,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
                   className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
                 >
                   Siguiente
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="size-4" />
                 </Button>
               ) : (
                 <Button
@@ -246,7 +246,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
                   disabled={!canSubmit}
                   className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
                 >
-                  <Save className="h-4 w-4" />
+                  <Save className="size-4" />
                   {isEditing ? 'Actualizar' : 'Crear'} Cliente
                 </Button>
               )}

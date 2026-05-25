@@ -40,21 +40,21 @@ export const InvoiceReportExport = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <FileDown className="h-4 w-4" />
+          <FileDown className="size-4" />
           Exportar Facturas
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => handleExport('pdf')}>
-          <FileText className="mr-2 h-4 w-4" />
+          <FileText className="mr-2 size-4" />
           <span>Exportar PDF</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleExport('excel')}>
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          <FileSpreadsheet className="mr-2 size-4" />
           <span>Exportar Excel</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleExport('excel', true)}>
-          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          <FileSpreadsheet className="mr-2 size-4" />
           <span>Excel con Historial de Pagos</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

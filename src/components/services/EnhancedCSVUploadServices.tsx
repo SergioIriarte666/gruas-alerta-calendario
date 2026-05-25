@@ -209,11 +209,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
         <div className="animate-fade-in">
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Upload className={cn(
-              "w-6 h-6",
+              "size-6",
               isUploading ? "animate-bounce-in text-primary" : "text-primary"
             )} />
             Carga Masiva Inteligente
-            {isUploading && <Sparkles className="w-5 h-5 text-primary animate-pulse-glow" />}
+            {isUploading && <Sparkles className="size-5 text-primary animate-pulse-glow" />}
           </h2>
           <p className="text-muted-foreground mt-1">
             Sistema avanzado de importación con validación automática y mapeo inteligente
@@ -225,7 +225,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             onClick={handleDownloadCSVTemplate}
             className="border-tms-green text-tms-green hover:bg-tms-green hover:text-white"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Plantilla CSV
           </Button>
           <Button
@@ -233,7 +233,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             onClick={handleDownloadExcelTemplate}
             className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Plantilla Excel
           </Button>
         </div>
@@ -245,9 +245,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {isInitialized ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="size-5 text-green-500" />
               ) : (
-                <Loader2 className="w-5 h-5 text-yellow-500 animate-spin" />
+                <Loader2 className="size-5 text-yellow-500 animate-spin" />
               )}
               <span className={`text-sm ${isInitialized ? 'text-green-600' : 'text-yellow-600'}`}>
                 {isInitialized ? 'Sistema listo' : 'Inicializando sistema...'}
@@ -264,8 +264,8 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {/* File Upload Area */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-foreground">
-            <FileText className="w-5 h-5 text-tms-green" />
+          <CardTitle className="flex items-center gap-x-2 text-foreground">
+            <FileText className="size-5 text-tms-green" />
             <span>Seleccionar Archivo</span>
           </CardTitle>
         </CardHeader>
@@ -283,7 +283,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             onDragLeave={handleDragLeave}
           >
             <Upload className={cn(
-              "w-12 h-12 mx-auto mb-4 transition-all duration-300",
+              "size-12 mx-auto mb-4 transition-all duration-300",
               isDragging ? "text-primary scale-110 animate-bounce-in" : "text-muted-foreground"
             )} />
             <p className="text-foreground mb-4">
@@ -312,14 +312,14 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           {file && (
             <div className="mt-4 p-4 bg-muted/50 rounded-lg animate-slide-up">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FileText className="w-5 h-5 text-tms-green" />
+                <div className="flex items-center gap-x-3">
+                  <FileText className="size-5 text-tms-green" />
                   <div>
                     <p className="text-foreground font-medium">{file.name}</p>
                     <p className="text-muted-foreground text-sm">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -331,9 +331,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                     )}
                   >
                     {isValidating ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="size-4 mr-2 animate-spin" />
                     ) : (
-                      <Eye className="w-4 h-4 mr-2" />
+                      <Eye className="size-4 mr-2" />
                     )}
                     Analizar & Validar
                   </Button>
@@ -358,7 +358,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <BarChart3 className={cn(
-                "w-5 h-5",
+                "size-5",
                 uploadProgress.stage === 'uploading' && "animate-rotate-slow"
               )} />
               {getProgressStageText(uploadProgress.stage)}
@@ -388,11 +388,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {validationResult && (
         <Card className="glass-card animate-slide-up">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-foreground">
+            <CardTitle className="flex items-center gap-x-2 text-foreground">
               {validationResult.isValid ? (
-                <CheckCircle className="w-5 h-5 text-green-500 animate-bounce-in" />
+                <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
               ) : (
-                <AlertCircle className="w-5 h-5 text-orange-500 animate-bounce-in" />
+                <AlertCircle className="size-5 text-orange-500 animate-bounce-in" />
               )}
               <span>Resultado del Análisis Inteligente</span>
             </CardTitle>
@@ -436,9 +436,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             )}>
               <div className="flex items-center gap-2 mb-2">
                 {validationResult.isValid ? (
-                  <CheckCircle className="w-5 h-5 text-green-400 animate-bounce-in" />
+                  <CheckCircle className="size-5 text-green-400 animate-bounce-in" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-orange-400 animate-scale-pulse" />
+                  <AlertTriangle className="size-5 text-orange-400 animate-scale-pulse" />
                 )}
                 <h4 className={cn(
                   "font-medium",
@@ -459,7 +459,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {validationResult.errors.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-foreground font-medium flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
+                  <AlertTriangle className="size-4" />
                   Detalles de Validación
                 </h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto bg-muted/50 rounded-lg p-4">
@@ -573,12 +573,12 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                 >
                   {isUploading ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="size-4 mr-2 animate-spin" />
                       Cargando...
                     </>
                   ) : (
                     <>
-                      <Upload className="w-4 h-4 mr-2" />
+                      <Upload className="size-4 mr-2" />
                       Cargar {validationResult.validCount} Servicios
                     </>
                   )}
@@ -596,11 +596,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           uploadResult.success && "shadow-[0_0_40px_rgba(34,197,94,0.3)]"
         )}>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-foreground">
+            <CardTitle className="flex items-center gap-x-2 text-foreground">
               {uploadResult.success ? (
-                <CheckCircle className="w-5 h-5 text-green-500 animate-bounce-in" />
+                <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-500 animate-scale-pulse" />
+                <XCircle className="size-5 text-red-500 animate-scale-pulse" />
               )}
               <span>Resultado de la Carga</span>
             </CardTitle>

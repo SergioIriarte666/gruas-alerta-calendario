@@ -130,7 +130,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-blue-500" />
+              <DollarSign className="size-5 text-blue-500" />
               Aplicar Pago a Facturas Específicas
             </DialogTitle>
             <div className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                     <p className="text-sm text-blue-700">Facturas Seleccionadas</p>
                     <p className="text-2xl font-bold text-blue-900">{selectedFiscalNumbers.length}</p>
                   </div>
-                  <Receipt className="h-8 w-8 text-blue-500" />
+                  <Receipt className="size-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
@@ -159,7 +159,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                     <p className="text-sm text-green-700">Saldo Restante</p>
                     <p className="text-2xl font-bold text-green-900">{formatCurrency(remainingPaymentAmount)}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-green-500" />
+                  <DollarSign className="size-8 text-green-500" />
                 </div>
               </CardContent>
             </Card>
@@ -167,7 +167,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
 
           {/* Búsqueda */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por folio o número fiscal..."
               value={searchQuery}
@@ -248,7 +248,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                       {fiscalNumber}
                       {invoice && ` (${formatCurrency(invoice.remaining_amount)})`}
                       <X 
-                        className="h-3 w-3 cursor-pointer" 
+                        className="size-3 cursor-pointer" 
                         onClick={(e) => {
                           e.stopPropagation();
                           handleInvoiceToggle(fiscalNumber);

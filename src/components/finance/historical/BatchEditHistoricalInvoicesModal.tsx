@@ -223,7 +223,7 @@ export const BatchEditHistoricalInvoicesModal = ({
         <div className="grid gap-6 py-4">
           {hasSystemInvoices && (
             <Alert variant="destructive" className="border-amber-300 bg-amber-50">
-              <ShieldAlert className="h-4 w-4 !text-amber-600" />
+              <ShieldAlert className="size-4 !text-amber-600" />
               <AlertDescription className="text-amber-800 text-xs">
                 {systemInvoiceCount} factura(s) del sistema serán excluidas de los cambios de Estado y Origen, 
                 ya que están vinculadas a cierres y servicios. Solo se aplicarán cambios de notas y metadatos.

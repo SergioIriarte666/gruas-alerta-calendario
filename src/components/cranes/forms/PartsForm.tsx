@@ -136,7 +136,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
       <DialogContent className="max-w-2xl border-border bg-background">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
-            <Package className="w-5 h-5 text-primary" />
+            <Package className="size-5 text-primary" />
             {editingPart ? 'Editar Pieza' : 'Agregar Nueva Pieza'}
           </DialogTitle>
         </DialogHeader>
@@ -145,7 +145,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           {/* Date Selection */}
           <div className="space-y-2">
             <Label htmlFor="date" className="text-foreground flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4" />
+              <CalendarIcon className="size-4" />
               Fecha de Compra
             </Label>
             <Popover>
@@ -154,7 +154,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
                 </Button>
               </PopoverTrigger>
@@ -172,7 +172,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           {/* Kilometraje */}
           <div className="space-y-2">
             <Label htmlFor="kilometraje" className="text-foreground flex items-center gap-2">
-              <Gauge className="w-4 h-4" />
+              <Gauge className="size-4" />
               Kilometraje (Opcional)
             </Label>
             <Input
@@ -195,7 +195,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="supplier" className="text-foreground flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <User className="size-4" />
                 Proveedor
               </Label>
               <Input
@@ -211,7 +211,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-foreground flex items-center gap-2">
-                <Phone className="w-4 h-4" />
+                <Phone className="size-4" />
                 Teléfono del proveedor
               </Label>
               <Input
@@ -226,7 +226,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
            {/* Part Information */}
            <div className="space-y-2">
             <Label htmlFor="part_name" className="text-foreground flex items-center gap-2">
-              <Package className="w-4 h-4" />
+              <Package className="size-4" />
               Nombre de la Pieza
             </Label>
             <Input
@@ -261,7 +261,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity" className="text-foreground flex items-center gap-2">
-                <Hash className="w-4 h-4" />
+                <Hash className="size-4" />
                 Cantidad
               </Label>
               <Input
@@ -281,7 +281,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
             <div className="space-y-2">
               <Label htmlFor="unit_price" className="text-foreground flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="size-4" />
                 Valor Unitario
               </Label>
               <Input
@@ -302,7 +302,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
             <div className="space-y-2">
               <Label className="text-foreground flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="size-4" />
                 Valor Total
               </Label>
               <div className="bg-primary/10 border border-primary/30 rounded-md px-3 py-2 text-primary font-semibold">
@@ -314,7 +314,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes" className="text-foreground flex items-center gap-2">
-              <FileText className="w-4 h-4" />
+              <FileText className="size-4" />
               Notas (Opcional)
             </Label>
             <Textarea

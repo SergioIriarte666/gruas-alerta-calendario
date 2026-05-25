@@ -95,7 +95,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
       <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-400" />
+            <FileText className="size-5 text-blue-400" />
             Registrar Información del Servicio
           </DialogTitle>
         </DialogHeader>
@@ -113,18 +113,18 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-300">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="size-4" />
                   <span>{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-gray-300">
-                  <Building2 className="w-4 h-4" />
+                  <Building2 className="size-4" />
                   <span>{service.serviceType.name}</span>
                 </div>
 
                 {service.operator && (
                   <div className="flex items-center gap-2 text-gray-300">
-                    <User className="w-4 h-4" />
+                    <User className="size-4" />
                     <span>{service.operator.name}</span>
                   </div>
                 )}
@@ -132,7 +132,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-300">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="size-4" />
                   <div className="truncate">
                     {service.origin}
                     {service.destination !== service.origin && (
@@ -142,7 +142,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 text-green-400">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="size-4" />
                   <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                   'Registrando...'
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />
+                    <Send className="size-4 mr-2" />
                     Registrar Información
                   </>
                 )}

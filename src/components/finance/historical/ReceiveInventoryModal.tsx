@@ -157,7 +157,7 @@ export const ReceiveInventoryModal = ({
         {existingMovements && existingMovements.length > 0 && (
           <div className="mb-4 space-y-3 p-4 border rounded-md bg-muted/20">
             <h4 className="text-sm font-medium flex items-center gap-2 text-primary">
-              <PackageCheck className="h-4 w-4" />
+              <PackageCheck className="size-4" />
               Inventario ya recibido ({existingMovements.length})
             </h4>
             <div className="rounded-md border bg-background overflow-hidden">
@@ -291,7 +291,7 @@ export const ReceiveInventoryModal = ({
                     disabled={fields.length === 1}
                     className="text-destructive hover:text-destructive/90"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="size-4" />
                   </Button>
                 </div>
               ))}
@@ -310,7 +310,7 @@ export const ReceiveInventoryModal = ({
                 }
                 className="w-full border-dashed"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 size-4" />
                 Agregar otro producto
               </Button>
             </div>
@@ -361,7 +361,7 @@ export const ReceiveInventoryModal = ({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Registrar Ingreso
               </Button>
             </DialogFooter>

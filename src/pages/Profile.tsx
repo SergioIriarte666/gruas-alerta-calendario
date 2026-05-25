@@ -118,9 +118,9 @@ const Profile = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-x-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="size-4 mr-2" />
           Volver
         </Button>
         <div>
@@ -133,7 +133,7 @@ const Profile = () => {
       <Card className="bg-card border">
         <CardContent className="flex items-center gap-6 p-6">
           <div className="relative group">
-            <Avatar className="h-20 w-20 border-2 border-border">
+            <Avatar className="size-20 border-2 border-border">
               <AvatarImage src={user?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
                 {getUserInitials()}
@@ -146,9 +146,9 @@ const Profile = () => {
               className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
             >
               {uploadingAvatar ? (
-                <Loader2 className="h-5 w-5 text-white animate-spin" />
+                <Loader2 className="size-5 text-white animate-spin" />
               ) : (
-                <Camera className="h-5 w-5 text-white" />
+                <Camera className="size-5 text-white" />
               )}
             </button>
             <input
@@ -182,7 +182,7 @@ const Profile = () => {
           <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center">
-                <User className="w-5 h-5 mr-2" />
+                <User className="size-5 mr-2" />
                 Información Personal
               </CardTitle>
               <CardDescription>Actualiza tu información personal y de contacto</CardDescription>
@@ -210,7 +210,7 @@ const Profile = () => {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <span className="text-muted-foreground text-sm">Rol:</span>
                   <span className="text-violet-600 dark:text-violet-400 font-medium capitalize">{user?.role}</span>
                 </div>
@@ -222,7 +222,7 @@ const Profile = () => {
           <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center">
-                <Lock className="w-5 h-5 mr-2" />
+                <Lock className="size-5 mr-2" />
                 Seguridad
               </CardTitle>
               <CardDescription>Cambia tu contraseña para mantener tu cuenta segura</CardDescription>
@@ -258,7 +258,7 @@ const Profile = () => {
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
             <Button type="submit">
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="size-4 mr-2" />
               Guardar Cambios
             </Button>
           </div>
