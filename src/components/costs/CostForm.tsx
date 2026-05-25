@@ -260,6 +260,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 immediate_consumption: hasImmediateConsumptionAssociation,
                 supplier_id: cost.supplier_id || 'none',
                 is_paid: !!cost.payment_date,
+                payment_date: cost.payment_date ? formatForInput(cost.payment_date as any) : '',
             });
         } else if (prefilledData) {
             const dateValue = (prefilledData as any)?.date
@@ -288,6 +289,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 // Auto-marcar como pagado cuando hay un servicio preseleccionado
                 // (regla de negocio: gastos operativos de servicios se pagan por defecto)
                 is_paid: !!prefilledData.service_id,
+                payment_date: '',
             });
             setCalculatedServiceTotal(0);
         } else {
@@ -311,6 +313,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: null,
                 immediate_consumption: false,
                 supplier_id: 'none',
+                is_paid: false,
+                payment_date: '',
             });
             setCalculatedServiceTotal(0);
         }
