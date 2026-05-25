@@ -38,6 +38,7 @@ const quickCostSchema = z.object({
   cost_center_id: z.string().optional(),
   notes: z.string().optional(),
   is_paid: z.boolean().optional().default(false),
+  payment_date: z.string().optional(),
 });
 
 type QuickCostFormValues = z.infer<typeof quickCostSchema>;
@@ -127,12 +128,24 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
         cost_center_id: 'none',
         notes: '',
         is_paid: false,
+        payment_date: '',
       });
       setShowAdvanced(false);
       setSelectedCategoryId('');
       setIsPaid(false);
     }
   }, [isOpen, reset]);
+
+  const watchedPaymentDate = watch('payment_date');
+  // Prellenar payment_date con la fecha del costo cuando se marca como pagado
+  useEffect(() => {
+    if (isPaid && !watchedPaymentDate && watch('date')) {
+      setValue('payment_date', watch('date'));
+    }
+    if (!isPaid && watchedPaymentDate) {
+      setValue('payment_date', '');
+    }
+  }, [isPaid, watchedPaymentDate, setValue, watch]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -156,7 +169,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
       notes: values.notes?.trim() || null,
       service_id: null,
       service_folio: null,
-      payment_date: isPaid ? values.date : null,
+      payment_date: isPaid ? (values.payment_date || values.date) : null,
     };
 
     addCost(submissionData, {
