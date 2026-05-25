@@ -447,7 +447,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             
             const resolvedSupplierId = values.supplier_id === 'none' ? null : values.supplier_id || null;
             
-            const { is_paid, ...restValues } = values;
+            const { is_paid, payment_date: formPaymentDate, ...restValues } = values;
             
             const submissionData = {
                 ...restValues,
@@ -464,7 +464,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_quantity: values.purchase_quantity || null,
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
-                payment_date: is_paid ? (cost?.payment_date || values.date) : null,
+                payment_date: is_paid
+                    ? (formPaymentDate || cost?.payment_date || values.date)
+                    : null,
             } as CostFormData;
 
             const previousImmediateConsumption = Boolean(
