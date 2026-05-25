@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import {
   RotateCcw,
   ArrowRight,
   CheckCheck,
+  Eye,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
@@ -45,7 +47,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
   services,
   onComplete,
 }) => {
-  const { state, processFiles, applyMatches, reset } = usePurchaseOrderPDFImport(clientId, services);
+  const { state, processFiles, applyMatches, reset, reassignMatch } = usePurchaseOrderPDFImport(clientId, services);
   const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
   const [previewService, setPreviewService] = useState<Service | null>(null);
 
@@ -210,7 +212,40 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         {match.parsedItem.patente}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {match.service ? (
+                        {match.candidates && match.candidates.length > 1 ? (
+                          <div className="flex items-center gap-1">
+                            <Select
+                              value={match.service?.id ?? ''}
+                              onValueChange={(val) => reassignMatch(index, val)}
+                            >
+                              <SelectTrigger className="h-7 text-xs font-mono w-[180px]">
+                                <SelectValue placeholder="Seleccionar..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {match.candidates.map((cand) => {
+                                  const oc = cand.purchaseOrder || cand.purchaseOrderNumber;
+                                  return (
+                                    <SelectItem key={cand.id} value={cand.id} className="text-xs font-mono">
+                                      {cand.folio}
+                                      {cand.serviceDate && ` (${format(new Date(cand.serviceDate), 'dd/MM')})`}
+                                      {oc ? ` · ${oc}` : ' · sin OC'}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                            {match.service && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
+                                className="text-violet-600 hover:text-violet-600/80"
+                                title="Ver detalle"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        ) : match.service ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
                             className="text-violet-600 underline hover:text-violet-600/80 cursor-pointer font-medium"
