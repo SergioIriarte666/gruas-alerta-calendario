@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 import { getCurrentChileDate, 
   formatForDisplay,
   formatForDatabase,
-  getCurrentWeekRange, getTodayLocal } from '@/utils/timezoneUtils';
+  getCurrentWeekRange, getTodayLocal, safeParseDateOnly, getBusinessToday } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
     useInventorySyncWatcher();
@@ -198,28 +198,26 @@ const CostsPage = () => {
     // Filtrar costos por fecha y término de búsqueda
     const filteredCostsByDate = useMemo(() => {
         let filtered = baseCosts;
-        const today = new Date();
+        const todayStr = getBusinessToday(); // YYYY-MM-DD en TZ negocio
+        const todayDate = safeParseDateOnly(todayStr);
 
         switch (dateFilter) {
             case 'today':
                 filtered = baseCosts.filter(cost => {
-                    const costDate = new Date(cost.date + 'T00:00:00');
-                    return costDate.toDateString() === today.toDateString();
+                    return (cost.date || '').slice(0, 10) === todayStr;
                 });
                 break;
             case 'week': {
                 const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
                 filtered = baseCosts.filter(cost => {
-                    const costDate = new Date(cost.date + 'T00:00:00');
+                    const costDate = safeParseDateOnly(cost.date);
                     return costDate >= weekStart && costDate <= weekEnd;
                 });
                 break;
             }
             case 'month':
                 filtered = baseCosts.filter(cost => {
-                    const costDate = new Date(cost.date + 'T00:00:00');
-                    return costDate.getMonth() === today.getMonth() && 
-                           costDate.getFullYear() === today.getFullYear();
+                    return (cost.date || '').slice(0, 7) === todayStr.slice(0, 7);
                 });
                 break;
             case 'all':
@@ -266,11 +264,11 @@ const CostsPage = () => {
         }
 
         if (filters.dateFrom) {
-            filtered = filtered.filter(cost => new Date(cost.date) >= filters.dateFrom!);
+            filtered = filtered.filter(cost => safeParseDateOnly(cost.date) >= filters.dateFrom!);
         }
 
         if (filters.dateTo) {
-            filtered = filtered.filter(cost => new Date(cost.date) <= filters.dateTo!);
+            filtered = filtered.filter(cost => safeParseDateOnly(cost.date) <= filters.dateTo!);
         }
 
         if (filters.operatorId && filters.operatorId !== 'all') {
@@ -299,7 +297,7 @@ const CostsPage = () => {
         }
 
         const exportData = finalFilteredCosts.map(cost => ({
-            Fecha: new Date(cost.date + 'T00:00:00').toLocaleDateString('es-ES'),
+            Fecha: cost.date ? safeParseDateOnly(cost.date).toLocaleDateString('es-CL') : '',
             Descripción: cost.description,
             Categoría: cost.cost_categories?.name || 'Sin categoría',
             Subcategoría: cost.subcategory || '',
