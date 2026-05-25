@@ -75,11 +75,11 @@ export const TurnstileWidget = ({
   action = 'password_reset',
 }: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const widgetIdRef = useRef<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    let currentWidgetId: string | null = null;
 
     const renderWidget = async () => {
       if (!containerRef.current || !siteKey) {
@@ -95,13 +95,8 @@ export const TurnstileWidget = ({
           return;
         }
 
-        if (widgetIdRef.current) {
-          window.turnstile.remove(widgetIdRef.current);
-          widgetIdRef.current = null;
-        }
-
         containerRef.current.innerHTML = '';
-        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        currentWidgetId = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
           theme,
           action,
@@ -123,9 +118,8 @@ export const TurnstileWidget = ({
 
     return () => {
       isMounted = false;
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = null;
+      if (currentWidgetId && window.turnstile) {
+        window.turnstile.remove(currentWidgetId);
       }
     };
   }, [siteKey, resetKey, theme, action, onTokenChange]);

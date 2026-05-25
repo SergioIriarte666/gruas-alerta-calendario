@@ -15,6 +15,56 @@ import { useServiceDetails } from '@/hooks/useServiceDetails';
 export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at' | 'payment_date';
 export type SortDirection = 'asc' | 'desc' | null;
 
+const currencyFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  minimumFractionDigits: 0,
+});
+
+interface SortButtonProps {
+  field: SortField;
+  children: React.ReactNode;
+  onSort: (field: SortField) => void;
+  icon: React.ReactNode;
+}
+
+interface CommissionFolioProps {
+  commission: Commission;
+  onOpenService: (commission: Commission) => void;
+}
+
+const SortButton: React.FC<SortButtonProps> = ({ field, children, onSort, icon }) => (
+  <Button
+    type="button"
+    variant="ghost"
+    size="sm"
+    className="h-auto p-0 font-medium hover:bg-transparent justify-start"
+    onClick={() => onSort(field)}
+  >
+    <span className="mr-2">{children}</span>
+    {icon}
+  </Button>
+);
+
+const CommissionFolio: React.FC<CommissionFolioProps> = ({ commission, onOpenService }) => {
+  const folio = commission.service_folio || commission.services?.folio || 'N/A';
+  const id = commission.services?.id || commission.service_id;
+
+  if (!id) {
+    return <span>{folio}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpenService(commission)}
+      className="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 underline cursor-pointer text-left"
+    >
+      {folio}
+    </button>
+  );
+};
+
 interface CommissionTableProps {
   commissions: Commission[];
   selectedCommissions: string[];
@@ -38,22 +88,8 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
     if (id) setSelectedServiceId(id);
   };
 
-  const renderFolio = (commission: Commission) => {
-    const folio = commission.service_folio || commission.services?.folio || 'N/A';
-    const id = commission.services?.id || commission.service_id;
-    if (!id) return <span>{folio}</span>;
-    return (
-      <button
-        onClick={() => handleServiceClick(commission)}
-        className="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 underline cursor-pointer text-left"
-      >
-        {folio}
-      </button>
-    );
-  };
-
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
+    return currencyFormatter.format(amount);
   };
 
   const formatDate = (dateString: string) => {
@@ -66,13 +102,6 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
     if (sortDirection === 'desc') return <ArrowDown className="size-4" />;
     return <ArrowUpDown className="size-4" />;
   };
-
-  const SortButton: React.FC<{ field: SortField; children: React.ReactNode }> = ({ field, children }) => (
-    <Button variant="ghost" size="sm" className="h-auto p-0 font-medium hover:bg-transparent justify-start" onClick={() => onSort(field)}>
-      <span className="mr-2">{children}</span>
-      {getSortIcon(field)}
-    </Button>
-  );
 
   const getStatusBadge = (status: 'pending' | 'paid') => {
     if (status === 'paid') return <Badge variant="secondary" className="bg-green-100 text-green-800">Pagada</Badge>;
@@ -95,7 +124,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                   />
                   <div className="space-y-1 min-w-0">
                     <p className="font-medium text-sm">
-                      {renderFolio(commission)}
+                      <CommissionFolio commission={commission} onOpenService={handleServiceClick} />
                     </p>
                     <p className="text-xs text-muted-foreground">{commission.client_name}</p>
                     <p className="text-xs text-muted-foreground">{commission.operators?.name || 'N/A'}</p>
@@ -155,16 +184,16 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-12"><span className="sr-only">Seleccionar</span></TableHead>
-            <TableHead><SortButton field="status">Estado</SortButton></TableHead>
-            <TableHead><SortButton field="folio">Folio</SortButton></TableHead>
-            <TableHead><SortButton field="service_date">Fecha Servicio</SortButton></TableHead>
-            <TableHead><SortButton field="client_name">Cliente</SortButton></TableHead>
-            <TableHead><SortButton field="operator_name">Operador</SortButton></TableHead>
-            <TableHead className="text-right"><SortButton field="service_value">Valor Servicio</SortButton></TableHead>
-            <TableHead className="text-right"><SortButton field="amount">Comisión</SortButton></TableHead>
-            <TableHead className="text-right"><SortButton field="commission_percentage">%</SortButton></TableHead>
-            <TableHead><SortButton field="created_at">Fecha Creación</SortButton></TableHead>
-            <TableHead><SortButton field="payment_date">Fecha Pago</SortButton></TableHead>
+            <TableHead><SortButton field="status" onSort={onSort} icon={getSortIcon('status')}>Estado</SortButton></TableHead>
+            <TableHead><SortButton field="folio" onSort={onSort} icon={getSortIcon('folio')}>Folio</SortButton></TableHead>
+            <TableHead><SortButton field="service_date" onSort={onSort} icon={getSortIcon('service_date')}>Fecha Servicio</SortButton></TableHead>
+            <TableHead><SortButton field="client_name" onSort={onSort} icon={getSortIcon('client_name')}>Cliente</SortButton></TableHead>
+            <TableHead><SortButton field="operator_name" onSort={onSort} icon={getSortIcon('operator_name')}>Operador</SortButton></TableHead>
+            <TableHead className="text-right"><SortButton field="service_value" onSort={onSort} icon={getSortIcon('service_value')}>Valor Servicio</SortButton></TableHead>
+            <TableHead className="text-right"><SortButton field="amount" onSort={onSort} icon={getSortIcon('amount')}>Comisión</SortButton></TableHead>
+            <TableHead className="text-right"><SortButton field="commission_percentage" onSort={onSort} icon={getSortIcon('commission_percentage')}>%</SortButton></TableHead>
+            <TableHead><SortButton field="created_at" onSort={onSort} icon={getSortIcon('created_at')}>Fecha Creación</SortButton></TableHead>
+            <TableHead><SortButton field="payment_date" onSort={onSort} icon={getSortIcon('payment_date')}>Fecha Pago</SortButton></TableHead>
             <TableHead className="w-32">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -175,7 +204,9 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                 <Checkbox checked={selectedCommissions.includes(commission.id)} onCheckedChange={() => onToggleCommission(commission.id)} disabled={commission.status === 'paid'} />
               </TableCell>
               <TableCell>{getStatusBadge(commission.status)}</TableCell>
-              <TableCell className="font-medium">{renderFolio(commission)}</TableCell>
+              <TableCell className="font-medium">
+                <CommissionFolio commission={commission} onOpenService={handleServiceClick} />
+              </TableCell>
               <TableCell>{commission.services?.service_date ? formatDate(commission.services.service_date) : formatDate(commission.date)}</TableCell>
               <TableCell>{commission.client_name}</TableCell>
               <TableCell>{commission.operators?.name || 'N/A'}</TableCell>

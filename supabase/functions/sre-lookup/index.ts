@@ -30,7 +30,7 @@ async function fetchFromRutsInfo(rut: string): Promise<Response> {
 
   if (!response.ok) {
     // Try alternative format without dash
-    const altRut = rut.replace(/[.\-]/g, "");
+    const altRut = rut.replace(/[.-]/g, "");
     const altUrl = `${RUTS_INFO_API_URL}?rut=${altRut}`;
     console.log(`ruts.info returned ${response.status}, retrying with alt format: ${altUrl}`);
     

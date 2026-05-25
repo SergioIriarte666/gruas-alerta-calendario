@@ -369,7 +369,7 @@ export class XMLCostParser {
   }
 
   private sanitizeDecodedText(value: string): string {
-    return value.replace(/\u0000/g, '').replace(/\ufeff/g, '');
+    return value.split('\0').join('').replace(/\ufeff/g, '');
   }
 
   private countReplacementChars(value: string): number {

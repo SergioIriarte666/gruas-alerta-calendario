@@ -44,7 +44,7 @@ const looksLikeRut = (value: string) => {
 // o un VIN (16-17 caracteres alfanuméricos). Rechaza valores puramente numéricos.
 const isValidPatenteShape = (value: string) => {
   if (!value) return false;
-  const cleaned = value.replace(/[\s.\-]/g, '').toUpperCase();
+  const cleaned = value.replace(/[\s.-]/g, '').toUpperCase();
   if (cleaned.length < 4 || cleaned.length > 20) return false;
   if (!/[A-Z]/.test(cleaned)) return false; // debe tener al menos una letra
   if (!/\d/.test(cleaned)) return false;    // debe tener al menos un número

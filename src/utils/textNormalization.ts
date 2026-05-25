@@ -46,7 +46,7 @@ const normalizeWord = (word: string, isFirst: boolean): string => {
   if (!word) return word;
 
   // Token has digits or symbols (other than period at end) → preserve as-is.
-  if (/[0-9]/.test(word) || /[\/\-_#°º:]/.test(word)) {
+  if (/[0-9]/.test(word) || /[/\-_#°º:]/.test(word)) {
     return word;
   }
 

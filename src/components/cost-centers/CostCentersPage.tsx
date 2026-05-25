@@ -19,8 +19,9 @@ export const CostCentersPage = () => {
 
   // Set up realtime updates for costs to refresh cost centers stats
   useEffect(() => {
-    const channel = supabase
-      .channel('cost-center-updates')
+    const channel = supabase.channel('cost-center-updates');
+
+    channel
       .on(
         'postgres_changes',
         {
@@ -45,11 +46,12 @@ export const CostCentersPage = () => {
           queryClient.invalidateQueries({ queryKey: ['cost-centers'] });
           queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
         }
-      )
-      .subscribe();
+      );
+
+    channel.subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      void channel.unsubscribe();
     };
   }, [queryClient]);
 
@@ -67,9 +69,11 @@ export const CostCentersPage = () => {
     console.log('Manual refresh triggered for cost centers');
     try {
       // Force refetch with fresh data
-      await queryClient.refetchQueries({ queryKey: ['cost-centers-stats'] });
-      await queryClient.refetchQueries({ queryKey: ['cost-centers'] });
-      await queryClient.refetchQueries({ queryKey: ['costs'] });
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['cost-centers-stats'] }),
+        queryClient.refetchQueries({ queryKey: ['cost-centers'] }),
+        queryClient.refetchQueries({ queryKey: ['costs'] }),
+      ]);
       console.log('All queries refetched successfully');
     } catch (error) {
       console.error('Error refreshing cost centers:', error);

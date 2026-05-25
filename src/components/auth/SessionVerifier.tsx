@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { verifySessionConsistency, forceReAuthentication } from '@/utils/authCleanup';
@@ -15,12 +15,16 @@ export const SessionVerifier = ({
 }: SessionVerifierProps) => {
   const { session, user, refreshSession } = useAuth();
   const { addNotification } = useNotifications();
-  const [lastCheck, setLastCheck] = useState<Date | null>(null);
-  const [verificationStatus, setVerificationStatus] = useState<'unknown' | 'valid' | 'invalid'>('unknown');
+  const lastCheckRef = useRef<Date | null>(null);
+  const verificationStatusRef = useRef<'unknown' | 'valid' | 'invalid'>('unknown');
+
+  const logVerificationStatus = useCallback((status: 'valid' | 'invalid', checkedAt: Date) => {
+    console.log(`🔐 SessionVerifier: Status = ${status}, Last Check = ${checkedAt.toISOString()}`);
+  }, []);
 
   const verifySession = useCallback(async () => {
     if (!session || !user) {
-      setVerificationStatus('invalid');
+      verificationStatusRef.current = 'invalid';
       return;
     }
 
@@ -29,10 +33,10 @@ export const SessionVerifier = ({
       const result = await verifySessionConsistency(supabase);
       
       if (result.isValid) {
-        setVerificationStatus('valid');
+        verificationStatusRef.current = 'valid';
         console.log('✅ SessionVerifier: Session is valid');
       } else {
-        setVerificationStatus('invalid');
+        verificationStatusRef.current = 'invalid';
         console.error('❌ SessionVerifier: Session invalid -', result.reason);
         
         if (result.reason === 'auth_uid_null' || result.reason === 'invalid_jwt') {
@@ -48,7 +52,7 @@ export const SessionVerifier = ({
                 await forceReAuthentication(supabase);
               } else {
                 console.log('✅ SessionVerifier: Auto-recovery successful');
-                setVerificationStatus('valid');
+                verificationStatusRef.current = 'valid';
                 addNotification({
                   title: 'Sesión Recuperada',
                   message: 'La sesión se recuperó automáticamente',
@@ -69,12 +73,17 @@ export const SessionVerifier = ({
         }
       }
       
-      setLastCheck(new Date());
+      const checkedAt = new Date();
+      lastCheckRef.current = checkedAt;
+      logVerificationStatus(verificationStatusRef.current === 'valid' ? 'valid' : 'invalid', checkedAt);
     } catch (error) {
       console.error('🚨 SessionVerifier: Error during verification:', error);
-      setVerificationStatus('invalid');
+      verificationStatusRef.current = 'invalid';
+      const checkedAt = new Date();
+      lastCheckRef.current = checkedAt;
+      logVerificationStatus('invalid', checkedAt);
     }
-  }, [session, user, autoRecover, refreshSession, addNotification]);
+  }, [session, user, autoRecover, refreshSession, addNotification, logVerificationStatus]);
 
   // Periodic session verification
   useEffect(() => {
@@ -90,13 +99,6 @@ export const SessionVerifier = ({
 
     return () => clearInterval(interval);
   }, [session, user, checkInterval, verifySession]);
-
-  // Log verification status for debugging
-  useEffect(() => {
-    if (verificationStatus !== 'unknown') {
-      console.log(`🔐 SessionVerifier: Status = ${verificationStatus}, Last Check = ${lastCheck?.toISOString()}`);
-    }
-  }, [verificationStatus, lastCheck]);
 
   // This component doesn't render anything - it's purely for session monitoring
   return null;

@@ -209,8 +209,8 @@ export class EnhancedCSVUploader {
               } else if (typeof value === 'string') {
                 // Handle DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD
                 const trimmed = value.trim();
-                const ddmmyyyy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-                const yyyymmdd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+                const ddmmyyyy = trimmed.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+                const yyyymmdd = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
                 if (ddmmyyyy) {
                   const [, d, m, y] = ddmmyyyy;
                   value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
