@@ -5,8 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatForDisplay } from '@/utils/timezoneUtils';
-import { differenceInDays, parseISO, isValid } from 'date-fns';
+import { formatForDisplay, safeParseDateOnly, safeDaysSince, getBusinessToday } from '@/utils/timezoneUtils';
 import { useSettings } from '@/hooks/useSettings';
 import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
 import { toast } from 'sonner';
@@ -63,16 +62,13 @@ const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Elem
   if (!dueDate) return <Badge className="bg-gray-500 text-white">Sin fecha</Badge>;
   
   try {
-    const due = parseISO(dueDate);
-    if (!isValid(due)) {
+    const todayStr = getBusinessToday();
+    const dueStr = (dueDate || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dueStr)) {
       return <Badge className="bg-gray-500 text-white">Fecha inválida</Badge>;
     }
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
-    
-    const days = differenceInDays(due, today);
+    // safeDaysSince(dueStr, todayStr) = today - due. Invertimos: días hasta vencer = due - today.
+    const days = -safeDaysSince(dueStr, todayStr);
     
     if (days > 7) {
       return <Badge className="bg-green-500 text-white">+{days} días</Badge>;

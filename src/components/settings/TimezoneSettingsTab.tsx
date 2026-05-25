@@ -78,6 +78,7 @@ export const TimezoneSettingsTab: React.FC = () => {
       if (error) throw error;
       setReportTimezone(timezone);
       invalidateBusinessTimezoneCache();
+      invalidateUserSettingsCache();
       window.dispatchEvent(new CustomEvent('timezone-changed'));
       toast.success('Zona horaria de negocio actualizada');
     } catch (e) {
@@ -104,6 +105,7 @@ export const TimezoneSettingsTab: React.FC = () => {
       if (error) throw error;
       setReportUseSystem(useSystem);
       invalidateBusinessTimezoneCache();
+      invalidateUserSettingsCache();
       window.dispatchEvent(new CustomEvent('timezone-changed'));
       toast.success('Configuración de zona horaria actualizada');
     } catch (e) {
