@@ -53,7 +53,7 @@ export const OperatorLayout = () => {
       {/* Header */}
       <header className="bg-card border-b border-border px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-x-3">
             {companyData?.logo_url ? (
               <img 
                 src={companyData.logo_url} 
@@ -73,8 +73,8 @@ export const OperatorLayout = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 text-foreground">
+          <div className="flex items-center gap-x-2 sm:gap-x-4">
+            <div className="hidden sm:flex items-center gap-x-2 text-foreground">
               <User className="size-4 flex-shrink-0" />
               <span className="text-sm truncate max-w-[120px]">{user?.name}</span>
             </div>

@@ -426,7 +426,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               <div className="text-sm text-muted-foreground">
                 <p>Costo total: ${(form.watch('unit_cost') * form.watch('quantity')).toLocaleString()}</p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 <Checkbox
                   id="generate_cost"
                   checked={form.watch('generate_cost') || false}

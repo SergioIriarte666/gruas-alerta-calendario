@@ -35,7 +35,7 @@ const PortalDashboard: React.FC = () => {
       {/* Métricas principales - Solo servicios */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Total Servicios</CardTitle>
             <History className="size-4 text-tms-green" />
           </CardHeader>

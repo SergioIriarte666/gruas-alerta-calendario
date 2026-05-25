@@ -140,7 +140,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
       {/* File Upload Area */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-foreground">
+          <CardTitle className="flex items-center gap-x-2 text-foreground">
             <Upload className="size-5 text-primary" />
             <span>Seleccionar Archivo CSV</span>
           </CardTitle>
@@ -172,14 +172,14 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
           {file && (
             <div className="mt-4 p-4 bg-gray-800 rounded-lg">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <FileText className="size-5 text-tms-green" />
                   <div>
                     <p className="text-white font-medium">{file.name}</p>
                     <p className="text-gray-400 text-sm">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -213,7 +213,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
       {validationResult && (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-white">
+            <CardTitle className="flex items-center gap-x-2 text-white">
               {validationResult.isValid ? (
                 <CheckCircle className="size-5 text-green-500" />
               ) : (
@@ -346,7 +346,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
       {uploadResult && (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-white">
+            <CardTitle className="flex items-center gap-x-2 text-white">
               {uploadResult.success ? (
                 <CheckCircle className="size-5 text-green-500" />
               ) : (

@@ -134,7 +134,7 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
+        <div className="flex justify-end gap-x-4 mt-6 pt-6 border-t">
           <Button
             variant="outline"
             onClick={onClose}

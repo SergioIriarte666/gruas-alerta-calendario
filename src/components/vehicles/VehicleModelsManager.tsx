@@ -240,7 +240,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                     placeholder="Ej: Corolla, F-150, Silverado..."
                   />
                 </div>
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end gap-x-2">
                   <Button
                     variant="outline"
                     onClick={() => setIsCreateDialogOpen(false)}
@@ -312,7 +312,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                   {new Date(model.created_at).toLocaleDateString('es-CL')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end gap-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -398,7 +398,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                 placeholder="Ej: Corolla, F-150, Silverado..."
               />
             </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-x-2">
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}

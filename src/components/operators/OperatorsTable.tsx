@@ -217,7 +217,7 @@ export const OperatorsTable = ({
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center justify-center gap-x-2">
                       <Button
                         variant="ghost"
                         size="sm"

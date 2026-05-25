@@ -225,7 +225,7 @@ export const AlertHistoryView: React.FC = () => {
                 <Card key={item.id} className="border-l-4 border-l-muted">
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-3">
+                      <div className="flex-1 gap-y-3">
                         <div className="flex items-center gap-3">
                           {getSeverityIcon(item.severity)}
                           <h4 className="font-semibold text-foreground">{item.title}</h4>

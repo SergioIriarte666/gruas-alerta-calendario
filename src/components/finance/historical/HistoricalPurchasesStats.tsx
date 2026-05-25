@@ -25,7 +25,7 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Facturas</CardTitle>
           <CreditCard className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -38,7 +38,7 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pendiente de Pago</CardTitle>
           <DollarSign className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -51,7 +51,7 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Vencido</CardTitle>
           <AlertCircle className="size-4 text-red-500" />
         </CardHeader>
@@ -64,7 +64,7 @@ export const HistoricalPurchasesStats = ({ invoices }: HistoricalPurchasesStatsP
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pagado</CardTitle>
           <CheckCircle2 className="size-4 text-green-500" />
         </CardHeader>

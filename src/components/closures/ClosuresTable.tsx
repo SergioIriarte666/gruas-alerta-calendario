@@ -151,7 +151,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
 
   return (
     <Card className="bg-card border" id="closures-table-top">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex flex-row items-center justify-between gap-y-0">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
@@ -291,7 +291,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                       {getStatusBadge(closure.status)}
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end gap-x-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -336,7 +336,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             
             {/* Bottom Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-end space-x-2 py-4">
+              <div className="flex items-center justify-end gap-x-2 py-4">
                 <Button
                   variant="outline"
                   size="sm"

@@ -217,7 +217,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
       <InvoicesPipelineMetrics invoices={invoices} />
 
       {/* Search */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-x-4">
         <div className="relative flex-1">
           <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
@@ -249,7 +249,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                   onClick={() => toggleGroup(status.key)}
                 >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-x-3">
                     <div className={cn("p-2 rounded-lg", status.bgColor)}>
                       <Icon className={cn("size-5", status.color)} />
                     </div>
@@ -266,7 +266,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center gap-x-4">
                     <div className="text-right">
                       <p className="text-lg font-bold text-foreground">{group.stats.count}</p>
                       <p className="text-sm text-muted-foreground">
@@ -308,7 +308,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2 mb-2">
+                                <div className="flex items-center gap-x-2 mb-2">
                                   <h4 className="font-semibold text-foreground truncate">
                                     {invoice.folio}
                                   </h4>
@@ -319,18 +319,18 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   )}
                                 </div>
                                 
-                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                  <div className="flex items-center space-x-1">
+                                <div className="flex items-center gap-x-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-x-1">
                                     <User className="size-3" />
                                     <span className="truncate">
                                       {(invoiceWithDetails as any).client?.name || 'Cliente no especificado'}
                                     </span>
                                   </div>
-                                  <div className="flex items-center space-x-1">
+                                  <div className="flex items-center gap-x-1">
                                     <Calendar className="size-3" />
                                     <span>{formatDate(invoice.dueDate)}</span>
                                   </div>
-                                  <div className="flex items-center space-x-1">
+                                  <div className="flex items-center gap-x-1">
                                     <DollarSign className="size-3" />
                                     <span className="font-medium text-foreground">
                                       {formatCurrency(invoice.total)}
@@ -350,7 +350,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                 )}
                               </div>
 
-                              <div className="flex items-center space-x-2 ml-4">
+                              <div className="flex items-center gap-x-2 ml-4">
                                 <Button
                                   variant="ghost"
                                   size="sm"

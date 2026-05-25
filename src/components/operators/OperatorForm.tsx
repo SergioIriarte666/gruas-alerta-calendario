@@ -225,7 +225,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
           <div className="space-y-2">
             <Label htmlFor="isActive">Estado</Label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <Switch
                 id="isActive"
                 checked={formData.isActive}
@@ -239,7 +239,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
           <div className="space-y-2">
             <Label htmlFor="commissionExempt">Comisiones</Label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <Switch
                 id="commissionExempt"
                 checked={formData.commissionExempt}
@@ -252,7 +252,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-border">
+        <div className="flex justify-end gap-x-3 pt-4 border-t border-border">
           <Button
             type="button"
             variant="outline"

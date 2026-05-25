@@ -189,7 +189,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                   ) : (
                     <TableRow className="border-border">
                       <TableCell colSpan={6} className="text-center text-foreground py-8">
-                        <div className="flex flex-col items-center space-y-2">
+                        <div className="flex flex-col items-center gap-y-2">
                           <p className="text-lg">No hay datos de partes disponibles</p>
                           <p className="text-sm">
                             No se encontraron registros de partes para el período seleccionado.

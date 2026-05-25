@@ -74,7 +74,7 @@ export const Suppliers: React.FC = () => {
         {stats && (
           <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'}`}>
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Proveedores</CardTitle>
                 <Building2 className="size-4 text-muted-foreground" />
               </CardHeader>
@@ -87,7 +87,7 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
                 <Clock className="size-4 text-yellow-500" />
               </CardHeader>
@@ -100,7 +100,7 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card className={stats.total_overdue_payments > 0 ? 'border-destructive/50 bg-destructive/5' : ''}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
                 <AlertTriangle className={`size-4 ${stats.total_overdue_payments > 0 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
               </CardHeader>
@@ -115,7 +115,7 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Pagado este Mes</CardTitle>
                 <CheckCircle2 className="size-4 text-green-500" />
               </CardHeader>
@@ -128,7 +128,7 @@ export const Suppliers: React.FC = () => {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Categorías</CardTitle>
                 <TrendingUp className="size-4 text-muted-foreground" />
               </CardHeader>

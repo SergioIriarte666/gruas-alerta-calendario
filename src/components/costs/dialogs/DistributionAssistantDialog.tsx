@@ -280,7 +280,7 @@ export const DistributionAssistantDialog = ({
           <div className="space-y-3">
             {distributions.map((dist, index) => (
               <div key={dist.id} className="flex items-end gap-3 p-3 border rounded-lg bg-background">
-                <div className="flex-1 space-y-2">
+                <div className="flex-1 gap-y-2">
                   <Label>Grúa {index + 1}</Label>
                   <Select
                     value={dist.crane_id}

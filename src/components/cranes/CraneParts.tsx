@@ -182,7 +182,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
             <Card key={m.id} className="border-border bg-card hover:border-violet-500/40 hover:shadow-md transition-all cursor-pointer group" onClick={() => setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' })}>
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 gap-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="text-lg font-semibold text-foreground">{(m.inventory_items as any)?.name || 'Producto'}</h4>

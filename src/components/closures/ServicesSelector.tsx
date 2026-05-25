@@ -60,7 +60,7 @@ const ServicesSelector = ({
                 </span>
               </p>}
           </div> : <div className="space-y-1">
-            {filteredServices.map(service => <div key={service.id} className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${selectedServiceIds.includes(service.id) ? 'bg-tms-green/10 border border-tms-green/30' : 'hover:bg-white/5'}`}>
+            {filteredServices.map(service => <div key={service.id} className={`flex items-center gap-x-2 py-2 px-1 rounded transition-colors ${selectedServiceIds.includes(service.id) ? 'bg-tms-green/10 border border-tms-green/30' : 'hover:bg-white/5'}`}>
                 <input type="checkbox" id={service.id} checked={selectedServiceIds.includes(service.id)} onChange={e => onServiceToggle(service.id, e.target.checked)} className="text-tms-green rounded" />
                 <label htmlFor={service.id} className="text-sm text-gray-300 flex-1 cursor-pointer">
                   <div className="flex justify-between items-center">

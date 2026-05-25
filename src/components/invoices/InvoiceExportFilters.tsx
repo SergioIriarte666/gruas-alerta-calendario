@@ -120,7 +120,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
       <div className="space-y-3">
         <Label className="text-sm font-medium">✅ OPCIONES ADICIONALES</Label>
         <div className="space-y-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includePaymentHistory"
               checked={filters.includePaymentHistory}
@@ -133,7 +133,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               Incluir historial de pagos detallado
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="groupByMonth"
               checked={filters.groupByMonth}
@@ -146,7 +146,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               Agrupar por mes
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includeNotes"
               checked={filters.includeNotes}
@@ -170,7 +170,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
           onValueChange={(value) => onFilterChange('format', value as 'pdf' | 'excel')}
           className="flex gap-4"
         >
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <RadioGroupItem value="pdf" id="pdf" />
             <label
               htmlFor="pdf"
@@ -180,7 +180,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               PDF
             </label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <RadioGroupItem value="excel" id="excel" />
             <label
               htmlFor="excel"

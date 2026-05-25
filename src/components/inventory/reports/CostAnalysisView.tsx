@@ -32,7 +32,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total Inventario</CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -43,7 +43,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Costo Promedio Unitario</CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -54,7 +54,7 @@ export const CostAnalysisView: React.FC<CostAnalysisViewProps> = ({ filters }) =
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Proveedores Únicos</CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>

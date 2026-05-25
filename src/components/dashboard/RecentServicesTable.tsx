@@ -65,7 +65,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   return (
     <Card className="bg-white border border-gray-200 shadow-sm">
       <CardHeader className={isMobile ? "pb-2 px-3 pt-3" : "pb-4"}>
-        <CardTitle className={`flex items-center space-x-3 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
+        <CardTitle className={`flex items-center gap-x-3 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
           <div className="p-2 bg-tms-green/10 rounded-lg">
             <Truck className={`${isMobile ? 'size-4' : 'size-6'} text-tms-green`} />
           </div>

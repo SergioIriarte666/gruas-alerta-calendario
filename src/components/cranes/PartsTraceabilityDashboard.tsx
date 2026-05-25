@@ -48,7 +48,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       {syncStats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-black border-tms-green/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Sincronización</CardTitle>
               <BarChart3 className="size-4 text-tms-green" />
             </CardHeader>
@@ -63,7 +63,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           </Card>
 
           <Card className="bg-black border-tms-green/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Items Creados</CardTitle>
               <Package className="size-4 text-tms-green" />
             </CardHeader>
@@ -78,7 +78,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           </Card>
 
           <Card className="bg-black border-tms-green/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Items Inventario</CardTitle>
               <TrendingUp className="size-4 text-tms-green" />
             </CardHeader>
@@ -93,7 +93,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           </Card>
 
           <Card className="bg-black border-tms-green/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Sin Sincronizar</CardTitle>
               <TrendingDown className="size-4 text-yellow-500" />
             </CardHeader>

@@ -296,7 +296,7 @@ export const UserManagementTab = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-x-2">
                           <Switch checked={user.is_active} onCheckedChange={(checked) => toggleUserStatus(user.id, checked)} disabled={updating === user.id} />
                           <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
                             {user.is_active ? 'Activo' : 'Inactivo'}

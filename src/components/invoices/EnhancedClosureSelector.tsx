@@ -135,7 +135,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                 setOpen(false);
               }} className="p-0 cursor-pointer">
                   <div className="flex items-start justify-between w-full p-4 hover:bg-muted rounded-md">
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 gap-y-2">
                       {/* Folio */}
                       <div className="flex items-center gap-2">
                         <FileText className="size-4 text-foreground" />

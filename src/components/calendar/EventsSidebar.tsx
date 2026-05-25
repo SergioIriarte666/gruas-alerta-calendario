@@ -192,7 +192,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
                         <p className="text-sm text-muted-foreground mt-2">{event.description}</p>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-x-2">
                       {!event.serviceId && event.status !== 'completed' && (
                         <Button
                           size="sm"

@@ -1094,7 +1094,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   <CardTitle className="text-foreground">Opciones de Importación</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-x-2">
                     <Checkbox id="create-payments" checked={createPayments} onCheckedChange={checked => setCreatePayments(checked === true)} />
                     <label htmlFor="create-payments" className="text-foreground">
                       Crear pagos automáticamente desde los documentos
@@ -1207,7 +1207,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                       {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center gap-x-3">
                             <Checkbox checked={selectedSuppliers.has(supplier.rut)} onCheckedChange={checked => {
                       if (checked === true) {
                         toggleSupplierSelection(supplier.rut);
@@ -1431,7 +1431,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             )}
 
                             <div className="flex items-start justify-between gap-3">
-                              <div className="flex min-w-0 flex-1 items-start space-x-3">
+                              <div className="flex min-w-0 flex-1 items-start gap-x-3">
                                 <Checkbox
                                   checked={selectedDocuments.has(documentKey)}
                                   onCheckedChange={checked => {
@@ -1446,7 +1446,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   <p className="break-words whitespace-pre-wrap font-medium text-foreground">
                                     {getEffectiveGlosa(document)}
                                   </p>
-                                  <div className="flex flex-wrap items-center space-x-4 text-sm text-muted-foreground">
+                                  <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground">
                                     <span>Folio: {document.folio}</span>
                                     <span>Total: ${document.total_amount.toLocaleString()}</span>
                                     {document.issue_date && (

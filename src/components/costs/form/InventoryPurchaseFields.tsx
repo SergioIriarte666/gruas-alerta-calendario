@@ -149,7 +149,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
                 control={form.control}
                 name="immediate_consumption"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-y-0">
+                  <FormItem className="flex items-center gap-y-0">
                     <FormControl>
                       <Checkbox
                         checked={field.value || false}

@@ -38,7 +38,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Productos Analizados</CardTitle>
             <Package className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -49,7 +49,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Riesgo Crítico</CardTitle>
             <AlertTriangle className="size-4 text-red-500" />
           </CardHeader>
@@ -60,7 +60,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Grúas Monitoreadas</CardTitle>
             <Truck className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -71,7 +71,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Períodos Analizados</CardTitle>
             <Calendar className="size-4 text-muted-foreground" />
           </CardHeader>

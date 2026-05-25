@@ -165,7 +165,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
             <Card key={record.id} className="bg-white/5 border-tms-green/30 hover:bg-white/10 transition-colors">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 gap-y-3">
                     {/* Status and Type Badges */}
                     <div className="flex items-center gap-3 flex-wrap">
                       <Badge className={getStatusColor(record.status)}>

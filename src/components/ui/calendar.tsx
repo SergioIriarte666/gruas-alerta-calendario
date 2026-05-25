@@ -47,7 +47,7 @@ function Calendar({
     <div key={cacheKey} className={cn("bg-background border rounded-lg shadow-lg", className)}>
       {/* Custom Header with Dropdowns */}
       <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <Select value={currentMonth.getMonth().toString()} onValueChange={handleMonthChange}>
             <SelectTrigger className="w-[130px] h-8">
               <SelectValue />
@@ -75,7 +75,7 @@ function Calendar({
           </Select>
         </div>
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center gap-x-1">
           <button
             onClick={() => {
               const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);

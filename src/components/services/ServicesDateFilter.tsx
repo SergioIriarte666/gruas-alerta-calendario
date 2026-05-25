@@ -17,7 +17,7 @@ export const ServicesDateFilter = ({ selected, onChange }: ServicesDateFilterPro
   ];
 
   return (
-    <div className="flex flex-shrink-0 space-x-1 overflow-x-auto rounded-lg border border-border bg-muted p-1 sm:space-x-2">
+    <div className="flex flex-shrink-0 gap-x-1 overflow-x-auto rounded-lg border border-border bg-muted p-1 sm:gap-x-2">
       {filters.map((filter) => (
         <Button
           key={filter.key}

@@ -38,7 +38,7 @@ const PortalHeader: React.FC = () => {
 
   return (
     <header className="bg-gray-800/50 backdrop-blur-sm p-4 flex justify-between items-center border-b border-gray-700">
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center gap-x-3">
         {settings?.company?.logo && (
           <img 
             src={settings.company.logo} 
@@ -51,14 +51,14 @@ const PortalHeader: React.FC = () => {
           <p className="text-sm text-gray-400">Portal de Clientes</p>
         </div>
       </div>
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-gray-300">
+      <div className="flex items-center gap-x-4">
+        <div className="flex items-center gap-x-2 text-gray-300">
           <User className="size-5" />
           <span>Bienvenido, {userName}</span>
         </div>
         <button 
           onClick={handleLogout}
-          className="flex items-center space-x-2 text-red-400 hover:text-red-300 transition-colors"
+          className="flex items-center gap-x-2 text-red-400 hover:text-red-300 transition-colors"
         >
           <LogOut className="size-5" />
           <span>Cerrar Sesión</span>

@@ -38,7 +38,7 @@ interface DetailItemProps {
 }
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
-  <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
+  <div className={`flex items-start gap-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
     <Icon className="size-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
       <p className="text-sm text-muted-foreground">{label}</p>

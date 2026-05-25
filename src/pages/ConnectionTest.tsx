@@ -109,7 +109,7 @@ export default function ConnectionTest() {
       <div className="grid gap-4">
         {/* Auth Status */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Autenticación</CardTitle>
             <StatusIcon success={results.auth?.success} />
           </CardHeader>
@@ -128,7 +128,7 @@ export default function ConnectionTest() {
 
         {/* Closures Table */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tabla service_closures</CardTitle>
             <StatusIcon success={results.closuresCount?.success} />
           </CardHeader>
@@ -142,7 +142,7 @@ export default function ConnectionTest() {
 
         {/* Single Closure + Relations */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Relación Clientes (JOIN)</CardTitle>
             <StatusIcon success={results.singleClosure?.success} />
           </CardHeader>
@@ -161,7 +161,7 @@ export default function ConnectionTest() {
 
         {/* Invoice Closures Table */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tabla invoice_closures</CardTitle>
             <StatusIcon success={results.invoiceClosures?.success} />
           </CardHeader>

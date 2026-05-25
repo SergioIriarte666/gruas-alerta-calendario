@@ -365,7 +365,7 @@ const Commissions = () => {
 
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pendiente</CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -384,7 +384,7 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pagado</CardTitle>
             <Users className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -403,7 +403,7 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Operadores</CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -416,7 +416,7 @@ const Commissions = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total General</CardTitle>
             <Clock className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -574,7 +574,7 @@ const Commissions = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-x-2">
                       <CommissionExportButton
                         commissions={operatorGroup.commissions}
                         filters={{

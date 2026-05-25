@@ -250,7 +250,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 gap-y-2">
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="text-blue-300 border-blue-500/30">
                           {service.folio}

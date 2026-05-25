@@ -83,12 +83,12 @@ export const ServiceHealthDashboard = () => {
       {/* Header con métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Salud del Sistema</CardTitle>
             <Shield className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <div className={`text-2xl font-bold ${getHealthColor(metrics.systemHealthScore)}`}>
                 {metrics.systemHealthScore}%
               </div>
@@ -106,7 +106,7 @@ export const ServiceHealthDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Servicios Consistentes</CardTitle>
             <CheckCircle className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -119,7 +119,7 @@ export const ServiceHealthDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Issues Críticos</CardTitle>
             <AlertCircle className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -134,12 +134,12 @@ export const ServiceHealthDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ultima Auditoria</CardTitle>
             <Clock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <span className="text-sm font-medium">
                 {metrics.lastAuditTime
                   ? formatForDisplayWithTime(metrics.lastAuditTime)
@@ -274,7 +274,7 @@ export const ServiceHealthDashboard = () => {
                           {formatForDisplayWithTime(issue.detectedAt)}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-x-2">
                         <Badge variant={getSeverityColor(issue.severity)}>
                           {issue.issueType}
                         </Badge>

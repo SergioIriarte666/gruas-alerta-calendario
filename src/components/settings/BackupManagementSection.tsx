@@ -28,7 +28,7 @@ export const BackupManagementSection = () => {
     <Card id="respaldos" className="bg-card border mt-6 scroll-mt-24">
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Database className="size-5 text-tms-green" />
             <span className="text-lg sm:text-xl">Gestión de Respaldos</span>
           </div>

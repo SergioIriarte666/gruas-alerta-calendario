@@ -558,7 +558,7 @@ const Invoices = () => {
               />
             </div>
             <div className="overflow-x-auto w-full">
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
+              <div className="flex items-center gap-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
                 {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
                   <Button
                     key={statusKey}

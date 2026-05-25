@@ -86,7 +86,7 @@ export const InventorySyncDashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Progreso de Sincronización</CardTitle>
             <Package className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -102,7 +102,7 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Items Auto-creados</CardTitle>
             <Package className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -115,7 +115,7 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Inventario</CardTitle>
             <Package className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -128,7 +128,7 @@ export const InventorySyncDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Piezas Pendientes</CardTitle>
             <AlertTriangle className="size-4 text-muted-foreground" />
           </CardHeader>

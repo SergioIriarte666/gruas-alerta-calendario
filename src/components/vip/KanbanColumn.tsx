@@ -98,7 +98,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       {/* Service Cards */}
-      <div className="space-y-2 flex-1">
+      <div className="gap-y-2 flex-1">
         {services.length === 0 ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <div className="text-center">

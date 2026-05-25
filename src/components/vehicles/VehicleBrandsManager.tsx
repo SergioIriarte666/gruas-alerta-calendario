@@ -182,7 +182,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                   placeholder="Ej: Toyota, Ford, Chevrolet..."
                 />
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end gap-x-2">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -234,7 +234,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                   {new Date(brand.created_at).toLocaleDateString('es-CL')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end gap-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -305,7 +305,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
                 placeholder="Ej: Toyota, Ford, Chevrolet..."
               />
             </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-x-2">
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}

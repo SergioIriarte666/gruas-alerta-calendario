@@ -27,7 +27,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
   return (
     <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-foreground">
+        <CardTitle className="flex items-center gap-x-2 text-foreground">
           <Palette className="size-5 text-primary" />
           <span className="text-foreground">Preferencias de Usuario</span>
         </CardTitle>

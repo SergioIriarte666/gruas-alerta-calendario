@@ -22,7 +22,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-black">
             Costo Total Mantenimiento
           </CardTitle>
@@ -39,7 +39,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
       </Card>
 
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-black">
             Costo Total Partes
           </CardTitle>
@@ -56,7 +56,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
       </Card>
 
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-black">
             Total Intervenciones
           </CardTitle>
@@ -73,7 +73,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
       </Card>
 
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-black">
             Costo Promedio
           </CardTitle>
@@ -90,7 +90,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
       </Card>
 
       <Card className="bg-card/50 border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-black">
             Proveedores Activos
           </CardTitle>

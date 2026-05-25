@@ -247,7 +247,7 @@ export const EnhancedFinancialSection = ({
         )}
 
         {/* Toggle para excedente */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-x-3">
           <Switch
             id="hasExcess"
             checked={hasExcess}

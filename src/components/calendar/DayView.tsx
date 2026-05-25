@@ -73,12 +73,12 @@ export const DayView = ({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <h4 className="font-medium text-foreground text-lg">{event.title}</h4>
-                  <div className="flex items-center space-x-2 mt-1">
+                  <div className="flex items-center gap-x-2 mt-1">
                     <Clock className="size-4 text-muted-foreground" />
                     <span className="text-muted-foreground text-sm">{event.startTime} - {event.endTime}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <Badge className={getEventTypeColor(event.type)}>
                     {getEventTypeLabel(event.type)}
                   </Badge>

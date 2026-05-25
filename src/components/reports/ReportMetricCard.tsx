@@ -13,7 +13,7 @@ interface ReportMetricCardProps {
 
 export const ReportMetricCard = ({ icon: Icon, title, value, description, valueClassName }: ReportMetricCardProps) => (
   <Card className="bg-card border hover:bg-muted/50 transition-colors">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+    <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
       <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
       <Icon className="size-4 text-foreground" />
     </CardHeader>

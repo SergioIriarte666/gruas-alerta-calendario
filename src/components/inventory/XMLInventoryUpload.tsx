@@ -1375,7 +1375,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
         />
 
         <div className="grid min-h-0 flex-1 gap-4 px-6 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-h-0 space-y-4 lg:flex lg:flex-col">
+          <div className="min-h-0 gap-y-4 lg:flex lg:flex-col">
             <div
               {...getRootProps()}
               className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
@@ -1772,7 +1772,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="min-h-0 space-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
+            <CardContent className="min-h-0 gap-y-4 pt-4 lg:flex-1 lg:overflow-hidden">
               <ScrollArea className="h-full pr-3">
                 <div className="space-y-4 pb-4">
                     <div className="space-y-2">

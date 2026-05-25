@@ -74,7 +74,7 @@ export const Header = ({
         </Button>
 
         {/* Company branding */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           {companyLogo && <img src={companyLogo} alt="Logo empresa" className={cn(
             "object-contain",
             isMobile ? "size-6" : "size-8"

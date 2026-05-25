@@ -20,7 +20,7 @@ interface CraneStatisticsProps {
 const SimpleBarChart = ({ data, title }: { data: number[], title: string }) => (
   <div className="space-y-2">
     <p className="text-gray-300 text-sm">{title}</p>
-    <div className="flex items-end space-x-1 h-16">
+    <div className="flex items-end gap-x-1 h-16">
       {data.map((value, index) => (
         <div
           key={index}

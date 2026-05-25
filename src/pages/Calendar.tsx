@@ -102,7 +102,7 @@ const Calendar = () => {
         <div className="lg:col-span-3">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-foreground">
+              <CardTitle className="flex items-center gap-x-2 text-foreground">
                 <CalendarIcon className="size-5 text-green-500" />
                 <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : 'Mensual'}</span>
               </CardTitle>

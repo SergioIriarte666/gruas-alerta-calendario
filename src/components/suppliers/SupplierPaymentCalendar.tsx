@@ -86,7 +86,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-card border">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-x-3">
               <Calendar className="size-6 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Pagos</p>
@@ -98,7 +98,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
         <Card className="bg-card border">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-x-3">
               <Clock className="size-6 text-yellow-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Pendientes</p>
@@ -111,7 +111,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
         <Card className="bg-card border">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-x-3">
               <AlertTriangle className="size-6 text-destructive" />
               <div>
                 <p className="text-sm text-muted-foreground">Vencidos</p>
@@ -124,7 +124,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
         <Card className="bg-card border">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-x-3">
               <CheckCircle className="size-6 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Pagados</p>
@@ -143,7 +143,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
             <CardTitle className="text-foreground">
               {format(currentDate, 'MMMM yyyy', { locale: es })}
             </CardTitle>
-            <div className="flex space-x-2">
+            <div className="flex gap-x-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -254,7 +254,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 .map((payment) => (
                   <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-x-3">
                         <Badge className={getStatusColor(payment.status)}>
                           {getStatusLabel(payment.status)}
                         </Badge>

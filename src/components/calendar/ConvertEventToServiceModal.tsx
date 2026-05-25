@@ -97,7 +97,7 @@ export const ConvertEventToServiceModal = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+            <DialogTitle className="flex items-center gap-x-2">
               <Calendar className="size-5 text-primary" />
               <ArrowRight className="size-4 text-muted-foreground" />
               <Truck className="size-5 text-primary" />
@@ -122,7 +122,7 @@ export const ConvertEventToServiceModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+          <DialogTitle className="flex items-center gap-x-2">
             <Calendar className="size-5 text-primary" />
             <ArrowRight className="size-4 text-muted-foreground" />
             <Truck className="size-5 text-primary" />
@@ -171,7 +171,7 @@ export const ConvertEventToServiceModal = ({
               Este evento se convertirá en un servicio. Podrás completar todos los detalles en el formulario de servicios.
             </p>
             
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center gap-x-3">
               <Button 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}

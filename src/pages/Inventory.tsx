@@ -115,7 +115,7 @@ const Inventory = () => {
       {/* Stats Cards */}
       <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
         <Card className="border-l-4 border-l-violet-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
             <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
               <Package className="size-4 text-violet-600" />
@@ -132,7 +132,7 @@ const Inventory = () => {
         </Card>
 
         <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
             <div className="size-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
               <AlertTriangle className="size-4 text-yellow-600" />
@@ -149,7 +149,7 @@ const Inventory = () => {
         </Card>
 
         <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
             <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
               <AlertTriangle className="size-4 text-red-600" />
@@ -166,7 +166,7 @@ const Inventory = () => {
         </Card>
 
         <Card className="border-l-4 border-l-violet-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
             <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
               <TrendingUp className="size-4 text-violet-600" />

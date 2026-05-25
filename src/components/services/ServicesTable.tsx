@@ -124,7 +124,7 @@ export const ServicesTable = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className="flex items-center gap-x-2">
           <Truck className="size-5 text-primary" />
           <span>Servicios Registrados ({services.length})</span>
         </CardTitle>
@@ -253,7 +253,7 @@ export const ServicesTable = ({
                         {getServiceStatusBadge(service.status)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-1">
+                        <div className="flex gap-x-1">
                           {(service.status === 'pending' || service.status === 'in_progress') && onCloseService && (
                             <Button 
                               variant="outline" 

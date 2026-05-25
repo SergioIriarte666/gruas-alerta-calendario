@@ -80,7 +80,7 @@ export const BackupEmailSchedulerSection: React.FC = () => {
     <Card className="bg-card border mt-6">
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Mail className="size-5 text-primary" />
             <span className="text-lg sm:text-xl">Envío Automático por Correo</span>
           </div>

@@ -44,7 +44,7 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Movimientos</CardTitle>
             <Activity className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -55,7 +55,7 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Entradas</CardTitle>
             <ArrowUpRight className="size-4 text-green-500" />
           </CardHeader>
@@ -68,7 +68,7 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Salidas</CardTitle>
             <ArrowDownLeft className="size-4 text-red-500" />
           </CardHeader>
@@ -81,7 +81,7 @@ export const MovementReportView: React.FC<MovementReportViewProps> = ({ filters 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Balance Neto</CardTitle>
             {movementData.entriesCount >= movementData.exitsCount ? (
               <TrendingUp className="size-4 text-green-500" />

@@ -54,7 +54,7 @@ export const AlertsPanel = () => {
     return (
       <Card className="bg-white border border-gray-200 shadow-sm h-fit">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center space-x-3 text-black text-xl">
+          <CardTitle className="flex items-center gap-x-3 text-black text-xl">
             <div className="p-2 bg-tms-green/10 rounded-lg">
               <AlertTriangle className="size-6 text-tms-green" />
             </div>
@@ -76,7 +76,7 @@ export const AlertsPanel = () => {
     <Card className="bg-white border border-gray-200 shadow-sm h-fit">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-black text-xl">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-x-3">
             <div className="p-2 bg-tms-green/10 rounded-lg">
               <AlertTriangle className="size-6 text-tms-green" />
             </div>
@@ -108,11 +108,11 @@ export const AlertsPanel = () => {
                   variant={getAlertVariant(notification.type)}
                   className="bg-gray-50 border-gray-200 p-4 hover:bg-gray-100 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-start space-x-3">
+                  <div className="flex items-start gap-x-3">
                     <Icon className="size-5 text-gray-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
+                        <div className="gap-y-1 flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-sm text-black">{notification.title}</p>
                             <span className={`text-xs px-2 py-1 rounded-full ${getAlertBadgeColor(notification.type)}`}>
@@ -152,7 +152,7 @@ export const AlertsPanel = () => {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-x-3">
                 <div className="p-2 bg-tms-green/10 rounded-lg">
                   <AlertTriangle className="size-6 text-tms-green" />
                 </div>
@@ -193,11 +193,11 @@ export const AlertsPanel = () => {
                     className={`${notification.read ? 'bg-gray-50 opacity-75' : 'bg-white'} border-gray-200 p-4 hover:bg-gray-100 transition-colors cursor-pointer`}
                     onClick={() => markAsRead(notification.id)}
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start gap-x-3">
                       <Icon className="size-5 text-gray-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
-                          <div className="space-y-1 flex-1">
+                          <div className="gap-y-1 flex-1">
                             <div className="flex items-center gap-2">
                               <p className={`font-semibold text-sm ${notification.read ? 'text-gray-500' : 'text-black'}`}>
                                 {notification.title}

@@ -473,7 +473,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </div>
 
                 {/* Nuevo: Checkbox para agregar a inventario */}
-                <div className="flex items-center space-x-2 mt-4 p-3 bg-muted/50 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-x-2 mt-4 p-3 bg-muted/50 rounded-lg border border-primary/20">
                   <Checkbox
                     id="add_to_inventory"
                     checked={!!form.watch('add_to_inventory')}
@@ -501,7 +501,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4 border-t border">
+            <div className="flex justify-end gap-x-2 pt-4 border-t border">
               <Button
                 type="button"
                 variant="outline"

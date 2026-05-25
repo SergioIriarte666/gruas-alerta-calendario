@@ -304,7 +304,7 @@ const InvoicesTable = ({
                       </div>
                     </td>
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="flex items-center justify-center gap-x-2">
           <Button
                             variant="outline"
                             size="sm"

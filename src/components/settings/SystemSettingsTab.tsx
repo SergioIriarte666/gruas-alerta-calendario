@@ -99,7 +99,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Configuración del Sistema */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
             <Database className="size-5 text-tms-green" />
             <span>Configuración del Sistema</span>
           </CardTitle>
@@ -162,7 +162,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             
             <div className="flex items-center justify-between">
               <div>
-                <Label className="flex items-center space-x-2 text-black">
+                <Label className="flex items-center gap-x-2 text-black">
                   <span>Modo Mantenimiento</span>
                   {settings.maintenanceMode && (
                     <AlertTriangle className="size-4 text-yellow-500" />
@@ -172,7 +172,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
                   Activar para realizar mantenimiento del sistema
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 {settings.maintenanceMode && (
                   <Badge variant="destructive">Activo</Badge>
                 )}
@@ -198,7 +198,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Reporte Diario de Pendientes */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
             <Mail className="size-5 text-tms-green" />
             <span>Reporte Diario de Pendientes</span>
           </CardTitle>
@@ -240,7 +240,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             <Separator className="bg-gray-200" />
 
             <div className="space-y-2">
-              <Label className="flex items-center space-x-2 text-black">
+              <Label className="flex items-center gap-x-2 text-black">
                 <Clock className="size-4" />
                 <span>Hora de Envío</span>
               </Label>
@@ -291,7 +291,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       {/* Configuración de Columnas de Reportes PDF */}
       <Card className="bg-card border">
         <CardHeader className="border-b p-4 sm:p-6">
-          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
+          <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
             <FileText className="size-5 text-tms-green" />
             <span>Reportes PDF</span>
           </CardTitle>

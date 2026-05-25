@@ -88,13 +88,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({ filters 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
               <kpi.icon className="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{kpi.value}</div>
-              <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-x-1 text-xs text-muted-foreground">
                 <span>{kpi.description}</span>
               </div>
               <div className="flex items-center mt-1">

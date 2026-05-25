@@ -52,7 +52,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
           <DollarSign className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -65,7 +65,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       </Card>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Ticket Promedio</CardTitle>
           <TrendingUp className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -78,7 +78,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       </Card>
       
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
           <Users className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -91,7 +91,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       </Card>
 
       <Card className="col-span-1 md:col-span-2 lg:col-span-1">
-         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+         <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tendencia (Últimos 6 meses)</CardTitle>
           <FileText className="size-4 text-muted-foreground" />
         </CardHeader>

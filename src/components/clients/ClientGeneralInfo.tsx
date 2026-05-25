@@ -13,7 +13,7 @@ interface DetailItemProps {
 }
 
 const DetailItem = ({ icon: Icon, label, value }: DetailItemProps) => (
-  <div className="flex items-start space-x-3">
+  <div className="flex items-start gap-x-3">
     <Icon className="size-5 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="min-w-0">
       <p className="text-sm text-muted-foreground">{label}</p>

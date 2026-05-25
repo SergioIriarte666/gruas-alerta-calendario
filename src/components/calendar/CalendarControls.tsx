@@ -21,7 +21,7 @@ export const CalendarControls = ({
     <Card className="glass-card">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-x-4">
             <Button 
               variant="outline" 
               size="sm" 
@@ -42,7 +42,7 @@ export const CalendarControls = ({
               <ChevronRight className="size-4" />
             </Button>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             <Button 
               variant={viewMode === 'day' ? 'default' : 'outline'} 
               size="sm" 

@@ -1008,7 +1008,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         {step === 'preview' && preview && (
           <div className="flex flex-col flex-1 min-h-0">
-            <div className="flex-none px-1 py-4 space-y-4">
+            <div className="flex-none px-1 py-4 gap-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-2xl font-bold text-foreground">{preview.totalInvoices}</p>
@@ -1179,7 +1179,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                     checked={selectedUnmatchedSupplierIndices.has(i)}
                                                     onCheckedChange={() => toggleUnmatchedSupplierSelection(i)}
                                                 />
-                                                <div className="flex-1 space-y-3">
+                                                <div className="flex-1 gap-y-3">
                                                     <div className="flex items-start justify-between">
                                                         <div className="space-y-1">
                                                             {editingSupplierIndex === i ? (

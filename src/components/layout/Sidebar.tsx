@@ -261,7 +261,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
         <TooltipProvider disableHoverableContent>
           {navigationGroups.map(group => {
             const filteredItems = filterItems(group.items);
@@ -364,7 +364,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
         {navigationGroups.map(group => {
           const filteredItems = filterItems(group.items);
           if (filteredItems.length === 0) return null;

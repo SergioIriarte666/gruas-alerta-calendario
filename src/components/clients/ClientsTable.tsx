@@ -232,7 +232,7 @@ export const ClientsTable = ({
                       </Badge>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center justify-center space-x-1">
+                      <div className="flex items-center justify-center gap-x-1">
                         <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" title="Ver detalles">
                           <Eye className="size-4" />
                         </Button>

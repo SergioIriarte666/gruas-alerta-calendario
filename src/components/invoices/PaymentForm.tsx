@@ -164,7 +164,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
             <div>
               <Label>Tipo de Pago</Label>
               <div className="flex gap-4 mt-2">
-                <label className="flex items-center space-x-2">
+                <label className="flex items-center gap-x-2">
                   <input
                     type="radio"
                     name="paymentType"
@@ -175,7 +175,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                   />
                   <span>Pago a facturas específicas</span>
                 </label>
-                <label className="flex items-center space-x-2">
+                <label className="flex items-center gap-x-2">
                   <input
                     type="radio"
                     name="paymentType"
@@ -230,7 +230,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                       const selectedInvoice = selectedInvoices.find(sel => sel.invoice_id === invoice.id);
                       
                       return (
-                        <div key={invoice.id} className="flex items-center space-x-3 p-2 border rounded">
+                        <div key={invoice.id} className="flex items-center gap-x-3 p-2 border rounded">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}

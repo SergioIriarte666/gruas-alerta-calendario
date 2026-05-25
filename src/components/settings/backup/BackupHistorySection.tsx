@@ -52,10 +52,10 @@ export const BackupHistorySection: React.FC<BackupHistorySectionProps> = ({ back
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {backupLogs.map(log => (
             <div key={log.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-x-3">
                 {getStatusIcon(log.status)}
                 <div>
-                  <div className="flex items-center space-x-2 mb-1">
+                  <div className="flex items-center gap-x-2 mb-1">
                     {log.backup_type === 'full' ? (
                       <FileText className="size-4 text-muted-foreground" />
                     ) : (

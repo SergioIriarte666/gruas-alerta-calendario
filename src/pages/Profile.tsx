@@ -118,7 +118,7 @@ const Profile = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-x-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4 mr-2" />
           Volver
@@ -210,7 +210,7 @@ const Profile = () => {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <span className="text-muted-foreground text-sm">Rol:</span>
                   <span className="text-violet-600 dark:text-violet-400 font-medium capitalize">{user?.role}</span>
                 </div>

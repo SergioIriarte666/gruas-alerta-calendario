@@ -232,7 +232,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                     </div>
 
                     {/* Step Content */}
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 gap-y-2">
                       <div className="flex items-center justify-between">
                         <h4 className={`font-medium ${colors.text}`}>
                           {step.label}

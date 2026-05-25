@@ -384,7 +384,7 @@ export const CostsTableView = ({
         <Card className="bg-gray-50 dark:bg-gray-800">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
-              <div className="flex space-x-6">
+              <div className="flex gap-x-6">
                 <div>
                   <span className="text-sm text-gray-600 dark:text-gray-400">Total registros:</span>
                   <span className="ml-2 font-semibold">{costs.length}</span>

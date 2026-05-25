@@ -71,14 +71,14 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
       <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-x-3">
               <FileText className="size-8 text-primary" />
               <div>
                 <p className="text-foreground font-medium">{selectedFile.name}</p>
                 <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
               </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex gap-x-2">
               <Button onClick={onAnalyze} disabled={isAnalyzing} variant="default">
                 {isAnalyzing
                   ? <Loader2 className="size-4 mr-2 animate-spin" />

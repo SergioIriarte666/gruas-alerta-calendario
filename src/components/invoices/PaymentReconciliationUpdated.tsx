@@ -245,7 +245,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       {/* Panel de estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
             <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -258,7 +258,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos Aplicados</CardTitle>
             <CheckCircle className="size-4 text-green-600" />
           </CardHeader>
@@ -269,7 +269,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Facturas sin Pago</CardTitle>
             <AlertTriangle className="size-4 text-red-600" />
           </CardHeader>
@@ -280,7 +280,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos sin Aplicar</CardTitle>
             <TrendingUp className="size-4 text-orange-600" />
           </CardHeader>

@@ -20,7 +20,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
   return (
     <Card className="glass-card">
       <CardContent className="p-4">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-x-4">
           <div className="size-16 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
             <img
               src={currentLogo}
@@ -32,7 +32,7 @@ export const LogoPreview: React.FC<LogoPreviewProps> = ({
             <p className="text-white text-sm">Logotipo actual</p>
             <p className="text-gray-400 text-xs">Se muestra en informes y facturas</p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             <Button
               variant="outline"
               size="sm"

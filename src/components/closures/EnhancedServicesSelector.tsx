@@ -539,7 +539,7 @@ const EnhancedServicesSelector = ({
               <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted">
                 <div className="space-y-1">
                   {visiblePendingServices.map(service => (
-                    <div key={service.id} className="flex items-center space-x-2 py-1 px-1 rounded hover:bg-background">
+                    <div key={service.id} className="flex items-center gap-x-2 py-1 px-1 rounded hover:bg-background">
                       <input
                         type="checkbox"
                         id={`pending-${service.id}`}
@@ -646,7 +646,7 @@ const EnhancedServicesSelector = ({
               {visibleServices.map(service => (
                 <div
                   key={service.id}
-                  className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${
+                  className={`flex items-center gap-x-2 py-2 px-1 rounded transition-colors ${
                     selectedServiceIds.includes(service.id) 
                       ? 'bg-primary/10 border border-primary/30' 
                       : 'hover:bg-background'

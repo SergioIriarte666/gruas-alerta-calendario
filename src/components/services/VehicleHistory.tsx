@@ -60,7 +60,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
   if (isLoading) {
     return (
       <div className="space-y-2 pt-4">
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center gap-x-2 mb-4">
           {isVehicleSpecific ? (
             <Car className="size-5 text-tms-green" />
           ) : (
@@ -93,7 +93,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
   if (history.length === 0) {
     return (
       <div className="mt-4">
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center gap-x-2 mb-4">
           {isVehicleSpecific ? (
             <Car className="size-5 text-tms-green" />
           ) : (

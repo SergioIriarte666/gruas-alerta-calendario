@@ -39,7 +39,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Productos</CardTitle>
             <Package className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -50,7 +50,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
             <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -61,7 +61,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
             <AlertTriangle className="size-4 text-orange-500" />
           </CardHeader>
@@ -72,7 +72,7 @@ export const StockReportView: React.FC<StockReportViewProps> = ({ filters }) => 
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
             <AlertTriangle className="size-4 text-red-500" />
           </CardHeader>

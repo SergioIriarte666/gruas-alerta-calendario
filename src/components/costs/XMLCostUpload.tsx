@@ -1343,7 +1343,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     <div className="space-y-3 max-h-60 overflow-y-auto">
                       {parseResult.suppliers.map((supplier, index) => (
                         <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center gap-x-3">
                             <Checkbox
                               checked={selectedSuppliers.has(supplier.rut)}
                               onCheckedChange={() => toggleSupplierSelection(supplier.rut)}
@@ -1578,14 +1578,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             )}
 
                             <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start space-x-3 flex-1 min-w-0">
+                              <div className="flex items-start gap-x-3 flex-1 min-w-0">
                                 <Checkbox
                                   checked={selectedDocuments.has(documentKey)}
                                   onCheckedChange={() => toggleDocumentSelection(documentKey)}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="text-foreground font-medium break-words whitespace-pre-wrap">{getEffectiveGlosa(document)}</p>
-                                  <div className="flex items-center space-x-4 text-sm text-muted-foreground flex-wrap">
+                                  <div className="flex items-center gap-x-4 text-sm text-muted-foreground flex-wrap">
                                     <span>Folio: {document.folio}</span>
                                     <span>Total: ${document.total_amount.toLocaleString('es-CL')}</span>
                                     {document.issue_date && (

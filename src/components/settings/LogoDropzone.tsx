@@ -36,7 +36,7 @@ export const LogoDropzone: React.FC<LogoDropzoneProps> = ({
       onClick={onClick}
     >
       <CardContent className="p-8">
-        <div className="flex flex-col items-center justify-center text-center space-y-4">
+        <div className="flex flex-col items-center justify-center text-center gap-y-4">
           <div className="size-16 rounded-full bg-white/10 flex items-center justify-center">
             <Image className="size-8 text-gray-400" />
           </div>

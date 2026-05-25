@@ -43,7 +43,7 @@ export const ConnectionStatus: React.FC = () => {
         ? "bg-green-500/90 text-white" 
         : "bg-red-500/90 text-white"
     )}>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-x-2">
         {isOnline ? (
           <>
             <Wifi className="size-4" />

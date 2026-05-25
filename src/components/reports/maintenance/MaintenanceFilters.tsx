@@ -136,7 +136,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
 
           {/* Filtro de proveedor y botón de limpiar - Tercera fila */}
           <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="space-y-2 flex-1 max-w-sm">
+            <div className="gap-y-2 flex-1 max-w-sm">
               <Label htmlFor="provider" className="text-sm text-black">
                 Proveedor
               </Label>

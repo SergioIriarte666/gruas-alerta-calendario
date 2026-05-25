@@ -223,7 +223,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
                   }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 gap-y-3">
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="flex items-center gap-1">
                           {getAlertTypeIcon(alert.alert_type)}

@@ -70,7 +70,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
   if (error) {
     return (
-      <div className="flex items-center space-x-2 text-destructive">
+      <div className="flex items-center gap-x-2 text-destructive">
         <AlertTriangle className="size-4" />
         <span className="text-sm">Error al cargar los costos del servicio</span>
       </div>
@@ -96,7 +96,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       {/* Resumen total */}
       <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <div className="p-1.5 rounded-lg bg-destructive/15">
               <Calculator className="size-5 text-destructive" />
             </div>
@@ -115,7 +115,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       {/* Resumen por categorías */}
       {(categoryKeys.length > 1 || hasCommissions) && (
         <div className="bg-muted/50 rounded-lg p-4 border border-border">
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="flex items-center gap-x-2 mb-3">
             <TrendingDown className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">Resumen por Categoría</span>
           </div>
@@ -158,7 +158,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
             <div key={operatorData.id} className={`rounded-lg p-4 border border-border border-l-4 ${COMMISSION_COLOR.border} ${COMMISSION_COLOR.bg}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div className="flex items-center gap-x-2 mb-2">
                     <h5 className="font-medium text-foreground">Comisión operador - Servicio {enhancedService?.folio || serviceId}</h5>
                     <Badge className={`text-xs border-0 ${COMMISSION_COLOR.badge}`}>
                       comisiones
@@ -208,7 +208,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                   <div key={cost.id} className={`rounded-lg p-4 border border-border border-l-4 ${color.border} ${color.bg}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
+                        <div className="flex items-center gap-x-2 mb-2">
                           <h5 className="font-medium text-foreground">{cost.description}</h5>
                           {cost.subcategory && (
                             <Badge className={`text-xs border-0 ${color.badge}`}>

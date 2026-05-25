@@ -112,7 +112,7 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
                         <TableCell className="text-foreground font-medium">{formatCurrency(closure.total)}</TableCell>
                         <TableCell>{getStatusBadge(closure.status)}</TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end space-x-2">
+                          <div className="flex justify-end gap-x-2">
                             <Button variant="outline" size="sm" onClick={() => onViewDetails(closure)} title="Ver detalles">
                               <Eye className="size-4" />
                             </Button>

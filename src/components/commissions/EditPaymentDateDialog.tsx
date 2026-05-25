@@ -150,7 +150,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
             />
           </div>
 
-          <div className="flex space-x-3 pt-4">
+          <div className="flex gap-x-3 pt-4">
             <Button
               type="button"
               variant="outline"

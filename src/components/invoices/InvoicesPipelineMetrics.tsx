@@ -154,7 +154,7 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-foreground">Resumen General del Pipeline</h3>
             {metrics.urgentCount > 0 && (
-              <Badge variant="destructive" className="flex items-center space-x-1">
+              <Badge variant="destructive" className="flex items-center gap-x-1">
                 <AlertTriangle className="size-3" />
                 <span>{metrics.urgentCount} Urgentes</span>
               </Badge>

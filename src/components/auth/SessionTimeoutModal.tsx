@@ -68,7 +68,7 @@ export const SessionTimeoutModal = ({
         <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.1)_2px,rgba(0,0,0,0.1)_4px)] pointer-events-none rounded-lg" />
         
         {/* Header with retro icon */}
-        <div className="relative flex flex-col items-center space-y-4 pt-4">
+        <div className="relative flex flex-col items-center gap-y-4 pt-4">
           {/* Animated icon container */}
           <div className={cn(
             "relative p-4 rounded-lg border-2",

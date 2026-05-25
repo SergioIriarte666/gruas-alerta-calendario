@@ -157,7 +157,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
               onClick={() => setExportFormat(option.value as any)}
             >
               <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <option.icon className="size-5 text-muted-foreground" />
                   <div>
                     <div className="font-medium">{option.label}</div>
@@ -175,7 +175,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
         <Label className="text-sm font-medium">Opciones de Contenido</Label>
         
         <div className="space-y-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Checkbox 
               id="includeDetails" 
               checked={includeDetails}
@@ -232,7 +232,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
       </Card>
 
       {/* Export Button */}
-      <div className="flex justify-end space-x-2">
+      <div className="flex justify-end gap-x-2">
         <Button variant="outline" onClick={onClose}>
           Cancelar
         </Button>

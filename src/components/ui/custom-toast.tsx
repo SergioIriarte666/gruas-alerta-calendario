@@ -138,7 +138,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
       }}
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3">
+        <div className="flex items-start gap-x-3">
           {getIcon()}
           <div className="flex-1">
             {toast.title && (

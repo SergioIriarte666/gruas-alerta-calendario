@@ -249,7 +249,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       )}
 
       {/* Estado Activo */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center gap-x-2">
         <Switch
           id="is_active"
           checked={watch('is_active')}

@@ -30,7 +30,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
 }) => (
   <Card className={cn("border bg-card", className)}>
     {(title || description || actions) && (
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 gap-y-0 pb-3">
         <div className="min-w-0 flex-1">
           {title && (
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">

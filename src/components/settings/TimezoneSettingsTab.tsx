@@ -158,7 +158,7 @@ export const TimezoneSettingsTab: React.FC = () => {
   return (
     <Card className="bg-card border">
       <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
+        <CardTitle className="flex items-center gap-x-2 text-foreground text-lg sm:text-xl">
           <Globe className="size-5 text-primary" />
           <span>Zona Horaria</span>
         </CardTitle>

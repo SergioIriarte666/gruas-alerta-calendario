@@ -49,7 +49,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
     <aside className="w-64 h-full bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-x-3">
             {settings?.company?.logo && (
               <img 
                 src={settings.company.logo} 
@@ -74,7 +74,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
           )}
         </div>
       </div>
-      <nav className="flex flex-col space-y-2">
+      <nav className="flex flex-col gap-y-2">
         {navigationItems.map((item) => {
           const isActive = location.pathname === item.href;
           return (

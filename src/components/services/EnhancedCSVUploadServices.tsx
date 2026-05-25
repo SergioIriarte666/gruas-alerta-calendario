@@ -264,7 +264,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {/* File Upload Area */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-foreground">
+          <CardTitle className="flex items-center gap-x-2 text-foreground">
             <FileText className="size-5 text-tms-green" />
             <span>Seleccionar Archivo</span>
           </CardTitle>
@@ -312,14 +312,14 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           {file && (
             <div className="mt-4 p-4 bg-muted/50 rounded-lg animate-slide-up">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-x-3">
                   <FileText className="size-5 text-tms-green" />
                   <div>
                     <p className="text-foreground font-medium">{file.name}</p>
                     <p className="text-muted-foreground text-sm">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex gap-x-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -388,7 +388,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {validationResult && (
         <Card className="glass-card animate-slide-up">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-foreground">
+            <CardTitle className="flex items-center gap-x-2 text-foreground">
               {validationResult.isValid ? (
                 <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
               ) : (
@@ -596,7 +596,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           uploadResult.success && "shadow-[0_0_40px_rgba(34,197,94,0.3)]"
         )}>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-foreground">
+            <CardTitle className="flex items-center gap-x-2 text-foreground">
               {uploadResult.success ? (
                 <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
               ) : (

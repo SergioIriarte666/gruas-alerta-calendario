@@ -603,7 +603,7 @@ export const EnhancedCostsTable = ({
         <Card className="bg-muted/50">
           <CardContent className="p-4">
             <div className="flex justify-between items-center flex-wrap gap-4">
-              <div className="flex space-x-6">
+              <div className="flex gap-x-6">
                 <div>
                   <span className="text-sm text-muted-foreground">Total registros:</span>
                   <span className="ml-2 font-semibold text-foreground">{costs.length}</span>

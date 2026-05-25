@@ -170,7 +170,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {historyData && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="bg-card border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Total Facturas</CardTitle>
                 <FileText className="size-4 text-blue-400" />
               </CardHeader>
@@ -181,7 +181,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             </Card>
 
             <Card className="bg-card border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Total Pagado</CardTitle>
                 <CheckCircle className="size-4 text-green-400" />
               </CardHeader>
@@ -192,7 +192,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             </Card>
 
             <Card className="bg-card border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Pendiente</CardTitle>
                 <Clock className="size-4 text-yellow-400" />
               </CardHeader>
@@ -203,7 +203,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             </Card>
 
             <Card className="bg-card border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">% Pagado</CardTitle>
                 <TrendingUp className="size-4 text-purple-400" />
               </CardHeader>

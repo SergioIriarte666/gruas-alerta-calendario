@@ -463,7 +463,7 @@ export const SupplierList: React.FC = () => {
                         </Button>
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-x-2">
                           <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="size-4" /></Button>
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="size-4" /></Button>
                           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400 hover:text-red-300"><Trash2 className="size-4" /></Button>

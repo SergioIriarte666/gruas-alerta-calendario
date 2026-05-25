@@ -30,7 +30,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Centros Activos</CardTitle>
           <TrendingUp className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -43,7 +43,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Presupuesto Total</CardTitle>
           <DollarSign className="size-4 text-muted-foreground" />
         </CardHeader>
@@ -56,7 +56,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Uso del Presupuesto</CardTitle>
           {budgetUsagePercentage > 100 ? 
             <TrendingDown className="size-4 text-destructive" /> :
@@ -75,7 +75,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Sobre Presupuesto</CardTitle>
           <AlertTriangle className="size-4 text-destructive" />
         </CardHeader>

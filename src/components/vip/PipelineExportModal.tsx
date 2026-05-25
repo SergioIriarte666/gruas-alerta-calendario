@@ -112,7 +112,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
 
         <div className="space-y-4">
           {/* Opción para exportar todo */}
-          <div className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/50">
+          <div className="flex items-center gap-x-2 p-3 border rounded-lg bg-muted/50">
             <Checkbox
               id="export-all"
               checked={exportAllStatuses}
@@ -129,7 +129,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
 
           {/* Opción para seleccionar todo */}
           {!exportAllStatuses && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <Checkbox
                 id="select-all"
                 checked={selectedStatuses.size === availableStatuses.length}
@@ -150,7 +150,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
                   exportAllStatuses ? 'opacity-50' : 'hover:bg-muted/50'
                 }`}
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-x-2">
                   <Checkbox
                     id={status}
                     checked={exportAllStatuses || selectedStatuses.has(status)}
