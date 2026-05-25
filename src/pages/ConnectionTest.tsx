@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
+const StatusIcon = ({ success }: { success?: boolean }) => {
+  if (success === undefined) return <Loader2 className="size-5 animate-spin text-gray-400" />;
+  return success ? <CheckCircle2 className="size-5 text-green-500" /> : <XCircle className="size-5 text-red-500" />;
+};
+
 export default function ConnectionTest() {
   const [results, setResults] = useState<{
     auth?: { success: boolean; message: string; data?: any };
@@ -90,11 +95,6 @@ export default function ConnectionTest() {
   useEffect(() => {
     runTests();
   }, []);
-
-  const StatusIcon = ({ success }: { success?: boolean }) => {
-    if (success === undefined) return <Loader2 className="size-5 animate-spin text-gray-400" />;
-    return success ? <CheckCircle2 className="size-5 text-green-500" /> : <XCircle className="size-5 text-red-500" />;
-  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">

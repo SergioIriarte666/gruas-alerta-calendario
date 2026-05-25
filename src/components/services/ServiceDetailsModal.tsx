@@ -223,7 +223,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
       
       // Verificación silenciosa después de un pequeño delay
-      setTimeout(verifyAndSyncCommissions, 100);
+      const verifyTimeoutId = setTimeout(verifyAndSyncCommissions, 100);
+      return () => clearTimeout(verifyTimeoutId);
     }
   }, [isOpen, serviceData?.id, serviceData?.folio, serviceData?.operatorCommission, queryClient]);
 

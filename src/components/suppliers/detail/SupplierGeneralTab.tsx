@@ -12,21 +12,21 @@ interface SupplierGeneralTabProps {
   supplier: SupplierWithStats;
 }
 
+const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) => {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
+      <Icon className="size-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+      <div>
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-foreground font-medium">{value}</p>
+      </div>
+    </div>
+  );
+};
+
 export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier }) => {
   const { data: activeCategories = [] } = useCostCategories();
-
-  const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) => {
-    if (!value) return null;
-    return (
-      <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
-        <Icon className="size-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-        <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-foreground font-medium">{value}</p>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

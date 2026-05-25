@@ -16,6 +16,12 @@ interface CraneTabsWithCountersProps {
   crane: Crane;
 }
 
+const CounterBadge = ({ count }: { count: number }) => (
+  <Badge variant="secondary" className="ml-2 border-primary/20 bg-primary-soft text-foreground">
+    {count}
+  </Badge>
+);
+
 export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => {
   const queryClient = useQueryClient();
 
@@ -89,12 +95,6 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
       };
     }
   });
-
-  const CounterBadge = ({ count }: { count: number }) => (
-    <Badge variant="secondary" className="ml-2 border-primary/20 bg-primary-soft text-foreground">
-      {count}
-    </Badge>
-  );
 
   return (
     <Tabs defaultValue="overview" className="size-full flex flex-col">
