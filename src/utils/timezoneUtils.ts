@@ -2,21 +2,22 @@
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 'date-fns';
 import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+import { businessClock } from './businessClock';
 
 // Zona horaria por defecto para Chile como fallback
 const CHILE_TIMEZONE = 'America/Santiago';
 
-// Cache para configuraciones del usuario
+// Cache para preferencias visuales del usuario (SOLO dateFormat).
+// IMPORTANTE: la zona horaria de negocio NO se lee aquí; viene de businessClock
+// (company_data.report_timezone) que es la única fuente de verdad de la app.
 let userSettingsCache: {
-  timezone: string;
-  useSystemTimezone: boolean;
   dateFormat: string;
   lastUpdate: number;
 } | null = null;
 
 const CACHE_DURATION = 30000; // 30 segundos
 
-// Función para obtener configuraciones del usuario con cache
+// Función para obtener preferencias visuales del usuario (sólo dateFormat)
 const getUserSettingsFromCache = async () => {
   const now = Date.now();
   
@@ -33,28 +34,22 @@ const getUserSettingsFromCache = async () => {
       if (user) {
         const { data } = await supabase
           .from('user_settings')
-          .select('timezone, use_system_timezone, date_format')
+          .select('date_format')
           .eq('user_id', user.id)
           .single();
 
         userSettingsCache = {
-          timezone: data?.timezone || CHILE_TIMEZONE,
-          useSystemTimezone: data?.use_system_timezone ?? true,
           dateFormat: data?.date_format || 'DD/MM/YYYY',
           lastUpdate: now
         };
       } else {
         userSettingsCache = {
-          timezone: CHILE_TIMEZONE,
-          useSystemTimezone: true,
           dateFormat: 'DD/MM/YYYY',
           lastUpdate: now
         };
       }
     } else {
       userSettingsCache = {
-        timezone: CHILE_TIMEZONE,
-        useSystemTimezone: true,
         dateFormat: 'DD/MM/YYYY',
         lastUpdate: now
       };
@@ -64,8 +59,6 @@ const getUserSettingsFromCache = async () => {
   } catch (error) {
     console.warn('Error fetching user settings, using defaults:', error);
     userSettingsCache = {
-      timezone: CHILE_TIMEZONE,
-      useSystemTimezone: true,
       dateFormat: 'DD/MM/YYYY',
       lastUpdate: now
     };
@@ -88,23 +81,18 @@ export const getSystemTimezone = (): string => {
   }
 };
 
-// Obtener la zona horaria a usar (sistema o configurada por el usuario)
+// Obtener la zona horaria de negocio (fuente única de verdad — company_data)
 export const getUserTimezone = async (): Promise<string> => {
+  // Asegurar que businessClock esté precargado y devolver la TZ del negocio
   try {
-    const settings = await getUserSettingsFromCache();
-    return settings.useSystemTimezone ? getSystemTimezone() : settings.timezone;
-  } catch (error) {
-    console.warn('Error getting user timezone, using system timezone');
-    return getSystemTimezone();
-  }
+    await businessClock.bootstrap();
+  } catch { /* fallback ya gestionado */ }
+  return businessClock.timezone();
 };
 
-// Versión sincrónica para compatibilidad hacia atrás
+// Versión sincrónica — fuente única de verdad: businessClock
 export const getUserTimezoneSync = (): string => {
-  if (userSettingsCache) {
-    return userSettingsCache.useSystemTimezone ? getSystemTimezone() : userSettingsCache.timezone;
-  }
-  return getSystemTimezone();
+  return businessClock.timezone();
 };
 
 // ===================== FUNCIONES BÁSICAS DE CONVERSIÓN =====================
