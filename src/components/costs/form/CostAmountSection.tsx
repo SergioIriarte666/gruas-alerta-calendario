@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { CostFormValues } from '@/schemas/costSchema';
-import { Calculator, Receipt } from 'lucide-react';
+import { Calculator, Receipt, CalendarCheck } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CostAmountSectionProps {
   form: UseFormReturn<CostFormValues>;
@@ -26,6 +27,19 @@ export const CostAmountSection = ({
   showServiceButton = false 
 }: CostAmountSectionProps) => {
   const amount = form.watch('amount');
+  const isPaid = form.watch('is_paid');
+  const costDate = form.watch('date');
+  const paymentDateValue = form.watch('payment_date');
+
+  // Cuando se marca como pagado y no hay fecha real, prellenar con la fecha del costo
+  React.useEffect(() => {
+    if (isPaid && !paymentDateValue && costDate) {
+      form.setValue('payment_date', costDate, { shouldDirty: true });
+    }
+    if (!isPaid && paymentDateValue) {
+      form.setValue('payment_date', '', { shouldDirty: true });
+    }
+  }, [isPaid, paymentDateValue, costDate, form]);
   
   return (
     <div className="space-y-4">
@@ -78,12 +92,37 @@ export const CostAmountSection = ({
                 Marcar como pagado
               </Label>
               <p className="text-xs text-muted-foreground">
-                Al guardar, se registrará la fecha del costo como fecha de pago.
+                Por defecto, se usa la fecha del costo. Puedes indicar abajo la fecha real si fue distinta.
               </p>
             </div>
           </FormItem>
         )}
       />
+
+      {isPaid && (
+        <FormField
+          name="payment_date"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <CalendarCheck className="w-4 h-4" />
+                Fecha real de pago
+              </Label>
+              <FormControl>
+                <DatePickerInput
+                  value={field.value || ''}
+                  onChange={(date) => field.onChange(date)}
+                />
+              </FormControl>
+              <p className="text-xs text-muted-foreground">
+                Si el pago se realizó en una fecha distinta a la de registro, indícala aquí.
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
 
       {/* Sección especial para Gastos de Servicios */}
       {isServiceExpense && showServiceButton && (
