@@ -260,6 +260,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 immediate_consumption: hasImmediateConsumptionAssociation,
                 supplier_id: cost.supplier_id || 'none',
                 is_paid: !!cost.payment_date,
+                payment_date: cost.payment_date ? formatForInput(cost.payment_date as any) : '',
             });
         } else if (prefilledData) {
             const dateValue = (prefilledData as any)?.date
@@ -288,6 +289,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 // Auto-marcar como pagado cuando hay un servicio preseleccionado
                 // (regla de negocio: gastos operativos de servicios se pagan por defecto)
                 is_paid: !!prefilledData.service_id,
+                payment_date: '',
             });
             setCalculatedServiceTotal(0);
         } else {
@@ -311,6 +313,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: null,
                 immediate_consumption: false,
                 supplier_id: 'none',
+                is_paid: false,
+                payment_date: '',
             });
             setCalculatedServiceTotal(0);
         }
@@ -443,7 +447,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             
             const resolvedSupplierId = values.supplier_id === 'none' ? null : values.supplier_id || null;
             
-            const { is_paid, ...restValues } = values;
+            const { is_paid, payment_date: formPaymentDate, ...restValues } = values;
             
             const submissionData = {
                 ...restValues,
@@ -460,7 +464,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_quantity: values.purchase_quantity || null,
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
-                payment_date: is_paid ? (cost?.payment_date || values.date) : null,
+                payment_date: is_paid
+                    ? (formPaymentDate || cost?.payment_date || values.date)
+                    : null,
             } as CostFormData;
 
             const previousImmediateConsumption = Boolean(

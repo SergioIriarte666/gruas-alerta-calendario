@@ -38,6 +38,7 @@ const quickCostSchema = z.object({
   cost_center_id: z.string().optional(),
   notes: z.string().optional(),
   is_paid: z.boolean().optional().default(false),
+  payment_date: z.string().optional(),
 });
 
 type QuickCostFormValues = z.infer<typeof quickCostSchema>;
@@ -127,12 +128,24 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
         cost_center_id: 'none',
         notes: '',
         is_paid: false,
+        payment_date: '',
       });
       setShowAdvanced(false);
       setSelectedCategoryId('');
       setIsPaid(false);
     }
   }, [isOpen, reset]);
+
+  const watchedPaymentDate = watch('payment_date');
+  // Prellenar payment_date con la fecha del costo cuando se marca como pagado
+  useEffect(() => {
+    if (isPaid && !watchedPaymentDate && watch('date')) {
+      setValue('payment_date', watch('date'));
+    }
+    if (!isPaid && watchedPaymentDate) {
+      setValue('payment_date', '');
+    }
+  }, [isPaid, watchedPaymentDate, setValue, watch]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -156,7 +169,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
       notes: values.notes?.trim() || null,
       service_id: null,
       service_folio: null,
-      payment_date: isPaid ? values.date : null,
+      payment_date: isPaid ? (values.payment_date || values.date) : null,
     };
 
     addCost(submissionData, {
@@ -296,10 +309,23 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
                 Marcar como pagado
               </label>
               <p className="text-xs text-muted-foreground">
-                Se registrará la fecha del costo como fecha de pago.
+                Por defecto, se usa la fecha del costo. Indica abajo la fecha real si fue distinta.
               </p>
             </div>
           </div>
+
+          {isPaid && (
+            <div className="space-y-2">
+              <Label>Fecha real de pago</Label>
+              <DatePickerInput
+                value={watchedPaymentDate || ''}
+                onChange={(date) => setValue('payment_date', date)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Si el pago se realizó en una fecha distinta a la de registro, indícala aquí.
+              </p>
+            </div>
+          )}
 
           {/* Sección expandible de detalles */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>

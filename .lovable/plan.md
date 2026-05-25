@@ -1,41 +1,55 @@
 ## Problema
 
-Cuando se registran costos a un servicio ya existente (combustible, peajes, viáticos, etc.), quedan como **no pagados** (círculo rojo). Esto contradice la regla de negocio vigente: los gastos operativos de servicios deben marcarse como pagados por defecto, dejando solo las **comisiones** con flujo manual.
+Al registrar un costo en el formulario principal (CostForm / QuickCostForm) y marcarlo como pagado, el sistema usa siempre la **fecha del costo** (`values.date`) como `payment_date`. No existe forma de indicar que el costo se ingresó en abril pero se pagó en mayo.
 
-Hoy esto solo se cumple en el modal de desglose rápido (`ServiceExpenseModals`), pero falla en los tres puntos donde el usuario normalmente registra costos a un servicio existente.
+El único lugar donde sí se permite indicar la fecha real de pago hoy es el importador XML (`XMLCostUpload.tsx`, vía `paidDateOverrides`: "Si ya fue pagado, indica la fecha real del pago.").
 
-## Causa raíz
+## Objetivo
 
-1. **`ServiceCostDetailsSection.saveCostDetail`** (formulario de edición de servicio → sección "Costos Detallados"): construye el `costData` sin `payment_date`, por lo que el costo se inserta con `payment_date = NULL`.
-2. **`CostForm`** y **`QuickCostForm`**: el checkbox "Marcar como pagado" siempre arranca en `false`, incluso cuando hay un `service_id` seleccionado.
+Permitir capturar y editar la **fecha real de pago** al crear/editar un costo cuando se marca como pagado, manteniendo el comportamiento por defecto actual (si no se modifica, se usa la fecha del costo).
 
 ## Cambios propuestos
 
-### 1. `src/components/services/form/ServiceCostDetailsSection.tsx`
-- En `saveCostDetail`, agregar `payment_date: costDate` al objeto `costData` cuando se crea un costo nuevo.
-- En la actualización (`isExisting === true`), preservar el `payment_date` existente: si el costo ya tenía pago registrado, no tocarlo; si no, asignar `costDate`. Esto evita "despagar" un costo que el usuario marcó manualmente como pendiente en otro flujo.
-- La sección ya excluye categoría comisiones, así que esta regla aplica solo a operativos (alineado con la regla de negocio).
+### 1. `src/schemas/costSchema.ts`
+Agregar campo opcional:
+```ts
+payment_date: z.string().optional().nullable(),
+```
 
-### 2. `src/components/costs/QuickCostForm.tsx` y `src/components/costs/CostForm.tsx`
-- Cambiar el valor por defecto del campo `is_paid` a `true` cuando:
-  - el formulario se abre con un `service_id` preseleccionado (registro contextual desde un servicio), **y**
-  - la categoría seleccionada no es comisiones.
-- Mantener `is_paid: false` por defecto en cualquier otro caso (compras a proveedor, gastos administrativos, etc.) para no alterar el flujo de pagos a proveedores.
-- El usuario sigue pudiendo desmarcar el checkbox antes de guardar.
+### 2. `src/components/costs/form/CostAmountSection.tsx`
+- Cuando `is_paid === true`, mostrar un input `<Input type="date">` debajo del checkbox: **"Fecha real de pago"**.
+- Default = `form.getValues('date')` si no hay valor previo.
+- Texto auxiliar: "Si el pago se realizó en una fecha distinta a la de registro, indícala aquí."
+- Mantener el diseño actual (mismo Card / tokens semánticos del módulo de costos, sin colores hardcoded).
 
-### 3. `src/components/costs/ServiceExpenseModals.tsx`
-- Sin cambios (ya asigna `payment_date: baseData.date`).
+### 3. `src/components/costs/CostForm.tsx`
+- `reset(...)`:
+  - Edición: `payment_date: cost.payment_date ?? ''`.
+  - Prefilled / nuevo: `payment_date: ''` (se autocompletará al marcar pagado).
+- En el submit (`onSubmit`, línea ~463):
+  ```ts
+  payment_date: is_paid
+    ? (values.payment_date || cost?.payment_date || values.date)
+    : null,
+  ```
+- Cuando el usuario tilda `is_paid` y `payment_date` está vacío, prellenarlo con `values.date` (efecto `watch` en CostForm o en CostAmountSection).
+
+### 4. `src/components/costs/QuickCostForm.tsx`
+Mismo tratamiento mínimo: agregar campo `payment_date` opcional al schema local, input visible si `is_paid`, y enviar `payment_date` real en lugar de derivarlo siempre de `date`.
+
+### 5. `src/components/services/form/ServiceCostDetailsSection.tsx`
+No cambia el flujo (los costos del servicio siguen heredando `serviceDate` como `payment_date`, según la regla `service-expenses-auto-payment`). Solo se respeta `payment_date` existente al editar (ya implementado).
 
 ## Fuera de alcance
 
-- No tocar comisiones (mantienen su flujo manual en su módulo).
-- No tocar XML/CSV/masivos (esos tienen su propia lógica documentada).
-- Sin migraciones de BD ni cambios en edge functions.
-- Sin re-asignar pagos a costos históricos ya registrados; el cambio aplica solo a costos creados/editados desde aquí en adelante.
+- Importadores XML/CSV/bulk (ya manejan fecha real).
+- Comisiones, supplier payments, debts (flujos propios).
+- Migraciones de DB (la columna `payment_date` ya existe).
+- Recalcular costos históricos.
 
 ## Verificación
 
-- Editar un servicio existente → agregar Combustible $X → guardar → el costo aparece con icono verde (pagado) y `payment_date` igual a la fecha del servicio.
-- Mismo flujo con Comisión Operador → sigue quedando **no pagado** (rojo).
-- Crear un costo desde `/costs` sin servicio → checkbox "Marcar como pagado" parte desmarcado (sin cambios).
-- Crear un costo desde `/costs` con servicio preseleccionado → checkbox parte marcado, se puede desmarcar.
+1. Crear costo nuevo con fecha 22/04, marcar pagado, indicar 15/05 → en detalle aparece "Fecha de Pago: 15/05", "Fecha: 22/04".
+2. Crear costo pagado sin tocar la fecha real → se guarda con `payment_date = date` (comportamiento actual).
+3. Editar un costo ya pagado y cambiar solo la fecha real → se actualiza `payment_date` sin perder la fecha original.
+4. Desmarcar pagado → `payment_date = null`.
