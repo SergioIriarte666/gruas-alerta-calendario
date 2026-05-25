@@ -93,7 +93,23 @@ export const useCostCSVUpload = () => {
           const data = e.target?.result;
           const wb = XLSX.read(data, { type: 'binary', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+          // raw:true so Date cells stay as Date — we convert via UTC components
+          // below to avoid local-timezone off-by-one issues.
+          const rawJson = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: '', raw: true });
+          const jsonData = rawJson.map((row) => {
+            const out: Record<string, any> = {};
+            for (const [k, v] of Object.entries(row)) {
+              if (v instanceof Date) {
+                const y = v.getUTCFullYear();
+                const m = String(v.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(v.getUTCDate()).padStart(2, '0');
+                out[k] = `${y}-${m}-${d}`;
+              } else {
+                out[k] = v;
+              }
+            }
+            return out;
+          });
           
           // Filter out empty rows
           const filtered = jsonData.filter((row: any) => {
