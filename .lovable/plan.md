@@ -1,46 +1,41 @@
-## Problema detectado
+## Problema
 
-Existen **dos páginas distintas** para respaldos, creando confusión:
+Cuando se registran costos a un servicio ya existente (combustible, peajes, viáticos, etc.), quedan como **no pagados** (círculo rojo). Esto contradice la regla de negocio vigente: los gastos operativos de servicios deben marcarse como pagados por defecto, dejando solo las **comisiones** con flujo manual.
 
-1. **`/backup`** (sidebar "Respaldos") → módulo antiguo `BackupManager.tsx` con:
-   - Card "Respaldo SQL Completo" cuya descripción dice *"de todas las tablas relacionadas con comisiones"* (texto heredado de cuando la herramienta sólo servía para reparar comisiones — en realidad respalda **toda** la base, no sólo comisiones).
-   - Card "Sistema de Comisiones" con botones **Auditar / Reparar** (herramienta de emergencia, no un respaldo).
+Hoy esto solo se cumple en el modal de desglose rápido (`ServiceExpenseModals`), pero falla en los tres puntos donde el usuario normalmente registra costos a un servicio existente.
 
-2. **`/settings` → Gestión de Respaldos** → módulo nuevo y completo (`BackupManagementSection`) con: estado, generación manual (SQL/JSON, completo/rápido), historial y la nueva sección **Envío Automático por Correo**.
+## Causa raíz
 
-El módulo nuevo es superior en todos los aspectos (más opciones, mejor UI alineada al diseño Costos, envío automático). El antiguo sólo aporta los botones de *Auditar/Reparar comisiones*, que pertenecen al panel de emergencia de administración, no al módulo de respaldos.
+1. **`ServiceCostDetailsSection.saveCostDetail`** (formulario de edición de servicio → sección "Costos Detallados"): construye el `costData` sin `payment_date`, por lo que el costo se inserta con `payment_date = NULL`.
+2. **`CostForm`** y **`QuickCostForm`**: el checkbox "Marcar como pagado" siempre arranca en `false`, incluso cuando hay un `service_id` seleccionado.
 
-## Plan: unificar en un solo módulo
+## Cambios propuestos
 
-### 1. Convertir `/backup` en un alias de Settings
-- Reemplazar el contenido de `src/pages/BackupPage.tsx` por una página delgada que **redirige a `/settings`** y abre directamente la sección de Respaldos (anchor `#respaldos`).
-- Mantener la ruta para que enlaces o accesos directos existentes sigan funcionando.
-- Mantener el item "Respaldos" del sidebar pero apuntando a `/settings#respaldos` (o dejarlo en `/backup` con redirect — efecto idéntico).
+### 1. `src/components/services/form/ServiceCostDetailsSection.tsx`
+- En `saveCostDetail`, agregar `payment_date: costDate` al objeto `costData` cuando se crea un costo nuevo.
+- En la actualización (`isExisting === true`), preservar el `payment_date` existente: si el costo ya tenía pago registrado, no tocarlo; si no, asignar `costDate`. Esto evita "despagar" un costo que el usuario marcó manualmente como pendiente en otro flujo.
+- La sección ya excluye categoría comisiones, así que esta regla aplica solo a operativos (alineado con la regla de negocio).
 
-### 2. Mover Auditoría/Reparación de Comisiones a su lugar correcto
-- Extraer las cards "Sistema de Comisiones (Auditar / Reparar)" del `BackupManager.tsx` y trasladarlas al **`AdminEmergencyPanel`** en Settings → Herramientas de Administración, donde ya conviven utilidades de reparación (Anular compra, eliminar servicios, etc.).
-- Eliminar el componente `BackupManager.tsx` una vez migrado (queda obsoleto).
+### 2. `src/components/costs/QuickCostForm.tsx` y `src/components/costs/CostForm.tsx`
+- Cambiar el valor por defecto del campo `is_paid` a `true` cuando:
+  - el formulario se abre con un `service_id` preseleccionado (registro contextual desde un servicio), **y**
+  - la categoría seleccionada no es comisiones.
+- Mantener `is_paid: false` por defecto en cualquier otro caso (compras a proveedor, gastos administrativos, etc.) para no alterar el flujo de pagos a proveedores.
+- El usuario sigue pudiendo desmarcar el checkbox antes de guardar.
 
-### 3. Anclaje y navegación
-- Añadir `id="respaldos"` al contenedor de `BackupManagementSection` para que `/settings#respaldos` haga scroll automático.
-- Pequeño `useEffect` en Settings que detecte el hash y haga scroll suave.
+### 3. `src/components/costs/ServiceExpenseModals.tsx`
+- Sin cambios (ya asigna `payment_date: baseData.date`).
 
-### 4. Corregir copy engañoso (sólo si se conserva)
-- Si por alguna razón decides conservar `/backup`, cambiar la descripción a *"Respaldo completo de la base de datos del sistema"* — pero con el plan anterior esto ya no aplica porque el componente se elimina.
+## Fuera de alcance
 
-## Resultado para el usuario
+- No tocar comisiones (mantienen su flujo manual en su módulo).
+- No tocar XML/CSV/masivos (esos tienen su propia lógica documentada).
+- Sin migraciones de BD ni cambios en edge functions.
+- Sin re-asignar pagos a costos históricos ya registrados; el cambio aplica solo a costos creados/editados desde aquí en adelante.
 
-- **Una sola pantalla** para todo lo relacionado con respaldos: `Configuración → Gestión de Respaldos`.
-- Los botones de *Auditar / Reparar comisiones* aparecen donde pertenecen: **panel de emergencia de admin**.
-- El enlace lateral "Respaldos" sigue funcionando y lleva directamente a la sección correcta.
-- Desaparece el texto confuso sobre "tablas relacionadas con comisiones".
+## Verificación
 
-## Detalles técnicos
-
-- Archivos modificados: `src/pages/BackupPage.tsx` (reemplazo por redirect), `src/components/admin/AdminEmergencyPanel.tsx` (añadir cards de Auditar/Reparar), `src/components/settings/BackupManagementSection.tsx` (añadir anchor id), `src/pages/Settings.tsx` (scroll-on-hash).
-- Archivos eliminados: `src/components/backup/BackupManager.tsx`.
-- Sin cambios en base de datos ni en Edge Functions.
-
-## Pregunta antes de implementar
-
-¿Prefieres que el item del sidebar **"Respaldos"** se elimine completamente (todo se gestiona desde Settings), o que se mantenga como atajo directo a la sección dentro de Settings? Mi recomendación es **mantenerlo como atajo** para no romper el hábito del usuario.
+- Editar un servicio existente → agregar Combustible $X → guardar → el costo aparece con icono verde (pagado) y `payment_date` igual a la fecha del servicio.
+- Mismo flujo con Comisión Operador → sigue quedando **no pagado** (rojo).
+- Crear un costo desde `/costs` sin servicio → checkbox "Marcar como pagado" parte desmarcado (sin cambios).
+- Crear un costo desde `/costs` con servicio preseleccionado → checkbox parte marcado, se puede desmarcar.
