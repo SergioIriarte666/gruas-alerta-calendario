@@ -124,12 +124,14 @@ export const formatDateForDisplay = (date: Date | string): string => {
 
 // Get current date in Chile timezone
 export const getCurrentChileDate = (): Date => {
-  return toChileTime(new Date());
+  // Devuelve un Date apuntando a las 12:00 del día comercial actual.
+  // Esto evita problemas de DST y mantiene el día comercial real.
+  return businessClock.todayDate();
 };
 
 // Get current date in Chile timezone as yyyy-MM-dd string
 export const getCurrentChileDateString = (): string => {
-  return formatInChileTime(new Date(), 'yyyy-MM-dd');
+  return businessClock.today();
 };
 
 // Get tomorrow's date in Chile timezone
@@ -552,3 +554,16 @@ export const toLocalDateString = (date: Date): string => {
  * Equivalent to getCurrentChileDateString but synchronous and without timezone conversion overhead.
  */
 export const getTodayLocal = (): string => toLocalDateString(new Date());
+
+// ===================== HELPERS PUBLICOS BASADOS EN BUSINESS TZ =====================
+
+/**
+ * "Hoy" en la zona horaria del negocio (YYYY-MM-DD). Síncrono y seguro.
+ * Úsese SIEMPRE para comparaciones de día comercial (overdue, filtros, etc.).
+ */
+export const getBusinessToday = (): string => businessClock.today();
+
+/**
+ * Date a las 12:00 del día comercial actual. Seguro para comparaciones.
+ */
+export const getBusinessTodayDate = (): Date => businessClock.todayDate();
