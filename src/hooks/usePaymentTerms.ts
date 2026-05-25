@@ -31,7 +31,6 @@ export const usePaymentTerms = () => {
       setPaymentTerms(data || []);
     } catch (error) {
       console.error('Error fetching payment terms:', error);
-      toast.error('Error al cargar condiciones de pago');
     } finally {
       setLoading(false);
     }
