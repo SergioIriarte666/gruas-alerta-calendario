@@ -337,12 +337,23 @@ export const ServiceCostDetailsSection = ({
     }
 
     const costDate = costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString());
+    // Buscar payment_date previo si es un costo existente (no sobreescribir pago manual previo)
+    const existingCost = costDetail.isExisting
+      ? existingCosts?.find(c => c.id === costDetail.id)
+      : undefined;
+    const existingPaymentDate = (existingCost as any)?.payment_date ?? null;
+    // Regla de negocio: gastos operativos de servicios se marcan como pagados por defecto
+    // (esta sección excluye comisiones, así que aplica a todos los costos de aquí).
+    const resolvedPaymentDate = costDetail.isExisting
+      ? (existingPaymentDate ?? costDate)
+      : costDate;
     const costData = {
       service_id: serviceId,
       category_id: costDetail.category_id,
       description: costDetail.description.trim(),
       amount: costDetail.amount,
       date: costDate,
+      payment_date: resolvedPaymentDate,
       notes: costDetail.notes || '',
       subcategory: costDetail.subcategory || '',
       crane_id: serviceMeta?.crane_id || null,
