@@ -191,7 +191,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-violet-600">
-            <Zap className="w-5 h-5" />
+            <Zap className="size-5" />
             Costo Rápido
           </DialogTitle>
         </DialogHeader>
@@ -332,10 +332,10 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between text-muted-foreground" type="button">
                 <span className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
+                  <Plus className="size-4" />
                   Agregar detalles opcionales
                 </span>
-                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showAdvanced ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-3 pt-3 border-t mt-2">
@@ -440,9 +440,9 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
               type="button"
             >
               {isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
               ) : (
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="size-4 mr-2" />
               )}
               Guardar
             </Button>

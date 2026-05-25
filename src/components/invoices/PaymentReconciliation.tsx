@@ -552,7 +552,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   if (!paymentSystemAvailable) {
     return (
       <Alert className="m-4">
-        <AlertTriangle className="h-4 w-4" />
+        <AlertTriangle className="size-4" />
         <AlertDescription>
           Sistema de pagos no disponible. Por favor, contacte al administrador.
         </AlertDescription>
@@ -581,7 +581,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               variant="outline"
               size="sm"
             >
-              <Zap className="h-4 w-4 mr-2" />
+              <Zap className="size-4 mr-2" />
               Backfill Mes
             </Button>
           )}
@@ -591,14 +591,14 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             size="sm"
             disabled={paymentsLoading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${paymentsLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 mr-2 ${paymentsLoading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
           <Button
             onClick={() => setShowPaymentForm(true)}
             size="sm"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Registrar Pago
           </Button>
           <Button
@@ -606,7 +606,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             variant="outline"
             size="sm"
           >
-            <History className="h-4 w-4 mr-2" />
+            <History className="size-4 mr-2" />
             Historial
           </Button>
         </div>
@@ -622,7 +622,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <p className="text-sm font-medium text-muted-foreground">Pendientes</p>
                   <p className="text-2xl font-bold">{reconciliationStats.pending_payments || 0}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-blue-500" />
+                <DollarSign className="size-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -634,7 +634,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <p className="text-sm font-medium text-muted-foreground">Aplicados</p>
                   <p className="text-2xl font-bold">{reconciliationStats.applied_payments || 0}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-500" />
+                <DollarSign className="size-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
@@ -646,7 +646,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <p className="text-sm font-medium text-muted-foreground">Parciales</p>
                   <p className="text-2xl font-bold">{reconciliationStats.partial_payments || 0}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-amber-500" />
+                <DollarSign className="size-8 text-amber-500" />
               </div>
             </CardContent>
           </Card>
@@ -658,7 +658,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <p className="text-sm font-medium text-muted-foreground">Total Monto</p>
                   <p className="text-2xl font-bold">{formatCurrency(reconciliationStats.total_amount || 0)}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-purple-500" />
+                <DollarSign className="size-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
@@ -750,7 +750,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                             variant="ghost"
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
                           >
-                            <Eye className="h-4 w-4 mr-1" />
+                            <Eye className="size-4 mr-1" />
                             Ver Detalle
                           </Button>
                         )}

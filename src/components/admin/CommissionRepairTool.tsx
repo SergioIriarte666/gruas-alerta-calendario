@@ -57,7 +57,7 @@ export const CommissionRepairTool = () => {
     <Card className="bg-card border">
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2 text-foreground">
-          <Wrench className="w-5 h-5 text-primary" />
+          <Wrench className="size-5 text-primary" />
           Reparación del Sistema de Comisiones
         </CardTitle>
         <CardDescription>
@@ -66,7 +66,7 @@ export const CommissionRepairTool = () => {
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6">
         <Alert className="border-info/30 bg-info-soft">
-          <AlertTriangle className="w-4 h-4 text-info" />
+          <AlertTriangle className="size-4 text-info" />
           <AlertDescription className="text-sm">
             <strong>Importante:</strong> antes de reparar, genera un respaldo desde
             {' '}<em>Configuración → Sistema → Gestión de Respaldos</em>.
@@ -75,11 +75,11 @@ export const CommissionRepairTool = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Button onClick={auditCommissionSystem} disabled={auditing} variant="outline">
-            {auditing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ScanSearch className="w-4 h-4 mr-2" />}
+            {auditing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <ScanSearch className="size-4 mr-2" />}
             Auditar Sistema
           </Button>
           <Button onClick={repairCommissionSystem} disabled={repairing} variant="destructive">
-            {repairing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+            {repairing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <CheckCircle className="size-4 mr-2" />}
             Reparar Sistema
           </Button>
         </div>
@@ -120,7 +120,7 @@ export const CommissionRepairTool = () => {
 
         {repairData && (
           <Alert className="border-primary/30 bg-primary-soft">
-            <CheckCircle className="w-4 h-4 text-primary" />
+            <CheckCircle className="size-4 text-primary" />
             <AlertDescription className="text-sm">
               <div className="font-medium mb-1">Reparación Completada</div>
               <ul className="space-y-0.5">

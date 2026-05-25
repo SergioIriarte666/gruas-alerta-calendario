@@ -158,11 +158,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-white flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
+            <Receipt className="size-5" />
             {isEditing ? 'Editar Factura' : 'Nueva Factura'}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onCancel} className="text-white/80 hover:text-white hover:bg-white/20">
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </div>
       </CardHeader>
@@ -182,17 +182,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <div className="border-t bg-card p-4 flex-shrink-0 sticky bottom-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div className="flex items-center justify-between">
               <Button type="button" variant="outline" onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)} disabled={currentStep === 1} className="gap-2">
-                <ChevronLeft className="h-4 w-4" /> Anterior
+                <ChevronLeft className="size-4" /> Anterior
               </Button>
               <div className="flex items-center gap-3">
                 <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
                 {currentStep < 3 ? (
                   <Button type="button" onClick={() => setCurrentStep(prev => Math.min(prev + 1, 3))} disabled={!canGoNext} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
-                    Siguiente <ChevronRight className="h-4 w-4" />
+                    Siguiente <ChevronRight className="size-4" />
                   </Button>
                 ) : (
                   <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 min-w-[140px]">
-                    <Save className="h-4 w-4" />
+                    <Save className="size-4" />
                     {isSubmitting || isLoading ? 'Guardando...' : `${isEditing ? 'Actualizar' : 'Crear'} Factura`}
                   </Button>
                 )}

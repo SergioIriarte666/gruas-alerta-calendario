@@ -61,7 +61,7 @@ export const CostSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-violet-500" />
+            <Receipt className="size-4 text-violet-500" />
             Resumen del Costo
           </span>
           <Badge variant="outline" className={cn(
@@ -77,7 +77,7 @@ export const CostSummaryPanel = ({
       <CardContent className="space-y-4">
         {/* Fecha */}
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Fecha:</span>
           <span className="text-sm font-medium">{formatDate(date)}</span>
         </div>
@@ -85,7 +85,7 @@ export const CostSummaryPanel = ({
         {/* Categoría */}
         {categoryName && (
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-muted-foreground" />
+            <Tag className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Categoría:</span>
             <Badge variant="secondary" className="text-xs">
               {categoryName}
@@ -96,7 +96,7 @@ export const CostSummaryPanel = ({
         {/* Subcategoría */}
         {subcategory && (
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-muted-foreground opacity-50" />
+            <Tag className="size-4 text-muted-foreground opacity-50" />
             <span className="text-xs text-muted-foreground">Subcategoría:</span>
             <span className="text-sm">{subcategory}</span>
           </div>
@@ -105,7 +105,7 @@ export const CostSummaryPanel = ({
         {/* Descripción */}
         {description && (
           <div className="flex items-start gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+            <FileText className="size-4 text-muted-foreground mt-0.5" />
             <div className="flex-1 min-w-0">
               <span className="text-xs text-muted-foreground block">Descripción:</span>
               <span className="text-sm line-clamp-2">{description}</span>
@@ -118,7 +118,7 @@ export const CostSummaryPanel = ({
         {/* Monto */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Monto Total:</span>
           </div>
           <span className={cn(
@@ -135,7 +135,7 @@ export const CostSummaryPanel = ({
             <Separator className="my-3" />
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Package className="h-3 w-3" />
+                <Package className="size-3" />
                 Detalles de Pieza
               </div>
               <div className="bg-muted/50 rounded-lg p-2 space-y-1 text-xs">
@@ -166,7 +166,7 @@ export const CostSummaryPanel = ({
             <Separator className="my-3" />
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Building2 className="h-3 w-3" />
+                <Building2 className="size-3" />
                 Asociaciones
               </div>
               <div className="flex flex-wrap gap-1">

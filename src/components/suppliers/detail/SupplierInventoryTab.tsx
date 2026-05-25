@@ -63,7 +63,7 @@ export const SupplierInventoryTab: React.FC<SupplierInventoryTabProps> = ({ move
   if (movements.length === 0) {
     return (
       <div className="text-center py-12">
-        <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <Package className="size-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">Sin movimientos</h3>
         <p className="text-muted-foreground">
           No hay movimientos de inventario registrados para este proveedor

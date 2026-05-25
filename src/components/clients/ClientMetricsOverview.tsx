@@ -27,14 +27,14 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
     <CardContent className="p-4">
       <div className="flex items-center space-x-3">
         <div className="p-2 bg-primary/10 rounded-lg">
-          <Icon className="h-5 w-5 text-primary" />
+          <Icon className="size-5 text-primary" />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <p className="text-sm text-muted-foreground">{title}</p>
             {trend && (
               <TrendingUp 
-                className={`h-3 w-3 ${
+                className={`size-3 ${
                   trend === 'up' ? 'text-green-500' : 
                   trend === 'down' ? 'text-red-500 rotate-180' : 
                   'text-gray-500'
@@ -121,7 +121,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <CreditCard className="h-5 w-5" />
+            <CreditCard className="size-5" />
             Estado Financiero
           </CardTitle>
         </CardHeader>
@@ -143,7 +143,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground">Pendiente de Pago</p>
                 {metrics.pendingAmount > 0 && (
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                  <AlertTriangle className="size-4 text-yellow-500" />
                 )}
               </div>
               <p className={`text-2xl font-bold ${
@@ -156,7 +156,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
           {metrics.avgPaymentTime > 0 && (
             <div className="mt-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="size-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
                   Tiempo promedio de pago: {metrics.avgPaymentTime} días
                 </span>
@@ -195,7 +195,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Activity className="h-5 w-5" />
+            <Activity className="size-5" />
             Actividad Reciente
           </CardTitle>
         </CardHeader>

@@ -163,13 +163,13 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
           className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
           title="Eliminar factura completa (Solo Admin)"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="size-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-gray-900 border-red-500/50">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-red-400 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="size-5" />
             ELIMINACIÓN DE EMERGENCIA
           </AlertDialogTitle>
           <AlertDialogDescription className="text-gray-300">

@@ -24,13 +24,13 @@ export const ClientFormStep2 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Información de Contacto"
-        icon={<Phone className="h-5 w-5" />}
+        icon={<Phone className="size-5" />}
         color="blue"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-foreground flex items-center gap-2">
-              <Phone className="h-4 w-4" />
+              <Phone className="size-4" />
               Teléfono
             </Label>
             <Input
@@ -44,7 +44,7 @@ export const ClientFormStep2 = ({
           
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground flex items-center gap-2">
-              <Mail className="h-4 w-4" />
+              <Mail className="size-4" />
               Email
             </Label>
             <Input
@@ -61,13 +61,13 @@ export const ClientFormStep2 = ({
 
       <ColoredSectionCard
         title="Ubicación y Contacto"
-        icon={<MapPin className="h-5 w-5" />}
+        icon={<MapPin className="size-5" />}
         color="cyan"
       >
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
             <Label htmlFor="address" className="text-foreground flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
+              <MapPin className="size-4" />
               Dirección
             </Label>
             <Input
@@ -82,7 +82,7 @@ export const ClientFormStep2 = ({
           
           <div className="space-y-2">
             <Label htmlFor="contactName" className="text-foreground flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className="size-4" />
               Nombre del Contacto
             </Label>
             <Input

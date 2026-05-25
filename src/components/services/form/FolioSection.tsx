@@ -70,7 +70,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
             disabled={isLoading || disabled}
             className="self-end sm:mt-6 h-10"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Regenerar
           </Button>
         )}

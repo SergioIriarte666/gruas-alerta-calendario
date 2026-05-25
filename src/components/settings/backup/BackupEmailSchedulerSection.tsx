@@ -61,7 +61,7 @@ export const BackupEmailSchedulerSection: React.FC = () => {
     return (
       <Card className="bg-card border mt-6">
         <CardContent className="p-6 flex items-center justify-center">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+          <Loader2 className="size-5 animate-spin text-primary" />
         </CardContent>
       </Card>
     );
@@ -81,7 +81,7 @@ export const BackupEmailSchedulerSection: React.FC = () => {
       <CardHeader className="border-b p-4 sm:p-6">
         <CardTitle className="flex items-center justify-between text-foreground">
           <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" />
+            <Mail className="size-5 text-primary" />
             <span className="text-lg sm:text-xl">Envío Automático por Correo</span>
           </div>
           <Badge variant={config?.enabled ? 'default' : 'secondary'}
@@ -134,7 +134,7 @@ export const BackupEmailSchedulerSection: React.FC = () => {
           </div>
           <div className="flex items-end">
             <Button onClick={handleSave} disabled={saving} className="w-full">
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
               Guardar
             </Button>
           </div>
@@ -148,8 +148,8 @@ export const BackupEmailSchedulerSection: React.FC = () => {
               : 'border-destructive/30 bg-destructive/10'
           }>
             {lastStatus === 'success'
-              ? <CheckCircle className="w-4 h-4 text-primary" />
-              : <XCircle className="w-4 h-4 text-destructive" />}
+              ? <CheckCircle className="size-4 text-primary" />
+              : <XCircle className="size-4 text-destructive" />}
             <AlertDescription className="text-sm">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span>
@@ -174,7 +174,7 @@ export const BackupEmailSchedulerSection: React.FC = () => {
         {/* Botón de prueba */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between p-4 rounded-lg border bg-muted/30">
           <div className="flex items-start gap-2">
-            <Send className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <Send className="size-4 text-primary mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-medium">Enviar prueba ahora</p>
               <p className="text-xs text-muted-foreground">
@@ -183,13 +183,13 @@ export const BackupEmailSchedulerSection: React.FC = () => {
             </div>
           </div>
           <Button onClick={handleTest} disabled={testing || !email} variant="outline" className="shrink-0">
-            {testing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+            {testing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Send className="size-4 mr-2" />}
             Enviar ahora
           </Button>
         </div>
 
         <Alert className="border-info/30 bg-info-soft">
-          <Clock className="w-4 h-4 text-info" />
+          <Clock className="size-4 text-info" />
           <AlertDescription className="text-sm text-foreground">
             El respaldo se genera automáticamente todos los días a las{' '}
             <strong>{String(hour).padStart(2, '0')}:00 hrs (hora Chile)</strong> y se envía a{' '}

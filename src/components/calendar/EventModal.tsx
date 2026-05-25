@@ -71,7 +71,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuevo Evento
         </Button>
       </DialogTrigger>

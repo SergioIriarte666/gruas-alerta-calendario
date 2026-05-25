@@ -24,7 +24,7 @@ const PWAInstallButton: React.FC = () => {
       className="border-tms-green text-tms-green hover:bg-tms-green hover:text-black"
       title="Instalar aplicación"
     >
-      <Download className="w-4 h-4 mr-2" />
+      <Download className="size-4 mr-2" />
       <span className="hidden sm:inline">Instalar App</span>
     </Button>
   );

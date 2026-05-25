@@ -109,7 +109,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-violet-500" />
+            <Shield className="size-5 text-violet-500" />
             Permisos de Módulos - {userName}
           </DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
         <div className="flex-1 overflow-y-auto py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <div className="size-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <>
@@ -163,7 +163,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                         onCheckedChange={(checked) => handleToggle(module.key, checked === true)}
                       />
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <ModuleIcon className={`w-4 h-4 flex-shrink-0 ${isEnabled ? 'text-violet-500' : 'text-muted-foreground'}`} />
+                        <ModuleIcon className={`size-4 flex-shrink-0 ${isEnabled ? 'text-violet-500' : 'text-muted-foreground'}`} />
                         <Label 
                           htmlFor={`perm-${module.key}`}
                           className={`text-sm cursor-pointer truncate ${
@@ -179,7 +179,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
               </div>
 
               <Alert className="mt-4 border-amber-500/30 bg-amber-500/10">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <AlertTriangle className="size-4 text-amber-500" />
                 <AlertDescription className="text-xs text-muted-foreground">
                   Los módulos deshabilitados no aparecerán en el menú lateral ni serán accesibles por URL para este usuario.
                 </AlertDescription>
@@ -198,9 +198,9 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
             className="bg-violet-600 hover:bg-violet-700"
           >
             {saving ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
             ) : (
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="size-4 mr-2" />
             )}
             Guardar
           </Button>

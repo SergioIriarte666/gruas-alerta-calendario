@@ -670,7 +670,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="size-5" />
             Importar Historial de Facturas
           </DialogTitle>
         </DialogHeader>
@@ -682,7 +682,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
           >
             <input {...getInputProps()} />
-            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg font-medium text-foreground">
               {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
             </p>
@@ -753,9 +753,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   <TabsTrigger value="unmatched" className="relative">
                     Sin Cliente ({preview.unmatched.length})
                     {preview.unmatched.length > 0 && (
-                      <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                      <span className="absolute top-0 right-0 -mt-1 -mr-1 flex size-3">
+                        <span className="animate-ping absolute inline-flex size-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full size-3 bg-amber-500"></span>
                       </span>
                     )}
                   </TabsTrigger>
@@ -773,7 +773,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <CheckCircle className="size-4 text-green-500" />
                               Facturas listas ({getSelectedMatchedCount()}/{preview.matched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -807,7 +807,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              <AlertTriangle className="size-4 text-amber-500" />
                               Clientes no encontrados ({unmatchedClients.length}) — {preview.unmatched.length} facturas
                             </h3>
                           </div>
@@ -831,7 +831,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                     onClick={() => handleBulkAction('create')}
                                     disabled={selectedUnmatchedClientIndices.size === 0}
                                 >
-                                    <UserPlus className="h-3.5 w-3.5 mr-1" />
+                                    <UserPlus className="size-3.5 mr-1" />
                                     Crear
                                 </Button>
                                 <Button 
@@ -841,7 +841,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                     onClick={handleBulkAssign}
                                     disabled={selectedUnmatchedClientIndices.size === 0}
                                 >
-                                    <Users className="h-3.5 w-3.5 mr-1" />
+                                    <Users className="size-3.5 mr-1" />
                                     Asignar
                                 </Button>
                                 <Button 
@@ -851,7 +851,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                     onClick={() => handleBulkAction('ignore')}
                                     disabled={selectedUnmatchedClientIndices.size === 0}
                                 >
-                                    <Ban className="h-3.5 w-3.5 mr-1" />
+                                    <Ban className="size-3.5 mr-1" />
                                     Ignorar
                                 </Button>
                             </div>
@@ -874,11 +874,11 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
-                                                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                                    className="size-6 text-muted-foreground hover:text-foreground"
                                                     onClick={() => openQuickEdit(index)}
                                                     title="Editar datos del cliente"
                                                 >
-                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                    <Edit2 className="size-3.5" />
                                                 </Button>
                                             </div>
                                             <p className="text-xs text-muted-foreground">
@@ -899,7 +899,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                   {uc.suggestion && uc.resolution === 'pending' && (
                                       <div className="ml-8 p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 rounded flex items-center justify-between gap-2">
                                           <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400">
-                                              <Sparkles className="h-3.5 w-3.5" />
+                                              <Sparkles className="size-3.5" />
                                               <span>Sugerencia: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)</span>
                                           </div>
                                           <Button 
@@ -920,7 +920,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                       onClick={() => handleClientResolution(index, 'create')}
                                       className="text-xs gap-1 h-8"
                                     >
-                                      <UserPlus className="h-3 w-3" />
+                                      <UserPlus className="size-3" />
                                       Crear
                                     </Button>
                                     <div className="flex items-center gap-1">
@@ -934,7 +934,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                         }}
                                         className="text-xs gap-1 h-8"
                                       >
-                                        <Users className="h-3 w-3" />
+                                        <Users className="size-3" />
                                         Asignar
                                       </Button>
                                       {uc.resolution === 'assign' && (
@@ -961,7 +961,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                       onClick={() => handleClientResolution(index, 'ignore')}
                                       className="text-xs gap-1 h-8"
                                     >
-                                      <Ban className="h-3 w-3" />
+                                      <Ban className="size-3" />
                                       Ignorar
                                     </Button>
                                   </div>
@@ -1009,7 +1009,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         <div>
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                              <XCircle className="h-4 w-4 text-muted-foreground" />
+                              <XCircle className="size-4 text-muted-foreground" />
                               Duplicados detectados ({getSelectedDuplicatesCount()}/{preview.duplicates.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1047,7 +1047,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 disabled={!canImport()}
                 className="gap-2"
               >
-                {!canImport() && <AlertTriangle className="h-4 w-4" />}
+                {!canImport() && <AlertTriangle className="size-4" />}
                 Importar {totalToImport} documento{totalToImport !== 1 ? 's' : ''}
               </Button>
             </div>
@@ -1056,7 +1056,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
         {step === 'importing' && (
           <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <Loader2 className="size-12 animate-spin text-primary mb-4" />
             <p className="text-lg font-medium text-foreground">Importando facturas...</p>
             <p className="text-sm text-muted-foreground">Esto puede tomar unos segundos</p>
             <div className="w-full max-w-md mt-6 space-y-2 px-4">
@@ -1082,8 +1082,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             {importResult.errors > 0 && importResult.imported === 0 ? (
               lastError?.includes('ya existen') || lastError?.includes('ya fueron importadas') ? (
                 <>
-                  <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-                    <Ban className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  <div className="size-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+                    <Ban className="size-6 text-amber-600 dark:text-amber-400" />
                   </div>
                   <p className="text-lg font-medium text-foreground">
                     Facturas ya importadas
@@ -1097,7 +1097,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </>
               ) : (
                 <>
-                  <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                  <AlertTriangle className="size-12 text-destructive mb-4" />
                   <p className="text-lg font-medium text-foreground">Error en la importación</p>
                   <p className="text-sm text-muted-foreground mt-2">
                     {importResult.imported} facturas importadas, {importResult.errors} con errores
@@ -1111,7 +1111,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               )
             ) : (
               <>
-                <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                <CheckCircle className="size-12 text-green-500 mb-4" />
                 <p className="text-lg font-medium text-foreground">Importación completada</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   {importResult.imported} facturas importadas exitosamente

@@ -96,7 +96,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
           <CardTitle className="text-white flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
+            <CreditCard className="size-5" />
             Registrar Pago
           </CardTitle>
           <Button
@@ -105,7 +105,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
             onClick={onClose}
             className="text-white hover:bg-white/20"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </CardHeader>
 
@@ -113,7 +113,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
           {/* Supplier filter */}
           <div>
             <Label className="text-foreground flex items-center gap-2 mb-2">
-              <Building2 className="h-4 w-4" />
+              <Building2 className="size-4" />
               Filtrar por Proveedor
             </Label>
             <Select value={selectedSupplierId} onValueChange={handleSupplierChange}>
@@ -158,7 +158,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-foreground flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="size-4" />
                 Fecha de Pago
               </Label>
               <DatePickerInput
@@ -217,12 +217,12 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
             >
               {isRegistering ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Registrando...
                 </>
               ) : (
                 <>
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <CreditCard className="size-4 mr-2" />
                   Registrar Pago ({selectedPaymentIds.length})
                 </>
               )}

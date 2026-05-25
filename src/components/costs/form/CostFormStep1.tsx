@@ -57,7 +57,7 @@ export const CostFormStep1 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Información Básica"
-        icon={<FileText className="h-4 w-4" />}
+        icon={<FileText className="size-4" />}
         color="purple"
         required
       >
@@ -66,7 +66,7 @@ export const CostFormStep1 = ({
             <FormField name="date" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <Calendar className="w-4 h-4" />
+                  <Calendar className="size-4" />
                   Fecha *
                 </Label>
                 <FormControl>
@@ -83,7 +83,7 @@ export const CostFormStep1 = ({
             <FormField name="category_id" control={form.control} render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <Tag className="w-4 h-4" />
+                  <Tag className="size-4" />
                   Categoría *
                 </Label>
                 <Select 
@@ -129,7 +129,7 @@ export const CostFormStep1 = ({
             return (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <FileText className="w-4 h-4" />
+                  <FileText className="size-4" />
                   Descripción *
                 </Label>
                 <FormControl>

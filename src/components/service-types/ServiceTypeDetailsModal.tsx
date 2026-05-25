@@ -40,12 +40,12 @@ export function ServiceTypeDetailsModal({
       <div className="flex items-center gap-2">
         {required ? (
           <>
-            <Check className="h-4 w-4 text-green-600" />
+            <Check className="size-4 text-green-600" />
             <span className="text-sm font-medium text-green-600">Requerido</span>
           </>
         ) : (
           <>
-            <X className="h-4 w-4 text-gray-400" />
+            <X className="size-4 text-gray-400" />
             <span className="text-sm text-gray-500">Opcional</span>
           </>
         )}
@@ -71,15 +71,15 @@ export function ServiceTypeDetailsModal({
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="general" className="flex items-center gap-2">
-                <Info className="h-4 w-4" />
+                <Info className="size-4" />
                 General
               </TabsTrigger>
               <TabsTrigger value="vehicle" className="flex items-center gap-2">
-                <Car className="h-4 w-4" />
+                <Car className="size-4" />
                 Vehículo
               </TabsTrigger>
               <TabsTrigger value="requirements" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
+                <Settings className="size-4" />
                 Requerimientos
               </TabsTrigger>
             </TabsList>
@@ -89,7 +89,7 @@ export function ServiceTypeDetailsModal({
                 <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
                     <div className="p-1 rounded bg-blue-500/10 text-blue-600">
-                      <Info className="h-4 w-4" />
+                      <Info className="size-4" />
                     </div>
                     Información General
                   </h3>
@@ -112,7 +112,7 @@ export function ServiceTypeDetailsModal({
                 <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
                     <div className="p-1 rounded bg-amber-500/10 text-amber-600">
-                      <Settings className="h-4 w-4" />
+                      <Settings className="size-4" />
                     </div>
                     Fechas
                   </h3>
@@ -135,7 +135,7 @@ export function ServiceTypeDetailsModal({
                 <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
                     <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
-                      <Car className="h-4 w-4" />
+                      <Car className="size-4" />
                     </div>
                     Configuración de Vehículo
                   </h3>
@@ -167,7 +167,7 @@ export function ServiceTypeDetailsModal({
                 <div className="rounded-lg border border-border border-l-4 border-l-violet-500 bg-violet-500/5 p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2 text-violet-700 dark:text-violet-300">
                     <div className="p-1 rounded bg-violet-500/10 text-violet-600">
-                      <Wrench className="h-4 w-4" />
+                      <Wrench className="size-4" />
                     </div>
                     Requerimientos del Servicio
                   </h3>

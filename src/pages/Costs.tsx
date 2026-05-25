@@ -377,7 +377,7 @@ const CostsPage = () => {
                         className="bg-violet-600 hover:bg-violet-700 text-white"
                         size={isMobile ? 'sm' : 'default'}
                     >
-                        <Zap className="w-4 h-4 mr-2" />
+                        <Zap className="size-4 mr-2" />
                         {isMobile ? 'Rápido' : 'Costo Rápido'}
                     </Button>
                     
@@ -386,7 +386,7 @@ const CostsPage = () => {
                         variant="outline"
                         size={isMobile ? 'sm' : 'default'}
                     >
-                        <FileEdit className="w-4 h-4 mr-2" />
+                        <FileEdit className="size-4 mr-2" />
                         {isMobile ? 'Completo' : 'Costo Completo'}
                     </Button>
                     
@@ -405,7 +405,7 @@ const CostsPage = () => {
                         size={isMobile ? 'sm' : 'default'}
                         className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                     >
-                        <FileSpreadsheet className="w-4 h-4 mr-1" />
+                        <FileSpreadsheet className="size-4 mr-1" />
                         {isMobile ? 'Excel' : 'Cargar Excel'}
                     </Button>
                 </div>
@@ -442,7 +442,7 @@ const CostsPage = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full px-4 py-2 pl-10 rounded-lg border bg-background text-foreground focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                     />
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
@@ -456,7 +456,7 @@ const CostsPage = () => {
                                 onClick={() => setViewMode('table')}
                                 className={viewMode === 'table' ? 'bg-violet-600 hover:bg-violet-700' : ''}
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
                             </Button>
@@ -466,7 +466,7 @@ const CostsPage = () => {
                                 onClick={() => setViewMode('cards')}
                                 className={viewMode === 'cards' ? 'bg-violet-600 hover:bg-violet-700' : ''}
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                                 </svg>
                             </Button>
@@ -474,7 +474,7 @@ const CostsPage = () => {
                     )}
 
                     <Button variant="outline" onClick={handleExportToExcel} size={isMobile ? 'sm' : 'default'}>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="size-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <span className="hidden sm:inline">Exportar</span>

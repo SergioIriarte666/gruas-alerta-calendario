@@ -122,7 +122,7 @@ export const ServiceDeleteConfirmDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="size-5" />
             Eliminar Servicio
           </DialogTitle>
           <DialogDescription>
@@ -147,7 +147,7 @@ export const ServiceDeleteConfirmDialog = ({
 
             {loading ? (
               <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
                 <span className="text-sm">Verificando datos relacionados...</span>
               </div>
             ) : (
@@ -155,7 +155,7 @@ export const ServiceDeleteConfirmDialog = ({
                 {hasRelatedData ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                      <ShieldAlert className="w-4 h-4" />
+                      <ShieldAlert className="size-4" />
                       <span className="text-sm font-medium">Este servicio tiene datos relacionados:</span>
                     </div>
 
@@ -234,12 +234,12 @@ export const ServiceDeleteConfirmDialog = ({
           >
             {verifying ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
                 Verificando...
               </>
             ) : (
               <>
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash2 className="size-4 mr-2" />
                 Eliminar
               </>
             )}

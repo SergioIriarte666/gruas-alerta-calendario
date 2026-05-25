@@ -139,7 +139,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <GitMerge className="w-5 h-5 text-violet-600" />
+            <GitMerge className="size-5 text-violet-600" />
             Fusionar Productos Duplicados
           </CardTitle>
           <CardDescription>
@@ -149,7 +149,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="size-4" />
             <AlertTitle>Uso recomendado</AlertTitle>
             <AlertDescription>
               Revisa primero los grupos de similitud. Los grupos exactos son seguros; los grupos similares
@@ -158,7 +158,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
           </Alert>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
@@ -253,7 +253,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
                                     : `${Math.round(item.similarity_score * 100)}% similitud`}
                                 </Badge>
                                 <Button variant="outline" size="sm" onClick={() => setDetailsProduct(item)}>
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className="mr-2 size-4" />
                                   Detalles
                                 </Button>
                               </div>
@@ -277,9 +277,9 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
                           className="gap-2"
                         >
                           {mergeItems.isPending && groupToConfirm?.id === group.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="size-4 animate-spin" />
                           ) : (
-                            <ArrowRightLeft className="h-4 w-4" />
+                            <ArrowRightLeft className="size-4" />
                           )}
                           Fusionar grupo
                         </Button>

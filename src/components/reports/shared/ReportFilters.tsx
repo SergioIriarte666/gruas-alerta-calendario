@@ -64,7 +64,7 @@ export const ReportFilters = ({
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors">
               <span className="text-sm font-medium text-foreground">Filtros de Métricas</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 [&[data-state=open]]:rotate-180" />
+              <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 [&[data-state=open]]:rotate-180" />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end p-4 bg-card border rounded-lg">
@@ -122,7 +122,7 @@ export const ReportFilters = ({
                 <div className="flex gap-2">
                   <Button onClick={onUpdate} className="flex-1" size="sm">Actualizar</Button>
                   <Button onClick={onClear} variant="outline" size="sm" className="px-3">
-                    <FilterX className="w-4 h-4" />
+                    <FilterX className="size-4" />
                   </Button>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export const ReportFilters = ({
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors">
               <span className="text-sm font-medium text-foreground">Filtros de Servicios</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="size-4 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end p-4 bg-card border rounded-lg">
@@ -174,7 +174,7 @@ export const ReportFilters = ({
           <Collapsible defaultOpen={false}>
             <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-card border rounded-lg hover:bg-muted/50 transition-colors">
               <span className="text-sm font-medium text-foreground">Filtros de Costos</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="size-4 text-muted-foreground" />
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-3">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end p-4 bg-card border rounded-lg">

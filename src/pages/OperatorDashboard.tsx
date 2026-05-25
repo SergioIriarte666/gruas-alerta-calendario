@@ -54,7 +54,7 @@ const OperatorDashboard = () => {
     console.log('❌ Rendering error state:', error.message);
     const isNoOperatorError = error.message.includes('No se encontró operador') || error.message.includes('operador');
     return <div className="text-center bg-destructive/10 border border-destructive/30 p-8 rounded-lg">
-        <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+        <AlertCircle className="size-16 mx-auto mb-4 text-destructive" />
         <h2 className="text-xl font-semibold mb-2 text-destructive">
           {isNoOperatorError ? 'Usuario no asignado como operador' : 'Error al cargar servicios'}
         </h2>
@@ -62,7 +62,7 @@ const OperatorDashboard = () => {
           {isNoOperatorError ? 'Tu usuario no está configurado como operador. Contacta al administrador para que te asigne como operador en el sistema.' : error.message || 'Hubo un problema al cargar tus servicios asignados.'}
         </p>
         <Button onClick={handleRefresh} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10" disabled={isRefreshing}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`size-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           {isRefreshing ? 'Recargando...' : 'Recargar'}
         </Button>
       </div>;
@@ -87,7 +87,7 @@ const OperatorDashboard = () => {
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" className="mt-4" disabled={isRefreshing}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`size-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           {isRefreshing ? 'Actualizando...' : 'Actualizar'}
         </Button>
       </div>;
@@ -107,7 +107,7 @@ const OperatorDashboard = () => {
           </div>
         </div>
         <Button onClick={handleRefresh} variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" disabled={isRefreshing}>
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`size-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
       </header>
       
@@ -115,28 +115,28 @@ const OperatorDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex w-full overflow-x-auto bg-muted border border-border">
             <TabsTrigger value="asignados" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Clock className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <Clock className="size-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Asignados</span>
               {serviceTabs.asignados.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.asignados.length}
                 </Badge>}
             </TabsTrigger>
             <TabsTrigger value="pendientes_entrega" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Package className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <Package className="size-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Por Entregar</span>
               {serviceTabs.pendientes_entrega.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.pendientes_entrega.length}
                 </Badge>}
             </TabsTrigger>
             <TabsTrigger value="activos" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Play className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <Play className="size-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Activos</span>
               {serviceTabs.activos.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.activos.length}
                 </Badge>}
             </TabsTrigger>
             <TabsTrigger value="completados" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <CheckCircle className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <CheckCircle className="size-4 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Completados</span>
               {serviceTabs.completados.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.completados.length}
@@ -152,7 +152,7 @@ const OperatorDashboard = () => {
               </Badge>
             </div>
             {serviceTabs.asignados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <Clock className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios asignados pendientes</p>
               </div> : serviceTabs.asignados.map(service => <AssignedServiceCard key={service.id} service={service} />)}
           </TabsContent>
@@ -165,18 +165,18 @@ const OperatorDashboard = () => {
               </Badge>
             </div>
             {serviceTabs.activos.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <Play className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios en progreso</p>
               </div> : serviceTabs.activos.map(service => <AssignedServiceCard key={service.id} service={service} />)}
           </TabsContent>
 
           <TabsContent value="pendientes_entrega" className="space-y-4">
             <h2 className="text-xl font-semibold text-accent flex items-center gap-2">
-              <Package className="w-5 h-5" />
+              <Package className="size-5" />
               Servicios Listos para Entrega ({serviceTabs.pendientes_entrega.length})
             </h2>
             {serviceTabs.pendientes_entrega.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <Package className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios pendientes de entrega</p>
               </div> : <div className="grid gap-4">
                 {serviceTabs.pendientes_entrega.map(service => <AssignedServiceCard key={service.id} service={service} showDeliveryAction={true} />)}
@@ -191,7 +191,7 @@ const OperatorDashboard = () => {
               </Badge>
             </div>
             {serviceTabs.completados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
-                <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <CheckCircle className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios completados</p>
               </div> : serviceTabs.completados.map(service => <AssignedServiceCard key={service.id} service={service} />)}
           </TabsContent>

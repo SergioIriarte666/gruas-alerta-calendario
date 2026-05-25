@@ -66,7 +66,7 @@ export const ReportFilters = ({
         <Card className="bg-card border">
             <CardHeader>
                 <CardTitle className="text-foreground flex items-center">
-                    <Calendar className="w-5 h-5 mr-2" />
+                    <Calendar className="size-5 mr-2" />
                     Filtros de Métricas
                 </CardTitle>
             </CardHeader>
@@ -266,7 +266,7 @@ export const ReportFilters = ({
                                 borderColor: 'rgba(255, 255, 255, 0.3)'
                             }}
                         >
-                            <FilterX className="w-4 h-4" />
+                            <FilterX className="size-4" />
                         </Button>
                     </div>
                 </div>
@@ -276,7 +276,7 @@ export const ReportFilters = ({
         <Card className="bg-card border mt-6">
             <CardHeader>
                 <CardTitle className="text-foreground flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
+                    <FileText className="size-5 mr-2" />
                     Filtros para Informe de Servicios
                 </CardTitle>
             </CardHeader>
@@ -337,7 +337,7 @@ export const ReportFilters = ({
         <Card className="bg-card border mt-6">
             <CardHeader>
                 <CardTitle className="text-foreground flex items-center">
-                    <FileText className="w-5 h-5 mr-2" />
+                    <FileText className="size-5 mr-2" />
                     Filtros para Informe de Costos
                 </CardTitle>
             </CardHeader>

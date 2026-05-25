@@ -54,7 +54,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               <img 
                 src={settings.company.logo} 
                 alt="Logo empresa" 
-                className="h-10 w-10 object-contain" 
+                className="size-10 object-contain" 
               />
             )}
             <div>
@@ -69,7 +69,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               onClick={onClose}
               className="text-gray-400 hover:text-white hover:bg-gray-800"
             >
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             </Button>
           )}
         </div>
@@ -89,7 +89,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="size-5" />
               <span>{item.name}</span>
             </Link>
           );

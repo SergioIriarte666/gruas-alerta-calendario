@@ -37,13 +37,13 @@ export const AlertHistoryView: React.FC = () => {
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <AlertTriangle className="w-4 h-4 text-destructive" />;
+        return <AlertTriangle className="size-4 text-destructive" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4 text-warning" />;
+        return <AlertTriangle className="size-4 text-warning" />;
       case 'info':
-        return <CheckCircle className="w-4 h-4 text-primary" />;
+        return <CheckCircle className="size-4 text-primary" />;
       default:
-        return <Bell className="w-4 h-4" />;
+        return <Bell className="size-4" />;
     }
   };
 
@@ -85,7 +85,7 @@ export const AlertHistoryView: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="size-8 animate-spin" />
       </div>
     );
   }
@@ -101,7 +101,7 @@ export const AlertHistoryView: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Total Alertas</p>
                 <p className="text-2xl font-bold text-foreground">{stats.total}</p>
               </div>
-              <History className="w-8 h-8 text-primary" />
+              <History className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -113,7 +113,7 @@ export const AlertHistoryView: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Críticas</p>
                 <p className="text-2xl font-bold text-destructive">{stats.critical}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-destructive" />
+              <AlertTriangle className="size-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -125,7 +125,7 @@ export const AlertHistoryView: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Advertencias</p>
                 <p className="text-2xl font-bold text-warning">{stats.warning}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-warning" />
+              <AlertTriangle className="size-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -137,7 +137,7 @@ export const AlertHistoryView: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Información</p>
                 <p className="text-2xl font-bold text-primary">{stats.info}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-primary" />
+              <CheckCircle className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -147,7 +147,7 @@ export const AlertHistoryView: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5" />
+            <History className="size-5" />
             Alertas Actuales
           </CardTitle>
           <CardDescription>
@@ -158,7 +158,7 @@ export const AlertHistoryView: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
                 <Input
                   placeholder="Buscar por producto o mensaje..."
                   value={searchTerm}
@@ -200,7 +200,7 @@ export const AlertHistoryView: React.FC = () => {
               <div className="text-center py-8">
                 {stats.total === 0 ? (
                   <>
-                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+                    <CheckCircle className="size-12 mx-auto mb-4 text-success" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
                       ¡Excelente! No hay alertas activas
                     </h3>
@@ -210,7 +210,7 @@ export const AlertHistoryView: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <History className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <History className="size-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
                       No se encontraron registros
                     </h3>
@@ -237,19 +237,19 @@ export const AlertHistoryView: React.FC = () => {
                         
                         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Package className="w-4 h-4" />
+                            <Package className="size-4" />
                             <span>{item.item_name}</span>
                           </div>
                           
                           {item.location_name && (
                             <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
+                              <MapPin className="size-4" />
                               <span>{item.location_name}</span>
                             </div>
                           )}
                           
                           <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
+                            <Clock className="size-4" />
                             <span>Detectada recientemente</span>
                           </div>
                         </div>

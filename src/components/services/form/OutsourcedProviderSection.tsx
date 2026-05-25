@@ -51,11 +51,11 @@ export const OutsourcedProviderSection = ({
     <Card className="border-orange-200 bg-orange-50/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-orange-700">
-          <Building2 className="h-5 w-5" />
+          <Building2 className="size-5" />
           Proveedor del Servicio Tercerizado
         </CardTitle>
         <div className="text-sm text-orange-600 bg-orange-100 p-2 rounded border border-orange-200">
-          <AlertTriangle className="h-4 w-4 inline mr-1" />
+          <AlertTriangle className="size-4 inline mr-1" />
           Este servicio será ejecutado por un proveedor externo. Los recursos propios (grúa/operador) no son requeridos.
         </div>
       </CardHeader>
@@ -80,7 +80,7 @@ export const OutsourcedProviderSection = ({
           {/* Costo del Tercero */}
           <div className="space-y-2">
             <Label htmlFor="outsourcedCost" className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3 text-orange-600" />
+              <DollarSign className="size-3 text-orange-600" />
               Costo Tercero (CLP) <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -99,7 +99,7 @@ export const OutsourcedProviderSection = ({
         {/* Notas del Servicio Tercero */}
         <div className="space-y-2">
           <Label htmlFor="outsourcedNotes" className="flex items-center gap-1">
-            <FileText className="h-3 w-3 text-muted-foreground" />
+            <FileText className="size-3 text-muted-foreground" />
             Notas del Servicio Tercero
           </Label>
           <Textarea
@@ -120,7 +120,7 @@ export const OutsourcedProviderSection = ({
         {serviceValue > 0 && (
           <div className={`p-4 rounded-lg border ${isLowMargin ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className={`h-4 w-4 ${isLowMargin ? 'text-amber-600' : 'text-green-600'}`} />
+              <TrendingUp className={`size-4 ${isLowMargin ? 'text-amber-600' : 'text-green-600'}`} />
               <span className={`font-medium ${isLowMargin ? 'text-amber-700' : 'text-green-700'}`}>
                 Margen del Servicio
               </span>
@@ -143,13 +143,13 @@ export const OutsourcedProviderSection = ({
             </div>
             {isLowMargin && (
               <div className="mt-2 text-xs text-amber-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="size-3" />
                 Margen bajo. Considera ajustar el valor del servicio o negociar el costo con el tercero.
               </div>
             )}
             {margin < 0 && (
               <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="size-3" />
                 ¡Atención! El costo del tercero supera el valor del servicio. Revisa los montos.
               </div>
           )}

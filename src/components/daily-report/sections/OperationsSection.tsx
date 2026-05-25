@@ -80,7 +80,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <AlertTriangle className={`w-4 h-4 text-${alertLevel.color}-500`} />
+                <AlertTriangle className={`size-4 text-${alertLevel.color}-500`} />
                 <span className="font-medium">{alert.crane}</span>
                 <Badge variant={alertLevel.color === 'red' ? 'destructive' : 'secondary'}>
                   {alertLevel.text}
@@ -96,7 +96,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             </div>
             
             <Button variant="ghost" size="sm" onClick={() => onViewCrane?.(alert)}>
-              <Eye className="w-4 h-4" />
+              <Eye className="size-4" />
             </Button>
           </div>
         </CardContent>
@@ -113,7 +113,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-500" />
+                <Users className="size-4 text-blue-500" />
                 <span className="font-medium">{operator.name}</span>
                 <Badge variant="default">Asignado</Badge>
               </div>
@@ -138,7 +138,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             </div>
             
             <Button variant="ghost" size="sm" onClick={() => onViewOperator?.(operator)}>
-              <Eye className="w-4 h-4" />
+              <Eye className="size-4" />
             </Button>
           </div>
         </CardContent>
@@ -157,7 +157,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
                 <p className="text-sm font-medium text-muted-foreground">Grúas Activas</p>
                 <p className="text-2xl font-bold text-green-600">{data.cranes.active}</p>
               </div>
-              <Truck className="w-8 h-8 text-green-500" />
+              <Truck className="size-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
                 <p className="text-sm font-medium text-muted-foreground">En Mantención</p>
                 <p className="text-2xl font-bold text-orange-600">{data.cranes.maintenance}</p>
               </div>
-              <Clock className="w-8 h-8 text-orange-500" />
+              <Clock className="size-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
                 <p className="text-sm font-medium text-muted-foreground">Operadores Asignados</p>
                 <p className="text-2xl font-bold text-blue-600">{data.operators.assigned}</p>
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
+              <Users className="size-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
@@ -193,7 +193,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
                 <p className="text-sm font-medium text-muted-foreground">Disponibles</p>
                 <p className="text-2xl font-bold text-gray-600">{data.operators.available}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-gray-500" />
+              <CheckCircle className="size-8 text-gray-500" />
             </div>
           </CardContent>
         </Card>
@@ -204,7 +204,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         <Card className="border-red-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Alertas de Documentos
               <Badge variant="destructive">{data.documentAlerts.length}</Badge>
             </CardTitle>
@@ -224,7 +224,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-500" />
+              <Users className="size-5 text-blue-500" />
               Asignaciones de Operadores
               <Badge variant="outline">{data.operators.assignments.length}</Badge>
             </CardTitle>
@@ -245,7 +245,7 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-2">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+              <CheckCircle className="size-12 text-green-500 mx-auto" />
               <p className="text-muted-foreground">
                 No hay alertas operacionales para este día
               </p>

@@ -183,7 +183,7 @@ export const EditHistoricalInvoiceModal = ({
         <div className="space-y-4 py-4">
           {isSystemInvoice && (
             <Alert variant="destructive" className="border-amber-300 bg-amber-50">
-              <ShieldAlert className="h-4 w-4 !text-amber-600" />
+              <ShieldAlert className="size-4 !text-amber-600" />
               <AlertDescription className="text-amber-800 text-xs">
                 Esta factura fue generada por el sistema y está vinculada a cierres, servicios y costos. 
                 Solo se permiten cambios en notas y metadatos. Para editar estado u origen, use el módulo de Facturación.

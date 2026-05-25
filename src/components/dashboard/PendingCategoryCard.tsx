@@ -71,7 +71,7 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className={`flex-shrink-0 ${styles.icon}`}>
-            <Icon className="w-5 h-5" />
+            <Icon className="size-5" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -88,10 +88,10 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0"
+              className="size-7 p-0"
               onClick={() => setExpanded(!expanded)}
             >
-              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </Button>
           )}
           {linkTo && count > 0 && (
@@ -102,7 +102,7 @@ export const PendingCategoryCard: React.FC<PendingCategoryCardProps> = ({
               onClick={handleNavigate}
             >
               {linkLabel}
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="size-3" />
             </Button>
           )}
         </div>

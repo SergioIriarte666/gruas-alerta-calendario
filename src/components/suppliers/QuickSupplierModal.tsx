@@ -66,7 +66,7 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
+            <UserPlus className="size-5 text-primary" />
             Crear Proveedor Rápido
           </DialogTitle>
           <DialogDescription>
@@ -115,12 +115,12 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
             >
               {isCreating ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Creando...
                 </>
               ) : (
                 <>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="size-4 mr-2" />
                   Crear Proveedor
                 </>
               )}

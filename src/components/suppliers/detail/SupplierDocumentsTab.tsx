@@ -68,7 +68,7 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
   if (invoices.length === 0) {
     return (
       <div className="text-center py-12">
-        <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <FileText className="size-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">Sin documentos</h3>
         <p className="text-muted-foreground">No hay facturas o documentos registrados para este proveedor</p>
       </div>
@@ -81,7 +81,7 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         {invoices.length > 3 && (
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar N° factura..."
               value={search}

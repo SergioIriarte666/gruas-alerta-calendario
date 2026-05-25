@@ -77,7 +77,7 @@ export const HistoricalSalesGroupedList = ({
   if (sortedGroupKeys.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
-        <User className="mx-auto h-12 w-12 opacity-20 mb-3" />
+        <User className="mx-auto size-12 opacity-20 mb-3" />
         <p className="text-lg font-medium">No se encontraron resultados para agrupar.</p>
         <p className="text-sm">Intenta ajustar los filtros.</p>
       </div>
@@ -119,8 +119,8 @@ export const HistoricalSalesGroupedList = ({
             <AccordionTrigger className="px-6 py-4 hover:bg-muted/30 transition-colors [&[data-state=open]]:bg-muted/30">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full pr-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                    <User className="h-5 w-5" />
+                  <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <User className="size-5" />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="font-semibold text-lg truncate">
@@ -147,7 +147,7 @@ export const HistoricalSalesGroupedList = ({
               <div className="mt-4 space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder="Filtrar documentos..."

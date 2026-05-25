@@ -110,7 +110,7 @@ export const UnifiedCostFilters = ({
                   isActive && 'bg-violet-600 hover:bg-violet-700 text-white'
                 )}
               >
-                <Icon className="w-4 h-4 mr-1.5" />
+                <Icon className="size-4 mr-1.5" />
                 {option.label}
                 {option.key === 'today' && todayCount > 0 && (
                   <Badge
@@ -135,11 +135,11 @@ export const UnifiedCostFilters = ({
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="relative">
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="size-4 mr-2" />
                 Filtros Avanzados
                 {activeFilterCount > 0 && (
                   <Badge
-                    className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-violet-600 text-white text-xs"
+                    className="absolute -top-2 -right-2 size-5 p-0 flex items-center justify-center bg-violet-600 text-white text-xs"
                   >
                     {activeFilterCount}
                   </Badge>
@@ -152,7 +152,7 @@ export const UnifiedCostFilters = ({
                   <span>Filtros Avanzados</span>
                   {activeFilterCount > 0 && (
                     <Button variant="ghost" size="sm" onClick={onClearFilters}>
-                      <X className="w-4 h-4 mr-1" />
+                      <X className="size-4 mr-1" />
                       Limpiar
                     </Button>
                   )}
@@ -314,7 +314,7 @@ export const UnifiedCostFilters = ({
 
           {activeFilterCount > 0 && (
             <Button variant="ghost" size="sm" onClick={handleClearAll}>
-              <X className="w-4 h-4 mr-1" />
+              <X className="size-4 mr-1" />
               Limpiar todo
             </Button>
           )}

@@ -183,7 +183,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       {/* Información Básica */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b">
-          <PackageMinus className="w-5 h-5 text-destructive" />
+          <PackageMinus className="size-5 text-destructive" />
           <h3 className="font-semibold">Información de Salida</h3>
         </div>
 
@@ -238,7 +238,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
           {watchedValues.item_id && watchedValues.location_id && (
             <div className="md:col-span-2">
               <Alert className={availableStock > 0 ? "border-primary" : "border-destructive"}>
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="size-4" />
                 <AlertDescription>
                   Stock disponible: <span className="font-semibold">{availableStock}</span> {selectedItem?.unit_of_measure || 'unidades'}
                   {availableStock === 0 && ' - No hay stock disponible'}
@@ -303,7 +303,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
           {watchedValues.item_id && watchedValues.location_id && recentEntries.length === 0 && (
             <div className="md:col-span-2">
               <Alert>
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="size-4" />
                 <AlertDescription>
                   No hay entradas activas recientes para copiar trazabilidad; la salida se registrará sin origen documental.
                 </AlertDescription>
@@ -338,7 +338,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
                     !watchedValues.movement_date && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {watchedValues.movement_date ? (
                     format(watchedValues.movement_date, "PPP", { locale: es })
                   ) : (

@@ -331,28 +331,28 @@ export const HistoricalPurchases = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download className="mr-2 size-4" />
                   Exportar
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => exportToExcel(filteredAndSortedInvoices)}>
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  <FileSpreadsheet className="mr-2 size-4" />
                   Excel
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => exportToPDF(filteredAndSortedInvoices)}>
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className="mr-2 size-4" />
                   PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <Button onClick={() => setIsImportOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 size-4" />
               Importar Histórico
             </Button>
             <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 size-4" />
               Nueva Factura
             </Button>
         </div>
@@ -378,7 +378,7 @@ export const HistoricalPurchases = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
-                    <LayoutList className="h-4 w-4" />
+                    <LayoutList className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Tabla</TooltipContent>
@@ -386,7 +386,7 @@ export const HistoricalPurchases = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="grouped" aria-label="Agrupado por proveedor" className="px-3">
-                    <Users className="h-4 w-4" />
+                    <Users className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Agrupado por proveedor</TooltipContent>
@@ -394,7 +394,7 @@ export const HistoricalPurchases = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="pipeline" aria-label="Pipeline por proveedor" className="px-3">
-                    <LayoutGrid className="h-4 w-4" />
+                    <LayoutGrid className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Pipeline por proveedor</TooltipContent>
@@ -461,7 +461,7 @@ export const HistoricalPurchases = () => {
               className="h-8 gap-2"
               onClick={() => setIsBatchEditOpen(true)}
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="size-4" />
               Editar Lote
             </Button>
 
@@ -471,14 +471,14 @@ export const HistoricalPurchases = () => {
               className="h-8 gap-2"
               onClick={confirmBatchDelete}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="size-4" />
               Eliminar
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="sm" className="h-8 gap-2">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="size-4" />
                   Estado
                 </Button>
               </DropdownMenuTrigger>
@@ -500,11 +500,11 @@ export const HistoricalPurchases = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              className="size-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
               onClick={() => setSelectedIds([])}
               title="Cancelar selección"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           </div>
         </div>,

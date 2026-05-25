@@ -92,8 +92,8 @@ export default function ConnectionTest() {
   }, []);
 
   const StatusIcon = ({ success }: { success?: boolean }) => {
-    if (success === undefined) return <Loader2 className="h-5 w-5 animate-spin text-gray-400" />;
-    return success ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
+    if (success === undefined) return <Loader2 className="size-5 animate-spin text-gray-400" />;
+    return success ? <CheckCircle2 className="size-5 text-green-500" /> : <XCircle className="size-5 text-red-500" />;
   };
 
   return (
@@ -101,7 +101,7 @@ export default function ConnectionTest() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Diagnóstico de Conexión (Producción)</h1>
         <Button onClick={runTests} disabled={loading}>
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Ejecutar Pruebas
         </Button>
       </div>

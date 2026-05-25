@@ -36,7 +36,7 @@ export const ClientsFilters = ({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
             <Input
               type="text"
               placeholder="Buscar por nombre, RUT o email..."

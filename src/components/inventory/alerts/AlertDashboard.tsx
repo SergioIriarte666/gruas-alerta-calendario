@@ -60,7 +60,7 @@ export const AlertDashboard: React.FC = () => {
                   }%
                 </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-success" />
+              <CheckCircle className="size-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -74,7 +74,7 @@ export const AlertDashboard: React.FC = () => {
                   {inventoryStats?.totalItems || 0}
                 </p>
               </div>
-              <Package className="w-8 h-8 text-primary" />
+              <Package className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -86,7 +86,7 @@ export const AlertDashboard: React.FC = () => {
                 <p className="text-sm font-medium text-muted-foreground">Alertas Activas</p>
                 <p className="text-2xl font-bold text-foreground">{activeAlerts.length}</p>
               </div>
-              <Clock className="w-8 h-8 text-primary" />
+              <Clock className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -100,7 +100,7 @@ export const AlertDashboard: React.FC = () => {
                   {activeAlerts.filter(a => a.severity === 'critical').length}
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-destructive" />
+              <Activity className="size-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -112,7 +112,7 @@ export const AlertDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+              <TrendingUp className="size-5" />
               Alertas por Tipo
             </CardTitle>
             <CardDescription>
@@ -133,7 +133,7 @@ export const AlertDashboard: React.FC = () => {
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-2" />
+                  <CheckCircle className="size-12 mx-auto mb-2" />
                   <p>No hay alertas activas</p>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export const AlertDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Alertas por Severidad
             </CardTitle>
             <CardDescription>
@@ -175,7 +175,7 @@ export const AlertDashboard: React.FC = () => {
             ) : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 <div className="text-center">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-2" />
+                  <CheckCircle className="size-12 mx-auto mb-2" />
                   <p>No hay alertas activas</p>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export const AlertDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
+              <AlertTriangle className="size-5 text-destructive" />
               Productos Críticos
             </CardTitle>
             <CardDescription>
@@ -204,7 +204,7 @@ export const AlertDashboard: React.FC = () => {
                   className="flex items-center justify-between p-3 border border-destructive/20 rounded-lg bg-destructive/5"
                 >
                   <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    <AlertTriangle className="size-5 text-destructive" />
                     <div>
                       <p className="font-medium text-foreground">{alert.item_name}</p>
                       <p className="text-sm text-muted-foreground">{alert.message}</p>
@@ -230,7 +230,7 @@ export const AlertDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
+              <Bell className="size-5" />
               Resumen del Sistema
             </CardTitle>
           </CardHeader>

@@ -62,11 +62,11 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               {hasError ? (
-                <XCircle className="w-5 h-5 text-red-500" />
+                <XCircle className="size-5 text-red-500" />
               ) : isComplete ? (
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                <CheckCircle2 className="size-5 text-green-500" />
               ) : (
-                <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+                <Loader2 className="size-5 text-cyan-400 animate-spin" />
               )}
               <span className={cn(
                 'font-mono text-sm',

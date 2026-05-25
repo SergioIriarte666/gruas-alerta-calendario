@@ -668,7 +668,7 @@ const Invoices = () => {
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <ShieldAlert className="w-5 h-5" />
+              <ShieldAlert className="size-5" />
               Eliminar factura protegida
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">

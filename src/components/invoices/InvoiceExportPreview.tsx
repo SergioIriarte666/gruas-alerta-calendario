@@ -52,14 +52,14 @@ const InvoiceExportPreview = ({
 
       {!hasValidDateRange ? (
         <Alert>
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="size-4" />
           <AlertDescription>
             Selecciona un rango de fechas para ver la vista previa
           </AlertDescription>
         </Alert>
       ) : !hasInvoices ? (
         <Alert>
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="size-4" />
           <AlertDescription>
             No se encontraron facturas con los filtros seleccionados
           </AlertDescription>
@@ -68,7 +68,7 @@ const InvoiceExportPreview = ({
         <Card className="p-4 bg-muted/50">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-success" />
+              <CheckCircle2 className="size-5 text-success" />
               <span className="font-semibold text-lg">
                 Se exportarán {invoiceCount} {invoiceCount === 1 ? 'factura' : 'facturas'}
               </span>
@@ -76,14 +76,14 @@ const InvoiceExportPreview = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t">
               <div className="flex items-center gap-2 text-sm">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <DollarSign className="size-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Total:</span>
                 <span className="font-semibold">{formatCurrency(totalAmount)}</span>
               </div>
 
               {dateFrom && dateTo && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Período:</span>
                   <span className="font-medium">
                     {format(dateFrom, 'dd/MM/yyyy', { locale: es })} - {format(dateTo, 'dd/MM/yyyy', { locale: es })}
@@ -93,7 +93,7 @@ const InvoiceExportPreview = ({
 
               {selectedClient && (
                 <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Cliente:</span>
                   <span className="font-medium">{selectedClient.name}</span>
                 </div>
@@ -101,7 +101,7 @@ const InvoiceExportPreview = ({
 
               {status && status !== 'all' && (
                 <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Estado:</span>
                   <span className="font-medium">{INVOICE_STATUS_LABELS[status] || status}</span>
                 </div>

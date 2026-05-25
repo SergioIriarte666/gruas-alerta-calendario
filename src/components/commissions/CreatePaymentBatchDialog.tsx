@@ -121,7 +121,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
                     !paymentDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {paymentDate ? formatForDisplay(paymentDate) : "Seleccionar fecha"}
                 </Button>
               </PopoverTrigger>

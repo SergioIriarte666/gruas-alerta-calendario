@@ -77,7 +77,7 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
             <CollapsibleTrigger asChild>
               <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                 <div className="flex items-center gap-3">
-                  <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                  <ChevronRight className={`size-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                   <span className="font-medium text-foreground">{clientName}</span>
                   <Badge variant="secondary" className="text-xs">
                     {groupClosures.length} {groupClosures.length === 1 ? 'cierre' : 'cierres'}
@@ -114,15 +114,15 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end space-x-2">
                             <Button variant="outline" size="sm" onClick={() => onViewDetails(closure)} title="Ver detalles">
-                              <Eye className="w-4 h-4" />
+                              <Eye className="size-4" />
                             </Button>
                             {closure.status === 'open' && (
                               <Button variant="outline" size="sm" onClick={() => onClose(closure.id, closure.folio)} title="Cerrar periodo">
-                                <FileText className="w-4 h-4" />
+                                <FileText className="size-4" />
                               </Button>
                             )}
                             <Button variant="outline" size="sm" onClick={() => onEdit(closure)} title="Editar cierre">
-                              <Edit className="w-4 h-4" />
+                              <Edit className="size-4" />
                             </Button>
                             <Button
                               variant="outline"
@@ -131,7 +131,7 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
                               className="text-destructive border-destructive/40 hover:bg-destructive/10"
                               title="Eliminar cierre"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </TableCell>

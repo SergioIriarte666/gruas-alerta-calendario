@@ -50,7 +50,7 @@ const ServiceInspection = () => {
         <InspectionHeader onBack={() => navigate('/operator')} />
         
         <div className="text-center p-8 bg-destructive/10 rounded-lg border border-destructive/30">
-          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+          <AlertTriangle className="size-16 mx-auto mb-4 text-destructive" />
           <h2 className="text-xl font-semibold mb-2 text-destructive">URL inválida</h2>
           <p className="text-muted-foreground mb-4">
             No se pudo obtener el ID del servicio desde la URL.

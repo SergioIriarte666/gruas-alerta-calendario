@@ -110,13 +110,13 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
         <CardHeader className="pb-3">
           <CardTitle className="text-white text-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <doc.icon className={`w-5 h-5 text-${status.color}-400`} />
+              <doc.icon className={`size-5 text-${status.color}-400`} />
               {doc.name}
             </div>
             <div className="flex items-center gap-2">
-              <StatusIcon className={`w-5 h-5 text-${status.color}-400`} />
+              <StatusIcon className={`size-5 text-${status.color}-400`} />
               {alert && (
-                <Settings className="w-4 h-4 text-gray-400" />
+                <Settings className="size-4 text-gray-400" />
               )}
             </div>
           </CardTitle>
@@ -159,7 +159,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
               onClick={() => handleDownload(doc.type)}
               disabled={!hasDocument}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="size-4 mr-2" />
               {hasDocument ? 'Descargar' : 'No disponible'}
             </Button>
             <Button 
@@ -169,7 +169,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
               onClick={() => handleUpload(doc.type, doc.name)}
               disabled={uploading}
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <Upload className="size-4 mr-2" />
               {uploading ? 'Subiendo...' : hasDocument ? 'Actualizar' : 'Subir'}
             </Button>
           </div>
@@ -191,7 +191,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
         <Card className="border-red-500/30 bg-red-500/5">
           <CardHeader>
             <CardTitle className="text-red-400 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Alertas de Documentación
             </CardTitle>
           </CardHeader>
@@ -230,7 +230,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5 text-tms-green" />
+            <FileText className="size-5 text-tms-green" />
             Estado de Documentación
           </CardTitle>
         </CardHeader>
@@ -271,7 +271,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
         <CardHeader>
           <CardTitle className="text-white flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-tms-green" />
+              <Calendar className="size-5 text-tms-green" />
               Configuración de Recordatorios
             </div>
             <Button 
@@ -280,7 +280,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
               className="border-tms-green/50 text-tms-green"
               onClick={() => setShowSettingsForm(true)}
             >
-              <Settings className="w-4 h-4 mr-2" />
+              <Settings className="size-4 mr-2" />
               Configurar Alertas
             </Button>
           </CardTitle>
@@ -293,7 +293,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
                 return (
                   <div key={doc.type} className="p-3 border border-gray-700 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <doc.icon className="w-4 h-4 text-tms-green" />
+                      <doc.icon className="size-4 text-tms-green" />
                       <span className="text-white text-sm font-medium">{doc.name}</span>
                     </div>
                     {alert ? (

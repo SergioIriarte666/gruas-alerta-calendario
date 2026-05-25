@@ -26,7 +26,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
         {/* Respaldo Completo */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Database className="w-4 h-4 text-primary" />
+            <Database className="size-4 text-primary" />
             <span className="font-medium text-foreground">Respaldo Completo</span>
           </div>
           
@@ -37,9 +37,9 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
               className="w-full bg-gradient-primary font-medium text-primary-foreground hover:opacity-95"
             >
               {progress.isGenerating && progress.stage.includes('SQL') ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                <RefreshCw className="size-4 mr-2 animate-spin" />
               ) : (
-                <FileCode className="w-4 h-4 mr-2" />
+                <FileCode className="size-4 mr-2" />
               )}
               Dump SQL
             </Button>
@@ -51,9 +51,9 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
               className="w-full border-primary text-primary hover:bg-primary-soft"
             >
               {progress.isGenerating && progress.stage.includes('JSON') ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                <RefreshCw className="size-4 mr-2 animate-spin" />
               ) : (
-                <FileText className="w-4 h-4 mr-2" />
+                <FileText className="size-4 mr-2" />
               )}
               Export JSON
             </Button>
@@ -67,7 +67,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
         {/* Respaldo Rápido */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-primary" />
+            <Zap className="size-4 text-primary" />
             <span className="font-medium text-foreground">Respaldo Rápido</span>
           </div>
           
@@ -78,9 +78,9 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
             className="w-full"
           >
             {progress.isGenerating && progress.stage.includes('Rápido') ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <RefreshCw className="size-4 mr-2 animate-spin" />
             ) : (
-              <Zap className="w-4 h-4 mr-2" />
+              <Zap className="size-4 mr-2" />
             )}
             Configuración JSON
           </Button>
@@ -96,7 +96,7 @@ export const BackupControlsSection: React.FC<BackupControlsSectionProps> = ({
       {lastGeneratedBackup?.fileName && onDownloadBackup ? (
         <div className="flex justify-end">
           <Button type="button" variant="outline" size="sm" onClick={onDownloadBackup}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="mr-2 size-4" />
             Descargar archivo
           </Button>
         </div>

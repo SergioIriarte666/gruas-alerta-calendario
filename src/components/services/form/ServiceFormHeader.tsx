@@ -25,7 +25,7 @@ export const ServiceFormHeader = ({ service }: ServiceFormHeaderProps) => {
         borderLeftWidth: '4px'
       }}
     >
-      <AlertTriangle className="h-4 w-4 text-purple-400" />
+      <AlertTriangle className="size-4 text-purple-400" />
       <AlertDescription className="text-white" style={{ color: '#ffffff' }}>
         {isAdmin 
           ? "⚠️ CUIDADO: Este servicio está facturado. Como administrador, puedes editarlo, pero ten precaución con los cambios."

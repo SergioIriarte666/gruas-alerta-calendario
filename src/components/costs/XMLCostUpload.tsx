@@ -1193,13 +1193,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       onCheckedChange={setSyncToInventory}
                     />
                     <Label className="text-sm flex items-center gap-2">
-                      <Package className="w-4 h-4" />
+                      <Package className="size-4" />
                       Sincronizar con Bodega/Inventario
                     </Label>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          <Info className="size-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Los costos se registrarán como entradas de inventario automáticamente</p>
@@ -1221,7 +1221,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               {/* Duplicate Warning Banner */}
               {duplicateResults.length > 0 && showDuplicateWarning && (
                 <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  <ShieldAlert className="size-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
                     <strong>⚠️ Se detectaron coincidencias que requieren revisión.</strong>
                     <span className="ml-2">
@@ -1259,7 +1259,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               {/* Checking duplicates indicator */}
               {isCheckingDuplicates && (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <Loader2 className="size-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
                 </div>
               )}
@@ -1267,7 +1267,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               {/* Searching cost matches indicator */}
               {isSearchingMatches && (
                 <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <Loader2 className="size-4 animate-spin text-blue-600" />
                   <span className="text-sm text-blue-700">Buscando costos existentes que coincidan...</span>
                 </div>
               )}
@@ -1275,7 +1275,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               {/* Cost matching summary */}
               {Object.keys(matchedCosts).length > 0 && (
                 <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-                  <Link2 className="h-4 w-4 text-blue-600" />
+                  <Link2 className="size-4 text-blue-600" />
                   <AlertDescription className="text-blue-800">
                     <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
                     Puedes vincular la factura al costo existente o crear un gasto nuevo.
@@ -1288,7 +1288,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 <div className="space-y-2">
                   {parseResult.errors.length > 0 && (
                     <Alert className="border-destructive bg-destructive/10">
-                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <AlertCircle className="size-4 text-destructive" />
                       <AlertDescription className="text-destructive">
                         <strong>Errores encontrados:</strong>
                         <ul className="mt-2 list-disc list-inside space-y-1">
@@ -1305,7 +1305,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
                   {parseResult.warnings.length > 0 && (
                     <Alert className="border-yellow-600 bg-yellow-600/10">
-                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <AlertCircle className="size-4 text-yellow-600" />
                       <AlertDescription className="text-yellow-600">
                         <strong>Advertencias:</strong>
                         <ul className="mt-2 list-disc list-inside space-y-1">
@@ -1335,7 +1335,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 <Card className="overflow-hidden border-border/70 shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <Building className="h-5 w-5" />
+                      <Building className="size-5" />
                       Proveedores Encontrados ({parseResult.suppliers.length})
                     </CardTitle>
                   </CardHeader>
@@ -1457,7 +1457,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 <Card className="overflow-hidden border-border/70 shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <Receipt className="h-5 w-5" />
+                      <Receipt className="size-5" />
                       Documentos Encontrados ({parseResult.documents.length})
                     </CardTitle>
                   </CardHeader>
@@ -1534,7 +1534,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             {/* Matched cost selector */}
                             {hasMatches && (
                               <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded bg-blue-100 text-blue-800">
-                                <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                <Link2 className="size-3.5 flex-shrink-0" />
                                 <span className="font-medium">🔗 Costo encontrado:</span>
                                 <Select
                                   value={currentDecision}
@@ -1590,7 +1590,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                     <span>Total: ${document.total_amount.toLocaleString('es-CL')}</span>
                                     {document.issue_date && (
                                       <span className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
+                                        <Calendar className="size-3" />
                                         Emisión: {document.issue_date}
                                       </span>
                                     )}
@@ -1613,7 +1613,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   onClick={() => setExpandedDocumentDetails(prev => ({ ...prev, [documentKey]: !showDetails }))}
                                 >
                                   {showDetails ? 'Ocultar detalles' : 'Ver detalles'}
-                                  {showDetails ? <ChevronUp className="ml-1 h-3.5 w-3.5" /> : <ChevronDown className="ml-1 h-3.5 w-3.5" />}
+                                  {showDetails ? <ChevronUp className="ml-1 size-3.5" /> : <ChevronDown className="ml-1 size-3.5" />}
                                 </Button>
                               </div>
                             </div>
@@ -1641,7 +1641,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                       <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div className="min-w-0 flex-1">
                                           <div className="flex items-center gap-2 text-violet-800 dark:text-violet-200">
-                                            <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                                            <Sparkles className="mt-0.5 size-4 flex-shrink-0" />
                                             <span className="font-medium">Glosa sugerida por historial</span>
                                             <Badge variant="secondary" className="text-[11px]">
                                               {historicalSuggestion.matchCount} similar{historicalSuggestion.matchCount > 1 ? 'es' : ''}
@@ -1795,9 +1795,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     disabled={isUploading || selectedDocuments.size === 0}
                   >
                     {isUploading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="size-4 mr-2 animate-spin" />
                     ) : (
-                      <Database className="h-4 w-4 mr-2" />
+                      <Database className="size-4 mr-2" />
                     )}
                     Confirmar carga
                     {selectedDocuments.size > 0 && ` (${selectedDocuments.size})`}

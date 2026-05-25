@@ -63,13 +63,13 @@ export const InventoryAlertsPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {alertStats && alertStats.criticalAlerts > 0 && (
               <Badge variant="destructive" className="flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
+                <AlertTriangle className="size-3" />
                 {alertStats.criticalAlerts} Críticas
               </Badge>
             )}
             {alertStats && alertStats.warningAlerts > 0 && (
               <Badge variant="outline" className="flex items-center gap-1 border-warning text-warning">
-                <Bell className="w-3 h-3" />
+                <Bell className="size-3" />
                 {alertStats.warningAlerts} Advertencias
               </Badge>
             )}
@@ -81,8 +81,8 @@ export const InventoryAlertsPage: React.FC = () => {
             disabled={!canCreateAlerts}
             title={!canCreateAlerts ? `Permisos insuficientes. Rol actual: ${user?.role}` : undefined}
           >
-            {!canCreateAlerts && <Shield className="w-4 h-4" />}
-            <Plus className="w-4 h-4" />
+            {!canCreateAlerts && <Shield className="size-4" />}
+            <Plus className="size-4" />
             Nueva Alerta
           </Button>
         </div>
@@ -99,7 +99,7 @@ export const InventoryAlertsPage: React.FC = () => {
                   {alertStats?.totalActiveAlerts || 0}
                 </p>
               </div>
-              <Bell className="w-8 h-8 text-primary" />
+              <Bell className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -113,7 +113,7 @@ export const InventoryAlertsPage: React.FC = () => {
                   {alertStats?.criticalAlerts || 0}
                 </p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-destructive" />
+              <AlertTriangle className="size-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export const InventoryAlertsPage: React.FC = () => {
                   {alertStats?.activeConfigurations || 0}
                 </p>
               </div>
-              <Settings className="w-8 h-8 text-primary" />
+              <Settings className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -141,7 +141,7 @@ export const InventoryAlertsPage: React.FC = () => {
                   {alertStats?.totalAlerts || 0}
                 </p>
               </div>
-              <TrendingUp className="w-8 h-8 text-primary" />
+              <TrendingUp className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -151,19 +151,19 @@ export const InventoryAlertsPage: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="active" className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
+            <Activity className="size-4" />
             Alertas Activas
           </TabsTrigger>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
+            <TrendingUp className="size-4" />
             Dashboard
           </TabsTrigger>
           <TabsTrigger value="configuration" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
+            <Settings className="size-4" />
             Configuración
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
+            <Bell className="size-4" />
             Historial
           </TabsTrigger>
         </TabsList>
@@ -173,7 +173,7 @@ export const InventoryAlertsPage: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
+                <Activity className="size-5" />
                 Alertas Activas
               </CardTitle>
               <CardDescription>

@@ -116,7 +116,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-muted rounded-lg">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+                <Clock className="size-4 text-muted-foreground" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.quoted}</p>
@@ -130,7 +130,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-muted rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                <AlertTriangle className="size-4 text-muted-foreground" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.pending_po}</p>
@@ -144,7 +144,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-muted rounded-lg">
-                <CheckCircle className="w-4 h-4 text-muted-foreground" />
+                <CheckCircle className="size-4 text-muted-foreground" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.with_purchase_order}</p>
@@ -158,7 +158,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-muted rounded-lg">
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <DollarSign className="size-4 text-muted-foreground" />
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">{formatCurrency(stats.total_value)}</p>
@@ -173,7 +173,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+            <FileText className="size-5" />
             Gestión de Órdenes de Compra
           </CardTitle>
         </CardHeader>
@@ -181,7 +181,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por folio, tipo de servicio o número O.C..."
                   value={searchTerm}
@@ -230,7 +230,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
         {filteredServices.length === 0 ? (
           <Card className="glass-card">
             <CardContent className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <FileText className="size-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No hay servicios</h3>
               <p className="text-gray-400">
                 {searchTerm ? 'No se encontraron servicios con los filtros aplicados' : 'No hay servicios pendientes de orden de compra'}
@@ -257,13 +257,13 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         </Badge>
                         
                         <Badge variant="outline" className={statusInfo.color}>
-                          <StatusIcon className="w-3 h-3 mr-1" />
+                          <StatusIcon className="size-3 mr-1" />
                           {statusInfo.label}
                         </Badge>
 
                         {(service.purchaseOrderNumber || service.purchaseOrder) && (
                           <Badge variant="secondary" className="bg-green-500/20 text-black border-green-500/30">
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                            <CheckCircle className="size-3 mr-1" />
                             Con O.C: {service.purchaseOrderNumber || service.purchaseOrder}
                           </Badge>
                         )}
@@ -272,18 +272,18 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
+                            <Calendar className="size-3" />
                             <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                           </div>
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Building2 className="w-3 h-3" />
+                            <Building2 className="size-3" />
                             <span>{service.serviceType.name}</span>
                           </div>
                         </div>
 
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
+                            <MapPin className="size-3" />
                             <div className="truncate">
                               {service.origin}
                               {service.destination !== service.origin && (
@@ -295,7 +295,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
 
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-foreground">
-                            <DollarSign className="w-3 h-3" />
+                            <DollarSign className="size-3" />
                             <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
                           </div>
                         </div>

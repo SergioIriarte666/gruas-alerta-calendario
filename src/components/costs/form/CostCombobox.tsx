@@ -70,7 +70,7 @@ export const CostCombobox = ({
           )}>
             {inputValue || placeholder}
           </span>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] p-0 bg-popover border-border" align="start">
@@ -101,7 +101,7 @@ export const CostCombobox = ({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "mr-2 size-4",
                         value === item.value ? "opacity-100" : "opacity-0"
                       )}
                     />

@@ -119,12 +119,12 @@ export const PurchaseGroupingView = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
+            <Package className="size-5" />
             Compras Agrupadas por Documento
           </CardTitle>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por documento o proveedor..."
                 value={searchTerm}
@@ -149,7 +149,7 @@ export const PurchaseGroupingView = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
+              <FileText className="size-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold">{purchaseGroups.length}</div>
                 <div className="text-sm text-muted-foreground">Documentos únicos</div>
@@ -161,7 +161,7 @@ export const PurchaseGroupingView = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="size-4 text-green-600" />
               <div>
                 <div className="text-2xl font-bold">
                   {purchaseGroups.reduce((sum, g) => sum + g.totalItems, 0)}
@@ -175,7 +175,7 @@ export const PurchaseGroupingView = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-blue-600" />
+              <DollarSign className="size-4 text-blue-600" />
               <div>
                 <div className="text-2xl font-bold">
                   ${purchaseGroups.reduce((sum, g) => sum + g.totalCost, 0).toLocaleString()}
@@ -192,7 +192,7 @@ export const PurchaseGroupingView = () => {
         {purchaseGroups.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-muted-foreground">
-              <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <Package className="size-12 mx-auto mb-4 opacity-50" />
               <p>No se encontraron compras agrupadas</p>
               <p className="text-sm mt-2">
                 Asegúrese de usar el campo "Documento de Referencia" al registrar entradas de inventario
@@ -212,9 +212,9 @@ export const PurchaseGroupingView = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {expandedGroups.has(group.document) ? (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown className="size-4" />
                         ) : (
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="size-4" />
                         )}
                         <div>
                           <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export const PurchaseGroupingView = () => {
                             </code>
                             {group.hasDiscrepancy && (
                               <Badge variant="destructive" className="text-xs">
-                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                <AlertTriangle className="size-3 mr-1" />
                                 Discrepancia
                               </Badge>
                             )}
@@ -233,7 +233,7 @@ export const PurchaseGroupingView = () => {
                               <span className="mr-4">Proveedor: {group.supplier}</span>
                             )}
                             <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
+                              <Calendar className="size-3" />
                               {format(group.date, 'dd/MM/yyyy', { locale: es })}
                             </span>
                           </div>

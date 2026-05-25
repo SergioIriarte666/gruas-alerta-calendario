@@ -58,7 +58,7 @@ export const FormSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-violet-500" />
+            <Receipt className="size-4 text-violet-500" />
             Resumen del Servicio
           </span>
           {getStatusBadge()}
@@ -67,7 +67,7 @@ export const FormSummaryPanel = ({
       <CardContent className="space-y-4">
         {/* Folio */}
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground" />
+          <FileText className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Folio:</span>
           <span className="text-sm font-mono font-semibold text-violet-600 dark:text-violet-400">
             {folio || 'Auto-generado'}
@@ -77,7 +77,7 @@ export const FormSummaryPanel = ({
         {/* Cliente */}
         {clientName && (
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cliente:</span>
             <span className="text-sm font-medium truncate">{toTitleCase(clientName)}</span>
           </div>
@@ -86,7 +86,7 @@ export const FormSummaryPanel = ({
         {/* Tipo de Servicio */}
         {serviceTypeName && (
           <div className="flex items-start gap-2">
-            <Truck className="h-4 w-4 text-muted-foreground mt-0.5" />
+            <Truck className="size-4 text-muted-foreground mt-0.5" />
             <span className="text-xs text-muted-foreground">Tipo:</span>
             <Badge variant="outline" className="text-xs">
               {serviceTypeName}
@@ -97,7 +97,7 @@ export const FormSummaryPanel = ({
         {/* Ubicación */}
         {(origin || destination) && (
           <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+            <MapPin className="size-4 text-muted-foreground mt-0.5" />
             <div className="text-xs space-y-1">
               {origin && <div className="truncate"><span className="text-muted-foreground">Origen:</span> {origin}</div>}
               {destination && <div className="truncate"><span className="text-muted-foreground">Destino:</span> {destination}</div>}
@@ -107,7 +107,7 @@ export const FormSummaryPanel = ({
 
         {/* Recursos */}
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <Users className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Recursos:</span>
           <div className="flex gap-1">
             {craneName && (
@@ -128,7 +128,7 @@ export const FormSummaryPanel = ({
         {/* Financiero */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Financiero:</span>
           </div>
           

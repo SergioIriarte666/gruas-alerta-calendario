@@ -28,7 +28,7 @@ export const CalendarControls = ({
               className="border-gray-700 text-gray-300"
               onClick={() => onNavigate('prev')}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
             </Button>
             <h2 className="text-xl font-semibold text-foreground min-w-48 sm:min-w-64 text-center">
               {viewTitle}
@@ -39,7 +39,7 @@ export const CalendarControls = ({
               className="border-gray-700 text-gray-300"
               onClick={() => onNavigate('next')}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Button>
           </div>
           <div className="flex space-x-2">

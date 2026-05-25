@@ -102,7 +102,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por descripción o categoría..."
                 value={searchTerm}
@@ -139,7 +139,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
       <SectionCard title="Detalle de Costos">
           {filteredCosts.length === 0 ? (
             <div className="text-center py-8">
-              <DollarSign className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <DollarSign className="mx-auto mb-4 size-12 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-medium text-foreground">No se encontraron costos</h3>
               <p className="text-muted-foreground">
                 {searchTerm || filterCategory !== 'all' 
@@ -165,7 +165,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="size-4" />
                             {formatForDisplay(cost.date)}
                           </div>
                           <div className="text-muted-foreground">

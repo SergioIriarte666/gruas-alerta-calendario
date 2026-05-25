@@ -64,7 +64,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
         <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
+              <Trophy className="size-5 text-yellow-500" />
               Top 5 Clientes
             </CardTitle>
           </CardHeader>
@@ -74,7 +74,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                 <div key={client.clientId} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
+                      <span className={`inline-flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
                         {index + 1}
                       </span>
                       <div className="min-w-0">

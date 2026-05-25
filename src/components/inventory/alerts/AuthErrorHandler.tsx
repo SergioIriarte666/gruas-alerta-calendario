@@ -118,7 +118,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
   if (hasAuthInconsistency || hasSessionDesync) {
     return (
       <Alert className="mb-4 border-destructive bg-destructive/10">
-        <AlertTriangle className="h-4 w-4" />
+        <AlertTriangle className="size-4" />
         <AlertDescription>
           <div className="flex flex-col gap-4">
             <div>
@@ -136,7 +136,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
                 size="sm"
                 disabled={isVerifying}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isVerifying ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`size-4 mr-2 ${isVerifying ? 'animate-spin' : ''}`} />
                 {isVerifying ? 'Verificando...' : 'Actualizar Sesión'}
               </Button>
               <Button
@@ -144,7 +144,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
                 variant="destructive"
                 size="sm"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="size-4 mr-2" />
                 Reiniciar Sesión
               </Button>
             </div>

@@ -34,13 +34,13 @@ export const OperatorsMobileView = ({
     return (
       <Card className="bg-card border">
         <CardContent className="p-6 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
           <p className="text-muted-foreground mb-4">
             No hay operadores que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Operador
           </Button>
         </CardContent>
@@ -52,13 +52,13 @@ export const OperatorsMobileView = ({
     return (
       <Card className="bg-card border">
         <CardContent className="p-6 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer operador al sistema
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Primer Operador
           </Button>
         </CardContent>
@@ -100,23 +100,23 @@ export const OperatorsMobileView = ({
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-foreground text-sm">
-                <IdCard className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <IdCard className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>{operator.rut}</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm">
-                <Phone className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                <Phone className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                 <span>{operator.phone}</span>
               </div>
 
               {operator.operatorType === 'crane_operator' ? (
                 <div className="flex items-center text-foreground text-sm">
-                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <Briefcase className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>Licencia: {operator.licenseNumber || '-'}</span>
                 </div>
               ) : (
                 <div className="flex items-center text-foreground text-sm">
-                  <Briefcase className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <Briefcase className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{operator.position || operator.department || '-'}</span>
                 </div>
               )}
@@ -141,7 +141,7 @@ export const OperatorsMobileView = ({
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
-                <Eye className="w-4 h-4 mr-1" />
+                <Eye className="size-4 mr-1" />
                 Ver
               </Button>
               
@@ -154,7 +154,7 @@ export const OperatorsMobileView = ({
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
-                <Edit className="w-4 h-4 mr-1" />
+                <Edit className="size-4 mr-1" />
                 Editar
               </Button>
               
@@ -171,7 +171,7 @@ export const OperatorsMobileView = ({
                   isMobile ? "w-full" : "flex-1"
                 )}
               >
-                {operator.isActive ? <UserX className="w-4 h-4 mr-1" /> : <UserCheck className="w-4 h-4 mr-1" />}
+                {operator.isActive ? <UserX className="size-4 mr-1" /> : <UserCheck className="size-4 mr-1" />}
                 {operator.isActive ? 'Desactivar' : 'Activar'}
               </Button>
               
@@ -184,7 +184,7 @@ export const OperatorsMobileView = ({
                   isMobile ? "w-full" : "px-3"
                 )}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
                 {isMobile && <span className="ml-1">Eliminar</span>}
               </Button>
             </div>

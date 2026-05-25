@@ -87,7 +87,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Calendar className="h-6 w-6 text-primary" />
+              <Calendar className="size-6 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Total Pagos</p>
                 <p className="text-xl font-bold text-foreground">{monthStats.total}</p>
@@ -99,7 +99,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Clock className="h-6 w-6 text-yellow-600" />
+              <Clock className="size-6 text-yellow-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Pendientes</p>
                 <p className="text-xl font-bold text-foreground">{monthStats.pending}</p>
@@ -112,7 +112,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
+              <AlertTriangle className="size-6 text-destructive" />
               <div>
                 <p className="text-sm text-muted-foreground">Vencidos</p>
                 <p className="text-xl font-bold text-foreground">{monthStats.overdue}</p>
@@ -125,7 +125,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-primary" />
+              <CheckCircle className="size-6 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">Pagados</p>
                 <p className="text-xl font-bold text-foreground">{monthStats.paid}</p>
@@ -149,7 +149,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 size="sm"
                 onClick={() => navigateMonth('prev')}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-4" />
               </Button>
               <Button
                 variant="outline"
@@ -163,7 +163,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 size="sm"
                 onClick={() => navigateMonth('next')}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="size-4" />
               </Button>
             </div>
           </div>

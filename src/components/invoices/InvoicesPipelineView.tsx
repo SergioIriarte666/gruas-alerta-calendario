@@ -204,7 +204,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
   if (!hasInitialInvoices) {
     return (
       <div className="text-center py-12">
-        <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <FileText className="size-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-foreground mb-2">No hay facturas</h3>
         <p className="text-gray-400">Crea tu primera factura para comenzar</p>
       </div>
@@ -219,7 +219,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
       {/* Search */}
       <div className="flex items-center space-x-4">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Buscar por folio o cliente..."
             value={searchTerm}
@@ -251,7 +251,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={cn("p-2 rounded-lg", status.bgColor)}>
-                      <Icon className={cn("w-5 h-5", status.color)} />
+                      <Icon className={cn("size-5", status.color)} />
                     </div>
                     <div>
                       <CardTitle className={cn("text-lg", status.color)}>
@@ -281,9 +281,9 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                       )}
                     </div>
                     {isExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                      <ChevronUp className="size-5 text-gray-400" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="size-5 text-gray-400" />
                     )}
                   </div>
                 </div>
@@ -321,17 +321,17 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                 
                                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                   <div className="flex items-center space-x-1">
-                                    <User className="w-3 h-3" />
+                                    <User className="size-3" />
                                     <span className="truncate">
                                       {(invoiceWithDetails as any).client?.name || 'Cliente no especificado'}
                                     </span>
                                   </div>
                                   <div className="flex items-center space-x-1">
-                                    <Calendar className="w-3 h-3" />
+                                    <Calendar className="size-3" />
                                     <span>{formatDate(invoice.dueDate)}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
-                                    <DollarSign className="w-3 h-3" />
+                                    <DollarSign className="size-3" />
                                     <span className="font-medium text-foreground">
                                       {formatCurrency(invoice.total)}
                                     </span>
@@ -357,7 +357,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   onClick={() => onView(invoice)}
                                   className="text-muted-foreground hover:text-foreground hover:bg-muted"
                                 >
-                                  <Eye className="w-4 h-4" />
+                                  <Eye className="size-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -365,7 +365,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   onClick={() => onEdit(invoice)}
                                   className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  <Edit className="size-4" />
                                 </Button>
                                 {(invoice.status === 'sent' || invoice.status === 'overdue') && (
                                   <Button
@@ -374,7 +374,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                     onClick={() => onMarkAsPaid(invoice.id)}
                                     className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
                                   >
-                                    <CreditCard className="w-4 h-4" />
+                                    <CreditCard className="size-4" />
                                   </Button>
                                 )}
                                 <Button
@@ -383,7 +383,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   onClick={() => onDelete(invoice.id)}
                                   className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="size-4" />
                                 </Button>
                               </div>
                             </div>
@@ -394,7 +394,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
 
                     {group.invoices.length === 0 && (
                       <div className="text-center py-8 text-gray-400">
-                        <Icon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <Icon className="size-12 mx-auto mb-2 opacity-50" />
                         <p>No hay facturas en {status.title.toLowerCase()}</p>
                       </div>
                     )}

@@ -46,7 +46,7 @@ export const CostAmountSection = ({
       <FormField name="amount" control={form.control} render={({ field }) => (
         <FormItem>
           <Label className="flex items-center gap-2 text-base font-medium text-foreground">
-            <Receipt className="w-4 h-4" />
+            <Receipt className="size-4" />
             Monto Total
           </Label>
           <div className="relative">
@@ -106,7 +106,7 @@ export const CostAmountSection = ({
           render={({ field }) => (
             <FormItem>
               <Label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <CalendarCheck className="w-4 h-4" />
+                <CalendarCheck className="size-4" />
                 Fecha real de pago
               </Label>
               <FormControl>
@@ -148,7 +148,7 @@ export const CostAmountSection = ({
                 className="ml-4"
                 size="sm"
               >
-                <Calculator className="w-4 h-4 mr-2" />
+                <Calculator className="size-4 mr-2" />
                 Desglosar Gastos
               </Button>
             </div>

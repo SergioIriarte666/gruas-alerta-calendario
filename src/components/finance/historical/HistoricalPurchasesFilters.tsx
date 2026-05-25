@@ -107,7 +107,7 @@ export const HistoricalPurchasesFilters = ({
     <div className="space-y-4 mb-6 bg-card p-4 rounded-lg border shadow-sm">
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="relative flex-1 w-full lg:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por proveedor, N° factura o descripción..."
             value={localFilters.searchTerm || ''}
@@ -129,10 +129,10 @@ export const HistoricalPurchasesFilters = ({
                 variant="outline"
                 className={cn('ml-auto lg:ml-0 gap-2', activeFilterCount > 0 && 'border-primary text-primary')}
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="size-4" />
                 Filtros
                 {activeFilterCount > 0 && (
-                  <Badge variant="default" className="ml-1 rounded-full h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  <Badge variant="default" className="ml-1 rounded-full size-5 p-0 flex items-center justify-center text-[10px]">
                     {activeFilterCount}
                   </Badge>
                 )}
@@ -159,7 +159,7 @@ export const HistoricalPurchasesFilters = ({
                       }}
                     >
                       Limpiar todo
-                      <X className="ml-2 h-3 w-3" />
+                      <X className="ml-2 size-3" />
                     </Button>
                   </div>
                   <Separator className="mt-3" />
@@ -177,7 +177,7 @@ export const HistoricalPurchasesFilters = ({
                             size="sm"
                             className={cn('w-full justify-start text-left font-normal', !localFilters.dateFrom && 'text-muted-foreground')}
                           >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            <CalendarIcon className="mr-2 size-3" />
                             {localFilters.dateFrom ? format(localFilters.dateFrom, 'P', { locale: es }) : 'Seleccionar'}
                           </Button>
                         </PopoverTrigger>
@@ -200,7 +200,7 @@ export const HistoricalPurchasesFilters = ({
                             size="sm"
                             className={cn('w-full justify-start text-left font-normal', !localFilters.dateTo && 'text-muted-foreground')}
                           >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            <CalendarIcon className="mr-2 size-3" />
                             {localFilters.dateTo ? format(localFilters.dateTo, 'P', { locale: es }) : 'Seleccionar'}
                           </Button>
                         </PopoverTrigger>

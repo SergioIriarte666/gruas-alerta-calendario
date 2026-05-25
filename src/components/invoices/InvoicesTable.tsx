@@ -100,11 +100,11 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
 // Sort icon component
 const SortIcon = ({ field, sortField, sortDirection }: { field: string; sortField?: string; sortDirection?: 'asc' | 'desc' }) => {
   if (sortField !== field) {
-    return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
+    return <ArrowUpDown className="size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' 
-    ? <ArrowUp className="w-4 h-4 text-primary" />
-    : <ArrowDown className="w-4 h-4 text-primary" />;
+    ? <ArrowUp className="size-4 text-primary" />
+    : <ArrowDown className="size-4 text-primary" />;
 };
 
 // Sortable header component
@@ -202,7 +202,7 @@ const InvoicesTable = ({
     return (
       <Card className="bg-card border">
         <CardContent className="p-8 text-center">
-          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <FileText className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay facturas</h3>
           <p className="text-muted-foreground">
             No se encontraron facturas que coincidan con los filtros aplicados
@@ -311,7 +311,7 @@ const InvoicesTable = ({
                             onClick={() => setViewingInvoice(getInvoiceWithDetails(invoice))}
                             title="Ver detalles"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="size-4" />
                           </Button>
                           <Button
                             variant="outline"
@@ -327,7 +327,7 @@ const InvoicesTable = ({
                             title="Editar factura"
                             disabled={!invoice.id}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="size-4" />
                           </Button>
                           {invoice.status !== 'paid' && (
                             <Button
@@ -345,7 +345,7 @@ const InvoicesTable = ({
                               title="Marcar como pagada"
                               disabled={!invoice.id}
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <CheckCircle className="size-4" />
                             </Button>
                           )}
                           {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
@@ -357,7 +357,7 @@ const InvoicesTable = ({
                               title="Anular con Nota de Crédito"
                               disabled={!invoice.id}
                             >
-                              <Ban className="w-4 h-4" />
+                              <Ban className="size-4" />
                             </Button>
                           )}
                           {invoice.status === 'cancelled' && (

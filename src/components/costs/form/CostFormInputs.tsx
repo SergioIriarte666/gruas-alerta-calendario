@@ -83,7 +83,7 @@ export const CostFormInputs = ({
             <Card className="bg-card border">
                 <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                        <FileText className="w-5 h-5" />
+                        <FileText className="size-5" />
                         Información Básica
                     </CardTitle>
                 </CardHeader>
@@ -92,7 +92,7 @@ export const CostFormInputs = ({
                         <FormField name="date" control={form.control} render={({ field }) => (
                             <FormItem>
                                 <Label className="flex items-center gap-2 text-foreground">
-                                    <Calendar className="w-4 h-4" />
+                                    <Calendar className="size-4" />
                                     Fecha
                                 </Label>
                                 <FormControl>
@@ -109,7 +109,7 @@ export const CostFormInputs = ({
                         <FormField name="category_id" control={form.control} render={({ field }) => (
                             <FormItem>
                                 <Label className="flex items-center gap-2 text-foreground">
-                                    <Tag className="w-4 h-4" />
+                                    <Tag className="size-4" />
                                     Categoría *
                                 </Label>
                                 <Select 
@@ -152,7 +152,7 @@ export const CostFormInputs = ({
                     <FormField name="description" control={form.control} render={({ field }) => (
                         <FormItem>
                             <Label className="flex items-center gap-2 text-foreground">
-                                <FileText className="w-4 h-4" />
+                                <FileText className="size-4" />
                                 Descripción *
                             </Label>
                             <FormControl>
@@ -173,7 +173,7 @@ export const CostFormInputs = ({
             <Card className="bg-card border">
                 <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                        <DollarSign className="w-5 h-5" />
+                        <DollarSign className="size-5" />
                         Monto
                     </CardTitle>
                 </CardHeader>
@@ -198,7 +198,7 @@ export const CostFormInputs = ({
                 <Card className="bg-card border">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                            <Tag className="w-5 h-5" />
+                            <Tag className="size-5" />
                             Subcategoría
                         </CardTitle>
                     </CardHeader>
@@ -260,7 +260,7 @@ export const CostFormInputs = ({
                 <Card className="bg-blue-50/50 border-blue-200">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2 text-lg text-blue-900">
-                            <Package className="w-5 h-5" />
+                            <Package className="size-5" />
                             Información de Piezas y Repuestos
                         </CardTitle>
                         <p className="text-sm text-blue-700">
@@ -272,7 +272,7 @@ export const CostFormInputs = ({
                             <FormField name="part_name" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <Label className="flex items-center gap-2">
-                                        <Package className="w-4 h-4" />
+                                        <Package className="size-4" />
                                         Nombre de la Pieza *
                                     </Label>
                                     <FormControl>
@@ -291,7 +291,7 @@ export const CostFormInputs = ({
                             <FormField name="supplier_phone" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <Label className="flex items-center gap-2">
-                                        <Phone className="w-4 h-4" />
+                                        <Phone className="size-4" />
                                         Teléfono del Proveedor
                                     </Label>
                                     <FormControl>
@@ -308,7 +308,7 @@ export const CostFormInputs = ({
                             <FormField name="quantity" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <Label className="flex items-center gap-2">
-                                        <Hash className="w-4 h-4" />
+                                        <Hash className="size-4" />
                                         Cantidad *
                                     </Label>
                                     <FormControl>
@@ -327,7 +327,7 @@ export const CostFormInputs = ({
                             <FormField name="unit_price" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <Label className="flex items-center gap-2">
-                                        <DollarSign className="w-4 h-4" />
+                                        <DollarSign className="size-4" />
                                         Precio Unitario *
                                     </Label>
                                     <FormControl>
@@ -347,7 +347,7 @@ export const CostFormInputs = ({
                             <FormField name="kilometraje" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <Label className="flex items-center gap-2">
-                                        <Gauge className="w-4 h-4" />
+                                        <Gauge className="size-4" />
                                         Kilometraje (Opcional)
                                     </Label>
                                     <FormControl>
@@ -371,7 +371,7 @@ export const CostFormInputs = ({
             <Card className="bg-card border">
                 <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                        <Building2 className="w-5 h-5" />
+                        <Building2 className="size-5" />
                         Asociaciones (Opcional)
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
@@ -497,7 +497,7 @@ export const CostFormInputs = ({
             <Card className="bg-card border">
                 <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-                        <FileText className="w-5 h-5" />
+                        <FileText className="size-5" />
                         Información Adicional
                     </CardTitle>
                 </CardHeader>

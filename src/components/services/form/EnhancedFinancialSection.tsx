@@ -78,9 +78,9 @@ export const EnhancedFinancialSection = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
+          <DollarSign className="size-5" />
           Información Financiera
-          {isCustodyService && <Shield className="h-4 w-4 text-blue-500" />}
+          {isCustodyService && <Shield className="size-4 text-blue-500" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -107,7 +107,7 @@ export const EnhancedFinancialSection = ({
             {/* Mostrar desglose de valores */}
             <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
-                <Calculator className="h-5 w-5 text-blue-600" />
+                <Calculator className="size-5 text-blue-600" />
                 <Label className="text-lg font-semibold text-blue-800">Desglose del Valor Total</Label>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -145,7 +145,7 @@ export const EnhancedFinancialSection = ({
               </Label>
               {valueFromRate && matchedRateOrigin && (
                 <Badge variant="secondary" className="bg-violet-100 text-violet-700 border-violet-300 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3" />
                   Tarifa: {matchedRateOrigin}
                 </Badge>
               )}
@@ -166,13 +166,13 @@ export const EnhancedFinancialSection = ({
             />
             {valueFromRate && (
               <p className="text-xs text-violet-600 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
+                <Sparkles className="size-3" />
                 Valor aplicado automáticamente desde tarifa predefinida
               </p>
             )}
             {isCustodyService && custodyTotalAmount > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                <Shield className="h-4 w-4 text-blue-600" />
+                <Shield className="size-4 text-blue-600" />
                 <p className="text-sm text-blue-700">
                   Valor de custodia: <span className="font-semibold">${custodyTotalAmount.toLocaleString('es-CL')}</span>
                 </p>
@@ -205,7 +205,7 @@ export const EnhancedFinancialSection = ({
 
         {/* Margen de ganancia */}
         <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
-          <TrendingUp className="h-5 w-5 text-blue-600" />
+          <TrendingUp className="size-5 text-blue-600" />
           <div>
             <Label className="text-sm text-muted-foreground">Margen de Ganancia</Label>
             <div className={`text-xl font-bold ${profitMargin >= 20 ? 'text-green-600' : profitMargin >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
@@ -223,7 +223,7 @@ export const EnhancedFinancialSection = ({
         {/* Alerta de margen bajo */}
         {profitMargin < 10 && serviceBreakdown.totalValue > 0 && (
           <Alert className="border-yellow-500 bg-yellow-50">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="size-4" />
             <AlertDescription>
               El margen de ganancia es bajo ({profitMargin.toFixed(1)}%). 
               Considera revisar los costos o el valor del servicio.
@@ -234,7 +234,7 @@ export const EnhancedFinancialSection = ({
         {/* Información especial para custodia */}
         {isCustodyService && (
           <Alert className="border-blue-500 bg-blue-50">
-            <Shield className="h-4 w-4" />
+            <Shield className="size-4" />
             <AlertDescription>
               <strong>Servicio de Custodia:</strong> {serviceBreakdown.hasBothValues 
                 ? 'Los cálculos financieros consideran el valor total (base + custodia).'

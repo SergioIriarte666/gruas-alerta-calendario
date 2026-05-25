@@ -24,7 +24,7 @@ const Vehicles: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 p-3 text-white shadow-md">
-                  <CarFront className="h-6 w-6" />
+                  <CarFront className="size-6" />
                 </div>
                 <div>
                   <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold tracking-tight`}>
@@ -38,15 +38,15 @@ const Vehicles: React.FC = () => {
 
               <div className="flex flex-wrap gap-2">
                 <Badge className="gap-1 border-0 bg-amber-100 px-3 py-1 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-200">
-                  <Tags className="h-3.5 w-3.5" />
+                  <Tags className="size-3.5" />
                   Catálogo de marcas
                 </Badge>
                 <Badge className="gap-1 border-0 bg-violet-100 px-3 py-1 text-violet-800 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-200">
-                  <CarFront className="h-3.5 w-3.5" />
+                  <CarFront className="size-3.5" />
                   Gestión de modelos
                 </Badge>
                 <Badge className="gap-1 border-0 bg-emerald-100 px-3 py-1 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-200">
-                  <ScanSearch className="h-3.5 w-3.5" />
+                  <ScanSearch className="size-3.5" />
                   Consulta por patente
                 </Badge>
               </div>
@@ -58,7 +58,7 @@ const Vehicles: React.FC = () => {
               onClick={() => setHistoryModalOpen(true)}
               className="gap-2 border-sky-200 bg-white/85 text-sky-700 shadow-sm hover:bg-sky-50 dark:border-sky-800 dark:bg-background/80 dark:text-sky-300 dark:hover:bg-sky-950/20"
             >
-              <History className="h-4 w-4" />
+              <History className="size-4" />
               {isMobile ? 'Historial' : 'Historial Completo'}
             </Button>
           </div>
@@ -71,21 +71,21 @@ const Vehicles: React.FC = () => {
                   value="brands"
                   className="gap-2 rounded-xl border border-transparent text-amber-700 data-[state=active]:border-amber-200 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:shadow-sm dark:text-amber-300 dark:data-[state=active]:border-amber-900 dark:data-[state=active]:bg-amber-950/30 dark:data-[state=active]:text-amber-100"
                 >
-                  <Tags className="h-4 w-4" />
+                  <Tags className="size-4" />
                   Marcas
                 </TabsTrigger>
                 <TabsTrigger
                   value="models"
                   className="gap-2 rounded-xl border border-transparent text-violet-700 data-[state=active]:border-violet-200 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-900 data-[state=active]:shadow-sm dark:text-violet-300 dark:data-[state=active]:border-violet-900 dark:data-[state=active]:bg-violet-950/30 dark:data-[state=active]:text-violet-100"
                 >
-                  <CarFront className="h-4 w-4" />
+                  <CarFront className="size-4" />
                   Modelos
                 </TabsTrigger>
                 <TabsTrigger
                   value="patent-lookup"
                   className="gap-2 rounded-xl border border-transparent text-emerald-700 data-[state=active]:border-emerald-200 data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-900 data-[state=active]:shadow-sm dark:text-emerald-300 dark:data-[state=active]:border-emerald-900 dark:data-[state=active]:bg-emerald-950/30 dark:data-[state=active]:text-emerald-100"
                 >
-                  <ScanSearch className="h-4 w-4" />
+                  <ScanSearch className="size-4" />
                   {isMobile ? 'Patentes' : 'Consulta de Patentes'}
                 </TabsTrigger>
               </TabsList>

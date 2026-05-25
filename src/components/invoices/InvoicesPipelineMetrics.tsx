@@ -155,7 +155,7 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
             <h3 className="text-lg font-semibold text-foreground">Resumen General del Pipeline</h3>
             {metrics.urgentCount > 0 && (
               <Badge variant="destructive" className="flex items-center space-x-1">
-                <AlertTriangle className="w-3 h-3" />
+                <AlertTriangle className="size-3" />
                 <span>{metrics.urgentCount} Urgentes</span>
               </Badge>
             )}
@@ -173,7 +173,7 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
                   )}
                 >
                   <div className={cn("p-2 rounded-lg bg-muted", card.bgColor)}>
-                    <Icon className={cn("w-5 h-5", card.color)} />
+                    <Icon className={cn("size-5", card.color)} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
@@ -200,7 +200,7 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-medium text-gray-300">{card.title}</h4>
-                {card.urgent && <AlertTriangle className="w-4 h-4 text-red-400" />}
+                {card.urgent && <AlertTriangle className="size-4 text-red-400" />}
               </div>
               
               <div className="space-y-1">

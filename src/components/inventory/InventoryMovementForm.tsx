@@ -204,7 +204,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
     <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Package className="w-5 h-5" />
+          <Package className="size-5" />
           Nuevo Movimiento de Inventario
         </CardTitle>
         <CardDescription>
@@ -363,7 +363,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                watchedQuantity > currentStock && 
                watchedItemId && watchedLocationId && (
                 <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
+                  <AlertTriangle className="size-3" />
                   Stock insuficiente (disponible: {currentStock})
                 </p>
               )}
@@ -401,7 +401,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                     !form.watch('movement_date') && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {form.watch('movement_date') ? format(form.watch('movement_date'), "PPP") : <span>Seleccionar fecha</span>}
                 </Button>
               </PopoverTrigger>
@@ -420,7 +420,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
           {watchedMovementType === 'entry' && form.watch('unit_cost') && form.watch('quantity') && (
             <div className="p-4 bg-muted rounded-lg space-y-3">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="size-4" />
                 <span className="font-medium">Información de Costo</span>
               </div>
               <div className="text-sm text-muted-foreground">
@@ -463,7 +463,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               {/* Reference Document - Enhanced for Multi-Product Purchases */}
               <div className="space-y-2">
                 <Label htmlFor="reference_document" className="flex items-center gap-2">
-                  <Package className="w-4 h-4" />
+                  <Package className="size-4" />
                   Documento de Referencia
                   <Badge variant="outline" className="text-xs">Recomendado</Badge>
                 </Label>
@@ -563,7 +563,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
             className="w-full" 
             disabled={createMovement.isPending}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             {createMovement.isPending ? 'Registrando...' : `Registrar ${getMovementTypeLabel(watchedMovementType)}`}
           </Button>
         </form>

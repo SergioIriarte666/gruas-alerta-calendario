@@ -77,17 +77,17 @@ export const SessionTimeoutModal = ({
               : "border-yellow-500/70 bg-yellow-950/30 shadow-[0_0_20px_rgba(255,200,0,0.3)]"
           )}>
             <Timer className={cn(
-              "h-10 w-10",
+              "size-10",
               isLowTime 
                 ? "text-red-400 animate-pulse" 
                 : "text-yellow-400"
             )} />
             
             {/* Pixel corners */}
-            <div className="absolute -top-1 -left-1 w-2 h-2 bg-cyan-400" />
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400" />
-            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-cyan-400" />
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-cyan-400" />
+            <div className="absolute -top-1 -left-1 size-2 bg-cyan-400" />
+            <div className="absolute -top-1 -right-1 size-2 bg-cyan-400" />
+            <div className="absolute -bottom-1 -left-1 size-2 bg-cyan-400" />
+            <div className="absolute -bottom-1 -right-1 size-2 bg-cyan-400" />
           </div>
 
           {/* Title */}
@@ -146,7 +146,7 @@ export const SessionTimeoutModal = ({
               "text-white"
             )}
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 size-4" />
             CONTINUAR
           </Button>
 
@@ -165,7 +165,7 @@ export const SessionTimeoutModal = ({
               "text-red-400 hover:text-red-300"
             )}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="mr-2 size-4" />
             SALIR
           </Button>
         </div>
@@ -176,7 +176,7 @@ export const SessionTimeoutModal = ({
             <div 
               key={i}
               className={cn(
-                "w-2 h-2 rounded-sm",
+                "size-2 rounded-sm",
                 i < Math.ceil((progressPercent / 100) * 7)
                   ? isLowTime ? "bg-red-500" : "bg-cyan-500"
                   : "bg-gray-700"

@@ -32,31 +32,31 @@ export const AdminEmergencyPanel = () => {
         <div className="overflow-x-auto">
           <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-7 bg-card border h-auto p-1 gap-1">
             <TabsTrigger value="liberation" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <Unlock className="w-4 h-4" />
+              <Unlock className="size-4" />
               <span>Liberación</span>
             </TabsTrigger>
             <TabsTrigger value="force-status" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="size-4" />
               <span>Forzar Estado</span>
             </TabsTrigger>
             <TabsTrigger value="bulk-repair" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <ScanSearch className="w-4 h-4" />
+              <ScanSearch className="size-4" />
               <span>Reparación Masiva</span>
             </TabsTrigger>
             <TabsTrigger value="delete-service" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="size-4" />
               <span>Eliminar Servicio</span>
             </TabsTrigger>
             <TabsTrigger value="payment-reassign" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <ArrowRightLeft className="w-4 h-4" />
+              <ArrowRightLeft className="size-4" />
               <span>Reconexión Pagos</span>
             </TabsTrigger>
             <TabsTrigger value="void-purchase" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <PackageX className="w-4 h-4" />
+              <PackageX className="size-4" />
               <span>Anular Compra</span>
             </TabsTrigger>
             <TabsTrigger value="commission-repair" className="flex-shrink-0 flex items-center gap-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[40px] text-xs whitespace-nowrap">
-              <Wrench className="w-4 h-4" />
+              <Wrench className="size-4" />
               <span>Comisiones</span>
             </TabsTrigger>
           </TabsList>

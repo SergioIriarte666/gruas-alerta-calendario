@@ -50,7 +50,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           <Card className="bg-black border-tms-green/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Sincronización</CardTitle>
-              <BarChart3 className="h-4 w-4 text-tms-green" />
+              <BarChart3 className="size-4 text-tms-green" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-tms-green">
@@ -65,7 +65,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           <Card className="bg-black border-tms-green/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Items Creados</CardTitle>
-              <Package className="h-4 w-4 text-tms-green" />
+              <Package className="size-4 text-tms-green" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-tms-green">
@@ -80,7 +80,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           <Card className="bg-black border-tms-green/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Items Inventario</CardTitle>
-              <TrendingUp className="h-4 w-4 text-tms-green" />
+              <TrendingUp className="size-4 text-tms-green" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-tms-green">
@@ -95,7 +95,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
           <Card className="bg-black border-tms-green/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Sin Sincronizar</CardTitle>
-              <TrendingDown className="h-4 w-4 text-yellow-500" />
+              <TrendingDown className="size-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-500">
@@ -113,7 +113,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       <Card className="bg-black border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Search className="h-5 w-5 text-tms-green" />
+            <Search className="size-5 text-tms-green" />
             Filtros de Trazabilidad
           </CardTitle>
         </CardHeader>
@@ -157,7 +157,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
       <Card className="bg-black border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Package className="h-5 w-5 text-tms-green" />
+            <Package className="size-5 text-tms-green" />
             Trazabilidad de Piezas
           </CardTitle>
         </CardHeader>
@@ -230,7 +230,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
                         </TableCell>
                         <TableCell className="text-white">
                           <Badge className={`text-xs ${syncStatus.color} text-white flex items-center gap-1`}>
-                            <SyncIcon className="h-3 w-3" />
+                            <SyncIcon className="size-3" />
                             {syncStatus.label}
                           </Badge>
                         </TableCell>

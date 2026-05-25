@@ -84,7 +84,7 @@ export const ProjectionHeader = ({ metrics, dateRange, isLoading }: ProjectionHe
                 </p>
               </div>
               <div className={`p-3 rounded-lg ${card.bgClass}`}>
-                <card.icon className={`h-6 w-6 ${card.colorClass}`} />
+                <card.icon className={`size-6 ${card.colorClass}`} />
               </div>
             </div>
           </CardContent>

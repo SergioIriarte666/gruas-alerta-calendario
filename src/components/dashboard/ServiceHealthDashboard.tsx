@@ -85,7 +85,7 @@ export const ServiceHealthDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Salud del Sistema</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
@@ -93,9 +93,9 @@ export const ServiceHealthDashboard = () => {
                 {metrics.systemHealthScore}%
               </div>
               {isHealthy() ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="size-5 text-green-500" />
               ) : (
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+                <AlertTriangle className="size-5 text-red-500" />
               )}
             </div>
             <Progress 
@@ -108,7 +108,7 @@ export const ServiceHealthDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Servicios Consistentes</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.consistentServices}</div>
@@ -121,7 +121,7 @@ export const ServiceHealthDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Issues Críticos</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <AlertCircle className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">
@@ -136,7 +136,7 @@ export const ServiceHealthDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ultima Auditoria</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
@@ -158,7 +158,7 @@ export const ServiceHealthDashboard = () => {
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="text-red-800 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="size-5" />
               Alertas del Sistema
             </CardTitle>
           </CardHeader>
@@ -181,7 +181,7 @@ export const ServiceHealthDashboard = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+            <Settings className="size-5" />
             Acciones del Sistema
           </CardTitle>
           <CardDescription>
@@ -196,9 +196,9 @@ export const ServiceHealthDashboard = () => {
               variant="outline"
             >
               {validating ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                <RefreshCw className="mr-2 size-4 animate-spin" />
               ) : (
-                <BarChart3 className="mr-2 h-4 w-4" />
+                <BarChart3 className="mr-2 size-4" />
               )}
               Ejecutar Auditoría
             </Button>
@@ -209,9 +209,9 @@ export const ServiceHealthDashboard = () => {
               variant="default"
             >
               {isRepairing ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                <RefreshCw className="mr-2 size-4 animate-spin" />
               ) : (
-                <Zap className="mr-2 h-4 w-4" />
+                <Zap className="mr-2 size-4" />
               )}
               Auto-Reparar ({metrics.autoRepairableIssues})
             </Button>
@@ -346,7 +346,7 @@ export const ServiceHealthDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+                <Clock className="size-5" />
                 Historial de Auditorías
               </CardTitle>
             </CardHeader>

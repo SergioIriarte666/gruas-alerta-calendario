@@ -300,7 +300,7 @@ export const HistoricalSales = () => {
           </p>
         </div>
         <Button onClick={() => setImportHistoryOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           Importar Histórico
         </Button>
       </div>
@@ -325,7 +325,7 @@ export const HistoricalSales = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
-                    <LayoutList className="h-4 w-4" />
+                    <LayoutList className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Tabla</TooltipContent>
@@ -333,7 +333,7 @@ export const HistoricalSales = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="grouped" aria-label="Agrupado por cliente" className="px-3">
-                    <Users className="h-4 w-4" />
+                    <Users className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Agrupado por cliente</TooltipContent>
@@ -341,7 +341,7 @@ export const HistoricalSales = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <ToggleGroupItem value="pipeline" aria-label="Pipeline por cliente" className="px-3">
-                    <LayoutGrid className="h-4 w-4" />
+                    <LayoutGrid className="size-4" />
                   </ToggleGroupItem>
                 </TooltipTrigger>
                 <TooltipContent>Pipeline por cliente</TooltipContent>
@@ -404,7 +404,7 @@ export const HistoricalSales = () => {
               className="h-8 gap-2"
               onClick={() => setBatchEditOpen(true)}
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="size-4" />
               Editar Lote
             </Button>
 
@@ -414,14 +414,14 @@ export const HistoricalSales = () => {
               className="h-8 gap-2"
               onClick={confirmBatchDelete}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="size-4" />
               Eliminar
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="sm" className="h-8 gap-2">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="size-4" />
                   Estado
                 </Button>
               </DropdownMenuTrigger>
@@ -449,11 +449,11 @@ export const HistoricalSales = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              className="size-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
               onClick={() => setSelectedIds([])}
               title="Cancelar selección"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </Button>
           </div>
         </div>,

@@ -112,12 +112,12 @@ export const CustodySection = ({
         <CardTitle className="flex items-center gap-2">
           {isEquipmentRental ? (
             <>
-              <Wrench className="h-5 w-5" />
+              <Wrench className="size-5" />
               Información de Arriendo
             </>
           ) : (
             <>
-              <Shield className="h-5 w-5" />
+              <Shield className="size-5" />
               Información de Custodia
             </>
           )}

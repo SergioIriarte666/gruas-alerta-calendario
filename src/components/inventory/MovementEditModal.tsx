@@ -167,7 +167,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Package className="w-6 h-6 text-primary" />
+        <Package className="size-6 text-primary" />
         <div>
           <h3 className="text-lg font-semibold">Editar Movimiento</h3>
           <p className="text-sm text-muted-foreground">
@@ -182,7 +182,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
+                <Package className="size-4" />
                 Información Básica
               </CardTitle>
             </CardHeader>
@@ -198,7 +198,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
                         !movementDate && "text-muted-foreground"
                       )}
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 size-4" />
                       {movementDate ? format(movementDate, "dd 'de' MMMM 'de' yyyy", { locale: es }) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
@@ -232,7 +232,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
                 />
                 {errors.quantity && (
                   <div className="flex items-center gap-1 text-sm text-destructive">
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="size-4" />
                     {errors.quantity}
                   </div>
                 )}
@@ -279,7 +279,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="size-4" />
                 Información de Costos
               </CardTitle>
             </CardHeader>
@@ -299,7 +299,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
                 />
                 {errors.unit_cost && (
                   <div className="flex items-center gap-1 text-sm text-destructive">
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="size-4" />
                     {errors.unit_cost}
                   </div>
                 )}
@@ -320,7 +320,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
                 />
                 {errors.total_cost && (
                   <div className="flex items-center gap-1 text-sm text-destructive">
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="size-4" />
                     {errors.total_cost}
                   </div>
                 )}

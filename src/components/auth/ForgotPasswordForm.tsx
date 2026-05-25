@@ -79,8 +79,8 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
       <CardContent className="bg-transparent" style={{ background: 'transparent' }}>
         {sent ? (
           <div className="space-y-4 text-center">
-            <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto">
-              <Mail className="w-8 h-8 text-tms-green" />
+            <div className="size-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto">
+              <Mail className="size-8 text-tms-green" />
             </div>
             <p className="text-white/80 text-sm">
               Revisa tu correo <strong className="text-white">{email}</strong> y sigue las instrucciones para restablecer tu contraseña.
@@ -91,7 +91,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
               onClick={onBack}
               className="text-white/80 hover:text-white hover:bg-white/10"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="size-4 mr-2" />
               Volver al inicio de sesión
             </Button>
           </div>
@@ -135,7 +135,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
               onClick={onBack}
               className="w-full text-white/80 hover:text-white hover:bg-white/10"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="size-4 mr-2" />
               Volver al inicio de sesión
             </Button>
           </form>

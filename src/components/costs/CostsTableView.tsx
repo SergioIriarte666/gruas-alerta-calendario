@@ -175,10 +175,10 @@ export const CostsTableView = ({
   }, [costs, sortField, sortDirection, getAssociatedTo, getCategoryDisplay, getSubcategoryDisplay]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    if (sortField !== field) return <ArrowUpDown className="ml-2 size-4" />;
     return sortDirection === 'asc' ? 
-      <ArrowUp className="ml-2 h-4 w-4" /> : 
-      <ArrowDown className="ml-2 h-4 w-4" />;
+      <ArrowUp className="ml-2 size-4" /> : 
+      <ArrowDown className="ml-2 size-4" />;
   };
 
   const calculateTotals = () => {
@@ -303,7 +303,7 @@ export const CostsTableView = ({
                             const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
                             return itemsCount > 1 ? (
                               <span className="shrink-0 inline-flex items-center px-1.5 py-0 rounded-full text-[10px] font-medium border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
-                                <Layers className="h-3 w-3 mr-0.5" />
+                                <Layers className="size-3 mr-0.5" />
                                 {itemsCount}
                               </span>
                             ) : null;
@@ -340,23 +340,23 @@ export const CostsTableView = ({
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="size-8 p-0">
                               <span className="sr-only">Abrir menú</span>
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreHorizontal className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => onViewDetails(cost)}>
-                              <Eye className="mr-2 h-4 w-4" />
+                              <Eye className="mr-2 size-4" />
                               Ver Detalles
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onEdit(cost)}>
-                              <Edit className="mr-2 h-4 w-4" />
+                              <Edit className="mr-2 size-4" />
                               Editar
                             </DropdownMenuItem>
                             {onDuplicate && (
                               <DropdownMenuItem onClick={() => onDuplicate(cost)}>
-                                <Copy className="mr-2 h-4 w-4" />
+                                <Copy className="mr-2 size-4" />
                                 Duplicar
                               </DropdownMenuItem>
                             )}
@@ -364,7 +364,7 @@ export const CostsTableView = ({
                               onClick={() => onDelete(cost)}
                               className="text-red-600 focus:text-red-600"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                              <Trash2 className="mr-2 size-4" />
                               Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>

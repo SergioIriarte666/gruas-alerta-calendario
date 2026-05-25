@@ -155,7 +155,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
               onClick={handleReset}
               className="h-10 gap-2 shrink-0 px-6"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw className="size-4" />
               Limpiar Filtros
             </Button>
           </div>

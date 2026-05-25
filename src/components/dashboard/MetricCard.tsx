@@ -93,7 +93,7 @@ export const MetricCard = ({
         )}>
           <Icon className={cn(
             "text-foreground",
-            isMobile ? "w-4 h-4" : isTablet ? "w-5 h-5" : "w-6 h-6"
+            isMobile ? "size-4" : isTablet ? "size-5" : "size-6"
           )} strokeWidth={2.25} />
         </div>
       </div>

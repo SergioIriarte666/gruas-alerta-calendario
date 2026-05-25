@@ -30,7 +30,7 @@ export const PatentLookup: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 p-2 text-white shadow-sm">
-              <Car className="h-5 w-5" />
+              <Car className="size-5" />
             </div>
             Consulta de Patentes
           </CardTitle>
@@ -52,12 +52,12 @@ export const PatentLookup: React.FC = () => {
               <Button type="submit" disabled={loading || !licensePlate.trim()} className="h-11 bg-emerald-600 shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500">
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 size-4 animate-spin" />
                     Consultando...
                   </>
                 ) : (
                   <>
-                    <Search className="mr-2 h-4 w-4" />
+                    <Search className="mr-2 size-4" />
                     Consultar
                   </>
                 )}
@@ -117,7 +117,7 @@ export const PatentLookup: React.FC = () => {
       {!data && !error && !loading && (
         <Card className="border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/40 to-cyan-50/30 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/10 dark:to-cyan-950/10">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Car className="h-12 w-12 text-muted-foreground mb-4" />
+            <Car className="size-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
               Ingresa una patente chilena para consultar la información del vehículo
             </p>
@@ -130,7 +130,7 @@ export const PatentLookup: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <History className="h-5 w-5" />
+                <History className="size-5" />
                 <CardTitle className="text-lg">Historial de Búsquedas</CardTitle>
               </div>
               <Button
@@ -139,7 +139,7 @@ export const PatentLookup: React.FC = () => {
                 onClick={clearHistory}
                 className="h-8 text-muted-foreground hover:text-destructive"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="size-4 mr-2" />
                 Limpiar
               </Button>
             </div>
@@ -163,7 +163,7 @@ export const PatentLookup: React.FC = () => {
                             {item.patente}
                           </Badge>
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="size-3" />
                             {format(new Date(item.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
                           </span>
                         </div>

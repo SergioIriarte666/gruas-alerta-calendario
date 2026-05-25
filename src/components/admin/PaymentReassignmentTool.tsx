@@ -237,7 +237,7 @@ export const PaymentReassignmentTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <ArrowRightLeft className="w-5 h-5 text-amber-600" />
+            <ArrowRightLeft className="size-5 text-amber-600" />
             Reconexión de Pagos
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -247,11 +247,11 @@ export const PaymentReassignmentTool = () => {
         <CardContent>
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Referencia bancaria o monto" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-9" />
             </div>
             <Button type="submit" disabled={searching || !searchInput.trim()}>
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
+              {searching ? <Loader2 className="size-4 animate-spin" /> : 'Buscar'}
             </Button>
           </form>
           {error && <div className="mt-3 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
@@ -303,10 +303,10 @@ export const PaymentReassignmentTool = () => {
                       </div>
                       <div className="flex gap-1">
                         <Button variant="outline" size="sm" onClick={() => openReassign(app.id)}>
-                          <ArrowRightLeft className="w-3 h-3" />
+                          <ArrowRightLeft className="size-3" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => openRemove(app.id)} className="text-destructive">
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="size-3" />
                         </Button>
                       </div>
                     </div>
@@ -326,7 +326,7 @@ export const PaymentReassignmentTool = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <AlertTriangle className="size-5 text-amber-600" />
               {actionType === 'reassign' ? 'Reasignar Pago' : 'Eliminar Aplicación'}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -366,7 +366,7 @@ export const PaymentReassignmentTool = () => {
               disabled={confirmText !== expectedText || executing || (actionType === 'reassign' && !targetInvoiceId)}
               onClick={handleExecute}
             >
-              {executing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {executing ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
               {actionType === 'reassign' ? 'Reasignar' : 'Eliminar'}
             </Button>
           </AlertDialogFooter>

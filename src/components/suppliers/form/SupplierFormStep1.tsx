@@ -27,7 +27,7 @@ export const SupplierFormStep1 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Datos Básicos"
-        icon={<Building2 className="h-5 w-5" />}
+        icon={<Building2 className="size-5" />}
         color="purple"
         required
         hasError={!!errors.name || !!errors.rut}

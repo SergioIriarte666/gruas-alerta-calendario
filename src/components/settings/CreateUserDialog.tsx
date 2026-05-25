@@ -124,7 +124,7 @@ export const CreateUserDialog = ({
       <DialogContent className="bg-white max-w-md">
         <DialogHeader>
           <DialogTitle className="text-black flex items-center gap-2">
-            <User className="w-5 h-5" />
+            <User className="size-5" />
             Crear Nuevo Usuario
           </DialogTitle>
         </DialogHeader>
@@ -132,7 +132,7 @@ export const CreateUserDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email" className="text-black flex items-center gap-2">
-              <Mail className="w-4 h-4" />
+              <Mail className="size-4" />
               Email *
             </Label>
             <Input
@@ -148,7 +148,7 @@ export const CreateUserDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="full_name" className="text-black flex items-center gap-2">
-              <User className="w-4 h-4" />
+              <User className="size-4" />
               Nombre Completo *
             </Label>
             <Input
@@ -164,7 +164,7 @@ export const CreateUserDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="role" className="text-black flex items-center gap-2">
-              <UserCog className="w-4 h-4" />
+              <UserCog className="size-4" />
               Rol *
             </Label>
             <Select 
@@ -191,7 +191,7 @@ export const CreateUserDialog = ({
           {formData.role === 'client' && (
             <div className="space-y-2">
               <Label htmlFor="client_id" className="text-black flex items-center gap-2">
-                <Building className="w-4 h-4" />
+                <Building className="size-4" />
                 Cliente Asociado *
               </Label>
               <Select 
@@ -215,7 +215,7 @@ export const CreateUserDialog = ({
           {formData.role === 'operator' && (
             <div className="space-y-2">
               <Label htmlFor="operator_id" className="text-black flex items-center gap-2">
-                <HardHat className="w-4 h-4" />
+                <HardHat className="size-4" />
                 Operador Asociado *
               </Label>
               <Select 
@@ -253,7 +253,7 @@ export const CreateUserDialog = ({
             >
               {creating ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Creando...
                 </>
               ) : (

@@ -34,7 +34,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         <div className="min-w-0 flex-1">
           {title && (
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-              {Icon && <Icon className="h-4 w-4 text-primary" />}
+              {Icon && <Icon className="size-4 text-primary" />}
               {title}
             </CardTitle>
           )}

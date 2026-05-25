@@ -73,11 +73,11 @@ export const ServicesHeader = ({
                   className="rounded-md border border-border bg-muted p-1"
                 >
                   <ToggleGroupItem value="table" size="sm" className="gap-1.5 px-3">
-                    <Table className="h-4 w-4" />
+                    <Table className="size-4" />
                     {!isMobile && 'Tabla'}
                   </ToggleGroupItem>
                   <ToggleGroupItem value="pipeline" size="sm" className="gap-1.5 px-3">
-                    <BarChart3 className="h-4 w-4" />
+                    <BarChart3 className="size-4" />
                     {!isMobile && 'Pipeline'}
                   </ToggleGroupItem>
                 </ToggleGroup>
@@ -94,7 +94,7 @@ export const ServicesHeader = ({
                       className="border-warning/30 bg-warning-soft text-foreground hover:bg-warning-soft/80"
                       title={pendingServicesCount === 0 ? "No hay servicios pendientes" : "Exportar servicios pendientes a PDF"}
                     >
-                      <FileDown className={`h-4 w-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />
+                      <FileDown className={`size-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />
                       {!isMobile ? `Exportar Pendientes (${pendingServicesCount})` : `(${pendingServicesCount})`}
                     </Button>
 
@@ -105,7 +105,7 @@ export const ServicesHeader = ({
                       className="border-info/30 bg-info-soft text-foreground hover:bg-info-soft/80"
                       title="Cargar servicios desde un archivo CSV"
                     >
-                      <Upload className="h-4 w-4" />
+                      <Upload className="size-4" />
                       {!isMobile && <span className="ml-2">Carga Masiva</span>}
                     </Button>
 
@@ -115,7 +115,7 @@ export const ServicesHeader = ({
                       title="Crear un nuevo servicio"
                       onClick={onNewService}
                     >
-                      <Plus className={`${isMobile ? 'h-5 w-5 mr-2' : 'h-5 w-5 mr-2'}`} />
+                      <Plus className={`${isMobile ? 'size-5 mr-2' : 'size-5 mr-2'}`} />
                       Nuevo Servicio
                     </Button>
                   </>
@@ -133,12 +133,12 @@ export const ServicesHeader = ({
               size="icon"
               onClick={() => setShowSensitiveData(!showSensitiveData)}
               title={showSensitiveData ? "Ocultar información sensible" : "Mostrar información sensible"}
-              className="h-8 w-8"
+              className="size-8"
             >
               {showSensitiveData ? (
-                <Eye className="h-4 w-4 text-muted-foreground" />
+                <Eye className="size-4 text-muted-foreground" />
               ) : (
-                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                <EyeOff className="size-4 text-muted-foreground" />
               )}
             </Button>
           </div>

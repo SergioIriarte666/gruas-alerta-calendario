@@ -42,7 +42,7 @@ export const InvoiceFormStep3 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Selección de Cierre"
-        icon={<FileCheck className="h-5 w-5" />}
+        icon={<FileCheck className="size-5" />}
         color="purple"
         required
         hasError={!!errors.closureId}
@@ -65,7 +65,7 @@ export const InvoiceFormStep3 = ({
       {showSummary && (
         <ColoredSectionCard
           title="Resumen de Montos"
-          icon={<FileCheck className="h-5 w-5" />}
+          icon={<FileCheck className="size-5" />}
           color="green"
         >
           <InvoiceSummary

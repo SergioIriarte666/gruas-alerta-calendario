@@ -46,7 +46,7 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
+    <Icon className="size-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-medium text-foreground ${valueClass}`}>{value || 'N/A'}</p>
@@ -79,7 +79,7 @@ const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSe
     <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
       <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${config.title}`}>
         <div className={`p-1 rounded ${config.iconBg}`}>
-          <Icon className="w-4 h-4" />
+          <Icon className="size-4" />
         </div>
         {title}
       </h3>
@@ -289,7 +289,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+              <FileText className="size-5" />
               Factura {invoice.folio}
               {invoice.numeroFiscal && (
                 <span className="text-muted-foreground font-normal text-sm">| N° {invoice.numeroFiscal}</span>
@@ -314,7 +314,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-4">
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-rose-700 dark:text-rose-300">
                     <div className="p-1 rounded bg-rose-500/10 text-rose-600">
-                      <AlertTriangle className="w-4 h-4" />
+                      <AlertTriangle className="size-4" />
                     </div>
                     Factura Anulada
                   </h3>
@@ -446,7 +446,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
             <div className="space-y-4">
               {isCancelled && (
                 <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-3 text-sm text-rose-700 dark:text-rose-300 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="size-4 mt-0.5 flex-shrink-0" />
                   <span>
                     Factura anulada{cancellation?.credit_note_number ? ` con NC ${cancellation.credit_note_number}` : ''}. El monto fue neutralizado y no representa deuda ni ingreso pagado.
                   </span>
@@ -495,7 +495,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.emerald.border} ${sectionColorConfig.emerald.bg} p-4`}>
                   <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.emerald.title}`}>
                     <div className={`p-1 rounded ${sectionColorConfig.emerald.iconBg}`}>
-                      <CreditCard className="w-4 h-4" />
+                      <CreditCard className="size-4" />
                     </div>
                     Progreso de Pago
                   </h3>
@@ -518,19 +518,19 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
             <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.rose.border} ${sectionColorConfig.rose.bg} p-4`}>
               <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.rose.title}`}>
                 <div className={`p-1 rounded ${sectionColorConfig.rose.iconBg}`}>
-                  <Receipt className="w-4 h-4" />
+                  <Receipt className="size-4" />
                 </div>
                 Historial de Pagos Aplicados
               </h3>
 
               {loadingPayments ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="w-8 h-8 mx-auto mb-2 animate-spin opacity-50" />
+                  <Clock className="size-8 mx-auto mb-2 animate-spin opacity-50" />
                   <p className="text-sm">Cargando pagos...</p>
                 </div>
               ) : paymentApplications.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Receipt className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <Receipt className="size-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No hay pagos aplicados a esta factura</p>
                 </div>
               ) : (
@@ -579,18 +579,18 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.orange.border} ${sectionColorConfig.orange.bg} p-4`}>
                 <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.orange.title}`}>
                   <div className={`p-1 rounded ${sectionColorConfig.orange.iconBg}`}>
-                    <Package className="w-4 h-4" />
+                    <Package className="size-4" />
                   </div>
                   Cierres Asociados
                 </h3>
                 {loadingServices ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    <Clock className="w-6 h-6 mx-auto mb-2 animate-spin opacity-50" />
+                    <Clock className="size-6 mx-auto mb-2 animate-spin opacity-50" />
                     <p className="text-sm">Cargando...</p>
                   </div>
                 ) : closures.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    <Package className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                    <Package className="size-6 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No hay cierres asociados</p>
                   </div>
                 ) : (
@@ -624,7 +624,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.cyan.border} ${sectionColorConfig.cyan.bg} p-4`}>
                 <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.cyan.title}`}>
                   <div className={`p-1 rounded ${sectionColorConfig.cyan.iconBg}`}>
-                    <Wrench className="w-4 h-4" />
+                    <Wrench className="size-4" />
                   </div>
                   Servicios Incluidos
                   {services.length > 0 && (
@@ -681,19 +681,19 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                         printWindow.print();
                       }}
                     >
-                      <Printer className="w-3.5 h-3.5 mr-1" />
+                      <Printer className="size-3.5 mr-1" />
                       Imprimir
                     </Button>
                   )}
                 </h3>
                 {loadingServices ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    <Clock className="w-6 h-6 mx-auto mb-2 animate-spin opacity-50" />
+                    <Clock className="size-6 mx-auto mb-2 animate-spin opacity-50" />
                     <p className="text-sm">Cargando...</p>
                   </div>
                 ) : services.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    <Wrench className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                    <Wrench className="size-6 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No hay servicios asociados</p>
                   </div>
                 ) : (

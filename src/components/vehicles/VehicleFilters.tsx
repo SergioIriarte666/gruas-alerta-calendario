@@ -13,7 +13,7 @@ export const VehicleFilters = ({ searchTerm, setSearchTerm, placeholder }: Vehic
     <Card className="border-border/70 bg-gradient-to-br from-card to-muted/20 shadow-sm">
       <CardContent className="p-4 md:p-5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder={placeholder}

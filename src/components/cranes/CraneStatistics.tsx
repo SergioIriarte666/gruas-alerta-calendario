@@ -89,7 +89,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
                 <p className="text-gray-300 text-sm">Utilización</p>
                 <p className="text-white text-2xl font-bold">{statistics.utilizationRate}%</p>
               </div>
-              <Activity className="w-8 h-8 text-tms-green" />
+              <Activity className="size-8 text-tms-green" />
             </div>
           </CardContent>
         </Card>
@@ -101,7 +101,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
                 <p className="text-gray-300 text-sm">Eficiencia</p>
                 <p className="text-white text-2xl font-bold">{statistics.efficiency}%</p>
               </div>
-              <Target className="w-8 h-8 text-green-400" />
+              <Target className="size-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -113,7 +113,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
                 <p className="text-gray-300 text-sm">Tiempo Promedio</p>
                 <p className="text-white text-2xl font-bold">{statistics.averageServiceTime}h</p>
               </div>
-              <Clock className="w-8 h-8 text-blue-400" />
+              <Clock className="size-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -125,7 +125,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
                 <p className="text-gray-300 text-sm">Satisfacción</p>
                 <p className="text-white text-2xl font-bold">{statistics.customerSatisfaction}/5</p>
               </div>
-              <Percent className="w-8 h-8 text-yellow-400" />
+              <Percent className="size-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -136,7 +136,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-tms-green" />
+              <BarChart3 className="size-5 text-tms-green" />
               Servicios por Mes
             </CardTitle>
           </CardHeader>
@@ -157,7 +157,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-tms-green" />
+              <DollarSign className="size-5 text-tms-green" />
               Ingresos por Mes
             </CardTitle>
           </CardHeader>
@@ -180,7 +180,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-tms-green" />
+            <TrendingUp className="size-5 text-tms-green" />
             Análisis Operativo
           </CardTitle>
         </CardHeader>
@@ -288,7 +288,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
       <Card className="bg-white/5 border-tms-green/30">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-tms-green" />
+            <Calendar className="size-5 text-tms-green" />
             Comparativa con el Parque de Grúas
           </CardTitle>
         </CardHeader>

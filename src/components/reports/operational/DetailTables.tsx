@@ -14,7 +14,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
     <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center">
-          <Users className="w-5 h-5 mr-2" />
+          <Users className="size-5 mr-2" />
           Top Clientes
         </CardTitle>
       </CardHeader>
@@ -40,7 +40,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
     <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center">
-          <FileText className="w-5 h-5 mr-2" />
+          <FileText className="size-5 mr-2" />
           Recursos Activos
         </CardTitle>
       </CardHeader>
@@ -48,7 +48,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Users className="w-5 h-5 text-blue-400 mr-3" />
+              <Users className="size-5 text-blue-400 mr-3" />
               <span className="text-foreground">Clientes Activos</span>
             </div>
             <span className="font-medium text-blue-400">{metrics.activeClients}</span>
@@ -56,7 +56,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
           
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Truck className="w-5 h-5 text-green-400 mr-3" />
+              <Truck className="size-5 text-green-400 mr-3" />
               <span className="text-foreground">Grúas Activas</span>
             </div>
             <span className="font-medium text-green-400">{metrics.activeCranes}</span>
@@ -64,7 +64,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
           
           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
             <div className="flex items-center">
-              <Users className="w-5 h-5 text-yellow-400 mr-3" />
+              <Users className="size-5 text-yellow-400 mr-3" />
               <span className="text-foreground">Operadores Activos</span>
             </div>
             <span className="font-medium text-yellow-400">{metrics.activeOperators}</span>

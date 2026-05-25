@@ -123,7 +123,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
             onClick={downloadTemplate}
             className="border-tms-green text-tms-green hover:bg-tms-green hover:text-white"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Plantilla CSV
           </Button>
           <Button
@@ -131,7 +131,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
             onClick={downloadExcelTemplate}
             className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Plantilla Excel
           </Button>
         </div>
@@ -141,7 +141,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-foreground">
-            <Upload className="w-5 h-5 text-primary" />
+            <Upload className="size-5 text-primary" />
             <span>Seleccionar Archivo CSV</span>
           </CardTitle>
         </CardHeader>
@@ -151,7 +151,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <Upload className="size-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-300 mb-4">
               Arrastra tu archivo CSV o Excel aquí o haz clic para seleccionar
             </p>
@@ -173,7 +173,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
             <div className="mt-4 p-4 bg-gray-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <FileText className="w-5 h-5 text-tms-green" />
+                  <FileText className="size-5 text-tms-green" />
                   <div>
                     <p className="text-white font-medium">{file.name}</p>
                     <p className="text-gray-400 text-sm">{formatFileSize(file.size)}</p>
@@ -188,9 +188,9 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
                     className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
                   >
                     {isValidating ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="size-4 mr-2 animate-spin" />
                     ) : (
-                      <Eye className="w-4 h-4 mr-2" />
+                      <Eye className="size-4 mr-2" />
                     )}
                     Vista Previa
                   </Button>
@@ -215,9 +215,9 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-white">
               {validationResult.isValid ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="size-5 text-green-500" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
+                <XCircle className="size-5 text-red-500" />
               )}
               <span>Resultado de Validación</span>
             </CardTitle>
@@ -242,7 +242,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
             {validationResult.errors.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                 <h4 className="text-red-300 font-medium mb-2 flex items-center">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  <AlertTriangle className="size-4 mr-2" />
                   Errores Encontrados
                 </h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -312,9 +312,9 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
                   className="bg-tms-green hover:bg-tms-green-dark text-white px-8"
                 >
                   {isUploading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="size-4 mr-2 animate-spin" />
                   ) : (
-                    <Upload className="w-4 h-4 mr-2" />
+                    <Upload className="size-4 mr-2" />
                   )}
                   Cargar {validationResult.validRows.length} Servicios
                 </Button>
@@ -348,9 +348,9 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-white">
               {uploadResult.success ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="size-5 text-green-500" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
+                <XCircle className="size-5 text-red-500" />
               )}
               <span>Resultado de Carga</span>
             </CardTitle>

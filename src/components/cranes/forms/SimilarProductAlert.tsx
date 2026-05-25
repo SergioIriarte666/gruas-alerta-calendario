@@ -28,7 +28,7 @@ export const SimilarProductAlert: React.FC<SimilarProductAlertProps> = ({
 
   return (
     <Alert className="border-warning bg-warning/5">
-      <AlertTriangle className="h-4 w-4 text-warning" />
+      <AlertTriangle className="size-4 text-warning" />
       <AlertDescription className="space-y-3">
         <p className="font-medium text-warning">{alertMessage}</p>
         
@@ -36,7 +36,7 @@ export const SimilarProductAlert: React.FC<SimilarProductAlertProps> = ({
         <div className="bg-background rounded-lg p-3 border">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium flex items-center gap-2">
-              <Package className="h-4 w-4" />
+              <Package className="size-4" />
               {primaryItem.name}
             </h4>
             <Badge variant={primaryItem.match_type === 'exact' ? 'destructive' : 'secondary'}>
@@ -46,11 +46,11 @@ export const SimilarProductAlert: React.FC<SimilarProductAlertProps> = ({
           
           <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
+              <DollarSign className="size-3" />
               <span>Precio: {formatCurrency(primaryItem.unit_cost)}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Warehouse className="h-3 w-3" />
+              <Warehouse className="size-3" />
               <span>Stock: {primaryItem.current_stock} unidades</span>
             </div>
             {primaryItem.sku && (

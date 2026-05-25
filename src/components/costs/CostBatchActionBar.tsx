@@ -39,7 +39,7 @@ export const CostBatchActionBar = ({
                 onClick={onBatchMarkPaid}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="size-4 mr-2" />
                 Marcar Pagados
               </Button>
             )}
@@ -48,7 +48,7 @@ export const CostBatchActionBar = ({
               size="sm"
               onClick={onBatchUpdate}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="size-4 mr-2" />
               Actualizar por Lotes
             </Button>
             <Button
@@ -56,7 +56,7 @@ export const CostBatchActionBar = ({
               size="sm"
               onClick={onClearSelection}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="size-4 mr-2" />
               Limpiar
             </Button>
           </div>

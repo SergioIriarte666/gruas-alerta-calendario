@@ -89,7 +89,7 @@ export const InvoiceCancellationModal = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <Ban className="h-5 w-5" />
+            <Ban className="size-5" />
             Anular Factura con Nota de Crédito
           </DialogTitle>
           <DialogDescription>
@@ -101,7 +101,7 @@ export const InvoiceCancellationModal = ({
           {/* Invoice Info */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm">
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="size-4 text-muted-foreground" />
               <span className="font-medium">Factura:</span>
               <span>{invoice.folio}</span>
               {invoice.numeroFiscal && (
@@ -109,12 +109,12 @@ export const InvoiceCancellationModal = ({
               )}
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <Building2 className="size-4 text-muted-foreground" />
               <span className="font-medium">Cliente:</span>
               <span>{getClientName(invoice)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <DollarSign className="size-4 text-muted-foreground" />
               <span className="font-medium">Total:</span>
               <span className="text-lg font-semibold">{formatCurrency(invoice.total)}</span>
             </div>
@@ -174,7 +174,7 @@ export const InvoiceCancellationModal = ({
           {/* Warning */}
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
             <div className="flex gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-800 dark:text-amber-200">
                 <p className="font-medium mb-1">Esta acción:</p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">

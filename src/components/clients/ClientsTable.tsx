@@ -45,11 +45,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 export const ClientsTable = ({
@@ -112,11 +112,11 @@ export const ClientsTable = ({
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron clientes</h3>
           <p className="text-muted-foreground mb-4">No hay clientes que coincidan con "{searchTerm}"</p>
           <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />Agregar Cliente
+            <Plus className="size-4 mr-2" />Agregar Cliente
           </Button>
         </CardContent>
       </Card>
@@ -127,11 +127,11 @@ export const ClientsTable = ({
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes registrados</h3>
           <p className="text-muted-foreground mb-4">Comienza agregando tu primer cliente al sistema</p>
           <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" />Agregar Primer Cliente
+            <Plus className="size-4 mr-2" />Agregar Primer Cliente
           </Button>
         </CardContent>
       </Card>
@@ -234,27 +234,27 @@ export const ClientsTable = ({
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center space-x-1">
                         <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" title="Ver detalles">
-                          <Eye className="w-4 h-4" />
+                          <Eye className="size-4" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => onEdit(client)} className="text-primary hover:text-primary/80 hover:bg-primary/10" title="Editar cliente">
-                          <Edit className="w-4 h-4" />
+                          <Edit className="size-4" />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
+                              <MoreHorizontal className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => onToggleStatus(client)}>
                               {client.isActive ? (
-                                <><UserX className="w-4 h-4 mr-2 text-red-500" />Desactivar</>
+                                <><UserX className="size-4 mr-2 text-red-500" />Desactivar</>
                               ) : (
-                                <><UserCheck className="w-4 h-4 mr-2 text-green-500" />Activar</>
+                                <><UserCheck className="size-4 mr-2 text-green-500" />Activar</>
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onDelete(client)} className="text-destructive">
-                              <Trash2 className="w-4 h-4 mr-2" />Eliminar
+                              <Trash2 className="size-4 mr-2" />Eliminar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

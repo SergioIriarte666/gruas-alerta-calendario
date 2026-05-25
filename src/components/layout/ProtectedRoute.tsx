@@ -16,7 +16,7 @@ const LoadingScreen = ({ message }: { message: string }) => (
   <div className="flex items-center justify-center h-screen bg-background text-foreground">
     <div className="text-center">
       <div className="mb-4">{message}</div>
-      <div className="w-8 h-8 border-2 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <div className="size-8 border-2 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
     </div>
   </div>
 );

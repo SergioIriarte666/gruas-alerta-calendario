@@ -32,7 +32,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Centros Activos</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <TrendingUp className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{activeCenters.length}</div>
@@ -45,7 +45,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Presupuesto Total</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <DollarSign className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(totalBudget)}</div>
@@ -59,8 +59,8 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Uso del Presupuesto</CardTitle>
           {budgetUsagePercentage > 100 ? 
-            <TrendingDown className="h-4 w-4 text-destructive" /> :
-            <TrendingUp className="h-4 w-4 text-success" />
+            <TrendingDown className="size-4 text-destructive" /> :
+            <TrendingUp className="size-4 text-success" />
           }
         </CardHeader>
         <CardContent>
@@ -77,7 +77,7 @@ export const CostCenterStats = ({ costCenters }: CostCenterStatsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Sobre Presupuesto</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertTriangle className="size-4 text-destructive" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-destructive">

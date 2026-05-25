@@ -13,7 +13,7 @@ const getIconForType = (type: GlobalSearchResult['type']) => {
     crane: Truck
   };
   const Icon = iconMap[type];
-  return <Icon className="w-4 h-4" />;
+  return <Icon className="size-4" />;
 };
 
 const getTypeLabel = (type: GlobalSearchResult['type']) => {
@@ -43,7 +43,7 @@ export const GlobalSearch = () => {
   return (
     <div className="relative max-w-md flex-1">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
         <Input
           placeholder="Buscar servicios, clientes, facturas..."
           className="pl-10 pr-4 bg-white border-gray-300 text-black placeholder-gray-500 focus:border-tms-green focus:ring-tms-green"
@@ -53,7 +53,7 @@ export const GlobalSearch = () => {
           onBlur={handleInputBlur}
         />
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4 animate-spin" />
         )}
       </div>
 

@@ -38,7 +38,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
     <Card className="bg-accent/30 border-primary/30">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-          <Package className="w-5 h-5 text-primary" />
+          <Package className="size-5 text-primary" />
           Detalles de Compra de Inventario
         </CardTitle>
       </CardHeader>
@@ -50,7 +50,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <Hash className="w-4 h-4" />
+                  <Hash className="size-4" />
                   Cantidad *
                 </Label>
                 <FormControl>
@@ -76,7 +76,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="size-4" />
                   Precio Unitario *
                 </Label>
                 <FormControl>
@@ -102,7 +102,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             render={({ field }) => (
               <FormItem>
                 <Label className="flex items-center gap-2 text-foreground">
-                  <DollarSign className="w-4 h-4" />
+                  <DollarSign className="size-4" />
                   Total (Auto-calculado)
                 </Label>
                 <FormControl>
@@ -134,7 +134,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
 
         {immediateConsumption && (!quantity || !unitCost || Number(quantity) <= 0 || Number(unitCost) <= 0) && (
           <Alert variant="destructive" className="py-2">
-            <Info className="w-4 h-4" />
+            <Info className="size-4" />
             <AlertDescription className="text-xs">
               Cantidad y precio unitario son <strong>obligatorios</strong> para registrar el consumo inmediato en bodega y grúa.
             </AlertDescription>
@@ -165,7 +165,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
                   htmlFor="immediate_consumption" 
                   className="flex items-center gap-2 cursor-pointer font-medium text-sm"
                 >
-                  <Zap className="w-3.5 h-3.5 text-orange-500" />
+                  <Zap className="size-3.5 text-orange-500" />
                   Consumo Inmediato
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -176,7 +176,7 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             
             {immediateConsumption && (
               <div className="flex items-center gap-2 text-xs bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-full border border-orange-200 dark:border-orange-800">
-                <Zap className="w-3 h-3" />
+                <Zap className="size-3" />
                 {craneId && craneId !== 'none' ? (
                   <span className="font-medium">→ 1 grúa seleccionada</span>
                 ) : (

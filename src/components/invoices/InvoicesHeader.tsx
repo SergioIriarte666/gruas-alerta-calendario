@@ -21,7 +21,7 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderPr
           onClick={onOpenExportModal}
           className="gap-2"
         >
-          <FileDown className="h-4 w-4" />
+          <FileDown className="size-4" />
           Exportar Facturas
         </Button>
         <Button
@@ -29,7 +29,7 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderPr
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
           title="Crear nueva factura"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nueva Factura
         </Button>
       </div>

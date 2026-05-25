@@ -25,7 +25,7 @@ export const PipelineBatchActionBar = ({
               {selectedCount} {selectedCount === 1 ? 'servicio seleccionado' : 'servicios seleccionados'}
             </Badge>
             <div className="flex items-center gap-2 text-foreground font-semibold">
-              <DollarSign className="w-4 h-4 text-violet-500" />
+              <DollarSign className="size-4 text-violet-500" />
               <span>Total: ${totalAmount.toLocaleString('es-CL')}</span>
             </div>
           </div>
@@ -36,7 +36,7 @@ export const PipelineBatchActionBar = ({
               size="sm"
               onClick={onBatchUpdate}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="size-4 mr-2" />
               Actualizar por Lotes
             </Button>
             <Button
@@ -44,7 +44,7 @@ export const PipelineBatchActionBar = ({
               size="sm"
               onClick={onClearSelection}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="size-4 mr-2" />
               Limpiar
             </Button>
           </div>

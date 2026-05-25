@@ -981,7 +981,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       <DialogContent className={`max-w-4xl overflow-hidden flex flex-col ${step === 'preview' ? 'h-[85vh]' : 'max-h-[90vh]'}`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="size-5" />
             Importar Historial de Compras
           </DialogTitle>
         </DialogHeader>
@@ -993,7 +993,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
           >
             <input {...getInputProps()} />
-            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg font-medium text-foreground">
               {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
             </p>
@@ -1059,7 +1059,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     <div className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <CheckCircle className="size-4 text-green-500" />
                               Facturas listas ({getSelectedMatchedCount()}/{preview.matched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1118,7 +1118,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-medium flex items-center gap-2">
-                                        <Users className="h-4 w-4 text-amber-500" />
+                                        <Users className="size-4 text-amber-500" />
                                         Proveedores no encontrados ({unmatchedSuppliers.length}) — {preview?.unmatched.length} facturas
                                     </h3>
                                 </div>
@@ -1143,7 +1143,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                 onClick={() => handleBulkAction('create')}
                                                 disabled={selectedUnmatchedSupplierIndices.size === 0}
                                             >
-                                                <UserPlus className="h-3.5 w-3.5" />
+                                                <UserPlus className="size-3.5" />
                                                 Crear
                                             </Button>
                                             <Button 
@@ -1153,7 +1153,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                 onClick={handleBulkAssign}
                                                 disabled={selectedUnmatchedSupplierIndices.size === 0}
                                             >
-                                                <Users className="h-3.5 w-3.5" />
+                                                <Users className="size-3.5" />
                                                 Asignar
                                             </Button>
                                             <Button 
@@ -1163,7 +1163,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                 onClick={() => handleBulkAction('ignore')}
                                                 disabled={selectedUnmatchedSupplierIndices.size === 0}
                                             >
-                                                <Ban className="h-3.5 w-3.5" />
+                                                <Ban className="size-3.5" />
                                                 Ignorar
                                             </Button>
                                         </div>
@@ -1191,8 +1191,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                         autoFocus
                                                                         onKeyDown={(e) => e.key === 'Enter' && saveQuickEdit()}
                                                                     />
-                                                                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={saveQuickEdit}>
-                                                                        <Check className="h-4 w-4 text-green-500" />
+                                                                    <Button size="icon" variant="ghost" className="size-8" onClick={saveQuickEdit}>
+                                                                        <Check className="size-4 text-green-500" />
                                                                     </Button>
                                                                 </div>
                                                             ) : (
@@ -1201,10 +1201,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                     <Button 
                                                                         size="icon" 
                                                                         variant="ghost" 
-                                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                         onClick={() => openQuickEdit(i)}
                                                                     >
-                                                                        <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                                                        <Edit2 className="size-3.5 text-muted-foreground" />
                                                                     </Button>
                                                                 </div>
                                                             )}
@@ -1221,17 +1221,17 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                         <div>
                                                             {us.resolution === 'create' && (
                                                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
-                                                                    <UserPlus className="h-3 w-3" /> Se creará
+                                                                    <UserPlus className="size-3" /> Se creará
                                                                 </Badge>
                                                             )}
                                                             {us.resolution === 'assign' && (
                                                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 gap-1">
-                                                                    <Users className="h-3 w-3" /> Asignado
+                                                                    <Users className="size-3" /> Asignado
                                                                 </Badge>
                                                             )}
                                                             {us.resolution === 'ignore' && (
                                                                 <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
-                                                                    <Ban className="h-3 w-3" /> Ignorado
+                                                                    <Ban className="size-3" /> Ignorado
                                                                 </Badge>
                                                             )}
                                                             {us.resolution === 'pending' && (
@@ -1250,7 +1250,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                             className="h-8 gap-2"
                                                             onClick={() => handleSupplierResolution(i, 'create')}
                                                         >
-                                                            <UserPlus className="h-3.5 w-3.5" />
+                                                            <UserPlus className="size-3.5" />
                                                             Crear
                                                         </Button>
                                                         
@@ -1266,7 +1266,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                 setBulkAssignDialogOpen(true);
                                                             }}
                                                         >
-                                                            <Users className="h-3.5 w-3.5" />
+                                                            <Users className="size-3.5" />
                                                             Asignar
                                                         </Button>
 
@@ -1276,7 +1276,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                             className={`h-8 gap-2 ${us.resolution !== 'ignore' ? 'text-muted-foreground hover:text-destructive' : ''}`}
                                                             onClick={() => handleSupplierResolution(i, 'ignore')}
                                                         >
-                                                            <Ban className="h-3.5 w-3.5" />
+                                                            <Ban className="size-3.5" />
                                                             Ignorar
                                                         </Button>
                                                     </div>
@@ -1292,7 +1292,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium flex items-center gap-2">
-                              <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              <AlertTriangle className="size-4 text-amber-500" />
                               Facturas sin asignar ({getSelectedUnmatchedCount()}/{preview.unmatched.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1353,7 +1353,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     <div className="p-4">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-medium flex items-center gap-2">
-                              <Ban className="h-4 w-4 text-muted-foreground" />
+                              <Ban className="size-4 text-muted-foreground" />
                               Duplicados ({getSelectedDuplicatesCount()}/{preview.duplicates.length})
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
@@ -1401,7 +1401,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         {step === 'importing' && (
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <Loader2 className="size-12 animate-spin text-primary mb-4" />
             <h3 className="text-lg font-medium">Importando facturas...</h3>
             <p className="text-sm text-muted-foreground mt-2">
               Esto puede tomar unos momentos. Por favor no cierres esta ventana.
@@ -1426,7 +1426,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         {step === 'done' && importResult && (
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+            <CheckCircle className="size-12 text-green-500 mb-4" />
             <h3 className="text-lg font-medium">Importación completada</h3>
             <div className="mt-4 space-y-1">
               <p className="text-sm text-muted-foreground">

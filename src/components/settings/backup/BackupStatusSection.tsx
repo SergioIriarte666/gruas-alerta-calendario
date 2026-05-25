@@ -22,7 +22,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
       {/* Error del hook */}
       {hookError && (
         <Alert variant="destructive">
-          <XCircle className="w-4 h-4 text-danger" />
+          <XCircle className="size-4 text-danger" />
           <AlertDescription className="text-foreground">
             Error al cargar datos de respaldos: {hookError.message}
           </AlertDescription>
@@ -31,7 +31,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
 
       {lastSuccessfulBackup ? (
         <Alert className="border-success/30 bg-success-soft">
-          <CheckCircle className="w-4 h-4 text-success" />
+          <CheckCircle className="size-4 text-success" />
           <AlertDescription className="text-foreground">
             Último respaldo exitoso: {' '}
             {formatDistanceToNow(new Date(lastSuccessfulBackup.created_at), {
@@ -47,7 +47,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
         </Alert>
       ) : (
         <Alert className="border-warning/30 bg-warning-soft">
-          <AlertTriangle className="w-4 h-4 text-warning" />
+          <AlertTriangle className="size-4 text-warning" />
           <AlertDescription className="text-foreground">
             No se encontraron respaldos anteriores. Se recomienda generar un respaldo.
           </AlertDescription>

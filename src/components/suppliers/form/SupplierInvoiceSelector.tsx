@@ -29,7 +29,7 @@ const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
   if (isPaid) {
     return (
       <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-        <CheckCircle className="h-3 w-3 mr-1" />
+        <CheckCircle className="size-3 mr-1" />
         Pagada
       </Badge>
     );
@@ -38,7 +38,7 @@ const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
   if (isOverdue) {
     return (
       <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-        <AlertTriangle className="h-3 w-3 mr-1" />
+        <AlertTriangle className="size-3 mr-1" />
         Vencida
       </Badge>
     );
@@ -96,7 +96,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
   if (isPendingLoading) {
     return (
       <div className="flex items-center justify-center p-4 text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        <Loader2 className="size-4 animate-spin mr-2" />
         Cargando facturas...
       </div>
     );
@@ -105,7 +105,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
   if (pendingInvoices.length === 0) {
     return (
       <div className="text-center p-4 text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
-        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <FileText className="size-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No hay facturas pendientes para este proveedor</p>
       </div>
     );
@@ -157,7 +157,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="font-medium text-sm truncate">
                     {invoice.invoice_number}
                   </span>

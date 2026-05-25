@@ -155,7 +155,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
       <div className="bg-card border rounded-lg p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por proveedor, N° factura o descripción..."
               value={searchTerm}
@@ -189,7 +189,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                   <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
-                        <Truck className="h-5 w-5" style={{ color }} />
+                        <Truck className="size-5" style={{ color }} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                         </p>
                       </div>
                     </div>
-                    {isExpanded ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+                    {isExpanded ? <ChevronDown className="size-5 text-muted-foreground" /> : <ChevronRight className="size-5 text-muted-foreground" />}
                   </div>
                 </CollapsibleTrigger>
 
@@ -218,13 +218,13 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                           <CollapsibleTrigger asChild>
                             <div className="flex items-center justify-between px-6 py-3 cursor-pointer hover:bg-accent/30 transition-colors border-b last:border-b-0">
                               <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <Calendar className="size-4 text-muted-foreground" />
                                 <span className="font-medium text-sm capitalize">{month.label}</span>
                                 <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
-                                {isMonthExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                {isMonthExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
                               </div>
                             </div>
                           </CollapsibleTrigger>
@@ -263,13 +263,13 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8"
+                                        className="size-8"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           onDelete(inv.id);
                                         }}
                                       >
-                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                        <Trash2 className="size-4 text-muted-foreground" />
                                       </Button>
                                     </div>
                                   </div>

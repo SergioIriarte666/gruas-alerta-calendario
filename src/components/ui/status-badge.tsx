@@ -47,7 +47,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     variant="outline"
     className={cn("gap-1 font-medium border", toneClasses[tone], className)}
   >
-    {Icon && <Icon className="h-3 w-3" />}
+    {Icon && <Icon className="size-3" />}
     {children}
   </Badge>
 );

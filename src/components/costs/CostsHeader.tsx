@@ -86,7 +86,7 @@ export const CostsHeader = ({
             onClick={onAddCost}
             className="bg-tms-green hover:bg-tms-green/80 text-black hover-scale"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Nuevo Costo
           </Button>
           
@@ -95,7 +95,7 @@ export const CostsHeader = ({
             variant="outline"
             className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
           >
-            <Code className="w-4 h-4 mr-2" />
+            <Code className="size-4 mr-2" />
             Cargar XML
           </Button>
         </div>
@@ -131,7 +131,7 @@ export const CostsHeader = ({
                 </p>
               </div>
               <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
-                <span className="w-5 h-5 text-blue-600 dark:text-blue-400 text-xl">📊</span>
+                <span className="size-5 text-blue-600 dark:text-blue-400 text-xl">📊</span>
               </div>
             </div>
           </div>
@@ -174,9 +174,9 @@ export const CostsHeader = ({
                 {monthVariation !== 0 && (
                   <div className="flex items-center mt-1">
                     {monthVariation > 0 ? (
-                      <TrendingUp className="w-3 h-3 text-red-500 mr-1" />
+                      <TrendingUp className="size-3 text-red-500 mr-1" />
                     ) : (
-                      <TrendingDown className="w-3 h-3 text-green-500 mr-1" />
+                      <TrendingDown className="size-3 text-green-500 mr-1" />
                     )}
                     <span className={`text-xs ${monthVariation > 0 ? 'text-red-500' : 'text-green-500'}`}>
                       {Math.abs(monthVariation).toFixed(1)}%
@@ -195,7 +195,7 @@ export const CostsHeader = ({
       {/* Barra de búsqueda y filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
           <Input
             placeholder="Buscar por descripción, categoría, folio..."
             value={searchTerm}
@@ -214,7 +214,7 @@ export const CostsHeader = ({
                 onClick={() => onViewModeChange('table')}
                 className="rounded-r-none border-r"
               >
-                <Table className="w-4 h-4" />
+                <Table className="size-4" />
               </Button>
               <Button
                 variant={viewMode === 'cards' ? 'default' : 'ghost'}
@@ -222,7 +222,7 @@ export const CostsHeader = ({
                 onClick={() => onViewModeChange('cards')}
                 className="rounded-l-none"
               >
-                <Grid3X3 className="w-4 h-4" />
+                <Grid3X3 className="size-4" />
               </Button>
             </div>
           )}
@@ -238,7 +238,7 @@ export const CostsHeader = ({
           
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport} className="whitespace-nowrap">
-              <Download className="w-4 h-4 sm:mr-2" />
+              <Download className="size-4 sm:mr-2" />
               <span className="hidden sm:inline">Exportar Excel</span>
               <span className="sm:hidden">Excel</span>
             </Button>

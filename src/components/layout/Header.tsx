@@ -69,7 +69,7 @@ export const Header = ({
           onClick={() => setIsMobileMenuOpen(true)} 
           className="lg:hidden text-foreground hover:bg-primary hover:text-primary-foreground"
         >
-          <Menu className={cn(isMobile ? "h-5 w-5" : "h-6 w-6")} />
+          <Menu className={cn(isMobile ? "size-5" : "size-6")} />
           <span className="sr-only">Abrir menú</span>
         </Button>
 
@@ -77,7 +77,7 @@ export const Header = ({
         <div className="flex items-center space-x-2">
           {companyLogo && <img src={companyLogo} alt="Logo empresa" className={cn(
             "object-contain",
-            isMobile ? "h-6 w-6" : "h-8 w-8"
+            isMobile ? "size-6" : "size-8"
           )} />}
           <div className={cn(isMobile ? "hidden" : "block")}>
             <h1 className={cn(
@@ -99,7 +99,7 @@ export const Header = ({
               onClick={() => navigate('/services')}
               className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
             >
-              <Truck className="w-4 h-4 mr-1.5" />
+              <Truck className="size-4 mr-1.5" />
               Servicios
             </Button>
             
@@ -109,7 +109,7 @@ export const Header = ({
               onClick={() => navigate('/costs')}
               className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
             >
-              <Receipt className="w-4 h-4 mr-1.5" />
+              <Receipt className="size-4 mr-1.5" />
               Costos
             </Button>
             
@@ -119,7 +119,7 @@ export const Header = ({
               onClick={() => navigate('/closures')}
               className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
             >
-              <ClipboardCheck className="w-4 h-4 mr-1.5" />
+              <ClipboardCheck className="size-4 mr-1.5" />
               Cierres
             </Button>
             
@@ -129,7 +129,7 @@ export const Header = ({
               onClick={() => navigate('/invoices')}
               className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
             >
-              <FileText className="w-4 h-4 mr-1.5" />
+              <FileText className="size-4 mr-1.5" />
               Facturas
             </Button>
             <Button 
@@ -138,7 +138,7 @@ export const Header = ({
               onClick={() => navigate('/clients')}
               className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
             >
-              <Users className="w-4 h-4 mr-1.5" />
+              <Users className="size-4 mr-1.5" />
               Clientes
             </Button>
           </div>
@@ -161,7 +161,7 @@ export const Header = ({
             >
               <User className={cn(
                 "text-violet-600",
-                isMobile ? "w-4 h-4" : "w-5 h-5"
+                isMobile ? "size-4" : "size-5"
               )} />
             </Button>
           </DropdownMenuTrigger>
@@ -171,11 +171,11 @@ export const Header = ({
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={handleProfileClick}>
-              <User className="w-4 h-4 mr-2" />
+              <User className="size-4 mr-2" />
               Perfil
             </DropdownMenuItem>
             {isAdmin && <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={() => navigate('/settings')}>
-                <Settings className="w-4 h-4 mr-2" />
+                <Settings className="size-4 mr-2" />
                 Configuración
               </DropdownMenuItem>}
             <DropdownMenuSeparator className="bg-border" />

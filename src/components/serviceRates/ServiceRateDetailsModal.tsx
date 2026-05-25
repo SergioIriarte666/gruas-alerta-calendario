@@ -42,7 +42,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-3">
             <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
               <div className="p-1 rounded bg-blue-500/10 text-blue-600">
-                <User className="h-3 w-3" />
+                <User className="size-3" />
               </div>
               Cliente
             </div>
@@ -56,7 +56,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           <div className="rounded-lg border border-border border-l-4 border-l-orange-500 bg-orange-500/5 p-3">
             <div className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300 font-medium mb-1">
               <div className="p-1 rounded bg-orange-500/10 text-orange-600">
-                <FileText className="h-3 w-3" />
+                <FileText className="size-3" />
               </div>
               Tipo de Servicio
             </div>
@@ -71,7 +71,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-3">
             <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300 font-medium mb-1">
               <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
-                <MapPin className="h-3 w-3" />
+                <MapPin className="size-3" />
               </div>
               Ruta
             </div>
@@ -79,7 +79,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
               <span className="font-medium">{rate.origin}</span>
               {rate.destination && (
                 <>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  <ArrowRight className="size-4 text-muted-foreground" />
                   <span className="font-medium">{rate.destination}</span>
                 </>
               )}
@@ -99,7 +99,7 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
             <div className="rounded-lg border border-border border-l-4 border-l-cyan-500 bg-cyan-500/5 p-3">
               <div className="flex items-center gap-2 text-sm text-cyan-700 dark:text-cyan-300 font-medium mb-1">
                 <div className="p-1 rounded bg-cyan-500/10 text-cyan-600">
-                  <FileText className="h-3 w-3" />
+                  <FileText className="size-3" />
                 </div>
                 Notas
               </div>
@@ -110,13 +110,13 @@ export const ServiceRateDetailsModal: React.FC<ServiceRateDetailsModalProps> = (
           {/* Metadatos */}
           <div className="pt-3 border-t text-xs text-muted-foreground space-y-1">
             <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3" />
+              <Calendar className="size-3" />
               Creado: {format(new Date(rate.created_at), "d 'de' MMMM, yyyy HH:mm", { locale: es })}
               {rate.creator && ` por ${rate.creator.email}`}
             </div>
             {rate.updated_at && rate.updated_at !== rate.created_at && (
               <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3" />
+                <Calendar className="size-3" />
                 Actualizado: {format(new Date(rate.updated_at), "d 'de' MMMM, yyyy HH:mm", { locale: es })}
               </div>
             )}

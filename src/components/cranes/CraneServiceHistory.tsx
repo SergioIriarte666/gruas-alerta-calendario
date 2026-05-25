@@ -71,7 +71,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                 <p className="text-gray-300 text-sm">Total Servicios</p>
                 <p className="text-white text-2xl font-bold">{services.length}</p>
               </div>
-              <FileText className="w-8 h-8 text-tms-green" />
+              <FileText className="size-8 text-tms-green" />
             </div>
           </CardContent>
         </Card>
@@ -85,7 +85,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                   {services.filter(s => s.status === 'completed').length}
                 </p>
               </div>
-              <Calendar className="w-8 h-8 text-green-400" />
+              <Calendar className="size-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -99,7 +99,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                   ${totalRevenue.toLocaleString()}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-tms-green" />
+              <DollarSign className="size-8 text-tms-green" />
             </div>
           </CardContent>
         </Card>
@@ -110,7 +110,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
               <Input
                 placeholder="Buscar por folio, cliente u operador..."
                 value={searchTerm}
@@ -165,7 +165,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
         <CardContent>
           {filteredServices.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <FileText className="mx-auto size-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No se encontraron servicios</h3>
               <p className="text-gray-400">
                 {searchTerm || filterStatus !== 'all' 
@@ -191,18 +191,18 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-300">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="size-4" />
                             {formatForDisplay(service.serviceDate)}
                           </div>
                           <div className="flex items-center gap-2 text-gray-300">
-                            <User className="w-4 h-4" />
+                            <User className="size-4" />
                             {service.operatorName}
                           </div>
                         </div>
                         
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-300">
-                            <MapPin className="w-4 h-4" />
+                            <MapPin className="size-4" />
                             {service.origin} → {service.destination}
                           </div>
                           <div className="text-white font-medium">

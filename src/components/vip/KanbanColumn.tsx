@@ -29,19 +29,19 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const getColumnIcon = () => {
     switch (column.id) {
       case 'quoted':
-        return <Package className="w-4 h-4" />;
+        return <Package className="size-4" />;
       case 'purchase_order_pending':
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle className="size-4" />;
       case 'pending':
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="size-4" />;
       case 'in_progress':
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="size-4" />;
       case 'completed':
-        return <Package className="w-4 h-4" />;
+        return <Package className="size-4" />;
       case 'invoiced':
-        return <Package className="w-4 h-4" />;
+        return <Package className="size-4" />;
       default:
-        return <Package className="w-4 h-4" />;
+        return <Package className="size-4" />;
     }
   };
 
@@ -102,7 +102,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
         {services.length === 0 ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <div className="text-center">
-              <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <Package className="size-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Sin servicios</p>
             </div>
           </div>

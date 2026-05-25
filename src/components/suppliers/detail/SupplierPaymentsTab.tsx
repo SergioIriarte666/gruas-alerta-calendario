@@ -70,7 +70,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
   if (payments.length === 0) {
     return (
       <div className="text-center py-12">
-        <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <CreditCard className="size-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">Sin pagos</h3>
         <p className="text-muted-foreground">No hay pagos registrados para este proveedor</p>
       </div>
@@ -83,7 +83,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         {payments.length > 3 && (
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <Input
               placeholder="Buscar descripción o ref..."
               value={search}

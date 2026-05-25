@@ -39,7 +39,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
   if (rates.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <MapPin className="size-12 mx-auto mb-4 opacity-50" />
         <p className="text-lg font-medium">No hay tarifas registradas</p>
         <p className="text-sm">Crea una nueva tarifa para comenzar</p>
       </div>
@@ -74,7 +74,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
                 <span className="truncate">{rate.origin}</span>
                 {rate.destination && (
                   <>
-                    <ArrowRight className="h-3 w-3 flex-shrink-0" />
+                    <ArrowRight className="size-3 flex-shrink-0" />
                     <span className="truncate">{rate.destination}</span>
                   </>
                 )}
@@ -88,14 +88,14 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
                     checked={rate.is_active}
                     onCheckedChange={(checked) => onToggleActive(rate.id, checked)}
                   />
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(rate)}>
-                    <Eye className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="size-8" onClick={() => onView(rate)}>
+                    <Eye className="size-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(rate)}>
-                    <Pencil className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="size-8" onClick={() => onEdit(rate)}>
+                    <Pencil className="size-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(rate)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="size-8 text-destructive" onClick={() => onDelete(rate)}>
+                    <Trash2 className="size-4" />
                   </Button>
                 </div>
               </div>
@@ -142,7 +142,7 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
                   <span className="truncate max-w-[150px]" title={rate.origin}>{rate.origin}</span>
                   {rate.destination && (
                     <>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      <ArrowRight className="size-3 text-muted-foreground flex-shrink-0" />
                       <span className="truncate max-w-[150px]" title={rate.destination}>{rate.destination}</span>
                     </>
                   )}
@@ -156,9 +156,9 @@ export const ServiceRatesTable: React.FC<ServiceRatesTableProps> = ({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => onView(rate)} title="Ver detalles"><Eye className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => onEdit(rate)} title="Editar"><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDelete(rate)} title="Eliminar" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onView(rate)} title="Ver detalles"><Eye className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(rate)} title="Editar"><Pencil className="size-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(rate)} title="Eliminar" className="text-destructive hover:text-destructive"><Trash2 className="size-4" /></Button>
                 </div>
               </TableCell>
             </TableRow>

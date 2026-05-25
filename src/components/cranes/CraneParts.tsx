@@ -153,7 +153,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           <p className="text-muted-foreground">Registro de consumos para la grúa {crane.licensePlate}</p>
         </div>
         <Button onClick={() => setIsExitOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Registrar Consumo
         </Button>
       </div>
@@ -165,13 +165,13 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
       ) : consumptions.length === 0 ? (
         <SectionCard className="border-border" contentClassName="py-12">
           <div className="flex flex-col items-center justify-center">
-            <Package className="mb-4 h-16 w-16 text-muted-foreground" />
+            <Package className="mb-4 size-16 text-muted-foreground" />
             <h3 className="mb-2 text-lg font-semibold text-foreground">No hay registros</h3>
             <p className="mb-6 text-center text-muted-foreground">
               Comienza registrando el primer consumo de inventario para esta grúa.
             </p>
             <Button onClick={() => setIsExitOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="size-4 mr-2" />
               Registrar Primer Consumo
             </Button>
           </div>
@@ -199,13 +199,13 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' }); }}>
-                        <History className="w-4 h-4 mr-1" />
+                        <History className="size-4 mr-1" />
                         Historial
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="size-4" />
                         <span>{m.movement_date ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es }) : '-'}</span>
                       </div>
                     </div>
@@ -261,7 +261,7 @@ const PartHistoryModal = ({ target, onClose }: PartHistoryModalProps) => {
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-violet-600" />
+            <History className="size-5 text-violet-600" />
             Historial de cambios
             {target && <span className="text-sm font-normal text-muted-foreground">— {target.itemName}</span>}
           </DialogTitle>

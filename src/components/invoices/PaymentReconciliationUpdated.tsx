@@ -201,7 +201,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     return (
       <div className="container mx-auto p-6">
         <Alert>
-          <AlertTriangle className="h-4 w-4" />
+          <AlertTriangle className="size-4" />
           <AlertDescription>
             Sistema de conciliación no disponible. Contacte al administrador.
           </AlertDescription>
@@ -220,15 +220,15 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <h2 className="text-2xl font-bold">Conciliación de Pagos</h2>
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isProcessing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
           <Button onClick={() => setShowPaymentForm(true)} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Registrar Pago
           </Button>
           <Button onClick={() => setShowPaymentHistory(true)} variant="outline" size="sm">
-            <History className="h-4 w-4 mr-2" />
+            <History className="size-4 mr-2" />
             Ver Historial
           </Button>
         </div>
@@ -247,7 +247,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.pending_payments || 0}</div>
@@ -260,7 +260,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos Aplicados</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="size-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.applied_payments || 0}</div>
@@ -271,7 +271,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Facturas sin Pago</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="size-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.invoices_without_payments || 0}</div>
@@ -282,7 +282,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos sin Aplicar</CardTitle>
-            <TrendingUp className="h-4 w-4 text-orange-600" />
+            <TrendingUp className="size-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.payments_without_applications || 0}</div>
@@ -296,7 +296,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
             <span className="flex items-center gap-2">
-              <Wrench className="h-4 w-4" />
+              <Wrench className="size-4" />
               Herramientas de Mantenimiento
               {systemDiagnosis?.system_health === 'NEEDS_REPAIR' && (
                 <Badge variant="destructive" className="ml-2">
@@ -304,7 +304,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 </Badge>
               )}
             </span>
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="size-4" />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
@@ -326,7 +326,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                       disabled={diagnosisLoading || isProcessing}
                       className="w-full"
                     >
-                      <Wrench className="h-4 w-4 mr-2" />
+                      <Wrench className="size-4 mr-2" />
                       Reparar Sistema
                     </Button>
                   </CardContent>
@@ -346,7 +346,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     className="w-full justify-start"
                     disabled={isProcessing}
                   >
-                    <FileText className="h-4 w-4 mr-2" />
+                    <FileText className="size-4 mr-2" />
                     Sincronizar Facturas Pagadas
                   </Button>
                   
@@ -361,7 +361,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     className="w-full justify-start"
                     disabled={isProcessing}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Settings className="size-4 mr-2" />
                     Eliminar Duplicados
                   </Button>
                   
@@ -376,7 +376,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     className="w-full justify-start"
                     disabled={isProcessing}
                   >
-                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    <AlertTriangle className="size-4 mr-2" />
                     Corregir Inconsistencias
                   </Button>
                   
@@ -390,7 +390,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     className="w-full justify-start"
                     disabled={diagnosisLoading}
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="size-4 mr-2" />
                     Actualizar Diagnóstico
                   </Button>
                 </div>

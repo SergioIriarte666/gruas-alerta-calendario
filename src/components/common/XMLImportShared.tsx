@@ -78,7 +78,7 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
       <div className="space-y-1">
         <DialogTitle className="flex items-center gap-2 text-xl">
           <span className="rounded-lg bg-primary/10 p-2 text-primary">
-            <Icon className="h-5 w-5" />
+            <Icon className="size-5" />
           </span>
           {title}
         </DialogTitle>
@@ -107,7 +107,7 @@ export const XMLImportStatsGrid: React.FC<XMLImportStatsGridProps> = ({ items, c
         <Card key={title} className={classes.card}>
           <CardContent className="flex items-center gap-4 p-4">
             <div className={cn('rounded-xl p-3', classes.icon)}>
-              <Icon className="h-5 w-5" />
+              <Icon className="size-5" />
             </div>
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>

@@ -25,7 +25,7 @@ export const ChangeHistoryPanel: React.FC<Props> = ({ changes, isLoading }) => {
   if (!changes || changes.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground">
-        <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+        <Clock className="size-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm">Sin registros de auditoría todavía</p>
       </div>
     );
@@ -40,14 +40,14 @@ export const ChangeHistoryPanel: React.FC<Props> = ({ changes, isLoading }) => {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2 text-sm">
-                <User className="w-4 h-4 text-primary" />
+                <User className="size-4 text-primary" />
                 <span className="font-medium text-foreground">{group.changerName}</span>
                 {group.changerEmail && (
                   <span className="text-xs text-muted-foreground">({group.changerEmail})</span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="size-3.5" />
                 {format(new Date(group.date), "dd 'de' MMMM yyyy, HH:mm", { locale: es })}
               </div>
             </div>
@@ -58,7 +58,7 @@ export const ChangeHistoryPanel: React.FC<Props> = ({ changes, isLoading }) => {
                 return (
                   <div key={c.id} className="flex items-start gap-2 text-sm">
                     <Badge variant="outline" className={`${meta.className} flex items-center gap-1 shrink-0`}>
-                      <Icon className="w-3 h-3" />
+                      <Icon className="size-3" />
                       {meta.label}
                     </Badge>
                     <span className="text-foreground leading-relaxed">

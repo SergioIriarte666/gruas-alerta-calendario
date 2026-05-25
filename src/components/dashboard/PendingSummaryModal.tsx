@@ -59,8 +59,8 @@ export const PendingSummaryModal: React.FC = () => {
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold text-foreground">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
-                <Bell className="w-5 h-5 text-violet-600" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10">
+                <Bell className="size-5 text-violet-600" />
               </div>
               Resumen de Pendientes
             </DialogTitle>

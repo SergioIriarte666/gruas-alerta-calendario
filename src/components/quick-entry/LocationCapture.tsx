@@ -106,22 +106,22 @@ export function LocationCapture({ onLocationChange }: LocationCaptureProps) {
       >
         {isCapturing ? (
           <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className="size-4 mr-2 animate-spin" />
             Obteniendo ubicación...
           </>
         ) : location ? (
           <>
-            <Check className="h-4 w-4 mr-2 text-green-500" />
+            <Check className="size-4 mr-2 text-green-500" />
             Ubicación guardada
           </>
         ) : error ? (
           <>
-            <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
+            <AlertCircle className="size-4 mr-2 text-red-500" />
             Reintentar ubicación
           </>
         ) : (
           <>
-            <MapPin className="h-4 w-4 mr-2" />
+            <MapPin className="size-4 mr-2" />
             Capturar Ubicación
           </>
         )}

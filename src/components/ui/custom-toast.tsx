@@ -87,13 +87,13 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-tms-green" />;
+        return <CheckCircle className="size-5 text-tms-green" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-400" />;
+        return <AlertCircle className="size-5 text-red-400" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-400" />;
+        return <AlertCircle className="size-5 text-yellow-400" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-400" />;
+        return <Info className="size-5 text-blue-400" />;
     }
   };
 
@@ -158,7 +158,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
           className="text-white/70 hover:text-white ml-2 transition-colors"
           style={{ color: 'rgba(255, 255, 255, 0.7)' }}
         >
-          <X className="w-4 h-4" />
+          <X className="size-4" />
         </button>
       </div>
     </div>

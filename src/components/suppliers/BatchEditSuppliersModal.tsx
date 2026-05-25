@@ -171,7 +171,7 @@ export const BatchEditSuppliersModal = ({
             disabled={updateSuppliersMutation.isPending || (category === 'no_change' && status === 'no_change')}
           >
             {updateSuppliersMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 size-4 animate-spin" />
             )}
             Guardar Cambios
           </Button>

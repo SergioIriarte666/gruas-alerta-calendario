@@ -120,7 +120,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
   if (!changes || changes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <History className="h-12 w-12 mb-4 opacity-50" />
+        <History className="size-12 mb-4 opacity-50" />
         <p className="text-sm">No hay cambios registrados para este servicio</p>
       </div>
     );
@@ -134,7 +134,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-amber-500/10">
-              <History className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <History className="size-4 text-amber-600 dark:text-amber-400" />
             </div>
             <h3 className="font-semibold text-base text-amber-700 dark:text-amber-300">Historial de Cambios</h3>
           </div>
@@ -158,7 +158,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
                 {/* Header del grupo */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <IconComponent className={`h-4 w-4 ${config.textColor}`} />
+                    <IconComponent className={`size-4 ${config.textColor}`} />
                     <span className={`text-xs font-medium ${config.textColor}`}>
                       {config.label}
                     </span>
@@ -172,7 +172,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
 
                 {/* Usuario */}
                 <div className="flex items-center gap-1.5 mb-3 text-xs text-muted-foreground">
-                  <User className="h-3 w-3" />
+                  <User className="size-3" />
                   <span>{group.changerName}</span>
                   {group.changerEmail && (
                     <span className="text-muted-foreground/70">({group.changerEmail})</span>

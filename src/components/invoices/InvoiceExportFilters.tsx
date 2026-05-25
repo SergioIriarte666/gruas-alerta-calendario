@@ -29,7 +29,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
       {/* Quick Filters */}
       <div className="space-y-2">
         <Label className="text-sm font-medium flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
+          <Calendar className="size-4" />
           Filtros Rápidos
         </Label>
         <div className="flex flex-wrap gap-2">
@@ -176,7 +176,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               htmlFor="pdf"
               className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
             >
-              <FileText className="h-4 w-4" />
+              <FileText className="size-4" />
               PDF
             </label>
           </div>
@@ -186,7 +186,7 @@ const InvoiceExportFilters = ({ filters, onFilterChange, onQuickFilter }: Invoic
               htmlFor="excel"
               className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
             >
-              <FileSpreadsheet className="h-4 w-4" />
+              <FileSpreadsheet className="size-4" />
               Excel
             </label>
           </div>

@@ -57,7 +57,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
       <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
         <CardTitle className="text-base font-semibold text-foreground">Deudas Activas</CardTitle>
         <Button size="sm" onClick={onCreateDebt}>
-          <Plus className="h-4 w-4 mr-1" /> Nueva Deuda
+          <Plus className="size-4 mr-1" /> Nueva Deuda
         </Button>
       </CardHeader>
       <CardContent className="p-0">
@@ -111,7 +111,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
                     <TableCell>{getStatusBadge(debt)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => onViewDebt(debt)}>
-                        <Eye className="h-4 w-4" />
+                        <Eye className="size-4" />
                       </Button>
                     </TableCell>
                   </TableRow>

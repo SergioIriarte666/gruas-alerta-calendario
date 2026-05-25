@@ -24,7 +24,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <AlertTriangle className="size-5 text-destructive" />
               <div>
                 <p className="text-sm font-medium">Facturas Vencidas</p>
                 <p className="text-2xl font-bold text-destructive">{overdueInvoices.length}</p>
@@ -36,7 +36,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-destructive" />
+              <DollarSign className="size-5 text-destructive" />
               <div>
                 <p className="text-sm font-medium">Monto Vencido</p>
                 <p className="text-2xl font-bold text-destructive">
@@ -50,7 +50,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-warning" />
+              <Clock className="size-5 text-warning" />
               <div>
                 <p className="text-sm font-medium">Vencen Pronto</p>
                 <p className="text-2xl font-bold text-warning">{invoicesDueSoon.length}</p>
@@ -62,7 +62,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-warning" />
+              <DollarSign className="size-5 text-warning" />
               <div>
                 <p className="text-sm font-medium">Monto por Vencer</p>
                 <p className="text-2xl font-bold text-warning">
@@ -79,7 +79,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="size-5" />
               Facturas Vencidas ({overdueInvoices.length})
             </CardTitle>
             <CardDescription>
@@ -94,7 +94,7 @@ export const InvoiceAlertsDashboard = () => {
                   className="flex items-center justify-between p-3 border rounded-lg bg-destructive/5 border-destructive/20"
                 >
                   <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-destructive" />
+                    <FileText className="size-4 text-destructive" />
                     <div>
                       <p className="font-medium">{invoice.folio}</p>
                       <p className="text-sm text-muted-foreground">{invoice.client_name}</p>
@@ -127,7 +127,7 @@ export const InvoiceAlertsDashboard = () => {
         <Card className="bg-card/60 backdrop-blur-sm border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-warning">
-              <Clock className="h-5 w-5" />
+              <Clock className="size-5" />
               Facturas Próximas a Vencer ({invoicesDueSoon.length})
             </CardTitle>
             <CardDescription>
@@ -142,7 +142,7 @@ export const InvoiceAlertsDashboard = () => {
                   className="flex items-center justify-between p-3 border rounded-lg bg-warning/5 border-warning/20"
                 >
                   <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-warning" />
+                    <FileText className="size-4 text-warning" />
                     <div>
                       <p className="font-medium">{invoice.folio}</p>
                       <p className="text-sm text-muted-foreground">{invoice.client_name}</p>

@@ -54,7 +54,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <DollarSign className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
@@ -67,7 +67,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Ticket Promedio</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <TrendingUp className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formatCurrency(stats.averageTicket)}</div>
@@ -80,7 +80,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <Users className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.uniqueClients}</div>
@@ -93,7 +93,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
       <Card className="col-span-1 md:col-span-2 lg:col-span-1">
          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tendencia (Últimos 6 meses)</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+          <FileText className="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent className="h-[80px]">
           <ResponsiveContainer width="100%" height="100%">

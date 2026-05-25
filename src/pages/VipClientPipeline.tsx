@@ -169,13 +169,13 @@ export default function VipClientPipeline() {
             onClick={() => navigate('/clients')}
             className="text-gray-400 hover:text-white"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="size-4 mr-2" />
             Volver a Clientes
           </Button>
         </div>
         <Card className="bg-card border">
           <CardContent className="p-8 text-center">
-            <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <AlertTriangle className="size-12 text-amber-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">Cliente no encontrado</h2>
             <p className="text-muted-foreground">El cliente solicitado no existe o no tienes permisos para verlo.</p>
           </CardContent>
@@ -194,7 +194,7 @@ export default function VipClientPipeline() {
             onClick={() => navigate('/clients')}
             className="text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="size-4 mr-2" />
             <span className="hidden sm:inline">Volver a Clientes</span>
             <span className="sm:hidden">Volver</span>
           </Button>
@@ -220,7 +220,7 @@ export default function VipClientPipeline() {
 
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            <CheckCircle className="w-3 h-3 mr-1" />
+            <CheckCircle className="size-3 mr-1" />
             <span className="hidden sm:inline">Sistema Activo</span>
             <span className="sm:hidden">Activo</span>
           </Badge>
@@ -308,7 +308,7 @@ export default function VipClientPipeline() {
       <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="flex items-center gap-3 text-muted-foreground">
-            <Clock className="w-4 h-4 text-primary" />
+            <Clock className="size-4 text-primary" />
             <p className="text-sm">
               Este pipeline se actualiza en tiempo real. Los servicios se mueven automáticamente entre estados según su progreso.
             </p>

@@ -20,11 +20,11 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   sortDirection?: SortDirection 
 }) => {
   if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 size-4 text-primary" /> : 
+    <ArrowDown className="ml-2 size-4 text-primary" />;
 };
 
 export const CostCategoryList = () => {
@@ -113,7 +113,7 @@ export const CostCategoryList = () => {
             className="gap-2"
             size={isMobile ? "sm" : "default"}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             {isMobile ? "Nueva" : "Nueva Categoría"}
           </Button>
         </CardHeader>
@@ -136,16 +136,16 @@ export const CostCategoryList = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-1 ml-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleManageSubcategories(category)} title="Subcategorías">
-                          <Settings className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="size-8" onClick={() => handleManageSubcategories(category)} title="Subcategorías">
+                          <Settings className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)}>
-                          <Edit className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="size-8" onClick={() => handleEdit(category)}>
+                          <Edit className="size-4" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="size-8 text-destructive">
+                              <Trash2 className="size-4" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent className="w-[90vw] max-w-md">
@@ -186,11 +186,11 @@ export const CostCategoryList = () => {
                     <TableCell>{category.description || '-'}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleManageSubcategories(category)} className="h-8 w-8 p-0" title="Subcategorías"><Settings className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(category)} className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleManageSubcategories(category)} className="size-8 p-0" title="Subcategorías"><Settings className="size-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(category)} className="size-8 p-0"><Edit className="size-4" /></Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" className="size-8 p-0 text-destructive hover:text-destructive"><Trash2 className="size-4" /></Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

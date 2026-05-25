@@ -93,7 +93,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
       {/* Persisted data alert */}
       {showPersistedDataAlert && (
         <Alert className="border-blue-500/50 bg-blue-500/10">
-          <Save className="h-4 w-4 text-blue-400" />
+          <Save className="size-4 text-blue-400" />
           <AlertDescription className="text-blue-200 flex items-center justify-between">
             <span>Se encontraron datos guardados anteriormente. ¿Deseas continuar desde donde lo dejaste?</span>
             <div className="ml-4 space-x-2">

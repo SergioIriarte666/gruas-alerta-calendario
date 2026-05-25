@@ -132,7 +132,7 @@ export const DocumentSettingsForm = ({
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <doc.icon className="w-5 h-5 text-tms-green" />
+                        <doc.icon className="size-5 text-tms-green" />
                         <div>
                           <h4 className="text-white font-medium">{doc.name}</h4>
                           <p className="text-gray-400 text-sm">

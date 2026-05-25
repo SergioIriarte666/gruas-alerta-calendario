@@ -46,12 +46,12 @@ export const ConnectionStatus: React.FC = () => {
       <div className="flex items-center space-x-2">
         {isOnline ? (
           <>
-            <Wifi className="w-4 h-4" />
+            <Wifi className="size-4" />
             <span className="text-sm font-medium">Conexión restaurada</span>
           </>
         ) : (
           <>
-            <WifiOff className="w-4 h-4" />
+            <WifiOff className="size-4" />
             <span className="text-sm font-medium">Sin conexión</span>
           </>
         )}

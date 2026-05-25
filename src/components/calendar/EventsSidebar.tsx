@@ -90,7 +90,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
               onClick={() => setShowForm(!showForm)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="size-4" />
             </Button>
           </CardTitle>
         </CardHeader>
@@ -182,7 +182,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
                     <div className="flex-1">
                       <h4 className="font-medium text-foreground">{event.title}</h4>
                       <p className="text-sm text-muted-foreground flex items-center mt-1">
-                        <Clock className="w-3 h-3 mr-1" />
+                        <Clock className="size-3 mr-1" />
                         {event.startTime} - {event.endTime}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -201,7 +201,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
                           className="text-green-400 hover:text-green-300 border-green-500/30 hover:bg-green-500/10"
                           title="Convertir a servicio"
                         >
-                          <ArrowRight className="w-3 h-3 mr-1" />
+                          <ArrowRight className="size-3 mr-1" />
                           <span className="text-xs">Servicio</span>
                         </Button>
                       )}
@@ -211,7 +211,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
                         onClick={() => handleDeleteEvent(event.id)}
                         className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </div>

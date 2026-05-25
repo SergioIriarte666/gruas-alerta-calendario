@@ -27,7 +27,7 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
         onClick={onReset}
         title="Restablecer la configuración a los valores por defecto"
       >
-        <RotateCcw className="w-4 h-4 mr-2" />
+        <RotateCcw className="size-4 mr-2" />
         {isMobile ? "Reset" : "Restablecer"}
       </Button>
     </div>

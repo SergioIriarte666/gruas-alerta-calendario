@@ -254,7 +254,7 @@ export const BulkStatusRepairTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <ScanSearch className="w-5 h-5 text-amber-600" />
+            <ScanSearch className="size-5 text-amber-600" />
             Reparación Masiva de Estados
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -263,13 +263,13 @@ export const BulkStatusRepairTool = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Button onClick={runScan} disabled={scanning} className="w-full">
-            {scanning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ScanSearch className="w-4 h-4 mr-2" />}
+            {scanning ? <Loader2 className="size-4 animate-spin mr-2" /> : <ScanSearch className="size-4 mr-2" />}
             {scanning ? 'Escaneando...' : 'Ejecutar Escaneo'}
           </Button>
 
           {scanned && issues.length === 0 && repairLog.length === 0 && (
             <div className="p-4 rounded-md bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm flex items-center gap-2">
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="size-5" />
               No se encontraron inconsistencias. Todo está en orden.
             </div>
           )}
@@ -281,7 +281,7 @@ export const BulkStatusRepairTool = () => {
                   Problemas encontrados ({issues.length})
                 </h4>
                 <Button variant="destructive" size="sm" onClick={repairAll} disabled={repairing}>
-                  {repairing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Wrench className="w-3 h-3 mr-1" />}
+                  {repairing ? <Loader2 className="size-3 animate-spin mr-1" /> : <Wrench className="size-3 mr-1" />}
                   Reparar todos
                 </Button>
               </div>
@@ -297,7 +297,7 @@ export const BulkStatusRepairTool = () => {
                       <span className="text-muted-foreground truncate">{issue.description}</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => repairSingle(issue)} disabled={repairing}>
-                      <Wrench className="w-3 h-3" />
+                      <Wrench className="size-3" />
                     </Button>
                   </div>
                 ))}

@@ -98,7 +98,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'Esperando O.C.',
       value: metrics.pendingOC,
       subtitle: `$${metrics.pendingOCValue.toLocaleString()}`,
-      icon: <AlertTriangle className="w-5 h-5" />,
+      icon: <AlertTriangle className="size-5" />,
       color: 'text-amber-400',
       bgColor: 'bg-amber-500/10 border-amber-500/20',
       urgent: metrics.pendingOC > 0
@@ -107,7 +107,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'En Pipeline',
       value: metrics.inPipeline,
       subtitle: `$${metrics.pipelineValue.toLocaleString()}`,
-      icon: <Package className="w-5 h-5" />,
+      icon: <Package className="size-5" />,
       color: 'text-blue-400',
       bgColor: 'bg-blue-500/10 border-blue-500/20'
     },
@@ -115,7 +115,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'Completados',
       value: metrics.completed,
       subtitle: `$${metrics.completedValue.toLocaleString()}`,
-      icon: <CheckCircle className="w-5 h-5" />,
+      icon: <CheckCircle className="size-5" />,
       color: 'text-green-400',
       bgColor: 'bg-green-500/10 border-green-500/20'
     },
@@ -123,7 +123,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'Facturados',
       value: metrics.invoiced,
       subtitle: `$${metrics.invoicedValue.toLocaleString()}`,
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="size-5" />,
       color: 'text-gray-400',
       bgColor: 'bg-gray-500/10 border-gray-500/20'
     },
@@ -131,7 +131,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'Tiempo Promedio',
       value: `${metrics.avgProcessingTime}d`,
       subtitle: 'Procesamiento',
-      icon: <Timer className="w-5 h-5" />,
+      icon: <Timer className="size-5" />,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/10 border-purple-500/20'
     },
@@ -139,7 +139,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       title: 'Servicios Urgentes',
       value: metrics.urgentServices,
       subtitle: '+7 días',
-      icon: <Clock className="w-5 h-5" />,
+      icon: <Clock className="size-5" />,
       color: 'text-red-400',
       bgColor: 'bg-red-500/10 border-red-500/20',
       urgent: metrics.urgentServices > 0
@@ -153,7 +153,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg text-foreground flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-400" />
+              <TrendingUp className="size-5 text-purple-400" />
               Resumen del Pipeline
             </CardTitle>
             <Badge variant="outline" className="text-purple-300 border-purple-500/30">

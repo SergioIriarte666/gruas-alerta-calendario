@@ -295,7 +295,7 @@ export const HistoricalResults: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full size-8 border-b-2 border-primary" />
       </div>
     );
   }
@@ -321,7 +321,7 @@ export const HistoricalResults: React.FC = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={cn("w-[130px] text-left text-xs", !customFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    <CalendarIcon className="mr-1 size-3" />
                     {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                   </Button>
                 </PopoverTrigger>
@@ -332,7 +332,7 @@ export const HistoricalResults: React.FC = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={cn("w-[130px] text-left text-xs", !customTo && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    <CalendarIcon className="mr-1 size-3" />
                     {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                   </Button>
                 </PopoverTrigger>
@@ -351,15 +351,15 @@ export const HistoricalResults: React.FC = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Exportar
+              <Download className="size-4 mr-1" /> Exportar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={exportToExcel}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
             <DropdownMenuItem onClick={exportToPDF}>
-              <FileText className="h-4 w-4 mr-2" /> PDF
+              <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -477,7 +477,7 @@ export const HistoricalResults: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-yellow-500" /> Top 5 Clientes
+              <Trophy className="size-4 text-yellow-500" /> Top 5 Clientes
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -487,7 +487,7 @@ export const HistoricalResults: React.FC = () => {
               const maxVal = topClients[0]?.total || 1;
               return (
                 <div key={i} className="flex items-center gap-3">
-                  <Badge variant="outline" className="w-6 h-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
+                  <Badge variant="outline" className="size-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{c.name}</p>
                     <div className="w-full bg-muted rounded-full h-1.5 mt-1">
@@ -504,7 +504,7 @@ export const HistoricalResults: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-blue-500" /> Top 5 Proveedores
+              <Building2 className="size-4 text-blue-500" /> Top 5 Proveedores
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -514,7 +514,7 @@ export const HistoricalResults: React.FC = () => {
               const maxVal = topSuppliers[0]?.total || 1;
               return (
                 <div key={i} className="flex items-center gap-3">
-                  <Badge variant="outline" className="w-6 h-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
+                  <Badge variant="outline" className="size-6 flex items-center justify-center text-[10px] shrink-0">{i + 1}</Badge>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{s.name}</p>
                     <div className="w-full bg-muted rounded-full h-1.5 mt-1">
@@ -550,8 +550,8 @@ export const HistoricalResults: React.FC = () => {
               {monthlySummary.map((m, i) => (
                 <TableRow key={i} className={cn(m.isNegative && 'bg-destructive/5', m.isMissingData && 'bg-amber-50/50 dark:bg-amber-950/20')}>
                   <TableCell className="text-xs font-medium capitalize">
-                    {m.isNegative && <AlertTriangle className="h-3 w-3 text-destructive inline mr-1" />}
-                    {m.isMissingData && <AlertTriangle className="h-3 w-3 text-amber-500 inline mr-1" />}
+                    {m.isNegative && <AlertTriangle className="size-3 text-destructive inline mr-1" />}
+                    {m.isMissingData && <AlertTriangle className="size-3 text-amber-500 inline mr-1" />}
                     {m.month}
                   </TableCell>
                   <TableCell className="text-xs text-right">
@@ -606,7 +606,7 @@ const KPICard: React.FC<{
     <CardContent className="p-3 sm:p-4">
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="size-4 text-muted-foreground" />
       </div>
       <div className={cn("text-lg sm:text-2xl font-bold truncate", valueClassName || 'text-foreground')}>{value}</div>
       <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{description}</p>

@@ -116,10 +116,10 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    if (sortField !== field) return <ArrowUpDown className="ml-2 size-4 opacity-50" />;
     return sortDirection === 'asc' ? 
-      <ArrowUp className="ml-2 h-4 w-4" /> : 
-      <ArrowDown className="ml-2 h-4 w-4" />;
+      <ArrowUp className="ml-2 size-4" /> : 
+      <ArrowDown className="ml-2 size-4" />;
   };
 
   const sortedModels = useMemo(() => {
@@ -193,18 +193,18 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
             className="rounded-xl border border-violet-100 bg-violet-50/60 p-1 dark:border-violet-900/40 dark:bg-violet-950/10"
           >
             <ToggleGroupItem value="grouped" aria-label="Vista agrupada" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
-              <LayoutGrid className="h-4 w-4 mr-2" />
+              <LayoutGrid className="size-4 mr-2" />
               Agrupada
             </ToggleGroupItem>
             <ToggleGroupItem value="table" aria-label="Vista lista" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
-              <LayoutList className="h-4 w-4 mr-2" />
+              <LayoutList className="size-4 mr-2" />
               Lista
             </ToggleGroupItem>
           </ToggleGroup>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-violet-600 shadow-sm hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500">
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="size-4 mr-2" />
                 Nuevo Modelo
               </Button>
             </DialogTrigger>
@@ -318,7 +318,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                       size="sm"
                       onClick={() => handleEdit(model)}
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="size-4" />
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -327,7 +327,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
                           size="sm"
                           className="text-destructive hover:text-destructive"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

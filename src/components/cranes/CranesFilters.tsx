@@ -13,7 +13,7 @@ export const CranesFilters = ({ searchTerm, setSearchTerm }: CranesFiltersProps)
     <Card className="bg-card border-border">
       <CardContent className="p-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
           <Input
             type="text"
             placeholder="Buscar por patente, marca o modelo..."

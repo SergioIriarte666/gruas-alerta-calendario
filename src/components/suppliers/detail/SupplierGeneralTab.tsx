@@ -19,7 +19,7 @@ export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier
     if (!value) return null;
     return (
       <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
-        <Icon className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+        <Icon className="size-5 text-muted-foreground mt-0.5 flex-shrink-0" />
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-foreground font-medium">{value}</p>
@@ -34,7 +34,7 @@ export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier
       <Card className="bg-card border">
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
+            <Building2 className="size-5 text-primary" />
             Información del Proveedor
           </h3>
           
@@ -53,7 +53,7 @@ export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier
       <Card className="bg-card border">
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
+            <FileText className="size-5 text-primary" />
             Estado y Clasificación
           </h3>
           

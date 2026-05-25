@@ -121,7 +121,7 @@ export const DocumentUploadModal = ({
               {selectedFile ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-center gap-2">
-                    <Upload className="h-5 w-5 text-primary" />
+                    <Upload className="size-5 text-primary" />
                     <span className="text-sm font-medium">{selectedFile.name}</span>
                     <Button
                       type="button"
@@ -129,7 +129,7 @@ export const DocumentUploadModal = ({
                       size="sm"
                       onClick={() => setSelectedFile(null)}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="size-4" />
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -138,7 +138,7 @@ export const DocumentUploadModal = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <Upload className="size-8 mx-auto text-muted-foreground" />
                   <div>
                     <p className="text-sm">Arrastra el archivo aquí o</p>
                     <Button
@@ -177,7 +177,7 @@ export const DocumentUploadModal = ({
                     !expiryDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {expiryDate ? format(expiryDate, "dd/MM/yyyy") : "Seleccionar fecha"}
                 </Button>
               </PopoverTrigger>

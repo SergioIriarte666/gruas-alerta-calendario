@@ -85,7 +85,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       value: 'low_stock',
       label: 'Stock Bajo',
       description: 'Alerta cuando el stock está por debajo del mínimo',
-      icon: <Package className="w-4 h-4" />,
+      icon: <Package className="size-4" />,
       requiresThreshold: true,
       thresholdLabel: 'Cantidad mínima'
     },
@@ -93,7 +93,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       value: 'expiring_soon',
       label: 'Próximo a Vencer',
       description: 'Alerta cuando productos están próximos a vencer',
-      icon: <Clock className="w-4 h-4" />,
+      icon: <Clock className="size-4" />,
       requiresThreshold: true,
       thresholdLabel: 'Días antes del vencimiento'
     },
@@ -101,7 +101,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       value: 'overstock',
       label: 'Sobrestock',
       description: 'Alerta cuando hay exceso de inventario',
-      icon: <TrendingDown className="w-4 h-4" />,
+      icon: <TrendingDown className="size-4" />,
       requiresThreshold: true,
       thresholdLabel: 'Cantidad máxima'
     },
@@ -109,7 +109,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       value: 'no_movement',
       label: 'Sin Movimiento',
       description: 'Alerta cuando no hay actividad por mucho tiempo',
-      icon: <Bell className="w-4 h-4" />,
+      icon: <Bell className="size-4" />,
       requiresThreshold: true,
       thresholdLabel: 'Días sin movimiento'
     }
@@ -188,7 +188,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       {/* Producto (Opcional) */}
       <div className="space-y-2">
         <Label htmlFor="item_id" className="flex items-center gap-2">
-          <Package className="w-4 h-4" />
+          <Package className="size-4" />
           Producto (Opcional)
         </Label>
         <Select onValueChange={(value) => setValue('item_id', value)} value={watch('item_id')}>
@@ -209,7 +209,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       {/* Ubicación (Opcional) */}
       <div className="space-y-2">
         <Label htmlFor="location_id" className="flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
+          <MapPin className="size-4" />
           Ubicación (Opcional)
         </Label>
         <Select onValueChange={(value) => setValue('location_id', value)} value={watch('location_id')}>
@@ -231,7 +231,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
       {selectedType?.requiresThreshold && (
         <div className="space-y-2">
           <Label htmlFor="threshold_value" className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="size-4" />
             {selectedType.thresholdLabel}
           </Label>
           <Input

@@ -37,7 +37,7 @@ export const CostFormStep3 = ({
     <div className="space-y-4">
       <ColoredSectionCard
         title="Asociaciones"
-        icon={<Building2 className="h-4 w-4" />}
+        icon={<Building2 className="size-4" />}
         color="orange"
       >
         <p className="text-sm text-muted-foreground mb-4">

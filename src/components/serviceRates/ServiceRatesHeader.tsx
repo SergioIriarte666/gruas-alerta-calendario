@@ -23,7 +23,7 @@ export const ServiceRatesHeader: React.FC<ServiceRatesHeaderProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-violet-500/10">
-            <DollarSign className="h-6 w-6 text-violet-500" />
+            <DollarSign className="size-6 text-violet-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Tarifas de Servicio</h1>
@@ -40,17 +40,17 @@ export const ServiceRatesHeader: React.FC<ServiceRatesHeaderProps> = ({
             onClick={onRefresh}
             disabled={isLoading}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
           <Button onClick={onAddNew} className="bg-violet-600 hover:bg-violet-700">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Nueva Tarifa
           </Button>
         </div>
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por cliente, origen o destino..."
           value={searchTerm}

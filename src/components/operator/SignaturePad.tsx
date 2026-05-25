@@ -74,7 +74,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
       }} backgroundColor="white" penColor="black" onEnd={handleEnd} />
           
           {signature && <div className="absolute top-2 right-2">
-              <Check className="w-5 h-5 text-emerald-500" />
+              <Check className="size-5 text-emerald-500" />
             </div>}
           
           <div className="absolute bottom-2 left-2 text-xs text-muted-foreground">
@@ -84,7 +84,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
 
         <div className="flex justify-center">
           <Button type="button" onClick={handleClear} variant="outline" size="sm">
-            <RotateCcw className="w-4 h-4 mr-2" />
+            <RotateCcw className="size-4 mr-2" />
             Limpiar Firma
           </Button>
         </div>

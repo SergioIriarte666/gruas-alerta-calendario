@@ -16,7 +16,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full size-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Productos Analizados</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <Package className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{predictiveData.consumptionPatterns.length}</div>
@@ -51,7 +51,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Riesgo Crítico</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="size-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-500">{criticalItems.length}</div>
@@ -62,7 +62,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Grúas Monitoreadas</CardTitle>
-            <Truck className="h-4 w-4 text-muted-foreground" />
+            <Truck className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{predictiveData.craneConsumption.length}</div>
@@ -73,7 +73,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Períodos Analizados</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{predictiveData.seasonalTrends.length}</div>
@@ -86,7 +86,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <AlertTriangle className="size-5 text-red-500" />
             Alertas Críticas de Stock
           </CardTitle>
           <CardDescription>
@@ -96,7 +96,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
         <CardContent>
           {criticalItems.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <Zap className="size-12 mx-auto mb-4 opacity-50" />
               <p>No hay productos en riesgo crítico</p>
               <p className="text-sm">Todos los productos tienen stock suficiente</p>
             </div>
@@ -187,7 +187,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
           <div className="space-y-4">
             {predictiveData.craneConsumption.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <Truck className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay datos de consumo por grúa</p>
                 <p className="text-sm">Los datos aparecerán cuando se registren movimientos con grúas</p>
               </div>

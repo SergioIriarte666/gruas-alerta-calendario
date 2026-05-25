@@ -62,9 +62,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
       <div className="space-y-2 pt-4">
         <div className="flex items-center space-x-2 mb-4">
           {isVehicleSpecific ? (
-            <Car className="w-5 h-5 text-tms-green" />
+            <Car className="size-5 text-tms-green" />
           ) : (
-            <User className="w-5 h-5 text-tms-green" />
+            <User className="size-5 text-tms-green" />
           )}
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
@@ -83,7 +83,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/10 rounded-lg mt-4">
-        <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+        <AlertCircle className="size-12 text-destructive mb-4" />
         <h3 className="text-lg font-semibold text-foreground">Error al cargar el historial</h3>
         <p className="text-destructive">No se pudo obtener el historial de servicios para este vehículo.</p>
       </div>
@@ -95,9 +95,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
       <div className="mt-4">
         <div className="flex items-center space-x-2 mb-4">
           {isVehicleSpecific ? (
-            <Car className="w-5 h-5 text-tms-green" />
+            <Car className="size-5 text-tms-green" />
           ) : (
-            <User className="w-5 h-5 text-tms-green" />
+            <User className="size-5 text-tms-green" />
           )}
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
@@ -107,7 +107,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           </h3>
         </div>
         <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/50 rounded-lg">
-          <History className="w-12 h-12 text-muted-foreground mb-4" />
+          <History className="size-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-foreground">Sin historial previo</h3>
           <p className="text-muted-foreground">
             {isVehicleSpecific 
@@ -127,9 +127,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-cyan-500/10">
               {isVehicleSpecific ? (
-                <Car className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                <Car className="size-4 text-cyan-600 dark:text-cyan-400" />
               ) : (
-                <User className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                <User className="size-4 text-cyan-600 dark:text-cyan-400" />
               )}
             </div>
             <h3 className="text-base font-semibold text-cyan-700 dark:text-cyan-300">

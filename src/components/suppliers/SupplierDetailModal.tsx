@@ -46,7 +46,7 @@ const StatCard: React.FC<StatCardProps> = ({
             <p className="text-2xl font-bold text-foreground">{value}</p>
             <p className="text-xs text-muted-foreground mt-1">{count} {countLabel}</p>
           </div>
-          <Icon className={`h-8 w-8 ${iconColor}`} />
+          <Icon className={`size-8 ${iconColor}`} />
         </div>
       )}
     </CardContent>
@@ -66,7 +66,7 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-primary" />
+            <Building2 className="size-6 text-primary" />
             Detalles del Proveedor: {supplier.name}
           </DialogTitle>
         </DialogHeader>
@@ -115,19 +115,19 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
         <CustomTabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
           <CustomTabsList className="grid w-full grid-cols-4 gap-1">
             <CustomTabsTrigger value="general">
-              <Building2 className="w-4 h-4 mr-2" />
+              <Building2 className="size-4 mr-2" />
               <span className="hidden sm:inline">General</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="documents">
-              <FileText className="w-4 h-4 mr-2" />
+              <FileText className="size-4 mr-2" />
               <span className="hidden sm:inline">Documentos</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="payments">
-              <CreditCard className="w-4 h-4 mr-2" />
+              <CreditCard className="size-4 mr-2" />
               <span className="hidden sm:inline">Pagos</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="inventory">
-              <Package className="w-4 h-4 mr-2" />
+              <Package className="size-4 mr-2" />
               <span className="hidden sm:inline">Inventario</span>
             </CustomTabsTrigger>
           </CustomTabsList>

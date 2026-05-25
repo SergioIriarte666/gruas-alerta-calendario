@@ -28,7 +28,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
+            <Package className="size-5" />
             Detalles del Producto
           </DialogTitle>
         </DialogHeader>
@@ -38,7 +38,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
           <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
               <div className="p-1 rounded bg-blue-500/10 text-blue-600">
-                <BarChart3 className="h-4 w-4" />
+                <BarChart3 className="size-4" />
               </div>
               Información General
             </h3>
@@ -59,7 +59,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               <div>
                 <label className="text-sm text-muted-foreground">Precio Unitario</label>
                 <p className="font-medium flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
+                  <DollarSign className="size-3" />
                   {formatCurrency(product.unit_cost)}
                 </p>
               </div>
@@ -67,7 +67,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               <div>
                 <label className="text-sm text-muted-foreground">Stock Actual</label>
                 <p className="font-medium flex items-center gap-1">
-                  <Warehouse className="h-3 w-3" />
+                  <Warehouse className="size-3" />
                   {product.current_stock} unidades
                 </p>
               </div>
@@ -91,7 +91,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
           <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
               <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
-                <DollarSign className="h-4 w-4" />
+                <DollarSign className="size-4" />
               </div>
               Valor del Inventario
             </h3>
@@ -118,7 +118,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
               <h3 className="font-semibold mb-2 flex items-center gap-2 text-amber-700 dark:text-amber-300">
                 <div className="p-1 rounded bg-amber-500/10 text-amber-600">
-                  <Package className="h-4 w-4" />
+                  <Package className="size-4" />
                 </div>
                 Recomendación
               </h3>

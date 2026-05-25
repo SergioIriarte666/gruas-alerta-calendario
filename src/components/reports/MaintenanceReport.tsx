@@ -127,17 +127,17 @@ export const MaintenanceReport = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
-              <Download className="h-4 w-4" />
+              <Download className="size-4" />
               Exportar
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => handleExport('pdf')}>
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="size-4 mr-2" />
               Exportar PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport('excel')}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              <FileSpreadsheet className="size-4 mr-2" />
               Exportar Excel
             </DropdownMenuItem>
           </DropdownMenuContent>

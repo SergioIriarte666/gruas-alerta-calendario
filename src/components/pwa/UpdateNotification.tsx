@@ -48,7 +48,7 @@ export const UpdateNotification: React.FC = () => {
     <div className="fixed bottom-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-lg max-w-sm z-50">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Download className="w-5 h-5 text-tms-green" />
+          <Download className="size-5 text-tms-green" />
           <h3 className="font-semibold text-white">Actualización Disponible</h3>
         </div>
         <Button
@@ -57,7 +57,7 @@ export const UpdateNotification: React.FC = () => {
           onClick={handleDismiss}
           className="text-slate-400 hover:text-white p-1 h-auto"
         >
-          <X className="w-4 h-4" />
+          <X className="size-4" />
         </Button>
       </div>
       <p className="text-slate-300 text-sm mb-3">

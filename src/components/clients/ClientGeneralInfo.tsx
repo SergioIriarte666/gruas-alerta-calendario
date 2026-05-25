@@ -14,7 +14,7 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value }: DetailItemProps) => (
   <div className="flex items-start space-x-3">
-    <Icon className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
+    <Icon className="size-5 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="min-w-0">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="font-medium text-foreground truncate">{value}</p>
@@ -32,7 +32,7 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center">
-            <User className="mr-2 h-5 w-5" />
+            <User className="mr-2 size-5" />
             Información del Cliente
           </CardTitle>
         </CardHeader>

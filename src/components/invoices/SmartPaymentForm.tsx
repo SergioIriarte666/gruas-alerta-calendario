@@ -196,13 +196,13 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       return {
         type: 'perfect',
         message: `Monto exacto - ${selectedInvoiceIds.length === 1 ? 'La factura seleccionada será pagada' : `Las ${selectedInvoiceIds.length} facturas seleccionadas serán pagadas`} completamente`,
-        icon: <CheckCircle className="h-4 w-4 text-green-500" />
+        icon: <CheckCircle className="size-4 text-green-500" />
       };
     } else {
       return {
         type: 'mismatch',
         message: `El monto debe ser exactamente ${formatCurrency(selectedTotal)} para ${selectedInvoiceIds.length === 1 ? 'la factura seleccionada' : `las ${selectedInvoiceIds.length} facturas seleccionadas`}`,
-        icon: <AlertTriangle className="h-4 w-4 text-red-500" />
+        icon: <AlertTriangle className="size-4 text-red-500" />
       };
     }
   };
@@ -303,11 +303,11 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
           <CardTitle className="flex items-center gap-2 text-white">
-            <Zap className="h-5 w-5" />
+            <Zap className="size-5" />
             Registrar Pago Inteligente
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </CardHeader>
         <CardContent className="pt-6">
@@ -357,7 +357,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                          <div className="text-sm font-medium text-gray-700 flex items-center justify-between">
                            <span>Próximas facturas a pagar:</span>
                            <label className="flex items-center gap-2 text-xs">
-                             <input type="checkbox" checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length} onChange={e => handleSelectAllInvoices(e.target.checked)} className="w-3 h-3 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
+                             <input type="checkbox" checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length} onChange={e => handleSelectAllInvoices(e.target.checked)} className="size-3 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
                              Seleccionar todas
                            </label>
                          </div>
@@ -365,7 +365,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                     const isSelected = selectedInvoiceIds.includes(invoice.id);
                     return <div key={invoice.id} className={`flex justify-between items-center text-sm p-2 bg-white rounded border ${isSelected ? 'border-blue-500 bg-blue-50' : ''}`}>
                                 <div className="flex items-center gap-2">
-                                  <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
+                                  <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="size-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
                                   <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
                                   <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
                                     {invoice.status}
@@ -390,7 +390,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                           </button>}
                       </div>
                     </> : <Alert>
-                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTriangle className="size-4" />
                       <AlertDescription>
                         Este cliente no tiene facturas pendientes de pago.
                       </AlertDescription>
@@ -421,7 +421,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
               {/* Advertencias de conflictos de pago */}
               {Object.keys(paymentStatusWarnings).length > 0 && <Alert className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTriangle className="size-4" />
                   <AlertDescription>
                     Algunas facturas seleccionadas ya tienen pagos automáticos aplicados. 
                     Proceda solo si está seguro de aplicar pagos adicionales.
@@ -430,7 +430,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
               {/* Advertencia de duplicado */}
               {duplicateWarning && <Alert className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTriangle className="size-4" />
                   <AlertDescription>{duplicateWarning}</AlertDescription>
                 </Alert>}
             </div>

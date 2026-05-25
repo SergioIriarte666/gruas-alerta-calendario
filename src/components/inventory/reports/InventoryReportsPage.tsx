@@ -70,7 +70,7 @@ export const InventoryReportsPage = () => {
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2"
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="size-4" />
             Filtros
           </Button>
           
@@ -79,7 +79,7 @@ export const InventoryReportsPage = () => {
             onClick={() => setShowExportOptions(!showExportOptions)}
             className="flex items-center gap-2"
           >
-            <Download className="h-4 w-4" />
+            <Download className="size-4" />
             Exportar
           </Button>
         </div>
@@ -128,7 +128,7 @@ export const InventoryReportsPage = () => {
               value={tab.id}
               className="flex items-center gap-2"
             >
-              <tab.icon className="h-4 w-4" />
+              <tab.icon className="size-4" />
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
           ))}
@@ -139,7 +139,7 @@ export const InventoryReportsPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <tab.icon className="h-5 w-5" />
+                  <tab.icon className="size-5" />
                   {tab.label}
                 </CardTitle>
                 <CardDescription>

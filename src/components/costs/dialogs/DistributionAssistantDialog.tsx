@@ -229,7 +229,7 @@ export const DistributionAssistantDialog = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-primary" />
+            <Package className="size-5 text-primary" />
             Distribuir Compra entre Grúas
           </DialogTitle>
           <DialogDescription>
@@ -260,7 +260,7 @@ export const DistributionAssistantDialog = ({
           {/* Alertas de validación */}
           {remaining < 0 && (
             <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="size-4" />
               <AlertDescription>
                 La suma de cantidades ({totalDistributed}) excede el total comprado ({inventoryData.totalQuantity})
               </AlertDescription>
@@ -269,7 +269,7 @@ export const DistributionAssistantDialog = ({
 
           {remaining > 0 && totalDistributed > 0 && (
             <Alert>
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="size-4" />
               <AlertDescription>
                 Quedarán {remaining} unidades en bodega sin asignar a ninguna grúa.
               </AlertDescription>
@@ -319,7 +319,7 @@ export const DistributionAssistantDialog = ({
                   disabled={distributions.length === 1}
                   className="shrink-0"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="size-4" />
                 </Button>
               </div>
             ))}
@@ -332,7 +332,7 @@ export const DistributionAssistantDialog = ({
             onClick={handleAddDistribution}
             className="w-full"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Agregar Grúa
           </Button>
         </div>
@@ -353,7 +353,7 @@ export const DistributionAssistantDialog = ({
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 mr-2 animate-spin" />
                 Procesando...
               </>
             ) : (

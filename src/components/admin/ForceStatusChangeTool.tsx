@@ -149,7 +149,7 @@ export const ForceStatusChangeTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <RefreshCw className="w-5 h-5 text-amber-600" />
+            <RefreshCw className="size-5 text-amber-600" />
             Cambio Forzado de Estado
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -159,11 +159,11 @@ export const ForceStatusChangeTool = () => {
         <CardContent>
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Ej: SRV-6413" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-9" />
             </div>
             <Button type="submit" disabled={searching || !searchInput.trim()}>
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
+              {searching ? <Loader2 className="size-4 animate-spin" /> : 'Buscar'}
             </Button>
           </form>
           {error && <div className="mt-3 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
@@ -188,16 +188,16 @@ export const ForceStatusChangeTool = () => {
             {/* Relations */}
             <div className="flex gap-2 flex-wrap">
               <Badge variant="outline" className="flex items-center gap-1">
-                <FileText className="w-3 h-3" />
+                <FileText className="size-3" />
                 Factura: {service.hasInvoice ? '✅ Vinculada' : '❌ Sin vínculo'}
               </Badge>
               <Badge variant="outline" className="flex items-center gap-1">
-                <Package className="w-3 h-3" />
+                <Package className="size-3" />
                 Cierre: {service.hasClosure ? '✅ Vinculado' : '❌ Sin vínculo'}
               </Badge>
               {service.invoice_folio && (
                 <Badge variant="outline" className="flex items-center gap-1">
-                  <CreditCard className="w-3 h-3" />
+                  <CreditCard className="size-3" />
                   Folio factura: {service.invoice_folio}
                 </Badge>
               )}
@@ -243,7 +243,7 @@ export const ForceStatusChangeTool = () => {
               onClick={() => { setConfirmText(''); setConfirmOpen(true); }}
               className="w-full"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="size-4 mr-2" />
               Forzar Cambio de Estado
             </Button>
           </CardContent>
@@ -254,7 +254,7 @@ export const ForceStatusChangeTool = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Confirmar Cambio Forzado
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -273,7 +273,7 @@ export const ForceStatusChangeTool = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <Button variant="destructive" disabled={confirmText !== expectedText || executing} onClick={handleForce}>
-              {executing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              {executing ? <Loader2 className="size-4 animate-spin mr-2" /> : <RefreshCw className="size-4 mr-2" />}
               Forzar
             </Button>
           </AlertDialogFooter>

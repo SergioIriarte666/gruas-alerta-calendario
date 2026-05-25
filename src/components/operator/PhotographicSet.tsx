@@ -230,7 +230,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           size="sm"
                           onClick={() => removePhoto(photo!.fileName, category.label)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                       <div className="mt-2 text-sm text-muted-foreground">
@@ -249,7 +249,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           size="sm"
                           onClick={() => removePhoto(photo.fileName, category.label)}
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
+                          <Trash2 className="size-4 mr-1" />
                           Eliminar registro
                         </Button>
                         <Button
@@ -258,7 +258,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
                           disabled={isLoading}
                         >
-                          <Camera className="w-4 h-4 mr-1" />
+                          <Camera className="size-4 mr-1" />
                           Tomar nueva
                         </Button>
                       </div>
@@ -266,7 +266,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                   ) : (
                     // No photo for this category
                     <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <Camera className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <Camera className="size-12 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground mb-4">
                         Toma una foto de la vista {category.label.toLowerCase()}
                       </p>
@@ -275,7 +275,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                         onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
                         disabled={isLoading}
                       >
-                        <Camera className="w-4 h-4 mr-2" />
+                        <Camera className="size-4 mr-2" />
                         {isLoading ? 'Procesando...' : 'Tomar Fotografía'}
                       </Button>
                     </div>

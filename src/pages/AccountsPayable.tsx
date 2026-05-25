@@ -25,7 +25,7 @@ const AccountsPayable = () => {
           <p className="text-sm text-muted-foreground">Gestión de deudas, cuotas y obligaciones financieras</p>
         </div>
         <Button onClick={() => setIsDebtFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Nueva Deuda
+          <Plus className="size-4 mr-1" /> Nueva Deuda
         </Button>
       </div>
 

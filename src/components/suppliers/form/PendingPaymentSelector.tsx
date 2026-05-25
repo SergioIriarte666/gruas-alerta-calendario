@@ -47,7 +47,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <Loader2 className="size-5 animate-spin mr-2" />
         Cargando facturas pendientes...
       </div>
     );
@@ -56,7 +56,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
   if (payments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <AlertCircle className="h-8 w-8 mb-2 text-muted-foreground/50" />
+        <AlertCircle className="size-8 mb-2 text-muted-foreground/50" />
         <p>No hay facturas pendientes de pago</p>
       </div>
     );
@@ -100,7 +100,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
             
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <FileText className="size-4 text-muted-foreground" />
                 <span className="font-medium text-sm truncate">
                   {payment.reference_number || payment.description || 'Sin referencia'}
                 </span>

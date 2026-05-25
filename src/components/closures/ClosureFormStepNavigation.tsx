@@ -46,7 +46,7 @@ export const ClosureFormStepNavigation = ({
           >
             <div
               className={cn(
-                "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                "flex-shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
                 isActive && "bg-violet-600 text-white",
                 step.isCompleted && !isActive && "bg-violet-500 text-white",
                 step.hasError && "bg-destructive text-destructive-foreground",
@@ -54,7 +54,7 @@ export const ClosureFormStepNavigation = ({
               )}
             >
               {step.isCompleted && !step.hasError ? (
-                <Check className="h-4 w-4" />
+                <Check className="size-4" />
               ) : (
                 step.id
               )}
@@ -95,18 +95,18 @@ export const getClosureFormSteps = (): Omit<ClosureFormStep, 'isCompleted' | 'ha
     id: 1,
     title: 'Cliente y Servicios',
     description: 'Seleccionar servicios',
-    icon: <ListChecks className="h-4 w-4" />,
+    icon: <ListChecks className="size-4" />,
   },
   {
     id: 2,
     title: 'Período',
     description: 'Rango de fechas',
-    icon: <Calendar className="h-4 w-4" />,
+    icon: <Calendar className="size-4" />,
   },
   {
     id: 3,
     title: 'Detalles',
     description: 'OC y estado',
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
   },
 ];

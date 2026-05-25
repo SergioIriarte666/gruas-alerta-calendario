@@ -35,7 +35,7 @@ export const InspectionFormSections = ({
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <Gauge className="w-5 h-5" />
+            <Gauge className="size-5" />
             Registro del Vehículo
           </CardTitle>
         </CardHeader>
@@ -47,7 +47,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <Gauge className="w-4 h-4" />
+                    <Gauge className="size-4" />
                     Kilometraje Actual
                   </FormLabel>
                   <FormControl>
@@ -69,7 +69,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <Fuel className="w-4 h-4" />
+                    <Fuel className="size-4" />
                     Nivel de Combustible
                   </FormLabel>
                   <FormControl>
@@ -105,7 +105,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <Key className="w-4 h-4" />
+                    <Key className="size-4" />
                     Llaves del Vehículo
                   </FormLabel>
                   <FormControl>
@@ -123,7 +123,7 @@ export const InspectionFormSections = ({
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="size-4" />
                         SÍ
                       </ToggleGroupItem>
                       <ToggleGroupItem
@@ -134,7 +134,7 @@ export const InspectionFormSections = ({
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="size-4" />
                         NO
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -150,7 +150,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <FileText className="w-4 h-4" />
+                    <FileText className="size-4" />
                     Documentación del Vehículo
                   </FormLabel>
                   <FormControl>
@@ -168,7 +168,7 @@ export const InspectionFormSections = ({
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="size-4" />
                         SÍ
                       </ToggleGroupItem>
                       <ToggleGroupItem
@@ -179,7 +179,7 @@ export const InspectionFormSections = ({
                             : 'bg-background border-border text-foreground hover:bg-muted'
                         }`}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="size-4" />
                         NO
                       </ToggleGroupItem>
                     </ToggleGroup>
@@ -240,7 +240,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <User className="w-4 h-4" /> 
+                    <User className="size-4" /> 
                     Nombre del Cliente (si está presente)
                   </FormLabel>
                   <FormControl>
@@ -261,7 +261,7 @@ export const InspectionFormSections = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2 text-foreground">
-                    <PenTool className="w-4 h-4" /> 
+                    <PenTool className="size-4" /> 
                     Nombre de quien recibe el vehículo
                   </FormLabel>
                   <FormControl>

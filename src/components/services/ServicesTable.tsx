@@ -90,9 +90,9 @@ export const ServicesTable = ({
       {children}
       {sortField === field && (
         sortDirection === 'asc' ? (
-          <ChevronUp className="w-4 h-4" />
+          <ChevronUp className="size-4" />
         ) : (
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="size-4" />
         )
       )}
     </Button>
@@ -125,15 +125,15 @@ export const ServicesTable = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <Truck className="w-5 h-5 text-primary" />
+          <Truck className="size-5 text-primary" />
           <span>Servicios Registrados ({services.length})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {services.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Truck className="w-8 h-8 text-primary" />
+            <div className="size-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Truck className="size-8 text-primary" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">
               {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
@@ -150,7 +150,7 @@ export const ServicesTable = ({
                 onClick={onAddNewService}
                 title="Crear el primer servicio"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="size-4 mr-2" />
                 Crear Primer Servicio
               </Button>
             )}
@@ -262,7 +262,7 @@ export const ServicesTable = ({
                               onClick={() => onCloseService(service)}
                               title="Cerrar Servicio"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="size-4" />
                             </Button>
                           )}
                           
@@ -273,7 +273,7 @@ export const ServicesTable = ({
                             onClick={() => onViewDetails(service)}
                             title="Ver detalles del servicio"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="size-4" />
                           </Button>
                           
                           {onEdit && (
@@ -291,7 +291,7 @@ export const ServicesTable = ({
                                   : "Editar servicio"}
                               disabled={isInvoiced && !isAdmin}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="size-4" />
                             </Button>
                           )}
                           
@@ -308,7 +308,7 @@ export const ServicesTable = ({
                                 : "Eliminar servicio"}
                               disabled={isInvoiced}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="size-4" />
                             </Button>
                           )}
                         </div>

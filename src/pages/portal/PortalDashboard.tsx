@@ -37,7 +37,7 @@ const PortalDashboard: React.FC = () => {
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Total Servicios</CardTitle>
-            <History className="h-4 w-4 text-tms-green" />
+            <History className="size-4 text-tms-green" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
@@ -62,7 +62,7 @@ const PortalDashboard: React.FC = () => {
                     variant="outline"
                     className="text-xs"
                   >
-                    <RefreshCw className="w-3 h-3 mr-1" />
+                    <RefreshCw className="size-3 mr-1" />
                     Reintentar
                   </Button>
                 )}
@@ -77,13 +77,13 @@ const PortalDashboard: React.FC = () => {
               <div className="text-gray-400">Cargando servicios...</div>
             ) : servicesError ? (
               <div className="text-center py-8">
-                <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+                <AlertTriangle className="size-12 mx-auto mb-4 text-red-500" />
                 <p className="text-red-400 mb-2">Error al cargar servicios</p>
                 <p className="text-gray-400 text-sm mb-4">
                   No se pudieron cargar tus servicios
                 </p>
                 <Button onClick={handleRetryServices} variant="outline" size="sm">
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="size-4 mr-2" />
                   Reintentar
                 </Button>
               </div>
@@ -111,7 +111,7 @@ const PortalDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400">
-                <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <History className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios registrados</p>
               </div>
             )}
@@ -125,7 +125,7 @@ const PortalDashboard: React.FC = () => {
             className="block bg-tms-green/20 border border-tms-green text-white p-6 rounded-lg shadow-lg hover:bg-tms-green/30 transition-colors"
           >
             <div className="flex flex-col items-center justify-center text-center">
-              <PlusCircle className="w-12 h-12 text-tms-green mb-4" />
+              <PlusCircle className="size-12 text-tms-green mb-4" />
               <h2 className="text-xl font-semibold text-white">Solicitar Nuevo Servicio</h2>
               <p className="text-gray-300 mt-2">Acceso rápido para crear una nueva solicitud de grúa.</p>
             </div>

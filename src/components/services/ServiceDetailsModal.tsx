@@ -56,7 +56,7 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
+    <Icon className="size-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-medium ${valueClass}`}>{value || 'N/A'}</p>
@@ -115,7 +115,7 @@ const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSe
     <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
       <h3 className={`text-base font-semibold mb-4 flex items-center gap-2 ${config.title}`}>
         <div className={`p-1.5 rounded-lg ${config.iconBg}`}>
-          <Icon className="w-4 h-4" />
+          <Icon className="size-4" />
         </div>
         {title}
       </h3>
@@ -264,7 +264,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   onClick={() => onDuplicate(serviceData as Service)}
                   className="flex items-center gap-2"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="size-4" />
                   Duplicar
                 </Button>
               )}
@@ -275,7 +275,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 disabled={isGenerating}
                 className="flex items-center gap-2"
               >
-                <Download className="h-4 w-4" />
+                <Download className="size-4" />
                 {isGenerating ? 'Generando...' : 'Descargar PDF'}
               </Button>
             </div>

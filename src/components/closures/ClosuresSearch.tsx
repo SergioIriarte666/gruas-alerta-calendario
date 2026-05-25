@@ -24,7 +24,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
             <Input
               placeholder="Buscar por folio, estado o cliente..."
               value={searchTerm}
@@ -33,7 +33,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
             />
           </div>
           <div className="relative min-w-[200px]">
-            <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+            <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4 z-10" />
             <Select value={clientFilter} onValueChange={onClientFilterChange}>
               <SelectTrigger className="pl-10 bg-background border-border text-foreground">
                 <SelectValue placeholder="Filtrar por cliente" />
@@ -51,7 +51,7 @@ const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilt
             </Select>
           </div>
           <div className="relative min-w-[200px]">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4 z-10" />
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="pl-10 bg-background border-border text-foreground">
                 <SelectValue placeholder="Filtrar por estado" />

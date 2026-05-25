@@ -168,7 +168,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       {/* Información Básica */}
       <div className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b">
-          <Package className="w-5 h-5 text-primary" />
+          <Package className="size-5 text-primary" />
           <h3 className="font-semibold">Información de Entrada</h3>
         </div>
 
@@ -185,7 +185,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                   onClick={() => setShowNewProductForm(true)}
                   className="h-auto py-1 px-2 text-xs"
                 >
-                  <Plus className="w-3 h-3 mr-1" />
+                  <Plus className="size-3 mr-1" />
                   Crear nuevo producto
                 </Button>
               )}
@@ -251,7 +251,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                       }}
                       className="h-auto p-1"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="size-4" />
                     </Button>
                   </div>
                   
@@ -411,7 +411,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                     !watchedValues.movement_date && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 size-4" />
                   {watchedValues.movement_date ? (
                     format(watchedValues.movement_date, "PPP", { locale: es })
                   ) : (
@@ -447,7 +447,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       <div className="space-y-4 p-4 rounded-lg border border-violet-200 bg-violet-50/50 dark:border-violet-800 dark:bg-violet-950/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Truck className="w-5 h-5 text-violet-600" />
+            <Truck className="size-5 text-violet-600" />
             <div>
               <Label className="text-base font-medium">Consumo Inmediato</Label>
               <p className="text-xs text-muted-foreground">
@@ -499,7 +499,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
           {/* Proveedor */}
           <div className="space-y-2">
             <Label htmlFor="supplier_id" className="flex items-center gap-2">
-              <Building2 className="w-4 h-4" />
+              <Building2 className="size-4" />
               Proveedor
             </Label>
             <SupplierCombobox

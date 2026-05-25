@@ -157,7 +157,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-green-600" />
+              <FileSpreadsheet className="size-5 text-green-600" />
               Carga Masiva de Costos
             </DialogTitle>
           </DialogHeader>
@@ -175,7 +175,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                 )}
               >
                 <input {...getInputProps()} />
-                <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                <Upload className="size-10 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-sm font-medium">
                   {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo CSV o Excel'}
                 </p>
@@ -202,7 +202,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   size="sm"
                   onClick={handleDownloadCSVTemplate}
                 >
-                    <Download className="w-3 h-3 mr-1" />
+                    <Download className="size-3 mr-1" />
                     CSV
                 </Button>
                 <Button
@@ -211,7 +211,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   size="sm"
                   onClick={handleDownloadExcelTemplate}
                 >
-                    <Download className="w-3 h-3 mr-1" />
+                    <Download className="size-3 mr-1" />
                     Excel
                 </Button>
               </div>
@@ -231,11 +231,11 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               {/* File info */}
               <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-green-600" />
+                  <FileText className="size-4 text-green-600" />
                   <span className="text-sm font-medium truncate max-w-[200px]">{file?.name}</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => { reset(); setStep('upload'); }}>
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                 </Button>
               </div>
 
@@ -297,7 +297,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                           <td className="px-2 py-1 truncate max-w-[120px]">{row.categoria}</td>
                           <td className="px-2 py-1 text-center">
                             {row.pagado ? (
-                              <CheckCircle className="w-3 h-3 text-green-500 mx-auto" />
+                              <CheckCircle className="size-3 text-green-500 mx-auto" />
                             ) : (
                               <span className="text-muted-foreground">—</span>
                             )}
@@ -320,7 +320,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               {validationResult.invalidRows.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-red-600 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="size-4" />
                     Filas con errores ({validationResult.invalidRows.length})
                   </p>
                   <div className="max-h-32 overflow-y-auto space-y-1">
@@ -347,7 +347,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   <div className="space-y-2">
                     {dbDupes.length > 0 && (
                       <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
-                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        <AlertTriangle className="size-4 text-amber-600" />
                         <AlertDescription className="text-xs">
                           <strong className="text-amber-700">{dbDupes.length} registro(s) ya existen en la base de datos</strong> (misma fecha, monto y descripción). Se cargarán igualmente si confirmas.
                           <div className="mt-1 max-h-20 overflow-y-auto space-y-0.5">
@@ -361,7 +361,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                     )}
                     {fileDupes.length > 0 && (
                       <Alert>
-                        <AlertTriangle className="w-4 h-4" />
+                        <AlertTriangle className="size-4" />
                         <AlertDescription className="text-xs">
                           {fileDupes.length} registro(s) duplicados dentro del archivo
                         </AlertDescription>
@@ -381,7 +381,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   disabled={validationResult.validRows.length === 0}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
+                  <Upload className="size-4 mr-2" />
                   Cargar {validationResult.validRows.length} costos
                 </Button>
               </div>
@@ -390,7 +390,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
 
           {step === 'done' && (
             <div className="text-center py-6 space-y-4">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
+              <CheckCircle className="size-12 text-green-500 mx-auto" />
               <p className="text-lg font-medium">Carga completada</p>
               <Button onClick={handleClose}>Cerrar</Button>
             </div>

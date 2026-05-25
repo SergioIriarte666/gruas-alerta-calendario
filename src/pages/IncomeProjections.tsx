@@ -40,7 +40,7 @@ export default function IncomeProjections() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className="p-2 sm:p-3 rounded-lg bg-primary/10">
-          <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <TrendingUp className="size-5 sm:size-6 text-primary" />
         </div>
         <div>
           <h1 className="text-xl sm:text-3xl font-bold text-foreground">Proyección de Ingresos</h1>
@@ -70,7 +70,7 @@ export default function IncomeProjections() {
                 onClick={clearFilters}
                 className="gap-2"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" />
                 Limpiar filtros
                 <Badge variant="secondary" className="ml-1">
                   Activos

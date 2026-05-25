@@ -304,7 +304,7 @@ export const InspectionForm = ({
               type="submit" 
               disabled={isProcessing || isUpdatingStatus || isGeneratingPDF}
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="size-4 mr-2" />
               {isGeneratingPDF ? 'Generando PDF...' : 
                isProcessing ? 'Procesando...' : 
                isUpdatingStatus ? 'Iniciando Servicio...' : 
@@ -317,7 +317,7 @@ export const InspectionForm = ({
               type="submit" 
               disabled={isProcessing || isUpdatingStatus || isGeneratingPDF}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
+              <CheckCircle className="size-4 mr-2" />
               {isGeneratingPDF ? 'Generando PDF Final...' : 
                isProcessing ? 'Finalizando...' : 
                isUpdatingStatus ? 'Completando Servicio...' : 

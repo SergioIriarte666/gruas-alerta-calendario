@@ -90,7 +90,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Car className="h-5 w-5 text-primary" />
+            <Car className="size-5 text-primary" />
             Historial Completo del Vehículo
           </DialogTitle>
           <DialogDescription>
@@ -101,7 +101,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
         {/* Barra de búsqueda */}
         <form onSubmit={handleSearch} className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Ingresa patente (ej: ABCD-12 o ABCD12)"
               value={searchPlate}
@@ -112,7 +112,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
           </div>
           <Button type="submit" disabled={isLoading || searchPlate.trim().length < 4}>
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
               'Buscar'
             )}
@@ -126,9 +126,9 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
               className="gap-2"
             >
               {isGeneratingPdf ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <FileDown className="h-4 w-4" />
+                <FileDown className="size-4" />
               )}
               Exportar PDF
             </Button>
@@ -139,7 +139,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
         <div className="flex-1 overflow-y-auto pr-2 -mr-2">
           {!activePlate ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Car className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <Car className="size-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">
                 Ingresa una patente para consultar el historial completo del vehículo
               </p>

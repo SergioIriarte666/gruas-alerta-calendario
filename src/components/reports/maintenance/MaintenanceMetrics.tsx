@@ -26,7 +26,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
           <CardTitle className="text-sm font-medium text-black">
             Costo Total Mantenimiento
           </CardTitle>
-          <Wrench className="h-4 w-4 text-blue-400" />
+          <Wrench className="size-4 text-blue-400" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-black">
@@ -43,7 +43,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
           <CardTitle className="text-sm font-medium text-black">
             Costo Total Partes
           </CardTitle>
-          <Package className="h-4 w-4 text-orange-400" />
+          <Package className="size-4 text-orange-400" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-black">
@@ -60,7 +60,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
           <CardTitle className="text-sm font-medium text-black">
             Total Intervenciones
           </CardTitle>
-          <TrendingUp className="h-4 w-4 text-green-400" />
+          <TrendingUp className="size-4 text-green-400" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-black">
@@ -77,7 +77,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
           <CardTitle className="text-sm font-medium text-black">
             Costo Promedio
           </CardTitle>
-          <Calculator className="h-4 w-4 text-purple-400" />
+          <Calculator className="size-4 text-purple-400" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-black">
@@ -94,7 +94,7 @@ export const MaintenanceMetrics = ({ data }: MaintenanceMetricsProps) => {
           <CardTitle className="text-sm font-medium text-black">
             Proveedores Activos
           </CardTitle>
-          <Users className="h-4 w-4 text-cyan-400" />
+          <Users className="size-4 text-cyan-400" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-black">

@@ -122,7 +122,7 @@ export const ServiceDeletionTool = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <Trash2 className="w-5 h-5 text-destructive" />
+            <Trash2 className="size-5 text-destructive" />
             Eliminación Segura de Servicio
           </CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
@@ -132,11 +132,11 @@ export const ServiceDeletionTool = () => {
         <CardContent>
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input placeholder="Ej: SRV-6413" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-9" />
             </div>
             <Button type="submit" disabled={searching || !searchInput.trim()}>
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Buscar'}
+              {searching ? <Loader2 className="size-4 animate-spin" /> : 'Buscar'}
             </Button>
           </form>
           {error && <div className="mt-3 p-3 rounded-md bg-destructive/10 text-destructive text-sm">{error}</div>}
@@ -183,7 +183,7 @@ export const ServiceDeletionTool = () => {
               onClick={() => { setConfirmText(''); setConfirmOpen(true); }}
               className="w-full"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="size-4 mr-2" />
               Eliminar Servicio Completo
             </Button>
           </CardContent>
@@ -194,7 +194,7 @@ export const ServiceDeletionTool = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="size-5" />
               Confirmar Eliminación Completa
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -213,7 +213,7 @@ export const ServiceDeletionTool = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <Button variant="destructive" disabled={confirmText !== expectedText || deleting} onClick={handleDelete}>
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              {deleting ? <Loader2 className="size-4 animate-spin mr-2" /> : <Trash2 className="size-4 mr-2" />}
               Eliminar Permanentemente
             </Button>
           </AlertDialogFooter>

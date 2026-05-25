@@ -47,7 +47,7 @@ export const FormStepNavigation = ({
             {/* Step indicator */}
             <div
               className={cn(
-                "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                "flex-shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
                 isActive && "bg-violet-600 text-white",
                 step.isCompleted && !isActive && "bg-violet-500 text-white",
                 step.hasError && "bg-destructive text-destructive-foreground",
@@ -55,7 +55,7 @@ export const FormStepNavigation = ({
               )}
             >
               {step.isCompleted && !step.hasError ? (
-                <Check className="h-4 w-4" />
+                <Check className="size-4" />
               ) : (
                 step.id
               )}
@@ -98,24 +98,24 @@ export const getDefaultSteps = (): Omit<FormStep, 'isCompleted' | 'hasError'>[] 
     id: 1,
     title: 'Información Básica',
     description: 'Folio, fechas y cliente',
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
   },
   {
     id: 2,
     title: 'Vehículo y Ubicación',
     description: 'Datos del vehículo',
-    icon: <Truck className="h-4 w-4" />,
+    icon: <Truck className="size-4" />,
   },
   {
     id: 3,
     title: 'Recursos',
     description: 'Grúa, operadores y costos',
-    icon: <Users className="h-4 w-4" />,
+    icon: <Users className="size-4" />,
   },
   {
     id: 4,
     title: 'Financiero',
     description: 'Valores y observaciones',
-    icon: <DollarSign className="h-4 w-4" />,
+    icon: <DollarSign className="size-4" />,
   },
 ];

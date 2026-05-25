@@ -89,7 +89,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
     <Card className="bg-card border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2 text-base">
-          <Upload className="w-5 h-5" />
+          <Upload className="size-5" />
           Importar Cotización desde PDF - {toTitleCase(clientName)}
         </CardTitle>
       </CardHeader>
@@ -105,7 +105,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
             }`}
           >
             <input {...getInputProps()} />
-            <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <FileText className="size-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-foreground font-medium mb-1">
               Arrastra PDFs de cotizaciones aquí
             </p>
@@ -119,7 +119,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
         {(state.step === 'uploading' || state.step === 'matching') && (
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <Loader2 className="size-5 text-primary animate-spin" />
               <span className="text-sm text-foreground">
                 {state.step === 'uploading'
                   ? `Procesando PDF ${state.progress.current}/${state.progress.total}...`
@@ -141,7 +141,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 border-violet-600/20">
-                <CheckCircle className="w-3 h-3 mr-1" />
+                <CheckCircle className="size-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
               {state.parsedQuotes.length > 0 && (
@@ -151,19 +151,19 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
               )}
               {sameQuoteCount > 0 && (
                 <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                  <CheckCheck className="w-3 h-3 mr-1" />
+                  <CheckCheck className="size-3 mr-1" />
                   {sameQuoteCount} ya asignada
                 </Badge>
               )}
               {alreadyHasQuoteCount > 0 && (
                 <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  <AlertTriangle className="size-3 mr-1" />
                   {alreadyHasQuoteCount} Cot. diferente
                 </Badge>
               )}
               {noMatchCount > 0 && (
                 <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive/20">
-                  <XCircle className="w-3 h-3 mr-1" />
+                  <XCircle className="size-3 mr-1" />
                   {noMatchCount} sin match
                 </Badge>
               )}
@@ -223,7 +223,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                                 className="text-violet-600 hover:text-violet-600/80"
                                 title="Ver detalle"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                <Eye className="size-3.5" />
                               </button>
                             )}
                           </div>
@@ -259,25 +259,25 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                       <TableCell>
                         {match.status === 'matched' && (
                           <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                            <CheckCircle className="size-3 mr-1" />
                             Match
                           </Badge>
                         )}
                         {match.status === 'same_quote' && (
                           <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 text-xs">
-                            <CheckCheck className="w-3 h-3 mr-1" />
+                            <CheckCheck className="size-3 mr-1" />
                             Ya asignada
                           </Badge>
                         )}
                         {match.status === 'already_has_quote' && (
                           <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            <AlertTriangle className="size-3 mr-1" />
                             Cot. diferente
                           </Badge>
                         )}
                         {match.status === 'no_match' && (
                           <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
-                            <XCircle className="w-3 h-3 mr-1" />
+                            <XCircle className="size-3 mr-1" />
                             Sin match
                           </Badge>
                         )}
@@ -290,7 +290,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
 
             <div className="flex items-center justify-between pt-2">
               <Button variant="outline" size="sm" onClick={reset}>
-                <RotateCcw className="w-3 h-3 mr-2" />
+                <RotateCcw className="size-3 mr-2" />
                 Cancelar
               </Button>
               <Button
@@ -299,7 +299,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                 disabled={selectedMatches.size === 0}
               >
                 Aplicar {selectedMatches.size} Cotizaciones
-                <ArrowRight className="w-3 h-3 ml-2" />
+                <ArrowRight className="size-3 ml-2" />
               </Button>
             </div>
           </div>
@@ -309,7 +309,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
         {state.step === 'applying' && (
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <Loader2 className="size-5 text-primary animate-spin" />
               <span className="text-sm text-foreground">
                 Actualizando servicios {state.progress.current}/{state.progress.total}...
               </span>
@@ -324,10 +324,10 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
         {/* Step: Done */}
         {state.step === 'done' && (
           <div className="text-center py-6 space-y-3">
-            <CheckCircle className="w-10 h-10 text-primary mx-auto" />
+            <CheckCircle className="size-10 text-primary mx-auto" />
             <p className="text-sm text-foreground font-medium">Importación completada</p>
             <Button size="sm" onClick={handleDone}>
-              <RotateCcw className="w-3 h-3 mr-2" />
+              <RotateCcw className="size-3 mr-2" />
               Importar más
             </Button>
           </div>
@@ -337,12 +337,12 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
         {state.error && (
           <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
             <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-              <XCircle className="w-4 h-4 shrink-0" />
+              <XCircle className="size-4 shrink-0" />
               Error al importar cotización
             </div>
             <p className="text-xs text-muted-foreground ml-6">{state.error}</p>
             <Button variant="outline" size="sm" className="ml-6 mt-1" onClick={reset}>
-              <RotateCcw className="w-3 h-3 mr-2" />
+              <RotateCcw className="size-3 mr-2" />
               Reintentar
             </Button>
           </div>

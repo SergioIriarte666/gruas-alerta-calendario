@@ -136,7 +136,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
           onClick={() => setIsFormOpen(true)}
           className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Programar Mantenimiento
         </Button>
       </div>
@@ -145,7 +145,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
       {maintenanceRecords.length === 0 ? (
         <Card className="bg-white/5 border-tms-green/30">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Wrench className="w-16 h-16 text-gray-500 mb-4" />
+            <Wrench className="size-16 text-gray-500 mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">No hay mantenimientos registrados</h3>
             <p className="text-gray-400 text-center mb-6">
               Comienza agregando el primer mantenimiento para esta grúa.
@@ -154,7 +154,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
               onClick={() => setIsFormOpen(true)}
               className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="size-4 mr-2" />
               Programar Primer Mantenimiento
             </Button>
           </CardContent>
@@ -178,12 +178,12 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       {record.status === 'completed' && record.cost > 0 && (
                         getCostStatus(record.id)?.hasCost ? (
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                            <Receipt className="w-3 h-3 mr-1" />
+                            <Receipt className="size-3 mr-1" />
                             Costo Registrado
                           </Badge>
                         ) : (
                           <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                            <AlertCircle className="w-3 h-3 mr-1" />
+                            <AlertCircle className="size-3 mr-1" />
                             Sincronizando...
                           </Badge>
                         )
@@ -195,19 +195,19 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       <h4 className="text-lg font-semibold text-white">{record.description}</h4>
                       {record.provider && (
                         <div className="flex items-center gap-2 mt-1">
-                          <Wrench className="w-4 h-4 text-gray-400" />
+                          <Wrench className="size-4 text-gray-400" />
                           <span className="text-gray-300">Proveedor: {record.provider}</span>
                         </div>
                       )}
                       {record.performedBy && (
                         <div className="flex items-center gap-2 mt-1">
-                          <User className="w-4 h-4 text-gray-400" />
+                          <User className="size-4 text-gray-400" />
                           <span className="text-gray-300">Realizado por: {record.performedBy}</span>
                         </div>
                       )}
                       {record.creatorName && (
                         <div className="flex items-center gap-2 mt-1">
-                          <User className="w-4 h-4 text-gray-400" />
+                          <User className="size-4 text-gray-400" />
                           <span className="text-gray-300">Registrado por: {record.creatorName}</span>
                         </div>
                       )}
@@ -217,25 +217,25 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-300">
                       {record.scheduledDate && (
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
+                          <Calendar className="size-4" />
                           <span>Programado: {formatForDisplayLong(record.scheduledDate)}</span>
                         </div>
                       )}
                       {record.completedDate && (
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-400" />
+                          <CheckCircle className="size-4 text-green-400" />
                           <span>Completado: {formatForDisplayLong(record.completedDate)}</span>
                         </div>
                       )}
                       {record.nextMaintenanceDate && (
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-yellow-400" />
+                          <Clock className="size-4 text-yellow-400" />
                           <span>Próximo: {formatForDisplayLong(record.nextMaintenanceDate)}</span>
                         </div>
                       )}
                       {record.kilometraje && (
                         <div className="flex items-center gap-2">
-                          <Gauge className="w-4 h-4 text-blue-400" />
+                          <Gauge className="size-4 text-blue-400" />
                           <span>Km: {record.kilometraje.toLocaleString('es-CL')}</span>
                         </div>
                       )}
@@ -244,7 +244,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                     {/* Cost with Integration Status */}
                     <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-tms-green" />
+                        <DollarSign className="size-4 text-tms-green" />
                         <span className="text-tms-green font-semibold">
                           ${record.cost.toLocaleString('es-CL')}
                         </span>
@@ -258,7 +258,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                         return (
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 text-sm text-gray-400">
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="size-3" />
                               <span>Vinculado a costos</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -301,7 +301,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       onClick={() => handleEdit(record)}
                       className="border-tms-green/50 text-tms-green hover:bg-tms-green/10"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="size-4" />
                     </Button>
                     <Button
                       variant="outline"
@@ -309,7 +309,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       onClick={() => handleDelete(record)}
                       className="border-red-500/50 text-red-400 hover:bg-red-500/10"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="size-4" />
                     </Button>
                   </div>
                 </div>

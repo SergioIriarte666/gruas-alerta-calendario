@@ -129,11 +129,11 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole }) => {
             onClick={handleDismiss}
             className="absolute right-2 top-2 text-gray-400 hover:text-white"
           >
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-tms-green rounded-lg flex items-center justify-center">
-              <Smartphone className="w-6 h-6 text-white" />
+            <div className="size-12 bg-tms-green rounded-lg flex items-center justify-center">
+              <Smartphone className="size-6 text-white" />
             </div>
             <div>
               <CardTitle className="text-white">{content.title}</CardTitle>
@@ -149,7 +149,7 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole }) => {
             <ul className="space-y-1">
               {content.benefits.map((benefit, index) => (
                 <li key={index} className="text-sm text-gray-400 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-tms-green rounded-full" />
+                  <div className="size-1.5 bg-tms-green rounded-full" />
                   {benefit}
                 </li>
               ))}
@@ -168,7 +168,7 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole }) => {
               onClick={handleInstall}
               className="flex-1 bg-tms-green hover:bg-tms-green/90 text-slate-900 font-medium"
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="size-4 mr-2" />
               Instalar
             </Button>
           </div>

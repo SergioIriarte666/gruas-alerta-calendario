@@ -321,9 +321,9 @@ export const CostBatchUpdateModal = ({
         <DialogHeader className="border-b pb-4 bg-gradient-to-r from-violet-500/10 to-purple-500/10 -mx-6 -mt-6 px-6 pt-6 rounded-t-lg">
           <DialogTitle className="flex items-center gap-2">
             {isMarkPaidMode ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="size-5 text-green-600" />
             ) : (
-              <BarChart3 className="h-5 w-5 text-violet-600" />
+              <BarChart3 className="size-5 text-violet-600" />
             )}
             {isMarkPaidMode ? 'Marcar como Pagados' : 'Actualización por Lotes'}
           </DialogTitle>
@@ -377,7 +377,7 @@ export const CostBatchUpdateModal = ({
                       {!markPaidUseCostDate && (
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-3 flex-1">
-                            <Calendar className="h-5 w-5 text-muted-foreground" />
+                            <Calendar className="size-5 text-muted-foreground" />
                             <div className="space-y-1 flex-1">
                               <Label>Fecha de Pago</Label>
                               <DatePickerInput
@@ -448,7 +448,7 @@ export const CostBatchUpdateModal = ({
                         size="sm"
                         onClick={() => downloadMarkPaidReport(markPaidResult)}
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="size-4 mr-2" />
                         Descargar reporte (Excel)
                       </Button>
                     </div>
@@ -471,7 +471,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <Tag className="h-5 w-5 text-muted-foreground" />
+                  <Tag className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-category">Categoría</Label>
@@ -506,7 +506,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Tag className="h-5 w-5 text-muted-foreground" />
+                  <Tag className="size-5 text-muted-foreground" />
                   <Label htmlFor="enable-subcategory">Subcategoría</Label>
                   <Switch
                     id="enable-subcategory"
@@ -564,10 +564,10 @@ export const CostBatchUpdateModal = ({
                             disabled={isCreatingSubcategory || !newSubcategoryName.trim()}
                           >
                             {isCreatingSubcategory ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className="size-4 animate-spin" />
                             ) : (
                               <>
-                                <Plus className="h-4 w-4 mr-1" />
+                                <Plus className="size-4 mr-1" />
                                 Agregar
                               </>
                             )}
@@ -586,7 +586,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <Calendar className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-date">Fecha</Label>
@@ -614,7 +614,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <Calendar className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-payment-date">Fecha de Pago</Label>
@@ -642,7 +642,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <Building2 className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-cost-center">Centro de Costos</Label>
@@ -683,7 +683,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <User className="h-5 w-5 text-muted-foreground" />
+                  <User className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-supplier">Proveedor</Label>
@@ -719,7 +719,7 @@ export const CostBatchUpdateModal = ({
             <CardContent className="pt-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
+                  <FileText className="size-5 text-muted-foreground" />
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <Label htmlFor="enable-notes">Notas</Label>

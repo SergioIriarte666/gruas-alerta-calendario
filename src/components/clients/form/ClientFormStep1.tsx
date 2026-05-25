@@ -95,7 +95,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
     <div className="space-y-4">
       <ColoredSectionCard
         title="Datos Básicos"
-        icon={<Building2 className="h-5 w-5" />}
+        icon={<Building2 className="size-5" />}
         color="purple"
         required
       >
@@ -121,9 +121,9 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
                 title="Buscar en SRE"
               >
                 {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                  <Loader2 className="size-4 animate-spin text-violet-600" />
                 ) : (
-                  <Search className="h-4 w-4 text-violet-600" />
+                  <Search className="size-4 text-violet-600" />
                 )}
               </Button>
             </div>
@@ -136,13 +136,13 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
             <div className="rounded-lg border border-emerald-200 border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4 space-y-3 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <CheckCircle2 className="size-4 text-emerald-600" />
                   <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                     Datos encontrados en SRE
                   </span>
                 </div>
-                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={dismissResult}>
-                  <X className="h-3 w-3" />
+                <Button type="button" variant="ghost" size="icon" className="size-6" onClick={dismissResult}>
+                  <X className="size-3" />
                 </Button>
               </div>
 

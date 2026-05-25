@@ -91,7 +91,7 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
             disabled={isDisabled}
           >
             <span className="truncate">{selectedSupplierName || placeholder}</span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
@@ -117,7 +117,7 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
                       setOpen(false);
                     }}
                   >
-                    <Check className={cn('mr-2 h-4 w-4', !value ? 'opacity-100' : 'opacity-0')} />
+                    <Check className={cn('mr-2 size-4', !value ? 'opacity-100' : 'opacity-0')} />
                     {noneLabel}
                   </CommandItem>
                 )}
@@ -131,7 +131,7 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
                       setOpen(false);
                     }}
                   >
-                    <Check className={cn('mr-2 h-4 w-4', value === supplier.id ? 'opacity-100' : 'opacity-0')} />
+                    <Check className={cn('mr-2 size-4', value === supplier.id ? 'opacity-100' : 'opacity-0')} />
                     <div className="flex flex-col">
                       <span className="font-medium">{supplier.name}</span>
                       {supplier.rut && (
@@ -150,7 +150,7 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
                     }}
                   >
                     <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-medium">
-                      <Plus className="h-4 w-4" />
+                      <Plus className="size-4" />
                       Crear nuevo proveedor...
                     </div>
                   </CommandItem>
@@ -188,7 +188,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
       render={({ field }) => (
         <FormItem>
           <Label className="flex items-center gap-2 text-foreground">
-            <Building2 className="w-4 h-4" />
+            <Building2 className="size-4" />
             {label}
           </Label>
           <FormControl>

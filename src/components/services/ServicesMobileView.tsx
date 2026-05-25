@@ -42,8 +42,8 @@ export const ServicesMobileView = ({
   if (services.length === 0) {
     return (
       <div className=" text-center py-12">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft">
-          <Truck className="h-8 w-8 text-primary" />
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary-soft">
+          <Truck className="size-8 text-primary" />
         </div>
         <h3 className="text-lg font-medium text-foreground mb-2">
           {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
@@ -60,7 +60,7 @@ export const ServicesMobileView = ({
             onClick={onAddNewService}
             title="Crear el primer servicio"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Crear Primer Servicio
           </Button>
         )}
@@ -72,7 +72,7 @@ export const ServicesMobileView = ({
     <div className=" space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground flex items-center">
-          <Truck className="mr-2 h-5 w-5 text-primary" />
+          <Truck className="mr-2 size-5 text-primary" />
           Servicios ({services.length})
         </h3>
       </div>
@@ -94,19 +94,19 @@ export const ServicesMobileView = ({
 
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-foreground text-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <Calendar className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                 </div>
 
                 {shouldShowVehicleInfo(service) && (
                   <div className="flex items-center text-foreground text-sm">
-                    <Truck className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                    <Truck className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                     <span>{formatVehicleInfo(service)}</span>
                   </div>
                 )}
 
                 <div className="flex items-start text-foreground text-sm">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <MapPin className="size-4 mr-2 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <div className="truncate">{service.origin}</div>
                     <div className="text-muted-foreground text-xs">→ {service.destination}</div>
@@ -114,12 +114,12 @@ export const ServicesMobileView = ({
                 </div>
 
                 <div className="flex items-center text-foreground text-sm">
-                  <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <User className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{service.operator?.name || 'Sin asignar'} • {service.crane?.licensePlate || 'Sin grúa'}</span>
                 </div>
 
                 <div className="flex items-center text-primary text-sm font-semibold">
-                  <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <DollarSign className="size-4 mr-2 flex-shrink-0" />
                   <span>{formatCurrency(getDisplayServiceValue(service))}</span>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export const ServicesMobileView = ({
                     className="flex-1 border-success/30 bg-success-soft text-foreground hover:bg-success-soft/80"
                     onClick={() => onCloseService(service)}
                   >
-                    <Check className="w-4 h-4 mr-1" />
+                    <Check className="size-4 mr-1" />
                     Cerrar
                   </Button>
                 )}
@@ -143,7 +143,7 @@ export const ServicesMobileView = ({
                     className="flex-1 border-primary/30 bg-primary-soft text-foreground hover:bg-primary-soft/80"
                   onClick={() => onViewDetails(service)}
                 >
-                  <Eye className="w-4 h-4 mr-1" />
+                  <Eye className="size-4 mr-1" />
                   Ver
                 </Button>
                 
@@ -157,7 +157,7 @@ export const ServicesMobileView = ({
                     onClick={() => onEdit(service)}
                     disabled={isInvoiced && !isAdmin}
                   >
-                    <Edit className="w-4 h-4 mr-1" />
+                    <Edit className="size-4 mr-1" />
                     Editar
                   </Button>
                 )}
@@ -172,7 +172,7 @@ export const ServicesMobileView = ({
                     onClick={isInvoiced ? undefined : () => onDelete(service)}
                     disabled={isInvoiced}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="size-4" />
                   </Button>
                 )}
               </div>

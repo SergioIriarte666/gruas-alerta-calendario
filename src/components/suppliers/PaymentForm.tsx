@@ -189,7 +189,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card border">
         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
           <CardTitle className="text-white flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <DollarSign className="size-5" />
             {payment ? 'Editar Pago a Proveedor' : 'Nuevo Pago a Proveedor'}
           </CardTitle>
           <Button 
@@ -198,7 +198,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             onClick={onClose}
             className="text-white hover:bg-white/20"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </CardHeader>
         
@@ -251,7 +251,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
               <div>
                 <Label className="text-foreground flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="size-4" />
                   Fecha de Vencimiento *
                 </Label>
                 <DatePickerInput
@@ -297,7 +297,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               {watchedStatus === 'paid' && (
                 <div>
                   <Label className="text-foreground flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="size-4" />
                     Fecha de Pago
                   </Label>
                   <DatePickerInput
@@ -403,7 +403,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             {isPiezasCategory && (
               <div className="border-t border pt-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Package className="h-5 w-5 text-primary" />
+                  <Package className="size-5 text-primary" />
                   <h3 className="text-lg font-semibold text-foreground">Detalles de Piezas y Repuestos</h3>
                 </div>
                 
@@ -447,7 +447,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
                   <div>
                     <Label className="text-foreground flex items-center gap-2">
-                      <Wrench className="h-4 w-4" />
+                      <Wrench className="size-4" />
                       Grúa Asociada
                     </Label>
                     <Select
@@ -480,7 +480,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     onCheckedChange={(checked: boolean) => form.setValue('add_to_inventory', checked)}
                   />
                   <Label htmlFor="add_to_inventory" className="flex items-center gap-2 cursor-pointer">
-                    <Package className="h-4 w-4 text-primary" />
+                    <Package className="size-4 text-primary" />
                     <div className="flex flex-col">
                       <span className="font-medium">Agregar automáticamente a inventario (Bodega)</span>
                       <span className="text-xs text-muted-foreground">
@@ -517,12 +517,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="size-4 mr-2 animate-spin" />
                     {payment ? 'Actualizando...' : 'Creando...'}
                   </>
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="size-4 mr-2" />
                     {payment ? 'Actualizar' : 'Crear'}
                   </>
                 )}
@@ -537,7 +537,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="size-5 text-amber-500" />
               Pago Duplicado Detectado
             </AlertDialogTitle>
             <AlertDialogDescription asChild>

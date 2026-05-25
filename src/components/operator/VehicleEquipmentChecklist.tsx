@@ -71,12 +71,12 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                           </span>
                           <div className="ml-3 flex-shrink-0">
                             {isChecked ? (
-                              <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-white" />
+                              <div className="size-6 rounded-full bg-green-500 flex items-center justify-center">
+                                <Check className="size-4 text-white" />
                               </div>
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                                <X className="w-4 h-4 text-white" />
+                              <div className="size-6 rounded-full bg-red-500 flex items-center justify-center">
+                                <X className="size-4 text-white" />
                               </div>
                             )}
                           </div>

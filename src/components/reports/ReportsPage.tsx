@@ -276,14 +276,14 @@ const ReportsPage = () => {
         return (
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-              <Truck className="w-3.5 h-3.5" />
+              <Truck className="size-3.5" />
               Informe de Servicios
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExportServiceReport('pdf')}>
-              <FileText className="w-4 h-4 mr-2" /> PDF
+              <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExportServiceReport('excel')}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
           </>
         );
@@ -291,14 +291,14 @@ const ReportsPage = () => {
         return (
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-              <DollarSign className="w-3.5 h-3.5" />
+              <DollarSign className="size-3.5" />
               Informe de Costos
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExportCostReport('pdf')}>
-              <FileText className="w-4 h-4 mr-2" /> PDF
+              <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExportCostReport('excel')}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
           </>
         );
@@ -306,14 +306,14 @@ const ReportsPage = () => {
         return (
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-              <Users className="w-3.5 h-3.5" />
+              <Users className="size-3.5" />
               {selectedClientData ? `Informe: ${toTitleCase(selectedClientData.clientName)}` : 'Informe de Clientes'}
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExport('pdf')}>
-              <FileText className="w-4 h-4 mr-2" /> PDF
+              <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport('excel')}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
           </>
         );
@@ -323,14 +323,14 @@ const ReportsPage = () => {
         return (
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-              <TabIcon className="w-3.5 h-3.5" />
+              <TabIcon className="size-3.5" />
               Métricas de {tabLabel}
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExport('pdf')}>
-              <FileText className="w-4 h-4 mr-2" /> PDF
+              <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExport('excel')}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
           </>
         );
@@ -380,7 +380,7 @@ const ReportsPage = () => {
           <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-500" />
+                <Trophy className="size-5 text-yellow-500" />
                 {selectedClientData ? `Detalle: ${toTitleCase(selectedClientData.clientName)}` : 'Ranking de Clientes'}
               </CardTitle>
             </CardHeader>
@@ -392,7 +392,7 @@ const ReportsPage = () => {
                     <div key={client.clientId} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${globalIndex < 3 ? rankBadgeColors[globalIndex] : 'bg-muted text-muted-foreground'}`}>
+                          <span className={`inline-flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0 ${globalIndex < 3 ? rankBadgeColors[globalIndex] : 'bg-muted text-muted-foreground'}`}>
                             {globalIndex + 1}
                           </span>
                           <div className="min-w-0">
@@ -433,7 +433,7 @@ const ReportsPage = () => {
           <Card className="bg-card border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-500" />
+                <Trophy className="size-5 text-yellow-500" />
                 Ranking de Operadores
               </CardTitle>
             </CardHeader>
@@ -449,7 +449,7 @@ const ReportsPage = () => {
                     <div key={op.operatorId} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
+                          <span className={`inline-flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
                             {index + 1}
                           </span>
                           <div className="font-medium text-foreground text-sm truncate">{op.operatorName}</div>
@@ -559,7 +559,7 @@ const ReportsPage = () => {
                   : 'bg-card text-foreground border-border hover:bg-muted/50 hover:border-violet-300'
               }`}
             >
-              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Icon className="size-4 sm:size-5" />
               <span className="text-[10px] sm:text-xs leading-tight truncate w-full text-center">{tab.label}</span>
             </button>
           );
@@ -570,7 +570,7 @@ const ReportsPage = () => {
       <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
           <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-card border">
-            <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <Calendar className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-popover border z-50">
@@ -586,7 +586,7 @@ const ReportsPage = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customFrom && "text-muted-foreground")}>
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  <Calendar className="size-3.5 mr-1.5" />
                   {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                 </Button>
               </PopoverTrigger>
@@ -604,7 +604,7 @@ const ReportsPage = () => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customTo && "text-muted-foreground")}>
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  <Calendar className="size-3.5 mr-1.5" />
                   {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                 </Button>
               </PopoverTrigger>
@@ -626,7 +626,7 @@ const ReportsPage = () => {
         {(activeTab === 'clientes' || activeTab === 'servicios') && (
           <Select value={selectedClientId} onValueChange={setSelectedClientId}>
             <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
-              <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <Users className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todos los clientes" />
             </SelectTrigger>
             <SelectContent className="bg-popover border z-50">
@@ -649,7 +649,7 @@ const ReportsPage = () => {
         {/* Company selector */}
         <Select value={selectedCompanyRut} onValueChange={setSelectedCompanyRut}>
           <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
-            <Truck className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <Truck className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue placeholder="Todas las empresas" />
           </SelectTrigger>
           <SelectContent className="bg-popover border z-50">
@@ -682,7 +682,7 @@ const ReportsPage = () => {
         {activeTab === 'costos' && (
           <Select value={selectedCostCategoryId} onValueChange={setSelectedCostCategoryId}>
             <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
-              <Receipt className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <Receipt className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todas las categorías" />
             </SelectTrigger>
             <SelectContent className="bg-popover border z-50">
@@ -706,14 +706,14 @@ const ReportsPage = () => {
             disabled={loading}
             className="h-9 border-input"
           >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="h-9 bg-violet-600 hover:bg-violet-700 text-white">
-                <Download className="w-3.5 h-3.5 mr-1.5" />
+                <Download className="size-3.5 mr-1.5" />
                 Exportar
               </Button>
             </DropdownMenuTrigger>

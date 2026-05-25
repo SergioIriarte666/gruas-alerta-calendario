@@ -78,7 +78,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             )}
             {trend && (
               <div className={cn("mt-1 flex items-center gap-1 text-xs", trendColor)}>
-                <TrendIcon className="h-3 w-3" />
+                <TrendIcon className="size-3" />
                 <span>{Math.abs(trend.value).toFixed(1)}%</span>
                 {trend.label && <span className="text-muted-foreground">{trend.label}</span>}
               </div>
@@ -86,7 +86,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </div>
           {Icon && (
             <div className={cn("rounded-lg p-2 shrink-0", t.iconBg)}>
-              <Icon className={cn("h-5 w-5", t.iconText)} />
+              <Icon className={cn("size-5", t.iconText)} />
             </div>
           )}
         </div>

@@ -101,7 +101,7 @@ const Inventory = () => {
           onClick={() => setIsXMLImportOpen(true)} 
           className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white"
         >
-          <Upload className="h-4 w-4" />
+          <Upload className="size-4" />
           <span>{isMobile ? 'XML' : 'Importar XML'}</span>
         </Button>
       </div>
@@ -117,8 +117,8 @@ const Inventory = () => {
         <Card className="border-l-4 border-l-violet-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-              <Package className="h-4 w-4 text-violet-600" />
+            <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <Package className="size-4 text-violet-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -134,8 +134,8 @@ const Inventory = () => {
         <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <div className="size-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+              <AlertTriangle className="size-4 text-yellow-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -151,8 +151,8 @@ const Inventory = () => {
         <Card className="border-l-4 border-l-red-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
+            <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <AlertTriangle className="size-4 text-red-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -168,8 +168,8 @@ const Inventory = () => {
         <Card className="border-l-4 border-l-violet-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-violet-600" />
+            <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <TrendingUp className="size-4 text-violet-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -187,15 +187,15 @@ const Inventory = () => {
       <Tabs defaultValue="stock" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex bg-muted/50">
           <TabsTrigger value="stock" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <Package className="w-4 h-4 mr-1" />
+            <Package className="size-4 mr-1" />
             <span className="hidden sm:inline">Stock</span>
           </TabsTrigger>
           <TabsTrigger value="movements" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <ArrowUpDown className="w-4 h-4 mr-1" />
+            <ArrowUpDown className="size-4 mr-1" />
             <span className="hidden sm:inline">Movimientos</span>
           </TabsTrigger>
           <TabsTrigger value="reports" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-1" />
+            <BarChart3 className="size-4 mr-1" />
             <span className="hidden sm:inline">Reportes</span>
           </TabsTrigger>
         </TabsList>

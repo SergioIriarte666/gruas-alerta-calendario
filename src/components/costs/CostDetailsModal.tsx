@@ -52,7 +52,7 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
+    <Icon className="size-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-medium text-foreground ${valueClass}`}>{value || 'N/A'}</p>
@@ -69,7 +69,7 @@ interface DetailSectionProps {
 const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   <div>
     <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-primary"/>
+      <Icon className="size-5 mr-2 text-primary"/>
       {title}
     </h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -193,7 +193,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 disabled={isDownloadingPdf}
                 className="flex items-center gap-2"
               >
-                <Download className="w-4 h-4" />
+                <Download className="size-4" />
                 {isDownloadingPdf ? 'Generando...' : 'Descargar PDF'}
               </Button>
               {onDuplicate && (
@@ -206,7 +206,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                   }}
                   className="flex items-center gap-1"
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy className="size-4" />
                   Duplicar
                 </Button>
               )}
@@ -309,7 +309,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 )}
                 {!cost.service_folio && (
                   <div className="col-span-1 md:col-span-2 text-center py-6 text-muted-foreground">
-                    <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <Building className="size-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No hay información detallada adicional</p>
                   </div>
                 )}
@@ -335,7 +335,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                       <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
                         <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                          <Wrench className="w-4 h-4 mr-2 text-primary"/>
+                          <Wrench className="size-4 mr-2 text-primary"/>
                           Información del Servicio
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -352,7 +352,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
 
                       <div className="col-span-1 md:col-span-2">
                         <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                          <Car className="w-4 h-4 mr-2 text-primary"/>
+                          <Car className="size-4 mr-2 text-primary"/>
                           Información del Vehículo
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -364,7 +364,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
 
                       <div className="col-span-1 md:col-span-2">
                         <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                          <MapPin className="w-4 h-4 mr-2 text-primary"/>
+                          <MapPin className="size-4 mr-2 text-primary"/>
                           Ubicación del Servicio
                         </h4>
                         <div className="grid grid-cols-1 gap-y-3">
@@ -376,7 +376,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                       {cost.services.observations && (
                         <div className="col-span-1 md:col-span-2">
                           <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                            <FileText className="w-4 h-4 mr-2 text-primary"/>
+                            <FileText className="size-4 mr-2 text-primary"/>
                             Observaciones del Servicio
                           </h4>
                           <div className="bg-muted/50 rounded-lg p-4 border">
@@ -395,7 +395,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                       <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
                         <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                          <Truck className="w-4 h-4 mr-2 text-primary"/>
+                          <Truck className="size-4 mr-2 text-primary"/>
                           Información de la Grúa
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -414,7 +414,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                       <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
                         <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
-                          <User className="w-4 h-4 mr-2 text-primary"/>
+                          <User className="size-4 mr-2 text-primary"/>
                           Información del Operador
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -427,7 +427,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 </DetailSection>
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
-                  <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <Building className="size-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Este costo no está asociado a ningún recurso específico</p>
                 </div>
               )}

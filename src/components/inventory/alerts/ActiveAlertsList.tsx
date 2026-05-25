@@ -39,13 +39,13 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle className="size-4" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4" />;
+        return <AlertTriangle className="size-4" />;
       case 'info':
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="size-4" />;
       default:
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="size-4" />;
     }
   };
 
@@ -79,7 +79,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
   if (alerts.length === 0) {
     return (
       <div className="text-center py-8">
-        <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+        <CheckCircle className="size-12 mx-auto mb-4 text-success" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
           No hay alertas activas
         </h3>
@@ -100,7 +100,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
       {criticalAlerts.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
-            <XCircle className="w-5 h-5" />
+            <XCircle className="size-5" />
             Alertas Críticas ({criticalAlerts.length})
           </h3>
           {criticalAlerts.map((alert) => (
@@ -113,7 +113,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
       {warningAlerts.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-warning flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
+            <AlertTriangle className="size-5" />
             Advertencias ({warningAlerts.length})
           </h3>
           {warningAlerts.map((alert) => (
@@ -126,7 +126,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
       {infoAlerts.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" />
+            <CheckCircle className="size-5" />
             Información ({infoAlerts.length})
           </h3>
           {infoAlerts.map((alert) => (
@@ -165,13 +165,13 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onViewDetail }) => {
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle className="size-4" />;
       case 'warning':
-        return <AlertTriangle className="w-4 h-4" />;
+        return <AlertTriangle className="size-4" />;
       case 'info':
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="size-4" />;
       default:
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="size-4" />;
     }
   };
 
@@ -198,19 +198,19 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onViewDetail }) => {
             
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
-                <Package className="w-4 h-4" />
+                <Package className="size-4" />
                 <span>{alert.item_name}</span>
               </div>
               
               {alert.location_name && (
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="size-4" />
                   <span>{alert.location_name}</span>
                 </div>
               )}
               
               <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+                <Clock className="size-4" />
                 <span>
                   {formatDistanceToNow(new Date(alert.created_at), { 
                     addSuffix: true, 
@@ -242,7 +242,7 @@ const AlertCard: React.FC<AlertCardProps> = ({ alert, onViewDetail }) => {
               className="flex items-center gap-1"
               onClick={() => onViewDetail(alert)}
             >
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="size-3" />
               Ver Detalle
             </Button>
           </div>

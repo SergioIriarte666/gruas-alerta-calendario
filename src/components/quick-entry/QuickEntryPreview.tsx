@@ -118,14 +118,14 @@ export function QuickEntryPreview({
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Fecha:</span>
                   <span className="font-medium">{new Date(entry.date).toLocaleDateString()}</span>
                 </div>
                 
                 {entry.amount && (
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <DollarSign className="size-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Monto:</span>
                     <span className="font-medium">${entry.amount.toLocaleString()}</span>
                   </div>
@@ -136,7 +136,7 @@ export function QuickEntryPreview({
             {entry.notes && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <FileText className="size-4 text-muted-foreground" />
                   <span className="font-medium">Notas:</span>
                 </div>
                 <p className="text-sm bg-muted p-3 rounded-md">{entry.notes}</p>

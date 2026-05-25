@@ -37,7 +37,7 @@ const ServicesSelector = ({
       <div className="flex items-center justify-between">
         <Label className="text-gray-300">Servicios Disponibles para Cierre</Label>
         {selectedServiceIds.length > 0 && <div className="flex items-center gap-1 text-sm text-tms-green">
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle className="size-4" />
             <span>{selectedServiceIds.length} seleccionado{selectedServiceIds.length !== 1 ? 's' : ''}</span>
           </div>}
       </div>

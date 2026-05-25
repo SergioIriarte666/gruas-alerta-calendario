@@ -68,25 +68,25 @@ export const MultipleOperatorsSection = ({
   return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-green-200 bg-green-50/30'}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className={`h-5 w-5 ${hasValidationError ? 'text-destructive' : 'text-green-600'}`} />
+          <Users className={`size-5 ${hasValidationError ? 'text-destructive' : 'text-green-600'}`} />
           Operadores y Comisiones del Servicio
           {operatorRequired && <span className="text-red-500">*</span>}
           {hasValidationError && (
             <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded flex items-center gap-1">
-              <AlertTriangle className="h-3 w-3" />
+              <AlertTriangle className="size-3" />
               Requerido
             </span>
           )}
         </CardTitle>
         {hasValidationError && validationMessage && (
           <div className="text-sm text-destructive bg-destructive/10 p-2 rounded border border-destructive/30 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="size-4" />
             {validationMessage}
           </div>
         )}
         {!hasValidationError && (
           <div className="text-sm text-blue-700 bg-blue-100 p-2 rounded border">
-            <DollarSign className="h-4 w-4 inline mr-1" />
+            <DollarSign className="size-4 inline mr-1" />
             <strong>Sistema Simplificado:</strong> Para servicios con un solo operador, la comisión se maneja en el campo principal del servicio.
             Esta sección es para servicios con múltiples operadores.
           </div>
@@ -102,7 +102,7 @@ export const MultipleOperatorsSection = ({
                 {operator.role && <span className="text-sm text-gray-600">({operator.role})</span>}
               </h4>
               {operators.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeOperator(operator.id)} disabled={disabled} className="text-red-600 hover:text-red-700">
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="size-4" />
                 </Button>}
             </div>
 
@@ -155,7 +155,7 @@ export const MultipleOperatorsSection = ({
               {/* Comisión */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
-                  <DollarSign className="h-3 w-3 text-green-600" />
+                  <DollarSign className="size-3 text-green-600" />
                   Comisión (CLP) {!isExempt(operator.operatorId) && '*'}
                 </Label>
                 <Input
@@ -177,7 +177,7 @@ export const MultipleOperatorsSection = ({
         {/* Botón para agregar operador */}
         <div className="flex justify-between items-center pt-4 border-t">
           <Button type="button" variant="outline" onClick={addOperator} disabled={disabled || operators.length >= 5} className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50">
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             Agregar Operador
           </Button>
 
@@ -185,7 +185,7 @@ export const MultipleOperatorsSection = ({
           <div className="text-right">
             <Label className="text-sm text-muted-foreground">Total Comisiones:</Label>
             <div className="text-lg font-bold text-green-600 flex items-center gap-1">
-              <DollarSign className="h-4 w-4" />
+              <DollarSign className="size-4" />
               ${getTotalCommissions().toLocaleString('es-CL')} CLP
             </div>
           </div>

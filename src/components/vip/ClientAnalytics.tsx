@@ -310,7 +310,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <Activity className="w-5 h-5 text-blue-400" />
+            <Activity className="size-5 text-blue-400" />
             Analytics Avanzados - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -349,7 +349,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               onClick={() => setChartType('line')}
               className="rounded-r-none"
             >
-              <Activity className="w-4 h-4" />
+              <Activity className="size-4" />
             </Button>
             <Button
               variant={chartType === 'area' ? 'default' : 'ghost'}
@@ -357,7 +357,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               onClick={() => setChartType('area')}
               className="rounded-none border-x"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="size-4" />
             </Button>
             <Button
               variant={chartType === 'bar' ? 'default' : 'ghost'}
@@ -365,7 +365,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               onClick={() => setChartType('bar')}
               className="rounded-l-none"
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="size-4" />
             </Button>
           </div>
         </div>
@@ -380,13 +380,13 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                 <p className="text-2xl font-bold text-foreground">{services.length}</p>
                 <p className="text-xs text-blue-400">Total Servicios</p>
               </div>
-              <Target className="w-5 h-5 text-blue-400" />
+              <Target className="size-5 text-blue-400" />
             </div>
             <div className="flex items-center gap-1 mt-2">
               {percentageChange >= 0 ? (
-                <TrendingUp className="w-3 h-3 text-green-400" />
+                <TrendingUp className="size-3 text-green-400" />
               ) : (
-                <TrendingDown className="w-3 h-3 text-red-400" />
+                <TrendingDown className="size-3 text-red-400" />
               )}
               <span className={`text-xs ${percentageChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {Math.abs(percentageChange).toFixed(1)}%
@@ -405,7 +405,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                 </p>
                 <p className="text-xs text-green-400">Tasa Completación</p>
               </div>
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <CheckCircle2 className="size-5 text-green-400" />
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               {services.filter(s => ['completed', 'invoiced'].includes(s.status)).length} de {services.length} servicios
@@ -420,10 +420,10 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                 <p className="text-2xl font-bold text-foreground">18.5h</p>
                 <p className="text-xs text-purple-400">Tiempo Respuesta</p>
               </div>
-              <Clock className="w-5 h-5 text-purple-400" />
+              <Clock className="size-5 text-purple-400" />
             </div>
             <div className="flex items-center gap-1 mt-2">
-              <TrendingDown className="w-3 h-3 text-green-400" />
+              <TrendingDown className="size-3 text-green-400" />
               <span className="text-xs text-green-400">12% mejor</span>
             </div>
           </CardContent>
@@ -438,7 +438,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
                 </p>
                 <p className="text-xs text-amber-400">Valor Total</p>
               </div>
-              <DollarSign className="w-5 h-5 text-amber-400" />
+              <DollarSign className="size-5 text-amber-400" />
             </div>
             <div className="text-xs text-muted-foreground mt-2">
               Promedio: ${Math.round(services.reduce((sum, s) => sum + s.value, 0) / services.length).toLocaleString()}
@@ -467,7 +467,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
         <Card className="bg-card border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-blue-400" />
+              <PieChartIcon className="size-5 text-blue-400" />
               Distribución por Estado
             </CardTitle>
           </CardHeader>
@@ -500,7 +500,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               {statusDistribution.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div
-                    className="w-3 h-3 rounded-full"
+                    className="size-3 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
                   <span className="text-xs text-muted-foreground">{item.name}: {item.value}</span>
@@ -549,7 +549,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               <div className="space-y-2">
                 {patterns.seasonalTrends.map((trend, index) => (
                   <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <AlertCircle className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                    <AlertCircle className="size-4 text-blue-400 flex-shrink-0" />
                     <span>{trend}</span>
                   </div>
                 ))}

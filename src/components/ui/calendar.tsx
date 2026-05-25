@@ -84,10 +84,10 @@ function Calendar({
             }}
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "h-8 w-8 p-0"
+              "size-8 p-0"
             )}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="size-4" />
           </button>
           <button
             onClick={() => {
@@ -97,10 +97,10 @@ function Calendar({
             }}
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "h-8 w-8 p-0"
+              "size-8 p-0"
             )}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="size-4" />
           </button>
         </div>
       </div>
@@ -127,9 +127,9 @@ function Calendar({
             head_row: "flex border-b pb-2 mb-2",
             head_cell: "text-muted-foreground rounded-md w-10 font-medium text-sm text-center",
             row: "flex w-full",
-            cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+            cell: "size-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
             day: cn(
-              "h-10 w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
+              "size-10 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
               "focus:bg-accent focus:text-accent-foreground focus:outline-none"
             ),
             day_range_end: "day-range-end",
