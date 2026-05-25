@@ -11,6 +11,25 @@ interface ServiceTypeDetailsModalProps {
   onClose: () => void;
 }
 
+const RequirementRow = ({ label, required }: { label: string; required: boolean }) => (
+  <div className="flex items-center justify-between py-2">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <div className="flex items-center gap-2">
+      {required ? (
+        <>
+          <Check className="size-4 text-green-600" />
+          <span className="text-sm font-medium text-green-600">Requerido</span>
+        </>
+      ) : (
+        <>
+          <X className="size-4 text-gray-400" />
+          <span className="text-sm text-gray-500">Opcional</span>
+        </>
+      )}
+    </div>
+  </div>
+);
+
 export function ServiceTypeDetailsModal({
   serviceType,
   isOpen,
