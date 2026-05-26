@@ -3,6 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AlertTriangle, CheckCircle, Loader2, ScanSearch, Wrench } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +25,7 @@ import { toast } from 'sonner';
 export const CommissionRepairTool = () => {
   const [auditing, setAuditing] = useState(false);
   const [repairing, setRepairing] = useState(false);
+  const [confirmRepairOpen, setConfirmRepairOpen] = useState(false);
   const [auditData, setAuditData] = useState<any>(null);
   const [repairData, setRepairData] = useState<any>(null);
 
@@ -34,9 +45,6 @@ export const CommissionRepairTool = () => {
   };
 
   const repairCommissionSystem = async () => {
-    if (!window.confirm('Esta operación reparará el sistema de comisiones. Asegúrate de haber generado un respaldo antes (Configuración → Gestión de Respaldos). ¿Continuar?')) {
-      return;
-    }
     try {
       setRepairing(true);
       const { data, error } = await supabase.rpc('repair_commission_system');
@@ -78,7 +86,7 @@ export const CommissionRepairTool = () => {
             {auditing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <ScanSearch className="size-4 mr-2" />}
             Auditar Sistema
           </Button>
-          <Button onClick={repairCommissionSystem} disabled={repairing} variant="destructive">
+          <Button onClick={() => setConfirmRepairOpen(true)} disabled={repairing} variant="destructive">
             {repairing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <CheckCircle className="size-4 mr-2" />}
             Reparar Sistema
           </Button>
@@ -133,6 +141,30 @@ export const CommissionRepairTool = () => {
           </Alert>
         )}
       </CardContent>
+
+      <AlertDialog open={confirmRepairOpen} onOpenChange={setConfirmRepairOpen}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="size-5 text-warning" />
+              Confirmar reparación
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta operación reparará el sistema de comisiones. Verifica que ya generaste un
+              respaldo desde Configuración antes de continuar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={repairCommissionSystem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Continuar reparación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

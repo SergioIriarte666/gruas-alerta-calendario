@@ -67,22 +67,22 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
   };
 
   return (
-    <Card className="bg-transparent border-white/20 shadow-none" style={{ background: 'transparent' }}>
-      <CardHeader className="bg-transparent" style={{ background: 'transparent' }}>
-        <CardTitle className="text-white text-center">Recuperar Contraseña</CardTitle>
-        <CardDescription className="text-white/80">
+    <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
+      <CardHeader>
+        <CardTitle className="text-center text-2xl text-white">Recuperar Contraseña</CardTitle>
+        <CardDescription className="text-center text-white/70">
           {sent
             ? 'Te hemos enviado un enlace de recuperación.'
             : 'Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.'}
         </CardDescription>
       </CardHeader>
-      <CardContent className="bg-transparent" style={{ background: 'transparent' }}>
+      <CardContent>
         {sent ? (
           <div className="space-y-4 text-center">
-            <div className="size-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto">
-              <Mail className="size-8 text-tms-green" />
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary/20">
+              <Mail className="size-8 text-primary" />
             </div>
-            <p className="text-white/80 text-sm">
+            <p className="text-sm text-white/80">
               Revisa tu correo <strong className="text-white">{email}</strong> y sigue las instrucciones para restablecer tu contraseña.
             </p>
             <Button
@@ -98,7 +98,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email-reset" className="text-white">Email</Label>
+              <Label htmlFor="email-reset" className="text-white/85">Email</Label>
               <Input
                 id="email-reset"
                 type="email"
@@ -106,12 +106,12 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                 required
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white"
+                className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40"
               />
             </div>
             {isTurnstileEnabled ? (
               <div className="space-y-2">
-                <Label className="text-white">Verificación anti-bot</Label>
+                <Label className="text-white/85">Verificación anti-bot</Label>
                 <TurnstileWidget
                   siteKey={turnstileSiteKey}
                   resetKey={captchaResetKey}
@@ -124,8 +124,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
             <Button
               type="submit"
               disabled={loading || (isTurnstileEnabled && !captchaToken)}
-              className="w-full text-white font-semibold bg-transparent border-white/50 hover:bg-white/10"
-              style={{ background: 'transparent' }}
+              className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
             </Button>

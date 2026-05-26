@@ -25,13 +25,14 @@ interface StatCardProps {
   countLabel: string;
   icon: React.ElementType;
   iconColor: string;
+  cardClassName?: string;
   isLoading?: boolean;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
-  title, value, count, countLabel, icon: Icon, iconColor, isLoading 
+  title, value, count, countLabel, icon: Icon, iconColor, cardClassName, isLoading 
 }) => (
-  <Card className="bg-card border">
+  <Card className={`border-border/70 bg-card shadow-sm ${cardClassName ?? ''}`}>
     <CardContent className="p-4">
       {isLoading ? (
         <div className="space-y-2">
@@ -63,14 +64,15 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Building2 className="size-6 text-primary" />
             Detalles del Proveedor: {supplier.name}
           </DialogTitle>
         </DialogHeader>
 
+        <div className="px-6 py-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <StatCard
@@ -79,7 +81,8 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             count={stats.pendingCount}
             countLabel="pendientes"
             icon={DollarSign}
-            iconColor="text-yellow-500"
+            iconColor="text-warning"
+            cardClassName="border-warning/20 bg-warning/5"
             isLoading={isLoading}
           />
           <StatCard
@@ -88,7 +91,8 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             count={stats.paidCount}
             countLabel="pagados"
             icon={CheckCircle2}
-            iconColor="text-green-500"
+            iconColor="text-success"
+            cardClassName="border-success/20 bg-success/5"
             isLoading={isLoading}
           />
           <StatCard
@@ -97,7 +101,8 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             count={stats.overdueCount}
             countLabel="vencidos"
             icon={AlertTriangle}
-            iconColor="text-red-500"
+            iconColor="text-danger"
+            cardClassName="border-danger/20 bg-danger/5"
             isLoading={isLoading}
           />
           <StatCard
@@ -106,7 +111,8 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             count={stats.inventoryMovementsCount}
             countLabel="inventario"
             icon={Package}
-            iconColor="text-blue-500"
+            iconColor="text-info"
+            cardClassName="border-info/20 bg-info/5"
             isLoading={isLoading}
           />
         </div>
@@ -152,6 +158,7 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             />
           </CustomTabsContent>
         </CustomTabs>
+        </div>
       </DialogContent>
     </Dialog>
   );

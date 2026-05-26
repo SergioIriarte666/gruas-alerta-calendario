@@ -1,11 +1,11 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { AlertTriangle, Clock, FileText, DollarSign, Truck, Calendar, User, Receipt, X } from 'lucide-react';
+import { AlertTriangle, Clock, FileText, DollarSign, Truck, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -21,29 +21,16 @@ export const AlertsPanel = () => {
     return AlertTriangle;
   };
 
-  const getAlertVariant = (type: string) => {
+  const getAlertBadgeColor = (type: string) => {
     switch (type) {
       case 'error':
         return 'destructive';
       case 'warning':
-        return 'default';
+        return 'warning';
       case 'info':
-        return 'default';
+        return 'info';
       default:
-        return 'default';
-    }
-  };
-
-  const getAlertBadgeColor = (type: string) => {
-    switch (type) {
-      case 'error':
-        return 'bg-red-100 text-red-800';
-      case 'warning':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'info':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+        return 'outline';
     }
   };
 
@@ -52,11 +39,11 @@ export const AlertsPanel = () => {
 
   if (loading) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm h-fit">
+      <Card className="h-fit border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-x-3 text-black text-xl">
-            <div className="p-2 bg-tms-green/10 rounded-lg">
-              <AlertTriangle className="size-6 text-tms-green" />
+          <CardTitle className="flex items-center gap-x-3 text-xl text-foreground">
+            <div className="rounded-xl bg-warning/10 p-2 text-warning">
+              <AlertTriangle className="size-5" />
             </div>
             <span>Alertas y Recordatorios</span>
           </CardTitle>
@@ -64,7 +51,7 @@ export const AlertsPanel = () => {
         <CardContent className="space-y-4">
           <div className="animate-pulse space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-16 rounded-xl bg-muted"></div>
             ))}
           </div>
         </CardContent>
@@ -73,17 +60,17 @@ export const AlertsPanel = () => {
   }
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm h-fit">
+    <Card className="h-fit border-border/70 bg-card/80 shadow-sm">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center justify-between text-black text-xl">
+        <CardTitle className="flex items-center justify-between text-xl text-foreground">
           <div className="flex items-center gap-x-3">
-            <div className="p-2 bg-tms-green/10 rounded-lg">
-              <AlertTriangle className="size-6 text-tms-green" />
+            <div className="rounded-xl bg-warning/10 p-2 text-warning">
+              <AlertTriangle className="size-5" />
             </div>
             <span>Alertas y Recordatorios</span>
           </div>
           {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+            <span className="rounded-full bg-destructive px-2 py-1 text-xs text-destructive-foreground">
               {unreadCount}
             </span>
           )}
@@ -92,11 +79,11 @@ export const AlertsPanel = () => {
       <CardContent className="space-y-4">
         {displayNotifications.length === 0 ? (
           <div className="text-center py-8">
-            <div className="p-4 bg-gray-50 rounded-xl inline-block mb-4">
-              <Clock className="size-12 mx-auto text-gray-400" />
+            <div className="mb-4 inline-flex rounded-2xl bg-muted p-4">
+              <Clock className="mx-auto size-10 text-muted-foreground" />
             </div>
-            <p className="text-gray-600 text-lg">No hay alertas pendientes</p>
-            <p className="text-gray-500 text-sm mt-2">Las alertas aparecerán aquí cuando se programen eventos importantes</p>
+            <p className="text-lg font-medium text-foreground">No hay alertas pendientes</p>
+            <p className="mt-2 text-sm text-muted-foreground">Las alertas aparecerán aquí cuando se programen eventos importantes.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -105,24 +92,25 @@ export const AlertsPanel = () => {
               return (
                 <Alert 
                   key={notification.id} 
-                  variant={getAlertVariant(notification.type)}
-                  className="bg-gray-50 border-gray-200 p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-2xl border-border/70 bg-background/70 p-4 transition-colors hover:bg-accent/40"
                 >
                   <div className="flex items-start gap-x-3">
-                    <Icon className="size-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                    <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+                      <Icon className="mt-0.5 size-4 flex-shrink-0" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div className="gap-y-1 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-sm text-black">{notification.title}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${getAlertBadgeColor(notification.type)}`}>
+                            <p className="text-sm font-semibold text-foreground">{notification.title}</p>
+                            <Badge variant={getAlertBadgeColor(notification.type) as any}>
                               {notification.type === 'error' ? 'Urgente' : 
                                notification.type === 'warning' ? 'Importante' : 'Info'}
-                            </span>
+                            </Badge>
                           </div>
-                          <p className="text-sm text-gray-600 leading-relaxed">{notification.message}</p>
+                          <p className="text-sm leading-relaxed text-muted-foreground">{notification.message}</p>
                         </div>
-                        <span className="text-xs text-gray-500 whitespace-nowrap ml-4 font-medium">
+                        <span className="ml-4 whitespace-nowrap text-xs font-medium text-muted-foreground">
                           {format(notification.timestamp, 'dd MMM', { locale: es })}
                         </span>
                       </div>
@@ -137,7 +125,7 @@ export const AlertsPanel = () => {
                   variant="ghost" 
                   size="sm"
                   onClick={() => setShowAllModal(true)}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   Y {notifications.length - 5} alertas más...
                 </Button>
@@ -149,16 +137,16 @@ export const AlertsPanel = () => {
 
       {/* Modal para mostrar todas las alertas */}
       <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-hidden border-border/70 bg-popover/95">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-x-3">
-                <div className="p-2 bg-tms-green/10 rounded-lg">
-                  <AlertTriangle className="size-6 text-tms-green" />
+                <div className="rounded-xl bg-warning/10 p-2 text-warning">
+                  <AlertTriangle className="size-5" />
                 </div>
                 <span>Todas las Alertas y Recordatorios</span>
                 {unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                  <span className="rounded-full bg-destructive px-2 py-1 text-xs text-destructive-foreground">
                     {unreadCount}
                   </span>
                 )}
@@ -177,11 +165,11 @@ export const AlertsPanel = () => {
           <div className="overflow-y-auto max-h-[60vh] space-y-3 pr-2">
             {notifications.length === 0 ? (
               <div className="text-center py-8">
-                <div className="p-4 bg-gray-50 rounded-xl inline-block mb-4">
-                  <Clock className="size-12 mx-auto text-gray-400" />
+                <div className="mb-4 inline-flex rounded-2xl bg-muted p-4">
+                  <Clock className="mx-auto size-10 text-muted-foreground" />
                 </div>
-                <p className="text-gray-600 text-lg">No hay alertas pendientes</p>
-                <p className="text-gray-500 text-sm mt-2">Las alertas aparecerán aquí cuando se programen eventos importantes</p>
+                <p className="text-lg font-medium text-foreground">No hay alertas pendientes</p>
+                <p className="mt-2 text-sm text-muted-foreground">Las alertas aparecerán aquí cuando se programen eventos importantes.</p>
               </div>
             ) : (
               notifications.map((notification) => {
@@ -189,32 +177,33 @@ export const AlertsPanel = () => {
                 return (
                   <Alert 
                     key={notification.id} 
-                    variant={getAlertVariant(notification.type)}
-                    className={`${notification.read ? 'bg-gray-50 opacity-75' : 'bg-white'} border-gray-200 p-4 hover:bg-gray-100 transition-colors cursor-pointer`}
+                    className={`${notification.read ? 'bg-muted/40 opacity-75' : 'bg-background/80'} cursor-pointer rounded-2xl border-border/70 p-4 transition-colors hover:bg-accent/40`}
                     onClick={() => markAsRead(notification.id)}
                   >
                     <div className="flex items-start gap-x-3">
-                      <Icon className="size-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                      <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+                        <Icon className="mt-0.5 size-4 flex-shrink-0" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="gap-y-1 flex-1">
                             <div className="flex items-center gap-2">
-                              <p className={`font-semibold text-sm ${notification.read ? 'text-gray-500' : 'text-black'}`}>
+                              <p className={`text-sm font-semibold ${notification.read ? 'text-muted-foreground' : 'text-foreground'}`}>
                                 {notification.title}
                               </p>
-                              <span className={`text-xs px-2 py-1 rounded-full ${getAlertBadgeColor(notification.type)}`}>
+                              <Badge variant={getAlertBadgeColor(notification.type) as any}>
                                 {notification.type === 'error' ? 'Urgente' : 
                                  notification.type === 'warning' ? 'Importante' : 'Info'}
-                              </span>
+                              </Badge>
                               {!notification.read && (
-                                <span className="size-2 bg-blue-500 rounded-full"></span>
+                                <span className="size-2 rounded-full bg-primary"></span>
                               )}
                             </div>
-                            <p className={`text-sm leading-relaxed ${notification.read ? 'text-gray-500' : 'text-gray-600'}`}>
+                            <p className={`text-sm leading-relaxed ${notification.read ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                               {notification.message}
                             </p>
                           </div>
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-4 font-medium">
+                          <span className="ml-4 whitespace-nowrap text-xs font-medium text-muted-foreground">
                             {format(notification.timestamp, 'dd MMM HH:mm', { locale: es })}
                           </span>
                         </div>

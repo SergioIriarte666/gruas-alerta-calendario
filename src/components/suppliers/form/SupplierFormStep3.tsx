@@ -31,13 +31,13 @@ interface SupplierFormStep3Props {
 }
 
 const EVALUATION_TAGS = [
-  { label: "Puntual", color: "bg-green-100 text-green-800 border-green-200" },
-  { label: "Económico", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  { label: "Calidad Alta", color: "bg-purple-100 text-purple-800 border-purple-200" },
-  { label: "Respuesta Rápida", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
-  { label: "Retrasos", color: "bg-orange-100 text-orange-800 border-orange-200" },
-  { label: "Caro", color: "bg-red-100 text-red-800 border-red-200" },
-  { label: "Mala Comunicación", color: "bg-gray-100 text-gray-800 border-gray-200" },
+  { label: "Puntual", color: "border-success/30 bg-success/10 text-success" },
+  { label: "Económico", color: "border-info/30 bg-info/10 text-info" },
+  { label: "Calidad Alta", color: "border-primary/30 bg-primary/10 text-primary" },
+  { label: "Respuesta Rápida", color: "border-info/30 bg-info/10 text-info" },
+  { label: "Retrasos", color: "border-warning/30 bg-warning/10 text-warning" },
+  { label: "Caro", color: "border-danger/30 bg-danger/10 text-danger" },
+  { label: "Mala Comunicación", color: "border-border/70 bg-muted/40 text-muted-foreground" },
 ];
 
 export const SupplierFormStep3 = ({ 
@@ -185,7 +185,7 @@ export const SupplierFormStep3 = ({
                   <Star 
                     className={cn(
                       "size-6 transition-colors", 
-                      star <= currentRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                      star <= currentRating ? "fill-warning text-warning" : "text-muted-foreground"
                     )} 
                   />
                 </button>

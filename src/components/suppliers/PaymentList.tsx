@@ -3,7 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -39,7 +39,7 @@ interface SupplierGroup {
 
 export const PaymentList: React.FC = () => {
   const isMobile = useIsMobile();
-  const { payments, isLoading, deletePayment, markPaymentAsPaid, updateOverduePayments, isDeleting } = useSupplierPayments();
+  const { payments, isLoading, deletePayment, markPaymentAsPaid, updateOverduePayments } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const { data: costCategories = [] } = useCostCategories();
 
@@ -178,7 +178,7 @@ export const PaymentList: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Pagos a Proveedores</h2>
-          <p className="text-muted-foreground">Agrupados por proveedor · Más reciente primero</p>
+          <p className="text-muted-foreground">Agrupados por proveedor, con prioridad operativa para vencidos y pendientes.</p>
         </div>
         <div className="flex gap-2">
           <SupplierPaymentExportButton
@@ -192,7 +192,7 @@ export const PaymentList: React.FC = () => {
               dateTo: dateTo ? formatForInput(dateTo) : undefined, dateType
             }}
           />
-          <Button onClick={() => updateOverduePayments()} variant="outline" size="sm">
+          <Button onClick={() => updateOverduePayments()} variant="outline" size="sm" className="border-border/70 bg-card/70">
             <Clock className="size-4 mr-2" />
             Actualizar Vencidos
           </Button>
@@ -205,7 +205,7 @@ export const PaymentList: React.FC = () => {
 
       {/* Filters */}
       <Collapsible defaultOpen>
-        <Card className="bg-card border">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full mb-3">
               <h3 className="text-sm font-medium text-foreground">Filtros</h3>
@@ -349,11 +349,11 @@ export const PaymentList: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-4 shrink-0 ml-4">
                     {group.pendingAmount > 0 && (
-                      <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                      <span className="text-sm font-medium text-warning">
                         Pendiente: {formatCurrency(group.pendingAmount)}
                       </span>
                     )}
-                    <span className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(group.total)}</span>
+                    <span className="text-sm font-bold text-primary">{formatCurrency(group.total)}</span>
                   </div>
                 </button>
 
@@ -375,7 +375,7 @@ export const PaymentList: React.FC = () => {
                               <span className="font-bold text-primary">{formatCurrency(payment.amount)}</span>
                               <span className="text-xs text-muted-foreground">Vence: {formatForDisplay(parseFromDatabase(payment.due_date))}</span>
                             </div>
-                            {payment.paid_date && <div className="text-xs text-green-600 dark:text-green-400">Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}</div>}
+                            {payment.paid_date && <div className="text-xs text-success">Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}</div>}
                             <div className="flex items-center justify-end gap-1 pt-1 border-t border-border/50">
                               {(payment.status === 'pending' || payment.status === 'overdue') && (
                                 <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary h-7"><CheckCircle className="size-3.5" /></Button>
@@ -385,7 +385,7 @@ export const PaymentList: React.FC = () => {
                                 <AlertDialogTrigger asChild>
                                   <Button variant="ghost" size="sm" className="text-destructive h-7"><Trash2 className="size-3.5" /></Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="bg-card border">
+                                <AlertDialogContent className="border-border/70 bg-card">
                                   <AlertDialogHeader>
                                     <AlertDialogTitle className="text-foreground">¿Eliminar pago?</AlertDialogTitle>
                                     <AlertDialogDescription className="text-muted-foreground">Se eliminará permanentemente "{payment.description}".</AlertDialogDescription>
@@ -430,16 +430,16 @@ export const PaymentList: React.FC = () => {
                                 <TableCell className="text-sm text-muted-foreground">{payment.reference_number || '-'}</TableCell>
                                 <TableCell>
                                   <div className="space-y-0.5">
-                                    <div className="font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(payment.amount)}</div>
+                                    <div className="font-semibold text-primary">{formatCurrency(payment.amount)}</div>
                                     {payment.status !== 'paid' && payment.paid_amount && payment.paid_amount > 0 && payment.paid_amount !== payment.amount && (
-                                      <div className="text-xs text-green-600 dark:text-green-400">Abonado: {formatCurrency(payment.paid_amount)}</div>
+                                      <div className="text-xs text-success">Abonado: {formatCurrency(payment.paid_amount)}</div>
                                     )}
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-sm text-foreground">{formatForDisplay(parseFromDatabase(payment.due_date))}</TableCell>
                                 <TableCell>
                                   {payment.paid_date
-                                    ? <span className="text-sm text-green-600 dark:text-green-400">{formatForDisplay(parseFromDatabase(payment.paid_date))}</span>
+                                    ? <span className="text-sm text-success">{formatForDisplay(parseFromDatabase(payment.paid_date))}</span>
                                     : <span className="text-muted-foreground">-</span>}
                                 </TableCell>
                                 <TableCell><Badge className={`${getStatusColor(payment.status)}`}>{getStatusLabel(payment.status)}</Badge></TableCell>
@@ -457,13 +457,13 @@ export const PaymentList: React.FC = () => {
                                       <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80 size-7 p-0"><Trash2 className="size-4" /></Button>
                                       </AlertDialogTrigger>
-                                      <AlertDialogContent className="bg-card border">
+                                      <AlertDialogContent className="border-border/70 bg-card">
                                         <AlertDialogHeader>
                                           <AlertDialogTitle className="text-foreground">¿Eliminar pago?</AlertDialogTitle>
                                           <AlertDialogDescription className="text-muted-foreground">Se eliminará permanentemente "{payment.description}".</AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
-                                          <AlertDialogCancel className="border text-muted-foreground">Cancelar</AlertDialogCancel>
+                                          <AlertDialogCancel className="border-border/70 bg-background/60 text-foreground">Cancelar</AlertDialogCancel>
                                           <AlertDialogAction onClick={() => handleDelete(payment.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Eliminar</AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>

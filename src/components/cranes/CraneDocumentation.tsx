@@ -19,12 +19,14 @@ import { useDocumentAlerts } from '@/hooks/useDocumentAlerts';
 import { useCraneDocuments } from '@/hooks/useCraneDocuments';
 import { DocumentUploadModal } from './DocumentUploadModal';
 import { DocumentSettingsForm } from './forms/DocumentSettingsForm';
+import { useToast } from '@/components/ui/custom-toast';
 
 interface CraneDocumentationProps {
   crane: Crane;
 }
 
 export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
+  const { toast } = useToast();
   const { data: documentAlerts = [] } = useDocumentAlerts(crane.id);
   const { uploadDocument, downloadDocument, getDocumentByType, uploading } = useCraneDocuments(crane.id);
   const [showSettingsForm, setShowSettingsForm] = useState(false);
@@ -42,9 +44,34 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
   };
 
   const getExpiryStatus = (days: number) => {
-    if (days <= 0) return { status: 'expired', color: 'red', icon: AlertTriangle };
-    if (days <= 30) return { status: 'warning', color: 'yellow', icon: Clock };
-    return { status: 'valid', color: 'green', icon: CheckCircle };
+    if (days <= 0) {
+      return {
+        status: 'expired',
+        icon: AlertTriangle,
+        theme: {
+          card: 'border-danger/20 bg-danger/5',
+          icon: 'text-danger',
+        },
+      };
+    }
+    if (days <= 30) {
+      return {
+        status: 'warning',
+        icon: Clock,
+        theme: {
+          card: 'border-warning/20 bg-warning/5',
+          icon: 'text-warning',
+        },
+      };
+    }
+    return {
+      status: 'valid',
+      icon: CheckCircle,
+      theme: {
+        card: 'border-success/20 bg-success/5',
+        icon: 'text-success',
+      },
+    };
   };
 
   const documents = [
@@ -76,7 +103,11 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
     if (document) {
       downloadDocument(document);
     } else {
-      alert('No hay documento disponible para descargar');
+      toast({
+        type: 'info',
+        title: 'Documento no disponible',
+        description: 'No hay documento disponible para descargar',
+      });
     }
   };
 
@@ -106,46 +137,46 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
     const hasDocument = getDocumentByType(doc.type as any);
 
     return (
-      <Card key={doc.type} className={`border-${status.color}-500/30 bg-${status.color}-500/5`}>
+      <Card key={doc.type} className={`border ${status.theme.card}`}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-white text-lg flex items-center justify-between">
+          <CardTitle className="text-foreground text-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <doc.icon className={`size-5 text-${status.color}-400`} />
+              <doc.icon className={`size-5 ${status.theme.icon}`} />
               {doc.name}
             </div>
             <div className="flex items-center gap-2">
-              <StatusIcon className={`size-5 text-${status.color}-400`} />
+              <StatusIcon className={`size-5 ${status.theme.icon}`} />
               {alert && (
-                <Settings className="size-4 text-gray-400" />
+                <Settings className="size-4 text-muted-foreground" />
               )}
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-gray-300 text-sm">Fecha de Vencimiento</p>
-            <p className="text-white font-medium">{formatForDisplay(doc.expiryDate)}</p>
+            <p className="text-muted-foreground text-sm">Fecha de Vencimiento</p>
+            <p className="text-foreground font-medium">{formatForDisplay(doc.expiryDate)}</p>
           </div>
 
           <div>
-            <p className="text-gray-300 text-sm">Estado</p>
+            <p className="text-muted-foreground text-sm">Estado</p>
             <div className="flex items-center gap-2">
               {status.status === 'expired' && (
                 <Badge variant="destructive">Vencido hace {Math.abs(days)} días</Badge>
               )}
               {status.status === 'warning' && (
-                <Badge className="bg-yellow-500/20 text-yellow-400">Vence en {days} días</Badge>
+                <Badge className="border-warning/30 bg-warning/10 text-warning">Vence en {days} días</Badge>
               )}
               {status.status === 'valid' && (
-                <Badge className="bg-green-500/20 text-green-400">Vigente por {days} días</Badge>
+                <Badge className="border-success/30 bg-success/10 text-success">Vigente por {days} días</Badge>
               )}
             </div>
           </div>
 
           {alert && (
             <div>
-              <p className="text-gray-300 text-sm">Configuración de Alertas</p>
-              <p className="text-tms-green text-sm">
+              <p className="text-muted-foreground text-sm">Configuración de Alertas</p>
+              <p className="text-primary text-sm">
                 Recordatorio {alert.alertDays} días antes
               </p>
             </div>
@@ -155,7 +186,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
             <Button 
               size="sm" 
               variant="outline"
-              className="border-tms-green/50 text-tms-green hover:bg-tms-green/10"
+              className="border-primary/30 text-primary hover:bg-primary/10"
               onClick={() => handleDownload(doc.type)}
               disabled={!hasDocument}
             >
@@ -165,7 +196,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
             <Button 
               size="sm" 
               variant="outline"
-              className="border-tms-green/50 text-tms-green hover:bg-tms-green/10"
+              className="border-primary/30 text-primary hover:bg-primary/10"
               onClick={() => handleUpload(doc.type, doc.name)}
               disabled={uploading}
             >
@@ -188,9 +219,9 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
     <div className="space-y-6">
       {/* Alertas de Vencimiento */}
       {(expiredDocs.length > 0 || soonToExpireDocs.length > 0) && (
-        <Card className="border-red-500/30 bg-red-500/5">
+        <Card className="border-danger/20 bg-danger/5">
           <CardHeader>
-            <CardTitle className="text-red-400 flex items-center gap-2">
+            <CardTitle className="text-danger flex items-center gap-2">
               <AlertTriangle className="size-5" />
               Alertas de Documentación
             </CardTitle>
@@ -199,10 +230,10 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
             <div className="space-y-3">
               {expiredDocs.length > 0 && (
                 <div>
-                  <p className="text-red-300 font-medium mb-2">Documentos Vencidos:</p>
+                  <p className="text-danger font-medium mb-2">Documentos Vencidos:</p>
                   <ul className="list-disc list-inside space-y-1">
                     {expiredDocs.map(doc => (
-                      <li key={doc.type} className="text-red-200">
+                      <li key={doc.type} className="text-danger">
                         {doc.name} - Vencido hace {Math.abs(getDaysUntilExpiry(doc.expiryDate))} días
                       </li>
                     ))}
@@ -211,10 +242,10 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
               )}
               {soonToExpireDocs.length > 0 && (
                 <div>
-                  <p className="text-yellow-300 font-medium mb-2">Por Vencer:</p>
+                  <p className="text-warning font-medium mb-2">Por Vencer:</p>
                   <ul className="list-disc list-inside space-y-1">
                     {soonToExpireDocs.map(doc => (
-                      <li key={doc.type} className="text-yellow-200">
+                      <li key={doc.type} className="text-warning">
                         {doc.name} - Vence en {getDaysUntilExpiry(doc.expiryDate)} días
                       </li>
                     ))}
@@ -227,32 +258,32 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
       )}
 
       {/* Estado General de Documentación */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border/70">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="size-5 text-tms-green" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <FileText className="size-5 text-primary" />
             Estado de Documentación
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {documents.filter(doc => getDaysUntilExpiry(doc.expiryDate) > 30).length}
               </div>
-              <div className="text-green-400 text-sm">Vigentes</div>
+              <div className="text-success text-sm">Vigentes</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {soonToExpireDocs.length}
               </div>
-              <div className="text-yellow-400 text-sm">Por Vencer</div>
+              <div className="text-warning text-sm">Por Vencer</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-2xl font-bold text-foreground mb-1">
                 {expiredDocs.length}
               </div>
-              <div className="text-red-400 text-sm">Vencidos</div>
+              <div className="text-danger text-sm">Vencidos</div>
             </div>
           </div>
         </CardContent>
@@ -260,24 +291,24 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
 
       {/* Documentos Detallados */}
       <div>
-        <h3 className="text-xl font-semibold text-white mb-4">Documentos</h3>
+        <h3 className="text-xl font-semibold text-foreground mb-4">Documentos</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {documents.map(getDocumentCard)}
         </div>
       </div>
 
       {/* Recordatorios y Configuración */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border/70">
         <CardHeader>
-          <CardTitle className="text-white flex items-center justify-between">
+          <CardTitle className="text-foreground flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="size-5 text-tms-green" />
+              <Calendar className="size-5 text-primary" />
               Configuración de Recordatorios
             </div>
             <Button 
               variant="outline" 
               size="sm" 
-              className="border-tms-green/50 text-tms-green"
+              className="border-primary/30 text-primary hover:bg-primary/10"
               onClick={() => setShowSettingsForm(true)}
             >
               <Settings className="size-4 mr-2" />
@@ -291,23 +322,23 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
               {documents.map(doc => {
                 const alert = documentAlerts.find(a => a.documentType === doc.type);
                 return (
-                  <div key={doc.type} className="p-3 border border-gray-700 rounded-lg">
+                  <div key={doc.type} className="p-3 border border-border/70 bg-muted/20 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <doc.icon className="size-4 text-tms-green" />
-                      <span className="text-white text-sm font-medium">{doc.name}</span>
+                      <doc.icon className="size-4 text-primary" />
+                      <span className="text-foreground text-sm font-medium">{doc.name}</span>
                     </div>
                     {alert ? (
                       <div className="text-xs">
-                        <p className="text-tms-green">✓ Alertas configuradas</p>
-                        <p className="text-gray-400">
+                        <p className="text-success">✓ Alertas configuradas</p>
+                        <p className="text-muted-foreground">
                           Recordatorio: {alert.alertDays} días antes
                         </p>
-                        <p className="text-gray-400">
+                        <p className="text-muted-foreground">
                           Email: {alert.emailNotifications ? 'Sí' : 'No'}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-gray-400 text-xs">Sin alertas configuradas</p>
+                      <p className="text-muted-foreground text-xs">Sin alertas configuradas</p>
                     )}
                   </div>
                 );

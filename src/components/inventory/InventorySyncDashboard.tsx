@@ -3,17 +3,30 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useInventorySyncStats, useMigrateUnsyncParts } from '@/hooks/useUnifiedParts';
 import { Package, Download, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export const InventorySyncDashboard = () => {
   const { data: stats, isLoading } = useInventorySyncStats();
   const migrateMutation = useMigrateUnsyncParts();
+  const [confirmMigrationOpen, setConfirmMigrationOpen] = useState(false);
 
-  const handleMigration = () => {
-    if (window.confirm('¿Estás seguro de que quieres migrar todas las piezas no sincronizadas al inventario?')) {
-      migrateMutation.mutate();
-    }
+  const handleMigration = () => setConfirmMigrationOpen(true);
+
+  const confirmMigration = () => {
+    setConfirmMigrationOpen(false);
+    migrateMutation.mutate();
   };
 
   if (isLoading) {
@@ -170,6 +183,23 @@ export const InventorySyncDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmMigrationOpen} onOpenChange={setConfirmMigrationOpen}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Confirmar migración</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Se migrarán todas las piezas no sincronizadas al inventario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmMigration}>
+              Migrar piezas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

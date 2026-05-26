@@ -86,8 +86,8 @@ export const InvoiceCancellationModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="border-border/70 bg-card p-0 sm:max-w-[500px]">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <Ban className="size-5" />
             Anular Factura con Nota de Crédito
@@ -97,15 +97,15 @@ export const InvoiceCancellationModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 px-6 py-6">
           {/* Invoice Info */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+          <div className="space-y-2 rounded-lg border border-border/70 bg-muted/40 p-4">
             <div className="flex items-center gap-2 text-sm">
               <FileText className="size-4 text-muted-foreground" />
               <span className="font-medium">Factura:</span>
               <span>{invoice.folio}</span>
               {invoice.numeroFiscal && (
-                <span className="text-violet-600 font-medium">({invoice.numeroFiscal})</span>
+                <span className="font-medium text-primary">({invoice.numeroFiscal})</span>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -172,10 +172,10 @@ export const InvoiceCancellationModal = ({
           </div>
 
           {/* Warning */}
-          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
             <div className="flex gap-2">
-              <AlertTriangle className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="mt-0.5 size-5 flex-shrink-0 text-warning" />
+              <div className="text-sm text-warning">
                 <p className="font-medium mb-1">Esta acción:</p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">
                   <li>Cambiará el estado de la factura a "Anulada"</li>
@@ -188,7 +188,7 @@ export const InvoiceCancellationModal = ({
           </div>
 
           {/* Confirmation Checkbox */}
-          <div className="flex items-start gap-3 bg-muted/30 rounded-lg p-3 border">
+          <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/30 p-3">
             <Checkbox
               id="confirmed"
               checked={confirmed}
@@ -202,8 +202,8 @@ export const InvoiceCancellationModal = ({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+        <DialogFooter className="border-t border-border/70 px-6 py-4">
+          <Button variant="outline" onClick={handleClose} disabled={isSubmitting} className="border-border/70 bg-background/60">
             Cancelar
           </Button>
           <Button

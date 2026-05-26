@@ -12,6 +12,8 @@ import { RegisterForm } from '@/components/auth/RegisterForm';
 import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { validatePassword } from '@/utils/passwordValidation';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Sparkles } from 'lucide-react';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -199,10 +201,12 @@ const Auth = () => {
   // Mostrar loading simple mientras se verifica la autenticación
   if (authLoading || profileLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+      <div className="flex h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
-          <div className="mb-4">Cargando...</div>
-          <div className="size-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="mb-4">Cargando acceso...</div>
+          <div className="mx-auto flex size-10 items-center justify-center rounded-full border border-white/15 bg-white/10">
+            <Loader2 className="size-5 animate-spin text-primary" />
+          </div>
         </div>
       </div>
     );
@@ -231,20 +235,30 @@ const Auth = () => {
 
   return (
     <AuthBackground>
-      <div className="w-full max-w-[400px]">
+      <div className="space-y-4">
+        <div className="space-y-2 text-center">
+          <Badge variant="outline" className="border-white/15 bg-white/10 px-3 py-1 text-white/80">
+            <Sparkles className="mr-1 size-3.5" />
+            Acceso seguro
+          </Badge>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">Gruas Alerta Calendario</h1>
+          <p className="text-sm text-white/65">Accede a la operación, clientes y facturación desde una interfaz unificada.</p>
+        </div>
+
+      <div className="w-full max-w-[400px] mx-auto">
         {isInvited && !needsPasswordSetup && (
-          <div className="mb-6 p-4 bg-tms-green/10 border border-tms-green/30 rounded-lg">
-            <h3 className="text-tms-green font-semibold mb-2">¡Has sido invitado!</h3>
-            <p className="text-white text-sm">
+          <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 p-4">
+            <h3 className="mb-2 font-semibold text-primary">¡Has sido invitado!</h3>
+            <p className="text-sm text-white">
               Completa tu registro con el email <strong>{emailParam}</strong> para acceder al sistema.
             </p>
           </div>
         )}
 
         {isRegistered && (
-          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-            <h3 className="text-green-400 font-semibold mb-2">¡Cuenta confirmada!</h3>
-            <p className="text-white text-sm">
+          <div className="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4">
+            <h3 className="mb-2 font-semibold text-success">¡Cuenta confirmada!</h3>
+            <p className="text-sm text-white">
               Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.
             </p>
           </div>
@@ -274,6 +288,7 @@ const Auth = () => {
             onSubmit={handleSignUp}
           />
         )}
+      </div>
       </div>
     </AuthBackground>
   );

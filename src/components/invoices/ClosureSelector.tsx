@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ServiceClosure } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
@@ -45,8 +44,8 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
   if (loading) {
     return (
       <div>
-        <Label className="text-gray-300">Cierre</Label>
-        <div className="mt-1 bg-white/5 border border-gray-700 rounded px-3 py-2 text-white">
+        <Label className="text-foreground">Cierre</Label>
+        <div className="mt-1 rounded border border-border/70 bg-muted/30 px-3 py-2 text-foreground">
           Cargando cierres...
         </div>
       </div>
@@ -55,10 +54,10 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
 
   return (
     <div className="ClosureSelector-container">
-      <Label htmlFor="closureId" className="text-gray-300">
+      <Label htmlFor="closureId" className="text-foreground">
         Cierre
         {isEditing && (
-          <span className="text-xs text-orange-400 ml-2">
+          <span className="ml-2 text-xs text-warning">
             (Modo edición - incluye cierres facturados)
           </span>
         )}
@@ -88,13 +87,13 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
       </Select>
       
       {disabled && (
-        <p className="text-xs text-orange-400 mt-1">
+        <p className="mt-1 text-xs text-warning">
           No se puede cambiar el cierre para facturas ya emitidas
         </p>
       )}
       
       {closures.length === 0 && (
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="mt-1 text-sm text-muted-foreground">
           {isEditing 
             ? "No hay cierres disponibles (verifica que existan cierres cerrados o facturados)"
             : "No hay cierres disponibles para facturar"
@@ -104,7 +103,7 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
       
       {/* Debug info in edit mode */}
       {isEditing && isDev && (
-        <p className="text-xs text-blue-400 mt-1">
+        <p className="mt-1 text-xs text-primary">
           Debug: Modo edición activo, mostrando cierres con estado 'closed' e 'invoiced'
         </p>
       )}

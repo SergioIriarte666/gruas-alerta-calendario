@@ -1,22 +1,23 @@
 
 import React, { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
-import { MetricCard } from '@/components/dashboard/MetricCard';
+import { MetricCard } from '@/components/ui/metric-card';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { RecentServicesTable } from '@/components/dashboard/RecentServicesTable';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
 import { PendingSummaryModal } from '@/components/dashboard/PendingSummaryModal';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
 import { 
   Truck, 
-  Users, 
+  Activity,
   DollarSign, 
   FileText, 
   AlertTriangle,
-  TrendingUp,
+  CalendarClock,
   Download
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
@@ -24,7 +25,7 @@ import { downloadPendingReportPDF } from '@/utils/pdf/pendingReportPDF';
 import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
-  const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
+  const { metrics, recentServices, loading: dashboardLoading } = useDashboardData();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [downloadingReport, setDownloadingReport] = useState(false);
 
@@ -60,33 +61,33 @@ const Dashboard: React.FC = () => {
 
   if (dashboardLoading) {
     return (
-      <div className="space-y-6 sm:space-y-8 bg-white min-h-screen p-4 sm:p-6">
+      <div className="space-y-6 sm:space-y-8">
         {/* Header Skeleton */}
         <div className="space-y-4">
-          <Skeleton className="h-8 sm:h-10 w-60 sm:w-80 bg-gray-200" />
-          <Skeleton className="h-5 sm:h-6 w-80 sm:w-96 bg-gray-200" />
+          <Skeleton className="h-8 sm:h-10 w-60 sm:w-80" />
+          <Skeleton className="h-5 sm:h-6 w-80 sm:w-96" />
         </div>
         
         {/* Primary Metrics Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-28 sm:h-36 bg-gray-200" />
+            <Skeleton key={i} className="h-28 sm:h-36" />
           ))}
         </div>
         
         {/* Secondary Metrics Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 sm:h-28 bg-gray-200" />
+            <Skeleton key={i} className="h-24 sm:h-28" />
           ))}
         </div>
         
         {/* Content Skeleton */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
           <div className="xl:col-span-2">
-            <Skeleton className="h-80 sm:h-96 bg-gray-200" />
+            <Skeleton className="h-80 sm:h-96" />
           </div>
-          <Skeleton className="h-80 sm:h-96 bg-gray-200" />
+          <Skeleton className="h-80 sm:h-96" />
         </div>
       </div>
     );
@@ -95,74 +96,91 @@ const Dashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="space-y-6">
       <PendingSummaryModal />
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6" style={{ background: '#ffffff', color: '#000000' }}>
-        {/* Header Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-x-4">
-              <h1 className="text-2xl sm:text-3xl font-bold text-black">
-                Dashboard Principal
-              </h1>
-              <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
-                <span className="size-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
-                En vivo
-              </Badge>
-            </div>
+      <section className="animate-fade-in space-y-6">
+        <PageHeader
+          title="Dashboard Principal"
+          description="Vista ejecutiva del estado operativo, financiero y de alertas del sistema."
+          badges={
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              Actualizado en tiempo real
+            </span>
+          }
+          actions={
             <Button
               variant="outline"
               size="sm"
               onClick={handleDownloadReport}
               disabled={downloadingReport}
-              className="w-fit"
+              className="w-fit border-border/70 bg-card/70"
             >
-              <Download className="size-4 mr-2" />
+              <Download className="mr-2 size-4" />
               {downloadingReport ? 'Generando...' : 'Reporte Pendientes'}
             </Button>
+          }
+        />
+
+        <SectionCard
+          flush
+          className="border-border/70 bg-card/70 shadow-sm"
+          contentClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <p className="text-sm font-medium text-foreground">Resumen del negocio</p>
+            <p className="text-sm text-muted-foreground">Los indicadores combinan actividad del mes, pendientes y salud operativa.</p>
           </div>
-          <p className="text-sm sm:text-base text-gray-600">
-            Vista general del sistema de gestión de grúas
-          </p>
-        </div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs text-muted-foreground">
+            <span className="size-2 rounded-full bg-primary" />
+            Datos consolidados para la jornada actual
+          </div>
+        </SectionCard>
 
         {/* Primary Metrics - Main Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <MetricCard
             title="Ingresos del Mes"
             value={formatCurrency(metrics.monthlyRevenue)}
-            change={metrics.revenueChange !== 0 ? `${metrics.revenueChange > 0 ? '+' : ''}${metrics.revenueChange.toFixed(1)}%` : undefined}
-            changeType={metrics.revenueChange > 0 ? "positive" : metrics.revenueChange < 0 ? "negative" : "neutral"}
+            tone="primary"
             icon={DollarSign}
-            description={`Facturación del mes actual • Mes anterior: ${formatCurrency(metrics.previousMonthRevenue)}`}
-            linkTo="/invoices"
+            description={`Mes anterior: ${formatCurrency(metrics.previousMonthRevenue)}`}
+            trend={metrics.revenueChange !== 0 ? {
+              value: metrics.revenueChange,
+              direction: metrics.revenueChange > 0 ? 'up' : 'down',
+              isPositive: metrics.revenueChange > 0,
+              label: 'vs mes anterior',
+            } : undefined}
           />
           
           <MetricCard
             title="Servicios del Mes"
             value={metrics.monthlyServices}
-            change={metrics.servicesChange !== 0 ? `${metrics.servicesChange > 0 ? '+' : ''}${metrics.servicesChange.toFixed(1)}%` : undefined}
-            changeType={metrics.servicesChange > 0 ? "positive" : metrics.servicesChange < 0 ? "negative" : "neutral"}
+            tone="info"
             icon={Truck}
-            description={`Servicios completados este mes • Mes anterior: ${metrics.previousMonthServices}`}
-            linkTo="/services"
+            description={`Mes anterior: ${metrics.previousMonthServices}`}
+            trend={metrics.servicesChange !== 0 ? {
+              value: metrics.servicesChange,
+              direction: metrics.servicesChange > 0 ? 'up' : 'down',
+              isPositive: metrics.servicesChange > 0,
+              label: 'vs mes anterior',
+            } : undefined}
           />
           
           <MetricCard
-            title="Servicios Futuros"
+            title="Servicios Programados"
             value={metrics.futureServices}
-            icon={Users}
-            description="Servicios programados próximamente"
-            linkTo="/services?future=true"
+            tone="warning"
+            icon={CalendarClock}
+            description="Servicios futuros con fecha comprometida"
           />
           
           <MetricCard
             title="Facturas Vencidas"
             value={metrics.overdueInvoices}
-            changeType={metrics.overdueInvoices > 0 ? "negative" : "neutral"}
+            tone={metrics.overdueInvoices > 0 ? "danger" : "muted"}
             icon={AlertTriangle}
             description="Requieren atención inmediata"
-            linkTo="/invoices?status=overdue"
           />
         </div>
 
@@ -171,32 +189,37 @@ const Dashboard: React.FC = () => {
           <MetricCard
             title="En Curso"
             value={metrics.servicesByStatus.pending}
-            icon={TrendingUp}
+            tone="warning"
+            icon={Activity}
             description="Servicios pendientes y en progreso"
-            linkTo="/services?status=pending,in_progress"
           />
           
           <MetricCard
             title="Completados"
             value={metrics.servicesByStatus.completed}
+            tone="success"
             icon={FileText}
             description="Servicios terminados"
-            linkTo="/services?status=completed"
           />
           
           <MetricCard
             title="Cancelados"
             value={metrics.servicesByStatus.cancelled}
+            tone="muted"
             icon={AlertTriangle}
             description="Servicios cancelados"
-            linkTo="/services?status=cancelled"
           />
         </div>
 
         {/* Invoice Alerts Dashboard */}
-        <div className="mb-6">
+        <SectionCard
+          title="Estado de Facturación"
+          description="Alertas clave de cobranza y facturas próximas a vencer."
+          flush
+          className="border-border/70 bg-card/80"
+        >
           <InvoiceAlertsDashboard />
-        </div>
+        </SectionCard>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -218,7 +241,7 @@ const Dashboard: React.FC = () => {
             onClose={handleCloseDetails}
           />
         )}
-      </div>
+      </section>
     </div>
   );
 };

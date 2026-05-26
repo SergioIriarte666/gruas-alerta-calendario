@@ -337,34 +337,32 @@ export const useServicesPage = () => {
       return;
     }
 
-    if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}? El estado cambiará a "Completado".`)) {
-      try {
-        console.log('🔄 [CLOSE_SERVICE] Attempting to close service:', service.folio, service.id);
-        
-        // SOLUCIÓN DEFINITIVA: Función de emergencia que bypassa todos los triggers
-        const { data, error: updateError } = await supabase.rpc('emergency_close_service', {
-          p_service_id: service.id
-        });
+    try {
+      console.log('🔄 [CLOSE_SERVICE] Attempting to close service:', service.folio, service.id);
+      
+      // SOLUCIÓN DEFINITIVA: Función de emergencia que bypassa todos los triggers
+      const { data, error: updateError } = await supabase.rpc('emergency_close_service', {
+        p_service_id: service.id
+      });
 
-        console.log('🔄 [CLOSE_SERVICE] Database function result:', { data, updateError });
+      console.log('🔄 [CLOSE_SERVICE] Database function result:', { data, updateError });
 
-        if (updateError) {
-          console.error('🚨 [CLOSE_SERVICE] RPC error:', updateError);
-          throw new Error(`Error al cerrar servicio: ${updateError.message}`);
-        }
-
-        if (!(data as any)?.success) {
-          console.error('🚨 [CLOSE_SERVICE] Function returned error:', (data as any)?.error);
-          throw new Error(`Error al cerrar servicio: ${(data as any)?.error || 'Error desconocido'}`);
-        }
-        
-        console.log('✅ [CLOSE_SERVICE] Service closed successfully:', service.folio);
-        await refetch();
-        toast.success('El servicio se ha cerrado exitosamente');
-      } catch (error) {
-        console.error('Error closing service:', error);
-        toast.error('No se pudo cerrar el servicio');
+      if (updateError) {
+        console.error('🚨 [CLOSE_SERVICE] RPC error:', updateError);
+        throw new Error(`Error al cerrar servicio: ${updateError.message}`);
       }
+
+      if (!(data as any)?.success) {
+        console.error('🚨 [CLOSE_SERVICE] Function returned error:', (data as any)?.error);
+        throw new Error(`Error al cerrar servicio: ${(data as any)?.error || 'Error desconocido'}`);
+      }
+      
+      console.log('✅ [CLOSE_SERVICE] Service closed successfully:', service.folio);
+      await refetch();
+      toast.success('El servicio se ha cerrado exitosamente');
+    } catch (error) {
+      console.error('Error closing service:', error);
+      toast.error('No se pudo cerrar el servicio');
     }
   };
 
@@ -382,13 +380,6 @@ export const useServicesPage = () => {
       toast.error('No hay servicios pendientes o en progreso para cerrar');
       return;
     }
-
-    const confirmed = window.confirm(
-      `¿Estás seguro de que deseas cerrar ${closeable.length} servicio${closeable.length > 1 ? 's' : ''}?` +
-      (notCloseableCount > 0 ? `\n\n(${notCloseableCount} seleccionado${notCloseableCount > 1 ? 's' : ''} no se puede${notCloseableCount > 1 ? 'n' : ''} cerrar por su estado)` : '')
-    );
-
-    if (!confirmed) return;
 
     setIsBatchClosing(true);
     let successCount = 0;
@@ -447,13 +438,7 @@ export const useServicesPage = () => {
       toast.error('No se puede editar un servicio facturado. Solo los administradores pueden hacerlo');
       return;
     }
-    
-    if (service.status === 'invoiced' && user?.role === 'admin') {
-      if (!window.confirm(`⚠️ ADVERTENCIA: Este servicio está facturado.\n\nComo administrador puedes editarlo, pero ten cuidado con los cambios ya que puede afectar la facturación.\n\n¿Deseas continuar?`)) {
-        return;
-      }
-    }
-    
+
     setEditingService(service);
     setIsFormOpen(true);
   };

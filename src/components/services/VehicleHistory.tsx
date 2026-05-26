@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { useVehicleHistory, VehicleHistoryEntry } from '@/hooks/useVehicleHistory';
 import { useClientHistory, ClientHistoryEntry } from '@/hooks/useClientHistory';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,19 +19,19 @@ interface VehicleHistoryProps {
 
 const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = {
-      pending: { label: 'Pendiente', className: 'bg-yellow-500 text-white' },
-      in_progress: { label: 'En Progreso', className: 'bg-blue-500 text-white' },
-      inspection_completed: { label: 'Inspección Completada', className: 'bg-orange-500 text-white' },
-      completed: { label: 'Completado', className: 'bg-green-500 text-white' },
-      cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' },
-      invoiced: { label: 'Facturado', className: 'bg-purple-500 text-white' },
-      quoted: { label: 'Cotizado', className: 'bg-cyan-500 text-white' },
-      purchase_order_pending: { label: 'OC Pendiente', className: 'bg-amber-500 text-white' },
-      with_purchase_order: { label: 'Con O.C.', className: 'bg-teal-500 text-white' },
-      failed: { label: 'Fallido', className: 'bg-red-700 text-white' }
+      pending: { label: 'Pendiente', className: 'border-warning/30 bg-warning/10 text-warning' },
+      in_progress: { label: 'En Progreso', className: 'border-info/30 bg-info/10 text-info' },
+      inspection_completed: { label: 'Inspección Completada', className: 'border-warning/30 bg-warning/10 text-warning' },
+      completed: { label: 'Completado', className: 'border-success/30 bg-success/10 text-success' },
+      cancelled: { label: 'Cancelado', className: 'border-danger/30 bg-danger/10 text-danger' },
+      invoiced: { label: 'Facturado', className: 'border-primary/30 bg-primary/10 text-primary' },
+      quoted: { label: 'Cotizado', className: 'border-info/30 bg-info/10 text-info' },
+      purchase_order_pending: { label: 'OC Pendiente', className: 'border-warning/30 bg-warning/10 text-warning' },
+      with_purchase_order: { label: 'Con O.C.', className: 'border-success/30 bg-success/10 text-success' },
+      failed: { label: 'Fallido', className: 'border-danger/30 bg-danger/10 text-danger' }
     };
 
-    const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-gray-500 text-white' };
+    const config = statusConfig[status] || { label: 'Desconocido', className: 'border-border/70 bg-muted text-muted-foreground' };
 
     return (
       <Badge className={config.className}>
@@ -62,9 +61,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
       <div className="space-y-2 pt-4">
         <div className="flex items-center gap-x-2 mb-4">
           {isVehicleSpecific ? (
-            <Car className="size-5 text-tms-green" />
+            <Car className="size-5 text-primary" />
           ) : (
-            <User className="size-5 text-tms-green" />
+            <User className="size-5 text-primary" />
           )}
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
@@ -95,9 +94,9 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
       <div className="mt-4">
         <div className="flex items-center gap-x-2 mb-4">
           {isVehicleSpecific ? (
-            <Car className="size-5 text-tms-green" />
+            <Car className="size-5 text-primary" />
           ) : (
-            <User className="size-5 text-tms-green" />
+            <User className="size-5 text-primary" />
           )}
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
@@ -139,7 +138,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
               }
             </h3>
           </div>
-          <Badge variant="outline" className="text-tms-green border-tms-green">
+          <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
             {history.length} servicio{history.length !== 1 ? 's' : ''} encontrado{history.length !== 1 ? 's' : ''}
           </Badge>
         </div>
@@ -162,7 +161,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
             {history.map((service: VehicleHistoryEntry | ClientHistoryEntry) => (
               <TableRow 
                 key={service.id} 
-                className={`border-border ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
+                className={`border-border ${service.id === currentServiceId ? 'border-primary/30 bg-primary/5' : ''}`}
               >
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2 whitespace-nowrap">
@@ -173,7 +172,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                       {service.folio}
                     </Badge>
                     {service.id === currentServiceId && (
-                      <Badge variant="outline" className="text-xs border-tms-green text-tms-green">
+                      <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs text-primary">
                         Actual
                       </Badge>
                     )}

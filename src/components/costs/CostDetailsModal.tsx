@@ -181,7 +181,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
@@ -191,7 +191,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                 size="sm"
                 onClick={handleDownloadPdf}
                 disabled={isDownloadingPdf}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 border-border/70 bg-background/60"
               >
                 <Download className="size-4" />
                 {isDownloadingPdf ? 'Generando...' : 'Descargar PDF'}
@@ -204,13 +204,13 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
                     onDuplicate(cost);
                     onClose();
                   }}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 border-border/70 bg-background/60"
                 >
                   <Copy className="size-4" />
                   Duplicar
                 </Button>
               )}
-              <Badge className="bg-destructive text-destructive-foreground">
+              <Badge className="border-danger/20 bg-danger/10 text-danger hover:bg-danger/10">
                 {formatCurrency(Number(cost.amount))}
               </Badge>
             </div>
@@ -218,7 +218,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 border border-border/70 bg-muted/30">
             <TabsTrigger value="general">Información General</TabsTrigger>
             <TabsTrigger value="details">Detalles</TabsTrigger>
             <TabsTrigger value="associations">Asociaciones</TabsTrigger>

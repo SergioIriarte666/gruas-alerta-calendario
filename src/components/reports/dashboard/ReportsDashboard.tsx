@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { ReportMetrics } from '@/hooks/useReports';
@@ -12,11 +11,11 @@ interface ReportsDashboardProps {
 }
 
 const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  scheduled: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
+  completed: 'border-success/30 bg-success/10 text-success',
+  pending: 'border-warning/30 bg-warning/10 text-warning',
+  in_progress: 'border-info/30 bg-info/10 text-info',
+  cancelled: 'border-danger/30 bg-danger/10 text-danger',
+  scheduled: 'border-primary/30 bg-primary/10 text-primary',
 };
 
 const statusLabels: Record<string, string> = {
@@ -28,9 +27,9 @@ const statusLabels: Record<string, string> = {
 };
 
 const rankBadgeColors = [
-  'bg-yellow-500 text-white',
-  'bg-gray-400 text-white',
-  'bg-amber-700 text-white',
+  'bg-warning text-warning-foreground',
+  'bg-muted text-foreground',
+  'bg-primary text-primary-foreground',
 ];
 
 export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
@@ -41,14 +40,14 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
     <div className="space-y-4">
 
       {/* Distribución de Servicios */}
-      <Card className="bg-card border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="text-foreground">Distribución de Servicios</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {metrics.servicesByStatus.map((status) => (
-              <div key={status.status} className="text-center p-4 bg-muted/50 rounded-lg space-y-2">
+              <div key={status.status} className="space-y-2 rounded-xl border border-border/60 bg-background/60 p-4 text-center">
                 <div className="text-2xl font-bold text-foreground">{status.count}</div>
                 <Badge className={`${statusColors[status.status] || 'bg-muted text-foreground'} text-xs`}>
                   {statusLabels[status.status] || status.status}
@@ -61,10 +60,10 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="bg-card border">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <Trophy className="size-5 text-yellow-500" />
+              <Trophy className="size-5 text-warning" />
               Top 5 Clientes
             </CardTitle>
           </CardHeader>
@@ -103,7 +102,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
           </CardHeader>

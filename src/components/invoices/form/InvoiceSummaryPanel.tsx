@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Receipt, Calendar, DollarSign, FileText, Building2 } from 'lucide-react';
-import { cn, toTitleCase } from '@/lib/utils';
+import { toTitleCase } from '@/lib/utils';
 
 interface InvoiceSummaryPanelProps {
   status: string;
@@ -44,11 +44,11 @@ export const InvoiceSummaryPanel = ({
 
   const getStatusBadge = () => {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      draft: { label: 'Borrador', className: 'bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-500/30' },
-      sent: { label: 'Enviada', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30' },
-      paid: { label: 'Pagada', className: 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30' },
-      overdue: { label: 'Vencida', className: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30' },
-      cancelled: { label: 'Cancelada', className: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30' },
+      draft: { label: 'Borrador', className: 'border-border/70 bg-muted/40 text-muted-foreground' },
+      sent: { label: 'Enviada', className: 'border-info/30 bg-info/10 text-info' },
+      paid: { label: 'Pagada', className: 'border-success/30 bg-success/10 text-success' },
+      overdue: { label: 'Vencida', className: 'border-danger/30 bg-danger/10 text-danger' },
+      cancelled: { label: 'Cancelada', className: 'border-warning/30 bg-warning/10 text-warning' },
     };
     const config = statusConfig[status] || statusConfig.draft;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -59,7 +59,7 @@ export const InvoiceSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="size-4 text-violet-500" />
+            <Receipt className="size-4 text-primary" />
             Resumen de Factura
           </span>
           {getStatusBadge()}
@@ -71,7 +71,7 @@ export const InvoiceSummaryPanel = ({
           <div className="flex items-center gap-2">
             <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">N° Fiscal:</span>
-            <span className="text-sm font-mono font-semibold text-violet-600 dark:text-violet-400">
+            <span className="text-sm font-mono font-semibold text-primary">
               {numeroFiscal}
             </span>
           </div>
@@ -91,7 +91,7 @@ export const InvoiceSummaryPanel = ({
           <div className="flex items-center gap-2">
             <FileText className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cierre:</span>
-            <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300">
+            <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-primary">
               {closureFolio}
             </Badge>
           </div>
@@ -117,7 +117,7 @@ export const InvoiceSummaryPanel = ({
             {paymentDate && status === 'paid' && (
               <div className="col-span-2">
                 <span className="text-muted-foreground">Pago:</span>
-                <span className="ml-1 text-green-600 dark:text-green-400">{formatDate(paymentDate)}</span>
+                <span className="ml-1 text-success">{formatDate(paymentDate)}</span>
               </div>
             )}
           </div>
@@ -144,15 +144,15 @@ export const InvoiceSummaryPanel = ({
             <Separator className="my-1" />
             <div className="flex justify-between font-semibold">
               <span>Total:</span>
-              <span className="text-violet-600 dark:text-violet-400">{formatCurrency(total)}</span>
+              <span className="text-primary">{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
 
         {/* Indicador de modo */}
         {isEditing && (
-          <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-md">
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning/10 p-2">
+            <p className="text-xs text-warning">
               Modo edición - Los cambios actualizarán la factura existente
             </p>
           </div>

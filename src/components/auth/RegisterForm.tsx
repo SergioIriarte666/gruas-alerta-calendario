@@ -20,23 +20,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   setPassword,
   onSubmit
 }) => {
-  return <Card className="bg-transparent">
+  return <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
       <CardHeader>
-        <CardTitle className="text-white">Registrarse</CardTitle>
-        <CardDescription className="text-white/80">Crea una nueva cuenta para empezar.</CardDescription>
+        <CardTitle className="text-2xl text-white">Registrarse</CardTitle>
+        <CardDescription className="text-white/70">Crea una nueva cuenta para empezar.</CardDescription>
       </CardHeader>
-      <CardContent className="bg-transparent">
+      <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email-register" className="text-white">Email</Label>
-            <Input id="email-register" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white" />
+            <Label htmlFor="email-register" className="text-white/85">Email</Label>
+            <Input id="email-register" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-register" className="text-white">Contraseña</Label>
-            <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="bg-transparent border-white/50 text-white focus:border-white" />
+            <Label htmlFor="password-register" className="text-white/85">Contraseña</Label>
+            <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white focus:border-white/40" />
             <PasswordStrengthIndicator password={password} />
           </div>
-          <Button type="submit" disabled={loading} className="w-full text-white font-semibold bg-transparent">
+          <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
             {loading ? 'Registrando...' : 'Registrar'}
           </Button>
         </form>

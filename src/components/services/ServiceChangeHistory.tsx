@@ -62,33 +62,33 @@ const getChangeTypeConfig = (changeType: 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPS
       return {
         icon: Plus,
         label: 'Creación',
-        bgColor: 'bg-green-100',
-        textColor: 'text-green-800',
-        borderColor: 'border-green-300',
+        bgColor: 'bg-success/10',
+        textColor: 'text-success',
+        borderColor: 'border-success/30',
       };
     case 'UPDATE':
       return {
         icon: Pencil,
         label: 'Modificación',
-        bgColor: 'bg-amber-100',
-        textColor: 'text-amber-800',
-        borderColor: 'border-amber-300',
+        bgColor: 'bg-warning/10',
+        textColor: 'text-warning',
+        borderColor: 'border-warning/30',
       };
     case 'DELETE':
       return {
         icon: Trash2,
         label: 'Eliminación',
-        bgColor: 'bg-red-100',
-        textColor: 'text-red-800',
-        borderColor: 'border-red-300',
+        bgColor: 'bg-danger/10',
+        textColor: 'text-danger',
+        borderColor: 'border-danger/30',
       };
     case 'SNAPSHOT':
       return {
         icon: Camera,
         label: 'Estado Inicial',
-        bgColor: 'bg-blue-100',
-        textColor: 'text-blue-800',
-        borderColor: 'border-blue-300',
+        bgColor: 'bg-info/10',
+        textColor: 'text-info',
+        borderColor: 'border-info/30',
       };
   }
 };
@@ -130,13 +130,13 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
+      <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-amber-500/10">
-              <History className="size-4 text-amber-600 dark:text-amber-400" />
+            <div className="rounded-lg bg-warning/10 p-1.5">
+              <History className="size-4 text-warning" />
             </div>
-            <h3 className="font-semibold text-base text-amber-700 dark:text-amber-300">Historial de Cambios</h3>
+            <h3 className="text-base font-semibold text-foreground">Historial de Cambios</h3>
           </div>
           <Badge variant="secondary" className="text-xs">
             {changes.length} {changes.length === 1 ? 'cambio' : 'cambios'}
@@ -198,7 +198,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
                             {snapshotFields.map(([fieldName, value]) => (
                               <div
                                 key={fieldName}
-                                className="flex items-start gap-2 text-xs bg-white/50 rounded px-2 py-1"
+                                className="flex items-start gap-2 rounded bg-background/60 px-2 py-1 text-xs"
                               >
                                 <span className="font-medium text-foreground min-w-[140px]">
                                   {FIELD_LABELS[fieldName] || fieldName}:
@@ -222,7 +222,7 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
                     return (
                       <div
                         key={change.id}
-                        className="flex items-start gap-2 text-xs bg-white/50 rounded px-2 py-1.5"
+                        className="flex items-start gap-2 rounded bg-background/60 px-2 py-1.5 text-xs"
                       >
                         <span className="font-medium text-foreground min-w-[140px]">
                           {FIELD_LABELS[change.fieldName] || change.fieldName}:

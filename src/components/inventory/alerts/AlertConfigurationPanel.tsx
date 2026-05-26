@@ -4,6 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Settings, 
   Plus, 
@@ -15,7 +25,6 @@ import {
   Clock,
   TrendingDown,
   Shield,
-  Info
 } from 'lucide-react';
 import { 
   useInventoryAlerts, 
@@ -40,6 +49,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
   onCloseNewForm
 }) => {
   const [editingAlert, setEditingAlert] = useState<string | null>(null);
+  const [alertToDelete, setAlertToDelete] = useState<string | null>(null);
   const { data: alerts = [], isLoading } = useInventoryAlerts();
   const deleteAlert = useDeleteAlert();
   const toggleAlert = useToggleAlert();
@@ -81,10 +91,14 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta configuración de alerta?')) {
-      await deleteAlert.mutateAsync(id);
-    }
+  const handleDelete = (id: string) => {
+    setAlertToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!alertToDelete) return;
+    await deleteAlert.mutateAsync(alertToDelete);
+    setAlertToDelete(null);
   };
 
   const handleToggle = async (id: string, isActive: boolean) => {
@@ -318,6 +332,26 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!alertToDelete} onOpenChange={(open) => !open && setAlertToDelete(null)}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Eliminar configuración</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Se eliminará permanentemente esta configuración de alerta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

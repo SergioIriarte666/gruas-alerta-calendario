@@ -121,17 +121,17 @@ export const CreateUserDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-w-md">
+      <DialogContent className="max-w-md border-border/70 bg-card">
         <DialogHeader>
-          <DialogTitle className="text-black flex items-center gap-2">
-            <User className="size-5" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <User className="size-5 text-primary" />
             Crear Nuevo Usuario
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-black flex items-center gap-2">
+            <Label htmlFor="email" className="flex items-center gap-2">
               <Mail className="size-4" />
               Email *
             </Label>
@@ -141,13 +141,13 @@ export const CreateUserDialog = ({
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               placeholder="usuario@ejemplo.com"
-              className="border-gray-300"
+              className="border-border/70 bg-background/60"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="full_name" className="text-black flex items-center gap-2">
+            <Label htmlFor="full_name" className="flex items-center gap-2">
               <User className="size-4" />
               Nombre Completo *
             </Label>
@@ -157,13 +157,13 @@ export const CreateUserDialog = ({
               value={formData.full_name}
               onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
               placeholder="Juan Pérez"
-              className="border-gray-300"
+              className="border-border/70 bg-background/60"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-black flex items-center gap-2">
+            <Label htmlFor="role" className="flex items-center gap-2">
               <UserCog className="size-4" />
               Rol *
             </Label>
@@ -176,7 +176,7 @@ export const CreateUserDialog = ({
                 operator_id: value !== 'operator' ? '' : prev.operator_id
               }))}
             >
-              <SelectTrigger className="border-gray-300">
+              <SelectTrigger className="border-border/70 bg-background/60">
                 <SelectValue placeholder="Seleccionar rol" />
               </SelectTrigger>
               <SelectContent>
@@ -190,7 +190,7 @@ export const CreateUserDialog = ({
 
           {formData.role === 'client' && (
             <div className="space-y-2">
-              <Label htmlFor="client_id" className="text-black flex items-center gap-2">
+              <Label htmlFor="client_id" className="flex items-center gap-2">
                 <Building className="size-4" />
                 Cliente Asociado *
               </Label>
@@ -198,7 +198,7 @@ export const CreateUserDialog = ({
                 value={formData.client_id} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
               >
-                <SelectTrigger className="border-gray-300">
+                <SelectTrigger className="border-border/70 bg-background/60">
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -214,7 +214,7 @@ export const CreateUserDialog = ({
 
           {formData.role === 'operator' && (
             <div className="space-y-2">
-              <Label htmlFor="operator_id" className="text-black flex items-center gap-2">
+              <Label htmlFor="operator_id" className="flex items-center gap-2">
                 <HardHat className="size-4" />
                 Operador Asociado *
               </Label>
@@ -222,7 +222,7 @@ export const CreateUserDialog = ({
                 value={formData.operator_id} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, operator_id: value }))}
               >
-                <SelectTrigger className="border-gray-300">
+                <SelectTrigger className="border-border/70 bg-background/60">
                   <SelectValue placeholder="Seleccionar operador" />
                 </SelectTrigger>
                 <SelectContent>
@@ -249,7 +249,7 @@ export const CreateUserDialog = ({
             <Button
               type="submit"
               disabled={creating}
-              className="flex-1 bg-tms-green hover:bg-tms-green/90 text-black"
+              className="flex-1"
             >
               {creating ? (
                 <>
@@ -263,8 +263,8 @@ export const CreateUserDialog = ({
           </div>
         </form>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-          <p className="text-blue-800 text-sm">
+        <div className="mt-4 rounded-xl border border-info/20 bg-info/10 p-3">
+          <p className="text-sm text-foreground">
             <strong>Nota:</strong> El usuario deberá registrarse normalmente en la aplicación usando el email especificado. 
             Una vez registrado, ya tendrá asignado el rol seleccionado.
           </p>

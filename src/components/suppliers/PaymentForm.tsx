@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +69,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onSave,
   preselectedSupplierId 
 }) => {
-  const { createPayment, updatePayment, markPaymentAsPaid, isCreating, isUpdating } = useSupplierPayments();
+  const { createPayment, updatePayment, isCreating, isUpdating } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
@@ -185,24 +185,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     false;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card border">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-          <CardTitle className="text-white flex items-center gap-2">
-            <DollarSign className="size-5" />
+    <>
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card p-0">
+          <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <DollarSign className="size-5 text-primary" />
             {payment ? 'Editar Pago a Proveedor' : 'Nuevo Pago a Proveedor'}
-          </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="text-white hover:bg-white/20"
-          >
-            <X className="size-4" />
-          </Button>
-        </CardHeader>
+            </DialogTitle>
+          </DialogHeader>
         
-        <CardContent className="p-6">
+          <div className="px-6 py-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {/* Información básica del pago */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -501,19 +494,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               />
             </div>
 
-            <div className="flex justify-end gap-x-2 pt-4 border-t border">
+            <div className="flex justify-end gap-x-2 border-t border-border/70 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
+                className="border-border/70 bg-background/60"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-violet-600 hover:bg-violet-700 text-white"
               >
                 {isSubmitting ? (
                   <>
@@ -529,15 +522,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Duplicate Warning Dialog */}
       <AlertDialog open={showDuplicateWarning} onOpenChange={setShowDuplicateWarning}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="size-5 text-amber-500" />
+              <AlertTriangle className="size-5 text-warning" />
               Pago Duplicado Detectado
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -547,7 +541,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </p>
                 
                 {duplicatePayment && (
-                  <div className="p-3 bg-muted/50 rounded-lg border border-border space-y-2">
+                  <div className="space-y-2 rounded-lg border border-border/70 bg-muted/40 p-3">
                     <div className="text-sm font-medium text-foreground">Pago existente:</div>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <div className="flex justify-between">
@@ -583,13 +577,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleConfirmDuplicate}
-              className="bg-amber-500 hover:bg-amber-600 text-black"
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
             >
               Crear de Todas Formas
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 };

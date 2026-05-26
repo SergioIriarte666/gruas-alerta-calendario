@@ -1,4 +1,3 @@
-
 import React from 'react';
 import authBackground from '@/assets/auth-background.jpg';
 
@@ -8,20 +7,18 @@ interface AuthBackgroundProps {
 
 export const AuthBackground: React.FC<AuthBackgroundProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Background Image */}
+    <div className="relative min-h-screen overflow-hidden bg-background">
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url(${authBackground})`,
         }}
       />
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/30" />
-      
-      {/* Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-8 md:p-12">
-        <div className="w-full max-w-md">
+      <div className="absolute inset-0 bg-slate-950/70" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.24),_transparent_42%)]" />
+
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-8 md:p-12">
+        <div className="w-full max-w-[440px]">
           {children}
         </div>
       </div>

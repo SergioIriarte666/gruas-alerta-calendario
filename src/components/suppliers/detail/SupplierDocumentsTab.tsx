@@ -25,11 +25,11 @@ interface SupplierDocumentsTabProps {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'paid': return 'bg-green-600 text-white';
-    case 'partial': return 'bg-yellow-600 text-white';
-    case 'pending': return 'bg-blue-600 text-white';
-    case 'overdue': return 'bg-red-600 text-white';
-    default: return 'bg-muted text-muted-foreground';
+    case 'paid': return 'border-success/30 bg-success/10 text-success';
+    case 'partial': return 'border-warning/30 bg-warning/10 text-warning';
+    case 'pending': return 'border-info/30 bg-info/10 text-info';
+    case 'overdue': return 'border-danger/30 bg-danger/10 text-danger';
+    default: return 'border-border/70 bg-muted/40 text-muted-foreground';
   }
 };
 
@@ -91,7 +91,7 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
           </div>
         )}
         <div className="flex items-center gap-4 text-xs text-muted-foreground ml-auto">
-          <span>Saldo pendiente: <strong className="text-yellow-600">{formatCurrency(totals.balance)}</strong></span>
+          <span>Saldo pendiente: <strong className="text-warning">{formatCurrency(totals.balance)}</strong></span>
         </div>
       </div>
 
@@ -117,7 +117,7 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
                 <TableCell className="text-foreground text-sm">
                   {invoice.due_date ? format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
-                <TableCell className="text-right font-bold text-violet-600 text-sm">
+                <TableCell className="text-right font-bold text-primary text-sm">
                   {formatCurrency(invoice.amount)}
                 </TableCell>
                 <TableCell className="text-right text-foreground text-sm">{formatCurrency(invoice.balance)}</TableCell>
@@ -133,7 +133,7 @@ export const SupplierDocumentsTab: React.FC<SupplierDocumentsTabProps> = ({ invo
       {/* Total Footer */}
       <div className="flex items-center justify-end gap-4 pt-2 border-t border-border">
         <span className="text-sm text-muted-foreground">Total:</span>
-        <span className="text-base font-bold text-violet-600">{formatCurrency(totals.amount)}</span>
+        <span className="text-base font-bold text-primary">{formatCurrency(totals.amount)}</span>
       </div>
     </div>
   );

@@ -40,27 +40,49 @@ interface ClientGroup {
   hasMultipleDepartments: boolean;
 }
 
-const getClientColor = (name: string) => {
-  const colors = [
-    '#8b5cf6', '#3b82f6', '#a855f7', '#f59e0b',
-    '#ef4444', '#06b6d4', '#ec4899', '#7c3aed',
+const getClientTheme = (name: string) => {
+  const themes = [
+    {
+      border: 'border-t-primary/40',
+      iconWrapper: 'bg-primary/10',
+      icon: 'text-primary',
+      pill: 'bg-primary/10 text-primary',
+    },
+    {
+      border: 'border-t-info/40',
+      iconWrapper: 'bg-info/10',
+      icon: 'text-info',
+      pill: 'bg-info/10 text-info',
+    },
+    {
+      border: 'border-t-success/40',
+      iconWrapper: 'bg-success/10',
+      icon: 'text-success',
+      pill: 'bg-success/10 text-success',
+    },
+    {
+      border: 'border-t-warning/40',
+      iconWrapper: 'bg-warning/10',
+      icon: 'text-warning',
+      pill: 'bg-warning/10 text-warning',
+    },
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return colors[Math.abs(hash) % colors.length];
+  return themes[Math.abs(hash) % themes.length];
 };
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, { label: string; className: string }> = {
-    paid: { label: 'Pagada', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
-    sent: { label: 'Enviada', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-    overdue: { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-    draft: { label: 'Borrador', className: 'bg-muted text-muted-foreground' },
-    cancelled: { label: 'Anulada', className: 'bg-muted text-muted-foreground line-through' },
+    paid: { label: 'Pagada', className: 'border-success/30 bg-success/10 text-success' },
+    sent: { label: 'Enviada', className: 'border-info/30 bg-info/10 text-info' },
+    overdue: { label: 'Vencida', className: 'border-danger/30 bg-danger/10 text-danger' },
+    draft: { label: 'Borrador', className: 'border-border/70 bg-muted/40 text-muted-foreground' },
+    cancelled: { label: 'Anulada', className: 'border-warning/30 bg-warning/10 text-warning line-through' },
   };
-  const s = map[status] || { label: status, className: 'bg-muted text-muted-foreground' };
+  const s = map[status] || { label: status, className: 'border-border/70 bg-muted/40 text-muted-foreground' };
   return <Badge className={s.className}>{s.label}</Badge>;
 };
 
@@ -103,7 +125,7 @@ const MonthSection = ({
           <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
+          <span className="text-sm font-semibold text-primary">{formatCurrency(month.total)}</span>
           {isExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
         </div>
       </div>
@@ -130,7 +152,7 @@ const MonthSection = ({
               <p className="text-xs text-muted-foreground mb-2">
                 {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
               </p>
-              <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.total)}</p>
+              <p className="text-sm font-bold text-primary">{formatCurrency(inv.total)}</p>
             </div>
           ))}
         </div>
@@ -139,7 +161,7 @@ const MonthSection = ({
   </Collapsible>
 );
 
-export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: HistoricalSalesPipelineViewProps) => {
+export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete: _onDelete }: HistoricalSalesPipelineViewProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(['all']));
   const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
@@ -288,7 +310,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       {/* Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{filteredInvoices.length} facturas en {clientGroups.length} clientes</span>
-        <span className="font-semibold text-violet-600 dark:text-violet-400">
+        <span className="font-semibold text-primary">
           Total: {formatCurrency(filteredInvoices.reduce((s, i) => s + i.total, 0))}
         </span>
       </div>
@@ -297,25 +319,32 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       <div className="space-y-4">
         {clientGroups.map(group => {
           const isExpanded = expandedClients.has(group.clientRut);
-          const color = group.clientRut === 'no_client' ? '#9ca3af' : getClientColor(group.clientName);
+          const theme = group.clientRut === 'no_client'
+            ? {
+                border: 'border-t-border/70',
+                iconWrapper: 'bg-muted/40',
+                icon: 'text-muted-foreground',
+                pill: 'bg-muted/50 text-muted-foreground',
+              }
+            : getClientTheme(group.clientName);
 
           return (
             <Collapsible key={group.clientRut} open={isExpanded} onOpenChange={() => toggleClient(group.clientRut)}>
-              <div className="bg-card border rounded-lg overflow-hidden" style={{ borderTopWidth: '3px', borderTopColor: color }}>
+              <div className={`overflow-hidden rounded-lg border border-border/70 border-t-4 bg-card ${theme.border}`}>
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
-                        <User className="size-5" style={{ color }} />
+                      <div className={`rounded-lg p-2 ${theme.iconWrapper}`}>
+                        <User className={`size-5 ${theme.icon}`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground">{group.clientName}</h3>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${color}20`, color }}>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${theme.pill}`}>
                             {group.count}
                           </span>
                         </div>
-                        <p className="text-sm text-violet-600 dark:text-violet-400 font-semibold">
+                        <p className="text-sm font-semibold text-primary">
                           {formatCurrency(group.totalAmount)}
                           <span className="text-muted-foreground font-normal">
                             {' · '}
@@ -353,7 +382,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                                   <span className="text-xs text-muted-foreground">({dg.count})</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(dg.totalAmount)}</span>
+                                  <span className="text-sm font-semibold text-primary">{formatCurrency(dg.totalAmount)}</span>
                                   {isDeptExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
                                 </div>
                               </div>

@@ -63,13 +63,13 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-500/20 text-green-400';
+        return 'border-success/30 bg-success/10 text-success';
       case 'in_progress':
-        return 'bg-yellow-500/20 text-yellow-400';
+        return 'border-warning/30 bg-warning/10 text-warning';
       case 'scheduled':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'border-info/30 bg-info/10 text-info';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'border-border/70 bg-muted/40 text-muted-foreground';
     }
   };
 
@@ -89,13 +89,13 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'preventive':
-        return 'bg-blue-500/20 text-blue-400';
+        return 'border-info/30 bg-info/10 text-info';
       case 'corrective':
-        return 'bg-orange-500/20 text-orange-400';
+        return 'border-warning/30 bg-warning/10 text-warning';
       case 'emergency':
-        return 'bg-red-500/20 text-red-400';
+        return 'border-danger/30 bg-danger/10 text-danger';
       default:
-        return 'bg-gray-500/20 text-gray-400';
+        return 'border-border/70 bg-muted/40 text-muted-foreground';
     }
   };
 
@@ -119,7 +119,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-gray-400">Cargando mantenimientos...</div>
+        <div className="text-muted-foreground">Cargando mantenimientos...</div>
       </div>
     );
   }
@@ -129,13 +129,10 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-white">Mantenimiento de la Grúa</h3>
-          <p className="text-gray-400">Gestión de mantenimientos para {crane.licensePlate}</p>
+          <h3 className="text-lg font-semibold text-foreground">Mantenimiento de la Grúa</h3>
+          <p className="text-muted-foreground">Gestión de mantenimientos para {crane.licensePlate}</p>
         </div>
-        <Button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
-        >
+        <Button onClick={() => setIsFormOpen(true)}>
           <Plus className="size-4 mr-2" />
           Programar Mantenimiento
         </Button>
@@ -143,17 +140,14 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
 
       {/* Maintenance Records List */}
       {maintenanceRecords.length === 0 ? (
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Wrench className="size-16 text-gray-500 mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No hay mantenimientos registrados</h3>
-            <p className="text-gray-400 text-center mb-6">
+            <Wrench className="mb-4 size-16 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold text-foreground">No hay mantenimientos registrados</h3>
+            <p className="mb-6 text-center text-muted-foreground">
               Comienza agregando el primer mantenimiento para esta grúa.
             </p>
-            <Button
-              onClick={() => setIsFormOpen(true)}
-              className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
-            >
+            <Button onClick={() => setIsFormOpen(true)}>
               <Plus className="size-4 mr-2" />
               Programar Primer Mantenimiento
             </Button>
@@ -162,7 +156,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
       ) : (
         <div className="space-y-4">
           {maintenanceRecords.map((record) => (
-            <Card key={record.id} className="bg-white/5 border-tms-green/30 hover:bg-white/10 transition-colors">
+            <Card key={record.id} className="border-border/70 bg-card/80 transition-colors hover:border-primary/20 hover:shadow-sm">
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1 gap-y-3">
@@ -177,12 +171,12 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       {/* Cost Integration Status */}
                       {record.status === 'completed' && record.cost > 0 && (
                         getCostStatus(record.id)?.hasCost ? (
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                          <Badge className="border-success/30 bg-success/10 text-success">
                             <Receipt className="size-3 mr-1" />
                             Costo Registrado
                           </Badge>
                         ) : (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                          <Badge className="border-warning/30 bg-warning/10 text-warning">
                             <AlertCircle className="size-3 mr-1" />
                             Sincronizando...
                           </Badge>
@@ -192,29 +186,28 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
 
                     {/* Description and Provider */}
                     <div>
-                      <h4 className="text-lg font-semibold text-white">{record.description}</h4>
+                      <h4 className="text-lg font-semibold text-foreground">{record.description}</h4>
                       {record.provider && (
                         <div className="flex items-center gap-2 mt-1">
-                          <Wrench className="size-4 text-gray-400" />
-                          <span className="text-gray-300">Proveedor: {record.provider}</span>
+                          <Wrench className="size-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Proveedor: {record.provider}</span>
                         </div>
                       )}
                       {record.performedBy && (
                         <div className="flex items-center gap-2 mt-1">
-                          <User className="size-4 text-gray-400" />
-                          <span className="text-gray-300">Realizado por: {record.performedBy}</span>
+                          <User className="size-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Realizado por: {record.performedBy}</span>
                         </div>
                       )}
                       {record.creatorName && (
                         <div className="flex items-center gap-2 mt-1">
-                          <User className="size-4 text-gray-400" />
-                          <span className="text-gray-300">Registrado por: {record.creatorName}</span>
+                          <User className="size-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Registrado por: {record.creatorName}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Dates */}
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       {record.scheduledDate && (
                         <div className="flex items-center gap-2">
                           <Calendar className="size-4" />
@@ -223,19 +216,19 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       )}
                       {record.completedDate && (
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="size-4 text-green-400" />
+                          <CheckCircle className="size-4 text-success" />
                           <span>Completado: {formatForDisplayLong(record.completedDate)}</span>
                         </div>
                       )}
                       {record.nextMaintenanceDate && (
                         <div className="flex items-center gap-2">
-                          <Clock className="size-4 text-yellow-400" />
+                          <Clock className="size-4 text-warning" />
                           <span>Próximo: {formatForDisplayLong(record.nextMaintenanceDate)}</span>
                         </div>
                       )}
                       {record.kilometraje && (
                         <div className="flex items-center gap-2">
-                          <Gauge className="size-4 text-blue-400" />
+                          <Gauge className="size-4 text-info" />
                           <span>Km: {record.kilometraje.toLocaleString('es-CL')}</span>
                         </div>
                       )}
@@ -244,8 +237,8 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                     {/* Cost with Integration Status */}
                     <div className="flex items-center gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="size-4 text-tms-green" />
-                        <span className="text-tms-green font-semibold">
+                        <DollarSign className="size-4 text-success" />
+                        <span className="font-semibold text-success">
                           ${record.cost.toLocaleString('es-CL')}
                         </span>
                       </div>
@@ -257,7 +250,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                         const isPaid = !!cs.paymentDate;
                         return (
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <ExternalLink className="size-3" />
                               <span>Vinculado a costos</span>
                             </div>
@@ -275,7 +268,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                               />
                               <label
                                 htmlFor={`paid-${record.id}`}
-                                className={`text-sm cursor-pointer ${isPaid ? 'text-green-400' : 'text-gray-400'}`}
+                                className={`cursor-pointer text-sm ${isPaid ? 'text-success' : 'text-muted-foreground'}`}
                               >
                                 {isPaid ? 'Pagado' : 'Marcar como pagado'}
                               </label>
@@ -287,7 +280,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
 
                     {/* Notes */}
                     {record.notes && (
-                      <p className="text-sm text-gray-400 bg-white/5 p-3 rounded-md">
+                      <p className="rounded-md border border-border/70 bg-background/50 p-3 text-sm text-muted-foreground">
                         {record.notes}
                       </p>
                     )}
@@ -299,7 +292,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(record)}
-                      className="border-tms-green/50 text-tms-green hover:bg-tms-green/10"
+                      className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
                     >
                       <Edit className="size-4" />
                     </Button>
@@ -307,7 +300,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(record)}
-                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -329,22 +322,22 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-black border-red-500/30">
+        <AlertDialogContent className="border-border/70 bg-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">¿Eliminar registro de mantenimiento?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-300">
+            <AlertDialogTitle className="text-foreground">¿Eliminar registro de mantenimiento?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               Esta acción eliminará permanentemente el registro de mantenimiento "{recordToDelete?.description}".
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-600 text-gray-300 hover:bg-gray-700">
+            <AlertDialogCancel>
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
             >
               {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>

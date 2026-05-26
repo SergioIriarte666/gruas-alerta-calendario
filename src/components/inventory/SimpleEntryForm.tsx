@@ -444,10 +444,10 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       </div>
 
       {/* Consumo Inmediato */}
-      <div className="space-y-4 p-4 rounded-lg border border-violet-200 bg-violet-50/50 dark:border-violet-800 dark:bg-violet-950/20">
+      <div className="space-y-4 rounded-lg border border-primary/20 bg-primary/10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Truck className="size-5 text-violet-600" />
+            <Truck className="size-5 text-primary" />
             <div>
               <Label className="text-base font-medium">Consumo Inmediato</Label>
               <p className="text-xs text-muted-foreground">

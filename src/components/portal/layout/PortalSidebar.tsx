@@ -46,7 +46,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
   };
 
   return (
-    <aside className="w-64 h-full bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
+    <aside className="flex h-full w-64 flex-col border-r border-border/70 bg-card p-4">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-x-3">
@@ -58,8 +58,8 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               />
             )}
             <div>
-              <h2 className="text-2xl font-bold text-tms-green">{companyName}</h2>
-              <p className="text-sm text-gray-400">Portal de Clientes</p>
+              <h2 className="text-2xl font-bold text-primary">{companyName}</h2>
+              <p className="text-sm text-muted-foreground">Portal de Clientes</p>
             </div>
           </div>
           {showCloseButton && (
@@ -67,7 +67,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               variant="ghost" 
               size="icon"
               onClick={onClose}
-              className="text-gray-400 hover:text-white hover:bg-gray-800"
+              className="text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="size-5" />
             </Button>
@@ -83,10 +83,10 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
               to={item.href}
               onClick={handleNavClick}
               className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
+                'flex items-center space-x-3 rounded-md px-3 py-2 transition-colors',
                 isActive 
-                  ? "bg-gray-700 text-white font-medium" 
-                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  ? 'border border-primary/20 bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <item.icon className="size-5" />
@@ -96,7 +96,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
         })}
       </nav>
       <div className="mt-auto">
-        <p className="text-xs text-center text-gray-500">© 2025 {companyName}</p>
+        <p className="text-center text-xs text-muted-foreground">© 2025 {companyName}</p>
       </div>
     </aside>
   );

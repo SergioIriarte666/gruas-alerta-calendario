@@ -160,21 +160,21 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
+          className="border border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
           title="Eliminar factura completa (Solo Admin)"
         >
           <Trash2 className="size-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-gray-900 border-red-500/50">
+      <AlertDialogContent className="border-danger/40 bg-card">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-red-400 flex items-center gap-2">
-            <AlertTriangle className="size-5" />
+          <AlertDialogTitle className="flex items-center gap-2 text-danger">
+            <AlertTriangle className="size-5 text-danger" />
             ELIMINACIÓN DE EMERGENCIA
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-gray-300">
+          <AlertDialogDescription className="text-muted-foreground">
             <div className="space-y-3">
-              <p className="font-medium text-red-300">
+              <p className="font-medium text-danger">
                 ATENCIÓN: Esta acción eliminará completamente la factura {invoiceFolio} y:
               </p>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -183,7 +183,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
                 <li>Revertirá el estado de los cierres de 'facturado' a 'cerrado'</li>
                 <li>Los servicios quedarán disponibles para nuevo cierre</li>
               </ul>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Esta acción NO se puede deshacer. Úsala solo en emergencias.
               </p>
             </div>
@@ -191,26 +191,26 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
         </AlertDialogHeader>
         
         <div className="my-4">
-          <Label htmlFor="confirmation" className="text-gray-300">
-            Para confirmar, escribe exactamente: <span className="font-mono font-bold text-red-300">{expectedText}</span>
+          <Label htmlFor="confirmation" className="text-foreground">
+            Para confirmar, escribe exactamente: <span className="font-mono font-bold text-danger">{expectedText}</span>
           </Label>
           <Input
             id="confirmation"
             value={confirmationText}
             onChange={(e) => setConfirmationText(e.target.value)}
-            className="mt-2 bg-gray-800 border-red-500/50 text-white"
+            className="mt-2 border-danger/30 bg-background/60 text-foreground"
             placeholder={expectedText}
           />
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel className="border-gray-700 text-gray-300">
+          <AlertDialogCancel className="border-border/70 bg-background/60 text-foreground">
             Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDeleteInvoice}
             disabled={confirmationText !== expectedText || isDeleting}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? 'Eliminando...' : 'ELIMINAR FACTURA'}
           </AlertDialogAction>

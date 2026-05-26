@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Plus, Truck, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Truck, ArrowUpDown, ArrowUp, ArrowDown, Power } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -71,11 +71,11 @@ export const CranesTable = ({
   // Desktop view (unchanged functionality)
   if (cranes.length === 0 && searchTerm) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
-          <p className="text-muted-foreground mb-4">
+          <Truck className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No se encontraron grúas</h3>
+          <p className="mb-4 text-muted-foreground">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewCrane}>
@@ -89,11 +89,11 @@ export const CranesTable = ({
 
   if (cranes.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>
-          <p className="text-muted-foreground mb-4">
+          <Truck className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No hay grúas registradas</h3>
+          <p className="mb-4 text-muted-foreground">
             Comienza agregando tu primera grúa al sistema
           </p>
           <Button onClick={onNewCrane}>
@@ -106,17 +106,17 @@ export const CranesTable = ({
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="text-foreground flex items-center justify-between">
           <span>Grúas Registradas ({totalCranes})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b border-border/60 bg-muted/30">
                 <th 
                   className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('licensePlate')}
@@ -194,8 +194,12 @@ export const CranesTable = ({
             </thead>
             <tbody>
               {cranes.map((crane) => (
-                <tr key={crane.id} className="border-b hover:bg-accent">
-                  <td className="py-3 px-4 text-foreground font-medium">{crane.licensePlate}</td>
+                <tr key={crane.id} className="border-b border-border/60 hover:bg-accent/20">
+                  <td className="py-3 px-4 text-foreground font-medium">
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                      {crane.licensePlate}
+                    </span>
+                  </td>
                   <td className="py-3 px-4 text-foreground">
                     {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
                   </td>
@@ -240,6 +244,15 @@ export const CranesTable = ({
                         title="Editar grúa"
                       >
                         <Edit className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onToggleStatus(crane)}
+                        className={crane.isActive ? "border border-warning/30 text-warning hover:bg-warning/10 hover:text-warning" : "border border-success/30 text-success hover:bg-success/10 hover:text-success"}
+                        title={crane.isActive ? 'Desactivar grúa' : 'Activar grúa'}
+                      >
+                        <Power className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"

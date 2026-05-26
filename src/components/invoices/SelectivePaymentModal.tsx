@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, DollarSign, Receipt, Target } from 'lucide-react';
+import { Search, X, DollarSign, Receipt } from 'lucide-react';
 
 import { PaymentWithDetails } from '@/types/payments';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
@@ -127,10 +127,10 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden border-border/70 bg-card p-0">
+          <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="size-5 text-blue-500" />
+              <DollarSign className="size-5 text-primary" />
               Aplicar Pago a Facturas Específicas
             </DialogTitle>
             <div className="text-sm text-muted-foreground">
@@ -138,28 +138,29 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
           </div>
           </DialogHeader>
 
+          <div className="flex flex-1 flex-col px-6 py-6">
           {/* Resumen */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="border-primary/20 bg-primary/10">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-700">Facturas Seleccionadas</p>
-                    <p className="text-2xl font-bold text-blue-900">{selectedFiscalNumbers.length}</p>
+                    <p className="text-sm text-primary">Facturas Seleccionadas</p>
+                    <p className="text-2xl font-bold text-foreground">{selectedFiscalNumbers.length}</p>
                   </div>
-                  <Receipt className="size-8 text-blue-500" />
+                  <Receipt className="size-8 text-primary" />
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="bg-green-50 border-green-200">
+            <Card className="border-success/20 bg-success/10">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-700">Saldo Restante</p>
-                    <p className="text-2xl font-bold text-green-900">{formatCurrency(remainingPaymentAmount)}</p>
+                    <p className="text-sm text-success">Saldo Restante</p>
+                    <p className="text-2xl font-bold text-foreground">{formatCurrency(remainingPaymentAmount)}</p>
                   </div>
-                  <DollarSign className="size-8 text-green-500" />
+                  <DollarSign className="size-8 text-success" />
                 </div>
               </CardContent>
             </Card>
@@ -193,8 +194,8 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                     key={invoice.id}
                     className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                       selectedFiscalNumbers.includes(invoice.numero_fiscal)
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'bg-white hover:bg-gray-50'
+                        ? 'border-primary/30 bg-primary/10'
+                        : 'bg-card hover:bg-muted/40'
                     }`}
                     onClick={() => handleInvoiceToggle(invoice.numero_fiscal)}
                   >
@@ -213,7 +214,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         {selectedFiscalNumbers.includes(invoice.numero_fiscal) && (
-                          <Badge className="bg-blue-500">Seleccionada</Badge>
+                          <Badge className="border-primary/20 bg-primary text-primary-foreground">Seleccionada</Badge>
                         )}
                       </div>
                     </div>
@@ -223,18 +224,18 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
             )}
           </div>
 
-          <div className="mt-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
-            <p className="text-sm font-medium text-amber-800">
+          <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-4">
+            <p className="text-sm font-medium text-warning">
               La aplicación selectiva solo afecta las facturas que selecciones aquí.
             </p>
-            <p className="text-xs text-amber-700 mt-2">
+            <p className="mt-2 text-xs text-warning">
               El saldo no asignado queda pendiente para aplicación manual posterior.
             </p>
           </div>
 
           {/* Facturas seleccionadas */}
           {selectedFiscalNumbers.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 rounded-lg border border-border/70 bg-muted/30 p-4">
               <h4 className="font-medium mb-2">Facturas Seleccionadas:</h4>
               <div className="flex flex-wrap gap-2">
                 {selectedFiscalNumbers.map((fiscalNumber) => {
@@ -266,17 +267,17 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
           )}
 
           {/* Acciones */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 border-t border-border/70 pt-4">
             <Button variant="outline" onClick={onClose} disabled={isApplying}>
               Cancelar
             </Button>
             <Button 
               onClick={handleApply} 
               disabled={selectedFiscalNumbers.length === 0 || isApplying}
-              className="bg-blue-600 hover:bg-blue-700"
             >
               {isApplying ? 'Aplicando...' : 'Aplicar Pago'}
             </Button>
+          </div>
           </div>
         </DialogContent>
       </Dialog>

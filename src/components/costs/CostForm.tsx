@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -687,10 +687,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="bg-card border max-w-6xl max-h-[90vh] overflow-hidden p-0">
+                <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden border-border/70 bg-card p-0">
                     <div className="flex flex-col h-full max-h-[90vh]">
                         {/* Header */}
-                        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+                        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
                             <DialogTitle className="text-2xl font-bold text-foreground">
                                 {cost ? 'Editar Costo' : isQuickEntryPrefill ? 'Completar Registro Rápido' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
                             </DialogTitle>
@@ -709,7 +709,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         <div className="flex-1 overflow-hidden">
                             <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
                                 {/* Left Sidebar - Navigation & Summary */}
-                                <div className="lg:col-span-1 border-r bg-muted/30 p-4 overflow-y-auto space-y-4">
+                                <div className="space-y-4 overflow-y-auto border-r border-border/70 bg-muted/30 p-4 lg:col-span-1">
                                     <CostFormStepNavigation
                                         steps={steps}
                                         currentStep={currentStep}
@@ -762,7 +762,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                             </div>
 
                                             {/* Footer - Navigation Buttons */}
-                                            <div className="border-t bg-muted/30 px-6 py-4 flex items-center justify-between">
+                                            <div className="flex items-center justify-between border-t border-border/70 bg-muted/30 px-6 py-4">
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -785,7 +785,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         <Button
                                                             type="button"
                                                             onClick={handleNextStep}
-                                                            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                                                            className="gap-2"
                                                         >
                                                             Siguiente
                                                             <ChevronRight className="size-4" />
@@ -795,7 +795,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                             type="button"
                                                             disabled={isSubmitting}
                                                             onClick={form.handleSubmit(onSubmit)}
-                                                            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                                                            className="gap-2"
                                                         >
                                                             {isSubmitting ? (
                                                                 <>

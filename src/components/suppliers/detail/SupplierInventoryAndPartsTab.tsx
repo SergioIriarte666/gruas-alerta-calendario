@@ -59,11 +59,11 @@ const getMovementTypeLabel = (type: string) => {
 
 const getMovementTypeColor = (type: string) => {
   switch (type) {
-    case 'entry': return 'bg-green-600 text-white';
-    case 'exit': return 'bg-red-600 text-white';
-    case 'adjustment': return 'bg-yellow-600 text-white';
-    case 'transfer': return 'bg-blue-600 text-white';
-    default: return 'bg-muted text-muted-foreground';
+    case 'entry': return 'border-success/30 bg-success/10 text-success';
+    case 'exit': return 'border-danger/30 bg-danger/10 text-danger';
+    case 'adjustment': return 'border-warning/30 bg-warning/10 text-warning';
+    case 'transfer': return 'border-info/30 bg-info/10 text-info';
+    default: return 'border-border/70 bg-muted/40 text-muted-foreground';
   }
 };
 
@@ -115,14 +115,14 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
     <div className="space-y-4">
       {/* Inventory Movements Section */}
       <Collapsible open={inventoryOpen} onOpenChange={setInventoryOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/70 bg-muted/30 p-3 transition-colors hover:bg-muted/50">
           <div className="flex items-center gap-2">
             <Package className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">
               Movimientos de Inventario ({movements.length})
             </span>
             {totalMovementsCost > 0 && (
-              <Badge variant="outline" className="text-xs font-bold text-violet-600 border-violet-300">
+              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs font-bold text-primary">
                 {formatCurrency(totalMovementsCost)}
               </Badge>
             )}
@@ -147,7 +147,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
               <p className="text-sm text-muted-foreground">Sin movimientos de inventario</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-border/70 bg-card">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
@@ -179,7 +179,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
                       <TableCell className="text-right text-foreground text-sm">
                         {movement.quantity}
                       </TableCell>
-                      <TableCell className="text-right font-bold text-violet-600 text-sm">
+                      <TableCell className="text-right font-bold text-primary text-sm">
                         {movement.total_cost ? formatCurrency(movement.total_cost) : '-'}
                       </TableCell>
                     </TableRow>
@@ -193,14 +193,14 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
 
       {/* Crane Parts Section */}
       <Collapsible open={partsOpen} onOpenChange={setPartsOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border/70 bg-muted/30 p-3 transition-colors hover:bg-muted/50">
           <div className="flex items-center gap-2">
             <Wrench className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">
               Piezas de Grúas ({parts.length})
             </span>
             {totalPartsCost > 0 && (
-              <Badge variant="outline" className="text-xs font-bold text-violet-600 border-violet-300">
+              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs font-bold text-primary">
                 {formatCurrency(totalPartsCost)}
               </Badge>
             )}
@@ -225,7 +225,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
               <p className="text-sm text-muted-foreground">Sin piezas registradas</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-border/70 bg-card">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
@@ -259,7 +259,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
                       <TableCell className="text-right text-foreground text-sm">
                         {formatCurrency(part.unit_price)}
                       </TableCell>
-                      <TableCell className="text-right font-bold text-violet-600 text-sm">
+                      <TableCell className="text-right font-bold text-primary text-sm">
                         {formatCurrency(part.total_value || part.quantity * part.unit_price)}
                       </TableCell>
                     </TableRow>
@@ -275,7 +275,7 @@ export const SupplierInventoryAndPartsTab: React.FC<SupplierInventoryAndPartsTab
       {(totalMovementsCost > 0 || totalPartsCost > 0) && (
         <div className="flex items-center justify-end gap-4 pt-3 border-t border-border">
           <span className="text-sm text-muted-foreground">Total General:</span>
-          <span className="text-lg font-bold text-violet-600">
+          <span className="text-lg font-bold text-primary">
             {formatCurrency(totalMovementsCost + totalPartsCost)}
           </span>
         </div>

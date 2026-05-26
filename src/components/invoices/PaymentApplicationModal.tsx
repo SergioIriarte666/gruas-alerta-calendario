@@ -10,6 +10,8 @@ import { X, Calculator, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface PaymentApplicationModalProps {
   payment: PaymentWithDetails;
@@ -25,6 +27,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   const { applyPaymentManual } = usePayments();
   const [applications, setApplications] = useState<ManualApplication[]>([]);
   const [loading, setLoading] = useState(false);
+  const [confirmLargeApply, setConfirmLargeApply] = useState(false);
   const batchProgress = useBatchProgress();
 
   // Ordenar facturas por fecha de vencimiento (más antiguas primero)
@@ -83,7 +86,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     return total > 0 && total <= paymentRemaining && applications.length > 0;
   };
 
-  const handleApply = async () => {
+  const submitApplications = async () => {
     if (applications.length === 0) {
       toast.error('Debe seleccionar al menos una factura');
       return;
@@ -100,15 +103,6 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     if (total > available) {
       toast.error(`Monto inválido. Disponible: ${formatCurrency(available)}, Seleccionado: ${formatCurrency(total)}`);
       return;
-    }
-
-    // Confirmación para montos grandes
-    if (total > 500000) {
-      const confirmed = window.confirm(
-        `¿Está seguro de aplicar ${formatCurrency(total)} a ${applications.length} factura(s)?\n\n` +
-        `Esta acción no se puede deshacer fácilmente.`
-      );
-      if (!confirmed) return;
     }
 
     setLoading(true);
@@ -139,46 +133,57 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     }
   };
 
+  const handleApply = async () => {
+    const total = getTotalSelected();
+    if (total > 500000) {
+      setConfirmLargeApply(true);
+      return;
+    }
+    await submitApplications();
+  };
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Conciliar Pago con Facturas</CardTitle>
-              <p className="text-sm text-gray-600">
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-auto border-border/70 bg-card p-0">
+          <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle>Conciliar Pago con Facturas</DialogTitle>
+                <p className="text-sm text-muted-foreground">
                 Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0)))}
-              </p>
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="size-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="size-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Calculator className="size-4 text-blue-600" />
-                <span className="font-medium text-blue-900">Resumen de Aplicación</span>
+          </DialogHeader>
+          <div className="space-y-4 px-6 py-5">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Calculator className="size-4 text-primary" />
+                <span className="font-medium text-foreground">Resumen de Aplicación</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Total seleccionado:</p>
-                  <p className="font-semibold text-blue-900">{formatCurrency(getTotalSelected())}</p>
+                  <p className="text-muted-foreground">Total seleccionado:</p>
+                  <p className="font-semibold text-foreground">{formatCurrency(getTotalSelected())}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Restante del pago:</p>
-                  <p className="font-semibold text-blue-900">
+                  <p className="text-muted-foreground">Restante del pago:</p>
+                  <p className="font-semibold text-foreground">
                     {formatCurrency((payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))) - getTotalSelected())}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Facturas seleccionadas:</p>
-                  <p className="font-semibold text-blue-900">{applications.length}</p>
+                  <p className="text-muted-foreground">Facturas seleccionadas:</p>
+                  <p className="font-semibold text-foreground">{applications.length}</p>
                 </div>
               </div>
               {getTotalSelected() > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="text-xs text-blue-700">
+                <div className="mt-3 border-t border-primary/20 pt-3">
+                  <p className="text-xs text-primary">
                     ✓ Las facturas seleccionadas se marcarán como pagadas automáticamente
                   </p>
                 </div>
@@ -224,7 +229,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
                             className="w-24"
                           />
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -233,22 +238,44 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
               </TableBody>
             </Table>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={onClose}>
+            <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
+              <Button variant="outline" className="border-border/70 bg-background/60" onClick={onClose}>
                 Cancelar
               </Button>
               <Button 
                 onClick={handleApply} 
                 disabled={loading || applications.length === 0}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-success text-success-foreground hover:bg-success/90"
               >
                 <CheckCircle className="size-4 mr-2" />
                 {loading ? 'Aplicando...' : 'Aplicar Pago'}
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={confirmLargeApply} onOpenChange={setConfirmLargeApply}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar aplicación masiva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se aplicarán {formatCurrency(getTotalSelected())} a {applications.length} factura(s). Esta acción puede ser difícil de revertir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-success text-success-foreground hover:bg-success/90"
+              onClick={async () => {
+                setConfirmLargeApply(false);
+                await submitApplications();
+              }}
+            >
+              Aplicar pago
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
     </>

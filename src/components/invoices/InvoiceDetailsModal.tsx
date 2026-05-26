@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
@@ -22,12 +21,11 @@ import {
   Receipt,
   Wrench,
   Package,
-  Car,
   Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface InvoiceDetailsModalProps {
@@ -54,16 +52,14 @@ const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = f
   </div>
 );
 
-type SectionColor = 'blue' | 'emerald' | 'amber' | 'violet' | 'cyan' | 'orange' | 'rose';
+type SectionColor = 'primary' | 'success' | 'warning' | 'info' | 'danger';
 
 const sectionColorConfig: Record<SectionColor, { border: string; bg: string; iconBg: string; title: string }> = {
-  blue: { border: 'border-l-blue-500', bg: 'bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600', title: 'text-blue-700 dark:text-blue-300' },
-  emerald: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600', title: 'text-emerald-700 dark:text-emerald-300' },
-  amber: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600', title: 'text-amber-700 dark:text-amber-300' },
-  violet: { border: 'border-l-violet-500', bg: 'bg-violet-500/5', iconBg: 'bg-violet-500/10 text-violet-600', title: 'text-violet-700 dark:text-violet-300' },
-  cyan: { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600', title: 'text-cyan-700 dark:text-cyan-300' },
-  orange: { border: 'border-l-orange-500', bg: 'bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600', title: 'text-orange-700 dark:text-orange-300' },
-  rose: { border: 'border-l-rose-500', bg: 'bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600', title: 'text-rose-700 dark:text-rose-300' },
+  primary: { border: 'border-l-primary', bg: 'bg-primary/5', iconBg: 'bg-primary/10 text-primary', title: 'text-primary' },
+  success: { border: 'border-l-success', bg: 'bg-success/5', iconBg: 'bg-success/10 text-success', title: 'text-success' },
+  warning: { border: 'border-l-warning', bg: 'bg-warning/5', iconBg: 'bg-warning/10 text-warning', title: 'text-warning' },
+  info: { border: 'border-l-info', bg: 'bg-info/5', iconBg: 'bg-info/10 text-info', title: 'text-info' },
+  danger: { border: 'border-l-danger', bg: 'bg-danger/5', iconBg: 'bg-danger/10 text-danger', title: 'text-danger' },
 };
 
 interface DetailSectionProps {
@@ -73,7 +69,7 @@ interface DetailSectionProps {
   color?: SectionColor;
 }
 
-const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSectionProps) => {
+const DetailSection = ({ title, icon: Icon, children, color = 'primary' }: DetailSectionProps) => {
   const config = sectionColorConfig[color];
   return (
     <div className={`rounded-lg border border-border border-l-4 ${config.border} ${config.bg} p-4`}>
@@ -311,9 +307,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           <TabsContent value="general" className="mt-6">
             <div className="space-y-4">
               {isCancelled && (
-                <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-4">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-rose-700 dark:text-rose-300">
-                    <div className="p-1 rounded bg-rose-500/10 text-rose-600">
+                <div className="rounded-lg border border-border border-l-4 border-l-danger bg-danger/5 p-4">
+                  <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-danger">
+                    <div className="rounded bg-danger/10 p-1 text-danger">
                       <AlertTriangle className="size-4" />
                     </div>
                     Factura Anulada
@@ -323,7 +319,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                       icon={Hash}
                       label="Nota de Crédito"
                       value={cancellation?.credit_note_number
-                        ? <span className="font-semibold text-rose-700 dark:text-rose-300">NC {cancellation.credit_note_number}</span>
+                        ? <span className="font-semibold text-danger">NC {cancellation.credit_note_number}</span>
                         : <span className="text-muted-foreground italic">Sin registro</span>}
                     />
                     <DetailItem
@@ -354,20 +350,20 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 </div>
               )}
 
-              <DetailSection title="Identificación" icon={FileText} color="blue">
+              <DetailSection title="Identificación" icon={FileText} color="primary">
                 <DetailItem icon={FileText} label="Folio" value={invoice.folio} />
                 <DetailItem
                   icon={Hash}
                   label="Número Fiscal"
                   value={
                     invoice.numeroFiscal
-                      ? <span className="text-violet-600">{invoice.numeroFiscal}</span>
+                      ? <span className="text-primary">{invoice.numeroFiscal}</span>
                       : <span className="text-muted-foreground italic">Sin asignar</span>
                   }
                 />
               </DetailSection>
 
-              <DetailSection title="Cliente" icon={User} color="emerald">
+              <DetailSection title="Cliente" icon={User} color="success">
                 <DetailItem icon={User} label="Nombre" value={invoice.client?.name ? toTitleCase(invoice.client.name) : undefined} />
                 <DetailItem icon={Hash} label="RUT" value={invoice.client?.rut} />
                 {invoice.client?.email && (
@@ -378,7 +374,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
               </DetailSection>
 
-              <DetailSection title="Fechas" icon={Calendar} color="amber">
+              <DetailSection title="Fechas" icon={Calendar} color="warning">
                 <DetailItem icon={Calendar} label="Fecha de Emisión" value={formatSafeDate(invoice.issueDate)} />
                 <DetailItem icon={Calendar} label="Fecha de Vencimiento" value={formatSafeDate(invoice.dueDate)} />
                 {paymentTermName && (
@@ -419,7 +415,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                         icon={AlertTriangle}
                         label={isOverdue ? 'Días de Atraso' : 'Días para Vencer'}
                         value={
-                          <Badge className={`text-xs font-medium ${isOverdue ? 'bg-destructive text-destructive-foreground' : daysUntilDue <= 7 ? 'bg-yellow-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+                            <Badge className={`text-xs font-medium ${isOverdue ? 'bg-destructive text-destructive-foreground' : daysUntilDue <= 7 ? 'bg-warning text-warning-foreground' : 'bg-primary text-primary-foreground'}`}>
                             {isOverdue ? `${Math.abs(daysUntilDue)} día${Math.abs(daysUntilDue) !== 1 ? 's' : ''} vencida` : `${daysUntilDue} día${daysUntilDue !== 1 ? 's' : ''}`}
                           </Badge>
                         }
@@ -430,7 +426,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               </DetailSection>
 
               {invoice.notes && (
-                <DetailSection title="Notas" icon={FileText} color="cyan">
+              <DetailSection title="Notas" icon={FileText} color="info">
                   <div className="col-span-1 md:col-span-2">
                     <p className="text-muted-foreground whitespace-pre-wrap min-h-[40px]">
                       {invoice.notes}
@@ -445,7 +441,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           <TabsContent value="financial" className="mt-6">
             <div className="space-y-4">
               {isCancelled && (
-                <div className="rounded-lg border border-border border-l-4 border-l-rose-500 bg-rose-500/5 p-3 text-sm text-rose-700 dark:text-rose-300 flex items-start gap-2">
+                <div className="flex items-start gap-2 rounded-lg border border-border border-l-4 border-l-danger bg-danger/5 p-3 text-sm text-danger">
                   <AlertTriangle className="size-4 mt-0.5 flex-shrink-0" />
                   <span>
                     Factura anulada{cancellation?.credit_note_number ? ` con NC ${cancellation.credit_note_number}` : ''}. El monto fue neutralizado y no representa deuda ni ingreso pagado.
@@ -453,7 +449,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 </div>
               )}
 
-              <DetailSection title="Desglose" icon={DollarSign} color="violet">
+              <DetailSection title="Desglose" icon={DollarSign} color="primary">
                 <DetailItem icon={DollarSign} label="Subtotal" value={formatCurrency(invoice.subtotal)} />
                 <DetailItem icon={DollarSign} label="IVA" value={formatCurrency(invoice.vat)} />
                 <DetailItem
@@ -467,7 +463,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                     icon={CheckCircle}
                     label="Monto Pagado"
                     value={formatCurrency(paidAmount)}
-                    valueClass="text-green-600"
+                    valueClass="text-success"
                   />
                 )}
                 {!isCancelled && (
@@ -475,14 +471,14 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                     icon={AlertTriangle}
                     label="Monto Pendiente"
                     value={formatCurrency(pendingAmount)}
-                    valueClass={pendingAmount > 0 ? 'text-orange-600' : 'text-green-600'}
+                    valueClass={pendingAmount > 0 ? 'text-warning' : 'text-success'}
                   />
                 )}
                 {isCancelled && (
                   <DetailItem
                     icon={AlertTriangle}
                     label="Estado Financiero"
-                    value={<span className="text-rose-600 font-semibold">Anulada con NC</span>}
+                    value={<span className="font-semibold text-danger">Anulada con NC</span>}
                     isFullWidth
                   />
                 )}
@@ -492,9 +488,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               </DetailSection>
 
               {!isCancelled && (
-                <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.emerald.border} ${sectionColorConfig.emerald.bg} p-4`}>
-                  <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.emerald.title}`}>
-                    <div className={`p-1 rounded ${sectionColorConfig.emerald.iconBg}`}>
+                <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.success.border} ${sectionColorConfig.success.bg} p-4`}>
+                  <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.success.title}`}>
+                    <div className={`p-1 rounded ${sectionColorConfig.success.iconBg}`}>
                       <CreditCard className="size-4" />
                     </div>
                     Progreso de Pago
@@ -515,9 +511,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
           {/* Tab 3: Pagos Aplicados */}
           <TabsContent value="payments" className="mt-6">
-            <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.rose.border} ${sectionColorConfig.rose.bg} p-4`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.rose.title}`}>
-                <div className={`p-1 rounded ${sectionColorConfig.rose.iconBg}`}>
+            <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.info.border} ${sectionColorConfig.info.bg} p-4`}>
+              <h3 className={`mb-4 flex items-center gap-2 text-lg font-semibold ${sectionColorConfig.info.title}`}>
+                <div className={`rounded p-1 ${sectionColorConfig.info.iconBg}`}>
                   <Receipt className="size-4" />
                 </div>
                 Historial de Pagos Aplicados
@@ -550,7 +546,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                           <td className="py-2 px-3 text-foreground">
                             {formatSafeDate(pa.payment?.payment_date || pa.created_at)}
                           </td>
-                          <td className="py-2 px-3 text-green-600 font-medium">
+                          <td className="py-2 px-3 font-medium text-success">
                             {formatCurrency(pa.applied_amount)}
                           </td>
                           <td className="py-2 px-3 text-foreground">
@@ -576,9 +572,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           {/* Tab 4: Servicios y Cierres */}
           <TabsContent value="services" className="mt-6">
             <div className="space-y-4">
-              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.orange.border} ${sectionColorConfig.orange.bg} p-4`}>
-                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.orange.title}`}>
-                  <div className={`p-1 rounded ${sectionColorConfig.orange.iconBg}`}>
+              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.warning.border} ${sectionColorConfig.warning.bg} p-4`}>
+                <h3 className={`mb-4 flex items-center gap-2 text-lg font-semibold ${sectionColorConfig.warning.title}`}>
+                  <div className={`rounded p-1 ${sectionColorConfig.warning.iconBg}`}>
                     <Package className="size-4" />
                   </div>
                   Cierres Asociados
@@ -621,9 +617,9 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 )}
               </div>
 
-              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.cyan.border} ${sectionColorConfig.cyan.bg} p-4`}>
-                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${sectionColorConfig.cyan.title}`}>
-                  <div className={`p-1 rounded ${sectionColorConfig.cyan.iconBg}`}>
+              <div className={`rounded-lg border border-border border-l-4 ${sectionColorConfig.info.border} ${sectionColorConfig.info.bg} p-4`}>
+                <h3 className={`mb-4 flex items-center gap-2 text-lg font-semibold ${sectionColorConfig.info.title}`}>
+                  <div className={`rounded p-1 ${sectionColorConfig.info.iconBg}`}>
                     <Wrench className="size-4" />
                   </div>
                   Servicios Incluidos

@@ -10,10 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   History, 
-  DollarSign, 
   FileText, 
-  Calendar, 
-  CreditCard,
   RefreshCw,
   TrendingUp,
   CheckCircle,
@@ -22,7 +19,6 @@ import {
   Eye
 } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
-import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { PaymentWithDetails } from '@/types/payments';
 
@@ -81,21 +77,21 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      pending: { color: 'bg-yellow-500', icon: Clock },
-      applied: { color: 'bg-green-500', icon: CheckCircle },
-      partial: { color: 'bg-blue-500', icon: TrendingUp },
-      cancelled: { color: 'bg-red-500', icon: AlertTriangle },
-      paid: { color: 'bg-green-500', icon: CheckCircle },
-      sent: { color: 'bg-blue-500', icon: FileText },
-      overdue: { color: 'bg-red-500', icon: AlertTriangle },
-      draft: { color: 'bg-gray-500', icon: FileText }
+      pending: { color: 'border-warning/30 bg-warning/10 text-warning', icon: Clock },
+      applied: { color: 'border-success/30 bg-success/10 text-success', icon: CheckCircle },
+      partial: { color: 'border-info/30 bg-info/10 text-info', icon: TrendingUp },
+      cancelled: { color: 'border-danger/30 bg-danger/10 text-danger', icon: AlertTriangle },
+      paid: { color: 'border-success/30 bg-success/10 text-success', icon: CheckCircle },
+      sent: { color: 'border-info/30 bg-info/10 text-info', icon: FileText },
+      overdue: { color: 'border-danger/30 bg-danger/10 text-danger', icon: AlertTriangle },
+      draft: { color: 'border-border/70 bg-muted/40 text-muted-foreground', icon: FileText }
     };
     
     const config = variants[status as keyof typeof variants] || variants.draft;
     const Icon = config.icon;
     
     return (
-      <Badge className={`${config.color} text-white flex items-center gap-1`}>
+      <Badge className={`${config.color} flex items-center gap-1`}>
         <Icon className="size-3" />
         {status}
       </Badge>
@@ -146,7 +142,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                   <div className="flex flex-col py-0.5">
                     <span className="font-medium">{toTitleCase(client.name)}</span>
                     {client.department && client.department !== 'General' && (
-                      <span className="text-xs text-violet-600 dark:text-violet-400">
+                      <span className="text-xs text-primary">
                         {client.department}
                       </span>
                     )}
@@ -159,7 +155,6 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
           <Button 
             onClick={handleSyncPaidInvoices} 
             disabled={syncing}
-            className="bg-purple-600 hover:bg-purple-700"
           >
             <RefreshCw className={`size-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Sincronizando...' : 'Sincronizar Facturas Pagadas'}
@@ -172,7 +167,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Total Facturas</CardTitle>
-                <FileText className="size-4 text-blue-400" />
+                <FileText className="size-4 text-info" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">{historyData.summary.total_invoices}</div>
@@ -183,7 +178,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Total Pagado</CardTitle>
-                <CheckCircle className="size-4 text-green-400" />
+                <CheckCircle className="size-4 text-success" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">{historyData.summary.paid_invoices_count}</div>
@@ -194,7 +189,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">Pendiente</CardTitle>
-                <Clock className="size-4 text-yellow-400" />
+                <Clock className="size-4 text-warning" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">{historyData.summary.pending_invoices_count}</div>
@@ -205,7 +200,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-foreground">% Pagado</CardTitle>
-                <TrendingUp className="size-4 text-purple-400" />
+                <TrendingUp className="size-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">
@@ -303,7 +298,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                  className="h-6 px-2 text-primary hover:bg-primary/10 hover:text-primary"
                                   onClick={() => {
                                     setSelectedPaymentForDetail(payment);
                                     setShowPaymentDetail(true);
@@ -337,7 +332,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {!selectedClient && (
           <Card className="bg-card border">
             <CardContent className="flex flex-col items-center justify-center h-64">
-              <History className="size-12 text-gray-400 mb-4" />
+              <History className="mb-4 size-12 text-muted-foreground" />
               <p className="text-foreground text-lg mb-2">Selecciona un cliente</p>
               <p className="text-muted-foreground text-center">
                 Elige un cliente para ver su historial completo de pagos y facturas

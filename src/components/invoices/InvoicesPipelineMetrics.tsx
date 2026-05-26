@@ -73,32 +73,32 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
       value: metrics.totalInvoices,
       subtitle: `$${metrics.totalAmount.toLocaleString('es-CL')}`,
       icon: FileText,
-      color: "text-blue-400",
-      bgColor: "bg-blue-500/10"
+      color: "text-info",
+      bgColor: "bg-info/10"
     },
     {
       title: "Monto Cobrado",
       value: `$${metrics.paidAmount.toLocaleString('es-CL')}`,
       subtitle: `${metrics.byStatus.paid.count} facturas`,
       icon: CreditCard,
-      color: "text-green-400",
-      bgColor: "bg-green-500/10"
+      color: "text-success",
+      bgColor: "bg-success/10"
     },
     {
       title: "Monto Pendiente",
       value: `$${metrics.pendingAmount.toLocaleString('es-CL')}`,
       subtitle: `${metrics.totalInvoices - metrics.byStatus.paid.count - metrics.byStatus.cancelled.count} facturas`,
       icon: DollarSign,
-      color: "text-yellow-400",
-      bgColor: "bg-yellow-500/10"
+      color: "text-warning",
+      bgColor: "bg-warning/10"
     },
     {
       title: "Tiempo Promedio Pago",
       value: `${metrics.avgPaymentTime} días`,
       subtitle: "Promedio histórico",
       icon: TrendingUp,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/10"
+      color: "text-primary",
+      bgColor: "bg-primary/10"
     }
   ];
 
@@ -107,32 +107,32 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
       title: "Borradores",
       count: metrics.byStatus.draft.count,
       amount: metrics.byStatus.draft.amount,
-      color: "text-gray-400",
-      bgColor: "bg-gray-500/10",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/40",
       description: "En preparación"
     },
     {
       title: "Enviadas",
       count: metrics.byStatus.sent.count,
       amount: metrics.byStatus.sent.amount,
-      color: "text-blue-400",
-      bgColor: "bg-blue-500/10",
+      color: "text-info",
+      bgColor: "bg-info/10",
       description: "Pendientes de pago"
     },
     {
       title: "Pagadas",
       count: metrics.byStatus.paid.count,
       amount: metrics.byStatus.paid.amount,
-      color: "text-green-400",
-      bgColor: "bg-green-500/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
       description: "Cobradas exitosamente"
     },
     {
       title: "Vencidas",
       count: metrics.byStatus.overdue.count,
       amount: metrics.byStatus.overdue.amount,
-      color: "text-red-400",
-      bgColor: "bg-red-500/10",
+      color: "text-danger",
+      bgColor: "bg-danger/10",
       description: "Requieren atención",
       urgent: metrics.byStatus.overdue.count > 0
     },
@@ -140,8 +140,8 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
       title: "Anuladas",
       count: metrics.byStatus.cancelled.count,
       amount: metrics.byStatus.cancelled.amount,
-      color: "text-gray-400",
-      bgColor: "bg-gray-500/10",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/40",
       description: "Canceladas"
     }
   ];
@@ -194,13 +194,13 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
             key={index}
             className={cn(
               "bg-card border-border transition-all duration-200 hover:bg-muted",
-              card.urgent && "ring-2 ring-red-400/50 animate-pulse"
+              card.urgent && "ring-2 ring-danger/20 animate-pulse"
             )}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-300">{card.title}</h4>
-                {card.urgent && <AlertTriangle className="size-4 text-red-400" />}
+                <h4 className="text-sm font-medium text-foreground">{card.title}</h4>
+                {card.urgent && <AlertTriangle className="size-4 text-danger" />}
               </div>
               
               <div className="space-y-1">

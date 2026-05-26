@@ -5,12 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   TrendingUp, 
   Clock, 
-  DollarSign, 
   AlertTriangle,
-  CheckCircle,
   Package,
   FileText,
-  Timer,
   ShoppingCart,
   Quote
 } from 'lucide-react';
@@ -117,16 +114,16 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
       value: metrics.quoted,
       subtitle: `$${metrics.quotedValue.toLocaleString()}`,
       icon: <Quote className="size-5" />,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10 border-blue-500/20'
+      color: 'text-info',
+      bgColor: 'border-info/20 bg-info/10'
     },
     {
       title: 'Esperando O.C.',
       value: metrics.pendingOC,
       subtitle: `$${metrics.pendingOCValue.toLocaleString()}`,
       icon: <AlertTriangle className="size-5" />,
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-500/10 border-amber-500/20',
+      color: 'text-warning',
+      bgColor: 'border-warning/20 bg-warning/10',
       urgent: metrics.pendingOC > 0
     },
     {
@@ -134,32 +131,32 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
       value: metrics.withOC,
       subtitle: `$${metrics.withOCValue.toLocaleString()}`,
       icon: <ShoppingCart className="size-5" />,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10 border-green-500/20'
+      color: 'text-success',
+      bgColor: 'border-success/20 bg-success/10'
     },
     {
       title: 'En Pipeline',
       value: metrics.totalInPipeline,
       subtitle: `$${metrics.totalPipelineValue.toLocaleString()}`,
       icon: <Package className="size-5" />,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10 border-purple-500/20'
+      color: 'text-primary',
+      bgColor: 'border-primary/20 bg-primary/10'
     },
     {
       title: 'Facturados',
       value: metrics.invoiced,
       subtitle: `$${metrics.invoicedValue.toLocaleString()}`,
       icon: <FileText className="size-5" />,
-      color: 'text-gray-400',
-      bgColor: 'bg-gray-500/10 border-gray-500/20'
+      color: 'text-muted-foreground',
+      bgColor: 'border-border/70 bg-muted/40'
     },
     {
       title: 'Servicios Urgentes',
       value: metrics.urgentServices,
       subtitle: '+7 días',
       icon: <Clock className="size-5" />,
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10 border-red-500/20',
+      color: 'text-danger',
+      bgColor: 'border-danger/20 bg-danger/10',
       urgent: metrics.urgentServices > 0
     }
   ];
@@ -167,10 +164,10 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
   return (
     <div className="space-y-4">
       {/* Overview Card */}
-      <Card className="bg-white border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-gray-900 flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg text-foreground">
               <TrendingUp className="size-5 text-primary" />
               Resumen del Pipeline de Servicios
             </CardTitle>
@@ -182,22 +179,22 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
         <CardContent className="pt-0">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">{metrics.total}</div>
-              <div className="text-gray-600">Total Servicios</div>
+              <div className="text-2xl font-bold text-foreground">{metrics.total}</div>
+              <div className="text-muted-foreground">Total Servicios</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-success">
                 ${metrics.totalValue.toLocaleString()}
               </div>
-              <div className="text-gray-600">Valor Total</div>
+              <div className="text-muted-foreground">Valor Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{metrics.totalInPipeline}</div>
-              <div className="text-gray-600">En Proceso</div>
+              <div className="text-2xl font-bold text-primary">{metrics.totalInPipeline}</div>
+              <div className="text-muted-foreground">En Proceso</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{metrics.avgProcessingTime}d</div>
-              <div className="text-gray-600">Tiempo Prom.</div>
+              <div className="text-2xl font-bold text-info">{metrics.avgProcessingTime}d</div>
+              <div className="text-muted-foreground">Tiempo Prom.</div>
             </div>
           </div>
         </CardContent>
@@ -208,7 +205,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
         {metricCards.map((metric, index) => (
           <Card 
             key={index} 
-            className={`bg-white border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
+            className={`border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -225,10 +222,10 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
                 <div className={`text-xl font-bold ${metric.color}`}>
                   {metric.value}
                 </div>
-                <div className="text-xs text-gray-700 font-medium">
+                <div className="text-xs font-medium text-foreground">
                   {metric.title}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {metric.subtitle}
                 </div>
               </div>

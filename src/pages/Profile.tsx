@@ -1,17 +1,18 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, User, Lock, Save, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Lock, Save, Camera, Loader2, ShieldCheck, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { PageHeader } from '@/components/ui/page-header';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const profileSchema = z.object({
@@ -35,7 +36,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 const Profile = () => {
   const navigate = useNavigate();
   const { user, updateUser, forceRefreshProfile } = useUser();
-  const { user: authUser } = useAuth();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,6 +50,17 @@ const Profile = () => {
       confirmPassword: '',
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  }, [form, user?.email, user?.name]);
 
   const getUserInitials = () => {
     if (!user?.name) return 'U';
@@ -116,147 +127,175 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex items-center gap-x-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4 mr-2" />
-          Volver
-        </Button>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Mi Perfil</h1>
-          <p className="text-muted-foreground text-sm">Gestiona tu información personal y configuración de seguridad</p>
-        </div>
-      </div>
-
-      {/* Avatar Section */}
-      <Card className="bg-card border">
-        <CardContent className="flex items-center gap-6 p-6">
-          <div className="relative group">
-            <Avatar className="size-20 border-2 border-border">
-              <AvatarImage src={user?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingAvatar}
-              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              {uploadingAvatar ? (
-                <Loader2 className="size-5 text-white animate-spin" />
-              ) : (
-                <Camera className="size-5 text-white" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{user?.name}</p>
-            <p className="text-xs text-muted-foreground">{user?.email}</p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingAvatar}
-            >
-              {uploadingAvatar ? 'Subiendo...' : 'Cambiar foto'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Mi Perfil"
+        description="Gestiona tu información personal, identidad visual y credenciales de acceso."
+        badges={
+          <Badge variant="outline" className="capitalize">
+            {user?.role || 'usuario'}
+          </Badge>
+        }
+        actions={
+          <Button variant="outline" onClick={() => navigate(-1)} className="border-border/70 bg-card/70">
+            <ArrowLeft className="mr-2 size-4" />
+            Volver
+          </Button>
+        }
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Personal Information */}
-          <Card className="bg-card border">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center">
-                <User className="size-5 mr-2" />
-                Información Personal
-              </CardTitle>
-              <CardDescription>Actualiza tu información personal y de contacto</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="name" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Nombre completo</FormLabel>
-                    <FormControl><Input {...field} placeholder="Tu nombre completo" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Email</FormLabel>
-                    <FormControl><Input {...field} type="email" placeholder="tu@email.com" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Teléfono</FormLabel>
-                    <FormControl><Input {...field} placeholder="+56 9 1234 5678" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="flex items-center gap-x-2">
-                  <span className="text-muted-foreground text-sm">Rol:</span>
-                  <span className="text-violet-600 dark:text-violet-400 font-medium capitalize">{user?.role}</span>
+          <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <Card className="border-border/70 bg-card/80 shadow-sm">
+              <CardContent className="space-y-5 p-6">
+                <div className="relative mx-auto flex w-fit justify-center">
+                  <div className="group relative">
+                    <Avatar className="size-28 border-2 border-border shadow-sm">
+                      <AvatarImage src={user?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-xl font-bold text-primary">
+                        {getUserInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-black/55 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      {uploadingAvatar ? (
+                        <Loader2 className="size-5 animate-spin text-white" />
+                      ) : (
+                        <Camera className="size-5 text-white" />
+                      )}
+                    </button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Security */}
-          <Card className="bg-card border">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center">
-                <Lock className="size-5 mr-2" />
-                Seguridad
-              </CardTitle>
-              <CardDescription>Cambia tu contraseña para mantener tu cuenta segura</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField control={form.control} name="currentPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Contraseña actual</FormLabel>
-                    <FormControl><Input {...field} type="password" placeholder="Contraseña actual" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="newPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Nueva contraseña</FormLabel>
-                    <FormControl><Input {...field} type="password" placeholder="Nueva contraseña" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">Confirmar contraseña</FormLabel>
-                    <FormControl><Input {...field} type="password" placeholder="Confirmar contraseña" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2 text-center">
+                  <p className="text-lg font-semibold text-foreground">{user?.name}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <Badge variant="outline" className="capitalize">
+                    {user?.role || 'usuario'}
+                  </Badge>
+                </div>
 
-          {/* Actions */}
+                <div className="rounded-xl border border-border/70 bg-background/50 p-4 text-sm">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <ShieldCheck className="size-4 text-primary" />
+                    <span className="font-medium">Estado de cuenta</span>
+                  </div>
+                  <p className="mt-2 text-muted-foreground">
+                    Mantén tu correo y contraseña actualizados para una recuperación segura del acceso.
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-border/70 bg-background/60"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? 'Subiendo foto...' : 'Cambiar foto de perfil'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-6">
+              <Card className="border-border/70 bg-card/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-foreground">
+                    <User className="mr-2 size-5 text-primary" />
+                    Información Personal
+                  </CardTitle>
+                  <CardDescription>Actualiza tu nombre visible y correo principal de acceso.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre completo</FormLabel>
+                        <FormControl><Input {...field} placeholder="Tu nombre completo" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl><Input {...field} type="email" placeholder="tu@email.com" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="phone" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Teléfono</FormLabel>
+                        <FormControl><Input {...field} placeholder="+56 9 1234 5678" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <div className="rounded-xl border border-border/70 bg-background/50 p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                        <Mail className="size-4 text-primary" />
+                        Identidad de acceso
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        El rol actual define los permisos visibles dentro del sistema.
+                      </p>
+                      <Badge variant="outline" className="mt-3 capitalize">
+                        {user?.role || 'usuario'}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70 bg-card/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-foreground">
+                    <Lock className="mr-2 size-5 text-primary" />
+                    Seguridad
+                  </CardTitle>
+                  <CardDescription>Cambia tu contraseña para mantener tu cuenta protegida.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <FormField control={form.control} name="currentPassword" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contraseña actual</FormLabel>
+                        <FormControl><Input {...field} type="password" placeholder="Contraseña actual" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="newPassword" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nueva contraseña</FormLabel>
+                        <FormControl><Input {...field} type="password" placeholder="Nueva contraseña" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar contraseña</FormLabel>
+                        <FormControl><Input {...field} type="password" placeholder="Confirmar contraseña" className="border-border/70 bg-background/60" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
+            <Button type="button" variant="outline" className="border-border/70 bg-card/70" onClick={() => navigate(-1)}>Cancelar</Button>
             <Button type="submit">
               <Save className="size-4 mr-2" />
               Guardar Cambios

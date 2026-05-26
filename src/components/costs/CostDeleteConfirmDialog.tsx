@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Trash2, Package, CreditCard, Wrench, Loader2, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Cost } from '@/types/costs';
-import { toast } from 'sonner';
 
 interface RelatedData {
   supplierPayments: number;
@@ -122,10 +121,10 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-border/70 bg-card">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <AlertTriangle className="size-5 text-danger" />
             Eliminar Costo
           </DialogTitle>
           <DialogDescription>
@@ -136,7 +135,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
         {cost && (
           <div className="space-y-4">
             {/* Cost info */}
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="rounded-xl border border-border/70 bg-background/50 p-3">
               <p className="font-medium text-sm text-foreground">{cost.description}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {formatCurrency(Number(cost.amount))} — {cost.date}
@@ -151,12 +150,12 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
               </div>
             ) : hasRelatedData ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <div className="flex items-center gap-2 text-warning">
                   <ShieldAlert className="size-4" />
                   <span className="text-sm font-medium">Este costo tiene datos relacionados:</span>
                 </div>
 
-                <div className="space-y-2 pl-6">
+                <div className="space-y-2 rounded-xl border border-border/70 bg-background/40 p-3">
                   {relatedData!.supplierPayments > 0 && (
                     <div className="flex items-center gap-2">
                       <CreditCard className="size-4 text-muted-foreground" />
@@ -187,7 +186,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
                 </div>
 
                 {/* Password field */}
-                <div className="space-y-2 pt-2 border-t">
+                <div className="space-y-2 border-t border-border/70 pt-2">
                   <Label htmlFor="delete-password" className="text-sm">
                     Ingrese su contraseña para confirmar
                   </Label>
@@ -216,7 +215,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={verifying}>
+          <Button variant="outline" className="border-border/70 bg-background/60" onClick={() => onOpenChange(false)} disabled={verifying}>
             Cancelar
           </Button>
           <Button

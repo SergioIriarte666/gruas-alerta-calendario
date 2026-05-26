@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
 import { Download, Filter, Calendar, TrendingUp, Package, BarChart3, Zap } from 'lucide-react';
 import { StockReportView } from './StockReportView';
 import { MovementReportView } from './MovementReportView';
@@ -55,108 +58,111 @@ export const InventoryReportsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reportes de Inventario</h1>
-          <p className="text-muted-foreground">
-            Sistema integral de análisis y reportes de inventario
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
-          >
-            <Filter className="size-4" />
-            Filtros
-          </Button>
-          
-          <Button
-            variant="outline"
-            onClick={() => setShowExportOptions(!showExportOptions)}
-            className="flex items-center gap-2"
-          >
-            <Download className="size-4" />
-            Exportar
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Reportes de Inventario"
+        description="Consulta indicadores, stock, movimientos, costos y proyecciones desde un workspace analítico unificado."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 border-border/70 bg-background/60"
+            >
+              <Filter className="size-4" />
+              Filtros
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowExportOptions(!showExportOptions)}
+              className="flex items-center gap-2 border-border/70 bg-background/60"
+            >
+              <Download className="size-4" />
+              Exportar
+            </Button>
+          </div>
+        }
+      />
 
-      {/* Filters */}
       {showFilters && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Filtros de Reporte</CardTitle>
-            <CardDescription>
-              Personaliza los datos mostrados en los reportes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <SectionCard
+          title="Filtros de reporte"
+          description="Personaliza el conjunto de datos mostrado en cada análisis."
+          className="border-border/70 bg-card/80 shadow-sm"
+        >
+          <CardContent className="p-0 pt-0">
             <ReportFilters filters={filters} onFiltersChange={setFilters} />
           </CardContent>
-        </Card>
+        </SectionCard>
       )}
 
-      {/* Export Options */}
       {showExportOptions && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Opciones de Exportación</CardTitle>
-            <CardDescription>
-              Exporta los reportes en diferentes formatos
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <SectionCard
+          title="Opciones de exportación"
+          description="Genera salidas del reporte activo con los filtros aplicados."
+          className="border-border/70 bg-card/80 shadow-sm"
+        >
+          <CardContent className="p-0 pt-0">
             <ExportOptions 
               activeReport={activeTab} 
               filters={filters}
               onClose={() => setShowExportOptions(false)}
             />
           </CardContent>
-        </Card>
+        </SectionCard>
       )}
 
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex items-center gap-2"
-            >
-              <tab.icon className="size-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
+        <div className="flex flex-wrap gap-2 px-6 pt-6">
+          <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+            <BarChart3 className="size-3.5" />
+            Analítica operativa
+          </Badge>
+          <Badge variant="outline" className="gap-1 rounded-full px-3 py-1">
+            <TrendingUp className="size-3.5" />
+            Reporte activo: {activeTabData?.label}
+          </Badge>
+        </div>
 
-        {tabs.map((tab) => (
-          <TabsContent key={tab.id} value={tab.id} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <tab.icon className="size-5" />
-                  {tab.label}
-                </CardTitle>
-                <CardDescription>
-                  {tab.id === 'dashboard' && 'Vista general de métricas clave y KPIs del inventario'}
-                  {tab.id === 'stock' && 'Estado actual del inventario, stock bajo y valorización'}
-                  {tab.id === 'movements' && 'Análisis detallado de entradas y salidas de inventario'}
-                  {tab.id === 'costs' && 'Análisis financiero de costos y proveedores'}
-                  {tab.id === 'predictive' && 'Proyecciones y análisis predictivo de demanda'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <tab.component filters={filters} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
+          <div className="overflow-x-auto">
+            <TabsList className="grid w-full min-w-[760px] grid-cols-5 rounded-xl bg-transparent p-0">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="flex items-center gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <tab.icon className="size-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {tabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+              <Card className="border-border/70 bg-background/50 shadow-none">
+                <CardContent className="space-y-4 p-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-foreground">
+                      <tab.icon className="size-5 text-primary" />
+                      <h2 className="text-lg font-semibold">{tab.label}</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {tab.id === 'dashboard' && 'Vista general de métricas clave y KPIs del inventario.'}
+                      {tab.id === 'stock' && 'Estado actual del inventario, stock bajo y valorización.'}
+                      {tab.id === 'movements' && 'Análisis detallado de entradas y salidas de inventario.'}
+                      {tab.id === 'costs' && 'Análisis financiero de costos y proveedores.'}
+                      {tab.id === 'predictive' && 'Proyecciones y análisis predictivo de demanda.'}
+                    </p>
+                  </div>
+                  <tab.component filters={filters} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </SectionCard>
     </div>
   );
 };

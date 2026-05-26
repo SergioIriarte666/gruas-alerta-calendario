@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { usePagedInvoices } from '@/hooks/invoices/useInvoiceData';
@@ -10,6 +9,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { InvoicesPageContent } from '@/components/invoices/InvoicesPageContent';
 import { useInvoicesPageState } from '@/hooks/invoices/useInvoicesPageState';
 import { useInvoicesPageActions } from '@/hooks/invoices/useInvoicesPageActions';
+import { PageHeader } from '@/components/ui/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface InvoicesFormScreenProps {
   formState: {
@@ -26,6 +27,10 @@ const InvoicesFormScreen = ({
   onCancel,
 }: InvoicesFormScreenProps) => (
   <div className="space-y-6">
+    <PageHeader
+      title={formState.editingInvoice ? 'Editar Factura' : 'Nueva Factura'}
+      description="Completa los datos de facturación y vuelve al listado cuando termines."
+    />
     <ErrorBoundary name="InvoiceForm">
       <InvoiceForm
         invoice={formState.editingInvoice}
@@ -39,8 +44,15 @@ const InvoicesFormScreen = ({
 );
 
 const InvoicesLoadingState = () => (
-  <div className="flex items-center justify-center h-64">
-    <div className="text-foreground">Cargando facturas…</div>
+  <div className="space-y-6">
+    <Skeleton className="h-12 w-64" />
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {[...Array(4)].map((_, index) => (
+        <Skeleton key={index} className="h-32 w-full" />
+      ))}
+    </div>
+    <Skeleton className="h-24 w-full" />
+    <Skeleton className="h-[420px] w-full" />
   </div>
 );
 

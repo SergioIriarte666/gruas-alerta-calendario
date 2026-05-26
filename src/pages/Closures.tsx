@@ -16,7 +16,6 @@ import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmation
 import { ClosureDetailsModal } from '@/components/closures/ClosureDetailsModal';
 import { ClosureDeleteConfirmDialog } from '@/components/closures/ClosureDeleteConfirmDialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import {
   Sheet,
@@ -28,6 +27,17 @@ import {
 import ClosureReportForm from '@/components/closures/ClosureReportForm';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const Closures = () => {
   const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
@@ -47,6 +57,7 @@ const Closures = () => {
   const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
   const [closureToDelete, setClosureToDelete] = useState<ServiceClosure | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [closureToClose, setClosureToClose] = useState<ServiceClosure | null>(null);
 
   
 
@@ -109,7 +120,7 @@ const Closures = () => {
     });
   }, [closures, searchTerm, statusFilter, clientFilter, sortField, sortDirection, clients]);
 
-  const handleDelete = (id: string, folio: string) => {
+  const handleDelete = (id: string) => {
     const closure = closures.find(c => c.id === id);
     if (!closure) return;
     if (closure.status === 'invoiced') {
@@ -129,13 +140,9 @@ const Closures = () => {
     setClosureToDelete(null);
   };
 
-  const handleClose = (id: string, folio: string) => {
-    if (window.confirm(`¿Está seguro de cerrar el periodo "${folio}"?`)) {
-      closeClosure(id);
-      toast.success("Cierre procesado", {
-        description: "El cierre ha sido procesado exitosamente.",
-      });
-    }
+  const handleClose = (id: string) => {
+    const closure = closures.find((item) => item.id === id);
+    if (closure) setClosureToClose(closure);
   };
 
   const handleEdit = (closure: ServiceClosure) => {
@@ -224,8 +231,15 @@ const Closures = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-foreground">Cargando cierres...</div>
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[...Array(3)].map((_, index) => (
+            <Skeleton key={index} className="h-32 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-[420px] w-full" />
       </div>
     );
   }
@@ -247,6 +261,7 @@ const Closures = () => {
     <div className="space-y-6">
       <ClosuresHeader 
         onCreateClosure={handleShowCreateModal}
+        onOpenReport={handleShowReportSheet}
       />
       
       
@@ -291,9 +306,11 @@ const Closures = () => {
       />
 
       {closures.length === 0 && !loading && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
-        </div>
+        <Card className="border-border/70 bg-card/80 shadow-sm">
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
+          </CardContent>
+        </Card>
       )}
 
       <Sheet open={showReportSheet} onOpenChange={setShowReportSheet}>
@@ -320,6 +337,34 @@ const Closures = () => {
         closure={createdClosure}
         onConfirm={handleInvoiceConfirm}
       />
+
+      <AlertDialog open={!!closureToClose} onOpenChange={(open) => !open && setClosureToClose(null)}>
+        <AlertDialogContent className="border-border/70 bg-popover/95">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cerrar periodo</AlertDialogTitle>
+            <AlertDialogDescription>
+              {closureToClose
+                ? `Se cerrará el periodo "${closureToClose.folio}" y quedará listo para su facturación.`
+                : 'Esta acción confirmará el cierre del periodo.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!closureToClose) return;
+                closeClosure(closureToClose.id);
+                toast.success("Cierre procesado", {
+                  description: "El cierre ha sido procesado exitosamente.",
+                });
+                setClosureToClose(null);
+              }}
+            >
+              Confirmar cierre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -15,7 +15,7 @@ interface XMLImportDialogHeaderProps {
   countLabel?: string;
 }
 
-type XMLImportStatTone = 'slate' | 'emerald' | 'blue' | 'red';
+type XMLImportStatTone = 'neutral' | 'success' | 'info' | 'danger';
 
 interface XMLImportStatItem {
   title: string;
@@ -43,25 +43,25 @@ const toneClasses: Record<
     value: string;
   }
 > = {
-  slate: {
-    card: 'border-slate-200/80 bg-gradient-to-br from-white to-slate-50 shadow-sm dark:from-background dark:to-muted/20',
-    icon: 'bg-slate-100 text-slate-700 dark:bg-slate-900/60 dark:text-slate-300',
+  neutral: {
+    card: 'border-border/70 bg-card shadow-sm',
+    icon: 'bg-muted/50 text-muted-foreground',
     value: '',
   },
-  emerald: {
-    card: 'border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm dark:from-emerald-950/30 dark:to-background',
-    icon: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-    value: 'text-emerald-600 dark:text-emerald-400',
+  success: {
+    card: 'border-success/20 bg-success/10 shadow-sm',
+    icon: 'bg-success/15 text-success',
+    value: 'text-success',
   },
-  blue: {
-    card: 'border-blue-200/80 bg-gradient-to-br from-blue-50 to-white shadow-sm dark:from-blue-950/20 dark:to-background',
-    icon: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  info: {
+    card: 'border-info/20 bg-info/10 shadow-sm',
+    icon: 'bg-info/15 text-info',
     value: '',
   },
-  red: {
-    card: 'border-red-200/80 bg-gradient-to-br from-red-50 to-white shadow-sm dark:from-red-950/20 dark:to-background',
-    icon: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-    value: 'text-red-600 dark:text-red-400',
+  danger: {
+    card: 'border-danger/20 bg-danger/10 shadow-sm',
+    icon: 'bg-danger/15 text-danger',
+    value: 'text-danger',
   },
 };
 
@@ -73,7 +73,7 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
   documentCount,
   countLabel = 'doc(s)',
 }) => (
-  <DialogHeader className="border-b bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-4 dark:from-slate-950 dark:via-background dark:to-slate-950">
+  <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <DialogTitle className="flex items-center gap-2 text-xl">
@@ -85,11 +85,11 @@ export const XMLImportDialogHeader: React.FC<XMLImportDialogHeaderProps> = ({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Badge variant="outline" className="bg-background/70 px-3 py-1 text-xs">
+        <Badge variant="outline" className="border-border/70 bg-background/70 px-3 py-1 text-xs">
           {fileName ? `Archivo: ${fileName}` : 'Esperando XML'}
         </Badge>
         {typeof documentCount === 'number' && (
-          <Badge variant="secondary" className="px-3 py-1 text-xs">
+          <Badge variant="secondary" className="border-border/70 bg-muted/40 px-3 py-1 text-xs">
             {documentCount} {countLabel}
           </Badge>
         )}

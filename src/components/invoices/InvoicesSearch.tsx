@@ -1,4 +1,3 @@
-
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
@@ -16,7 +15,7 @@ const InvoicesSearch = ({ searchTerm, onSearchChange }: InvoicesSearchProps) => 
         placeholder="Buscar por folio, número fiscal o cliente..."
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+        className="h-11 rounded-xl border-border/70 bg-background/70 pl-10 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
     </div>
   );

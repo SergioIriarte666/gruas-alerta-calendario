@@ -27,10 +27,10 @@ interface SupplierPaymentsTabProps {
 }
 
 const getStatusColor = (status: string, dueDate: string | null) => {
-  if (status === 'paid') return 'bg-green-600 text-white';
-  if (status === 'overdue') return 'bg-red-600 text-white';
-  if (dueDate && new Date(dueDate) < new Date()) return 'bg-red-600 text-white';
-  return 'bg-yellow-600 text-white';
+  if (status === 'paid') return 'border-success/30 bg-success/10 text-success';
+  if (status === 'overdue') return 'border-danger/30 bg-danger/10 text-danger';
+  if (dueDate && new Date(dueDate) < new Date()) return 'border-danger/30 bg-danger/10 text-danger';
+  return 'border-warning/30 bg-warning/10 text-warning';
 };
 
 const getStatusLabel = (status: string, dueDate: string | null) => {
@@ -93,8 +93,8 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
           </div>
         )}
         <div className="flex items-center gap-4 text-xs text-muted-foreground ml-auto">
-          <span>Pagado: <strong className="text-green-600">{formatCurrency(totals.paid)}</strong></span>
-          <span>Pendiente: <strong className="text-yellow-600">{formatCurrency(totals.pending)}</strong></span>
+          <span>Pagado: <strong className="text-success">{formatCurrency(totals.paid)}</strong></span>
+          <span>Pendiente: <strong className="text-warning">{formatCurrency(totals.pending)}</strong></span>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
                   {payment.description || '-'}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">{payment.reference_number || '-'}</TableCell>
-                <TableCell className="text-right font-bold text-violet-600 text-sm">
+                <TableCell className="text-right font-bold text-primary text-sm">
                   {formatCurrency(payment.amount)}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
@@ -145,7 +145,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
       {/* Total Footer */}
       <div className="flex items-center justify-end gap-4 pt-2 border-t border-border">
         <span className="text-sm text-muted-foreground">Total:</span>
-        <span className="text-base font-bold text-violet-600">{formatCurrency(totals.total)}</span>
+        <span className="text-base font-bold text-primary">{formatCurrency(totals.total)}</span>
       </div>
     </div>
   );

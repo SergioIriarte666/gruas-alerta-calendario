@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,9 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRut } from '@/utils/rutFormatter';
+
+const inputClassName = 'border-border/70 bg-background/60';
+const sectionCardClassName = 'border-border/70 bg-card/80 shadow-sm';
 
 export const CompanySettingsTab = () => {
   const { settings, updateSettings, saveSettings, saving } = useSettings();
@@ -205,121 +208,130 @@ export const CompanySettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card border">
+      <Card className={sectionCardClassName}>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-black text-lg sm:text-xl">Información de la Empresa</CardTitle>
+          <CardTitle className="text-lg text-foreground sm:text-xl">Información de la empresa</CardTitle>
+          <CardDescription>
+            Define los datos legales y operativos que se usarán en encabezados, documentos y folios del sistema.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="businessName" className="text-black">Nombre de la Empresa</Label>
+              <Label htmlFor="businessName">Nombre de la empresa</Label>
               <Input
                 id="businessName"
                 value={localSettings.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Nombre de la empresa"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
             <div>
-              <Label htmlFor="taxId" className="text-black">RUT</Label>
+              <Label htmlFor="taxId">RUT</Label>
               <Input
                 id="taxId"
                 value={localSettings.taxId}
                 onChange={(e) => handleInputChange('taxId', e.target.value)}
                 placeholder="RUT de la empresa"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="address" className="text-black">Dirección</Label>
+            <Label htmlFor="address">Dirección</Label>
             <Textarea
               id="address"
               value={localSettings.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
               placeholder="Dirección completa de la empresa"
-              className="bg-white border-gray-300 text-black"
+              className={inputClassName}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="phone" className="text-black">Teléfono</Label>
+              <Label htmlFor="phone">Teléfono</Label>
               <Input
                 id="phone"
                 value={localSettings.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="Teléfono de contacto"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-black">Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={localSettings.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Email de contacto"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="folioFormat" className="text-black">Formato de Folio</Label>
+            <Label htmlFor="folioFormat">Formato de folio</Label>
             <Input
               id="folioFormat"
               value={localSettings.folioFormat}
               onChange={(e) => handleInputChange('folioFormat', e.target.value)}
               placeholder="SRV-{number}"
-              className="bg-white border-gray-300 text-black"
+              className={inputClassName}
             />
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Use {'{number}'} donde quiere que aparezca el número consecutivo
             </p>
           </div>
 
           <div>
-            <Label htmlFor="nextFolioNumber" className="text-black">Próximo Número de Folio</Label>
+            <Label htmlFor="nextFolioNumber">Próximo número de folio</Label>
             <Input
               id="nextFolioNumber"
               type="number"
               value={localSettings.nextServiceFolioNumber}
-              onChange={(e) => handleInputChange('nextServiceFolioNumber', parseInt(e.target.value))}
+              onChange={(e) => handleInputChange('nextServiceFolioNumber', parseInt(e.target.value || '0', 10) || 0)}
               placeholder="1000"
-              className="bg-white border-gray-300 text-black"
+              className={inputClassName}
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border">
+      <Card className={sectionCardClassName}>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-black text-lg sm:text-xl">Logotipo de la Empresa</CardTitle>
+          <CardTitle className="text-lg text-foreground sm:text-xl">Logotipo principal</CardTitle>
+          <CardDescription>
+            Actualiza la imagen corporativa que se muestra en la navegación y en los documentos generados.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <LogoUpload
             currentLogo={localSettings.logo}
             onLogoChange={handleLogoChange}
             disabled={isLogoUpdating}
-            labelClassName="text-black"
+            labelClassName="text-foreground"
           />
         </CardContent>
       </Card>
 
-      <Card className="bg-card border">
+      <Card className={sectionCardClassName}>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-black text-lg sm:text-xl">Empresas adicionales (encabezado y logotipo)</CardTitle>
+          <CardTitle className="text-lg text-foreground sm:text-xl">Empresas adicionales</CardTitle>
+          <CardDescription>
+            Gestiona perfiles alternativos para encabezados, branding y emisión de documentos por empresa.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-black">Seleccionar empresa</Label>
+              <Label>Seleccionar empresa</Label>
               <Select value={selectedProfileRut} onValueChange={setSelectedProfileRut}>
-                <SelectTrigger className="bg-white border-gray-300 text-black">
+                <SelectTrigger className={inputClassName}>
                   <SelectValue placeholder="Nueva empresa" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border z-50">
@@ -336,69 +348,69 @@ export const CompanySettingsTab = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-black">RUT</Label>
+              <Label>RUT</Label>
               <Input
                 value={profileForm.rut}
                 onChange={(e) => setProfileForm(prev => ({ ...prev, rut: formatRut(e.target.value) }))}
                 placeholder="13.222.170-7"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
                 disabled={selectedProfileRut !== '__new__'}
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-black">Nombre</Label>
+              <Label>Nombre</Label>
               <Input
                 value={profileForm.name}
                 onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="LowBoy Chile SpA"
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
           </div>
 
           <div>
-            <Label className="text-black">Dirección</Label>
+            <Label>Dirección</Label>
             <Textarea
               value={profileForm.address}
               onChange={(e) => setProfileForm(prev => ({ ...prev, address: e.target.value }))}
               placeholder="Dirección completa"
-              className="bg-white border-gray-300 text-black"
+              className={inputClassName}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-black">Teléfono</Label>
+              <Label>Teléfono</Label>
               <Input
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+56 9 ..."
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
             <div>
-              <Label className="text-black">Email</Label>
+              <Label>Email</Label>
               <Input
                 type="email"
                 value={profileForm.email}
                 onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="contacto@..."
-                className="bg-white border-gray-300 text-black"
+                className={inputClassName}
               />
             </div>
           </div>
 
-          <div className="rounded-md border p-4">
+          <div className="rounded-xl border border-border/70 bg-background/50 p-4">
             <LogoUpload
               currentLogo={profileForm.logoUrl}
               onLogoChange={handleProfileLogoChange}
               disabled={updatingProfileLogo}
-              labelClassName="text-black"
+              labelClassName="text-foreground"
             />
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button onClick={saveCompanyProfile} disabled={savingProfile} className="bg-tms-green hover:bg-tms-green/90 text-black">
+            <Button onClick={saveCompanyProfile} disabled={savingProfile}>
               {savingProfile && <Loader2 className="size-4 mr-2 animate-spin" />}
               Guardar Empresa
             </Button>
@@ -407,11 +419,7 @@ export const CompanySettingsTab = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-tms-green hover:bg-tms-green/90 text-black"
-        >
+        <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
           Guardar Configuración
         </Button>

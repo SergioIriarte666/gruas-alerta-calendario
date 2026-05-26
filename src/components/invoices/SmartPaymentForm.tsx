@@ -18,6 +18,8 @@ import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface SmartPaymentFormProps {
   onClose: () => void;
@@ -61,6 +63,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [isAmountAutoCalculated, setIsAmountAutoCalculated] = useState(false);
   const [paymentStatusWarnings, setPaymentStatusWarnings] = useState<Record<string, string>>({});
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const batchProgress = useBatchProgress();
 
   // Fetch client invoices when client changes
@@ -196,13 +199,13 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       return {
         type: 'perfect',
         message: `Monto exacto - ${selectedInvoiceIds.length === 1 ? 'La factura seleccionada será pagada' : `Las ${selectedInvoiceIds.length} facturas seleccionadas serán pagadas`} completamente`,
-        icon: <CheckCircle className="size-4 text-green-500" />
+        icon: <CheckCircle className="size-4 text-success" />
       };
     } else {
       return {
         type: 'mismatch',
         message: `El monto debe ser exactamente ${formatCurrency(selectedTotal)} para ${selectedInvoiceIds.length === 1 ? 'la factura seleccionada' : `las ${selectedInvoiceIds.length} facturas seleccionadas`}`,
-        icon: <AlertTriangle className="size-4 text-red-500" />
+        icon: <AlertTriangle className="size-4 text-danger" />
       };
     }
   };
@@ -219,9 +222,14 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         return;
       }
     }
-    if (duplicateWarning && !confirm('Se detectó un posible duplicado. ¿Desea continuar?')) {
+    if (duplicateWarning) {
+      setShowDuplicateConfirm(true);
       return;
     }
+    await processSubmit();
+  };
+
+  const processSubmit = async () => {
     setLoading(true);
     
     // Iniciar progreso si hay facturas seleccionadas
@@ -299,18 +307,20 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const selectedClient = clients.find(c => c.id === formData.client_id);
   const recommendation = getPaymentRecommendation();
   return <>
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Zap className="size-5" />
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle className="flex items-center gap-2">
+            <Zap className="size-5 text-primary" />
             Registrar Pago Inteligente
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
+          </DialogTitle>
+          <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />
           </Button>
-        </CardHeader>
-        <CardContent className="pt-6">
+          </div>
+        </DialogHeader>
+        <div className="px-6 py-5">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cliente */}
             <div>
@@ -322,13 +332,13 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectContent>
                   {clients.filter(c => c.isActive).map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex flex-col py-0.5">
                         <span className="font-medium">{toTitleCase(client.name)}</span>
                         {client.department && client.department !== 'General' && (
-                          <span className="text-xs text-violet-600 dark:text-violet-400">
+                          <span className="text-xs text-primary">
                             {client.department}
                           </span>
                         )}
@@ -340,32 +350,32 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             </div>
 
             {/* Información del cliente y facturas */}
-            {selectedClient && <Card className="bg-gray-50">
+            {selectedClient && <Card className="border-border/70 bg-muted/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{toTitleCase(selectedClient.name)}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {clientInvoices.length > 0 ? <>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         <span className="font-medium">Facturas pendientes:</span> {clientInvoices.length}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         <span className="font-medium">Total pendiente:</span> {formatCurrency(getTotalPendingAmount())}
                       </div>
                       
                        <div className="space-y-2">
-                         <div className="text-sm font-medium text-gray-700 flex items-center justify-between">
+                         <div className="flex items-center justify-between text-sm font-medium text-foreground">
                            <span>Próximas facturas a pagar:</span>
                            <label className="flex items-center gap-2 text-xs">
-                             <input type="checkbox" checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length} onChange={e => handleSelectAllInvoices(e.target.checked)} className="size-3 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
+                             <input type="checkbox" checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length} onChange={e => handleSelectAllInvoices(e.target.checked)} className="size-3 rounded border border-border checked:bg-primary checked:border-primary" />
                              Seleccionar todas
                            </label>
                          </div>
                          {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map(invoice => {
                     const isSelected = selectedInvoiceIds.includes(invoice.id);
-                    return <div key={invoice.id} className={`flex justify-between items-center text-sm p-2 bg-white rounded border ${isSelected ? 'border-blue-500 bg-blue-50' : ''}`}>
+                    return <div key={invoice.id} className={`flex items-center justify-between rounded-lg border p-2 text-sm ${isSelected ? 'border-primary/30 bg-primary/10' : 'border-border/70 bg-background/60'}`}>
                                 <div className="flex items-center gap-2">
-                                  <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="size-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600" />
+                                  <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="size-4 rounded border border-border checked:bg-primary checked:border-primary" />
                                   <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
                                   <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
                                     {invoice.status}
@@ -378,14 +388,14 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                                        </span>
                                      );
                                    })()}
-                                   {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                   {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
                                        ⚠️ Pago automático
                                      </Badge>}
                                  </div>
                                  <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
                               </div>;
                   })}
-                        {clientInvoices.length > 3 && <button type="button" onClick={() => setShowAllInvoices(!showAllInvoices)} className="text-xs text-blue-600 hover:text-blue-800 text-center w-full py-1 rounded hover:bg-blue-50 transition-colors">
+                        {clientInvoices.length > 3 && <button type="button" onClick={() => setShowAllInvoices(!showAllInvoices)} className="w-full rounded py-1 text-center text-xs text-primary transition-colors hover:bg-primary/10 hover:text-primary">
                             {showAllInvoices ? 'Mostrar menos' : `+${clientInvoices.length - 3} facturas más`}
                           </button>}
                       </div>
@@ -407,11 +417,11 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 amount: e.target.value
               });
               setIsAmountAutoCalculated(false);
-            }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-green-300 bg-green-50" : ""} />
+            }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-success/30 bg-success/10" : ""} />
               
               {/* Recomendación de pago */}
               {recommendation && (
-                <Alert className={`mt-2 ${recommendation.type === 'perfect' ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
+                <Alert className={`mt-2 ${recommendation.type === 'perfect' ? 'border-success/30 bg-success/10' : 'border-danger/30 bg-danger/10'}`}>
                   <div className="flex items-center gap-2">
                     {recommendation.icon}
                     <AlertDescription>{recommendation.message}</AlertDescription>
@@ -457,7 +467,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                  <SelectContent>
                     <SelectItem value="transferencia">Transferencia</SelectItem>
                     <SelectItem value="efectivo">Efectivo</SelectItem>
                     <SelectItem value="cheque">Cheque</SelectItem>
@@ -483,18 +493,39 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             })} placeholder="Observaciones adicionales" rows={3} />
             </div>
 
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={loading || !!duplicateWarning} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white">
+            <div className="flex gap-2 border-t border-border/70 pt-4">
+              <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? 'Procesando...' : 'Registrar Pago'}
               </Button>
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" className="border-border/70 bg-background/60" onClick={onClose}>
                 Cancelar
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <AlertDialog open={showDuplicateConfirm} onOpenChange={setShowDuplicateConfirm}>
+      <AlertDialogContent className="border-border/70 bg-card">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Posible pago duplicado</AlertDialogTitle>
+          <AlertDialogDescription>
+            {duplicateWarning || 'Se detectó un pago similar. Confirma si quieres continuar con el registro.'}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async () => {
+              setShowDuplicateConfirm(false);
+              await processSubmit();
+            }}
+          >
+            Continuar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     
     <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
   </>;

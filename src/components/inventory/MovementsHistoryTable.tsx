@@ -1,31 +1,28 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Search, 
-  Filter, 
   Download, 
-  Calendar as CalendarIcon, 
   Eye, 
   MoreHorizontal,
   ArrowUpDown,
   TrendingUp,
   TrendingDown,
-  Edit
+  Edit,
+  RefreshCw,
+  X,
 } from 'lucide-react';
-import { useInventoryMovements, useInventoryCategories, useInventoryLocations, type InventoryMovement } from '@/hooks/useInventory';
+import { useInventoryMovements, useInventoryLocations, type InventoryMovement } from '@/hooks/useInventory';
 import { MovementDetailsModal } from './MovementDetailsModal';
 import { MovementExportOptions } from './MovementExportOptions';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export const MovementsHistoryTable = () => {
@@ -41,7 +38,6 @@ export const MovementsHistoryTable = () => {
   const [showExportOptions, setShowExportOptions] = useState(false);
 
   const { data: movements = [], isLoading, refetch } = useInventoryMovements(200);
-  const { data: categories = [] } = useInventoryCategories();
   const { data: locations = [] } = useInventoryLocations();
 
   const activeMovements = movements.filter(movement => movement.status === 'active');
@@ -114,10 +110,10 @@ export const MovementsHistoryTable = () => {
 
   const getMovementBadge = (type: string) => {
     const badges = {
-      entry: { label: 'Entrada', icon: TrendingUp, className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200' },
-      exit: { label: 'Salida', icon: TrendingDown, className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200' },
-      transfer: { label: 'Transferencia', icon: ArrowUpDown, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200' },
-      adjustment: { label: 'Ajuste', icon: ArrowUpDown, className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200' },
+      entry: { label: 'Entrada', icon: TrendingUp, className: 'border-success/20 bg-success/10 text-success' },
+      exit: { label: 'Salida', icon: TrendingDown, className: 'border-danger/20 bg-danger/10 text-danger' },
+      transfer: { label: 'Transferencia', icon: ArrowUpDown, className: 'border-info/20 bg-info/10 text-info' },
+      adjustment: { label: 'Ajuste', icon: ArrowUpDown, className: 'border-warning/20 bg-warning/10 text-warning' },
     };
     
     const config = badges[type as keyof typeof badges] || badges.adjustment;
@@ -163,11 +159,10 @@ export const MovementsHistoryTable = () => {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-8 text-muted-foreground">
-            Cargando historial de movimientos...
-          </div>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardContent className="flex items-center justify-center gap-2 py-10">
+          <RefreshCw className="size-5 animate-spin text-foreground" />
+          <span className="text-sm text-muted-foreground">Cargando historial de movimientos...</span>
         </CardContent>
       </Card>
     );
@@ -175,214 +170,251 @@ export const MovementsHistoryTable = () => {
 
   return (
     <div className="space-y-4">
-      {/* Movements Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>Historial de Movimientos</CardTitle>
-            <div className="flex flex-col md:flex-row gap-3 md:items-center">
-              {/* Simple Filters */}
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 focus-visible:ring-violet-500"
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="entry">Entradas</SelectItem>
-                  <SelectItem value="exit">Salidas</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={handleExportData} className="border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20">
-                <Download className="size-4 mr-2" />
-                Exportar
-              </Button>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardHeader className="space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle className="text-lg text-foreground sm:text-xl">Historial de Movimientos</CardTitle>
+              <CardDescription>
+                Revisa entradas, salidas y trazabilidad documental del inventario operativo.
+              </CardDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{sortedMovements.length} resultados</Badge>
+              <Badge variant="outline">{activeMovements.length} movimientos activos</Badge>
             </div>
           </div>
+
+          <div className="flex flex-col gap-3 xl:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por producto, documento o motivo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-border/70 bg-background/60 pl-10"
+              />
+            </div>
+
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="entry">Entradas</SelectItem>
+                <SelectItem value="exit">Salidas</SelectItem>
+                <SelectItem value="transfer">Transferencias</SelectItem>
+                <SelectItem value="adjustment">Ajustes</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger className="w-full border-border/70 bg-background/60 xl:w-[210px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las ubicaciones</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" onClick={handleRefresh} className="border-border/70 bg-background/60">
+              <RefreshCw className="mr-2 size-4" />
+              Actualizar
+            </Button>
+            <Button variant="outline" onClick={handleExportData} className="border-border/70 bg-background/60">
+              <Download className="mr-2 size-4" />
+              Exportar
+            </Button>
+            <Button variant="outline" onClick={clearFilters} className="border-border/70 bg-background/60">
+              <X className="mr-2 size-4" />
+              Limpiar
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('date')}
-                    className="h-auto p-0 font-semibold"
-                  >
-                    Fecha
-                    <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
-                    Tipo <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
-                    Producto <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
-                    Ubicación <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('quantity')}
-                    className="h-auto p-0 font-semibold"
-                  >
-                    Cantidad
-                    <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('cost')}
-                    className="h-auto p-0 font-semibold"
-                  >
-                    Costo
-                    <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
-                    Documento <ArrowUpDown className="ml-2 size-4" />
-                  </Button>
-                </TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedMovements.length === 0 ? (
+
+        <CardContent className="space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-border/70 bg-background/40">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No se encontraron movimientos que coincidan con los filtros
-                  </TableCell>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('date')}
+                      className="h-auto p-0 font-semibold"
+                    >
+                      Fecha
+                      <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('type')} className="h-auto p-0 font-semibold">
+                      Tipo <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('product')} className="h-auto p-0 font-semibold">
+                      Producto <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('location')} className="h-auto p-0 font-semibold">
+                      Ubicación <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('quantity')}
+                      className="h-auto p-0 font-semibold"
+                    >
+                      Cantidad
+                      <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('cost')}
+                      className="h-auto p-0 font-semibold"
+                    >
+                      Costo
+                      <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('document')} className="h-auto p-0 font-semibold">
+                      Documento <ArrowUpDown className="ml-2 size-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
-              ) : (
-                sortedMovements.map((movement) => (
-                  <TableRow key={movement.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">
-                          {format(new Date(movement.movement_date), 'dd/MM/yyyy')}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(new Date(movement.movement_date), 'HH:mm')}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getMovementBadge(movement.movement_type)}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{movement.item?.name}</div>
-                        {movement.batch_number && (
-                          <div className="text-sm text-muted-foreground">
-                            Lote: {movement.batch_number}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {movement.location?.name}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <span className={cn(
-                          "font-bold",
-                          movement.movement_type === 'entry' ? "text-violet-600" : "text-red-600"
-                        )}>
-                          {movement.movement_type === 'entry' ? '+' : '-'}{movement.quantity}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {movement.item?.unit_of_measure || 'unidades'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {movement.total_cost ? (
-                        <span className={cn(
-                          "font-bold",
-                          movement.movement_type === 'entry' ? "text-violet-600" : "text-red-600"
-                        )}>
-                          {movement.movement_type === 'entry' ? '+' : '-'}${movement.total_cost.toLocaleString()}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {movement.reference_document ? (
-                        <div className="space-y-1">
-                          <code className="text-sm bg-muted px-1 rounded">
-                            {movement.reference_document}
-                          </code>
-                          {/* Show if this document has multiple products (count unique items, not entry+exit pairs) */}
-                          {(() => {
-                            if (!movement.reference_document) return null;
-                            const uniqueItems = new Set(
-                              activeMovements
-                                .filter(m => m.reference_document === movement.reference_document)
-                                .map(m => m.item_id)
-                            );
-                            return uniqueItems.size > 1 ? (
-                              <Badge variant="secondary" className="text-xs">
-                                Compra múltiple ({uniqueItems.size} productos)
-                              </Badge>
-                            ) : null;
-                          })()}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
-                            <Eye className="size-4 mr-2" />
-                            Ver detalles
-                          </DropdownMenuItem>
-                          {movement.status === 'active' && (
-                            <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
-                              <Edit className="size-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              </TableHeader>
+              <TableBody>
+                {sortedMovements.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                      No se encontraron movimientos que coincidan con los filtros.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  sortedMovements.map((movement) => (
+                    <TableRow key={movement.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {format(new Date(movement.movement_date), 'dd/MM/yyyy')}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {format(new Date(movement.movement_date), 'HH:mm')}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getMovementBadge(movement.movement_type)}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{movement.item?.name}</div>
+                          {movement.batch_number && (
+                            <div className="text-sm text-muted-foreground">
+                              Lote: {movement.batch_number}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {movement.location?.name}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span className={cn(
+                            'font-bold',
+                            movement.movement_type === 'entry' ? 'text-primary' : 'text-danger'
+                          )}>
+                            {movement.movement_type === 'entry' ? '+' : '-'}{movement.quantity}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {movement.item?.unit_of_measure || 'unidades'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {movement.total_cost ? (
+                          <span className={cn(
+                            'font-bold',
+                            movement.movement_type === 'entry' ? 'text-primary' : 'text-danger'
+                          )}>
+                            {movement.movement_type === 'entry' ? '+' : '-'}${movement.total_cost.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {movement.reference_document ? (
+                          <div className="space-y-1">
+                            <code className="rounded bg-muted px-1 text-sm">
+                              {movement.reference_document}
+                            </code>
+                            {(() => {
+                              if (!movement.reference_document) return null;
+                              const uniqueItems = new Set(
+                                activeMovements
+                                  .filter((item) => item.reference_document === movement.reference_document)
+                                  .map((item) => item.item_id)
+                              );
+                              return uniqueItems.size > 1 ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  Compra múltiple ({uniqueItems.size} productos)
+                                </Badge>
+                              ) : null;
+                            })()}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
+                              <Eye className="size-4 mr-2" />
+                              Ver detalles
+                            </DropdownMenuItem>
+                            {movement.status === 'active' && (
+                              <DropdownMenuItem onClick={() => handleViewDetails(movement)}>
+                                <Edit className="size-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Export Options Modal */}
       <Dialog open={showExportOptions} onOpenChange={setShowExportOptions}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl border-border/70 bg-card">
           <MovementExportOptions
             movements={sortedMovements}
             appliedFilters={{
@@ -397,9 +429,8 @@ export const MovementsHistoryTable = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Movement Details Modal */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Detalles del Movimiento</DialogTitle>
           </DialogHeader>

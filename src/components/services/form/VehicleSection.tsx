@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -118,7 +118,6 @@ export const VehicleSection = ({
   const [modelExistsFlag, setModelExistsFlag] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
   const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
-  const verifiedPlatesRef = useRef<Set<string>>(new Set()); // Track plates verified for cross-check -- kept for future use
   const [pendingModel, setPendingModel] = useState<string | null>(null);
   
   // Cross-verification states
@@ -133,7 +132,7 @@ export const VehicleSection = ({
   const prevPlateRef = useRef<string>('');
   
   // Fetch vehicle history for the debounced plate
-  const { history, isLoading: historyLoading } = useVehicleHistory(
+  const { history } = useVehicleHistory(
     debouncedPlate.length >= 4 ? debouncedPlate : ''
   );
 
@@ -479,7 +478,7 @@ export const VehicleSection = ({
             )}
           </Label>
           {!vehicleBrandRequired && !vehicleBrandError && (
-            <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
+            <p className="text-xs text-muted-foreground">Opcional para este tipo de servicio</p>
           )}
           <Select 
             value={selectedBrandId} 
@@ -522,7 +521,7 @@ export const VehicleSection = ({
             )}
           </Label>
           {!vehicleModelRequired && !vehicleModelError && (
-            <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
+            <p className="text-xs text-muted-foreground">Opcional para este tipo de servicio</p>
           )}
           <Select 
             value={vehicleModel ? models.find(m => m.name.toLowerCase() === vehicleModel.toLowerCase())?.id || '' : ''}
@@ -571,7 +570,7 @@ export const VehicleSection = ({
             )}
           </Label>
           {!licensePlateRequired && !licensePlateError && (
-            <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
+            <p className="text-xs text-muted-foreground">Opcional para este tipo de servicio</p>
           )}
           <div className="relative">
             <Input
@@ -597,14 +596,14 @@ export const VehicleSection = ({
 
       {/* Banner de verificación cruzada - advertencia */}
       {mismatchWarning && !warningDismissed && (
-        <div className="flex flex-col gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 mt-2">
+        <div className="mt-2 flex flex-col gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4">
           <div className="flex items-start gap-3">
-            <ShieldAlert className="size-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <ShieldAlert className="mt-0.5 size-5 flex-shrink-0 text-warning" />
             <div className="flex-1 text-sm">
-              <p className="font-semibold text-yellow-800 dark:text-yellow-200">
+              <p className="font-semibold text-foreground">
                 Verificación de patente: datos no coinciden
               </p>
-              <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+              <p className="mt-1 text-muted-foreground">
                 Según el registro, la patente <span className="font-mono font-semibold">{licensePlate}</span> corresponde a{' '}
                 <span className="font-semibold">{mismatchWarning.expectedBrand} {mismatchWarning.expectedModel}</span>,
                 pero se ingresó <span className="font-semibold">{mismatchWarning.enteredBrand} {mismatchWarning.enteredModel}</span>.
@@ -662,9 +661,9 @@ export const VehicleSection = ({
 
       {/* Banner de verificación exitosa */}
       {verificationSuccess && !mismatchWarning && (
-        <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-950/20 p-3 mt-2">
-          <CheckCircle2 className="size-5 text-green-600 flex-shrink-0" />
-          <p className="text-sm font-medium text-green-700 dark:text-green-300">
+        <div className="mt-2 flex items-center gap-3 rounded-lg border border-success/30 bg-success/10 p-3">
+          <CheckCircle2 className="size-5 flex-shrink-0 text-success" />
+          <p className="text-sm font-medium text-success">
             Patente verificada: los datos coinciden con el registro oficial
           </p>
         </div>
@@ -672,7 +671,7 @@ export const VehicleSection = ({
 
       {/* Dialog para crear nueva marca */}
       <Dialog open={isNewBrandDialogOpen} onOpenChange={setIsNewBrandDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Nueva Marca de Vehículo</DialogTitle>
             <DialogDescription>
@@ -716,7 +715,7 @@ export const VehicleSection = ({
 
       {/* Dialog para crear nuevo modelo */}
       <Dialog open={isNewModelDialogOpen} onOpenChange={setIsNewModelDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Nuevo Modelo de Vehículo</DialogTitle>
             <DialogDescription>
@@ -760,10 +759,10 @@ export const VehicleSection = ({
 
       {/* Dialog de historial del vehículo */}
       <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg border-border/70 bg-card">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
-              <AlertCircle className="size-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertCircle className="size-5 text-warning" />
               Vehículo con Historial
             </DialogTitle>
             <DialogDescription>

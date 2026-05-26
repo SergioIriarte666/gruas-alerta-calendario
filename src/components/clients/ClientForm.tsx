@@ -2,12 +2,13 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Client } from '@/types';
-import { ChevronLeft, ChevronRight, Save, X, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Building2 } from 'lucide-react';
 import { ClientFormStepNavigation, getClientFormSteps, ClientFormStep } from './form/ClientFormStepNavigation';
 import { ClientSummaryPanel } from './form/ClientSummaryPanel';
 import { ClientFormStep1 } from './form/ClientFormStep1';
 import { ClientFormStep2 } from './form/ClientFormStep2';
 import { ClientFormStep3 } from './form/ClientFormStep3';
+import { toast } from 'sonner';
 
 interface ClientFormProps {
   client?: Client;
@@ -55,7 +56,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
     } else {
       const validDepartments = departments.filter(dep => dep.trim() !== '');
       if (validDepartments.length === 0) {
-        alert('Debe ingresar al menos un departamento');
+        toast.error('Debe ingresar al menos un departamento');
         return;
       }
       
@@ -234,7 +235,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
                   type="button"
                   onClick={goToNextStep}
                   disabled={!canGoNext}
-                  className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                  className="gap-2"
                 >
                   Siguiente
                   <ChevronRight className="size-4" />
@@ -244,7 +245,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit}
-                  className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                  className="gap-2"
                 >
                   <Save className="size-4" />
                   {isEditing ? 'Actualizar' : 'Crear'} Cliente

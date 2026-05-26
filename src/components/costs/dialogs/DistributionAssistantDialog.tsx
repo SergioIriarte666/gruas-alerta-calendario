@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -226,7 +226,7 @@ export const DistributionAssistantDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="size-5 text-primary" />
@@ -240,7 +240,7 @@ export const DistributionAssistantDialog = ({
 
         <div className="space-y-4 py-4">
           {/* Resumen */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+          <div className="grid grid-cols-3 gap-4 rounded-lg border border-border/70 bg-muted/30 p-4">
             <div>
               <p className="text-sm text-muted-foreground">Total Comprado</p>
               <p className="text-2xl font-bold">{inventoryData.totalQuantity}</p>
@@ -279,7 +279,7 @@ export const DistributionAssistantDialog = ({
           {/* Lista de distribuciones */}
           <div className="space-y-3">
             {distributions.map((dist, index) => (
-              <div key={dist.id} className="flex items-end gap-3 p-3 border rounded-lg bg-background">
+              <div key={dist.id} className="flex items-end gap-3 rounded-lg border border-border/70 bg-background/60 p-3">
                 <div className="flex-1 gap-y-2">
                   <Label>Grúa {index + 1}</Label>
                   <Select
@@ -330,17 +330,18 @@ export const DistributionAssistantDialog = ({
             type="button"
             variant="outline"
             onClick={handleAddDistribution}
-            className="w-full"
+            className="w-full border-border/70 bg-background/60"
           >
             <Plus className="size-4 mr-2" />
             Agregar Grúa
           </Button>
         </div>
 
-        <DialogFooter className="flex gap-2">
+        <DialogFooter className="flex gap-2 border-t border-border/70 pt-4">
           <Button
             type="button"
             variant="outline"
+            className="border-border/70 bg-background/60"
             onClick={handleSkip}
             disabled={isProcessing}
           >

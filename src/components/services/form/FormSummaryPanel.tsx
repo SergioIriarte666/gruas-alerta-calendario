@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -32,7 +31,7 @@ export const FormSummaryPanel = ({
   origin,
   destination,
   status,
-  isEditing,
+  isEditing: _isEditing,
 }: FormSummaryPanelProps) => {
   const netMargin = value - totalCommissions - totalCosts;
   const marginPercentage = value > 0 ? ((netMargin / value) * 100).toFixed(1) : '0.0';
@@ -43,11 +42,11 @@ export const FormSummaryPanel = ({
 
   const getStatusBadge = () => {
     const statusConfig: Record<string, { label: string; className: string }> = {
-      pending: { label: 'Pendiente', className: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30' },
-      in_progress: { label: 'En Progreso', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30' },
-      completed: { label: 'Completado', className: 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30' },
-      invoiced: { label: 'Facturado', className: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/30' },
-      cancelled: { label: 'Cancelado', className: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30' },
+      pending: { label: 'Pendiente', className: 'border-warning/30 bg-warning/10 text-warning' },
+      in_progress: { label: 'En Progreso', className: 'border-info/30 bg-info/10 text-info' },
+      completed: { label: 'Completado', className: 'border-success/30 bg-success/10 text-success' },
+      invoiced: { label: 'Facturado', className: 'border-primary/30 bg-primary/10 text-primary' },
+      cancelled: { label: 'Cancelado', className: 'border-danger/30 bg-danger/10 text-danger' },
     };
     const config = statusConfig[status] || statusConfig.pending;
     return <Badge className={config.className}>{config.label}</Badge>;
@@ -58,7 +57,7 @@ export const FormSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="size-4 text-violet-500" />
+            <Receipt className="size-4 text-primary" />
             Resumen del Servicio
           </span>
           {getStatusBadge()}
@@ -69,7 +68,7 @@ export const FormSummaryPanel = ({
         <div className="flex items-center gap-2">
           <FileText className="size-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Folio:</span>
-          <span className="text-sm font-mono font-semibold text-violet-600 dark:text-violet-400">
+          <span className="text-sm font-mono font-semibold text-primary">
             {folio || 'Auto-generado'}
           </span>
         </div>
@@ -135,19 +134,19 @@ export const FormSummaryPanel = ({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Valor:</span>
-              <span className="font-semibold text-green-600 dark:text-green-400">
+              <span className="font-semibold text-success">
                 {formatCurrency(value)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Comisiones:</span>
-              <span className="text-orange-600 dark:text-orange-400">
+              <span className="text-warning">
                 -{formatCurrency(totalCommissions)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Costos:</span>
-              <span className="text-red-600 dark:text-red-400">
+              <span className="text-danger">
                 -{formatCurrency(totalCosts)}
               </span>
             </div>
@@ -155,7 +154,7 @@ export const FormSummaryPanel = ({
               <span className="text-muted-foreground">Margen:</span>
               <span className={cn(
                 "font-bold",
-                netMargin >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                netMargin >= 0 ? "text-success" : "text-danger"
               )}>
                 {formatCurrency(netMargin)}
               </span>
@@ -168,9 +167,9 @@ export const FormSummaryPanel = ({
               <span className="text-muted-foreground">Margen neto</span>
               <span className={cn(
                 "font-medium",
-                parseFloat(marginPercentage) >= 30 ? "text-green-600 dark:text-green-400" :
-                parseFloat(marginPercentage) >= 15 ? "text-yellow-600 dark:text-yellow-400" :
-                "text-red-600 dark:text-red-400"
+                parseFloat(marginPercentage) >= 30 ? "text-success" :
+                parseFloat(marginPercentage) >= 15 ? "text-warning" :
+                "text-danger"
               )}>
                 {marginPercentage}%
               </span>
@@ -179,9 +178,9 @@ export const FormSummaryPanel = ({
               <div
                 className={cn(
                   "h-full transition-all duration-300",
-                  parseFloat(marginPercentage) >= 30 ? "bg-green-500" :
-                  parseFloat(marginPercentage) >= 15 ? "bg-yellow-500" :
-                  "bg-red-500"
+                  parseFloat(marginPercentage) >= 30 ? "bg-success" :
+                  parseFloat(marginPercentage) >= 15 ? "bg-warning" :
+                  "bg-danger"
                 )}
                 style={{ width: `${Math.min(Math.max(parseFloat(marginPercentage), 0), 100)}%` }}
               />

@@ -70,16 +70,16 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-green-500 hover:bg-green-600 text-white">
+        <Button>
           <Plus className="size-4 mr-2" />
           Nuevo Evento
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="border-border/70 bg-card p-0 sm:max-w-[600px]">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-foreground">Crear Nuevo Evento</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="title" className="text-muted-foreground">Título *</Label>
@@ -98,7 +98,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
                 <SelectTrigger className="bg-card border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
+                <SelectContent>
                   <SelectItem value="service">Servicio</SelectItem>
                   <SelectItem value="maintenance">Mantenimiento</SelectItem>
                   <SelectItem value="meeting">Reunión</SelectItem>
@@ -155,11 +155,11 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
             </div>
           </div>
 
-          <div className="flex justify-end gap-x-3 pt-4">
+          <div className="flex justify-end gap-x-3 border-t border-border/70 pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button type="submit">
               Crear Evento
             </Button>
           </div>

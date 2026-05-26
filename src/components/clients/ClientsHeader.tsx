@@ -1,7 +1,8 @@
-
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { PageHeader } from '@/components/ui/page-header';
+import { Plus } from 'lucide-react';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 
@@ -29,70 +30,28 @@ export const ClientsHeader = ({
     setSelectedClient(undefined);
   }, [setIsDialogOpen, setSelectedClient]);
 
-  // Handle escape key
-  React.useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isDialogOpen) {
-        handleCloseModal();
-      }
-    };
-
-    if (isDialogOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isDialogOpen, handleCloseModal]);
-
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-black">Gestión de Clientes</h1>
-          <p className="text-gray-600 mt-2">
-            Administra la información de todos los clientes del sistema
-          </p>
-        </div>
-        
-        <Button 
-          onClick={handleNewClient}
-          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
-        >
-          <Plus className="size-4 mr-2" />
-          Nuevo Cliente
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestión de Clientes"
+        description="Administra cartera, departamentos y actividad comercial desde una sola vista."
+        actions={
+          <Button onClick={handleNewClient}>
+            <Plus className="mr-2 size-4" />
+            Nuevo Cliente
+          </Button>
+        }
+      />
 
-      {/* Custom Modal Implementation */}
-      {isDialogOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
-          onClick={handleCloseModal}
-        >
-          <div 
-            className="relative bg-white border border-gray-200 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={handleCloseModal}
-              className="absolute right-4 top-4 text-gray-600 hover:text-black z-10 p-1 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Cerrar modal"
-            >
-              <X className="size-4" />
-            </button>
-            
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !open ? handleCloseModal() : setIsDialogOpen(true)}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-popover/95 p-0">
             <ClientForm
               client={selectedClient}
               onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
               onCancel={handleCloseModal}
             />
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

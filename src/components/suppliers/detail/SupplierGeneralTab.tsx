@@ -62,7 +62,7 @@ export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier
               <span className="text-muted-foreground">Estado</span>
               <Badge 
                 variant={supplier.is_active ? "default" : "secondary"}
-                className={supplier.is_active ? "bg-green-600" : ""}
+                className={supplier.is_active ? "bg-success text-success-foreground hover:bg-success/90" : ""}
               >
                 {supplier.is_active ? 'Activo' : 'Inactivo'}
               </Badge>

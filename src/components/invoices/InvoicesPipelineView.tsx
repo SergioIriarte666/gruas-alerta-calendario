@@ -63,36 +63,36 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
       key: 'draft',
       title: 'Borradores',
       description: 'Facturas en preparación',
-      color: 'text-gray-400',
-      bgColor: 'bg-gray-500/10',
-      borderColor: 'border-gray-500/20',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted/40',
+      borderColor: 'border-border/70',
       icon: FileText
     },
     {
       key: 'sent',
       title: 'Enviadas',
       description: 'Pendientes de pago',
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/20',
+      color: 'text-info',
+      bgColor: 'bg-info/10',
+      borderColor: 'border-info/20',
       icon: Send
     },
     {
       key: 'paid',
       title: 'Pagadas',
       description: 'Cobradas exitosamente',
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
+      color: 'text-success',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/20',
       icon: CreditCard
     },
     {
       key: 'overdue',
       title: 'Vencidas',
       description: 'Requieren atención urgente',
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10',
-      borderColor: 'border-red-500/20',
+      color: 'text-danger',
+      bgColor: 'bg-danger/10',
+      borderColor: 'border-danger/20',
       icon: AlertTriangle,
       urgent: true
     },
@@ -100,9 +100,9 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
       key: 'cancelled',
       title: 'Anuladas',
       description: 'Facturas canceladas',
-      color: 'text-gray-400',
-      bgColor: 'bg-gray-500/10',
-      borderColor: 'border-gray-500/20',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted/40',
+      borderColor: 'border-border/70',
       icon: X
     }
   ];
@@ -204,9 +204,9 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
   if (!hasInitialInvoices) {
     return (
       <div className="text-center py-12">
-        <FileText className="size-16 text-gray-400 mx-auto mb-4" />
+        <FileText className="size-16 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-foreground mb-2">No hay facturas</h3>
-        <p className="text-gray-400">Crea tu primera factura para comenzar</p>
+        <p className="text-muted-foreground">Crea tu primera factura para comenzar</p>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
       {/* Search */}
       <div className="flex items-center gap-x-4">
         <div className="relative flex-1">
-          <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search className="size-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar por folio o cliente..."
             value={searchTerm}
@@ -241,7 +241,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
               key={status.key}
               className={cn(
                 "bg-card border-border transition-all duration-200",
-                status.urgent && group.stats.count > 0 && "ring-2 ring-red-400/50"
+                status.urgent && group.stats.count > 0 && "ring-2 ring-danger/20"
               )}
             >
                 <CardHeader
@@ -273,7 +273,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                         {formatCurrency(group.stats.totalValue)}
                       </p>
                       {group.stats.avgDays > 0 && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {status.key === 'paid' && `${group.stats.avgDays} días promedio pago`}
                           {status.key === 'overdue' && `${group.stats.avgDays} días vencidas`}
                           {status.key === 'sent' && `${group.stats.avgDays} días pendientes`}
@@ -281,9 +281,9 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                       )}
                     </div>
                     {isExpanded ? (
-                      <ChevronUp className="size-5 text-gray-400" />
+                      <ChevronUp className="size-5 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="size-5 text-gray-400" />
+                      <ChevronDown className="size-5 text-muted-foreground" />
                     )}
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                           key={invoice.id}
                           className={cn(
                             "bg-muted/50 border-border hover:bg-muted transition-all duration-200",
-                            isUrgent && "ring-1 ring-red-400/30"
+                            isUrgent && "ring-1 ring-danger/20"
                           )}
                         >
                           <CardContent className="p-4">
@@ -339,12 +339,12 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                 </div>
 
                                 {invoice.status === 'overdue' && (
-                                  <p className="text-xs text-red-400 mt-1">
+                                  <p className="text-xs text-danger mt-1">
                                     Vencida hace {Math.abs(daysFromDue)} días
                                   </p>
                                 )}
                                 {invoice.status === 'sent' && daysFromDue <= 3 && (
-                                  <p className="text-xs text-yellow-400 mt-1">
+                                  <p className="text-xs text-warning mt-1">
                                     Vence en {daysFromDue} días
                                   </p>
                                 )}
@@ -363,7 +363,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onEdit(invoice)}
-                                  className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                  className="text-primary hover:text-primary hover:bg-primary/10"
                                 >
                                   <Edit className="size-4" />
                                 </Button>
@@ -372,7 +372,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => onMarkAsPaid(invoice.id)}
-                                    className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                                    className="text-success hover:text-success hover:bg-success/10"
                                   >
                                     <CreditCard className="size-4" />
                                   </Button>
@@ -381,7 +381,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onDelete(invoice.id)}
-                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  className="text-danger hover:text-danger hover:bg-danger/10"
                                 >
                                   <Trash2 className="size-4" />
                                 </Button>
@@ -393,7 +393,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                     })}
 
                     {group.invoices.length === 0 && (
-                      <div className="text-center py-8 text-gray-400">
+                      <div className="text-center py-8 text-muted-foreground">
                         <Icon className="size-12 mx-auto mb-2 opacity-50" />
                         <p>No hay facturas en {status.title.toLowerCase()}</p>
                       </div>

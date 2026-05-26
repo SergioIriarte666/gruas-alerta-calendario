@@ -11,6 +11,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const ServiceTypes = () => {
   const { user } = useUser();
@@ -21,6 +31,7 @@ const ServiceTypes = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [serviceTypeToDelete, setServiceTypeToDelete] = useState<ServiceTypeConfig | null>(null);
 
   React.useEffect(() => {
     document.title = 'Tipos de Servicio | Panel';
@@ -75,14 +86,21 @@ const ServiceTypes = () => {
   };
 
   const handleDelete = async (serviceType: ServiceTypeConfig) => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar el tipo de servicio "${serviceType.name}"?`)) {
-      return;
-    }
+    setServiceTypeToDelete(serviceType);
+  };
 
+  const confirmDelete = async () => {
+    if (!serviceTypeToDelete) return;
     try {
-      await deleteServiceType(serviceType.id);
+      await deleteServiceType(serviceTypeToDelete.id);
+      toast.success('Tipo de servicio eliminado', {
+        description: `"${serviceTypeToDelete.name}" fue eliminado correctamente.`,
+      });
     } catch (error) {
       console.error('Error deleting service type:', error);
+      toast.error('No se pudo eliminar el tipo de servicio');
+    } finally {
+      setServiceTypeToDelete(null);
     }
   };
 
@@ -175,6 +193,30 @@ const ServiceTypes = () => {
           setSelectedServiceType(null);
         }}
       />
+
+      <AlertDialog open={!!serviceTypeToDelete} onOpenChange={(open) => !open && setServiceTypeToDelete(null)}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar tipo de servicio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente el tipo de servicio{' '}
+              <span className="font-medium text-foreground">
+                {serviceTypeToDelete?.name}
+              </span>
+              .
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

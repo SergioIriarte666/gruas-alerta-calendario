@@ -1,13 +1,14 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { PushNotificationManager } from '@/components/notifications/PushNotificationManager';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Bell, Clock3, Loader2, Mail, ShieldAlert, Wrench } from 'lucide-react';
 
 export const NotificationSettingsTab = () => {
   const {
@@ -34,94 +35,94 @@ export const NotificationSettingsTab = () => {
     updateNotificationSettings({ [setting]: value });
   };
 
+  const notificationOptions = [
+    {
+      id: 'emailNotifications',
+      label: 'Notificaciones por Email',
+      description: 'Recibir notificaciones importantes por correo electrónico.',
+      icon: Mail,
+    },
+    {
+      id: 'serviceReminders',
+      label: 'Recordatorios de Servicios',
+      description: 'Notificaciones sobre servicios próximos y vencimientos.',
+      icon: Clock3,
+    },
+    {
+      id: 'invoiceAlerts',
+      label: 'Alertas de Facturas',
+      description: 'Notificaciones sobre facturas vencidas y pagos pendientes.',
+      icon: ShieldAlert,
+    },
+    {
+      id: 'overdueNotifications',
+      label: 'Notificaciones de Vencimientos',
+      description: 'Alertas sobre documentos y servicios vencidos.',
+      icon: Bell,
+    },
+    {
+      id: 'systemUpdates',
+      label: 'Actualizaciones del Sistema',
+      description: 'Notificaciones sobre actualizaciones y mantenimiento del sistema.',
+      icon: Wrench,
+    },
+  ] as const;
+
   return (
     <div className="space-y-6">
-      <Card className="bg-card border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+              <Bell className="size-3.5" />
+              Centro de notificaciones
+            </Badge>
+            <Badge variant="outline" className="rounded-full px-3 py-1">
+              {notificationOptions.length} controles disponibles
+            </Badge>
+          </div>
           <CardTitle className="text-foreground text-lg sm:text-xl">Configuración de Notificaciones</CardTitle>
+          <CardDescription>
+            Define qué avisos deben llegar por correo, vencimientos y eventos importantes del sistema.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="emailNotifications" className="text-black">Notificaciones por Email</Label>
-              <p className="text-sm text-gray-600">
-                Recibir notificaciones importantes por correo electrónico
-              </p>
-            </div>
-            <Switch
-              id="emailNotifications"
-              checked={notificationSettings.emailNotifications}
-              onCheckedChange={(checked) => handleToggle('emailNotifications', checked)}
-            />
-          </div>
+        <CardContent className="space-y-4 p-4 sm:p-6">
+          {notificationOptions.map((option) => {
+            const Icon = option.icon;
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="serviceReminders" className="text-black">Recordatorios de Servicios</Label>
-              <p className="text-sm text-gray-600">
-                Notificaciones sobre servicios próximos y vencimientos
-              </p>
-            </div>
-            <Switch
-              id="serviceReminders"
-              checked={notificationSettings.serviceReminders}
-              onCheckedChange={(checked) => handleToggle('serviceReminders', checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="invoiceAlerts" className="text-black">Alertas de Facturas</Label>
-              <p className="text-sm text-gray-600">
-                Notificaciones sobre facturas vencidas y pagos pendientes
-              </p>
-            </div>
-            <Switch
-              id="invoiceAlerts"
-              checked={notificationSettings.invoiceAlerts}
-              onCheckedChange={(checked) => handleToggle('invoiceAlerts', checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="overdueNotifications" className="text-black">Notificaciones de Vencimientos</Label>
-              <p className="text-sm text-gray-600">
-                Alertas sobre documentos y servicios vencidos
-              </p>
-            </div>
-            <Switch
-              id="overdueNotifications"
-              checked={notificationSettings.overdueNotifications}
-              onCheckedChange={(checked) => handleToggle('overdueNotifications', checked)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="systemUpdates" className="text-black">Actualizaciones del Sistema</Label>
-              <p className="text-sm text-gray-600">
-                Notificaciones sobre actualizaciones y mantenimiento del sistema
-              </p>
-            </div>
-            <Switch
-              id="systemUpdates"
-              checked={notificationSettings.systemUpdates}
-              onCheckedChange={(checked) => handleToggle('systemUpdates', checked)}
-            />
-          </div>
+            return (
+              <div
+                key={option.id}
+                className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4"
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                    <Icon className="size-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor={option.id} className="text-sm font-medium text-foreground">
+                      {option.label}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {option.description}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id={option.id}
+                  checked={notificationSettings[option.id]}
+                  onCheckedChange={(checked) => handleToggle(option.id, checked)}
+                />
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
-      {/* Push Notifications Manager */}
       <PushNotificationManager />
 
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-tms-green hover:bg-tms-green/90 text-white"
-        >
+        <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
           Guardar Configuración
         </Button>

@@ -92,20 +92,20 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
     <div className="space-y-6">
       {/* Persisted data alert */}
       {showPersistedDataAlert && (
-        <Alert className="border-blue-500/50 bg-blue-500/10">
-          <Save className="size-4 text-blue-400" />
-          <AlertDescription className="text-blue-200 flex items-center justify-between">
+        <Alert className="border-info/30 bg-info/10">
+          <Save className="size-4 text-info" />
+          <AlertDescription className="flex items-center justify-between text-foreground">
             <span>Se encontraron datos guardados anteriormente. ¿Deseas continuar desde donde lo dejaste?</span>
             <div className="ml-4 space-x-2">
               <button 
                 onClick={() => setShowPersistedDataAlert(false)}
-                className="text-blue-300 hover:text-blue-100 underline text-sm"
+                className="text-info underline text-sm hover:text-info/80"
               >
                 Continuar
               </button>
               <button 
                 onClick={handleDiscardPersistedData}
-                className="text-blue-300 hover:text-blue-100 underline text-sm"
+                className="text-info underline text-sm hover:text-info/80"
               >
                 Descartar
               </button>
@@ -256,14 +256,12 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           <Button
             type="button"
             variant="outline"
+            className="border-border/70 bg-background/60"
             onClick={onCancel}
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            className="bg-violet-600 hover:bg-violet-700 text-white"
-          >
+          <Button type="submit">
             {operator ? 'Actualizar' : 'Crear'} {formData.operatorType === 'administrative' ? 'Personal' : 'Operador'}
           </Button>
         </div>

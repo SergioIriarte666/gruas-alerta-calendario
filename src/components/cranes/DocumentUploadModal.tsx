@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/custom-toast';
 
 interface DocumentUploadModalProps {
   isOpen: boolean;
@@ -32,10 +33,11 @@ export const DocumentUploadModal = ({
   isOpen,
   onClose,
   onUpload,
-  documentType,
+  documentType: _documentType,
   documentName,
   uploading
 }: DocumentUploadModalProps) => {
+  const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [expiryDate, setExpiryDate] = useState<Date>();
   const [dragOver, setDragOver] = useState(false);
@@ -44,13 +46,21 @@ export const DocumentUploadModal = ({
     // Validate file type
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Solo se permiten archivos PDF, JPG y PNG');
+      toast({
+        type: 'error',
+        title: 'Formato no permitido',
+        description: 'Solo se permiten archivos PDF, JPG y PNG',
+      });
       return;
     }
 
     // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
-      alert('El archivo no puede ser mayor a 10MB');
+      toast({
+        type: 'error',
+        title: 'Archivo demasiado grande',
+        description: 'El archivo no puede ser mayor a 10MB',
+      });
       return;
     }
 
@@ -93,7 +103,7 @@ export const DocumentUploadModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="cranes-modal cranes-modal--upload sm:max-w-md">
+      <DialogContent className="cranes-modal cranes-modal--upload border-border/70 bg-card sm:max-w-md">
         <DialogHeader className="cranes-modal__header">
           <DialogTitle>Actualizar {documentName}</DialogTitle>
           <DialogDescription>
@@ -194,8 +204,8 @@ export const DocumentUploadModal = ({
         </div>
 
         {/* Actions */}
-        <div className="cranes-modal__footer flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={handleClose} disabled={uploading}>
+        <div className="cranes-modal__footer flex justify-end gap-2 border-t border-border/70 pt-4">
+          <Button variant="outline" className="border-border/70 bg-background/60" onClick={handleClose} disabled={uploading}>
             Cancelar
           </Button>
           <Button 

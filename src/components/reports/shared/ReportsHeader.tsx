@@ -1,10 +1,16 @@
-import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { BarChart3 } from 'lucide-react';
 
 export const ReportsHeader = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
-    <p className="text-sm text-muted-foreground mt-1">
-      Análisis y estadísticas del negocio
-    </p>
-  </div>
+  <PageHeader
+    title="Reportes"
+    description="Análisis y estadísticas del negocio con foco operativo, financiero y de rendimiento."
+    actions={
+      <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
+        <BarChart3 className="mr-1.5 size-3.5" />
+        Analytics en tiempo real
+      </Badge>
+    }
+  />
 );

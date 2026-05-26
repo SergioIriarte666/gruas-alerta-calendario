@@ -1,9 +1,7 @@
-import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, CalendarClock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useDebtsWithProgress } from '@/hooks/useDebts';
 import { useMonthlyInstallments } from '@/hooks/useDebtInstallments';
-import { format } from 'date-fns';
 
 export const APDashboardCards = () => {
   const { data: debts } = useDebtsWithProgress();
@@ -35,8 +33,8 @@ export const APDashboardCards = () => {
       value: totalPendingCLP > 0 ? `$${totalPendingCLP.toLocaleString('es-CL')}` : (totalPendingUF > 0 ? formatUF(totalPendingUF) : '$0'),
       subtitle: totalPendingCLP > 0 && totalPendingUF > 0 ? formatUF(totalPendingUF) : undefined,
       icon: DollarSign,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      color: 'text-info',
+      bg: 'bg-info/10',
     },
     {
       title: 'Cuotas del Mes',
@@ -46,15 +44,15 @@ export const APDashboardCards = () => {
         monthlyPendingCLP > 0 && monthlyPendingUF > 0 ? formatUF(monthlyPendingUF) : null
       ].filter(Boolean).join(' · '),
       icon: CalendarClock,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
+      color: 'text-warning',
+      bg: 'bg-warning/10',
     },
     {
       title: 'Cuotas Vencidas',
       value: String(totalOverdue),
       icon: AlertTriangle,
-      color: totalOverdue > 0 ? 'text-red-600' : 'text-gray-400',
-      bg: totalOverdue > 0 ? 'bg-red-50' : 'bg-gray-50',
+      color: totalOverdue > 0 ? 'text-danger' : 'text-muted-foreground',
+      bg: totalOverdue > 0 ? 'bg-danger/10' : 'bg-muted/40',
     },
     {
       title: 'Pagado este Mes',
@@ -64,8 +62,8 @@ export const APDashboardCards = () => {
         monthlyPaidCLP > 0 && monthlyPaidUF > 0 ? formatUF(monthlyPaidUF) : null
       ].filter(Boolean).join(' · '),
       icon: CheckCircle,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
+      color: 'text-success',
+      bg: 'bg-success/10',
     },
   ];
 

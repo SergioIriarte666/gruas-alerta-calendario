@@ -1,5 +1,4 @@
 // App entry point
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
@@ -52,8 +51,4 @@ window.addEventListener('error', (ev) => {
 sessionStorage.removeItem(CHUNK_RELOAD_KEY);
 
 // ── Render ─────────────────────────────────────────────────────
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.Fragment>
-    <App />
-  </React.Fragment>,
-)
+ReactDOM.createRoot(document.getElementById('root')!).render(<App />)

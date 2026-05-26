@@ -183,10 +183,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     };
     
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      applied: 'bg-green-100 text-green-800',
-      partial: 'bg-blue-100 text-blue-800',
-      cancelled: 'bg-red-100 text-red-800'
+      pending: 'border-warning/30 bg-warning/10 text-warning',
+      applied: 'border-success/30 bg-success/10 text-success',
+      partial: 'border-info/30 bg-info/10 text-info',
+      cancelled: 'border-danger/30 bg-danger/10 text-danger'
     };
 
     return (
@@ -260,7 +260,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos Aplicados</CardTitle>
-            <CheckCircle className="size-4 text-green-600" />
+            <CheckCircle className="size-4 text-success" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.applied_payments || 0}</div>
@@ -271,7 +271,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Facturas sin Pago</CardTitle>
-            <AlertTriangle className="size-4 text-red-600" />
+            <AlertTriangle className="size-4 text-danger" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.invoices_without_payments || 0}</div>
@@ -282,7 +282,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pagos sin Aplicar</CardTitle>
-            <TrendingUp className="size-4 text-orange-600" />
+            <TrendingUp className="size-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reconciliationStats?.payments_without_applications || 0}</div>
@@ -413,7 +413,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 <div className="flex flex-col py-0.5">
                   <span className="font-medium">{toTitleCase(client.name)}</span>
                   {client.department && client.department !== 'General' && (
-                    <span className="text-xs text-violet-600 dark:text-violet-400">
+                    <span className="text-xs text-primary">
                       {client.department}
                     </span>
                   )}

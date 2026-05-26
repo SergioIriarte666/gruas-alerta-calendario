@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState } from 'react';
 import { Search, AlertTriangle, PackageX, Loader2, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,10 +69,10 @@ export const PurchaseVoidTool = () => {
 
   return (
     <div className="space-y-4">
-      <Card className="border-l-4 border-l-violet-500">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-violet-700 dark:text-violet-400">
-            <PackageX className="size-5" />
+      <Card className="border-l-4 border-l-primary/50">
+        <CardHeader className="border-b border-border/70 bg-muted/20">
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <PackageX className="size-5 text-primary" />
             Anular Compra de Bodega
           </CardTitle>
           <CardDescription>
@@ -134,7 +133,7 @@ export const PurchaseVoidTool = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         {(p.document_number || p.service_folio) && (
-                          <Badge variant="secondary" className="font-mono text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border-violet-300">
+                          <Badge variant="secondary" className="border-primary/20 bg-primary/10 font-mono text-xs text-primary">
                             #{p.document_number || p.service_folio}
                           </Badge>
                         )}
@@ -143,7 +142,7 @@ export const PurchaseVoidTool = () => {
                       {p.matched_item &&
                         p.matched_item.trim().toLowerCase() !==
                           (p.description || '').trim().toLowerCase() && (
-                          <div className="text-xs text-violet-700 dark:text-violet-300 mt-0.5 truncate">
+                          <div className="mt-0.5 truncate text-xs text-primary">
                             Ítem: {p.matched_item}
                           </div>
                         )}
@@ -154,7 +153,7 @@ export const PurchaseVoidTool = () => {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-semibold text-violet-600">
+                      <div className="font-semibold text-primary">
                         {formatCurrency(p.amount)}
                       </div>
                       <div className="flex gap-1 justify-end mt-1">
@@ -175,10 +174,10 @@ export const PurchaseVoidTool = () => {
       </Card>
 
       {selected && (
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
-              <AlertTriangle className="size-5" />
+        <Card className="border-l-4 border-l-danger/50">
+          <CardHeader className="border-b border-border/70 bg-muted/20">
+            <CardTitle className="flex items-center gap-2 text-danger">
+              <AlertTriangle className="size-5 text-danger" />
               Vista previa del impacto
             </CardTitle>
             <CardDescription>
@@ -200,13 +199,13 @@ export const PurchaseVoidTool = () => {
                     <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center justify-between">
                       <span>Costo</span>
                       {(selected.document_number || selected.service_folio) && (
-                        <span className="font-mono text-violet-700 dark:text-violet-300">
+                        <span className="font-mono text-primary">
                           #{selected.document_number || selected.service_folio}
                         </span>
                       )}
                     </div>
                     <div className="font-medium">{selected.description}</div>
-                    <div className="text-violet-600 font-semibold">
+                    <div className="font-semibold text-primary">
                       {formatCurrency(selected.amount)}
                     </div>
                   </div>
@@ -279,8 +278,8 @@ export const PurchaseVoidTool = () => {
                   <div
                     className={`p-3 rounded-md border text-sm flex items-center justify-between ${
                       stockNegative
-                        ? 'bg-red-50 border-red-300 dark:bg-red-950/30'
-                        : 'bg-violet-50 border-violet-300 dark:bg-violet-950/30'
+                        ? 'border-danger/30 bg-danger/10'
+                        : 'border-primary/30 bg-primary/10'
                     }`}
                   >
                     <span>
@@ -290,7 +289,7 @@ export const PurchaseVoidTool = () => {
                     {stockNegative ? (
                       <Badge variant="destructive">Stock negativo</Badge>
                     ) : (
-                      <CheckCircle2 className="size-4 text-violet-600" />
+                      <CheckCircle2 className="size-4 text-primary" />
                     )}
                   </div>
                 )}
@@ -332,7 +331,7 @@ export const PurchaseVoidTool = () => {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="reason" className="text-sm">
-                      Motivo de la anulación <span className="text-red-600">*</span>
+                      Motivo de la anulación <span className="text-danger">*</span>
                     </Label>
                     <Textarea
                       id="reason"
@@ -374,10 +373,10 @@ export const PurchaseVoidTool = () => {
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-border/70 bg-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="size-5" />
+            <AlertDialogTitle className="flex items-center gap-2 text-danger">
+              <AlertTriangle className="size-5 text-danger" />
               Confirmación final
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -400,7 +399,7 @@ export const PurchaseVoidTool = () => {
             <AlertDialogAction
               disabled={!canConfirm || voidMutation.isPending}
               onClick={handleConfirm}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {voidMutation.isPending ? (
                 <>

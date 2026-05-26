@@ -89,7 +89,7 @@ export const InvoiceCancellationsHistory = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-destructive/10 text-destructive px-4 py-2 rounded-lg">
+          <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-2 text-danger">
             <span className="text-sm font-medium">Total Anulado:</span>
             <span className="ml-2 font-bold">{formatCurrency(totalCancelled)}</span>
           </div>
@@ -109,7 +109,7 @@ export const InvoiceCancellationsHistory = () => {
 
       {/* Empty State */}
       {filteredCancellations.length === 0 ? (
-        <Card className="bg-card border">
+        <Card className="border-border/70 bg-card shadow-sm">
           <CardContent className="p-8 text-center">
             <Ban className="mx-auto size-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
@@ -125,8 +125,8 @@ export const InvoiceCancellationsHistory = () => {
         </Card>
       ) : (
         /* Table */
-        <Card className="bg-card border">
-          <CardHeader>
+        <Card className="border-border/70 bg-card shadow-sm">
+          <CardHeader className="border-b border-border/70 bg-muted/20">
             <CardTitle className="text-foreground">
               Anulaciones ({filteredCancellations.length})
             </CardTitle>
@@ -155,7 +155,7 @@ export const InvoiceCancellationsHistory = () => {
                       </td>
                       <td className="py-3 px-4">
                         {cancellation.originalNumeroFiscal ? (
-                          <span className="text-violet-600 font-medium">{cancellation.originalNumeroFiscal}</span>
+                          <span className="font-medium text-primary">{cancellation.originalNumeroFiscal}</span>
                         ) : (
                           <span className="text-muted-foreground italic">Sin asignar</span>
                         )}
@@ -170,7 +170,7 @@ export const InvoiceCancellationsHistory = () => {
                         {formatCurrency(cancellation.originalTotal)}
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="border-border/70 bg-muted/40 text-xs">
                           {getReasonLabel(cancellation.cancellationReason)}
                         </Badge>
                       </td>
@@ -197,8 +197,8 @@ export const InvoiceCancellationsHistory = () => {
 
       {/* Details Modal */}
       <Dialog open={!!selectedCancellation} onOpenChange={() => setSelectedCancellation(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent className="border-border/70 bg-card p-0 sm:max-w-[500px]">
+          <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <Ban className="size-5 text-destructive" />
               Detalle de Anulación
@@ -209,27 +209,27 @@ export const InvoiceCancellationsHistory = () => {
           </DialogHeader>
 
           {selectedCancellation && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 px-6 py-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FileText className="size-4" />
                     Folio Original
                   </div>
                   <p className="font-medium">{selectedCancellation.originalFolio}</p>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FileText className="size-4" />
                     N° Fiscal
                   </div>
-                  <p className="font-medium text-violet-600">
+                  <p className="font-medium text-primary">
                     {selectedCancellation.originalNumeroFiscal || 'Sin asignar'}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 rounded-lg border border-danger/20 bg-danger/5 p-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Ban className="size-4" />
                   Nota de Crédito
@@ -237,7 +237,7 @@ export const InvoiceCancellationsHistory = () => {
                 <p className="font-medium text-destructive">{selectedCancellation.creditNoteNumber}</p>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Building2 className="size-4" />
                   Cliente
@@ -245,7 +245,7 @@ export const InvoiceCancellationsHistory = () => {
                 <p className="font-medium">{toTitleCase(selectedCancellation.clientName)}</p>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <DollarSign className="size-4" />
                   Monto Anulado
@@ -253,25 +253,25 @@ export const InvoiceCancellationsHistory = () => {
                 <p className="font-bold text-lg">{formatCurrency(selectedCancellation.originalTotal)}</p>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                 <div className="text-sm text-muted-foreground">Motivo de Anulación</div>
-                <Badge variant="secondary">{getReasonLabel(selectedCancellation.cancellationReason)}</Badge>
+                <Badge variant="secondary" className="border-border/70 bg-muted/40">{getReasonLabel(selectedCancellation.cancellationReason)}</Badge>
                 {selectedCancellation.reasonDetails && (
-                  <p className="text-sm text-muted-foreground mt-2 p-2 bg-muted rounded">
+                  <p className="mt-2 rounded border border-border/70 bg-background/60 p-2 text-sm text-muted-foreground">
                     {selectedCancellation.reasonDetails}
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-4 border-t border-border/70 pt-2">
+                <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <User className="size-4" />
                     Anulado por
                   </div>
                   <p className="text-sm">{selectedCancellation.cancelledByName}</p>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 rounded-lg border border-border/70 bg-muted/20 p-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="size-4" />
                     Fecha

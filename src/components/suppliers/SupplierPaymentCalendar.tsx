@@ -99,11 +99,11 @@ export const SupplierPaymentCalendar: React.FC = () => {
         <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-x-3">
-              <Clock className="size-6 text-yellow-600" />
+              <Clock className="size-6 text-warning" />
               <div>
                 <p className="text-sm text-muted-foreground">Pendientes</p>
                 <p className="text-xl font-bold text-foreground">{monthStats.pending}</p>
-                <p className="text-xs text-yellow-600">{formatCurrency(monthStats.pendingAmount)}</p>
+                <p className="text-xs text-warning">{formatCurrency(monthStats.pendingAmount)}</p>
               </div>
             </div>
           </CardContent>

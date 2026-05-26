@@ -15,20 +15,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, ShieldAlert, Link2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestion';
 import { cn } from '@/lib/utils';
 import { findSupplierByIdentity } from '@/utils/supplierIdentity';
-import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
+import { XMLCompleteParseResult, XMLDocumentData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
@@ -252,7 +249,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   // Estados para condiciones de pago (tipo Facturas)
   const [supplierPaymentCondition, setSupplierPaymentCondition] = useState<Record<string, 'none' | 'credit' | string>>({});
   const [supplierCreditDate, setSupplierCreditDate] = useState<Record<string, string>>({});
-  const [bulkDueDate, setBulkDueDate] = useState<string>('');
+  const [, setBulkDueDate] = useState<string>('');
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
@@ -492,7 +489,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         if (result.documents.length > 0) {
           setIsCheckingDuplicates(true);
           try {
-            const itemsToCheck = result.documents.map((doc, index) => ({
+            const itemsToCheck = result.documents.map((doc) => ({
               folio: doc.folio,
               supplier_rut: doc.supplier_rut,
               amount: doc.total_amount
@@ -873,7 +870,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               return originalDoc ? getEffectiveGlosa(originalDoc) : paymentData.description;
             })();
 
-            const createdPayment = await new Promise<any>((resolve, reject) => {
+            await new Promise<any>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
                 amount: paymentData.amount,
@@ -1004,31 +1001,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     });
   };
 
-  const handleDueDateChange = (documentKey: string, date: Date | undefined) => {
-    if (date) {
-      setDueDateOverrides(prev => ({
-        ...prev,
-        [documentKey]: format(date, 'yyyy-MM-dd')
-      }));
-    }
-  };
-
-  const applyDefaultDaysToAll = () => {
-    if (!parseResult) return;
-    const daysToAdd = defaultDaysToAdd;
-    const newOverrides: Record<string, string> = {};
-    parseResult.documents.forEach(doc => {
-      const documentKey = getDocumentStateKey(doc);
-      if (selectedDocuments.has(documentKey) && doc.issue_date) {
-        const issueDate = safeParseDateOnly(doc.issue_date);
-        newOverrides[documentKey] = format(addDays(issueDate, daysToAdd), 'yyyy-MM-dd');
-      }
-    });
-    setDueDateOverrides(newOverrides);
-    toast.success(`Fechas de vencimiento actualizadas a ${daysToAdd} días desde emisión`);
-  };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
+      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-y-auto border-border/70 bg-card p-0 shadow-2xl">
         <XMLImportDialogHeader
           icon={FileSpreadsheet}
           title="Importar Documentos XML"
@@ -1062,19 +1036,19 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     title: 'Proveedores',
                     value: `${parseResult.validSuppliers}/${parseResult.totalSuppliers}`,
                     icon: Users,
-                    tone: 'slate',
+                    tone: 'neutral',
                   },
                   {
                     title: 'Documentos',
                     value: `${parseResult.validDocuments}/${parseResult.totalDocuments}`,
                     icon: Receipt,
-                    tone: 'emerald',
+                    tone: 'success',
                   },
                   {
                     title: 'Errores',
                     value: parseResult.errors.length,
                     icon: AlertCircle,
-                    tone: 'red',
+                    tone: 'danger',
                   },
                   {
                     title: 'Total Montos',
@@ -1083,7 +1057,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       .reduce((sum, d) => sum + d.total_amount, 0)
                       .toLocaleString('es-CL')}`,
                     icon: DollarSign,
-                    tone: 'blue',
+                    tone: 'info',
                   },
                 ]}
               />
@@ -1106,9 +1080,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Duplicate Warning Banner */}
               {duplicateResults.length > 0 && showDuplicateWarning && (
-                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                  <ShieldAlert className="size-4 text-amber-600" />
-                  <AlertDescription className="text-amber-800">
+                <Alert className="border-warning/30 bg-warning/10">
+                  <ShieldAlert className="size-4 text-warning" />
+                  <AlertDescription className="text-warning">
                     <strong>⚠️ Se detectaron coincidencias que requieren revisión.</strong>
                     <span className="ml-2">
                       {duplicateResults.filter(d => d.matchType === 'exact_folio').length > 0 && (
@@ -1117,7 +1091,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         </Badge>
                       )}
                       {duplicateResults.filter(d => d.matchType === 'similar').length > 0 && (
-                        <Badge className="bg-yellow-100 text-yellow-800">
+                        <Badge className="border-warning/30 bg-warning/15 text-warning">
                           {duplicateResults.filter(d => d.matchType === 'similar').length} similares
                         </Badge>
                       )}
@@ -1128,7 +1102,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="ml-4 text-amber-700 hover:text-amber-900"
+                      className="ml-4 text-warning hover:bg-warning/10 hover:text-warning"
                       onClick={() => setShowDuplicateWarning(false)}
                     >
                       Ocultar
@@ -1139,25 +1113,25 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Checking duplicates indicator */}
               {isCheckingDuplicates && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
-                  <Loader2 className="size-4 animate-spin text-blue-600" />
-                  <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
+                <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 p-3">
+                  <Loader2 className="size-4 animate-spin text-info" />
+                  <span className="text-sm text-info">Verificando duplicados en la base de datos...</span>
                 </div>
               )}
 
               {/* Searching cost matches indicator */}
               {isSearchingMatches && (
-                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
-                  <Loader2 className="size-4 animate-spin text-blue-600" />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">Buscando costos existentes que coincidan...</span>
+                <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 p-3">
+                  <Loader2 className="size-4 animate-spin text-info" />
+                  <span className="text-sm text-info">Buscando costos existentes que coincidan...</span>
                 </div>
               )}
 
               {/* Cost matching summary */}
               {Object.keys(matchedCosts).length > 0 && (
-                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-                  <Link2 className="size-4 text-blue-600" />
-                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <Alert className="border-info/30 bg-info/10">
+                  <Link2 className="size-4 text-info" />
+                  <AlertDescription className="text-info">
                     <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
                     Puedes vincular la factura al costo existente o crear un pago nuevo.
                   </AlertDescription>
@@ -1176,9 +1150,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       </AlertDescription>
                     </Alert>}
 
-                  {parseResult.warnings.length > 0 && <Alert className="border-yellow-600 bg-yellow-600/10">
-                      <AlertCircle className="size-4 text-yellow-600" />
-                      <AlertDescription className="text-yellow-600">
+                  {parseResult.warnings.length > 0 && <Alert className="border-warning/30 bg-warning/10">
+                      <AlertCircle className="size-4 text-warning" />
+                      <AlertDescription className="text-warning">
                         <strong>Advertencias:</strong>
                         <ul className="mt-2 list-disc list-inside space-y-1">
                           {parseResult.warnings.slice(0, 3).map((warning, index) => <li key={index} className="text-sm">{warning}</li>)}
@@ -1206,7 +1180,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 border-l-4 border-l-violet-400 rounded-lg bg-muted/30 shadow-sm dark:border-l-violet-500">
+                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between rounded-lg border border-border/70 border-l-4 border-l-primary bg-muted/30 p-3 shadow-sm">
                           <div className="flex items-center gap-x-3">
                             <Checkbox checked={selectedSuppliers.has(supplier.rut)} onCheckedChange={checked => {
                       if (checked === true) {
@@ -1354,24 +1328,24 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         const statusMeta = hasMatches && currentDecision !== 'new'
                           ? {
                               label: 'Vinculado a costo',
-                              badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+                              badgeClass: 'bg-info/15 text-info',
                               hint: 'Este documento se enlazará con un costo existente.',
                             }
                           : isExactDuplicate
                             ? {
                                 label: 'Ya registrado',
-                                badgeClass: 'bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-200',
+                                badgeClass: 'bg-danger/15 text-danger',
                                 hint: 'Ya existe en el sistema. Normalmente no necesitas cambiar nada.',
                               }
                             : isDuplicate && duplicateInfo.matchType === 'similar'
                               ? {
                                   label: 'Revisar coincidencia',
-                                  badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
+                                  badgeClass: 'bg-warning/15 text-warning',
                                   hint: 'Se encontró una coincidencia parecida. Conviene revisarlo antes de importar.',
                                 }
                               : {
                                   label: 'Listo para revisar',
-                                  badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+                                  badgeClass: 'bg-success/15 text-success',
                                   hint: 'Puedes importarlo o ajustar sus detalles si lo necesitas.',
                                 };
 
@@ -1381,16 +1355,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             className={cn(
                               'flex flex-col gap-3 rounded-lg border p-3 shadow-sm',
                               hasMatches && currentDecision !== 'new'
-                                ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30'
+                                ? 'border-info/30 bg-info/10'
                                 : isDuplicate && duplicateInfo.matchType === 'exact_folio'
-                                  ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20'
+                                  ? 'border-danger/30 bg-danger/10'
                                   : isDuplicate && duplicateInfo.matchType === 'similar'
-                                    ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/20'
+                                    ? 'border-warning/30 bg-warning/10'
                                     : 'border-border/60 bg-muted/30'
                             )}
                           >
                             {hasMatches && (
-                              <div className="flex items-center gap-2 rounded bg-blue-100 px-2 py-1.5 text-xs text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
+                              <div className="flex items-center gap-2 rounded bg-info/15 px-2 py-1.5 text-xs text-info">
                                 <Link2 className="size-3.5 flex-shrink-0" />
                                 <span className="font-medium">🔗 Costo encontrado:</span>
                                 <Select
@@ -1417,8 +1391,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 className={cn(
                                   'rounded px-2 py-1 text-xs',
                                   duplicateInfo.matchType === 'exact_folio'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
+                                    ? 'bg-danger/15 text-danger'
+                                    : 'bg-warning/15 text-warning'
                                 )}
                               >
                                 <strong>
@@ -1495,10 +1469,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     Este texto se usará como descripción del pago o del vínculo con costos.
                                   </p>
                                   {shouldShowHistoricalSuggestion && historicalSuggestion && (
-                                    <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm dark:border-violet-900/60 dark:bg-violet-950/20">
+                                    <div className="mt-2 rounded-lg border border-primary/20 bg-primary/10 p-3 text-sm">
                                       <div className="flex flex-wrap items-start justify-between gap-2">
                                         <div className="min-w-0 flex-1">
-                                          <div className="flex items-center gap-2 text-violet-800 dark:text-violet-200">
+                                          <div className="flex items-center gap-2 text-primary">
                                             <Sparkles className="mt-0.5 size-4 flex-shrink-0" />
                                             <span className="font-medium">Glosa sugerida por historial</span>
                                             <Badge variant="secondary" className="text-[11px]">
@@ -1635,7 +1609,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between border-t pt-4">
+              <div className="flex items-center justify-between border-t border-border/70 pt-4">
                 <div className="text-sm text-muted-foreground">
                   {selectedSuppliers.size > 0 && (
                     <div className="space-y-1">

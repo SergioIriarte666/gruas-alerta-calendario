@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { X, FileText, Calendar } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 
@@ -109,11 +111,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
     if (paymentType === 'specific') {
       const totalSelected = getTotalSelectedAmount();
       if (paymentAmount !== totalSelected) {
-        alert(`El monto del pago ($${paymentAmount}) debe coincidir con el total seleccionado ($${totalSelected})`);
+        toast.error(`El monto del pago (${paymentAmount}) debe coincidir con el total seleccionado (${totalSelected})`);
         return;
       }
       if (selectedInvoices.length === 0) {
-        alert('Debe seleccionar al menos una factura para pago específico');
+        toast.error('Debe seleccionar al menos una factura para pago específico');
         return;
       }
     }
@@ -150,15 +152,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Registrar Nuevo Pago</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            <X className="size-4" />
-          </Button>
-        </CardHeader>
-        <CardContent>
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle>Registrar Nuevo Pago</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={onCancel}>
+              <X className="size-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        <div className="px-6 py-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Payment Type Selection */}
             <div>
@@ -198,13 +202,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectContent>
                   {clients.filter(c => c.isActive).map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex flex-col py-0.5">
                         <span className="font-medium">{toTitleCase(client.name)}</span>
                         {client.department && client.department !== 'General' && (
-                          <span className="text-xs text-violet-600 dark:text-violet-400">
+                          <span className="text-xs text-primary">
                             {client.department}
                           </span>
                         )}
@@ -224,13 +228,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                 ) : unpaidInvoices.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No hay facturas pendientes para este cliente</div>
                 ) : (
-                  <div className="border rounded-md p-4 space-y-3 max-h-48 overflow-y-auto">
+                  <div className="max-h-48 space-y-3 overflow-y-auto rounded-md border border-border/70 bg-background/50 p-4">
                     {unpaidInvoices.map((invoice) => {
                       const isSelected = selectedInvoices.some(sel => sel.invoice_id === invoice.id);
                       const selectedInvoice = selectedInvoices.find(sel => sel.invoice_id === invoice.id);
                       
                       return (
-                        <div key={invoice.id} className="flex items-center gap-x-3 p-2 border rounded">
+                        <div key={invoice.id} className="flex items-center gap-x-3 rounded-lg border border-border/70 bg-background/60 p-2">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}
@@ -306,7 +310,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                 )}
               </div>
               {paymentType === 'specific' && parseFloat(formData.amount) !== getTotalSelectedAmount() && selectedInvoices.length > 0 && (
-                <div className="text-sm text-orange-600 mt-1">
+                <div className="mt-1 text-sm text-warning">
                   El monto debe coincidir con el total seleccionado (${getTotalSelectedAmount().toLocaleString()})
                 </div>
               )}
@@ -338,7 +342,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                <SelectContent>
                   <SelectItem value="transferencia">Transferencia</SelectItem>
                   <SelectItem value="efectivo">Efectivo</SelectItem>
                   <SelectItem value="cheque">Cheque</SelectItem>
@@ -357,17 +361,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
               />
             </div>
 
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700">
+            <div className="flex gap-2 border-t border-border/70 pt-4">
+              <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? 'Guardando...' : 'Registrar Pago'}
               </Button>
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button type="button" variant="outline" className="border-border/70 bg-background/60" onClick={onCancel}>
                 Cancelar
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

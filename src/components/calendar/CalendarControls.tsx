@@ -18,14 +18,14 @@ export const CalendarControls = ({
   onViewModeChange 
 }: CalendarControlsProps) => {
   return (
-    <Card className="glass-card">
+    <Card className="border-border/70 bg-card shadow-sm">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-x-4">
             <Button 
               variant="outline" 
               size="sm" 
-              className="border-gray-700 text-gray-300"
+              className="border-border/70 bg-background/60"
               onClick={() => onNavigate('prev')}
             >
               <ChevronLeft className="size-4" />
@@ -36,17 +36,17 @@ export const CalendarControls = ({
             <Button 
               variant="outline" 
               size="sm" 
-              className="border-gray-700 text-gray-300"
+              className="border-border/70 bg-background/60"
               onClick={() => onNavigate('next')}
             >
               <ChevronRight className="size-4" />
             </Button>
           </div>
-          <div className="flex gap-x-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant={viewMode === 'day' ? 'default' : 'outline'} 
               size="sm" 
-              className={viewMode === 'day' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
+              className={viewMode === 'day' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('day')}
             >
               Día
@@ -54,7 +54,7 @@ export const CalendarControls = ({
             <Button 
               variant={viewMode === 'week' ? 'default' : 'outline'} 
               size="sm" 
-              className={viewMode === 'week' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
+              className={viewMode === 'week' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('week')}
             >
               Semana
@@ -62,7 +62,7 @@ export const CalendarControls = ({
             <Button 
               variant={viewMode === 'month' ? 'default' : 'outline'} 
               size="sm" 
-              className={viewMode === 'month' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
+              className={viewMode === 'month' ? 'shadow-sm' : 'border-border/70 bg-background/60'}
               onClick={() => onViewModeChange('month')}
             >
               Mes

@@ -8,6 +8,7 @@ import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancel
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal } from '@/components/ui/batch-progress-modal';
 import { MarkAsPaidModal } from '@/components/invoices/MarkAsPaidModal';
+import { SectionCard } from '@/components/ui/section-card';
 import {
   InvoicesProtectedDeleteDialog,
   InvoicesProtectedDeleteDialogState,
@@ -111,26 +112,28 @@ export const InvoicesPageContent = ({
         onValueChange={onActiveTabChange}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 max-w-5xl mx-auto bg-card border-border gap-1">
-          <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <span className="hidden sm:inline">Facturas</span>
-            <span className="sm:hidden">Fact.</span>
-          </TabsTrigger>
-          <TabsTrigger value="pipeline" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Pipeline
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Alertas
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <span className="hidden sm:inline">Conciliación</span>
-            <span className="sm:hidden">Conc.</span>
-          </TabsTrigger>
-          <TabsTrigger value="cancellations" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <span className="hidden sm:inline">Anulaciones</span>
-            <span className="sm:hidden">Anul.</span>
-          </TabsTrigger>
-        </TabsList>
+        <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="p-2">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 bg-transparent">
+            <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Facturas</span>
+              <span className="sm:hidden">Fact.</span>
+            </TabsTrigger>
+            <TabsTrigger value="pipeline" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Pipeline
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Alertas
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Conciliación</span>
+              <span className="sm:hidden">Conc.</span>
+            </TabsTrigger>
+            <TabsTrigger value="cancellations" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <span className="hidden sm:inline">Anulaciones</span>
+              <span className="sm:hidden">Anul.</span>
+            </TabsTrigger>
+          </TabsList>
+        </SectionCard>
 
         <TabsContent value="invoices">
           <InvoicesListTabContent

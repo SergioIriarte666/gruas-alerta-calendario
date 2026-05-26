@@ -29,7 +29,7 @@ export const MonthView = ({
       {/* Days of week header */}
       <div className="grid grid-cols-7 gap-1 mb-4">
         {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-          <div key={day} className="p-3 text-center text-sm font-medium text-black">
+          <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
             {day}
           </div>
         ))}
@@ -47,14 +47,14 @@ export const MonthView = ({
             <div
               key={day.toISOString()}
               className={`
-                min-h-24 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
-                ${isDayToday ? 'border-green-500' : ''}
+                min-h-24 rounded-lg border border-border/70 bg-card p-2 cursor-pointer transition-colors
+                ${isSelected ? 'border-primary bg-primary/10' : 'hover:bg-muted/40'}
+                ${isDayToday ? 'border-primary/60' : ''}
                 ${!isCurrentMonth ? 'opacity-50' : ''}
               `}
               onClick={() => onDateSelect(day)}
             >
-              <div className="text-sm font-medium mb-1 text-black">
+              <div className="mb-1 text-sm font-medium text-foreground">
                 {day.getDate()}
               </div>
               <div className="space-y-1">
@@ -71,7 +71,7 @@ export const MonthView = ({
                   </div>
                 ))}
                 {dayEvents.length > 2 && (
-                  <div className="text-xs text-black">
+                  <div className="text-xs text-muted-foreground">
                     +{dayEvents.length - 2} más
                   </div>
                 )}

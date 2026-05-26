@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Upload, 
@@ -16,7 +14,6 @@ import {
   FileText,
   Loader2,
   Code,
-  Database,
   Building2,
   Users,
   Phone,
@@ -24,13 +21,14 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
-import { XMLSupplierData, XMLSupplierParseResult } from '@/types/suppliers';
+import { XMLSupplierParseResult } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierDuplicateCheck, SupplierDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
 
 interface XMLSupplierUploadProps {
   isOpen: boolean;
@@ -163,7 +161,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
           is_active: xmlSupplier.is_active
         };
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
           createSupplier(supplierData, {
             onSuccess: () => {
               successCount++;
@@ -249,30 +247,32 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Code className="size-5 text-primary" />
-            Importar Proveedores desde XML
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto border-border/70 bg-card p-0">
+        <XMLImportDialogHeader
+          icon={Code}
+          title="Importar Proveedores desde XML"
+          description="Analiza proveedores, detecta duplicados y normaliza categorías antes de crear registros."
+          fileName={file?.name}
+          documentCount={parseResult?.totalRows}
+          countLabel="registro(s)"
+        />
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 py-6">
           {/* Info del sistema */}
-          <Card className="border-blue-200/50 bg-blue-50/30">
+          <Card className="border-info/20 bg-info/10">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-sm text-blue-700">
-                <FileX className="size-4" />
+              <div className="flex items-center gap-2 text-sm text-info">
+                <FileX className="size-4 text-info" />
                 <span>Soporta facturas electrónicas (DTE), archivos XML de proveedores y formatos personalizados</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Upload Area */}
-          <Card>
-            <CardHeader>
+            <Card className="border-border/70">
+              <CardHeader className="border-b border-border/70 bg-muted/20">
               <CardTitle className="flex items-center gap-2">
-                <Upload className="size-5" />
+                <Upload className="size-5 text-primary" />
                 Seleccionar Archivo XML
               </CardTitle>
             </CardHeader>
@@ -300,7 +300,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
               </div>
 
               {file && (
-                <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+                <div className="mt-4 rounded-lg border border-border/70 bg-muted/30 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <FileText className="size-5 text-primary" />
@@ -325,33 +325,15 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
           </Card>
 
           {/* Upload Progress */}
-          {isUploading && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="size-5" />
-                  Creando Proveedores...
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Progreso de carga</span>
-                    <span>{Math.round(uploadProgress)}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="w-full" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {isUploading && <XMLImportProgressCard label="Creando proveedores..." value={uploadProgress} />}
 
           {/* Parse Results */}
           {parseResult && (
-            <Card>
-              <CardHeader>
+            <Card className="border-border/70">
+              <CardHeader className="border-b border-border/70 bg-muted/20">
                 <CardTitle className="flex items-center gap-2">
                   {parseResult.success ? (
-                    <CheckCircle className="size-5 text-green-500" />
+                    <CheckCircle className="size-5 text-success" />
                   ) : (
                     <AlertCircle className="size-5 text-destructive" />
                   )}
@@ -360,41 +342,20 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Statistics */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="bg-blue-50/50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <FileText className="size-5 text-blue-500" />
-                      <div>
-                        <p className="text-sm text-blue-600">Total Registros</p>
-                        <p className="text-xl font-bold">{parseResult.totalRows}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-green-50/50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="size-5 text-green-500" />
-                      <div>
-                        <p className="text-sm text-green-600">Válidos</p>
-                        <p className="text-xl font-bold">{parseResult.validRows}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-red-50/50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="size-5 text-destructive" />
-                      <div>
-                        <p className="text-sm text-destructive">Errores</p>
-                        <p className="text-xl font-bold">{parseResult.errors.length}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <XMLImportStatsGrid
+                  className="grid-cols-1 md:grid-cols-3 xl:grid-cols-3"
+                  items={[
+                    { title: 'Total Registros', value: parseResult.totalRows, icon: FileText, tone: 'info' },
+                    { title: 'Válidos', value: parseResult.validRows, icon: CheckCircle, tone: 'success' },
+                    { title: 'Errores', value: parseResult.errors.length, icon: AlertTriangle, tone: 'danger' },
+                  ]}
+                />
 
                 {/* Duplicate Warning Banner */}
                 {duplicateResults.length > 0 && showDuplicateWarning && (
-                  <Alert className="border-amber-300 bg-amber-50">
-                    <ShieldAlert className="size-4 text-amber-600" />
-                    <AlertDescription className="text-amber-800">
+                  <Alert className="border-warning/30 bg-warning/10">
+                    <ShieldAlert className="size-4 text-warning" />
+                    <AlertDescription className="text-warning">
                       <strong>⚠️ Se detectaron {duplicateResults.length} posibles proveedores duplicados.</strong>
                       <span className="ml-2">
                         {duplicateResults.filter(d => d.matchType === 'exact_rut').length > 0 && (
@@ -403,7 +364,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                           </Badge>
                         )}
                         {duplicateResults.filter(d => d.matchType === 'exact_name' || d.matchType === 'similar_name').length > 0 && (
-                          <Badge className="bg-yellow-100 text-yellow-800">
+                          <Badge className="border-warning/30 bg-warning/15 text-warning">
                             {duplicateResults.filter(d => d.matchType === 'exact_name' || d.matchType === 'similar_name').length} por nombre
                           </Badge>
                         )}
@@ -411,7 +372,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="ml-4 text-amber-700 hover:text-amber-900"
+                        className="ml-4 text-warning hover:bg-warning/10 hover:text-warning"
                         onClick={() => setShowDuplicateWarning(false)}
                       >
                         Ocultar
@@ -422,9 +383,9 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
 
                 {/* Checking duplicates indicator */}
                 {isCheckingDuplicates && (
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Loader2 className="size-4 animate-spin text-blue-600" />
-                    <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 p-3">
+                    <Loader2 className="size-4 animate-spin text-info" />
+                    <span className="text-sm text-info">Verificando duplicados en la base de datos...</span>
                   </div>
                 )}
 
@@ -432,22 +393,22 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && (
                   <div className="space-y-2">
                     {parseResult.errors.length > 0 && (
-                      <div className="p-3 bg-red-50/50 border border-red-200/50 rounded-lg">
-                        <h4 className="font-medium text-red-800 mb-2">Errores:</h4>
+                      <div className="rounded-lg border border-danger/30 bg-danger/10 p-3">
+                        <h4 className="mb-2 font-medium text-danger">Errores:</h4>
                         {parseResult.errors.map((error, idx) => (
-                          <p key={idx} className="text-sm text-red-700">• {error}</p>
+                          <p key={idx} className="text-sm text-danger">• {error}</p>
                         ))}
                       </div>
                     )}
                     
                     {parseResult.warnings.length > 0 && (
-                      <div className="p-3 bg-yellow-50/50 border border-yellow-200/50 rounded-lg">
-                        <h4 className="font-medium text-yellow-800 mb-2">Advertencias:</h4>
+                      <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                        <h4 className="mb-2 font-medium text-warning">Advertencias:</h4>
                         {parseResult.warnings.slice(0, 5).map((warning, idx) => (
-                          <p key={idx} className="text-sm text-yellow-700">• {warning}</p>
+                          <p key={idx} className="text-sm text-warning">• {warning}</p>
                         ))}
                         {parseResult.warnings.length > 5 && (
-                          <p className="text-sm text-yellow-600">... y {parseResult.warnings.length - 5} más</p>
+                          <p className="text-sm text-warning">... y {parseResult.warnings.length - 5} más</p>
                         )}
                       </div>
                     )}
@@ -483,11 +444,11 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                             className={cn(
                               "p-3 rounded-lg border",
                               isDuplicate && duplicateInfo.matchType === 'exact_rut'
-                                ? "bg-red-50 border-red-200"
+                                ? "bg-danger/10 border-danger/30"
                                 : isDuplicate
-                                ? "bg-yellow-50 border-yellow-200"
+                                ? "bg-warning/10 border-warning/30"
                                 : isSelected
-                                ? "bg-violet-50 border-violet-200"
+                                ? "bg-primary/10 border-primary/30"
                                 : "bg-muted/50 border-transparent"
                             )}
                           >
@@ -497,7 +458,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                                   type="checkbox"
                                   checked={isSelected}
                                   onChange={() => toggleSupplierSelection(index)}
-                                  className="size-4 rounded border-gray-300"
+                                  className="size-4 rounded border-border"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
@@ -508,7 +469,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                                         variant={duplicateInfo.matchType === 'exact_rut' ? 'destructive' : 'secondary'}
                                         className={cn(
                                           "text-xs flex-shrink-0",
-                                          duplicateInfo.matchType !== 'exact_rut' && "bg-yellow-100 text-yellow-800"
+                                          duplicateInfo.matchType !== 'exact_rut' && "border-warning/30 bg-warning/15 text-warning"
                                         )}
                                       >
                                         {duplicateInfo.matchType === 'exact_rut' && '⚠️ RUT Existente'}
@@ -535,7 +496,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                                   {isDuplicate && duplicateInfo.existingSupplier && (
                                     <div className={cn(
                                       "text-xs mt-2 p-2 rounded",
-                                      duplicateInfo.matchType === 'exact_rut' ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
+                                      duplicateInfo.matchType === 'exact_rut' ? "bg-danger/15 text-danger" : "bg-warning/15 text-warning"
                                     )}>
                                       <strong>Ya existe:</strong> {duplicateInfo.existingSupplier.name} ({duplicateInfo.existingSupplier.rut})
                                     </div>
@@ -567,7 +528,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
 
                 {/* Action Buttons */}
                 {parseResult.success && parseResult.validRows > 0 && (
-                  <div className="flex justify-end gap-3 pt-4 border-t">
+                  <div className="flex justify-end gap-3 border-t border-border/70 pt-4">
                     <Button 
                       variant="outline" 
                       onClick={() => setParseResult(null)}

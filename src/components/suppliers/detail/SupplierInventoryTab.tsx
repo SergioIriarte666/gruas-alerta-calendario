@@ -41,11 +41,11 @@ const getMovementTypeLabel = (type: string) => {
 
 const getMovementTypeColor = (type: string) => {
   switch (type) {
-    case 'entry': return 'bg-green-600 text-white';
-    case 'exit': return 'bg-red-600 text-white';
-    case 'adjustment': return 'bg-yellow-600 text-white';
-    case 'transfer': return 'bg-blue-600 text-white';
-    default: return 'bg-muted text-muted-foreground';
+    case 'entry': return 'border-success/30 bg-success/10 text-success';
+    case 'exit': return 'border-danger/30 bg-danger/10 text-danger';
+    case 'adjustment': return 'border-warning/30 bg-warning/10 text-warning';
+    case 'transfer': return 'border-info/30 bg-info/10 text-info';
+    default: return 'border-border/70 bg-muted/40 text-muted-foreground';
   }
 };
 
@@ -73,7 +73,7 @@ export const SupplierInventoryTab: React.FC<SupplierInventoryTabProps> = ({ move
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg border border-border/70 bg-card">
       <Table>
         <TableHeader>
           <TableRow className="border-border">

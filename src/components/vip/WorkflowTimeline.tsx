@@ -120,39 +120,39 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   const getStepColorClasses = (color: string, isActive: boolean, isCompleted: boolean, hasWarning?: boolean) => {
     if (hasWarning) {
       return {
-        bg: 'bg-red-500/20',
-        text: 'text-red-300',
-        border: 'border-red-500/30',
-        icon: 'text-red-400'
+        bg: 'bg-danger/10',
+        text: 'text-danger',
+        border: 'border-danger/20',
+        icon: 'text-danger'
       };
     }
 
     if (isCompleted) {
       return {
-        bg: 'bg-green-500/20',
-        text: 'text-green-300',
-        border: 'border-green-500/30',
-        icon: 'text-green-400'
+        bg: 'bg-success/10',
+        text: 'text-success',
+        border: 'border-success/20',
+        icon: 'text-success'
       };
     }
 
     if (isActive) {
       const colorMap = {
-        amber: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30', icon: 'text-amber-400' },
-        orange: { bg: 'bg-orange-500/20', text: 'text-orange-300', border: 'border-orange-500/30', icon: 'text-orange-400' },
-        blue: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/30', icon: 'text-blue-400' },
-        purple: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30', icon: 'text-purple-400' },
-        green: { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30', icon: 'text-green-400' },
-        gray: { bg: 'bg-gray-500/20', text: 'text-gray-300', border: 'border-gray-500/30', icon: 'text-gray-400' }
+        amber: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20', icon: 'text-warning' },
+        orange: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20', icon: 'text-warning' },
+        blue: { bg: 'bg-info/10', text: 'text-info', border: 'border-info/20', icon: 'text-info' },
+        purple: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20', icon: 'text-primary' },
+        green: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20', icon: 'text-success' },
+        gray: { bg: 'bg-muted/40', text: 'text-muted-foreground', border: 'border-border/70', icon: 'text-muted-foreground' }
       };
       return colorMap[color] || colorMap.gray;
     }
 
     return {
-      bg: 'bg-gray-700/30',
-      text: 'text-gray-400',
-      border: 'border-gray-600/30',
-      icon: 'text-gray-500'
+      bg: 'bg-muted/20',
+      text: 'text-muted-foreground',
+      border: 'border-border/70',
+      icon: 'text-muted-foreground'
     };
   };
 
@@ -164,10 +164,10 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Overview */}
-      <Card className="glass-card border-blue-500/20">
+      <Card className="glass-card border-border/70">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Timer className="size-5 text-blue-400" />
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <Timer className="size-5 text-primary" />
             Progreso del Workflow - {service.folio}
           </CardTitle>
         </CardHeader>
@@ -175,12 +175,12 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-300">Progreso del Servicio</span>
-              <span className="text-white font-medium">{Math.round(calculateProgress())}%</span>
+              <span className="text-muted-foreground">Progreso del Servicio</span>
+              <span className="text-foreground font-medium">{Math.round(calculateProgress())}%</span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div 
-                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${calculateProgress()}%` }}
               />
             </div>
@@ -189,16 +189,16 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-lg font-bold text-white">{currentStepIndex + 1}</p>
-              <p className="text-xs text-gray-400">Etapa Actual</p>
+              <p className="text-lg font-bold text-foreground">{currentStepIndex + 1}</p>
+              <p className="text-xs text-muted-foreground">Etapa Actual</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-white">{steps.filter(s => s.isCompleted).length}</p>
-              <p className="text-xs text-gray-400">Completadas</p>
+              <p className="text-lg font-bold text-foreground">{steps.filter(s => s.isCompleted).length}</p>
+              <p className="text-xs text-muted-foreground">Completadas</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-white">{totalExpectedDuration}h</p>
-              <p className="text-xs text-gray-400">Duración Est.</p>
+              <p className="text-lg font-bold text-foreground">{totalExpectedDuration}h</p>
+              <p className="text-xs text-muted-foreground">Duración Est.</p>
             </div>
           </div>
         </CardContent>
@@ -215,13 +215,13 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             <div key={step.status} className="relative">
               {/* Connector Line */}
               {!isLast && (
-                <div className="absolute left-6 top-12 w-px h-8 bg-gray-600" />
+                <div className="absolute left-6 top-12 w-px h-8 bg-border" />
               )}
 
               <Card 
                 className={`glass-card ${colors.border} transition-all duration-200 ${
-                  step.isActive ? 'ring-1 ring-blue-500/30' : ''
-                } ${onStepClick ? 'cursor-pointer hover:bg-gray-800/50' : ''}`}
+                  step.isActive ? 'ring-1 ring-primary/20' : ''
+                } ${onStepClick ? 'cursor-pointer hover:bg-muted/40' : ''}`}
                 onClick={() => onStepClick?.(step)}
               >
                 <CardContent className="p-4">
@@ -237,19 +237,19 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                         <h4 className={`font-medium ${colors.text}`}>
                           {step.label}
                           {step.isActive && (
-                            <Badge variant="outline" className="ml-2 bg-blue-500/20 text-blue-300 border-blue-500/30">
+                            <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/30">
                               Actual
                             </Badge>
                           )}
                           {step.hasWarning && (
-                            <Badge variant="outline" className="ml-2 bg-red-500/20 text-red-300 border-red-500/30">
+                            <Badge variant="outline" className="ml-2 bg-danger/10 text-danger border-danger/20">
                               <AlertTriangle className="size-3 mr-1" />
                               Atención
                             </Badge>
                           )}
                         </h4>
 
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {step.expectedDuration && (
                             <span>{step.expectedDuration}h esperado</span>
                           )}
@@ -266,14 +266,14 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
                       {/* Warning Message */}
                       {step.hasWarning && step.warningMessage && (
-                        <div className="flex items-center gap-2 text-sm text-red-300 bg-red-500/10 p-2 rounded">
+                        <div className="flex items-center gap-2 text-sm text-danger bg-danger/10 border border-danger/20 p-2 rounded">
                           <AlertTriangle className="size-4" />
                           <span>{step.warningMessage}</span>
                         </div>
                       )}
 
                       {/* Step Details */}
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-muted-foreground">
                         {step.status === 'purchase_order_pending' && service.purchaseOrderNumber && (
                           <span>O.C: {service.purchaseOrderNumber}</span>
                         )}
@@ -287,7 +287,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
                     {/* Next Arrow */}
                     {!isLast && step.isCompleted && (
-                      <ArrowRight className="size-4 text-gray-500 mt-3" />
+                      <ArrowRight className="size-4 text-muted-foreground mt-3" />
                     )}
                   </div>
                 </CardContent>
@@ -299,17 +299,17 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
 
       {/* Service Purchase Order Info */}
       {service.purchaseOrderNumber && (
-        <Card className="glass-card border-purple-500/20">
+        <Card className="glass-card border-border/70">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <ShoppingCart className="size-4 text-purple-400" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <ShoppingCart className="size-4 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-foreground">
                   Orden de Compra Registrada
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {service.purchaseOrderNumber}
                 </p>
               </div>

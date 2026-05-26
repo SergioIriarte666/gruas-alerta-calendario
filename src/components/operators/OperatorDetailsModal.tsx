@@ -5,10 +5,7 @@ import { Operator } from '@/types';
 import { 
   User,
   Phone,
-  Mail,
-  Calendar,
   Truck,
-  Clock,
   CheckCircle,
   FileText
 } from 'lucide-react';
@@ -25,10 +22,10 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl border-border/70 bg-card">
+        <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2">
-            <User className="size-5" />
+            <User className="size-5 text-primary" />
             {operator.name}
           </DialogTitle>
         </DialogHeader>
@@ -39,13 +36,13 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
             <Badge variant={operator.isActive ? "default" : "secondary"}>
               {operator.isActive ? 'Activo' : 'Inactivo'}
             </Badge>
-            {operator.isActive && <CheckCircle className="size-4 text-green-500" />}
+            {operator.isActive && <CheckCircle className="size-4 text-success" />}
           </div>
 
           {/* Información de Contacto */}
-          <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-blue-500/5 p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-              <div className="p-1 rounded bg-blue-500/10 text-blue-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-info bg-info/5 p-4">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <div className="rounded bg-info/10 p-1 text-info">
                 <Phone className="size-4" />
               </div>
               Información de Contacto
@@ -65,9 +62,9 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </div>
 
           {/* Servicios del Día */}
-          <div className="rounded-lg border border-border border-l-4 border-l-emerald-500 bg-emerald-500/5 p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-              <div className="p-1 rounded bg-emerald-500/10 text-emerald-600">
+          <div className="rounded-lg border border-border border-l-4 border-l-success bg-success/5 p-4">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <div className="rounded bg-success/10 p-1 text-success">
                 <FileText className="size-4" />
               </div>
               Servicios del Día
@@ -100,9 +97,9 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
 
           {/* Información de Licencias */}
           {(operator.licenseNumber || operator.examExpiry) && (
-            <div className="rounded-lg border border-border border-l-4 border-l-amber-500 bg-amber-500/5 p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <div className="p-1 rounded bg-amber-500/10 text-amber-600">
+            <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                <div className="rounded bg-warning/10 p-1 text-warning">
                   <FileText className="size-4" />
                 </div>
                 Licencias y Exámenes
@@ -125,7 +122,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           )}
 
           {/* Footer con información de creación */}
-          <div className="flex justify-between text-sm text-muted-foreground pt-4 border-t">
+          <div className="flex justify-between border-t border-border/70 pt-4 text-sm text-muted-foreground">
             <span>
               Creado: {formatForDisplayWithTime(operator.createdAt)}
               {operator.creatorName && ` por ${operator.creatorName}`}
@@ -134,7 +131,7 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </div>
 
           <div className="flex justify-end">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" className="border-border/70 bg-background/60" onClick={onClose}>
               Cerrar
             </Button>
           </div>

@@ -65,7 +65,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
   return (
     <div className="space-y-3">
       {/* Select all header */}
-      <div className="flex items-center justify-between pb-2 border-b">
+      <div className="flex items-center justify-between pb-2 border-b border-border/70">
         <div className="flex items-center gap-2">
           <Checkbox
             checked={selectedIds.length === payments.length && payments.length > 0}
@@ -124,7 +124,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
                 className={
                   payment.status === 'overdue'
                     ? 'bg-destructive/10 text-destructive border-destructive/30 text-xs'
-                    : 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs'
+                    : 'bg-warning/10 text-warning border-warning/30 text-xs'
                 }
               >
                 {payment.status === 'overdue' ? 'Vencido' : 'Pendiente'}

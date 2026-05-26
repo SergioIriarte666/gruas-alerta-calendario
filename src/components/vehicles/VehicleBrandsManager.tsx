@@ -34,6 +34,7 @@ import {
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { VehicleFilters } from './VehicleFilters';
+import { SectionCard } from '@/components/ui/section-card';
 
 type SortField = 'name' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -114,7 +115,8 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
     if (!sortField) return filtered;
     
     return [...filtered].sort((a, b) => {
-      let aValue, bValue;
+      let aValue: string | Date;
+      let bValue: string | Date;
       switch (sortField) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -150,7 +152,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-semibold tracking-tight">Marcas de Vehículos</h2>
-            <Badge className="border-0 bg-amber-100 text-amber-800 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-200">
+            <Badge variant="secondary" className="rounded-full">
               {sortedBrands.length}
             </Badge>
           </div>
@@ -160,7 +162,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-amber-600 shadow-sm hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500">
+            <Button>
               <Plus className="size-4 mr-2" />
               Nueva Marca
             </Button>
@@ -201,10 +203,10 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
         </Dialog>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50/70 to-background shadow-sm dark:border-amber-900/30 dark:from-amber-950/10 dark:to-background">
+      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-amber-100/60 hover:bg-amber-100/60 dark:bg-amber-950/20 dark:hover:bg-amber-950/20">
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead 
                 className="cursor-pointer hover:bg-muted/50 transition-colors" 
                 onClick={() => handleSort('name')}
@@ -284,7 +286,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
             )}
           </TableBody>
         </Table>
-      </div>
+      </SectionCard>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

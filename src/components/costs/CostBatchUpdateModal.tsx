@@ -317,13 +317,13 @@ export const CostBatchUpdateModal = ({
         else onOpenChange(true);
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4 bg-gradient-to-r from-violet-500/10 to-purple-500/10 -mx-6 -mt-6 px-6 pt-6 rounded-t-lg">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+        <DialogHeader className="-mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-2">
             {isMarkPaidMode ? (
-              <CheckCircle className="size-5 text-green-600" />
+              <CheckCircle className="size-5 text-success" />
             ) : (
-              <BarChart3 className="size-5 text-violet-600" />
+              <BarChart3 className="size-5 text-primary" />
             )}
             {isMarkPaidMode ? 'Marcar como Pagados' : 'Actualización por Lotes'}
           </DialogTitle>
@@ -335,7 +335,7 @@ export const CostBatchUpdateModal = ({
         </DialogHeader>
 
         {/* Resumen */}
-        <Card className={isMarkPaidMode ? 'bg-green-500/5 border-green-500/20' : 'bg-violet-500/5 border-violet-500/20'}>
+        <Card className={isMarkPaidMode ? 'border-success/20 bg-success/5' : 'border-primary/20 bg-primary/5'}>
           <CardContent className="pt-6">
             <div className={isMarkPaidMode ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-2 gap-4'}>
               <div>
@@ -344,7 +344,7 @@ export const CostBatchUpdateModal = ({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className={isMarkPaidMode ? 'text-2xl font-bold text-green-600' : 'text-2xl font-bold text-violet-600'}>
+                <p className={isMarkPaidMode ? 'text-2xl font-bold text-success' : 'text-2xl font-bold text-primary'}>
                   ${totalAmount.toLocaleString('es-CL')}
                 </p>
               </div>
@@ -411,9 +411,9 @@ export const CostBatchUpdateModal = ({
                 )}
 
                 {markPaidError && (
-                  <Card className="border-red-500/30 bg-red-50/50">
+                <Card className="border-danger/30 bg-danger/10">
                     <CardContent className="pt-6">
-                      <div className="text-sm text-red-700">{markPaidError}</div>
+                    <div className="text-sm text-danger">{markPaidError}</div>
                     </CardContent>
                   </Card>
                 )}
@@ -422,7 +422,7 @@ export const CostBatchUpdateModal = ({
 
             {markPaidStage === 'done' && markPaidResult && (
               <div className="space-y-4">
-                <Card className="border-green-500/30 bg-green-50/50">
+                <Card className="border-success/30 bg-success/10">
                   <CardContent className="pt-6 space-y-2">
                     <div className="text-sm">
                       <span className="text-muted-foreground">Procesados: </span>
@@ -780,9 +780,10 @@ export const CostBatchUpdateModal = ({
           </>
         )}
 
-        <DialogFooter className="border-t pt-4 mt-4">
+        <DialogFooter className="mt-4 border-t border-border/70 pt-4">
           <Button
             variant="outline"
+            className="border-border/70 bg-background/60"
             onClick={handleClose}
             disabled={isMarkPaidMode ? isMarkingPaid : isUpdating}
           >
@@ -793,12 +794,12 @@ export const CostBatchUpdateModal = ({
               <Button
                 onClick={handleMarkPaidSubmit}
                 disabled={selectedCosts.length === 0 || isMarkingPaid}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-success text-success-foreground hover:bg-success/90"
               >
                 {isMarkingPaid ? 'Marcando...' : `Marcar ${selectedCosts.length} como pagados`}
               </Button>
             ) : (
-              <Button onClick={handleClose} className="bg-green-600 hover:bg-green-700 text-white">
+              <Button onClick={handleClose} className="bg-success text-success-foreground hover:bg-success/90">
                 Cerrar
               </Button>
             )
@@ -806,7 +807,6 @@ export const CostBatchUpdateModal = ({
             <Button
               onClick={handleSubmit}
               disabled={!hasChanges || isUpdating}
-              className="bg-violet-600 hover:bg-violet-700"
             >
               {isUpdating ? 'Actualizando...' : `Actualizar ${selectedCosts.length} costos`}
             </Button>

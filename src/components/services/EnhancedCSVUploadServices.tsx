@@ -19,11 +19,12 @@ import {
 } from 'lucide-react';
 import { useEnhancedCSVUpload } from '@/hooks/useEnhancedCSVUpload';
 import { ValidationError } from '@/utils/enhancedCsvUpload';
-import { shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
+import { shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { BatchUploadAnimations } from './BatchUploadAnimations';
 import { AnimatedProgress } from './AnimatedProgress';
 import { AnimatedStatCard } from './AnimatedStatCard';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface EnhancedCSVUploadServicesProps {
   onClose?: () => void;
@@ -70,7 +71,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     if (selectedFile && allowedTypes.includes(selectedFile.type)) {
       setFile(selectedFile);
     } else {
-      alert('Por favor seleccione un archivo CSV o Excel válido.');
+      toast.error('Por favor seleccione un archivo CSV o Excel válido.');
     }
   }, [setFile]);
 
@@ -87,7 +88,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     if (droppedFile && allowedTypes.includes(droppedFile.type)) {
       setFile(droppedFile);
     } else {
-      alert('Por favor seleccione un archivo CSV o Excel válido.');
+      toast.error('Por favor seleccione un archivo CSV o Excel válido.');
     }
   }, [setFile]);
 
@@ -122,11 +123,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
         console.log('✅ Validation completed successfully');
       } else {
         console.warn('⚠️ No data found in file');
-        alert('No se encontraron datos válidos en el archivo');
+        toast.error('No se encontraron datos válidos en el archivo');
       }
     } catch (error) {
       console.error('❌ Error in preview process:', error);
-      alert(`Error al procesar el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      toast.error(`Error al procesar el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
 
@@ -152,7 +153,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       downloadExcelTemplate();
     } catch (error) {
       console.error('Error downloading Excel template:', error);
-      alert('Error al descargar la plantilla de Excel');
+      toast.error('Error al descargar la plantilla de Excel');
     }
   };
 
@@ -161,7 +162,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       downloadTemplate();
     } catch (error) {
       console.error('Error downloading CSV template:', error);
-      alert('Error al descargar la plantilla CSV');
+      toast.error('Error al descargar la plantilla CSV');
     }
   };
 
@@ -224,7 +225,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <Button
             variant="outline"
             onClick={handleDownloadCSVTemplate}
-            className="border-tms-green text-tms-green hover:bg-tms-green hover:text-white"
+            className="border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
           >
             <Download className="size-4 mr-2" />
             Plantilla CSV
@@ -232,7 +233,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <Button
             variant="outline"
             onClick={handleDownloadExcelTemplate}
-            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+            className="border-info/30 text-info hover:bg-info hover:text-info-foreground"
           >
             <Download className="size-4 mr-2" />
             Plantilla Excel
@@ -246,11 +247,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {isInitialized ? (
-                <CheckCircle className="size-5 text-green-500" />
+                <CheckCircle className="size-5 text-success" />
               ) : (
-                <Loader2 className="size-5 text-yellow-500 animate-spin" />
+                <Loader2 className="size-5 text-warning animate-spin" />
               )}
-              <span className={`text-sm ${isInitialized ? 'text-green-600' : 'text-yellow-600'}`}>
+              <span className={`text-sm ${isInitialized ? 'text-success' : 'text-warning'}`}>
                 {isInitialized ? 'Sistema listo' : 'Inicializando sistema...'}
               </span>
             </div>
@@ -266,7 +267,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-x-2 text-foreground">
-            <FileText className="size-5 text-tms-green" />
+            <FileText className="size-5 text-primary" />
             <span>Seleccionar Archivo</span>
           </CardTitle>
         </CardHeader>
@@ -314,7 +315,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             <div className="mt-4 p-4 bg-muted/50 rounded-lg animate-slide-up">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-x-3">
-                  <FileText className="size-5 text-tms-green" />
+                  <FileText className="size-5 text-primary" />
                   <div>
                     <p className="text-foreground font-medium">{file.name}</p>
                     <p className="text-muted-foreground text-sm">{formatFileSize(file.size)}</p>
@@ -327,7 +328,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                     onClick={handlePreview}
                     disabled={isValidating || !isInitialized}
                     className={cn(
-                      "border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-all duration-300",
+                      "border-info/30 text-info hover:bg-info hover:text-info-foreground transition-all duration-300",
                       isValidating && "animate-pulse-glow"
                     )}
                   >
@@ -342,7 +343,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                     variant="outline"
                     size="sm"
                     onClick={reset}
-                    className="border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
+                    className="border-border/70 bg-background/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                   >
                     Limpiar
                   </Button>
@@ -431,19 +432,19 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             <div className={cn(
               "p-4 rounded-lg border transition-all duration-500 animate-slide-up",
               validationResult.isValid 
-                ? 'bg-green-500/10 border-green-500/30' 
-                : 'bg-orange-500/10 border-orange-500/30',
-              validationResult.isValid && "shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+                ? 'bg-success/10 border-success/20' 
+                : 'bg-warning/10 border-warning/20',
+              validationResult.isValid && "shadow-[0_0_20px_hsl(var(--success)/0.18)]"
             )}>
               <div className="flex items-center gap-2 mb-2">
                 {validationResult.isValid ? (
-                  <CheckCircle className="size-5 text-green-400 animate-bounce-in" />
+                  <CheckCircle className="size-5 text-success animate-bounce-in" />
                 ) : (
-                  <AlertTriangle className="size-5 text-orange-400 animate-scale-pulse" />
+                  <AlertTriangle className="size-5 text-warning animate-scale-pulse" />
                 )}
                 <h4 className={cn(
                   "font-medium",
-                  validationResult.isValid ? 'text-green-600' : 'text-orange-600'
+                  validationResult.isValid ? 'text-success' : 'text-warning'
                 )}>
                   {validationResult.isValid ? 'Validación Exitosa' : 'Validación con Observaciones'}
                 </h4>
@@ -473,7 +474,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                         <div className="flex items-center gap-2 mb-1">
                           <Badge 
                             variant={isError ? "destructive" : "secondary"}
-                            className={isError ? "bg-red-500/20 text-red-600" : "bg-yellow-500/20 text-yellow-600"}
+                            className={isError ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}
                           >
                             {field}
                           </Badge>
@@ -543,11 +544,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                             <TableCell className="text-foreground">${row.Valor || row.value}</TableCell>
                             <TableCell>
                               {hasError ? (
-                                <Badge variant="destructive" className="bg-red-500/20 text-red-600">Error</Badge>
+                                <Badge className="border-danger/30 bg-danger/10 text-danger">Error</Badge>
                               ) : hasWarning ? (
-                                <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">Advertencia</Badge>
+                                <Badge className="border-warning/30 bg-warning/10 text-warning">Advertencia</Badge>
                               ) : (
-                                <Badge variant="secondary" className="bg-green-500/20 text-green-600">Válido</Badge>
+                                <Badge className="border-success/30 bg-success/10 text-success">Válido</Badge>
                               )}
                             </TableCell>
                           </TableRow>
@@ -599,9 +600,9 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <CardHeader>
             <CardTitle className="flex items-center gap-x-2 text-foreground">
               {uploadResult.success ? (
-                <CheckCircle className="size-5 text-green-500 animate-bounce-in" />
+                <CheckCircle className="size-5 text-success animate-bounce-in" />
               ) : (
-                <XCircle className="size-5 text-red-500 animate-scale-pulse" />
+                <XCircle className="size-5 text-danger animate-scale-pulse" />
               )}
               <span>Resultado de la Carga</span>
             </CardTitle>
@@ -625,8 +626,8 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             
             {/* Error details */}
             {uploadResult.errorDetails && uploadResult.errorDetails.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4 animate-slide-up">
-                <h4 className="text-red-600 font-medium mb-2">Detalles de Errores</h4>
+              <div className="bg-danger/10 border border-danger/20 rounded-lg p-4 mb-4 animate-slide-up">
+                <h4 className="text-danger font-medium mb-2">Detalles de Errores</h4>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {uploadResult.errorDetails.slice(0, 10).map((error, idx) => (
                     <div 

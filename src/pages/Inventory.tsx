@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/ui/page-header';
+import { MetricCard } from '@/components/ui/metric-card';
+import { SectionCard } from '@/components/ui/section-card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Download, Upload, ArrowUpDown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Package, AlertTriangle, TrendingUp, BarChart3, Upload, ArrowUpDown, Boxes, FileSpreadsheet } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { InventoryStockView } from '@/components/inventory/InventoryStockView';
 import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTable';
 import { InventoryReportsPage } from '@/components/inventory/reports/InventoryReportsPage';
-import { format } from 'date-fns';
 import { InventoryMovementForm } from '@/components/inventory/InventoryMovementForm';
 import { XMLInventoryUpload } from '@/components/inventory/XMLInventoryUpload';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
@@ -21,23 +22,23 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Inventory = () => {
   useInventorySyncWatcher();
-  
-  const [searchTerm, setSearchTerm] = useState('');
+
   const location = useLocation() as any;
   const navigate = useNavigate();
   const { deleteEntry } = useQuickEntry();
   const [intakeOpen, setIntakeOpen] = useState<boolean>(!!location?.state?.prefilledData);
   const [prefill, setPrefill] = useState<any | null>(location?.state?.prefilledData || null);
   const [isXMLImportOpen, setIsXMLImportOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('stock');
 
   const { data: stats, isLoading: statsLoading } = useInventoryStats();
-  const { data: recentMovements, isLoading: movementsLoading } = useInventoryMovements(5);
-  const { data: lowStockData, isLoading: lowStockLoading } = useLowStockItems();
+  const { data: recentMovements = [], isLoading: movementsLoading } = useInventoryMovements(5);
+  const { data: lowStockData = [] } = useLowStockItems();
 
   const isMobile = useIsMobile();
 
   return (
-    <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+    <div className="space-y-6 pb-6">
       <Dialog open={intakeOpen} onOpenChange={(open) => {
         setIntakeOpen(open);
         if (!open) {
@@ -45,7 +46,7 @@ const Inventory = () => {
           setPrefill(null);
         }
       }}>
-        <DialogContent>
+        <DialogContent className="border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Registrar entrada de inventario desde Registro Rápido</DialogTitle>
           </DialogHeader>
@@ -91,20 +92,20 @@ const Inventory = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Gestión de Bodega</h1>
-          {!isMobile && <p className="text-muted-foreground">Control de inventario y stock de repuestos</p>}
-        </div>
-        <Button 
-          onClick={() => setIsXMLImportOpen(true)} 
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white"
-        >
-          <Upload className="size-4" />
-          <span>{isMobile ? 'XML' : 'Importar XML'}</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestión de Bodega"
+        description="Controla stock, movimientos y reportes de inventario desde una experiencia administrativa unificada."
+        actions={
+          <Button
+            onClick={() => setIsXMLImportOpen(true)}
+            size={isMobile ? 'sm' : 'default'}
+            className="flex items-center gap-2"
+          >
+            <Upload className="size-4" />
+            <span>{isMobile ? 'XML' : 'Importar XML'}</span>
+          </Button>
+        }
+      />
 
       <XMLInventoryUpload
         isOpen={isXMLImportOpen}
@@ -112,106 +113,101 @@ const Inventory = () => {
         onSuccess={() => setIsXMLImportOpen(false)}
       />
 
-      {/* Stats Cards */}
-      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
-        <Card className="border-l-4 border-l-violet-500">
-          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
-            <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-              <Package className="size-4 text-violet-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-violet-600">
-              {statsLoading ? '...' : (stats?.totalItems || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total de productos activos
-            </p>
-          </CardContent>
-        </Card>
+      {statsLoading ? (
+        <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}`}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-28 rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}`}>
+          <MetricCard
+            title="Total Productos"
+            value={(stats?.totalItems || 0).toLocaleString()}
+            description={`${recentMovements.length} movimientos recientes`}
+            icon={Boxes}
+            tone="primary"
+          />
+          <MetricCard
+            title="Stock Bajo"
+            value={stats?.lowStock || 0}
+            description={`${lowStockData.length} productos monitoreados`}
+            icon={AlertTriangle}
+            tone="warning"
+          />
+          <MetricCard
+            title="Sin Stock"
+            value={stats?.outOfStock || 0}
+            description="Requieren reposición inmediata"
+            icon={Package}
+            tone="danger"
+          />
+          <MetricCard
+            title="Valor Total"
+            value={`$${(stats?.totalValue || 0).toLocaleString()}`}
+            description={movementsLoading ? 'Actualizando movimientos...' : 'Valorización consolidada'}
+            icon={TrendingUp}
+            tone="info"
+          />
+        </div>
+      )}
 
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Bajo</CardTitle>
-            <div className="size-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-              <AlertTriangle className="size-4 text-yellow-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {statsLoading ? '...' : stats?.lowStock || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Requieren reposición
-            </p>
-          </CardContent>
-        </Card>
+      <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
+        <div className="flex flex-wrap gap-2 px-6 pt-6">
+          <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+            <Package className="size-3.5" />
+            Stock operativo
+          </Badge>
+          <Badge variant="outline" className="gap-1 rounded-full px-3 py-1">
+            <ArrowUpDown className="size-3.5" />
+            Trazabilidad de movimientos
+          </Badge>
+          <Badge variant="outline" className="gap-1 rounded-full px-3 py-1">
+            <FileSpreadsheet className="size-3.5" />
+            Reportería analítica
+          </Badge>
+        </div>
 
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sin Stock</CardTitle>
-            <div className="size-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertTriangle className="size-4 text-red-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {statsLoading ? '...' : stats?.outOfStock || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Críticos para operación
-            </p>
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
+          <div className="overflow-x-auto">
+            <TabsList className="grid w-full min-w-[420px] grid-cols-3 rounded-xl bg-transparent p-0">
+              <TabsTrigger
+                value="stock"
+                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Package className="size-4" />
+                <span>Stock</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="movements"
+                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <ArrowUpDown className="size-4" />
+                <span>Movimientos</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="reports"
+                className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <BarChart3 className="size-4" />
+                <span>Reportes</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-        <Card className="border-l-4 border-l-violet-500">
-          <CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <div className="size-8 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-              <TrendingUp className="size-4 text-violet-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-violet-600">
-              ${statsLoading ? '...' : (stats?.totalValue || 0).toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valor total del inventario
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <TabsContent value="stock" className="mt-4 space-y-4">
+            <InventoryStockView />
+          </TabsContent>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="stock" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex bg-muted/50">
-          <TabsTrigger value="stock" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <Package className="size-4 mr-1" />
-            <span className="hidden sm:inline">Stock</span>
-          </TabsTrigger>
-          <TabsTrigger value="movements" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <ArrowUpDown className="size-4 mr-1" />
-            <span className="hidden sm:inline">Movimientos</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="text-xs sm:text-sm data-[state=active]:bg-violet-600 data-[state=active]:text-white">
-            <BarChart3 className="size-4 mr-1" />
-            <span className="hidden sm:inline">Reportes</span>
-          </TabsTrigger>
-        </TabsList>
+          <TabsContent value="movements" className="mt-4 space-y-4">
+            <MovementsHistoryTable />
+          </TabsContent>
 
-        <TabsContent value="stock" className="space-y-4">
-          <InventoryStockView />
-        </TabsContent>
-
-        <TabsContent value="movements" className="space-y-4">
-          <MovementsHistoryTable />
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <InventoryReportsPage />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="reports" className="mt-4 space-y-4">
+            <InventoryReportsPage />
+          </TabsContent>
+        </Tabs>
+      </SectionCard>
     </div>
   );
 };

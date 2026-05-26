@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -21,7 +21,6 @@ import { useServiceDetails } from '@/hooks/useServiceDetails';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { CostBatchActionBar } from './CostBatchActionBar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -268,8 +267,8 @@ export const EnhancedCostsTable = ({
     <TableRow 
       key={cost.id} 
       className={cn(
-        'hover:bg-muted/50 group',
-        highlightedCostId === cost.id && 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500'
+        'group border-border/60 hover:bg-accent/20',
+        highlightedCostId === cost.id && 'border-l-4 border-primary bg-primary/5'
       )}
     >
       {onSelectionChange && (
@@ -292,7 +291,7 @@ export const EnhancedCostsTable = ({
           {(() => {
             const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
             return itemsCount > 1 ? (
-              <Badge variant="outline" className="shrink-0 text-[10px] px-1.5 py-0 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300">
+              <Badge variant="outline" className="shrink-0 border-warning/20 bg-warning/10 px-1.5 py-0 text-[10px] text-warning">
                 <Layers className="size-3 mr-0.5" />
                 {itemsCount}
               </Badge>
@@ -301,7 +300,7 @@ export const EnhancedCostsTable = ({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant="secondary" className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+        <Badge variant="secondary" className="bg-primary/10 text-primary">
           {getCategoryDisplay(cost)}
         </Badge>
       </TableCell>
@@ -322,12 +321,12 @@ export const EnhancedCostsTable = ({
               <span className="inline-flex">
                 {cost.payment_date ? (
                   new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
-                    <CalendarClock className="size-5 text-amber-500" />
+                    <CalendarClock className="size-5 text-warning" />
                   ) : (
-                    <CheckCircle className="size-5 text-green-500" />
+                    <CheckCircle className="size-5 text-success" />
                   )
                 ) : (
-                  <Circle className="size-5 text-red-400" />
+                  <Circle className="size-5 text-danger" />
                 )}
               </span>
             </TooltipTrigger>
@@ -345,7 +344,7 @@ export const EnhancedCostsTable = ({
         {cost.services ? (
           <button
             onClick={() => handleServiceClick(cost)}
-            className="text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 underline cursor-pointer"
+            className="cursor-pointer text-primary underline underline-offset-2 hover:text-primary/80"
           >
             {getAssociatedTo(cost)}
           </button>
@@ -467,9 +466,9 @@ export const EnhancedCostsTable = ({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent">
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (
-                    <TableHead className="w-12">
+                    <TableHead className="w-12 pl-6">
                       <Checkbox
                         checked={selectedCosts.size === costs.length && costs.length > 0}
                         onCheckedChange={handleSelectAll}
@@ -477,44 +476,44 @@ export const EnhancedCostsTable = ({
                       />
                     </TableHead>
                   )}
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('date')}>
                     <div className="flex items-center">
                       Fecha
                       <SortIcon field="date" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('description')}>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('description')}>
                     <div className="flex items-center">
                       Descripción
                       <SortIcon field="description" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('category')}>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('category')}>
                     <div className="flex items-center">
                       Categoría
                       <SortIcon field="category" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('subcategory')}>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('subcategory')}>
                     <div className="flex items-center">
                       Subcategoría
                       <SortIcon field="subcategory" />
                     </div>
                   </TableHead>
-                  <TableHead className="cursor-pointer text-right" onClick={() => handleSort('amount')}>
+                  <TableHead className="cursor-pointer text-right font-semibold text-foreground" onClick={() => handleSort('amount')}>
                     <div className="flex items-center justify-end">
                       Monto
                       <SortIcon field="amount" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-center w-20">Pagado</TableHead>
-                  <TableHead className="cursor-pointer" onClick={() => handleSort('associated')}>
+                  <TableHead className="w-20 text-center font-semibold text-foreground">Pagado</TableHead>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('associated')}>
                     <div className="flex items-center">
                       Asociado a
                       <SortIcon field="associated" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-right w-32">Acciones</TableHead>
+                  <TableHead className="w-32 pr-6 text-right font-semibold text-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -522,7 +521,7 @@ export const EnhancedCostsTable = ({
                   if (groupBy === 'none') {
                     return groupCosts.length === 0 ? (
                       <TableRow key="empty">
-                        <TableCell colSpan={onSelectionChange ? 9 : 8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={onSelectionChange ? 9 : 8} className="py-8 text-center text-muted-foreground">
                           No se encontraron costos que coincidan con los filtros aplicados.
                         </TableCell>
                       </TableRow>
@@ -535,9 +534,9 @@ export const EnhancedCostsTable = ({
                   const isExpanded = expandedGroups.has(groupKey);
 
                   return (
-                    <React.Fragment key={groupKey}>
+                    <Fragment key={groupKey}>
                       <TableRow 
-                        className="bg-muted/30 cursor-pointer hover:bg-muted/50"
+                        className="cursor-pointer bg-muted/30 hover:bg-muted/50"
                         onClick={() => toggleGroup(groupKey)}
                       >
                         <TableCell colSpan={onSelectionChange ? 9 : 8}>
@@ -552,14 +551,14 @@ export const EnhancedCostsTable = ({
                               <span className="font-medium capitalize">{groupKey}</span>
                               <Badge variant="secondary">{groupCosts.length} costos</Badge>
                             </div>
-                            <span className="font-semibold text-violet-600">
+                            <span className="font-semibold text-primary">
                               {formatCurrency(groupTotal)}
                             </span>
                           </div>
                         </TableCell>
                       </TableRow>
                       {isExpanded && groupCosts.map(cost => renderCostRow(cost))}
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })}
               </TableBody>
@@ -600,7 +599,7 @@ export const EnhancedCostsTable = ({
 
       {/* Totales */}
       {costs.length > 0 && (
-        <Card className="bg-muted/50">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardContent className="p-4">
             <div className="flex justify-between items-center flex-wrap gap-4">
               <div className="flex gap-x-6">
@@ -610,7 +609,7 @@ export const EnhancedCostsTable = ({
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">Total monto:</span>
-                  <span className="ml-2 font-semibold text-violet-600">
+                  <span className="ml-2 font-semibold text-primary">
                     {formatCurrency(calculateTotals())}
                   </span>
                 </div>

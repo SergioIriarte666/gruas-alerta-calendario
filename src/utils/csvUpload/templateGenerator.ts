@@ -109,7 +109,7 @@ export class TemplateGenerator {
       console.error('❌ Error generating Excel template:', error);
       
       // Fallback to CSV template if Excel generation fails
-      alert('Error generando plantilla Excel. Descargando plantilla CSV como alternativa.');
+      console.warn('Error generando plantilla Excel. Descargando plantilla CSV como alternativa.');
       this.downloadTemplate();
     }
   }

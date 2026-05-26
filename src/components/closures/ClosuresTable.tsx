@@ -150,8 +150,8 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
   };
 
   return (
-    <Card className="bg-card border" id="closures-table-top">
-      <CardHeader className="flex flex-row items-center justify-between gap-y-0">
+    <Card className="border-border/70 bg-card/80 shadow-sm" id="closures-table-top">
+      <CardHeader className="flex flex-row items-center justify-between gap-y-0 border-b border-border/60 pb-4">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
@@ -207,7 +207,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
           <>
             <Table>
               <TableHeader>
-                <TableRow className="border-border">
+                <TableRow className="border-border/60 bg-muted/30">
                   <TableHead 
                     className="text-foreground cursor-pointer hover:text-primary transition-colors" 
                     onClick={() => onSort?.('folio')}
@@ -269,11 +269,13 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                 {paginatedClosures.map((closure) => (
                   <TableRow 
                     key={closure.id} 
-                    className="border-border hover:bg-muted cursor-pointer"
+                    className="cursor-pointer border-border/60 hover:bg-accent/20"
                     onClick={() => onViewDetails(closure)}
                   >
                     <TableCell className="text-foreground font-medium">
-                      {closure.folio}
+                      <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                        {closure.folio}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDateRange(closure.dateRange)}
@@ -305,6 +307,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                             variant="outline"
                             size="sm"
                             onClick={() => onClose(closure.id, closure.folio)}
+                          className="border-warning/20 bg-warning/10 text-warning hover:bg-warning/15"
                             title="Cerrar periodo"
                           >
                             <FileText className="size-4" />
@@ -314,6 +317,7 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                           variant="outline"
                           size="sm"
                           onClick={() => onEdit(closure)}
+                          className="border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
                           title="Editar cierre"
                         >
                           <Edit className="size-4" />

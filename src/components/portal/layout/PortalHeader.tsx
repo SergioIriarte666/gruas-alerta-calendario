@@ -3,6 +3,7 @@ import React from 'react';
 import { LogOut, User } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useUser } from '@/contexts/UserContext';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cleanupAuthState } from '@/utils/authCleanup';
 
@@ -37,7 +38,7 @@ const PortalHeader: React.FC = () => {
   const userName = user?.name || 'Usuario';
 
   return (
-    <header className="bg-gray-800/50 backdrop-blur-sm p-4 flex justify-between items-center border-b border-gray-700">
+    <header className="flex items-center justify-between border-b border-border/70 bg-card/95 p-4 backdrop-blur">
       <div className="flex items-center gap-x-3">
         {settings?.company?.logo && (
           <img 
@@ -47,22 +48,23 @@ const PortalHeader: React.FC = () => {
           />
         )}
         <div>
-          <h1 className="text-xl font-bold text-white">{companyName}</h1>
-          <p className="text-sm text-gray-400">Portal de Clientes</p>
+          <h1 className="text-xl font-bold text-foreground">{companyName}</h1>
+          <p className="text-sm text-muted-foreground">Portal de Clientes</p>
         </div>
       </div>
       <div className="flex items-center gap-x-4">
-        <div className="flex items-center gap-x-2 text-gray-300">
-          <User className="size-5" />
+        <div className="flex items-center gap-x-2 text-muted-foreground">
+          <User className="size-5 text-primary" />
           <span>Bienvenido, {userName}</span>
         </div>
-        <button 
+        <Button
           onClick={handleLogout}
-          className="flex items-center gap-x-2 text-red-400 hover:text-red-300 transition-colors"
+          variant="ghost"
+          className="text-danger hover:bg-danger/10 hover:text-danger"
         >
           <LogOut className="size-5" />
           <span>Cerrar Sesión</span>
-        </button>
+        </Button>
       </div>
     </header>
   );

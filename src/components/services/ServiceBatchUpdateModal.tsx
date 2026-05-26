@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,7 +19,7 @@ import { ServiceBatchUpdateData, useUpdateServicesBatch } from '@/hooks/useUpdat
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCranes } from '@/hooks/useCranes';
 import { 
-  Hash, Truck, User, FileText, Activity, X, Check, 
+  Truck, User, FileText, Activity, X, Check,
   CheckSquare, Square, Layers, ArrowRight 
 } from 'lucide-react';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
@@ -38,10 +37,10 @@ interface ServiceBatchUpdateModalProps {
 }
 
 const STATUS_OPTIONS: { value: ServiceStatus; label: string; color: string }[] = [
-  { value: 'pending', label: 'Pendiente', color: 'bg-yellow-500' },
-  { value: 'in_progress', label: 'En Progreso', color: 'bg-blue-500' },
-  { value: 'completed', label: 'Completado', color: 'bg-green-500' },
-  { value: 'cancelled', label: 'Cancelado', color: 'bg-red-500' },
+  { value: 'pending', label: 'Pendiente', color: 'bg-warning' },
+  { value: 'in_progress', label: 'En Progreso', color: 'bg-info' },
+  { value: 'completed', label: 'Completado', color: 'bg-success' },
+  { value: 'cancelled', label: 'Cancelado', color: 'bg-danger' },
 ];
 
 export const ServiceBatchUpdateModal = ({
@@ -197,11 +196,11 @@ export const ServiceBatchUpdateModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden border-border/70 bg-card p-0">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-3 text-lg">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/10">
-              <Layers className="size-5 text-violet-600" />
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <Layers className="size-5 text-primary" />
             </div>
             <div>
               <span>Edición por Lotes</span>
@@ -213,8 +212,8 @@ export const ServiceBatchUpdateModal = ({
         {/* Two-column layout */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left panel - Services list */}
-          <div className="w-[340px] border-r flex flex-col bg-muted/20">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
+          <div className="flex w-[340px] flex-col border-r border-border/70 bg-muted/20">
+            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
               <span className="text-sm font-medium">Servicios</span>
               <div className="flex gap-1">
                 <Button 
@@ -301,17 +300,17 @@ export const ServiceBatchUpdateModal = ({
                 {/* Status card */}
                 <div className={cn(
                   "rounded-xl border-2 transition-all overflow-hidden",
-                  enableStatus ? "border-violet-500/50 bg-violet-500/5" : "border-transparent bg-card"
+                  enableStatus ? "border-primary/30 bg-primary/5" : "border-transparent bg-card"
                 )}>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "flex size-10 items-center justify-center rounded-full transition-colors",
-                        enableStatus ? "bg-violet-500/20" : "bg-muted"
+                        enableStatus ? "bg-primary/10" : "bg-muted"
                       )}>
                         <Activity className={cn(
                           "size-5 transition-colors",
-                          enableStatus ? "text-violet-500" : "text-muted-foreground"
+                          enableStatus ? "text-primary" : "text-muted-foreground"
                         )} />
                       </div>
                       <div>
@@ -348,17 +347,17 @@ export const ServiceBatchUpdateModal = ({
                 {/* Operator card */}
                 <div className={cn(
                   "rounded-xl border-2 transition-all overflow-hidden",
-                  enableOperator ? "border-violet-500/50 bg-violet-500/5" : "border-transparent bg-card"
+                  enableOperator ? "border-primary/30 bg-primary/5" : "border-transparent bg-card"
                 )}>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "flex size-10 items-center justify-center rounded-full transition-colors",
-                        enableOperator ? "bg-violet-500/20" : "bg-muted"
+                        enableOperator ? "bg-primary/10" : "bg-muted"
                       )}>
                         <User className={cn(
                           "size-5 transition-colors",
-                          enableOperator ? "text-violet-500" : "text-muted-foreground"
+                          enableOperator ? "text-primary" : "text-muted-foreground"
                         )} />
                       </div>
                       <div>
@@ -395,17 +394,17 @@ export const ServiceBatchUpdateModal = ({
                 {/* Crane card */}
                 <div className={cn(
                   "rounded-xl border-2 transition-all overflow-hidden",
-                  enableCrane ? "border-violet-500/50 bg-violet-500/5" : "border-transparent bg-card"
+                  enableCrane ? "border-primary/30 bg-primary/5" : "border-transparent bg-card"
                 )}>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "flex size-10 items-center justify-center rounded-full transition-colors",
-                        enableCrane ? "bg-violet-500/20" : "bg-muted"
+                        enableCrane ? "bg-primary/10" : "bg-muted"
                       )}>
                         <Truck className={cn(
                           "size-5 transition-colors",
-                          enableCrane ? "text-violet-500" : "text-muted-foreground"
+                          enableCrane ? "text-primary" : "text-muted-foreground"
                         )} />
                       </div>
                       <div>
@@ -442,17 +441,17 @@ export const ServiceBatchUpdateModal = ({
                 {/* Observations card */}
                 <div className={cn(
                   "rounded-xl border-2 transition-all overflow-hidden",
-                  enableObservations ? "border-violet-500/50 bg-violet-500/5" : "border-transparent bg-card"
+                  enableObservations ? "border-primary/30 bg-primary/5" : "border-transparent bg-card"
                 )}>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "flex size-10 items-center justify-center rounded-full transition-colors",
-                        enableObservations ? "bg-violet-500/20" : "bg-muted"
+                        enableObservations ? "bg-primary/10" : "bg-muted"
                       )}>
                         <FileText className={cn(
                           "size-5 transition-colors",
-                          enableObservations ? "text-violet-500" : "text-muted-foreground"
+                          enableObservations ? "text-primary" : "text-muted-foreground"
                         )} />
                       </div>
                       <div>
@@ -493,15 +492,15 @@ export const ServiceBatchUpdateModal = ({
         </div>
 
         {/* Footer with summary */}
-        <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-col sm:flex-row gap-3">
+        <DialogFooter className="flex-col gap-3 border-t border-border/70 bg-muted/30 px-6 py-4 sm:flex-row">
           <div className="flex-1 flex items-center gap-2 text-sm">
             {hasChanges && activeServices.length > 0 ? (
               <>
-                <ArrowRight className="size-4 text-violet-600" />
+                <ArrowRight className="size-4 text-primary" />
                 <span className="text-muted-foreground">
                   Aplicando a <strong className="text-foreground">{activeServices.length}</strong> servicios:
                 </span>
-                <span className="text-violet-600 font-medium truncate">
+                <span className="truncate font-medium text-primary">
                   {changeSummary.join(' • ')}
                 </span>
               </>
@@ -523,7 +522,6 @@ export const ServiceBatchUpdateModal = ({
             <Button 
               onClick={handleSubmit} 
               disabled={!hasChanges || isPending || activeServices.length === 0}
-              className="bg-violet-600 hover:bg-violet-700"
             >
               <Check className="size-4 mr-2" />
               {isPending ? 'Actualizando...' : `Actualizar ${activeServices.length} servicios`}

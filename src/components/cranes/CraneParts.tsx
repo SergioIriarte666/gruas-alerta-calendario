@@ -179,7 +179,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
       ) : (
         <div className="space-y-4">
           {consumptions.map((m: any) => (
-            <Card key={m.id} className="border-border bg-card hover:border-violet-500/40 hover:shadow-md transition-all cursor-pointer group" onClick={() => setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' })}>
+            <Card key={m.id} className="group cursor-pointer border-border bg-card transition-all hover:border-primary/30 hover:shadow-md" onClick={() => setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' })}>
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1 gap-y-3">
@@ -222,7 +222,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
         </div>
       )}
       <Dialog open={isExitOpen} onOpenChange={setIsExitOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Registrar Consumo - {crane.licensePlate}</DialogTitle>
           </DialogHeader>
@@ -258,10 +258,10 @@ const PartHistoryModal = ({ target, onClose }: PartHistoryModalProps) => {
 
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <History className="size-5 text-violet-600" />
+            <History className="size-5 text-primary" />
             Historial de cambios
             {target && <span className="text-sm font-normal text-muted-foreground">— {target.itemName}</span>}
           </DialogTitle>

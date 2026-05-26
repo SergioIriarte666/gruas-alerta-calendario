@@ -1,8 +1,7 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Receipt, Calendar, Tag, DollarSign, Truck, User, FileText, Building2, Package } from 'lucide-react';
+import { Receipt, Calendar, Tag, DollarSign, FileText, Building2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CostSummaryPanelProps {
@@ -61,14 +60,14 @@ export const CostSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="size-4 text-violet-500" />
+            <Receipt className="size-4 text-primary" />
             Resumen del Costo
           </span>
           <Badge variant="outline" className={cn(
             "text-xs",
             isEditing 
-              ? "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30"
-              : "bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/30"
+              ? "border-warning/30 bg-warning/10 text-warning"
+              : "border-primary/30 bg-primary/10 text-primary"
           )}>
             {isEditing ? 'Editando' : 'Nuevo'}
           </Badge>
@@ -123,7 +122,7 @@ export const CostSummaryPanel = ({
           </div>
           <span className={cn(
             "text-lg font-bold",
-            amount > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
+            amount > 0 ? "text-danger" : "text-muted-foreground"
           )}>
             {formatCurrency(amount)}
           </span>

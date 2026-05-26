@@ -134,16 +134,29 @@ export const useInvoicesPageActions = ({
     const isHistorical = invoice?.folio?.startsWith('HIST-');
 
     if (isHistorical) {
-      if (window.confirm('¿Está seguro de que desea eliminar esta factura histórica?')) {
-        try {
-          await deleteInvoice(id, { force: true });
-          toast.success("Factura eliminada", {
-            description: "La factura histórica ha sido eliminada.",
-          });
-        } catch (error) {
-          console.error('Error deleting invoice:', error);
-        }
-      }
+      toast.warning('Eliminar factura histórica', {
+        id: `delete-historical-invoice-${id}`,
+        description: 'Se eliminará permanentemente esta factura histórica.',
+        duration: 8000,
+        action: {
+          label: 'Eliminar',
+          onClick: async () => {
+            try {
+              await deleteInvoice(id, { force: true });
+              toast.success("Factura eliminada", {
+                description: "La factura histórica ha sido eliminada.",
+              });
+            } catch (error) {
+              console.error('Error deleting invoice:', error);
+              toast.error('No se pudo eliminar la factura histórica');
+            }
+          },
+        },
+        cancel: {
+          label: 'Cancelar',
+          onClick: () => {},
+        },
+      });
       return;
     }
 

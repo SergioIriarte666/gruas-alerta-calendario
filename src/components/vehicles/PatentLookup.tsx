@@ -46,10 +46,10 @@ export const PatentLookup: React.FC = () => {
                 value={licensePlate}
                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
                 disabled={loading}
-                className="h-11 flex-1 rounded-xl border-border/70 bg-background/90 shadow-sm"
+                className="h-11 flex-1 rounded-xl border-border/70 bg-background/70 shadow-sm"
                 maxLength={20}
               />
-              <Button type="submit" disabled={loading || !licensePlate.trim()} className="h-11 bg-emerald-600 shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500">
+              <Button type="submit" disabled={loading || !licensePlate.trim()} className="h-11 shadow-sm">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
@@ -63,7 +63,7 @@ export const PatentLookup: React.FC = () => {
                 )}
               </Button>
               {(data || error) && (
-                <Button type="button" variant="outline" onClick={handleReset} className="h-11">
+                <Button type="button" variant="outline" onClick={handleReset} className="h-11 border-border/70 bg-card/70">
                   Limpiar
                 </Button>
               )}
@@ -152,7 +152,7 @@ export const PatentLookup: React.FC = () => {
               {history.map((item) => (
                 <Card
                   key={item.id}
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  className="cursor-pointer border-border/70 bg-background/70 transition-colors hover:bg-accent/50"
                   onClick={() => loadFromHistory(item)}
                 >
                   <CardContent className="p-4">

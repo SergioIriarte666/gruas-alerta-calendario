@@ -44,6 +44,7 @@ import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { VehicleFilters } from './VehicleFilters';
 import { VehicleModelsPipelineView } from './VehicleModelsPipelineView';
+import { SectionCard } from '@/components/ui/section-card';
 
 type SortField = 'name' | 'created_at' | 'brand';
 type SortDirection = 'asc' | 'desc';
@@ -137,7 +138,8 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
     if (!sortField) return filtered;
     
     return [...filtered].sort((a, b) => {
-      let aValue, bValue;
+      let aValue: string | Date;
+      let bValue: string | Date;
       switch (sortField) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -177,7 +179,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-semibold tracking-tight">Modelos de Vehículos</h2>
-            <Badge className="border-0 bg-violet-100 text-violet-800 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-200">
+            <Badge variant="secondary" className="rounded-full">
               {sortedModels.length}
             </Badge>
           </div>
@@ -190,20 +192,20 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
             type="single"
             value={viewMode}
             onValueChange={(value) => value && setViewMode(value as 'table' | 'grouped')}
-            className="rounded-xl border border-violet-100 bg-violet-50/60 p-1 dark:border-violet-900/40 dark:bg-violet-950/10"
+            className="rounded-xl border border-border/70 bg-background/70 p-1"
           >
-            <ToggleGroupItem value="grouped" aria-label="Vista agrupada" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
+            <ToggleGroupItem value="grouped" aria-label="Vista agrupada" className="rounded-lg text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
               <LayoutGrid className="size-4 mr-2" />
               Agrupada
             </ToggleGroupItem>
-            <ToggleGroupItem value="table" aria-label="Vista lista" className="rounded-lg text-violet-700 data-[state=on]:bg-white data-[state=on]:text-violet-900 dark:text-violet-300 dark:data-[state=on]:bg-violet-950/30 dark:data-[state=on]:text-violet-100">
+            <ToggleGroupItem value="table" aria-label="Vista lista" className="rounded-lg text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
               <LayoutList className="size-4 mr-2" />
               Lista
             </ToggleGroupItem>
           </ToggleGroup>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-violet-600 shadow-sm hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-500">
+              <Button>
                 <Plus className="size-4 mr-2" />
                 Nuevo Modelo
               </Button>
@@ -269,10 +271,10 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
           isDeleting={isDeleting}
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/70 to-background shadow-sm dark:border-violet-900/30 dark:from-violet-950/10 dark:to-background">
+        <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow className="bg-violet-100/60 hover:bg-violet-100/60 dark:bg-violet-950/20 dark:hover:bg-violet-950/20">
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead 
                 className="cursor-pointer hover:bg-muted/50 transition-colors" 
                 onClick={() => handleSort('brand')}
@@ -361,7 +363,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
               )}
             </TableBody>
           </Table>
-        </div>
+        </SectionCard>
       )}
 
       {/* Edit Dialog */}

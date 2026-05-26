@@ -24,7 +24,7 @@ export const FormStepNavigation = ({
 }: FormStepNavigationProps) => {
   return (
     <div className="space-y-2">
-      {steps.map((step, index) => {
+      {steps.map((step) => {
         const isActive = step.id === currentStep;
         const isPast = step.id < currentStep;
         const isClickable = step.id <= currentStep || step.isCompleted;
@@ -37,7 +37,7 @@ export const FormStepNavigation = ({
             disabled={!isClickable}
             className={cn(
               "w-full flex items-center gap-3 p-3 rounded-lg transition-all text-left",
-              isActive && "bg-violet-500/10 border border-violet-500/30",
+              isActive && "border border-primary/30 bg-primary/10",
               isPast && !isActive && "bg-muted/50",
               !isActive && !isPast && "hover:bg-muted/30",
               step.hasError && "border-destructive/50 bg-destructive/5",
@@ -48,8 +48,8 @@ export const FormStepNavigation = ({
             <div
               className={cn(
                 "flex-shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                isActive && "bg-violet-600 text-white",
-                step.isCompleted && !isActive && "bg-violet-500 text-white",
+                isActive && "bg-primary text-primary-foreground",
+                step.isCompleted && !isActive && "bg-primary/80 text-primary-foreground",
                 step.hasError && "bg-destructive text-destructive-foreground",
                 !isActive && !step.isCompleted && !step.hasError && "bg-muted text-muted-foreground"
               )}
@@ -66,7 +66,7 @@ export const FormStepNavigation = ({
               <p
                 className={cn(
                   "text-sm font-medium truncate",
-                  isActive && "text-violet-700 dark:text-violet-300",
+                  isActive && "text-primary",
                   step.hasError && "text-destructive"
                 )}
               >
@@ -81,7 +81,7 @@ export const FormStepNavigation = ({
             <div
               className={cn(
                 "flex-shrink-0 text-muted-foreground",
-                isActive && "text-violet-600 dark:text-violet-400"
+                isActive && "text-primary"
               )}
             >
               {step.icon}

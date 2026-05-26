@@ -23,11 +23,11 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   const renderMobileView = () => (
     <div className="space-y-3 p-3">
       {services.map((service) => (
-        <Card key={service.id} className="border">
+        <Card key={service.id} className="border-border/70 bg-background/70 shadow-sm">
           <CardContent className="p-3">
             <div className="flex items-start justify-between mb-2">
               <div>
-                <Badge variant="outline" className="text-tms-green border-tms-green/50 font-medium">
+                <Badge variant="outline" className="border-primary/20 bg-primary/10 font-medium text-primary">
                   #{service.folio}
                 </Badge>
               </div>
@@ -42,7 +42,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                 <User className="size-3.5 mr-2 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</span>
               </div>
-              <div className="flex items-center text-tms-green font-semibold">
+              <div className="flex items-center font-semibold text-primary">
                 <DollarSign className="size-3.5 mr-2 flex-shrink-0" />
                 {formatCurrency(getDisplayServiceValue(service))}
               </div>
@@ -50,7 +50,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
             <Button
               variant="ghost"
               size="sm"
-              className="w-full mt-2 text-tms-green hover:text-tms-green hover:bg-tms-green/10"
+              className="mt-2 w-full text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => onViewDetails(service.id)}
             >
               <Eye className="size-4 mr-1" />
@@ -63,11 +63,11 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   );
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm">
+    <Card className="border-border/70 bg-card/80 shadow-sm">
       <CardHeader className={isMobile ? "pb-2 px-3 pt-3" : "pb-4"}>
-        <CardTitle className={`flex items-center gap-x-3 text-black ${isMobile ? 'text-base' : 'text-xl'}`}>
-          <div className="p-2 bg-tms-green/10 rounded-lg">
-            <Truck className={`${isMobile ? 'size-4' : 'size-6'} text-tms-green`} />
+        <CardTitle className={`flex items-center gap-x-3 text-foreground ${isMobile ? 'text-base' : 'text-xl'}`}>
+          <div className="rounded-xl bg-primary/10 p-2 text-primary">
+            <Truck className={`${isMobile ? 'size-4' : 'size-5'}`} />
           </div>
           <span>Servicios Recientes</span>
         </CardTitle>
@@ -75,11 +75,11 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
       <CardContent className={isMobile ? "p-0" : "p-0"}>
         {services.length === 0 ? (
           <div className="text-center py-12 px-6">
-            <div className="p-4 bg-gray-50 rounded-xl inline-block mb-4">
-              <Truck className="size-12 mx-auto text-gray-400" />
+            <div className="mb-4 inline-flex rounded-2xl bg-muted p-4">
+              <Truck className="mx-auto size-10 text-muted-foreground" />
             </div>
-            <p className="text-gray-600 text-lg">No hay servicios registrados</p>
-            <p className="text-gray-500 text-sm mt-2">Los servicios aparecerán aquí una vez que se registren</p>
+            <p className="text-lg font-medium text-foreground">No hay servicios registrados</p>
+            <p className="mt-2 text-sm text-muted-foreground">Los servicios aparecerán aquí una vez que se registren.</p>
           </div>
         ) : isMobile ? (
           renderMobileView()
@@ -87,39 +87,39 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-200 bg-gray-50/50">
-                  <TableHead className="text-gray-700 font-semibold py-4 px-6">Folio</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Fecha</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Cliente</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Vehículo</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Valor</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Estado</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4 px-6">Acciones</TableHead>
+                <TableRow className="border-border/60 bg-muted/30">
+                  <TableHead className="px-6 py-4 font-semibold text-foreground">Folio</TableHead>
+                  <TableHead className="py-4 font-semibold text-foreground">Fecha</TableHead>
+                  <TableHead className="py-4 font-semibold text-foreground">Cliente</TableHead>
+                  <TableHead className="py-4 font-semibold text-foreground">Vehículo</TableHead>
+                  <TableHead className="py-4 font-semibold text-foreground">Valor</TableHead>
+                  <TableHead className="py-4 font-semibold text-foreground">Estado</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.map((service) => (
-                  <TableRow key={service.id} className="border-gray-200 hover:bg-gray-50/50 transition-colors">
-                    <TableCell className="font-medium text-tms-green py-4 px-6">
-                      {service.folio}
+                  <TableRow key={service.id} className="border-border/60 transition-colors hover:bg-accent/20">
+                    <TableCell className="px-6 py-4 font-medium text-primary">
+                      #{service.folio}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
+                    <TableCell className="py-4 text-foreground">
                       {formatForDisplay(service.serviceDate)}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
+                    <TableCell className="py-4 text-foreground">
                       <div className="font-medium">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</div>
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
+                    <TableCell className="py-4 text-foreground">
                       {shouldShowVehicleInfo(service) ? (
                         <div className="space-y-1">
                           <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
-                          <div className="text-sm text-gray-500 font-mono">{service.licensePlate}</div>
+                          <div className="font-mono text-sm text-muted-foreground">{service.licensePlate}</div>
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-500 italic">No aplica</div>
+                        <div className="text-sm italic text-muted-foreground">No aplica</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
+                    <TableCell className="py-4 text-foreground">
                       <span className="font-semibold">{formatCurrency(getDisplayServiceValue(service))}</span>
                     </TableCell>
                     <TableCell className="py-4">
@@ -129,7 +129,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-tms-green hover:text-tms-green hover:bg-tms-green/10 transition-colors"
+                        className="text-primary transition-colors hover:bg-primary/10 hover:text-primary"
                         onClick={() => onViewDetails(service.id)}
                         title="Ver detalles del servicio"
                       >

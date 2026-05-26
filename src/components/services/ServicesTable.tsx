@@ -101,7 +101,7 @@ export const ServicesTable = ({
   // Render mobile view if on mobile device
   if (isMobile) {
     return (
-      <Card>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <ServicesMobileView
             services={services}
@@ -122,23 +122,23 @@ export const ServicesTable = ({
 
   // Desktop view
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center gap-x-2">
           <Truck className="size-5 text-primary" />
           <span>Servicios Registrados ({services.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {services.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="size-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="px-6 py-12 text-center">
+            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10">
               <Truck className="size-8 text-primary" />
             </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
+            <h3 className="mb-2 text-lg font-medium text-foreground">
               {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
             </h3>
-            <p className="text-muted-foreground mb-6">
+            <p className="mb-6 text-muted-foreground">
               {!hasInitialServices
                 ? 'Comienza agregando tu primer servicio de grúa'
                 : 'Intenta ajustar los filtros de búsqueda'
@@ -159,9 +159,9 @@ export const ServicesTable = ({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-border/60 bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (
-                    <TableHead className="w-12">
+                    <TableHead className="w-12 pl-6">
                       <Checkbox
                         checked={allVisibleSelected}
                         onCheckedChange={handleSelectAll}
@@ -170,32 +170,32 @@ export const ServicesTable = ({
                       />
                     </TableHead>
                   )}
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="folio">Folio</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="date">Fecha Servicio</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="client">Cliente</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="vehicle">Vehículo</SortableHeader>
                   </TableHead>
-                  <TableHead>Origen/Destino</TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">Origen/Destino</TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="crane">Grúa</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="operator">Operador</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="value">Valor</SortableHeader>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="font-semibold text-foreground">
                     <SortableHeader field="status">Estado</SortableHeader>
                   </TableHead>
-                  <TableHead className="min-w-[140px]">Acciones</TableHead>
+                  <TableHead className="min-w-[140px] pr-6 font-semibold text-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -206,10 +206,10 @@ export const ServicesTable = ({
                   return (
                     <TableRow 
                       key={service.id} 
-                      className={`hover:bg-muted/50 ${isSelected ? 'bg-primary/5' : ''}`}
+                      className={`border-border/60 hover:bg-accent/20 ${isSelected ? 'bg-primary/5' : ''}`}
                     >
                       {onSelectionChange && (
-                        <TableCell>
+                        <TableCell className="pl-6">
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={(checked) => handleSelectService(service.id, checked)}
@@ -218,8 +218,8 @@ export const ServicesTable = ({
                         </TableCell>
                       )}
                       <TableCell className="font-medium">
-                        <Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>
-                          {service.folio}
+                        <Badge variant="outline" className="whitespace-nowrap border-primary/20 bg-primary/10 text-primary" title={`Folio: ${service.folio}`}>
+                          #{service.folio}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -252,13 +252,13 @@ export const ServicesTable = ({
                       <TableCell>
                         {getServiceStatusBadge(service.status)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="pr-6">
                         <div className="flex gap-x-1">
                           {(service.status === 'pending' || service.status === 'in_progress') && onCloseService && (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="action-button border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
+                              className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
                               onClick={() => onCloseService(service)}
                               title="Cerrar Servicio"
                             >
@@ -269,7 +269,7 @@ export const ServicesTable = ({
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="action-button border-primary/50 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary"
+                            className="action-button border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40"
                             onClick={() => onViewDetails(service)}
                             title="Ver detalles del servicio"
                           >
@@ -281,8 +281,8 @@ export const ServicesTable = ({
                               variant="outline" 
                               size="sm" 
                               className={isInvoiced && !isAdmin 
-                                ? "action-button border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
-                                : "action-button border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"}
+                                ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground" 
+                                : "action-button border-info/30 bg-info/10 text-info hover:bg-info/15 hover:border-info/40"}
                               onClick={() => onEdit(service)}
                               title={isInvoiced && !isAdmin 
                                 ? "No se puede editar un servicio facturado" 
@@ -300,8 +300,8 @@ export const ServicesTable = ({
                               variant="outline" 
                               size="sm" 
                               className={isInvoiced 
-                                ? "action-button border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
-                                : "action-button border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500"}
+                                ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground" 
+                                : "action-button border-danger/30 bg-danger/10 text-danger hover:bg-danger/15 hover:border-danger/40"}
                               onClick={isInvoiced ? undefined : () => onDelete(service)}
                               title={isInvoiced 
                                 ? "No se puede eliminar un servicio facturado" 

@@ -69,11 +69,11 @@ export const OperatorsTable = ({
 
   if (operators.length === 0 && searchTerm) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
-          <p className="text-muted-foreground mb-4">
+          <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No se encontraron operadores</h3>
+          <p className="mb-4 text-muted-foreground">
             No hay operadores que coincidan con "{searchTerm}"
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -87,11 +87,11 @@ export const OperatorsTable = ({
 
   if (operators.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
-          <p className="text-muted-foreground mb-4">
+          <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No hay operadores registrados</h3>
+          <p className="mb-4 text-muted-foreground">
             Comienza agregando tu primer operador al sistema
           </p>
           <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -104,17 +104,17 @@ export const OperatorsTable = ({
   }
 
   return (
-    <Card className="bg-card border-border">
-      <CardHeader>
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="text-foreground flex items-center justify-between">
           <span>Personal ({totalOperators})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b border-border/60 bg-muted/30">
                 <th 
                   className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('operatorType')}
@@ -183,13 +183,13 @@ export const OperatorsTable = ({
             </thead>
             <tbody>
               {operators.map((operator) => (
-                <tr key={operator.id} className="border-b hover:bg-accent">
+                <tr key={operator.id} className="border-b border-border/60 hover:bg-accent/20">
                   <td className="py-3 px-4">
                     <Badge 
                       variant={operator.operatorType === 'crane_operator' ? 'default' : 'secondary'}
-                      className="text-xs"
+                      className={operator.operatorType === 'crane_operator' ? 'text-xs' : 'border-info/20 bg-info/10 text-info text-xs'}
                     >
-                      {operator.operatorType === 'crane_operator' ? '🏗️ Operador' : '📋 Administrativo'}
+                      {operator.operatorType === 'crane_operator' ? 'Operador' : 'Administrativo'}
                     </Badge>
                   </td>
                   <td className="py-3 px-4 text-foreground font-medium">{operator.name}</td>
@@ -231,7 +231,7 @@ export const OperatorsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(operator)}
-                        className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
+                        className="border border-primary/30 text-primary hover:bg-primary/10 hover:text-primary"
                         title="Editar"
                       >
                         <Edit className="size-4" />
@@ -242,8 +242,8 @@ export const OperatorsTable = ({
                         onClick={() => onToggleStatus(operator.id, operator.isActive, operator.name)}
                         className={`border ${
                           operator.isActive 
-                            ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/50' 
-                            : 'text-green-400 hover:text-green-300 hover:bg-green-400/10 border-green-400/50'
+                            ? 'text-danger hover:text-danger hover:bg-danger/10 border-danger/30' 
+                            : 'text-success hover:text-success hover:bg-success/10 border-success/30'
                         }`}
                         title={operator.isActive ? 'Desactivar' : 'Activar'}
                       >
@@ -253,7 +253,7 @@ export const OperatorsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(operator.id, operator.name)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
+                        className="border border-danger/30 text-danger hover:bg-danger/10 hover:text-danger"
                         title="Eliminar"
                       >
                         <Trash2 className="size-4" />

@@ -63,22 +63,22 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
   const getStatusBadge = (status: string) => {
     const variants = {
       pending: { 
-        style: { backgroundColor: 'hsl(var(--warning))' },
+        className: 'border-warning/30 bg-warning/10 text-warning',
         icon: Clock,
         label: 'Pendiente'
       },
       applied: { 
-        style: { backgroundColor: 'hsl(var(--success))' },
+        className: 'border-success/30 bg-success/10 text-success',
         icon: CheckCircle,
         label: 'Aplicado'
       },
       partial: { 
-        style: { backgroundColor: 'hsl(var(--info))' },
+        className: 'border-info/30 bg-info/10 text-info',
         icon: AlertTriangle,
         label: 'Parcial'
       },
       cancelled: { 
-        style: { backgroundColor: 'hsl(var(--destructive))' },
+        className: 'border-danger/30 bg-danger/10 text-danger',
         icon: AlertTriangle,
         label: 'Cancelado'
       }
@@ -88,7 +88,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
     const Icon = config.icon;
     
     return (
-      <Badge style={config.style} className="text-white flex items-center gap-1">
+      <Badge className={`${config.className} flex items-center gap-1`}>
         <Icon className="size-3" />
         {config.label}
       </Badge>
@@ -106,15 +106,15 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Receipt className="size-5" />
+            <Receipt className="size-5 text-primary" />
             Detalle del Pago
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 py-6">
           {/* Estado del Pago */}
           <div className="flex justify-between items-center">
             {getStatusBadge(payment.status)}
@@ -124,7 +124,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           </div>
 
           {/* Resumen del Pago */}
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+          <Card className="border-info/20 bg-info/10">
             <CardContent className="pt-6">
               <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                 <DollarSign className="size-4" />
@@ -137,13 +137,13 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Monto Aplicado</p>
-                  <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                  <p className="text-lg font-bold text-success">
                     {formatCurrency(payment.applied_amount)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Monto Restante</p>
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                  <p className="text-lg font-bold text-warning">
                     {formatCurrency(payment.remaining_amount)}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
             {payment.notes && (
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">Notas</h3>
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                <p className="rounded-lg border border-border/70 bg-muted/40 p-3 text-sm text-muted-foreground">
                   {payment.notes}
                 </p>
               </div>
@@ -206,7 +206,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
                 <Loader2 className="size-6 animate-spin text-muted-foreground" />
               </div>
             ) : applications.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-hidden rounded-lg border border-border/70">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
@@ -226,7 +226,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
                         <TableCell className="text-right text-sm">
                           {formatCurrency(app.invoice.total)}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-sm text-green-600 dark:text-green-400">
+                        <TableCell className="text-right text-sm font-semibold text-success">
                           {formatCurrency(app.applied_amount)}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
@@ -251,7 +251,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
           </div>
 
           {/* Fecha de Creación */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t">
+          <div className="flex items-center justify-between border-t border-border/70 pt-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="size-3" />
               Creado: {new Date(payment.created_at).toLocaleString()}

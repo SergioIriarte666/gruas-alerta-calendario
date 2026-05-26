@@ -38,19 +38,19 @@ const formatSafeAmount = (amount: any): string => {
 
 const getStatusBadge = (status: string) => {
   const statusConfig: Record<string, { label: string; className: string }> = {
-    draft: { label: 'Borrador', className: 'bg-muted text-foreground' },
-    sent: { label: 'Enviada', className: 'bg-secondary text-secondary-foreground' },
-    paid: { label: 'Pagada', className: 'bg-primary text-primary-foreground' },
-    overdue: { label: 'Vencida', className: 'bg-destructive text-destructive-foreground' },
-    cancelled: { label: 'Anulada', className: 'bg-muted text-muted-foreground' },
+    draft: { label: 'Borrador', className: 'border-border/70 bg-muted/40 text-foreground' },
+    sent: { label: 'Enviada', className: 'border-info/30 bg-info/10 text-info' },
+    paid: { label: 'Pagada', className: 'border-success/30 bg-success/10 text-success' },
+    overdue: { label: 'Vencida', className: 'border-danger/30 bg-danger/10 text-danger' },
+    cancelled: { label: 'Anulada', className: 'border-warning/30 bg-warning/10 text-warning' },
   };
   const config = statusConfig[status] || statusConfig.draft;
   return <Badge className={config.className}>{config.label}</Badge>;
 };
 
 const getDaysUntilDueBadge = (dueDate: any, status: string) => {
-  if (status === 'paid') return <Badge className="bg-green-500 text-white text-xs">✓ Pagada</Badge>;
-  if (status === 'cancelled') return <Badge className="bg-muted text-muted-foreground text-xs">Anulada</Badge>;
+  if (status === 'paid') return <Badge className="border-success/30 bg-success/10 text-success text-xs">✓ Pagada</Badge>;
+  if (status === 'cancelled') return <Badge className="border-warning/30 bg-warning/10 text-warning text-xs">Anulada</Badge>;
   if (!dueDate) return null;
   try {
     const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
@@ -59,10 +59,10 @@ const getDaysUntilDueBadge = (dueDate: any, status: string) => {
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
     const days = differenceInDays(due, today);
-    if (days > 7) return <Badge className="bg-green-500 text-white text-xs">+{days}d</Badge>;
-    if (days >= 1) return <Badge className="bg-yellow-500 text-white text-xs">+{days}d</Badge>;
-    if (days === 0) return <Badge className="bg-orange-500 text-white text-xs">Hoy</Badge>;
-    return <Badge className="bg-red-500 text-white text-xs">{days}d</Badge>;
+    if (days > 7) return <Badge className="border-success/30 bg-success/10 text-success text-xs">+{days}d</Badge>;
+    if (days >= 1) return <Badge className="border-warning/30 bg-warning/10 text-warning text-xs">+{days}d</Badge>;
+    if (days === 0) return <Badge className="border-warning/30 bg-warning/10 text-warning text-xs">Hoy</Badge>;
+    return <Badge className="border-danger/30 bg-danger/10 text-danger text-xs">{days}d</Badge>;
   } catch {
     return null;
   }
@@ -71,7 +71,7 @@ const getDaysUntilDueBadge = (dueDate: any, status: string) => {
 export const InvoicesMobileView = ({
   invoices,
   onEdit,
-  onDelete,
+  onDelete: _onDelete,
   onMarkAsPaid,
   getInvoiceWithDetails,
   onRefresh,
@@ -124,14 +124,14 @@ export const InvoicesMobileView = ({
         const clientName = invoiceWithDetails?.client?.name ? toTitleCase(invoiceWithDetails.client.name) : 'Cliente no encontrado';
 
         return (
-          <Card key={invoice.id} className="border">
+          <Card key={invoice.id} className="border-border/70 bg-card shadow-sm">
             <CardContent className="p-3">
               {/* Header: Folio + Status */}
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <span className="text-foreground font-semibold text-sm">{invoice.folio}</span>
                   {invoice.numeroFiscal && (
-                    <span className="text-violet-600 text-xs ml-2">N°{invoice.numeroFiscal}</span>
+                    <span className="ml-2 text-xs text-primary">N°{invoice.numeroFiscal}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -153,7 +153,7 @@ export const InvoicesMobileView = ({
                     <span className="text-muted-foreground ml-1">→ {formatSafeDate(invoice.dueDate)}</span>
                   )}
                 </div>
-                <div className="flex items-center text-violet-600 font-bold">
+                <div className="flex items-center font-bold text-primary">
                   <DollarSign className="size-3.5 mr-2 flex-shrink-0" />
                   {formatSafeAmount(invoice.total)}
                 </div>

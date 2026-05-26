@@ -55,20 +55,20 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border border-white/20 shadow-2xl">
+    <div className="rounded-3xl border border-white/15 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
       <div className="text-center mb-6">
-        <div className="size-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Lock className="size-8 text-tms-green" />
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/20">
+          <Lock className="size-8 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">Configura tu contraseña</h2>
-        <p className="text-gray-300 text-sm">
+        <p className="text-sm text-white/70">
           Crea una contraseña segura para acceder al sistema
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-white">Nueva contraseña</Label>
+          <Label htmlFor="password" className="text-white/85">Nueva contraseña</Label>
           <div className="relative">
             <Input
               id="password"
@@ -76,7 +76,7 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="bg-white/10 border-white/30 text-white placeholder:text-gray-400 pr-10"
+              className="h-11 rounded-xl border-white/15 bg-white/8 pr-10 text-white placeholder:text-white/45"
               required
             />
             <button
@@ -90,34 +90,34 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-white">Confirmar contraseña</Label>
+          <Label htmlFor="confirmPassword" className="text-white/85">Confirmar contraseña</Label>
           <Input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Repite tu contraseña"
-            className="bg-white/10 border-white/30 text-white placeholder:text-gray-400"
+            className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45"
             required
           />
         </div>
 
-        <div className="text-xs text-gray-400 space-y-1">
+        <div className="space-y-1 text-xs text-white/55">
           <p className="font-medium">La contraseña debe tener:</p>
           <ul className="list-none space-y-1">
-            <li className={`flex items-center gap-2 ${password.length >= 8 ? 'text-tms-green' : ''}`}>
+            <li className={`flex items-center gap-2 ${password.length >= 8 ? 'text-primary' : ''}`}>
               <Check className={`size-3 ${password.length >= 8 ? 'opacity-100' : 'opacity-30'}`} />
               Al menos 8 caracteres
             </li>
-            <li className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-tms-green' : ''}`}>
+            <li className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-primary' : ''}`}>
               <Check className={`size-3 ${/[A-Z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
               Una letra mayúscula
             </li>
-            <li className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-tms-green' : ''}`}>
+            <li className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-primary' : ''}`}>
               <Check className={`size-3 ${/[a-z]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
               Una letra minúscula
             </li>
-            <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-tms-green' : ''}`}>
+            <li className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-primary' : ''}`}>
               <Check className={`size-3 ${/[0-9]/.test(password) ? 'opacity-100' : 'opacity-30'}`} />
               Un número
             </li>
@@ -126,7 +126,7 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
 
         <Button 
           type="submit" 
-          className="w-full bg-tms-green hover:bg-tms-green/90"
+          className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           disabled={loading || !password || !confirmPassword}
         >
           {loading ? 'Configurando...' : 'Configurar contraseña'}

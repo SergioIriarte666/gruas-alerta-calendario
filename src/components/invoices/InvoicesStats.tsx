@@ -1,6 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricCard } from '@/components/ui/metric-card';
 import { Invoice } from '@/types';
+import { DollarSign, FileText, AlertTriangle, BadgeCheck } from 'lucide-react';
 
 interface InvoicesStatsProps {
   invoices: Invoice[];
@@ -20,41 +20,34 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Facturas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-foreground">{totalInvoices}</div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Pendientes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-yellow-600">${pendingAmount.toLocaleString()}</div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Vencidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-red-600">${overdueAmount.toLocaleString()}</div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Cobradas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">${paidAmount.toLocaleString()}</div>
-        </CardContent>
-      </Card>
+      <MetricCard
+        title="Total Facturas"
+        value={totalInvoices}
+        description="Registros disponibles en la vista actual"
+        icon={FileText}
+        tone="primary"
+      />
+      <MetricCard
+        title="Pendientes"
+        value={`$${pendingAmount.toLocaleString('es-CL')}`}
+        description="Borradores y enviadas pendientes de pago"
+        icon={DollarSign}
+        tone="warning"
+      />
+      <MetricCard
+        title="Vencidas"
+        value={`$${overdueAmount.toLocaleString('es-CL')}`}
+        description="Facturas fuera de plazo de cobro"
+        icon={AlertTriangle}
+        tone="danger"
+      />
+      <MetricCard
+        title="Cobradas"
+        value={`$${paidAmount.toLocaleString('es-CL')}`}
+        description="Facturación ya conciliada"
+        icon={BadgeCheck}
+        tone="success"
+      />
     </div>
   );
 };

@@ -41,7 +41,7 @@ export const ServicesDialogs = ({
   return (
     <>
       <Dialog open={isCSVUploadOpen} onOpenChange={onCSVUploadClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Carga Masiva de Servicios</DialogTitle>
           </DialogHeader>
@@ -53,7 +53,7 @@ export const ServicesDialogs = ({
       </Dialog>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
-        <DialogContent className="w-[95vw] lg:max-w-[90vw] xl:max-w-[1400px] max-h-[95vh] overflow-hidden p-3 sm:p-6 lg:p-8">
+        <DialogContent className="max-h-[95vh] w-[95vw] overflow-hidden border-border/70 bg-card p-3 sm:p-6 lg:max-w-[90vw] lg:p-8 xl:max-w-[1400px]">
           <DialogHeader className="sr-only">
             <DialogTitle>
               {editingService ? `Editar Servicio` : 'Nuevo Servicio'}

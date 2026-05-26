@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +15,20 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toTitleCase } from '@/lib/utils';
+
+const roleBadgeClassNames: Record<string, string> = {
+  admin: 'border-danger/20 bg-danger/10 text-danger',
+  operator: 'border-info/20 bg-info/10 text-info',
+  viewer: 'border-success/20 bg-success/10 text-success',
+  client: 'border-primary/20 bg-primary/10 text-primary',
+};
+
+const invitationBadgeClassNames: Record<string, string> = {
+  pending: 'border-warning/20 bg-warning/10 text-warning',
+  sent: 'border-info/20 bg-info/10 text-info',
+  accepted: 'border-success/20 bg-success/10 text-success',
+  expired: 'border-danger/20 bg-danger/10 text-danger',
+};
 
 export const UserManagementTab = () => {
   const isMobile = useIsMobile();
@@ -42,13 +56,7 @@ export const UserManagementTab = () => {
   const [userForPermissions, setUserForPermissions] = useState<any>(null);
 
   const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-500 hover:bg-red-600 text-white';
-      case 'operator': return 'bg-blue-500 hover:bg-blue-600 text-white';
-      case 'viewer': return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'client': return 'bg-purple-500 hover:bg-purple-600 text-white';
-      default: return 'bg-gray-500 hover:bg-gray-600 text-white';
-    }
+    return roleBadgeClassNames[role] || 'border-border/70 bg-muted text-muted-foreground';
   };
 
   const getRoleLabel = (role: string) => {
@@ -63,13 +71,13 @@ export const UserManagementTab = () => {
 
   const getInvitationStatusBadge = (user: any) => {
     const invitation = getInvitationStatus(user.id);
-    if (!invitation) return <Badge variant="outline" className="text-gray-500 text-xs">Sin invitación</Badge>;
+    if (!invitation) return <Badge variant="outline" className="text-xs">Sin invitación</Badge>;
     switch (invitation.status) {
-      case 'pending': return <Badge variant="outline" className="text-orange-500 border-orange-300 text-xs">Pendiente</Badge>;
-      case 'sent': return <Badge variant="outline" className="text-blue-500 border-blue-300 text-xs">Enviada</Badge>;
-      case 'accepted': return <Badge className="bg-green-500 text-white text-xs">Registrado</Badge>;
-      case 'expired': return <Badge variant="outline" className="text-red-500 border-red-300 text-xs">Expirada</Badge>;
-      default: return <Badge variant="outline" className="text-gray-500 text-xs">Desconocido</Badge>;
+      case 'pending': return <Badge variant="outline" className={`text-xs ${invitationBadgeClassNames.pending}`}>Pendiente</Badge>;
+      case 'sent': return <Badge variant="outline" className={`text-xs ${invitationBadgeClassNames.sent}`}>Enviada</Badge>;
+      case 'accepted': return <Badge variant="outline" className={`text-xs ${invitationBadgeClassNames.accepted}`}>Registrado</Badge>;
+      case 'expired': return <Badge variant="outline" className={`text-xs ${invitationBadgeClassNames.expired}`}>Expirada</Badge>;
+      default: return <Badge variant="outline" className="text-xs">Desconocido</Badge>;
     }
   };
 
@@ -92,16 +100,18 @@ export const UserManagementTab = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="size-6 animate-spin text-foreground" />
-        <span className="ml-2 text-foreground">Cargando usuarios...</span>
-      </div>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardContent className="flex items-center justify-center gap-2 py-8">
+          <Loader2 className="size-6 animate-spin text-foreground" />
+          <span className="text-foreground">Cargando usuarios...</span>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card className="bg-card border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -113,7 +123,6 @@ export const UserManagementTab = () => {
             <div className="flex gap-2">
               <Button
                 onClick={() => setIsCreateUserOpen(true)}
-                className="bg-tms-green hover:bg-tms-green/90 text-black"
                 size={isMobile ? "sm" : "default"}
                 disabled={creating}
               >
@@ -130,6 +139,7 @@ export const UserManagementTab = () => {
                 onClick={refetchUsers}
                 variant="outline"
                 size="sm"
+                className="border-border/70 bg-background/60"
               >
                 <RefreshCw className="size-4" />
                 {!isMobile && <span className="ml-1">Actualizar</span>}
@@ -142,8 +152,8 @@ export const UserManagementTab = () => {
             /* ===== Mobile Card View ===== */
             <div className="space-y-3">
               {users.map((user) => (
-                <Card key={user.id} className="border bg-card">
-                  <CardContent className="p-4 space-y-3">
+                <Card key={user.id} className="border-border/70 bg-background/50 shadow-none">
+                  <CardContent className="space-y-3 p-4">
                     {/* User Info + Role Badge */}
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
@@ -152,7 +162,7 @@ export const UserManagementTab = () => {
                         </p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
-                      <Badge className={getRoleBadgeColor(user.role) + ' text-xs flex-shrink-0 ml-2'}>
+                      <Badge variant="outline" className={getRoleBadgeColor(user.role) + ' text-xs flex-shrink-0 ml-2'}>
                         {getRoleLabel(user.role)}
                       </Badge>
                     </div>
@@ -165,7 +175,7 @@ export const UserManagementTab = () => {
                           onCheckedChange={(checked) => toggleUserStatus(user.id, checked)}
                           disabled={updating === user.id}
                         />
-                        <span className={`text-xs ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`text-xs ${user.is_active ? 'text-success' : 'text-danger'}`}>
                           {user.is_active ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
@@ -179,7 +189,7 @@ export const UserManagementTab = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 pt-2 border-t">
+                    <div className="flex items-center gap-2 border-t border-border/70 pt-2">
                       <Select
                         value={user.role}
                         onValueChange={(newRole) => updateUserRole(user.id, newRole as any)}
@@ -205,7 +215,7 @@ export const UserManagementTab = () => {
                               <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="bg-card w-[90vw] max-w-md">
+                          <DialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
                             <DialogHeader>
                               <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                             </DialogHeader>
@@ -222,10 +232,10 @@ export const UserManagementTab = () => {
                           </DialogContent>
                         </Dialog>
                       )}
-                      <Button variant="ghost" size="icon" className="size-8 text-violet-600" onClick={() => setUserForPermissions(user)}>
+                      <Button variant="ghost" size="icon" className="size-8 text-primary hover:bg-primary/10 hover:text-primary" onClick={() => setUserForPermissions(user)}>
                         <Shield className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-8 text-red-600" onClick={() => setUserToDelete(user)}>
+                      <Button variant="ghost" size="icon" className="size-8 text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)}>
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -235,7 +245,7 @@ export const UserManagementTab = () => {
             </div>
           ) : (
             /* ===== Desktop Table View ===== */
-            <div className="rounded-md border">
+            <div className="rounded-xl border border-border/70 bg-background/40">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -258,7 +268,7 @@ export const UserManagementTab = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getRoleBadgeColor(user.role)}>{getRoleLabel(user.role)}</Badge>
+                        <Badge variant="outline" className={getRoleBadgeColor(user.role)}>{getRoleLabel(user.role)}</Badge>
                       </TableCell>
                       <TableCell>
                         {user.role === 'client' ? (
@@ -273,7 +283,7 @@ export const UserManagementTab = () => {
                                   <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="bg-card">
+                              <DialogContent className="border-border/70 bg-card">
                                 <DialogHeader>
                                   <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                                 </DialogHeader>
@@ -298,7 +308,7 @@ export const UserManagementTab = () => {
                       <TableCell>
                         <div className="flex items-center gap-x-2">
                           <Switch checked={user.is_active} onCheckedChange={(checked) => toggleUserStatus(user.id, checked)} disabled={updating === user.id} />
-                          <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                          <span className={`text-sm ${user.is_active ? 'text-success' : 'text-danger'}`}>
                             {user.is_active ? 'Activo' : 'Inactivo'}
                           </span>
                         </div>
@@ -327,10 +337,10 @@ export const UserManagementTab = () => {
                               <SelectItem value="client">Cliente</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button variant="ghost" size="icon" className="text-violet-600 hover:text-violet-700 hover:bg-violet-50" onClick={() => setUserForPermissions(user)} disabled={updating === user.id} title="Configurar permisos de módulos">
+                          <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 hover:text-primary" onClick={() => setUserForPermissions(user)} disabled={updating === user.id} title="Configurar permisos de módulos">
                             <Shield className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setUserToDelete(user)} disabled={updating === user.id}>
+                          <Button variant="ghost" size="icon" className="text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)} disabled={updating === user.id}>
                             <Trash2 className="size-4" />
                           </Button>
                         </div>
@@ -348,26 +358,26 @@ export const UserManagementTab = () => {
             </div>
           )}
 
-          <div className="mt-6 p-3 sm:p-4 bg-muted/50 rounded-lg border">
+          <div className="mt-6 rounded-xl border border-border/70 bg-background/50 p-3 sm:p-4">
             <h4 className="text-foreground font-medium mb-2 text-sm">Información sobre Gestión de Usuarios</h4>
             <p className="text-muted-foreground text-xs mb-3">
               Al crear nuevos usuarios, se enviará automáticamente un email de invitación.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-              <div className="p-2 bg-orange-50 rounded border border-orange-200">
-                <strong className="text-orange-700">Pendiente</strong>
+              <div className="rounded-lg border border-warning/20 bg-warning/10 p-2">
+                <strong className="text-warning">Pendiente</strong>
                 <p className="text-muted-foreground">Email por enviar</p>
               </div>
-              <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                <strong className="text-blue-700">Enviada</strong>
+              <div className="rounded-lg border border-info/20 bg-info/10 p-2">
+                <strong className="text-info">Enviada</strong>
                 <p className="text-muted-foreground">Esperando registro</p>
               </div>
-              <div className="p-2 bg-green-50 rounded border border-green-200">
-                <strong className="text-green-700">Registrado</strong>
+              <div className="rounded-lg border border-success/20 bg-success/10 p-2">
+                <strong className="text-success">Registrado</strong>
                 <p className="text-muted-foreground">Registro completado</p>
               </div>
-              <div className="p-2 bg-red-50 rounded border border-red-200">
-                <strong className="text-red-700">Expirada</strong>
+              <div className="rounded-lg border border-danger/20 bg-danger/10 p-2">
+                <strong className="text-danger">Expirada</strong>
                 <p className="text-muted-foreground">Invitación venció</p>
               </div>
             </div>
@@ -386,7 +396,7 @@ export const UserManagementTab = () => {
       />
 
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
-        <AlertDialogContent className="bg-card w-[90vw] max-w-md">
+        <AlertDialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">¿Eliminar usuario?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -397,7 +407,7 @@ export const UserManagementTab = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
               disabled={updating === userToDelete?.id}
             >
               {updating === userToDelete?.id ? (

@@ -136,10 +136,10 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <GitMerge className="size-5 text-violet-600" />
+            <GitMerge className="size-5 text-primary" />
             Fusionar Productos Duplicados
           </CardTitle>
           <CardDescription>
@@ -185,7 +185,7 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
                 const totalStock = group.items.reduce((sum, item) => sum + (item.current_stock || 0), 0);
 
                 return (
-                  <Card key={group.id} className="border-l-4 border-l-violet-500">
+                  <Card key={group.id} className="border-border/70 bg-background/50 shadow-none">
                     <CardHeader className="pb-3">
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div className="space-y-2">
@@ -232,13 +232,13 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
                             <div
                               key={item.id}
                               className={`flex flex-col gap-3 rounded-md border p-3 md:flex-row md:items-center md:justify-between ${
-                                isMaster ? 'border-violet-500 bg-violet-50/60 dark:bg-violet-950/20' : ''
+                                isMaster ? 'border-primary/30 bg-primary/10' : 'border-border/70 bg-card/70'
                               }`}
                             >
                               <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="font-medium">{item.name}</span>
-                                  {isMaster && <Badge className="bg-violet-600 text-white">Maestro</Badge>}
+                                  {isMaster && <Badge className="bg-primary text-primary-foreground">Maestro</Badge>}
                                   {!isMaster && <Badge variant="outline">Duplicado</Badge>}
                                 </div>
                                 <div className="text-sm text-muted-foreground">

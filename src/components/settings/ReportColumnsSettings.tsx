@@ -209,20 +209,20 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
 
       {/* Vista previa visual */}
       <div className="space-y-2">
-        <Label className="text-black text-sm">Vista previa de columnas</Label>
-        <div className="flex h-8 rounded-lg overflow-hidden border border-gray-200">
+        <Label className="text-sm">Vista previa de columnas</Label>
+        <div className="flex h-8 overflow-hidden rounded-lg border border-border/70 bg-background/40">
           {visibleColumns.map((key, index) => {
             const column = safeConfig.columns[key];
             if (!column) return null;
             const colors = [
-              'bg-blue-500', 'bg-tms-green', 'bg-purple-500', 'bg-amber-500',
-              'bg-pink-500', 'bg-indigo-500', 'bg-cyan-500', 'bg-orange-500',
-              'bg-teal-500', 'bg-rose-500', 'bg-violet-500', 'bg-lime-500', 'bg-sky-500'
+              'bg-primary/80', 'bg-info/80', 'bg-success/80', 'bg-warning/80',
+              'bg-primary/65', 'bg-info/65', 'bg-success/65', 'bg-warning/65',
+              'bg-primary/50', 'bg-info/50', 'bg-success/50', 'bg-warning/50', 'bg-primary/35'
             ];
             return (
               <div
                 key={key}
-                className={`${colors[index % colors.length]} flex items-center justify-center text-foreground text-xs font-medium overflow-hidden`}
+                className={`${colors[index % colors.length]} flex items-center justify-center overflow-hidden text-xs font-medium text-primary-foreground`}
                 style={{ width: `${column.width}%` }}
                 title={`${column.label}: ${column.width}%`}
               >

@@ -55,49 +55,49 @@ const PIPELINE_STATUSES: Array<{
     status: 'quoted',
     title: 'Cotizados',
     description: 'Servicios con cotización enviada',
-    color: 'bg-blue-50 border-blue-200 text-blue-800'
+    color: 'border-info/20 bg-info/10 text-info'
   },
   {
     status: 'purchase_order_pending',
     title: 'Esperando O.C.',
     description: 'Pendientes de orden de compra',
-    color: 'bg-amber-50 border-amber-200 text-amber-800'
+    color: 'border-warning/20 bg-warning/10 text-warning'
   },
   {
     status: 'with_purchase_order',
     title: 'Con Orden de Compra',
     description: 'Confirmados con O.C.',
-    color: 'bg-green-50 border-green-200 text-green-800'
+    color: 'border-success/20 bg-success/10 text-success'
   },
   {
     status: 'pending',
     title: 'Pendientes',
     description: 'Listos para ejecutar',
-    color: 'bg-purple-50 border-purple-200 text-purple-800'
+    color: 'border-primary/20 bg-primary/10 text-primary'
   },
   {
     status: 'in_progress',
     title: 'En Progreso',
     description: 'Servicios en ejecución',
-    color: 'bg-orange-50 border-orange-200 text-orange-800'
+    color: 'border-warning/20 bg-warning/10 text-warning'
   },
   {
     status: 'completed',
     title: 'Completados',
     description: 'Servicios terminados',
-    color: 'bg-teal-50 border-teal-200 text-teal-800'
+    color: 'border-success/20 bg-success/10 text-success'
   },
   {
     status: 'failed',
     title: 'Fallidos',
     description: 'Servicios fallidos por cliente',
-    color: 'bg-orange-50 border-orange-200 text-orange-800'
+    color: 'border-danger/20 bg-danger/10 text-danger'
   },
   {
     status: 'invoiced',
     title: 'Facturados',
     description: 'Servicios facturados',
-    color: 'bg-gray-50 border-gray-200 text-gray-800'
+    color: 'border-border/70 bg-muted/40 text-muted-foreground'
   }
 ];
 
@@ -164,12 +164,12 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
 
   if (!hasInitialServices) {
     return (
-      <Card className="bg-white">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="text-center py-12">
-          <div className="text-gray-500 mb-4">
+          <div className="mb-4 text-muted-foreground">
             <Calendar className="size-16 mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-medium">No hay servicios registrados</h3>
-            <p className="text-sm mt-2">Crea tu primer servicio para comenzar</p>
+            <h3 className="text-lg font-medium text-foreground">No hay servicios registrados</h3>
+            <p className="mt-2 text-sm">Crea tu primer servicio para comenzar</p>
           </div>
           {onAddNewService && (
             <Button onClick={onAddNewService} className="mt-4">
@@ -187,16 +187,16 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       <ServicesPipelineMetrics services={services} />
 
       {/* Filtros */}
-      <Card className="bg-white">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <div className="flex items-center gap-x-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 transform text-muted-foreground" />
               <Input
                 placeholder="Buscar por folio, cliente, origen o destino..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="border-border/70 bg-background/60 pl-10"
               />
             </div>
           </div>
@@ -206,38 +206,38 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       {/* Pipeline Groups */}
       <div className="space-y-4">
         {serviceGroups.map((group) => (
-          <Card key={group.status} className="bg-white">
+          <Card key={group.status} className="border-border/70 bg-card/80 shadow-sm">
             <Collapsible
               open={expandedGroups.has(group.status)}
               onOpenChange={() => toggleGroup(group.status)}
             >
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardHeader className="cursor-pointer transition-colors hover:bg-accent/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-x-3">
                       {expandedGroups.has(group.status) ? (
-                        <ChevronDown className="size-5 text-gray-500" />
+                        <ChevronDown className="size-5 text-muted-foreground" />
                       ) : (
-                        <ChevronRight className="size-5 text-gray-500" />
+                        <ChevronRight className="size-5 text-muted-foreground" />
                       )}
                       <div>
-                        <CardTitle className="text-lg flex items-center gap-x-2">
+                        <CardTitle className="flex items-center gap-x-2 text-lg text-foreground">
                           <span>{group.title}</span>
                           <Badge className={group.color}>
                             {group.services.length}
                           </Badge>
                         </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {group.description}
                         </p>
                       </div>
                     </div>
                     <div className="text-right text-sm">
-                      <div className="font-semibold text-gray-900">
+                      <div className="font-semibold text-foreground">
                         ${group.totalValue.toLocaleString()}
                       </div>
                       {group.avgDays > 0 && (
-                        <div className="text-gray-500 flex items-center">
+                        <div className="flex items-center text-muted-foreground">
                           <Clock className="size-3 mr-1" />
                           {group.avgDays} días prom.
                         </div>
@@ -254,43 +254,43 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                       {group.services.map((service) => (
                         <div 
                           key={service.id} 
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="flex items-center justify-between rounded-lg border border-border/70 bg-background/50 p-4 transition-colors hover:bg-accent/20"
                         >
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                             <div>
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-foreground">
                                 Folio: {service.folio}
                               </div>
-                              <div className="text-gray-600 flex items-center">
+                              <div className="flex items-center text-muted-foreground">
                                 <User className="size-3 mr-1" />
                                 {toTitleCase(service.client.name)}
                               </div>
                             </div>
                             <div>
-                              <div className="text-gray-600 flex items-center">
+                              <div className="flex items-center text-muted-foreground">
                                 <MapPin className="size-3 mr-1" />
                                 {service.origin}
                               </div>
-                              <div className="text-gray-600">
+                              <div className="text-muted-foreground">
                                 → {service.destination}
                               </div>
                             </div>
                             <div>
-                              <div className="text-gray-600 flex items-center">
+                              <div className="flex items-center text-muted-foreground">
                                 <Calendar className="size-3 mr-1" />
                                 {formatForDisplay(service.serviceDate)}
                               </div>
-                              <div className="text-gray-600 flex items-center">
+                              <div className="flex items-center text-muted-foreground">
                                 <Truck className="size-3 mr-1" />
                                 {service.crane?.licensePlate || 'Sin asignar'}
                               </div>
                             </div>
                             <div>
-                              <div className="font-semibold text-gray-900 flex items-center">
+                              <div className="flex items-center font-semibold text-foreground">
                                 <DollarSign className="size-3 mr-1" />
                                 ${getDisplayServiceValue(service).toLocaleString()}
                               </div>
-                              <div className="text-gray-600">
+                              <div className="text-muted-foreground">
                                 {service.serviceType.name}
                               </div>
                             </div>
@@ -316,13 +316,13 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 <Edit className="size-4" />
                               </Button>
                             )}
-                            {service.status === 'completed' && (
+                            {(service.status === 'pending' || service.status === 'in_progress') && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => onCloseService(service)}
                                 title="Cerrar servicio"
-                                className="border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                                className="border-success/30 bg-success/10 text-success hover:bg-success/15"
                               >
                                 <CheckCircle className="size-4" />
                               </Button>
@@ -333,7 +333,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                                 variant="outline"
                                 onClick={() => onDelete(service.id)}
                                 title="Eliminar servicio"
-                                className="border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                                className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15"
                               >
                                 <Trash2 className="size-4" />
                               </Button>
@@ -343,7 +343,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="py-8 text-center text-muted-foreground">
                       <p>No hay servicios en este estado</p>
                     </div>
                   )}

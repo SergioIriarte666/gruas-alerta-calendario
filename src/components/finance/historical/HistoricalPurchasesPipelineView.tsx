@@ -31,26 +31,48 @@ interface SupplierGroup {
   months: MonthGroup[];
 }
 
-const getSupplierColor = (name: string) => {
-  const colors = [
-    '#8b5cf6', '#3b82f6', '#a855f7', '#f59e0b',
-    '#ef4444', '#06b6d4', '#ec4899', '#7c3aed',
+const getSupplierTheme = (name: string) => {
+  const themes = [
+    {
+      border: 'border-t-primary/40',
+      iconWrapper: 'bg-primary/10',
+      icon: 'text-primary',
+      pill: 'bg-primary/10 text-primary',
+    },
+    {
+      border: 'border-t-info/40',
+      iconWrapper: 'bg-info/10',
+      icon: 'text-info',
+      pill: 'bg-info/10 text-info',
+    },
+    {
+      border: 'border-t-success/40',
+      iconWrapper: 'bg-success/10',
+      icon: 'text-success',
+      pill: 'bg-success/10 text-success',
+    },
+    {
+      border: 'border-t-warning/40',
+      iconWrapper: 'bg-warning/10',
+      icon: 'text-warning',
+      pill: 'bg-warning/10 text-warning',
+    },
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return colors[Math.abs(hash) % colors.length];
+  return themes[Math.abs(hash) % themes.length];
 };
 
 const getStatusBadge = (status: string | null) => {
   const map: Record<string, { label: string; className: string }> = {
-    paid: { label: 'Pagada', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
-    pending: { label: 'Pendiente', className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
-    overdue: { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-    partial: { label: 'Parcial', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    paid: { label: 'Pagada', className: 'border-success/30 bg-success/10 text-success' },
+    pending: { label: 'Pendiente', className: 'border-warning/30 bg-warning/10 text-warning' },
+    overdue: { label: 'Vencida', className: 'border-danger/30 bg-danger/10 text-danger' },
+    partial: { label: 'Parcial', className: 'border-info/30 bg-info/10 text-info' },
   };
-  const s = map[status || ''] || { label: status || 'N/A', className: 'bg-muted text-muted-foreground' };
+  const s = map[status || ''] || { label: status || 'N/A', className: 'border-border/70 bg-muted/40 text-muted-foreground' };
   return <Badge className={s.className}>{s.label}</Badge>;
 };
 
@@ -172,7 +194,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{filteredInvoices.length} facturas en {supplierGroups.length} proveedores</span>
-        <span className="font-semibold text-violet-600 dark:text-violet-400">
+        <span className="font-semibold text-primary">
           Total: {formatCurrency(filteredInvoices.reduce((s, i) => s + i.amount, 0))}
         </span>
       </div>
@@ -180,25 +202,32 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
       <div className="space-y-4">
         {supplierGroups.map(group => {
           const isExpanded = expandedSuppliers.has(group.supplierId);
-          const color = group.supplierId === 'no_supplier' ? '#9ca3af' : getSupplierColor(group.supplierName);
+          const theme = group.supplierId === 'no_supplier'
+            ? {
+                border: 'border-t-border/70',
+                iconWrapper: 'bg-muted/40',
+                icon: 'text-muted-foreground',
+                pill: 'bg-muted/50 text-muted-foreground',
+              }
+            : getSupplierTheme(group.supplierName);
 
           return (
             <Collapsible key={group.supplierId} open={isExpanded} onOpenChange={() => toggleSupplier(group.supplierId)}>
-              <div className="bg-card border rounded-lg overflow-hidden" style={{ borderTopWidth: '3px', borderTopColor: color }}>
+              <div className={`overflow-hidden rounded-lg border border-border/70 border-t-4 bg-card ${theme.border}`}>
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
-                        <Truck className="size-5" style={{ color }} />
+                      <div className={`rounded-lg p-2 ${theme.iconWrapper}`}>
+                        <Truck className={`size-5 ${theme.icon}`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground">{group.supplierName}</h3>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${color}20`, color }}>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${theme.pill}`}>
                             {group.count}
                           </span>
                         </div>
-                        <p className="text-sm text-violet-600 dark:text-violet-400 font-semibold">
+                        <p className="text-sm font-semibold text-primary">
                           {formatCurrency(group.totalAmount)} <span className="text-muted-foreground font-normal">· {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}</span>
                         </p>
                       </div>
@@ -223,7 +252,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                                 <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
+                                <span className="text-sm font-semibold text-primary">{formatCurrency(month.total)}</span>
                                 {isMonthExpanded ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
                               </div>
                             </div>
@@ -256,7 +285,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                                       <span className="text-xs text-muted-foreground tabular-nums">
                                         {format(parseISO(inv.issue_date), 'dd/MM/yyyy')}
                                       </span>
-                                      <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 tabular-nums">
+                                      <span className="text-sm font-semibold text-primary tabular-nums">
                                         {formatCurrency(inv.amount)}
                                       </span>
                                       <Button

@@ -1,6 +1,5 @@
-
 import { FileText, Calendar, DollarSign } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { MetricCard } from '@/components/ui/metric-card';
 import { ServiceClosure } from '@/types';
 
 interface ClosuresStatsProps {
@@ -16,48 +15,28 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Cierres Abiertos</p>
-              <p className="text-2xl font-bold text-foreground">
-                {closures.filter(c => c.status === 'open').length}
-              </p>
-            </div>
-            <FileText className="size-8 text-primary" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Cierres Cerrados</p>
-              <p className="text-2xl font-bold text-foreground">
-                {closures.filter(c => c.status === 'closed').length}
-              </p>
-            </div>
-            <Calendar className="size-8 text-blue-500" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Total Facturado</p>
-              <p className="text-2xl font-bold text-foreground">
-                {formatCurrency(closures.filter(c => c.status === 'invoiced').reduce((sum, c) => sum + c.total, 0))}
-              </p>
-            </div>
-            <DollarSign className="size-8 text-green-500" />
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <MetricCard
+        title="Cierres Abiertos"
+        value={closures.filter(c => c.status === 'open').length}
+        description="Pendientes de revisión o cierre"
+        icon={FileText}
+        tone="warning"
+      />
+      <MetricCard
+        title="Cierres Cerrados"
+        value={closures.filter(c => c.status === 'closed').length}
+        description="Listos para facturación"
+        icon={Calendar}
+        tone="info"
+      />
+      <MetricCard
+        title="Total Facturado"
+        value={formatCurrency(closures.filter(c => c.status === 'invoiced').reduce((sum, c) => sum + c.total, 0))}
+        description="Monto ya facturado"
+        icon={DollarSign}
+        tone="success"
+      />
     </div>
   );
 };

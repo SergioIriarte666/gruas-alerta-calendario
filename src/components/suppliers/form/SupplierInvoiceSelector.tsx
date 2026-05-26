@@ -28,7 +28,7 @@ const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
 
   if (isPaid) {
     return (
-      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+      <Badge className="border-success/30 bg-success/10 text-success">
         <CheckCircle className="size-3 mr-1" />
         Pagada
       </Badge>
@@ -37,7 +37,7 @@ const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
 
   if (isOverdue) {
     return (
-      <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+      <Badge className="border-danger/30 bg-danger/10 text-danger">
         <AlertTriangle className="size-3 mr-1" />
         Vencida
       </Badge>
@@ -46,14 +46,14 @@ const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
 
   if (isPartial) {
     return (
-      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+      <Badge className="border-warning/30 bg-warning/10 text-warning">
         Pago Parcial
       </Badge>
     );
   }
 
   return (
-    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+    <Badge className="border-info/30 bg-info/10 text-info">
       Pendiente
     </Badge>
   );
@@ -128,7 +128,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
           </span>
         </div>
         {selectedInvoices.length > 0 && (
-          <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30">
+          <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
             Total: {formatCurrency(selectedTotal)}
           </Badge>
         )}
@@ -144,7 +144,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
               key={invoice.id}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                 isSelected 
-                  ? 'bg-violet-500/10 border-violet-500/30' 
+                  ? 'bg-primary/10 border-primary/30' 
                   : 'bg-muted/30 border-border hover:bg-muted/50'
               }`}
               onClick={() => handleInvoiceToggle(invoice.id, balance)}

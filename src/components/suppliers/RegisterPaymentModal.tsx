@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, CreditCard, Loader2, Calendar, Building2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CreditCard, Loader2, Calendar, Building2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
@@ -92,24 +92,16 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border">
-        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-          <CardTitle className="text-white flex items-center gap-2">
-            <CreditCard className="size-5" />
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <CreditCard className="size-5 text-primary" />
             Registrar Pago
-          </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-white hover:bg-white/20"
-          >
-            <X className="size-4" />
-          </Button>
-        </CardHeader>
+          </DialogTitle>
+        </DialogHeader>
 
-        <CardContent className="p-6 space-y-6">
+        <div className="space-y-6 px-6 py-6">
           {/* Supplier filter */}
           <div>
             <Label className="text-foreground flex items-center gap-2 mb-2">
@@ -206,14 +198,18 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} disabled={isRegistering}>
+          <div className="flex justify-end gap-3 border-t border-border/70 pt-4">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isRegistering}
+              className="border-border/70 bg-background/60"
+            >
               Cancelar
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={selectedPaymentIds.length === 0 || isRegistering}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
             >
               {isRegistering ? (
                 <>
@@ -228,8 +224,8 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

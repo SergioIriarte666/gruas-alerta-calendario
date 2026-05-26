@@ -20,32 +20,42 @@ export const Layout = () => {
 
   return (
     <QuickEntryProvider>
-        <div className="min-h-screen bg-white text-black flex overflow-hidden">
-          <Sidebar 
-            isCollapsed={isCollapsed}
-            setIsCollapsed={setIsCollapsed}
-            isMobileMenuOpen={isMobileMenuOpen}
-            setIsMobileMenuOpen={setIsMobileMenuOpen}
-          />
-          <div className={cn(
-            "flex-1 flex flex-col min-w-0 transition-all duration-300",
-            "lg:ml-64",
-            isCollapsed && "lg:ml-16"
-          )}>
+      <div className="flex min-h-screen overflow-hidden bg-background text-foreground">
+        <Sidebar 
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col transition-all duration-300",
+            "lg:ml-72",
+            isCollapsed && "lg:ml-[4.5rem]"
+          )}
+        >
           <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
-          <main className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden bg-white",
-            isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
-          )}>
+          <main
+            className={cn(
+              "flex-1 overflow-x-hidden overflow-y-auto bg-background",
+              isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
+            )}
+          >
+            <div className="mx-auto w-full max-w-[1600px]">
+              <div className="rounded-[28px] border border-border/60 bg-card/35 shadow-sm backdrop-blur-sm">
+                <div className={cn(isMobile ? "p-3" : isTablet ? "p-4" : "p-6")}>
             <ErrorBoundary name="Página">
               <Suspense fallback={null}>
                 <Outlet />
               </Suspense>
             </ErrorBoundary>
+                </div>
+              </div>
+            </div>
           </main>
         </div>
         <QuickEntryFAB />
-        
+
       </div>
     </QuickEntryProvider>
   );

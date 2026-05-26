@@ -1365,7 +1365,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] h-[95vh] overflow-hidden border-border/60 bg-gradient-to-b from-background to-muted/20 p-0 shadow-2xl">
+        <DialogContent className="h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-hidden border-border/70 bg-card p-0 shadow-2xl">
         <XMLImportDialogHeader
           icon={Receipt}
           title="Importar XML a Bodega"
@@ -1409,25 +1409,25 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                   title: 'Facturas Detectadas',
                   value: summary.totalDocs,
                   icon: FileText,
-                  tone: 'slate',
+                  tone: 'neutral',
                 },
                 {
                   title: 'Facturas Válidas',
                   value: summary.validDocs,
                   icon: CheckCircle2,
-                  tone: 'emerald',
+                  tone: 'success',
                 },
                 {
                   title: 'Líneas Totales',
                   value: summary.totalLines,
                   icon: Package,
-                  tone: 'blue',
+                  tone: 'info',
                 },
                 {
                   title: 'Líneas con Error',
                   value: summary.invalidLines,
                   icon: AlertCircle,
-                  tone: 'red',
+                  tone: 'danger',
                 },
               ]}
             />
@@ -1714,7 +1714,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                                       type="button"
                                       size="sm"
                                       variant="ghost"
-                                      className="size-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                      className="size-7 p-0 text-success hover:bg-success/10 hover:text-success"
                                       onClick={() => setDiscardedLines(prev => { const next = new Set(prev); next.delete(line.key); return next; })}
                                       disabled={isImporting}
                                       title="Restaurar línea"
@@ -1748,8 +1748,8 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             </ScrollArea>
           </div>
 
-          <Card className="min-h-0 overflow-hidden border-border/70 bg-background/95 shadow-sm lg:h-full lg:flex lg:flex-col">
-            <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white pb-4 dark:from-slate-950/40 dark:to-background">
+            <Card className="min-h-0 overflow-hidden border-border/70 bg-background/95 shadow-sm lg:h-full lg:flex lg:flex-col">
+            <CardHeader className="border-b border-border/70 bg-muted/20 pb-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -2026,7 +2026,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
                       </div>
                     </Collapsible>
 
-                    <div className="flex items-center gap-3 rounded-xl border border-emerald-200/60 bg-emerald-50/70 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                    <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-success/10 p-3">
                       <Checkbox
                         id="inventory-xml-is-paid"
                         checked={isPaid}

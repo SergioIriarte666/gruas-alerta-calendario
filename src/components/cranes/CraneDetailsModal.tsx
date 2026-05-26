@@ -21,8 +21,8 @@ export const CraneDetailsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="cranes-modal cranes-modal--details bg-card border max-w-7xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="cranes-modal__header p-6 pb-4 border-b">
+      <DialogContent className="cranes-modal cranes-modal--details max-h-[90vh] max-w-7xl overflow-y-auto border-border/70 bg-card p-0">
+        <DialogHeader className="cranes-modal__header border-b border-border/70 p-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-2xl font-bold text-foreground">
@@ -33,7 +33,7 @@ export const CraneDetailsModal = ({
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => onEdit(crane)} variant="outline">
+              <Button onClick={() => onEdit(crane)} variant="outline" className="border-border/70 bg-background/60">
                 Editar Grúa
               </Button>
             </div>
@@ -45,7 +45,7 @@ export const CraneDetailsModal = ({
         </div>
 
         {/* Footer con información de creación */}
-        <div className="cranes-modal__meta flex justify-between text-sm text-muted-foreground px-6 py-4 border-t">
+        <div className="cranes-modal__meta flex justify-between border-t border-border/70 px-6 py-4 text-sm text-muted-foreground">
           <span>
             Creado: {formatForDisplayWithTime(crane.createdAt)}
             {crane.creatorName && ` por ${crane.creatorName}`}
@@ -54,7 +54,7 @@ export const CraneDetailsModal = ({
         </div>
 
         <div className="cranes-modal__actions flex justify-end px-6 pb-4">
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="outline" className="border-border/70 bg-background/60">
             Cerrar
           </Button>
         </div>

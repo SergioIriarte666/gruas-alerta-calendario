@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ServiceClosure } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -7,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
-import { cn, toTitleCase } from '@/lib/utils';
+import { toTitleCase } from '@/lib/utils';
 
 const isDev = import.meta.env.DEV;
 
@@ -28,7 +27,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   selectedClosureId,
   onClosureChange,
   isEditing = false,
-  currentInvoice,
+  currentInvoice: _currentInvoice,
   disabled = false,
   closures: propClosures,
   loading: propLoading
@@ -89,8 +88,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   const selectedClosure = closures.find(c => c.id === selectedClosureId);
   if (loading) {
     return <div>
-        <Label className="text-gray-300">Cierre</Label>
-        <div className="mt-1 bg-white/5 border border-gray-700 rounded px-3 py-2 text-white">
+        <Label className="text-foreground">Cierre</Label>
+        <div className="mt-1 rounded border border-border/70 bg-muted/30 px-3 py-2 text-foreground">
           Cargando cierres...
         </div>
       </div>;
@@ -98,14 +97,14 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   return <div className="space-y-2">
       <Label className="text-foreground">
         Cierre
-        {isEditing && <span className="text-xs text-violet-600 ml-2">(Modo edición - incluye cierres facturados)</span>}
+        {isEditing && <span className="ml-2 text-xs text-primary">(Modo edición - incluye cierres facturados)</span>}
       </Label>
       
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className="w-full justify-between bg-background border-input text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] p-3">
             {selectedClosure ? <div className="flex flex-col items-start text-left w-full">
-                <div className="flex items-center gap-2 text-violet-600 font-medium">
+                <div className="flex items-center gap-2 font-medium text-primary">
                   <FileText className="size-4" />
                   {selectedClosure.folio}
                 </div>
@@ -117,7 +116,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
           </Button>
         </PopoverTrigger>
         
-        <PopoverContent className="w-[600px] p-0 bg-card border" align="start">
+        <PopoverContent className="w-[600px] border-border/70 bg-card p-0" align="start">
           <Command className="bg-card" shouldFilter={false}>
             <CommandInput 
               placeholder="Buscar por folio, cliente o fecha..." 
@@ -165,8 +164,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                       
                       {/* Monto */}
                       <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="size-4 text-violet-600" />
-                        <span className="font-medium text-violet-600">
+                        <DollarSign className="size-4 text-primary" />
+                        <span className="font-medium text-primary">
                           ${Math.round(closure.total).toLocaleString()}
                         </span>
                       </div>
@@ -179,11 +178,11 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
         </PopoverContent>
       </Popover>
       
-      {disabled && <p className="text-xs text-orange-400 mt-1">
+      {disabled && <p className="mt-1 text-xs text-warning">
           No se puede cambiar el cierre para facturas ya emitidas
         </p>}
       
-      {closures.length === 0 && <p className="text-sm text-gray-400 mt-1">
+      {closures.length === 0 && <p className="mt-1 text-sm text-muted-foreground">
           {isEditing ? "No hay cierres disponibles (verifica que existan cierres cerrados o facturados)" : "No hay cierres disponibles para facturar"}
         </p>}
       

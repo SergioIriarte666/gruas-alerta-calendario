@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -184,23 +184,21 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
     });
   };
 
-  const selectedCategory = categories.find(c => c.id === watchedCategoryId);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] border-border/70 bg-card">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-violet-600">
-            <Zap className="size-5" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Zap className="size-5 text-primary" />
             Costo Rápido
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Vista previa del monto */}
-          <div className="bg-gradient-to-r from-violet-50 to-violet-100 dark:from-violet-900/20 dark:to-violet-800/20 p-4 rounded-lg border border-violet-200 dark:border-violet-800">
+          <div className="rounded-lg border border-primary/20 bg-gradient-to-r from-primary/10 to-info/10 p-4">
             <p className="text-sm text-muted-foreground">Monto a registrar</p>
-            <p className="text-3xl font-bold text-violet-600">
+            <p className="text-3xl font-bold text-primary">
               {formatCurrency(watchedAmount || 0)}
             </p>
           </div>
@@ -330,7 +328,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
           {/* Sección expandible de detalles */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between text-muted-foreground" type="button">
+              <Button variant="ghost" className="w-full justify-between rounded-xl border border-border/70 bg-background/60 text-muted-foreground hover:bg-accent/20" type="button">
                 <span className="flex items-center gap-2">
                   <Plus className="size-4" />
                   Agregar detalles opcionales
@@ -338,7 +336,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
                 {showAdvanced ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 pt-3 border-t mt-2">
+            <CollapsibleContent className="mt-2 space-y-3 border-t border-border/70 pt-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-sm">Grúa</Label>
@@ -429,14 +427,14 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
           </Collapsible>
 
           {/* Botones */}
-          <div className="flex gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1" type="button">
+          <div className="flex gap-2 border-t border-border/70 pt-4">
+            <Button variant="outline" onClick={onClose} className="flex-1 border-border/70 bg-background/60" type="button">
               Cancelar
             </Button>
             <Button
               onClick={handleSubmit(onSubmit)}
               disabled={isPending || !isValid}
-              className="flex-1 bg-violet-600 hover:bg-violet-700 text-white"
+              className="flex-1"
               type="button"
             >
               {isPending ? (

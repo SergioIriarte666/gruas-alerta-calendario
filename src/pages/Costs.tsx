@@ -1,6 +1,9 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
+import { SectionCard } from '@/components/ui/section-card';
 import { CostList } from '@/components/costs/CostList';
 import { EnhancedCostsTable } from '@/components/costs/EnhancedCostsTable';
 import { CostForm } from '@/components/costs/CostForm';
@@ -18,20 +21,16 @@ import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDia
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
-import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
 import { prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet, Search, LayoutGrid, Table2, Download } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { getCurrentChileDate, 
-  formatForDisplay,
-  formatForDatabase,
-  getCurrentWeekRange, getTodayLocal, safeParseDateOnly, getBusinessToday } from '@/utils/timezoneUtils';
+import { getCurrentWeekRange, getTodayLocal, safeParseDateOnly, getBusinessToday } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
     useInventorySyncWatcher();
@@ -55,7 +54,6 @@ const CostsPage = () => {
     const [highlightedCostId, setHighlightedCostId] = useState<string>('');
     const [dateFilter, setDateFilter] = useState<string>('all');
     const [selectedCostIds, setSelectedCostIds] = useState<Set<string>>(new Set());
-    const [showDashboard, setShowDashboard] = useState(true);
     const [distributionData, setDistributionData] = useState<{
         costId: string;
         itemName: string;
@@ -79,7 +77,6 @@ const CostsPage = () => {
     const { mutate: deleteCost } = useDeleteCost();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
-    const queryClient = useQueryClient();
     const { user } = useUser();
 
     const baseCosts = costs;
@@ -191,7 +188,7 @@ const CostsPage = () => {
         setIsXMLUploadOpen(false);
     }, []);
 
-    const handleXMLUploadSuccess = useCallback((count: number) => {
+    const handleXMLUploadSuccess = useCallback(() => {
         setHighlightedCostId('');
     }, []);
 
@@ -199,8 +196,6 @@ const CostsPage = () => {
     const filteredCostsByDate = useMemo(() => {
         let filtered = baseCosts;
         const todayStr = getBusinessToday(); // YYYY-MM-DD en TZ negocio
-        const todayDate = safeParseDateOnly(todayStr);
-
         switch (dateFilter) {
             case 'today':
                 filtered = baseCosts.filter(cost => {
@@ -292,7 +287,7 @@ const CostsPage = () => {
 
     const handleExportToExcel = useCallback(() => {
         if (finalFilteredCosts.length === 0) {
-            alert('No hay datos para exportar');
+            toast.error('No hay datos para exportar');
             return;
         }
 
@@ -341,11 +336,9 @@ const CostsPage = () => {
     }, [isMobile]);
 
     const totalCosts = finalFilteredCosts.length;
-    const totalAmount = finalFilteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
-
     if (isLoading) {
         return (
-            <div className="space-y-6 p-6">
+            <div className="space-y-6">
                 <Skeleton className="h-32 w-full" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[...Array(6)].map((_, i) => (
@@ -357,68 +350,106 @@ const CostsPage = () => {
     }
 
     return (
-        <div className={`space-y-6 ${isMobile ? 'p-3' : 'p-6'}`}>
-            {/* Header con botones de acción */}
-            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row justify-between items-start sm:items-center gap-4'}`}>
-                <div>
-                    <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
-                        Gestión de Costos
-                    </h1>
-                    {!isMobile && (
-                        <p className="text-muted-foreground mt-1">
-                            Administra y registra todos los costos operativos
-                        </p>
-                    )}
-                </div>
-                
-                <div className="flex gap-2 flex-wrap">
-                    <Button 
-                        onClick={() => setIsQuickFormOpen(true)}
-                        className="bg-violet-600 hover:bg-violet-700 text-white"
-                        size={isMobile ? 'sm' : 'default'}
-                    >
-                        <Zap className="size-4 mr-2" />
-                        {isMobile ? 'Rápido' : 'Costo Rápido'}
-                    </Button>
-                    
-                    <Button 
-                        onClick={() => handleOpenForm(null)}
-                        variant="outline"
-                        size={isMobile ? 'sm' : 'default'}
-                    >
-                        <FileEdit className="size-4 mr-2" />
-                        {isMobile ? 'Completo' : 'Costo Completo'}
-                    </Button>
-                    
-                    <Button 
-                        onClick={handleOpenXMLUpload}
-                        variant="outline"
-                        size={isMobile ? 'sm' : 'default'}
-                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-                    >
-                        {isMobile ? 'XML' : 'Cargar XML'}
-                    </Button>
+        <div className="space-y-6">
+            <PageHeader
+                title="Gestión de Costos"
+                description="Administra costos operativos, filtros analíticos y acciones masivas desde una misma superficie."
+                actions={
+                    <div className={`flex ${isMobile ? 'w-full flex-col gap-2' : 'flex-wrap items-center gap-2'}`}>
+                        <Button
+                            onClick={() => setIsQuickFormOpen(true)}
+                            size={isMobile ? 'default' : 'sm'}
+                            className={isMobile ? 'w-full' : ''}
+                        >
+                            <Zap className="mr-2 size-4" />
+                            {isMobile ? 'Costo Rápido' : 'Nuevo Costo Rápido'}
+                        </Button>
 
-                    <Button 
-                        onClick={() => setIsCSVUploadOpen(true)}
-                        variant="outline"
-                        size={isMobile ? 'sm' : 'default'}
-                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-                    >
-                        <FileSpreadsheet className="size-4 mr-1" />
-                        {isMobile ? 'Excel' : 'Cargar Excel'}
-                    </Button>
-                </div>
-            </div>
+                        <Button
+                            onClick={() => handleOpenForm(null)}
+                            variant="outline"
+                            size={isMobile ? 'default' : 'sm'}
+                            className={isMobile ? 'w-full border-border/70 bg-card/70' : 'border-border/70 bg-card/70'}
+                        >
+                            <FileEdit className="mr-2 size-4" />
+                            Costo Completo
+                        </Button>
 
-            {/* Dashboard de métricas */}
-            {showDashboard && (
-                <CostsDashboard
-                    costs={finalFilteredCosts}
-                    dateFilter={dateFilter}
-                    allCosts={costs}
-                />
-            )}
+                        <Button
+                            onClick={handleOpenXMLUpload}
+                            variant="outline"
+                            size={isMobile ? 'default' : 'sm'}
+                            className={isMobile ? 'w-full border-info/20 bg-info/10 text-info hover:bg-info/15' : 'border-info/20 bg-info/10 text-info hover:bg-info/15'}
+                        >
+                            XML
+                        </Button>
+
+                        <Button
+                            onClick={() => setIsCSVUploadOpen(true)}
+                            variant="outline"
+                            size={isMobile ? 'default' : 'sm'}
+                            className={isMobile ? 'w-full border-success/20 bg-success/10 text-success hover:bg-success/15' : 'border-success/20 bg-success/10 text-success hover:bg-success/15'}
+                        >
+                            <FileSpreadsheet className="mr-2 size-4" />
+                            Carga Excel
+                        </Button>
+                    </div>
+                }
+            />
+
+            <CostsDashboard
+                costs={finalFilteredCosts}
+                dateFilter={dateFilter}
+                allCosts={costs}
+            />
+
+            <SectionCard
+                className="border-border/70 bg-card/80 shadow-sm"
+                contentClassName="space-y-4"
+                title="Búsqueda y Vista"
+                description="Refina resultados, cambia el formato visual y exporta el subconjunto filtrado."
+            >
+                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center gap-3'}`}>
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="Buscar por descripción, categoría, folio o notas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-11 rounded-xl border-border/70 bg-background/70 pl-10"
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {!isMobile && (
+                            <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/70 p-1">
+                                <Button
+                                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setViewMode('table')}
+                                    className="rounded-lg"
+                                >
+                                    <Table2 className="size-4" />
+                                </Button>
+                                <Button
+                                    variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setViewMode('cards')}
+                                    className="rounded-lg"
+                                >
+                                    <LayoutGrid className="size-4" />
+                                </Button>
+                            </div>
+                        )}
+
+                        <Button variant="outline" onClick={handleExportToExcel} size={isMobile ? 'sm' : 'default'} className="h-11 rounded-xl border-border/70 bg-background/70">
+                            <Download className="mr-2 size-4" />
+                            <span className="hidden sm:inline">Exportar</span>
+                        </Button>
+                    </div>
+                </div>
+            </SectionCard>
 
             {/* Filtros unificados */}
             <UnifiedCostFilters
@@ -431,56 +462,6 @@ const CostsPage = () => {
                 totalCosts={costs.length}
                 todayCount={dateMetrics.today.count}
             />
-
-            {/* Barra de búsqueda */}
-            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-3'}`}>
-                <div className="flex-1 relative">
-                    <input
-                        type="text"
-                        placeholder="Buscar por descripción, categoría, folio..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2 pl-10 rounded-lg border bg-background text-foreground focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                    />
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                    {!isMobile && (
-                        <div className="flex items-center gap-2 border rounded-lg p-1">
-                            <Button
-                                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setViewMode('table')}
-                                className={viewMode === 'table' ? 'bg-violet-600 hover:bg-violet-700' : ''}
-                            >
-                                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </Button>
-                            <Button
-                                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                                size="sm"
-                                onClick={() => setViewMode('cards')}
-                                className={viewMode === 'cards' ? 'bg-violet-600 hover:bg-violet-700' : ''}
-                            >
-                                <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                </svg>
-                            </Button>
-                        </div>
-                    )}
-
-                    <Button variant="outline" onClick={handleExportToExcel} size={isMobile ? 'sm' : 'default'}>
-                        <svg className="size-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="hidden sm:inline">Exportar</span>
-                    </Button>
-                </div>
-            </div>
             
             {viewMode === 'table' ? (
                 <EnhancedCostsTable
@@ -546,7 +527,7 @@ const CostsPage = () => {
             <CSVCostUpload
                 isOpen={isCSVUploadOpen}
                 onClose={() => setIsCSVUploadOpen(false)}
-                onSuccess={(count) => setIsCSVUploadOpen(false)}
+                onSuccess={() => setIsCSVUploadOpen(false)}
             />
 
             <CostBatchUpdateModal

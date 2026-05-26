@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Service } from '@/types';
 import { 
@@ -30,7 +29,7 @@ import { VehicleHistory } from './VehicleHistory';
 import { ServiceChangeHistory } from './ServiceChangeHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
-import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
@@ -92,14 +91,14 @@ const calculateDuration = (startTime: string, endTime: string): string => {
 type SectionColor = 'blue' | 'green' | 'violet' | 'orange' | 'cyan' | 'rose' | 'amber' | 'emerald';
 
 const sectionColorConfig: Record<SectionColor, { border: string; bg: string; iconBg: string; title: string }> = {
-  blue: { border: 'border-l-blue-500', bg: 'bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400', title: 'text-blue-700 dark:text-blue-300' },
-  green: { border: 'border-l-green-500', bg: 'bg-green-500/5', iconBg: 'bg-green-500/10 text-green-600 dark:text-green-400', title: 'text-green-700 dark:text-green-300' },
-  violet: { border: 'border-l-violet-500', bg: 'bg-violet-500/5', iconBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400', title: 'text-violet-700 dark:text-violet-300' },
-  orange: { border: 'border-l-orange-500', bg: 'bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400', title: 'text-orange-700 dark:text-orange-300' },
-  cyan: { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', title: 'text-cyan-700 dark:text-cyan-300' },
-  rose: { border: 'border-l-rose-500', bg: 'bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400', title: 'text-rose-700 dark:text-rose-300' },
-  amber: { border: 'border-l-amber-500', bg: 'bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', title: 'text-amber-700 dark:text-amber-300' },
-  emerald: { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', title: 'text-emerald-700 dark:text-emerald-300' },
+  blue: { border: 'border-l-info', bg: 'bg-info/5', iconBg: 'bg-info/10 text-info', title: 'text-foreground' },
+  green: { border: 'border-l-success', bg: 'bg-success/5', iconBg: 'bg-success/10 text-success', title: 'text-foreground' },
+  violet: { border: 'border-l-primary', bg: 'bg-primary/5', iconBg: 'bg-primary/10 text-primary', title: 'text-foreground' },
+  orange: { border: 'border-l-warning', bg: 'bg-warning/5', iconBg: 'bg-warning/10 text-warning', title: 'text-foreground' },
+  cyan: { border: 'border-l-info', bg: 'bg-info/5', iconBg: 'bg-info/10 text-info', title: 'text-foreground' },
+  rose: { border: 'border-l-danger', bg: 'bg-danger/5', iconBg: 'bg-danger/10 text-danger', title: 'text-foreground' },
+  amber: { border: 'border-l-warning', bg: 'bg-warning/5', iconBg: 'bg-warning/10 text-warning', title: 'text-foreground' },
+  emerald: { border: 'border-l-success', bg: 'bg-success/5', iconBg: 'bg-success/10 text-success', title: 'text-foreground' },
 };
 
 interface DetailSectionProps {
@@ -130,7 +129,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const queryClient = useQueryClient();
   
   // Usar el nuevo sistema global para obtener datos completos del servicio
-  const { enhancedService, isLoading } = useServiceDetailsForView(service?.id || null);
+  const { enhancedService } = useServiceDetailsForView(service?.id || null);
   // Hook para generar PDF
   const { generatePDF, isGenerating } = useServiceDetailsPDF();
   
@@ -153,13 +152,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     return service as any;
   }, [service, enhancedService]);
   
-  const serviceCosts = enhancedService?.serviceCosts || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;
   const totalServiceCosts = enhancedService?.totalCosts || 0;
   
   const primaryOperator =
     enhancedService?.operators && enhancedService.operators.length > 0
-      ? (enhancedService.operators.find(op => op.role === 'Principal') || enhancedService.operators[0])?.operator
+      ? (enhancedService.operators.find((op: { role?: string }) => op.role === 'Principal') || enhancedService.operators[0])?.operator
       : (serviceData as any)?.operator;
   const hasMultipleOperators = enhancedService?.operators && enhancedService.operators.length > 1;
   
@@ -250,13 +248,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-2 border-b border-border flex-shrink-0">
+      <DialogContent className="flex h-[90vh] max-w-4xl flex-col border-border/70 bg-card p-0">
+        <DialogHeader className="flex-shrink-0 border-b border-border/70 px-6 pb-4 pt-6">
           <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-3">
-              <span>Detalles del Servicio - {serviceData.folio}</span>
-              {getServiceStatusBadge(serviceData.status)}
-            </DialogTitle>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <Badge className="border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+                  Servicio {serviceData.folio}
+                </Badge>
+                {getServiceStatusBadge(serviceData.status)}
+              </div>
+              <DialogTitle className="flex items-center gap-3 text-foreground">
+                <span>Detalle Operativo y Financiero</span>
+              </DialogTitle>
+            </div>
             <div className="flex items-center gap-2">
               {onDuplicate && (
                 <Button
@@ -284,8 +289,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+          <Tabs defaultValue="general" className="w-full py-6">
+            <TabsList className="mb-6 grid w-full grid-cols-5 border border-border/70 bg-muted/30">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               <TabsTrigger value="costs">Costos</TabsTrigger>
@@ -396,7 +401,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                           icon={DollarSign} 
                           label={isEquipmentRental ? "Total Arriendo" : "Total Custodia"} 
                           value={formatCurrency(custodyInfo.totalAmount)} 
-                          valueClass="text-lg text-tms-green font-bold" 
+                          valueClass="text-lg text-success font-bold" 
                         />
                         {custodyInfo.startDate && (
                           <DetailItem icon={Calendar} label="Fecha Inicio" value={formatForDisplay(custodyInfo.startDate)} />
@@ -449,19 +454,19 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                               icon={DollarSign} 
                               label="Valor Base del Servicio" 
                               value={formatCurrency(serviceBreakdown.baseValue)} 
-                              valueClass="text-md text-blue-600 font-medium" 
+                              valueClass="text-md text-info font-medium" 
                             />
                             <DetailItem 
                               icon={Shield} 
                               label="Valor de Custodia" 
                               value={formatCurrency(serviceBreakdown.custodyValue)} 
-                              valueClass="text-md text-green-600 font-medium" 
+                              valueClass="text-md text-success font-medium" 
                             />
                             <DetailItem 
                               icon={DollarSign} 
                               label="Valor Total del Servicio" 
                               value={formatCurrency(displayServiceValue)} 
-                              valueClass="text-lg text-violet-600 font-bold border-t border-border pt-2" 
+                              valueClass="border-t border-border pt-2 text-lg font-bold text-primary" 
                             />
                           </>
                         ) : (
@@ -469,7 +474,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                             icon={DollarSign} 
                             label={isCustody ? "Valor Total Servicio" : serviceData.hasExcess ? "Valor Total del Servicio" : "Valor del Servicio"} 
                             value={formatCurrency(displayServiceValue)} 
-                            valueClass="text-lg text-violet-600 font-bold" 
+                            valueClass="text-lg text-primary font-bold" 
                           />
                         )}
                         {serviceData.hasExcess && serviceData.clientCoveredAmount && (
@@ -478,18 +483,18 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                               icon={DollarSign} 
                               label="Monto Cubierto Cliente" 
                               value={formatCurrency(serviceData.clientCoveredAmount)} 
-                              valueClass="text-md text-blue-600 font-medium" 
+                              valueClass="text-md text-info font-medium" 
                             />
                             <DetailItem 
                               icon={DollarSign} 
                               label="Excedente" 
                               value={formatCurrency(displayServiceValue - (serviceData.clientCoveredAmount || 0))} 
-                              valueClass="text-md text-orange-600 font-medium" 
+                              valueClass="text-md text-warning font-medium" 
                             />
                           </>
                         )}
                          <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
-                         <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
+                         <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}/>
                   </DetailSection>
 
                   {serviceData.observations && (

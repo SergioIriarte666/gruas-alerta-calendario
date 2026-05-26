@@ -1,9 +1,7 @@
-
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
-import { GlobalRefreshButton } from './GlobalRefreshButton';
 import { ServicesMetrics } from './ServicesMetrics';
 import { ServicesDateFilter } from './ServicesDateFilter';
 import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
@@ -82,7 +80,16 @@ export const ServicesHeader = ({
                   </ToggleGroupItem>
                 </ToggleGroup>
 
-                <GlobalRefreshButton />
+                <Button
+                  variant="outline"
+                  size={isMobile ? 'sm' : 'default'}
+                  onClick={onRefresh}
+                  disabled={refreshing}
+                  className="border-border/70 bg-card/70"
+                >
+                  <RefreshCw className={`size-4 ${!isMobile ? 'mr-2' : ''} ${refreshing ? 'animate-spin' : ''}`} />
+                  {!isMobile && 'Actualizar'}
+                </Button>
 
                 {isAdmin && (
                   <>
@@ -91,7 +98,7 @@ export const ServicesHeader = ({
                       disabled={isExportingPending || pendingServicesCount === 0}
                       variant="outline"
                       size={isMobile ? 'sm' : 'default'}
-                      className="border-warning/30 bg-warning-soft text-foreground hover:bg-warning-soft/80"
+                      className="border-warning/20 bg-warning/10 text-foreground hover:bg-warning/15"
                       title={pendingServicesCount === 0 ? "No hay servicios pendientes" : "Exportar servicios pendientes a PDF"}
                     >
                       <FileDown className={`size-4 ${!isMobile ? 'mr-2' : ''} ${isExportingPending ? 'animate-bounce' : ''}`} />
@@ -102,7 +109,7 @@ export const ServicesHeader = ({
                       onClick={onCSVUpload}
                       variant="outline"
                       size={isMobile ? 'sm' : 'default'}
-                      className="border-info/30 bg-info-soft text-foreground hover:bg-info-soft/80"
+                      className="border-info/20 bg-info/10 text-foreground hover:bg-info/15"
                       title="Cargar servicios desde un archivo CSV"
                     >
                       <Upload className="size-4" />

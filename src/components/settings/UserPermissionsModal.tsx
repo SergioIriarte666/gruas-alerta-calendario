@@ -106,10 +106,10 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden border-border/70 bg-card sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="size-5 text-violet-500" />
+            <Shield className="size-5 text-primary" />
             Permisos de Módulos - {userName}
           </DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
         <div className="flex-1 overflow-y-auto py-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="size-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : (
             <>
@@ -151,10 +151,10 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                   return (
                     <div
                       key={module.key}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                         isEnabled 
-                          ? 'bg-violet-500/10 border-violet-500/30' 
-                          : 'bg-muted/30 border-border/50'
+                          ? 'border-primary/30 bg-primary/10'
+                          : 'border-border/50 bg-muted/30'
                       }`}
                     >
                       <Checkbox
@@ -163,7 +163,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                         onCheckedChange={(checked) => handleToggle(module.key, checked === true)}
                       />
                       <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <ModuleIcon className={`size-4 flex-shrink-0 ${isEnabled ? 'text-violet-500' : 'text-muted-foreground'}`} />
+                        <ModuleIcon className={`size-4 flex-shrink-0 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
                         <Label 
                           htmlFor={`perm-${module.key}`}
                           className={`text-sm cursor-pointer truncate ${
@@ -178,8 +178,8 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                 })}
               </div>
 
-              <Alert className="mt-4 border-amber-500/30 bg-amber-500/10">
-                <AlertTriangle className="size-4 text-amber-500" />
+              <Alert className="mt-4 border-warning/30 bg-warning/10">
+                <AlertTriangle className="size-4 text-warning" />
                 <AlertDescription className="text-xs text-muted-foreground">
                   Los módulos deshabilitados no aparecerán en el menú lateral ni serán accesibles por URL para este usuario.
                 </AlertDescription>
@@ -195,10 +195,9 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
           <Button 
             onClick={handleSave} 
             disabled={saving || loading}
-            className="bg-violet-600 hover:bg-violet-700"
           >
             {saving ? (
-              <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              <div className="mr-2 size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <Save className="size-4 mr-2" />
             )}

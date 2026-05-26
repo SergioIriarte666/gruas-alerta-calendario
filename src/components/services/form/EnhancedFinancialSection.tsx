@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { getServiceValueBreakdown, getCompleteServiceValue } from '@/utils/serviceValueCalculations';
+import { getServiceValueBreakdown } from '@/utils/serviceValueCalculations';
 
 interface EnhancedFinancialSectionProps {
   value: number;
@@ -80,7 +80,7 @@ export const EnhancedFinancialSection = ({
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="size-5" />
           Información Financiera
-          {isCustodyService && <Shield className="size-4 text-blue-500" />}
+          {isCustodyService && <Shield className="size-4 text-info" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -105,27 +105,27 @@ export const EnhancedFinancialSection = ({
             </div>
 
             {/* Mostrar desglose de valores */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+            <div className="rounded-lg border border-border/70 bg-gradient-to-r from-info/10 to-success/10 p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Calculator className="size-5 text-blue-600" />
-                <Label className="text-lg font-semibold text-blue-800">Desglose del Valor Total</Label>
+                <Calculator className="size-5 text-info" />
+                <Label className="text-lg font-semibold text-foreground">Desglose del Valor Total</Label>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div className="p-3 bg-white rounded-md border">
+                <div className="rounded-md border border-border/70 bg-background/70 p-3">
                   <Label className="text-sm text-muted-foreground block mb-1">Valor Base</Label>
-                  <div className="text-xl font-bold text-blue-600">
+                  <div className="text-xl font-bold text-info">
                     ${serviceBreakdown.baseValue.toLocaleString('es-CL')}
                   </div>
                 </div>
-                <div className="p-3 bg-white rounded-md border">
+                <div className="rounded-md border border-border/70 bg-background/70 p-3">
                   <Label className="text-sm text-muted-foreground block mb-1">Custodia</Label>
-                  <div className="text-xl font-bold text-green-600">
+                  <div className="text-xl font-bold text-success">
                     ${serviceBreakdown.custodyValue.toLocaleString('es-CL')}
                   </div>
                 </div>
-                <div className="p-3 bg-gradient-to-r from-blue-100 to-green-100 rounded-md border-2 border-primary">
+                <div className="rounded-md border-2 border-primary/30 bg-gradient-to-r from-info/10 to-success/10 p-3">
                   <Label className="text-sm text-primary font-medium block mb-1">TOTAL</Label>
-                  <div className="text-2xl font-bold text-violet-600">
+                  <div className="text-2xl font-bold text-primary">
                     ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export const EnhancedFinancialSection = ({
                 )}
               </Label>
               {valueFromRate && matchedRateOrigin && (
-                <Badge variant="secondary" className="bg-violet-100 text-violet-700 border-violet-300 flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 border-primary/20 bg-primary/10 text-primary">
                   <Sparkles className="size-3" />
                   Tarifa: {matchedRateOrigin}
                 </Badge>
@@ -162,18 +162,18 @@ export const EnhancedFinancialSection = ({
               placeholder={isCustodyService ? "0 (opcional)" : "150000"}
               required={!isCustodyService}
               disabled={disabled}
-              className={`!text-2xl !font-bold h-14 ${valueFromRate ? 'border-violet-400 bg-violet-50/50' : ''}`}
+              className={`!text-2xl !font-bold h-14 ${valueFromRate ? 'border-primary/30 bg-primary/10' : ''}`}
             />
             {valueFromRate && (
-              <p className="text-xs text-violet-600 flex items-center gap-1">
+              <p className="flex items-center gap-1 text-xs text-primary">
                 <Sparkles className="size-3" />
                 Valor aplicado automáticamente desde tarifa predefinida
               </p>
             )}
             {isCustodyService && custodyTotalAmount > 0 && (
-              <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                <Shield className="size-4 text-blue-600" />
-                <p className="text-sm text-blue-700">
+              <div className="flex items-center gap-2 rounded-md bg-info/10 p-2">
+                <Shield className="size-4 text-info" />
+                <p className="text-sm text-info">
                   Valor de custodia: <span className="font-semibold">${custodyTotalAmount.toLocaleString('es-CL')}</span>
                 </p>
               </div>
@@ -182,39 +182,39 @@ export const EnhancedFinancialSection = ({
         )}
 
         {/* Resumen de costos */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 gap-4 rounded-lg border border-border/70 bg-muted/30 p-4 md:grid-cols-3">
           <div className="text-center">
             <Label className="text-sm text-muted-foreground">Total Comisiones</Label>
-            <div className="text-lg font-semibold text-orange-600">
+            <div className="text-lg font-semibold text-warning">
               ${totalCommissions.toLocaleString('es-CL')}
             </div>
           </div>
           <div className="text-center">
             <Label className="text-sm text-muted-foreground">Total Costos</Label>
-            <div className="text-lg font-semibold text-red-600">
+            <div className="text-lg font-semibold text-danger">
               ${totalCosts.toLocaleString('es-CL')}
             </div>
           </div>
           <div className="text-center">
             <Label className="text-sm text-muted-foreground">Ganancia Neta</Label>
-            <div className={`text-lg font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-lg font-semibold ${profit >= 0 ? 'text-success' : 'text-danger'}`}>
               ${profit.toLocaleString('es-CL')}
             </div>
           </div>
         </div>
 
         {/* Margen de ganancia */}
-        <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
-          <TrendingUp className="size-5 text-blue-600" />
+        <div className="flex items-center gap-4 rounded-lg border border-border/70 bg-background/50 p-3">
+          <TrendingUp className="size-5 text-info" />
           <div>
             <Label className="text-sm text-muted-foreground">Margen de Ganancia</Label>
-            <div className={`text-xl font-bold ${profitMargin >= 20 ? 'text-green-600' : profitMargin >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+            <div className={`text-xl font-bold ${profitMargin >= 20 ? 'text-success' : profitMargin >= 10 ? 'text-warning' : 'text-danger'}`}>
               {profitMargin.toFixed(1)}%
             </div>
           </div>
           <div className="ml-auto text-right">
             <Label className="text-sm font-medium text-muted-foreground">Valor Total Servicio</Label>
-            <div className="text-2xl font-bold text-violet-600">
+            <div className="text-2xl font-bold text-primary">
               ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
             </div>
           </div>
@@ -222,8 +222,8 @@ export const EnhancedFinancialSection = ({
 
         {/* Alerta de margen bajo */}
         {profitMargin < 10 && serviceBreakdown.totalValue > 0 && (
-          <Alert className="border-yellow-500 bg-yellow-50">
-            <AlertCircle className="size-4" />
+          <Alert className="border-warning/30 bg-warning/10">
+            <AlertCircle className="size-4 text-warning" />
             <AlertDescription>
               El margen de ganancia es bajo ({profitMargin.toFixed(1)}%). 
               Considera revisar los costos o el valor del servicio.
@@ -233,8 +233,8 @@ export const EnhancedFinancialSection = ({
 
         {/* Información especial para custodia */}
         {isCustodyService && (
-          <Alert className="border-blue-500 bg-blue-50">
-            <Shield className="size-4" />
+          <Alert className="border-info/30 bg-info/10">
+            <Shield className="size-4 text-info" />
             <AlertDescription>
               <strong>Servicio de Custodia:</strong> {serviceBreakdown.hasBothValues 
                 ? 'Los cálculos financieros consideran el valor total (base + custodia).'
@@ -261,7 +261,7 @@ export const EnhancedFinancialSection = ({
 
         {/* Campos condicionales de excedente */}
         {hasExcess && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-l-4 border-blue-200 pl-4 bg-blue-50/30 py-4 rounded-r-lg">
+          <div className="grid grid-cols-1 gap-6 rounded-r-lg border-l-4 border-info/30 bg-info/5 py-4 pl-4 md:grid-cols-2">
             {/* Monto Cubierto por Cliente */}
             <div className="space-y-2">
               <Label htmlFor="clientCoveredAmount">Monto Cubierto por Cliente (CLP)</Label>

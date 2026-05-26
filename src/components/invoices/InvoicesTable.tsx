@@ -60,7 +60,7 @@ const formatSafeAmount = (amount: any): string => {
 const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
   // Si ya está pagada, no mostrar días de atraso
   if (status === 'paid') {
-    return <Badge className="bg-green-500 text-white">✓ Pagada</Badge>;
+    return <Badge className="border-success/30 bg-success/10 text-success">✓ Pagada</Badge>;
   }
 
   // Si está anulada con NC, no aplica vencimiento
@@ -68,12 +68,12 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
     return <Badge className="bg-muted text-muted-foreground">Anulada</Badge>;
   }
 
-  if (!dueDate) return <Badge className="bg-muted text-foreground">Sin fecha</Badge>;
+  if (!dueDate) return <Badge className="border-border/70 bg-muted/40 text-foreground">Sin fecha</Badge>;
   
   try {
     const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
     if (!isValid(due)) {
-      return <Badge className="bg-muted text-foreground">Fecha inválida</Badge>;
+      return <Badge className="border-border/70 bg-muted/40 text-foreground">Fecha inválida</Badge>;
     }
     
     const today = new Date();
@@ -83,17 +83,17 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
     const days = differenceInDays(due, today);
     
     if (days > 7) {
-      return <Badge className="bg-green-500 text-white">+{days} días</Badge>;
+      return <Badge className="border-success/30 bg-success/10 text-success">+{days} días</Badge>;
     } else if (days >= 1 && days <= 7) {
-      return <Badge className="bg-yellow-500 text-white">+{days} días</Badge>;
+      return <Badge className="border-warning/30 bg-warning/10 text-warning">+{days} días</Badge>;
     } else if (days === 0) {
-      return <Badge className="bg-orange-500 text-white">Hoy</Badge>;
+      return <Badge className="border-warning/30 bg-warning/10 text-warning">Hoy</Badge>;
     } else {
-      return <Badge className="bg-red-500 text-white">{days} días</Badge>;
+      return <Badge className="border-danger/30 bg-danger/10 text-danger">{days} días</Badge>;
     }
   } catch (error) {
     console.error('Error calculating days until due:', error);
-    return <Badge className="bg-muted text-foreground">Error</Badge>;
+    return <Badge className="border-border/70 bg-muted/40 text-foreground">Error</Badge>;
   }
 };
 
@@ -137,17 +137,17 @@ const SortableHeader = ({
 // Enhanced status badge with validation
 const getStatusBadge = (status: string) => {
   const statusConfig = {
-    draft: { label: 'Borrador', className: 'bg-muted text-foreground' },
-    sent: { label: 'Enviada', className: 'bg-secondary text-secondary-foreground' },
-    paid: { label: 'Pagada', className: 'bg-primary text-primary-foreground' },
-    overdue: { label: 'Vencida', className: 'bg-destructive text-destructive-foreground' },
-    cancelled: { label: 'Anulada', className: 'bg-muted text-muted-foreground' },
+    draft: { label: 'Borrador', className: 'border-border/70 bg-muted/40 text-foreground' },
+    sent: { label: 'Enviada', className: 'border-info/30 bg-info/10 text-info' },
+    paid: { label: 'Pagada', className: 'border-success/30 bg-success/10 text-success' },
+    overdue: { label: 'Vencida', className: 'border-danger/30 bg-danger/10 text-danger' },
+    cancelled: { label: 'Anulada', className: 'border-warning/30 bg-warning/10 text-warning' },
   };
   
   // Validate status and provide fallback
   if (!status || typeof status !== 'string') {
     console.warn('Invalid status provided to getStatusBadge:', status);
-    return <Badge className="bg-gray-500 text-white">Estado desconocido</Badge>;
+    return <Badge className="border-border/70 bg-muted/40 text-muted-foreground">Estado desconocido</Badge>;
   }
   
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
@@ -200,10 +200,10 @@ const InvoicesTable = ({
 
   if (invoices.length === 0) {
     return (
-      <Card className="bg-card border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <FileText className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No hay facturas</h3>
+          <FileText className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No hay facturas</h3>
           <p className="text-muted-foreground">
             No se encontraron facturas que coincidan con los filtros aplicados
           </p>
@@ -213,22 +213,31 @@ const InvoicesTable = ({
   }
 
   return (
-    <Card className="bg-card border">
-      <CardHeader>
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center justify-between text-foreground">
           <span>Facturas ({invoices.length})</span>
           {selectedInvoiceIds.length > 0 && (
-            <span className="text-sm bg-primary/15 text-primary px-3 py-1 rounded-full">
+            <span className="rounded-full bg-primary/15 px-3 py-1 text-sm text-primary">
               {selectedInvoiceIds.length} seleccionadas
             </span>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-border/60 bg-muted/30">
+                <th className="py-3 px-4 text-left font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
+                    onChange={(e) => onSelectAllToggle(e.target.checked)}
+                    className="size-4 rounded border-border text-primary focus:ring-primary"
+                    aria-label="Seleccionar todas las facturas"
+                  />
+                </th>
                 <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
@@ -255,17 +264,29 @@ const InvoicesTable = ({
                 return (
                   <tr 
                     key={invoice.id} 
-                    className={`border-b border-border hover:bg-muted cursor-pointer transition-colors ${
+                    className={`border-b border-border/60 cursor-pointer transition-colors hover:bg-accent/20 ${
                       isSelected ? 'bg-primary/10 border-primary/30' : ''
                     }`}
                     onClick={() => onInvoiceToggle(invoice.id, !isSelected)}
                    >
+                     <td className="py-3 px-4">
+                       <input
+                         type="checkbox"
+                         checked={isSelected}
+                         onChange={(e) => onInvoiceToggle(invoice.id, e.target.checked)}
+                         onClick={(e) => e.stopPropagation()}
+                         className="size-4 rounded border-border text-primary focus:ring-primary"
+                         aria-label={`Seleccionar factura ${invoice.folio || invoice.id}`}
+                       />
+                     </td>
                      <td className="py-3 px-4 text-foreground font-medium">
-                       {invoice.folio || 'Sin folio'}
+                       <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                         {invoice.folio || 'Sin folio'}
+                       </span>
                      </td>
                     <td className="py-3 px-4 text-foreground">
                       {invoice.numeroFiscal ? (
-                        <span className="text-violet-600 font-medium">{invoice.numeroFiscal}</span>
+                        <span className="font-medium text-primary">{invoice.numeroFiscal}</span>
                       ) : (
                         <span className="text-muted-foreground italic">Sin asignar</span>
                       )}
@@ -341,7 +362,7 @@ const InvoicesTable = ({
                                 console.log('Marking as paid:', invoice.id);
                                 onMarkAsPaid(invoice.id);
                               }}
-                              className=""
+                              className="border-success/20 bg-success/10 text-success hover:bg-success/15"
                               title="Marcar como pagada"
                               disabled={!invoice.id}
                             >

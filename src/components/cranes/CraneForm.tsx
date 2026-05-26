@@ -88,12 +88,12 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   ];
 
   return (
-    <DialogContent className="cranes-modal cranes-modal--form sm:max-w-[600px] bg-card border">
-      <DialogHeader className="cranes-modal__header bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
-        <DialogTitle className="text-white">
+    <DialogContent className="cranes-modal cranes-modal--form border-border/70 bg-card sm:max-w-[600px]">
+      <DialogHeader className="cranes-modal__header -mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 py-4">
+        <DialogTitle className="text-foreground">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}
         </DialogTitle>
-        <DialogDescription className="text-violet-200">
+        <DialogDescription className="text-muted-foreground">
           {crane ? 'Modifica los datos de la grúa' : 'Ingresa los datos de la nueva grúa'}
         </DialogDescription>
       </DialogHeader>
@@ -237,14 +237,12 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
           <Button
             type="button"
             variant="outline"
+            className="border-border/70 bg-background/60"
             onClick={onCancel}
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            className="bg-violet-600 hover:bg-violet-700 text-white"
-          >
+          <Button type="submit">
             {crane ? 'Actualizar' : 'Crear'} Grúa
           </Button>
         </DialogFooter>

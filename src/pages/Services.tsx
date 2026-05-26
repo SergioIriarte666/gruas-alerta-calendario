@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useServicesPage } from '@/hooks/services/useServicesPage';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
 import { ServicesHeader } from '@/components/services/ServicesHeader';
@@ -14,13 +14,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
 import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { AlertTriangle, CheckCircle2, Copy, ShieldAlert, Trash2 } from 'lucide-react';
+import { Service } from '@/types';
 
 type ViewMode = 'table' | 'pipeline';
 
@@ -33,6 +44,11 @@ const Services = () => {
   const [batchDeletePassword, setBatchDeletePassword] = useState('');
   const [batchDeleteVerifying, setBatchDeleteVerifying] = useState(false);
   const [batchDeleteError, setBatchDeleteError] = useState('');
+  const [serviceToClose, setServiceToClose] = useState<Service | null>(null);
+  const [serviceToEditWarning, setServiceToEditWarning] = useState<Service | null>(null);
+  const [isBatchCloseConfirmOpen, setIsBatchCloseConfirmOpen] = useState(false);
+  const [isBatchDeleteConfirmOpen, setIsBatchDeleteConfirmOpen] = useState(false);
+  const [isBatchDuplicateConfirmOpen, setIsBatchDuplicateConfirmOpen] = useState(false);
   const batchProgress = useBatchProgress();
   
   const {
@@ -48,12 +64,10 @@ const Services = () => {
     statusFilter,
     currentPage,
     refreshing,
-    hasAdvancedFilters,
     isAdmin,
     filteredServices,
     totalPages,
     paginatedServices,
-    ITEMS_PER_PAGE,
     prefilledData,
     fromCalendarEvent,
     sortField,
@@ -108,6 +122,14 @@ const Services = () => {
     return services.filter(s => selectedServiceIds.has(s.id));
   }, [services, selectedServiceIds]);
 
+  const closeableServices = useMemo(() => {
+    return selectedServicesData.filter(
+      (service) => service.status === 'pending' || service.status === 'in_progress'
+    );
+  }, [selectedServicesData]);
+
+  const notCloseableCount = selectedServicesData.length - closeableServices.length;
+
   // Check if batch delete is allowed (no invoiced services)
   const canBatchDelete = useMemo(() => {
     return selectedServicesData.every(s => s.status !== 'invoiced');
@@ -122,12 +144,6 @@ const Services = () => {
       toast.error('No se pueden eliminar servicios facturados');
       return;
     }
-
-    const confirmed = window.confirm(
-      `¿Estás seguro de que deseas eliminar ${count} servicio${count > 1 ? 's' : ''}? Esta acción no se puede deshacer.`
-    );
-
-    if (!confirmed) return;
 
     setBatchDeletePassword('');
     setBatchDeleteError('');
@@ -210,12 +226,6 @@ const Services = () => {
     const count = selectedServiceIds.size;
     if (count === 0) return;
 
-    const confirmed = window.confirm(
-      `¿Deseas duplicar ${count} servicio${count > 1 ? 's' : ''}? Se crearán copias con nuevo folio.`
-    );
-
-    if (!confirmed) return;
-
     setIsBatchDuplicating(true);
     batchProgress.start('Duplicando Servicios', 1);
     let successCount = 0;
@@ -244,9 +254,81 @@ const Services = () => {
     }
   };
 
+  const handleRequestCloseService = (service: Service) => {
+    if (service.status === 'invoiced') {
+      toast.error('No se puede cerrar un servicio que ya está facturado');
+      return;
+    }
+
+    setServiceToClose(service);
+  };
+
+  const handleConfirmCloseService = async () => {
+    if (!serviceToClose) return;
+    await handleCloseService(serviceToClose);
+    setServiceToClose(null);
+  };
+
+  const handleRequestEdit = (service: Service) => {
+    if (service.status === 'invoiced' && !isAdmin) {
+      toast.error('No se puede editar un servicio facturado. Solo los administradores pueden hacerlo');
+      return;
+    }
+
+    if (service.status === 'invoiced' && isAdmin) {
+      setServiceToEditWarning(service);
+      return;
+    }
+
+    handleEdit(service);
+  };
+
+  const handleConfirmEditWarning = () => {
+    if (!serviceToEditWarning) return;
+    handleEdit(serviceToEditWarning);
+    setServiceToEditWarning(null);
+  };
+
+  const handleRequestBatchClose = () => {
+    if (selectedServiceIds.size === 0) return;
+
+    if (closeableServices.length === 0) {
+      toast.error('No hay servicios pendientes o en progreso para cerrar');
+      return;
+    }
+
+    setIsBatchCloseConfirmOpen(true);
+  };
+
+  const handleRequestBatchDelete = () => {
+    if (selectedServiceIds.size === 0) return;
+
+    if (!canBatchDelete) {
+      toast.error('No se pueden eliminar servicios facturados');
+      return;
+    }
+
+    setIsBatchDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmBatchDelete = async () => {
+    setIsBatchDeleteConfirmOpen(false);
+    await handleBatchDeleteServices();
+  };
+
+  const handleRequestBatchDuplicate = () => {
+    if (selectedServiceIds.size === 0) return;
+    setIsBatchDuplicateConfirmOpen(true);
+  };
+
+  const handleConfirmBatchDuplicate = async () => {
+    setIsBatchDuplicateConfirmOpen(false);
+    await handleBatchDuplicateServices();
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto min-h-screen space-y-6 bg-background py-6 text-foreground">
+      <div className="space-y-6 text-foreground">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-8 w-64" />
         <div className="space-y-4">
@@ -259,16 +341,16 @@ const Services = () => {
   }
 
   return (
-    <div className="container mx-auto min-h-screen space-y-6 bg-background py-6 text-foreground">
+    <div className="space-y-6 text-foreground">
       {/* Batch Action Bar - show when services are selected */}
       {selectedServiceIds.size > 0 && (
         <ServiceBatchActionBar
           selectedCount={selectedServiceIds.size}
           totalAmount={selectedServicesTotal}
-          onBatchClose={handleBatchCloseServices}
+          onBatchClose={handleRequestBatchClose}
           onBatchUpdate={() => setIsBatchUpdateOpen(true)}
-          onBatchDelete={handleBatchDeleteServices}
-          onBatchDuplicate={handleBatchDuplicateServices}
+          onBatchDelete={handleRequestBatchDelete}
+          onBatchDuplicate={handleRequestBatchDuplicate}
           onClearSelection={handleClearSelection}
           isProcessing={isBatchClosing || isBatchDeleting || isBatchDuplicating}
           canDelete={canBatchDelete}
@@ -303,9 +385,9 @@ const Services = () => {
               services={paginatedServices}
               hasInitialServices={services.length > 0}
               onViewDetails={handleViewDetails}
-              onEdit={isAdmin ? handleEdit : undefined}
+              onEdit={isAdmin ? handleRequestEdit : undefined}
               onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
-              onCloseService={handleCloseService}
+              onCloseService={handleRequestCloseService}
               onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -316,9 +398,9 @@ const Services = () => {
               services={paginatedServices}
               hasInitialServices={services.length > 0}
               onViewDetails={handleViewDetails}
-              onEdit={isAdmin ? handleEdit : undefined}
+              onEdit={isAdmin ? handleRequestEdit : undefined}
               onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
-              onCloseService={handleCloseService}
+              onCloseService={handleRequestCloseService}
               onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -346,9 +428,12 @@ const Services = () => {
       />
 
       <Dialog open={isBatchDeletePasswordOpen} onOpenChange={setIsBatchDeletePasswordOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-border/70 bg-card">
           <DialogHeader>
-            <DialogTitle className="text-destructive">Eliminar servicios</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <ShieldAlert className="size-5 text-danger" />
+              Eliminar servicios
+            </DialogTitle>
             <DialogDescription>
               Ingrese su contraseña para confirmar la eliminación por lotes.
             </DialogDescription>
@@ -372,7 +457,7 @@ const Services = () => {
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsBatchDeletePasswordOpen(false)} disabled={batchDeleteVerifying || isBatchDeleting}>
+            <Button variant="outline" className="border-border/70 bg-background/60" onClick={() => setIsBatchDeletePasswordOpen(false)} disabled={batchDeleteVerifying || isBatchDeleting}>
               Cancelar
             </Button>
             <Button
@@ -391,12 +476,12 @@ const Services = () => {
           services={filteredServices}
           hasInitialServices={services.length > 0}
           onViewDetails={handleViewDetails}
-          onEdit={isAdmin ? handleEdit : undefined}
+          onEdit={isAdmin ? handleRequestEdit : undefined}
           onDelete={isAdmin ? (id: string) => {
             const service = services.find(s => s.id === id);
             if (service) handleDelete(service);
           } : undefined}
-          onCloseService={handleCloseService}
+          onCloseService={handleRequestCloseService}
           onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
         />
       )}
@@ -434,6 +519,122 @@ const Services = () => {
         state={batchProgress.state}
         onClose={batchProgress.close}
       />
+
+      <AlertDialog open={!!serviceToClose} onOpenChange={(open) => !open && setServiceToClose(null)}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="size-5 text-success" />
+              Cerrar servicio
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {serviceToClose
+                ? `Se cerrará el servicio ${serviceToClose.folio} y su estado cambiará a "Completado".`
+                : 'Confirma el cierre del servicio.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCloseService}>
+              Confirmar cierre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBatchCloseConfirmOpen} onOpenChange={setIsBatchCloseConfirmOpen}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="size-5 text-success" />
+              Cerrar servicios seleccionados
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se cerrarán {closeableServices.length} servicio{closeableServices.length === 1 ? '' : 's'}
+              {notCloseableCount > 0
+                ? ` y ${notCloseableCount} seleccionado${notCloseableCount === 1 ? '' : 's'} quedará${notCloseableCount === 1 ? '' : 'n'} fuera por su estado actual.`
+                : '.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setIsBatchCloseConfirmOpen(false);
+                await handleBatchCloseServices();
+              }}
+            >
+              Cerrar seleccionados
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBatchDeleteConfirmOpen} onOpenChange={setIsBatchDeleteConfirmOpen}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <Trash2 className="size-5 text-danger" />
+              Eliminar servicios
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán {selectedServiceIds.size} servicio{selectedServiceIds.size === 1 ? '' : 's'}.
+              Esta acción no se puede deshacer y luego se solicitará tu contraseña.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBatchDelete}
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBatchDuplicateConfirmOpen} onOpenChange={setIsBatchDuplicateConfirmOpen}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <Copy className="size-5 text-primary" />
+              Duplicar servicios
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se tomará el primer servicio seleccionado y se preparará una copia con nuevo folio para revisión.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBatchDuplicate}>
+              Preparar duplicación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!serviceToEditWarning} onOpenChange={(open) => !open && setServiceToEditWarning(null)}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="size-5 text-warning" />
+              Servicio facturado
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {serviceToEditWarning
+                ? `El servicio ${serviceToEditWarning.folio} ya está facturado. Como administrador puedes editarlo, pero los cambios podrían afectar la facturación relacionada.`
+                : 'Como administrador puedes continuar bajo tu responsabilidad.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmEditWarning}>
+              Continuar edición
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

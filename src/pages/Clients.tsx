@@ -13,6 +13,17 @@ import { ClientsTable, ClientSortField, SortDirection } from '@/components/clien
 import { ClientsDashboard } from '@/components/clients/ClientsDashboard';
 import { ClientBatchActionBar } from '@/components/clients/ClientBatchActionBar';
 import { ClientBatchUpdateModal } from '@/components/clients/ClientBatchUpdateModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
@@ -29,6 +40,8 @@ const Clients = () => {
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
   const [selectedClients, setSelectedClients] = React.useState<Set<string>>(new Set());
   const [isBatchEditOpen, setIsBatchEditOpen] = React.useState(false);
+  const [clientToDelete, setClientToDelete] = React.useState<Client | null>(null);
+  const [isBatchDeleteOpen, setIsBatchDeleteOpen] = React.useState(false);
   const ITEMS_PER_PAGE = 50;
 
   const batchUpdate = useUpdateClientsBatch();
@@ -128,10 +141,17 @@ const Clients = () => {
   }, [selectedClients, batchUpdate]);
 
   const handleBatchDelete = React.useCallback(() => {
+    setIsBatchDeleteOpen(true);
+  }, []);
+
+  const confirmBatchDelete = React.useCallback(() => {
     const ids = Array.from(selectedClients);
-    if (!window.confirm(`¿Eliminar ${ids.length} cliente(s)? Esta acción no se puede deshacer.`)) return;
     batchDelete.mutate(ids, {
-      onSuccess: () => { toast.success(`${ids.length} cliente(s) eliminado(s)`); setSelectedClients(new Set()); }
+      onSuccess: () => {
+        toast.success(`${ids.length} cliente(s) eliminado(s)`);
+        setSelectedClients(new Set());
+        setIsBatchDeleteOpen(false);
+      }
     });
   }, [selectedClients, batchDelete]);
 
@@ -181,11 +201,14 @@ const Clients = () => {
 
   const handleEditClient = React.useCallback((client: Client) => { setSelectedClient(client); setIsDialogOpen(true); }, []);
   const handleDeleteClient = React.useCallback((client: Client) => {
-    if (window.confirm(`¿Estás seguro de eliminar al cliente "${toTitleCase(client.name)}"?`)) {
-      deleteClient(client.id);
-      toast.error("Cliente eliminado", { description: "El cliente ha sido eliminado del sistema." });
-    }
-  }, [deleteClient]);
+    setClientToDelete(client);
+  }, []);
+  const confirmDeleteClient = React.useCallback(() => {
+    if (!clientToDelete) return;
+    deleteClient(clientToDelete.id);
+    toast.error("Cliente eliminado", { description: "El cliente ha sido eliminado del sistema." });
+    setClientToDelete(null);
+  }, [clientToDelete, deleteClient]);
   const handleToggleStatus = React.useCallback((client: Client) => {
     toggleClientStatus(client.id);
     toast.info(client.isActive ? "Cliente desactivado" : "Cliente activado", { description: `El cliente ha sido ${client.isActive ? 'desactivado' : 'activado'}.` });
@@ -195,7 +218,18 @@ const Clients = () => {
   const handleCloseDetailsModal = React.useCallback(() => { setIsDetailsModalOpen(false); setSelectedClientForDetails(null); }, []);
 
   if (loading || (isBasicView && pagedLoading && !pagedData)) {
-    return <div className="flex items-center justify-center h-64"><div className="text-foreground">Cargando clientes...</div></div>;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[...Array(4)].map((_, index) => (
+            <Skeleton key={index} className="h-32 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-[420px] w-full" />
+      </div>
+    );
   }
 
   const isProcessing = batchUpdate.isPending || batchDelete.isPending;
@@ -255,6 +289,42 @@ const Clients = () => {
         departments={departments}
         isProcessing={isProcessing}
       />
+
+      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <AlertDialogContent className="border-border/70 bg-popover/95">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar cliente</AlertDialogTitle>
+            <AlertDialogDescription>
+              {clientToDelete
+                ? `Se eliminará el cliente "${toTitleCase(clientToDelete.name)}" del sistema. Esta acción no se puede deshacer.`
+                : 'Esta acción no se puede deshacer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmDeleteClient}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isBatchDeleteOpen} onOpenChange={setIsBatchDeleteOpen}>
+        <AlertDialogContent className="border-border/70 bg-popover/95">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar clientes seleccionados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminarán {selectedClients.size} cliente(s). Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmBatchDelete}>
+              Confirmar eliminación
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

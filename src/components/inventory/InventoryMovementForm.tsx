@@ -16,7 +16,7 @@ import { CalendarIcon, Package, Plus, AlertTriangle, DollarSign } from 'lucide-r
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useInventoryStock, useCreateInventoryMovement } from '@/hooks/useInventory';
+import { useInventoryItems, useInventoryLocations, useInventoryStock, useCreateInventoryMovement } from '@/hooks/useInventory';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { toast } from 'sonner';
@@ -182,11 +182,11 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
 
   const getMovementTypeColor = (type: string) => {
     switch (type) {
-      case 'entry': return 'bg-green-100 text-green-800';
-      case 'exit': return 'bg-red-100 text-red-800';
-      case 'transfer': return 'bg-blue-100 text-blue-800';
-      case 'adjustment': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'entry': return 'border-success/20 bg-success/10 text-success';
+      case 'exit': return 'border-danger/20 bg-danger/10 text-danger';
+      case 'transfer': return 'border-info/20 bg-info/10 text-info';
+      case 'adjustment': return 'border-warning/20 bg-warning/10 text-warning';
+      default: return 'border-border/70 bg-muted text-muted-foreground';
     }
   };
 
@@ -201,7 +201,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-2xl border-border/70 bg-card/80 shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Package className="size-5" />
@@ -278,7 +278,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                   <SelectItem key={item.id} value={item.id}>
                     <div className="flex flex-col">
                       <span className="font-medium">{item.name}</span>
-                      {item.sku && <span className="text-sm text-gray-500">SKU: {item.sku}</span>}
+                      {item.sku && <span className="text-sm text-muted-foreground">SKU: {item.sku}</span>}
                     </div>
                   </SelectItem>
                 ))}
@@ -304,7 +304,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                   <SelectItem key={location.id} value={location.id}>
                     <div className="flex flex-col">
                       <span className="font-medium">{location.name}</span>
-                      <span className="text-sm text-gray-500">Código: {location.code}</span>
+                      <span className="text-sm text-muted-foreground">Código: {location.code}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -354,7 +354,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                 )}
               />
               {selectedItem && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Unidad: {selectedItem.unit_of_measure}
                 </p>
               )}

@@ -28,11 +28,11 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
     
     switch (diagnosis.system_health) {
       case 'HEALTHY':
-        return <CheckCircle className="size-5 text-green-600" />;
+        return <CheckCircle className="size-5 text-success" />;
       case 'NEEDS_REPAIR':
-        return <AlertTriangle className="size-5 text-yellow-600" />;
+        return <AlertTriangle className="size-5 text-warning" />;
       case 'ERROR':
-        return <XCircle className="size-5 text-red-600" />;
+        return <XCircle className="size-5 text-danger" />;
       default:
         return <Activity className="size-5 text-muted-foreground" />;
     }
@@ -41,13 +41,13 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
   const getHealthColor = () => {
     switch (diagnosis.system_health) {
       case 'HEALTHY':
-        return 'bg-green-50 border-green-200';
+        return 'bg-success/10 border-success/20';
       case 'NEEDS_REPAIR':
-        return 'bg-yellow-50 border-yellow-200';
+        return 'bg-warning/10 border-warning/20';
       case 'ERROR':
-        return 'bg-red-50 border-red-200';
+        return 'bg-danger/10 border-danger/20';
       default:
-        return 'bg-muted/50 border-border';
+        return 'bg-muted/40 border-border/70';
     }
   };
 
@@ -58,11 +58,11 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
 
     switch (diagnosis.system_health) {
       case 'HEALTHY':
-        return <Badge variant="secondary" className="bg-green-100 text-green-700">Saludable</Badge>;
+        return <Badge className="border-success/30 bg-success/10 text-success">Saludable</Badge>;
       case 'NEEDS_REPAIR':
-        return <Badge variant="destructive">Requiere Atención</Badge>;
+        return <Badge className="border-warning/30 bg-warning/10 text-warning">Requiere Atención</Badge>;
       case 'ERROR':
-        return <Badge variant="destructive">Error del Sistema</Badge>;
+        return <Badge className="border-danger/30 bg-danger/10 text-danger">Error del Sistema</Badge>;
       default:
         return <Badge variant="secondary">Estado Desconocido</Badge>;
     }
@@ -86,17 +86,17 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
         ) : (
           <>
             {diagnosis.system_health === 'HEALTHY' && (
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-success">
                 ✅ Todos los sistemas funcionan correctamente
               </p>
             )}
             
             {diagnosis.system_health === 'NEEDS_REPAIR' && (
               <div className="space-y-2">
-                <p className="text-sm text-yellow-700 font-medium">
+                <p className="text-sm text-warning font-medium">
                   ⚠️ {diagnosis.total_issues} problema{diagnosis.total_issues !== 1 ? 's' : ''} detectado{diagnosis.total_issues !== 1 ? 's' : ''}:
                 </p>
-                <ul className="text-xs space-y-1 text-yellow-600">
+                <ul className="text-xs space-y-1 text-warning">
                   {diagnosis.issues.inconsistent_payments ? (
                     <li>• {diagnosis.issues.inconsistent_payments} pagos con montos inconsistentes</li>
                   ) : null}
@@ -115,11 +115,11 @@ export const SystemHealthIndicator: React.FC<SystemHealthProps> = ({
             
             {diagnosis.system_health === 'ERROR' && (
               <div className="space-y-2">
-                <p className="text-sm text-red-700 font-medium">
+                <p className="text-sm text-danger font-medium">
                   ❌ Error del sistema detectado
                 </p>
                 {diagnosis.issues.error && (
-                  <p className="text-xs text-red-600">
+                  <p className="text-xs text-danger">
                     {diagnosis.issues.error}
                   </p>
                 )}

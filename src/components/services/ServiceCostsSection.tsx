@@ -1,10 +1,9 @@
-import React from 'react';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
-import { DollarSign, FileText, AlertTriangle, Calculator, TrendingDown, Users } from 'lucide-react';
+import { FileText, AlertTriangle, Calculator, TrendingDown } from 'lucide-react';
 
 interface ServiceCostsSectionProps {
   serviceId: string;
@@ -12,16 +11,16 @@ interface ServiceCostsSectionProps {
 }
 
 const CATEGORY_COLORS = [
-  { border: 'border-l-blue-500', bg: 'bg-blue-500/5', text: 'text-blue-700 dark:text-blue-300', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', dot: 'bg-blue-500' },
-  { border: 'border-l-orange-500', bg: 'bg-orange-500/5', text: 'text-orange-700 dark:text-orange-300', badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300', dot: 'bg-orange-500' },
-  { border: 'border-l-emerald-500', bg: 'bg-emerald-500/5', text: 'text-emerald-700 dark:text-emerald-300', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', dot: 'bg-emerald-500' },
-  { border: 'border-l-rose-500', bg: 'bg-rose-500/5', text: 'text-rose-700 dark:text-rose-300', badge: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300', dot: 'bg-rose-500' },
-  { border: 'border-l-amber-500', bg: 'bg-amber-500/5', text: 'text-amber-700 dark:text-amber-300', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', dot: 'bg-amber-500' },
-  { border: 'border-l-cyan-500', bg: 'bg-cyan-500/5', text: 'text-cyan-700 dark:text-cyan-300', badge: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300', dot: 'bg-cyan-500' },
+  { border: 'border-l-info', bg: 'bg-info/5', text: 'text-info', badge: 'bg-info/10 text-info border-0', dot: 'bg-info' },
+  { border: 'border-l-warning', bg: 'bg-warning/5', text: 'text-warning', badge: 'bg-warning/10 text-warning border-0', dot: 'bg-warning' },
+  { border: 'border-l-success', bg: 'bg-success/5', text: 'text-success', badge: 'bg-success/10 text-success border-0', dot: 'bg-success' },
+  { border: 'border-l-danger', bg: 'bg-danger/5', text: 'text-danger', badge: 'bg-danger/10 text-danger border-0', dot: 'bg-danger' },
+  { border: 'border-l-primary', bg: 'bg-primary/5', text: 'text-primary', badge: 'bg-primary/10 text-primary border-0', dot: 'bg-primary' },
+  { border: 'border-l-muted-foreground', bg: 'bg-muted/40', text: 'text-muted-foreground', badge: 'bg-muted text-muted-foreground border-0', dot: 'bg-muted-foreground' },
 ];
 
 const COMMISSION_COLOR = {
-  border: 'border-l-violet-500', bg: 'bg-violet-500/5', text: 'text-violet-700 dark:text-violet-300', badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300', dot: 'bg-violet-500',
+  border: 'border-l-primary', bg: 'bg-primary/5', text: 'text-primary', badge: 'bg-primary/10 text-primary border-0', dot: 'bg-primary',
 };
 
 export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCostsSectionProps) => {
@@ -30,8 +29,6 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
   const allCosts = enhancedService?.serviceCosts || costs || [];
   const operatorsData = enhancedService?.operators || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;
-  const totalServiceCosts = enhancedService?.totalCosts || 0;
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -94,7 +91,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
   return (
     <div className="space-y-4">
       {/* Resumen total */}
-      <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
+      <div className="rounded-lg border border-danger/20 bg-danger/10 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-x-2">
             <div className="p-1.5 rounded-lg bg-destructive/15">
@@ -114,7 +111,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
       {/* Resumen por categorías */}
       {(categoryKeys.length > 1 || hasCommissions) && (
-        <div className="bg-muted/50 rounded-lg p-4 border border-border">
+        <div className="rounded-lg border border-border bg-muted/50 p-4">
           <div className="flex items-center gap-x-2 mb-3">
             <TrendingDown className="size-4 text-primary" />
             <span className="font-medium text-foreground text-sm">Resumen por Categoría</span>

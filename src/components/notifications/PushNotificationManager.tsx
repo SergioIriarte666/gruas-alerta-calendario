@@ -1,12 +1,13 @@
 
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
-import { Bell, BellOff, Smartphone, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Bell, BellOff, Smartphone, AlertCircle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react';
 
 export const PushNotificationManager: React.FC = () => {
   const {
@@ -37,18 +38,20 @@ export const PushNotificationManager: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 bg-card border rounded-lg">
-          <AlertCircle className="size-5 text-amber-500" />
-          <div>
-            <h3 className="font-medium text-foreground">Notificaciones Push No Disponibles</h3>
-            <p className="text-sm text-muted-foreground">
-              {getUnsupportedReason()}
-            </p>
-            {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Las notificaciones push requieren HTTPS en producción.
+        <div className="rounded-xl border border-warning/20 bg-warning/10 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="size-5 text-warning" />
+            <div>
+              <h3 className="font-medium text-foreground">Notificaciones Push No Disponibles</h3>
+              <p className="text-sm text-muted-foreground">
+                {getUnsupportedReason()}
               </p>
-            )}
+              {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Las notificaciones push requieren HTTPS en producción.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -133,16 +136,27 @@ export const PushNotificationManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Estado de las Notificaciones */}
-      <Card className="bg-card border">
-        <CardHeader>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardHeader className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+              <Smartphone className="size-3.5" />
+              Push en tiempo real
+            </Badge>
+            <Badge variant="outline" className="rounded-full px-3 py-1">
+              Estado: {permissionStatus.text}
+            </Badge>
+          </div>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Smartphone className="size-5" />
             Estado de Notificaciones Push
           </CardTitle>
+          <CardDescription>
+            Gestiona permisos del navegador, suscripción activa y preferencias de notificaciones push.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
             <div className="flex items-center gap-3">
               <PermissionIcon className={`size-5 ${permissionStatus.color}`} />
               <div>
@@ -162,7 +176,6 @@ export const PushNotificationManager: React.FC = () => {
               <Button
                 onClick={requestPermission}
                 disabled={isLoading}
-                className="bg-primary hover:bg-primary/90"
               >
                 Solicitar Permisos
               </Button>
@@ -172,7 +185,6 @@ export const PushNotificationManager: React.FC = () => {
               <Button
                 onClick={handleSubscribe}
                 disabled={isLoading}
-                className="bg-primary hover:bg-primary/90"
               >
                 {isLoading ? 'Habilitando...' : 'Habilitar'}
               </Button>
@@ -194,7 +206,7 @@ export const PushNotificationManager: React.FC = () => {
                 disabled={isLoading}
                 variant="outline"
                 size="sm"
-                className="border-amber-600 text-amber-600 hover:bg-amber-50"
+                className="border-warning/30 bg-background/60 text-warning hover:bg-warning/10"
               >
                 <RefreshCw className="size-4 mr-1" />
                 Reintentar
@@ -204,18 +216,25 @@ export const PushNotificationManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Preferencias de Notificación */}
       {isSubscribed && (
-        <Card className="bg-card border">
+        <Card className="border-border/70 bg-card/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-foreground">Preferencias de Notificación</CardTitle>
+            <CardDescription>
+              Define qué eventos deben disparar notificaciones push para este dispositivo.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="newServices" className="text-foreground">
-                  Nuevos Servicios Asignados
-                </Label>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+                <div>
+                  <Label htmlFor="newServices" className="text-foreground">
+                    Nuevos Servicios Asignados
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Recibe avisos cuando se te asignen nuevos servicios.
+                  </p>
+                </div>
                 <Switch
                   id="newServices"
                   checked={preferences.newServices}
@@ -223,10 +242,15 @@ export const PushNotificationManager: React.FC = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
-                <Label htmlFor="serviceUpdates" className="text-foreground">
-                  Actualizaciones de Servicios
-                </Label>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+                <div>
+                  <Label htmlFor="serviceUpdates" className="text-foreground">
+                    Actualizaciones de Servicios
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Notifica cambios relevantes en el avance o estado de los servicios.
+                  </p>
+                </div>
                 <Switch
                   id="serviceUpdates"
                   checked={preferences.serviceUpdates}
@@ -234,10 +258,15 @@ export const PushNotificationManager: React.FC = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
-                <Label htmlFor="inspectionCompleted" className="text-foreground">
-                  Inspecciones Completadas
-                </Label>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+                <div>
+                  <Label htmlFor="inspectionCompleted" className="text-foreground">
+                    Inspecciones Completadas
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Informa cuando una inspección quede cerrada correctamente.
+                  </p>
+                </div>
                 <Switch
                   id="inspectionCompleted"
                   checked={preferences.inspectionCompleted}
@@ -245,10 +274,15 @@ export const PushNotificationManager: React.FC = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
-                <Label htmlFor="invoiceGenerated" className="text-foreground">
-                  Facturas Generadas
-                </Label>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+                <div>
+                  <Label htmlFor="invoiceGenerated" className="text-foreground">
+                    Facturas Generadas
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Notifica la emisión de nuevas facturas relacionadas con la operación.
+                  </p>
+                </div>
                 <Switch
                   id="invoiceGenerated"
                   checked={preferences.invoiceGenerated}
@@ -256,10 +290,15 @@ export const PushNotificationManager: React.FC = () => {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
-                <Label htmlFor="systemAlerts" className="text-foreground">
-                  Alertas del Sistema
-                </Label>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-border/70 bg-background/50 p-4">
+                <div>
+                  <Label htmlFor="systemAlerts" className="text-foreground">
+                    Alertas del Sistema
+                  </Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Muestra incidencias, caídas o eventos críticos del sistema.
+                  </p>
+                </div>
                 <Switch
                   id="systemAlerts"
                   checked={preferences.systemAlerts}
@@ -272,16 +311,21 @@ export const PushNotificationManager: React.FC = () => {
       )}
 
       {permission === 'denied' && (
-        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <h3 className="font-medium text-destructive mb-2">Notificaciones Bloqueadas</h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            Has bloqueado las notificaciones para este sitio. Para habilitarlas:
-          </p>
-          <ol className="text-sm text-muted-foreground space-y-1 ml-4">
-            <li>1. Haz clic en el ícono de candado en la barra de direcciones</li>
-            <li>2. Cambia "Notificaciones" a "Permitir"</li>
-            <li>3. Recarga la página</li>
-          </ol>
+        <div className="rounded-xl border border-danger/20 bg-danger/10 p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="mt-0.5 size-5 text-danger" />
+            <div>
+              <h3 className="mb-2 font-medium text-danger">Notificaciones Bloqueadas</h3>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Has bloqueado las notificaciones para este sitio. Para habilitarlas:
+              </p>
+              <ol className="ml-4 space-y-1 text-sm text-muted-foreground">
+                <li>1. Haz clic en el ícono de candado en la barra de direcciones</li>
+                <li>2. Cambia &quot;Notificaciones&quot; a &quot;Permitir&quot;</li>
+                <li>3. Recarga la página</li>
+              </ol>
+            </div>
+          </div>
         </div>
       )}
     </div>

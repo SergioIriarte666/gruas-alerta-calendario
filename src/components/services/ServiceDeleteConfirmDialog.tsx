@@ -119,10 +119,10 @@ export const ServiceDeleteConfirmDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-border/70 bg-card">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <AlertTriangle className="size-5 text-danger" />
             Eliminar Servicio
           </DialogTitle>
           <DialogDescription>
@@ -132,7 +132,7 @@ export const ServiceDeleteConfirmDialog = ({
 
         {service && (
           <div className="space-y-4">
-            <div className="p-3 bg-muted rounded-lg">
+            <div className="rounded-xl border border-border/70 bg-background/50 p-3">
               <p className="font-medium text-sm text-foreground">{service.folio}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {service.serviceDate} — {service.client?.name || 'Sin cliente'}
@@ -140,7 +140,7 @@ export const ServiceDeleteConfirmDialog = ({
             </div>
 
             {isInvoiced && (
-              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+              <div className="rounded-xl border border-danger/20 bg-danger/10 p-3 text-sm text-danger">
                 No se puede eliminar un servicio facturado.
               </div>
             )}
@@ -154,12 +154,12 @@ export const ServiceDeleteConfirmDialog = ({
               <>
                 {hasRelatedData ? (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                    <div className="flex items-center gap-2 text-warning">
                       <ShieldAlert className="size-4" />
                       <span className="text-sm font-medium">Este servicio tiene datos relacionados:</span>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 rounded-xl border border-border/70 bg-background/40 p-3">
                       {relatedData?.costs ? (
                         <div className="flex items-center justify-between text-sm">
                           <span>{relatedData.costs} costo(s)</span>
@@ -198,7 +198,7 @@ export const ServiceDeleteConfirmDialog = ({
                   </p>
                 )}
 
-                <div className="space-y-2 pt-2 border-t">
+                <div className="space-y-2 border-t border-border/70 pt-2">
                   <Label htmlFor="delete-service-password" className="text-sm">
                     Ingrese su contraseña para confirmar
                   </Label>

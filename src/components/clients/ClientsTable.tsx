@@ -110,11 +110,11 @@ export const ClientsTable = ({
 
   if (clients.length === 0 && searchTerm) {
     return (
-      <Card>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron clientes</h3>
-          <p className="text-muted-foreground mb-4">No hay clientes que coincidan con "{searchTerm}"</p>
+          <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No se encontraron clientes</h3>
+          <p className="mb-4 text-muted-foreground">No hay clientes que coincidan con "{searchTerm}"</p>
           <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="size-4 mr-2" />Agregar Cliente
           </Button>
@@ -125,11 +125,11 @@ export const ClientsTable = ({
 
   if (clients.length === 0) {
     return (
-      <Card>
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto size-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes registrados</h3>
-          <p className="text-muted-foreground mb-4">Comienza agregando tu primer cliente al sistema</p>
+          <Users className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-medium text-foreground">No hay clientes registrados</h3>
+          <p className="mb-4 text-muted-foreground">Comienza agregando tu primer cliente al sistema</p>
           <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="size-4 mr-2" />Agregar Primer Cliente
           </Button>
@@ -139,17 +139,17 @@ export const ClientsTable = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="flex items-center justify-between">
           <span>Clientes ({totalClients})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b border-border/60 bg-muted/30">
                 <th className="py-3 px-2 w-10">
                   <Checkbox
                     checked={allPageSelected}
@@ -182,7 +182,7 @@ export const ClientsTable = ({
                 const svcCount = serviceCountByClient?.get(client.id) || 0;
                 const isSelected = selectedClients.has(client.id);
                 return (
-                  <tr key={client.id} className={`border-b hover:bg-muted/50 ${isSelected ? 'bg-primary/5' : ''}`}>
+                  <tr key={client.id} className={`border-b border-border/60 hover:bg-accent/20 ${isSelected ? 'bg-primary/5' : ''}`}>
                     <td className="py-3 px-2">
                       <Checkbox
                         checked={isSelected}
@@ -194,13 +194,13 @@ export const ClientsTable = ({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleViewPipeline(client)}
-                          className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-left"
+                          className="text-left font-medium text-primary hover:underline"
                           title="Ir al Pipeline VIP"
                         >
                           {toTitleCase(client.name)}
                         </button>
                         {client.billingType === 'monthly' && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/50 text-blue-500">
+                          <Badge variant="outline" className="border-info/20 px-1.5 py-0 text-[10px] text-info">
                             Mensual
                           </Badge>
                         )}
@@ -218,7 +218,7 @@ export const ClientsTable = ({
                           className="inline-flex items-center gap-1"
                           title="Ver servicios en Pipeline"
                         >
-                          <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200">
+                          <Badge variant="outline" className="border-success/20 bg-success/10 text-success">
                             {svcCount} activo{svcCount !== 1 ? 's' : ''}
                           </Badge>
                         </button>
@@ -233,7 +233,7 @@ export const ClientsTable = ({
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center gap-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" title="Ver detalles">
+                        <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-info hover:text-info hover:bg-info/10" title="Ver detalles">
                           <Eye className="size-4" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => onEdit(client)} className="text-primary hover:text-primary/80 hover:bg-primary/10" title="Editar cliente">

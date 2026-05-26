@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,10 +65,10 @@ export const MultipleOperatorsSection = ({
   const getTotalCommissions = () => {
     return operators.reduce((total, op) => total + (op.commission || 0), 0);
   };
-  return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-green-200 bg-green-50/30'}`}>
+  return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-border/70 bg-card/80 shadow-sm'}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className={`size-5 ${hasValidationError ? 'text-destructive' : 'text-green-600'}`} />
+          <Users className={`size-5 ${hasValidationError ? 'text-destructive' : 'text-primary'}`} />
           Operadores y Comisiones del Servicio
           {operatorRequired && <span className="text-red-500">*</span>}
           {hasValidationError && (
@@ -85,23 +85,23 @@ export const MultipleOperatorsSection = ({
           </div>
         )}
         {!hasValidationError && (
-          <div className="text-sm text-blue-700 bg-blue-100 p-2 rounded border">
-            <DollarSign className="size-4 inline mr-1" />
+          <div className="rounded-lg border border-info/20 bg-info/10 p-2 text-sm text-foreground">
+            <DollarSign className="mr-1 inline size-4 text-info" />
             <strong>Sistema Simplificado:</strong> Para servicios con un solo operador, la comisión se maneja en el campo principal del servicio.
             Esta sección es para servicios con múltiples operadores.
           </div>
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {operators.map((operator, index) => <div key={operator.id} className="border rounded-lg p-4 space-y-4 bg-white shadow-sm">
+        {operators.map((operator, index) => <div key={operator.id} className="space-y-4 rounded-lg border border-border/70 bg-background/50 p-4">
             <div className="flex justify-between items-center">
               <h4 className="font-medium flex items-center gap-2">
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                <span className="rounded text-sm bg-primary/10 px-2 py-1 text-primary">
                   Operador {index + 1}
                 </span>
-                {operator.role && <span className="text-sm text-gray-600">({operator.role})</span>}
+                {operator.role && <span className="text-sm text-muted-foreground">({operator.role})</span>}
               </h4>
-              {operators.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeOperator(operator.id)} disabled={disabled} className="text-red-600 hover:text-red-700">
+              {operators.length > 1 && <Button type="button" variant="outline" size="sm" onClick={() => removeOperator(operator.id)} disabled={disabled} className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15 hover:text-danger">
                   <Trash2 className="size-4" />
                 </Button>}
             </div>
@@ -119,7 +119,7 @@ export const MultipleOperatorsSection = ({
                         <span className="flex items-center gap-2">
                           {op.name}
                           {op.commissionExempt && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-200" title="Exento de comisiones">
+                            <span className="rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary" title="Exento de comisiones">
                               E
                             </span>
                           )}
@@ -155,7 +155,7 @@ export const MultipleOperatorsSection = ({
               {/* Comisión */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-1">
-                  <DollarSign className="size-3 text-green-600" />
+                  <DollarSign className="size-3 text-success" />
                   Comisión (CLP) {!isExempt(operator.operatorId) && '*'}
                 </Label>
                 <Input
@@ -165,18 +165,18 @@ export const MultipleOperatorsSection = ({
                   placeholder="150000"
                   min="0"
                   disabled={disabled || isExempt(operator.operatorId)}
-                  className="border-green-300 focus:border-green-500"
+                  className="border-border/70 bg-background/60"
                 />
                 {isExempt(operator.operatorId) && (
-                  <p className="text-xs text-violet-700">Operador exento de comisiones</p>
+                  <p className="text-xs text-primary">Operador exento de comisiones</p>
                 )}
               </div>
             </div>
           </div>)}
 
         {/* Botón para agregar operador */}
-        <div className="flex justify-between items-center pt-4 border-t">
-          <Button type="button" variant="outline" onClick={addOperator} disabled={disabled || operators.length >= 5} className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50">
+        <div className="flex justify-between items-center border-t border-border/70 pt-4">
+          <Button type="button" variant="outline" onClick={addOperator} disabled={disabled || operators.length >= 5} className="flex items-center gap-2 border-border/70 bg-background/60">
             <Plus className="size-4" />
             Agregar Operador
           </Button>
@@ -184,7 +184,7 @@ export const MultipleOperatorsSection = ({
           {/* Total de comisiones */}
           <div className="text-right">
             <Label className="text-sm text-muted-foreground">Total Comisiones:</Label>
-            <div className="text-lg font-bold text-green-600 flex items-center gap-1">
+            <div className="flex items-center gap-1 text-lg font-bold text-success">
               <DollarSign className="size-4" />
               ${getTotalCommissions().toLocaleString('es-CL')} CLP
             </div>

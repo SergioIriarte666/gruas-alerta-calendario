@@ -42,13 +42,13 @@ export const SupplierSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Building2 className="size-4 text-violet-500" />
+            <Building2 className="size-4 text-primary" />
             Resumen del Proveedor
           </span>
           <Badge className={cn(
             isActive 
-              ? "bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30"
-              : "bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-danger/30 bg-danger/10 text-danger"
           )}>
             {isActive ? 'Activo' : 'Inactivo'}
           </Badge>
@@ -60,7 +60,7 @@ export const SupplierSummaryPanel = ({
           <div className="flex items-center gap-2">
             <Building2 className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Nombre:</span>
-            <span className="text-sm font-semibold text-violet-600 dark:text-violet-400 truncate">
+            <span className="text-sm font-semibold text-primary truncate">
               {name}
             </span>
           </div>
@@ -80,7 +80,7 @@ export const SupplierSummaryPanel = ({
           <div className="flex items-center gap-2">
             <Tag className="size-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Categoría:</span>
-            <Badge variant="secondary" className="text-xs bg-violet-500/10 text-violet-700 dark:text-violet-300">
+            <Badge variant="secondary" className="border-primary/20 bg-primary/10 text-primary">
               {categoryLabel}
             </Badge>
           </div>
@@ -88,15 +88,15 @@ export const SupplierSummaryPanel = ({
 
         {/* Evaluación / Rating */}
         {rating > 0 && (
-          <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/5 rounded-md border border-yellow-500/10">
-            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Evaluación:</span>
+          <div className="flex items-center gap-2 mt-2 p-2 bg-warning/10 rounded-md border border-warning/20">
+            <span className="text-xs font-medium text-warning">Evaluación:</span>
             <div className="flex">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star 
                   key={s} 
                   className={cn(
                     "size-3.5", 
-                    s <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"
+                    s <= rating ? "fill-warning text-warning" : "text-muted-foreground/30"
                   )} 
                 />
               ))}
@@ -160,8 +160,8 @@ export const SupplierSummaryPanel = ({
 
         {/* Indicador de modo */}
         {isEditing && (
-          <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-md">
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning/10 p-2">
+            <p className="text-xs text-warning">
               Modo edición - Los cambios actualizarán el proveedor existente
             </p>
           </div>

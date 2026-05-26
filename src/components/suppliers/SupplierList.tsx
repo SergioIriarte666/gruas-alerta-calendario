@@ -21,7 +21,7 @@ import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
 import { BatchEditSuppliersModal } from './BatchEditSuppliersModal';
 import { SupplierWithStats } from '@/types/suppliers';
-import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { toast } from 'sonner';
 
@@ -48,8 +48,7 @@ export const SupplierList: React.FC = () => {
     suppliers, 
     isLoading, 
     deleteSupplier, 
-    toggleSupplierStatus, 
-    isDeleting 
+    toggleSupplierStatus
   } = useSuppliers();
 
   const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
@@ -114,7 +113,7 @@ export const SupplierList: React.FC = () => {
         toast.success(`${selectedIds.length} proveedores eliminados`);
         setSelectedIds([]);
       } else if (supplierToDelete) {
-        await deleteSupplier(supplierToDelete);
+        deleteSupplier(supplierToDelete);
         toast.success('Proveedor eliminado correctamente');
       }
     } catch (error) {
@@ -204,10 +203,6 @@ export const SupplierList: React.FC = () => {
     setEditingSupplier(null);
   };
 
-  const handleDelete = (id: string) => {
-    deleteSupplier(id);
-  };
-
   const handleToggleStatus = (supplier: SupplierWithStats) => {
     toggleSupplierStatus(supplier.id);
   };
@@ -215,7 +210,7 @@ export const SupplierList: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="size-8 animate-spin text-blue-400" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -226,7 +221,7 @@ export const SupplierList: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Proveedores</h2>
-          <p className="text-muted-foreground">Gestiona los proveedores del sistema</p>
+          <p className="text-muted-foreground">Gestiona contactos, categorías y estado operativo del padrón de proveedores.</p>
         </div>
 
         <div className="flex gap-2">
@@ -241,7 +236,7 @@ export const SupplierList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-card border">
+      <Card className="border-border/70 bg-card/80 shadow-sm">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -252,7 +247,7 @@ export const SupplierList: React.FC = () => {
                   placeholder="Buscar por nombre, RUT o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="h-11 rounded-xl border-border/70 bg-background/70 pl-10"
                 />
               </div>
             </div>
@@ -332,7 +327,7 @@ export const SupplierList: React.FC = () => {
           ) : isMobile ? (
               <div className="space-y-3">
                 {filteredAndSortedSuppliers.map((supplier) => (
-                  <Card key={supplier.id} className="bg-card border cursor-pointer" onClick={() => setSelectedSupplier(supplier)}>
+                  <Card key={supplier.id} className="bg-card border-border/70 cursor-pointer shadow-sm" onClick={() => setSelectedSupplier(supplier)}>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1 min-w-0">
@@ -346,7 +341,7 @@ export const SupplierList: React.FC = () => {
                           className="p-0 h-auto shrink-0"
                         >
                           {supplier.is_active ? (
-                            <div className="flex items-center text-green-800">
+                            <div className="flex items-center text-success">
                               <ToggleRight className="size-4 mr-1" />
                               <span className="text-xs">Activo</span>
                             </div>
@@ -377,8 +372,8 @@ export const SupplierList: React.FC = () => {
 
                       <div className="flex items-center justify-end gap-1 pt-1 border-t" onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary"><Eye className="size-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400"><Edit2 className="size-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400"><Trash2 className="size-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-primary hover:bg-primary/10"><Edit2 className="size-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-danger hover:bg-danger/10"><Trash2 className="size-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -442,7 +437,7 @@ export const SupplierList: React.FC = () => {
                         <div className="space-y-0.5">
                           <div className="text-sm text-foreground font-medium">{stats?.total_payments || 0} pagos</div>
                           {stats?.pending_amount > 0 && (
-                            <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                            <div className="text-xs text-warning">
                               Pend: {formatCurrency(stats.pending_amount)}
                             </div>
                           )}
@@ -456,7 +451,7 @@ export const SupplierList: React.FC = () => {
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
                           {supplier.is_active ? (
-                            <div className="flex items-center text-green-800"><ToggleRight className="size-4 mr-1" />Activo</div>
+                            <div className="flex items-center text-success"><ToggleRight className="size-4 mr-1" />Activo</div>
                           ) : (
                             <div className="flex items-center text-muted-foreground"><ToggleLeft className="size-4 mr-1" />Inactivo</div>
                           )}
@@ -465,8 +460,8 @@ export const SupplierList: React.FC = () => {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-x-2">
                           <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="size-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="size-4" /></Button>
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400 hover:text-red-300"><Trash2 className="size-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-primary hover:bg-primary/10"><Edit2 className="size-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-danger hover:bg-danger/10"><Trash2 className="size-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>

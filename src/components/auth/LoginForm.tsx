@@ -21,20 +21,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
   onForgotPassword
 }) => {
-  return <Card className="bg-transparent border-white/20 shadow-none" style={{ background: 'transparent' }}>
-      <CardHeader className="bg-transparent" style={{ background: 'transparent' }}>
-        <CardTitle className="text-white text-center">Iniciar Sesión</CardTitle>
-        <CardDescription className="text-white/80">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
+  return <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
+      <CardHeader>
+        <CardTitle className="text-center text-2xl text-white">Iniciar Sesión</CardTitle>
+        <CardDescription className="text-center text-white/70">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
       </CardHeader>
-      <CardContent className="bg-transparent" style={{ background: 'transparent' }}>
+      <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email-login" className="text-white">Email</Label>
-            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white" />
+            <Label htmlFor="email-login" className="text-white/85">Email</Label>
+            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-login" className="text-white">Contraseña</Label>
-            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="bg-transparent border-white/50 text-white focus:border-white" />
+            <Label htmlFor="password-login" className="text-white/85">Contraseña</Label>
+            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white focus:border-white/40" />
           </div>
           {onForgotPassword && (
             <div className="text-right">
@@ -47,7 +47,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               </button>
             </div>
           )}
-          <Button type="submit" disabled={loading} className="w-full text-white font-semibold bg-transparent border-white/50 hover:bg-white/10" style={{ background: 'transparent' }}>
+          <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
             {loading ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>

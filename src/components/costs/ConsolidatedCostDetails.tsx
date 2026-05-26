@@ -154,7 +154,7 @@ export const ConsolidatedCostDetails = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[min(96vw,1100px)] max-w-5xl max-h-[92vh] overflow-y-auto overflow-x-hidden pr-10">
+      <DialogContent className="max-h-[92vh] w-[min(96vw,1100px)] max-w-5xl overflow-x-hidden overflow-y-auto border-border/70 bg-card pr-10">
         <DialogHeader>
           <div className="flex flex-col gap-4 pr-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
@@ -162,7 +162,7 @@ export const ConsolidatedCostDetails = ({
                 {cost.description}
               </DialogTitle>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                <Badge className="border-primary/20 bg-primary/10 text-primary hover:bg-primary/10">
                   {cost.cost_categories?.name || 'Sin categoría'}
                 </Badge>
                 {cost.subcategory && (
@@ -173,7 +173,7 @@ export const ConsolidatedCostDetails = ({
               </div>
             </div>
             <div className="shrink-0 text-left sm:text-right">
-              <p className="break-words text-2xl font-bold text-violet-600 sm:text-3xl">
+              <p className="break-words text-2xl font-bold text-primary sm:text-3xl">
                 {formatCurrency(Number(cost.amount))}
               </p>
               <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
@@ -194,11 +194,11 @@ export const ConsolidatedCostDetails = ({
 
         <div className="space-y-4 mt-4">
           {/* Información principal */}
-          <div className="bg-muted/50 rounded-lg p-4">
+          <div className="rounded-lg border border-border/70 bg-muted/30 p-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex items-center gap-3">
-                <div className="bg-violet-100 dark:bg-violet-900/30 p-2 rounded-lg">
-                  <Calendar className="size-4 text-violet-600 dark:text-violet-400" />
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <Calendar className="size-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha</p>
@@ -209,8 +209,8 @@ export const ConsolidatedCostDetails = ({
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
-                  <DollarSign className="size-4 text-green-600 dark:text-green-400" />
+                <div className="rounded-lg bg-success/10 p-2">
+                  <DollarSign className="size-4 text-success" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Monto</p>
@@ -222,11 +222,11 @@ export const ConsolidatedCostDetails = ({
 
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${cost.payment_date 
-                  ? 'bg-green-100 dark:bg-green-900/30' 
-                  : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                  ? 'bg-success/10' 
+                  : 'bg-warning/10'}`}>
                   {cost.payment_date 
-                    ? <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
-                    : <Clock className="size-4 text-orange-600 dark:text-orange-400" />}
+                    ? <CheckCircle className="size-4 text-success" />
+                    : <Clock className="size-4 text-warning" />}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha de Pago</p>
@@ -240,8 +240,8 @@ export const ConsolidatedCostDetails = ({
 
               {cost.service_folio && (
                 <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
-                    <FileText className="size-4 text-blue-600 dark:text-blue-400" />
+                  <div className="rounded-lg bg-info/10 p-2">
+                    <FileText className="size-4 text-info" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Folio Servicio</p>
@@ -252,8 +252,8 @@ export const ConsolidatedCostDetails = ({
 
               {cost.cost_center_id && (
                 <div className="flex items-center gap-3">
-                  <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
-                    <Building className="size-4 text-purple-600 dark:text-purple-400" />
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <Building className="size-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Centro de Costo</p>
@@ -272,7 +272,7 @@ export const ConsolidatedCostDetails = ({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Wrench className="size-4 text-violet-600" />
+                    <Wrench className="size-4 text-primary" />
                     Asociaciones
                   </span>
                   {showAssociations ? (
@@ -283,10 +283,10 @@ export const ConsolidatedCostDetails = ({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                <div className="space-y-4 rounded-lg border border-border/70 bg-muted/20 p-4">
                   {cost.cranes && (
                     <div className="flex items-start gap-3">
-                      <Truck className="size-5 text-blue-600 mt-0.5" />
+                      <Truck className="mt-0.5 size-5 text-info" />
                       <div>
                         <p className="text-xs text-muted-foreground">Grúa</p>
                         <p className="font-medium text-foreground">
@@ -301,7 +301,7 @@ export const ConsolidatedCostDetails = ({
 
                   {cost.operators && (
                     <div className="flex items-start gap-3">
-                      <User className="size-5 text-green-600 mt-0.5" />
+                      <User className="mt-0.5 size-5 text-success" />
                       <div>
                         <p className="text-xs text-muted-foreground">Operador</p>
                         <p className="font-medium text-foreground">{cost.operators.name}</p>
@@ -313,7 +313,7 @@ export const ConsolidatedCostDetails = ({
                   {cost.services && (
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <Wrench className="size-5 text-purple-600 mt-0.5" />
+                        <Wrench className="mt-0.5 size-5 text-primary" />
                         <div className="flex-1">
                           <p className="text-xs text-muted-foreground">Servicio</p>
                           <p className="font-medium text-foreground">
@@ -366,7 +366,7 @@ export const ConsolidatedCostDetails = ({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <StickyNote className="size-4 text-amber-600" />
+                    <StickyNote className="size-4 text-warning" />
                     Notas
                   </span>
                   {showNotes ? (
@@ -377,7 +377,7 @@ export const ConsolidatedCostDetails = ({
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-3">
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+                <div className="rounded-lg border border-warning/20 bg-warning/10 p-4">
                   <p className="text-foreground whitespace-pre-wrap break-words">{cost.notes}</p>
                 </div>
               </CollapsibleContent>
@@ -473,7 +473,7 @@ export const ConsolidatedCostDetails = ({
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                 <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <History className="size-4 text-violet-600" />
+                  <History className="size-4 text-primary" />
                   Historial de cambios
                   {changeHistory && changeHistory.length > 0 && (
                     <Badge variant="outline" className="ml-1">{changeHistory.length}</Badge>

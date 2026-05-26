@@ -16,17 +16,9 @@ export const ServiceFormHeader = ({ service }: ServiceFormHeaderProps) => {
   if (!isInvoiced) return null;
 
   return (
-    <Alert 
-      className="border-purple-500/50 bg-purple-500/10"
-      style={{
-        background: '#000000',
-        borderColor: 'rgba(168, 85, 247, 0.5)',
-        borderLeftColor: '#a855f7',
-        borderLeftWidth: '4px'
-      }}
-    >
-      <AlertTriangle className="size-4 text-purple-400" />
-      <AlertDescription className="text-white" style={{ color: '#ffffff' }}>
+    <Alert className="border-primary/30 bg-primary/10">
+      <AlertTriangle className="size-4 text-primary" />
+      <AlertDescription className="text-foreground">
         {isAdmin 
           ? "⚠️ CUIDADO: Este servicio está facturado. Como administrador, puedes editarlo, pero ten precaución con los cambios."
           : "Este servicio está facturado y no puede ser editado. Solo los administradores pueden hacerlo."

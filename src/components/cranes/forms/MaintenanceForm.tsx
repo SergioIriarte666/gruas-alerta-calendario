@@ -7,9 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CalendarIcon, Wrench, DollarSign, FileText, User, Calendar as CalendarComponent, Gauge } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { CalendarIcon, Wrench, DollarSign, FileText, User, Gauge } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateMaintenance, useUpdateMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
@@ -183,10 +181,10 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-card border-border max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl border-border/70 bg-card">
+        <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-foreground flex items-center gap-2">
-            <Wrench className="size-5 text-violet-500" />
+            <Wrench className="size-5 text-primary" />
             {editingRecord ? 'Editar Mantenimiento' : 'Agregar Mantenimiento'}
           </DialogTitle>
         </DialogHeader>
@@ -446,6 +444,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             <Button
               type="button"
               variant="outline"
+              className="border-border/70 bg-background/60"
               onClick={handleClose}
             >
               Cancelar
@@ -453,7 +452,6 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
             <Button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold"
             >
               {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : editingRecord ? 'Actualizar' : 'Guardar'}
             </Button>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Service } from '@/types';
 import { useServices } from '@/hooks/useServices';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
@@ -8,7 +8,6 @@ import { ServicesTable } from './ServicesTable';
 import { ServicesMobileView } from './ServicesMobileView';
 import { ServicesDialogs } from './ServicesDialogs';
 import { ServiceFilters } from './ServiceFilters';
-import { AdvancedServiceFilters } from './AdvancedServiceFilters';
 import { useToast } from '@/components/ui/custom-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@/contexts/UserContext';
@@ -16,6 +15,17 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2 } from 'lucide-react';
 
 type ViewMode = 'table' | 'pipeline';
 
@@ -37,6 +47,7 @@ export const ServicesPageContent = () => {
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [serviceToClose, setServiceToClose] = useState<Service | null>(null);
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,42 +175,40 @@ export const ServicesPageContent = () => {
       return;
     }
 
-    if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}?`)) {
-      try {
-        // Usar la función de cierre seguro para evitar duplicar comisiones
-        const { data, error } = await supabase.rpc('emergency_close_service', {
-          p_service_id: service.id
-        });
+    try {
+      // Usar la función de cierre seguro para evitar duplicar comisiones
+      const { data, error } = await supabase.rpc('emergency_close_service', {
+        p_service_id: service.id
+      });
 
-        if (error) {
-          throw error;
-        }
-
-        const result = data as any;
-        if (!result?.success) {
-          throw new Error(result?.error || 'Error desconocido al cerrar servicio');
-        }
-
-        // Refrescar la lista de servicios y invalidar caché de comisiones
-        refetch();
-        
-        // Invalidar caché de comisiones para que se actualicen en tiempo real
-        queryClient.invalidateQueries({ queryKey: ['commissions'] });
-        queryClient.invalidateQueries({ queryKey: ['costs'] });
-        
-        toast({
-          type: 'success',
-          title: 'Servicio cerrado',
-          description: result.message || 'El servicio se ha cerrado exitosamente'
-        });
-      } catch (error) {
-        console.error('Error closing service:', error);
-        toast({
-          type: 'error',
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'No se pudo cerrar el servicio'
-        });
+      if (error) {
+        throw error;
       }
+
+      const result = data as any;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error desconocido al cerrar servicio');
+      }
+
+      // Refrescar la lista de servicios y invalidar caché de comisiones
+      refetch();
+      
+      // Invalidar caché de comisiones para que se actualicen en tiempo real
+      queryClient.invalidateQueries({ queryKey: ['commissions'] });
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      
+      toast({
+        type: 'success',
+        title: 'Servicio cerrado',
+        description: result.message || 'El servicio se ha cerrado exitosamente'
+      });
+    } catch (error) {
+      console.error('Error closing service:', error);
+      toast({
+        type: 'error',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'No se pudo cerrar el servicio'
+      });
     }
   };
 
@@ -293,7 +302,7 @@ export const ServicesPageContent = () => {
           onViewDetails={handleViewService}
           onEdit={isAdmin ? handleEditService : undefined}
           onDelete={isAdmin ? handleDeleteService : undefined}
-          onCloseService={handleCloseService}
+          onCloseService={(service) => setServiceToClose(service)}
           onAddNewService={isAdmin ? handleNewService : undefined}
         />
       ) : (
@@ -303,7 +312,7 @@ export const ServicesPageContent = () => {
           onViewDetails={handleViewService}
           onEdit={isAdmin ? handleEditService : undefined}
           onDelete={isAdmin ? handleDeleteService : undefined}
-          onCloseService={handleCloseService}
+          onCloseService={(service) => setServiceToClose(service)}
           onAddNewService={isAdmin ? handleNewService : undefined}
         />
       )}
@@ -328,6 +337,35 @@ export const ServicesPageContent = () => {
         onOpenChange={setIsDeleteDialogOpen}
         onConfirmDelete={handleConfirmDeleteService}
       />
+
+      <AlertDialog open={!!serviceToClose} onOpenChange={(open) => !open && setServiceToClose(null)}>
+        <AlertDialogContent className="border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="size-5 text-success" />
+              Cerrar servicio
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {serviceToClose
+                ? `Se cerrará el servicio ${serviceToClose.folio} y pasará a estado completado.`
+                : 'Confirma el cierre del servicio.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!serviceToClose) return;
+                const service = serviceToClose;
+                setServiceToClose(null);
+                await handleCloseService(service);
+              }}
+            >
+              Confirmar cierre
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

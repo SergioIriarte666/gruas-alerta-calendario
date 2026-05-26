@@ -421,6 +421,317 @@ body {
   .hover\:bg-tms-green:hover,
   .hover\:bg-tms-primary:hover { background-color: hsl(var(--primary) / 0.9) !important; }
 
+  /* Legacy palette remap (violet/purple/blue/green/red/yellow/orange/amber)
+     → semantic tokens so legacy classes respect theme automatically. */
+  .text-violet-400,
+  .text-violet-500,
+  .text-violet-600,
+  .text-violet-700,
+  .text-violet-800,
+  .text-purple-400,
+  .text-purple-500,
+  .text-purple-600,
+  .text-purple-700,
+  .text-purple-800 { color: hsl(var(--primary)) !important; }
+
+  .bg-violet-50,
+  .bg-violet-100,
+  .bg-purple-50,
+  .bg-purple-100 { background-color: hsl(var(--primary) / 0.10) !important; }
+  .bg-violet-600,
+  .bg-violet-700,
+  .bg-purple-600,
+  .bg-purple-700 { background-color: hsl(var(--primary)) !important; }
+  .bg-violet-600\/10,
+  .bg-violet-500\/10,
+  .bg-purple-500\/10,
+  .bg-purple-600\/10 { background-color: hsl(var(--primary) / 0.10) !important; }
+  .bg-violet-500\/20,
+  .bg-violet-600\/20,
+  .bg-purple-500\/20,
+  .bg-purple-600\/20 { background-color: hsl(var(--primary) / 0.20) !important; }
+  .border-violet-200,
+  .border-violet-300,
+  .border-violet-500,
+  .border-violet-600,
+  .border-purple-200,
+  .border-purple-300,
+  .border-purple-500,
+  .border-purple-600 { border-color: hsl(var(--primary) / 0.30) !important; }
+  .border-violet-500\/30,
+  .border-violet-600\/20,
+  .border-violet-600\/30,
+  .border-purple-500\/30,
+  .border-purple-600\/20,
+  .border-purple-600\/30 { border-color: hsl(var(--primary) / 0.30) !important; }
+
+  .text-blue-400,
+  .text-blue-500,
+  .text-blue-600,
+  .text-blue-700,
+  .text-indigo-400,
+  .text-indigo-500,
+  .text-indigo-600 { color: hsl(var(--info)) !important; }
+  .bg-blue-50,
+  .bg-blue-100,
+  .bg-indigo-50,
+  .bg-indigo-100 { background-color: hsl(var(--info) / 0.10) !important; }
+  .bg-blue-500,
+  .bg-blue-600 { background-color: hsl(var(--info)) !important; }
+  .bg-blue-500\/10,
+  .bg-blue-500\/20,
+  .bg-blue-600\/10,
+  .bg-blue-600\/20,
+  .bg-indigo-500\/10,
+  .bg-indigo-500\/20 { background-color: hsl(var(--info) / 0.10) !important; }
+  .border-blue-200,
+  .border-blue-300,
+  .border-blue-500,
+  .border-blue-600,
+  .border-indigo-200,
+  .border-indigo-300,
+  .border-indigo-500,
+  .border-indigo-600 { border-color: hsl(var(--info) / 0.30) !important; }
+  .border-blue-500\/20,
+  .border-blue-500\/30,
+  .border-blue-600\/20,
+  .border-blue-600\/30 { border-color: hsl(var(--info) / 0.30) !important; }
+
+  .text-green-400,
+  .text-green-500,
+  .text-green-600,
+  .text-green-700 { color: hsl(var(--success)) !important; }
+  .bg-green-50,
+  .bg-green-100 { background-color: hsl(var(--success) / 0.10) !important; }
+  .bg-green-500,
+  .bg-green-600 { background-color: hsl(var(--success)) !important; }
+  .bg-green-500\/10,
+  .bg-green-500\/20,
+  .bg-green-600\/10,
+  .bg-green-600\/20 { background-color: hsl(var(--success) / 0.10) !important; }
+  .border-green-200,
+  .border-green-300,
+  .border-green-500,
+  .border-green-600 { border-color: hsl(var(--success) / 0.30) !important; }
+  .border-green-500\/20,
+  .border-green-500\/30,
+  .border-green-600\/20,
+  .border-green-600\/30 { border-color: hsl(var(--success) / 0.30) !important; }
+
+  .text-red-400,
+  .text-red-500,
+  .text-red-600,
+  .text-red-700 { color: hsl(var(--danger)) !important; }
+  .bg-red-50,
+  .bg-red-100 { background-color: hsl(var(--danger) / 0.10) !important; }
+  .bg-red-500,
+  .bg-red-600 { background-color: hsl(var(--danger)) !important; }
+  .bg-red-500\/10,
+  .bg-red-500\/20,
+  .bg-red-600\/10,
+  .bg-red-600\/20 { background-color: hsl(var(--danger) / 0.10) !important; }
+  .border-red-200,
+  .border-red-300,
+  .border-red-500,
+  .border-red-600 { border-color: hsl(var(--danger) / 0.30) !important; }
+  .border-red-500\/20,
+  .border-red-500\/30,
+  .border-red-600\/20,
+  .border-red-600\/30 { border-color: hsl(var(--danger) / 0.30) !important; }
+
+  .text-yellow-400,
+  .text-yellow-500,
+  .text-yellow-600,
+  .text-yellow-700,
+  .text-amber-500,
+  .text-amber-600,
+  .text-orange-500,
+  .text-orange-600 { color: hsl(var(--warning)) !important; }
+  .bg-yellow-50,
+  .bg-yellow-100,
+  .bg-amber-50,
+  .bg-amber-100,
+  .bg-orange-50,
+  .bg-orange-100 { background-color: hsl(var(--warning) / 0.10) !important; }
+  .bg-yellow-500,
+  .bg-yellow-600,
+  .bg-amber-500,
+  .bg-amber-600,
+  .bg-orange-500,
+  .bg-orange-600 { background-color: hsl(var(--warning)) !important; }
+  .bg-yellow-500\/10,
+  .bg-yellow-500\/20,
+  .bg-yellow-600\/10,
+  .bg-yellow-600\/20,
+  .bg-amber-500\/10,
+  .bg-amber-500\/20,
+  .bg-orange-500\/10,
+  .bg-orange-500\/20 { background-color: hsl(var(--warning) / 0.10) !important; }
+  .border-yellow-200,
+  .border-yellow-300,
+  .border-yellow-500,
+  .border-yellow-600,
+  .border-amber-200,
+  .border-amber-300,
+  .border-amber-500,
+  .border-amber-600,
+  .border-orange-200,
+  .border-orange-300,
+  .border-orange-500,
+  .border-orange-600 { border-color: hsl(var(--warning) / 0.30) !important; }
+  .border-yellow-500\/20,
+  .border-yellow-500\/30,
+  .border-yellow-600\/20,
+  .border-yellow-600\/30,
+  .border-amber-500\/30,
+  .border-orange-500\/30 { border-color: hsl(var(--warning) / 0.30) !important; }
+
+  .hover\:bg-blue-500:hover,
+  .hover\:bg-blue-600:hover,
+  .hover\:bg-indigo-500:hover { background-color: hsl(var(--info) / 0.90) !important; }
+  .hover\:bg-green-500:hover,
+  .hover\:bg-green-600:hover { background-color: hsl(var(--success) / 0.90) !important; }
+  .hover\:bg-red-500:hover,
+  .hover\:bg-red-600:hover { background-color: hsl(var(--danger) / 0.90) !important; }
+  .hover\:bg-yellow-500:hover,
+  .hover\:bg-yellow-600:hover,
+  .hover\:bg-amber-500:hover,
+  .hover\:bg-orange-500:hover { background-color: hsl(var(--warning) / 0.90) !important; }
+  .hover\:bg-violet-600:hover,
+  .hover\:bg-violet-700:hover,
+  .hover\:bg-purple-600:hover,
+  .hover\:bg-purple-700:hover { background-color: hsl(var(--primary) / 0.90) !important; }
+
+  .hover\:text-blue-400:hover,
+  .hover\:text-blue-500:hover,
+  .hover\:text-blue-600:hover,
+  .hover\:text-indigo-500:hover { color: hsl(var(--info)) !important; }
+  .hover\:text-green-400:hover,
+  .hover\:text-green-500:hover,
+  .hover\:text-green-600:hover { color: hsl(var(--success)) !important; }
+  .hover\:text-red-400:hover,
+  .hover\:text-red-500:hover,
+  .hover\:text-red-600:hover { color: hsl(var(--danger)) !important; }
+  .hover\:text-yellow-400:hover,
+  .hover\:text-yellow-500:hover,
+  .hover\:text-yellow-600:hover,
+  .hover\:text-amber-600:hover,
+  .hover\:text-orange-600:hover { color: hsl(var(--warning)) !important; }
+  .hover\:text-violet-600:hover,
+  .hover\:text-violet-700:hover,
+  .hover\:text-purple-600:hover,
+  .hover\:text-purple-700:hover { color: hsl(var(--primary)) !important; }
+
+  /* Gradient stop remap (Tailwind gradients use CSS variables) */
+  .from-blue-500,
+  .from-blue-600,
+  .from-indigo-500,
+  .from-indigo-600 {
+    --tw-gradient-from: hsl(var(--info)) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: hsl(var(--info) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-blue-500,
+  .to-blue-600,
+  .to-indigo-500,
+  .to-indigo-600 {
+    --tw-gradient-to: hsl(var(--info)) var(--tw-gradient-to-position) !important;
+  }
+  .via-blue-500,
+  .via-blue-600,
+  .via-indigo-500,
+  .via-indigo-600 {
+    --tw-gradient-to: hsl(var(--info) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--info)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+  }
+
+  .from-violet-500,
+  .from-violet-600,
+  .from-violet-700,
+  .from-purple-500,
+  .from-purple-600,
+  .from-purple-700 {
+    --tw-gradient-from: hsl(var(--primary)) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: hsl(var(--primary) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-violet-500,
+  .to-violet-600,
+  .to-violet-700,
+  .to-purple-500,
+  .to-purple-600,
+  .to-purple-700 {
+    --tw-gradient-to: hsl(var(--primary)) var(--tw-gradient-to-position) !important;
+  }
+  .via-violet-500,
+  .via-violet-600,
+  .via-violet-700,
+  .via-purple-500,
+  .via-purple-600,
+  .via-purple-700 {
+    --tw-gradient-to: hsl(var(--primary) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--primary)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+  }
+
+  .from-green-500,
+  .from-green-600 {
+    --tw-gradient-from: hsl(var(--success)) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: hsl(var(--success) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-green-500,
+  .to-green-600 { --tw-gradient-to: hsl(var(--success)) var(--tw-gradient-to-position) !important; }
+  .via-green-500,
+  .via-green-600 {
+    --tw-gradient-to: hsl(var(--success) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--success)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+  }
+
+  .from-red-500,
+  .from-red-600 {
+    --tw-gradient-from: hsl(var(--danger)) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: hsl(var(--danger) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-red-500,
+  .to-red-600 { --tw-gradient-to: hsl(var(--danger)) var(--tw-gradient-to-position) !important; }
+  .via-red-500,
+  .via-red-600 {
+    --tw-gradient-to: hsl(var(--danger) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--danger)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+  }
+
+  .from-yellow-500,
+  .from-yellow-600,
+  .from-amber-500,
+  .from-amber-600,
+  .from-orange-500,
+  .from-orange-600 {
+    --tw-gradient-from: hsl(var(--warning)) var(--tw-gradient-from-position) !important;
+    --tw-gradient-to: hsl(var(--warning) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  }
+  .to-yellow-500,
+  .to-yellow-600,
+  .to-amber-500,
+  .to-amber-600,
+  .to-orange-500,
+  .to-orange-600 { --tw-gradient-to: hsl(var(--warning)) var(--tw-gradient-to-position) !important; }
+  .via-yellow-500,
+  .via-yellow-600,
+  .via-amber-500,
+  .via-amber-600,
+  .via-orange-500,
+  .via-orange-600 {
+    --tw-gradient-to: hsl(var(--warning) / 0) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--warning)) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+  }
+
+  /* A few extra legacy solid shades used in badges */
+  .bg-amber-700,
+  .bg-orange-700,
+  .bg-yellow-700 { background-color: hsl(var(--warning)) !important; }
+
   /* Active state only: never infer text color from raw className substrings,
      because selectors like [class*="bg-primary"] also match
      `data-[state=active]:bg-primary` on inactive elements. */

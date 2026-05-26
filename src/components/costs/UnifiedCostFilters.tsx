@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -84,9 +84,9 @@ export const UnifiedCostFilters = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm">
+    <div className="rounded-2xl border border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
       {/* Filtros rápidos de período */}
-      <div className="p-4 border-b">
+      <div className="border-b border-border/60 p-4">
         <div className="flex items-center justify-between mb-3">
           <Label className="text-sm font-medium text-muted-foreground">Período</Label>
           {dateFilter !== 'all' && (
@@ -106,8 +106,8 @@ export const UnifiedCostFilters = ({
                 size="sm"
                 onClick={() => onDateFilterChange(option.key)}
                 className={cn(
-                  'transition-all',
-                  isActive && 'bg-violet-600 hover:bg-violet-700 text-white'
+                  'rounded-xl transition-all',
+                  isActive && 'bg-primary hover:bg-primary/90 text-primary-foreground'
                 )}
               >
                 <Icon className="size-4 mr-1.5" />
@@ -134,19 +134,19 @@ export const UnifiedCostFilters = ({
         <div className="flex items-center gap-3">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="relative">
+              <Button variant="outline" size="sm" className="relative rounded-xl border-border/70 bg-background/70">
                 <Filter className="size-4 mr-2" />
                 Filtros Avanzados
                 {activeFilterCount > 0 && (
                   <Badge
-                    className="absolute -top-2 -right-2 size-5 p-0 flex items-center justify-center bg-violet-600 text-white text-xs"
+                    className="absolute -top-2 -right-2 flex size-5 items-center justify-center bg-primary p-0 text-xs text-primary-foreground"
                   >
                     {activeFilterCount}
                   </Badge>
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[320px] sm:w-[400px]">
+            <SheetContent className="w-[320px] border-border/70 bg-popover/95 sm:w-[400px]">
               <SheetHeader>
                 <SheetTitle className="flex items-center justify-between">
                   <span>Filtros Avanzados</span>
@@ -313,7 +313,7 @@ export const UnifiedCostFilters = ({
           </Sheet>
 
           {activeFilterCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={handleClearAll}>
+            <Button variant="ghost" size="sm" onClick={handleClearAll} className="rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground">
               <X className="size-4 mr-1" />
               Limpiar todo
             </Button>

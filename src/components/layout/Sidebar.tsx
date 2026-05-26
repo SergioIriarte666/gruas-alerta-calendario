@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
@@ -37,9 +37,9 @@ export const Sidebar = ({
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['principal']);
 
   const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev =>
+    setExpandedGroups((prev: string[]) =>
       prev.includes(groupName)
-        ? prev.filter(g => g !== groupName)
+        ? prev.filter((g: string) => g !== groupName)
         : [...prev, groupName]
     );
   };
@@ -70,6 +70,18 @@ export const Sidebar = ({
     '/settings': 'settings',
     '/trip-calculator': 'trip-calculator',
   };
+
+  useEffect(() => {
+    const activeGroup = navigationGroups.find((group) =>
+      group.items.some((item) => location.pathname === item.href),
+    );
+
+    if (!activeGroup || activeGroup.alwaysExpanded) return;
+
+    setExpandedGroups((prev) =>
+      prev.includes(activeGroup.id) ? prev : [...prev, activeGroup.id],
+    );
+  }, [location.pathname]);
 
   const navigationGroups = [
     {
@@ -185,25 +197,28 @@ export const Sidebar = ({
   };
 
   // ── Shared nav item renderer ──
-  const NavItem = ({ item, collapsed, onNavigate }: {
+  const NavItem: React.FC<{
     item: { name: string; href: string; icon: React.ElementType };
     collapsed: boolean;
     onNavigate?: () => void;
-  }) => {
+  }> = ({ item, collapsed, onNavigate }) => {
     const isActive = location.pathname === item.href;
     const link = (
       <Link
         to={item.href}
         onClick={onNavigate}
         className={cn(
-          "flex items-center gap-3 rounded-md text-sm transition-colors duration-150",
-          collapsed ? "justify-center px-2 py-2" : "px-3 py-2",
+          "group relative flex items-center gap-3 rounded-xl text-sm transition-all duration-150",
+          collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
           isActive
-            ? "bg-muted font-semibold text-foreground"
-            : "text-violet-600 hover:bg-muted/50 hover:text-violet-800"
+            ? "bg-primary/12 font-semibold text-foreground shadow-sm ring-1 ring-primary/15"
+            : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
         )}
       >
-        <item.icon className="size-4 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
+        {isActive && !collapsed && (
+          <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-primary" />
+        )}
+        <item.icon className={cn("size-4 shrink-0", isActive && "text-primary")} strokeWidth={isActive ? 2.5 : 2} />
         {!collapsed && <span className="truncate">{item.name}</span>}
       </Link>
     );
@@ -224,10 +239,10 @@ export const Sidebar = ({
 
   // ── Desktop / tablet content ──
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-background border-r border-border">
+    <div className="flex h-full flex-col border-r border-border/60 bg-card/90 backdrop-blur-xl">
       {/* Profile header */}
-      <div className={cn("flex items-center gap-3 border-b border-border", isCollapsed ? "justify-center p-3" : "p-4")}>
-        <Avatar className="size-9 shrink-0 border border-border">
+      <div className={cn("flex items-center gap-3 border-b border-border/60", isCollapsed ? "justify-center p-3" : "p-4")}>
+        <Avatar className="size-10 shrink-0 border border-border/70 shadow-sm">
           <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
@@ -236,8 +251,9 @@ export const Sidebar = ({
 
         {!isCollapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{getRoleLabel()}</p>
-            <p className="text-sm font-medium text-foreground truncate">{user?.name}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
+            <p className="truncate text-sm font-semibold text-foreground">{user?.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{companyName}</p>
           </div>
         )}
 
@@ -245,7 +261,7 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden lg:flex size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="hidden lg:flex size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </Button>
@@ -254,41 +270,37 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="lg:hidden size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="lg:hidden size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
         <TooltipProvider disableHoverableContent>
           {navigationGroups.map(group => {
             const filteredItems = filterItems(group.items);
             if (filteredItems.length === 0) return null;
 
             const isExpanded = expandedGroups.includes(group.id) || group.alwaysExpanded;
-            const hasActiveItem = filteredItems.some(i => location.pathname === i.href);
-
-            // Auto-expand group that contains the active route
-            if (hasActiveItem && !expandedGroups.includes(group.id) && !group.alwaysExpanded) {
-              // We don't setState during render — let the user expand manually or use the effect below
-            }
-
             return (
-              <div key={group.id}>
+              <div key={group.id} className="mb-4">
                 {/* Group label / separator */}
                 {isCollapsed ? (
-                  <Separator className="my-2" />
+                  <Separator className="my-2 bg-border/60" />
                 ) : (
                   <button
                     onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                      "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                       !group.alwaysExpanded && "cursor-pointer hover:text-foreground"
                     )}
                   >
-                    <span>{group.name}</span>
+                    <div className="flex items-center gap-2">
+                      <group.icon className="size-3.5" />
+                      <span>{group.name}</span>
+                    </div>
                     {!group.alwaysExpanded && (
                       isExpanded
                         ? <ChevronUp className="size-3" />
@@ -299,7 +311,7 @@ export const Sidebar = ({
 
                 {/* Items */}
                 {(isExpanded || isCollapsed) && (
-                  <div className={cn("space-y-0.5", !isCollapsed && "mt-1")}>
+                  <div className={cn("space-y-1", !isCollapsed && "mt-1")}>
                     {filteredItems.map(item => (
                       <NavItem
                         key={item.href}
@@ -317,12 +329,12 @@ export const Sidebar = ({
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-2 space-y-2">
+      <div className="space-y-2 border-t border-border/60 p-2">
         <Button
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            "w-full rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground",
             isCollapsed ? "justify-center px-2" : "justify-start px-3"
           )}
           size="sm"
@@ -332,7 +344,9 @@ export const Sidebar = ({
         </Button>
 
         {!isCollapsed && (
-          <p className="text-[10px] text-center text-muted-foreground">{companyName}</p>
+          <p className="text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
+            Centro de Operaciones
+          </p>
         )}
       </div>
     </div>
@@ -340,45 +354,49 @@ export const Sidebar = ({
 
   // ── Mobile content (never collapsed) ──
   const MobileSidebarContent = () => (
-    <div className="flex flex-col h-full bg-background border-r border-border">
+    <div className="flex h-full flex-col border-r border-border/60 bg-card/95 backdrop-blur-xl">
       {/* Profile header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <Avatar className="size-9 shrink-0 border border-border">
+      <div className="flex items-center gap-3 border-b border-border/60 p-4">
+        <Avatar className="size-10 shrink-0 border border-border/70 shadow-sm">
           <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{getRoleLabel()}</p>
-          <p className="text-sm font-medium text-foreground truncate">{user?.name}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{getRoleLabel()}</p>
+          <p className="truncate text-sm font-semibold text-foreground">{user?.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{companyName}</p>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
-          className="size-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-2 px-2 gap-y-4">
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
         {navigationGroups.map(group => {
           const filteredItems = filterItems(group.items);
           if (filteredItems.length === 0) return null;
           const isExpanded = expandedGroups.includes(group.id) || group.alwaysExpanded;
           return (
-            <div key={group.id}>
+            <div key={group.id} className="mb-4">
               <button
                 onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
                 className={cn(
-                  "w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                  "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                   !group.alwaysExpanded && "cursor-pointer hover:text-foreground"
                 )}
               >
-                <span>{group.name}</span>
+                <div className="flex items-center gap-2">
+                  <group.icon className="size-3.5" />
+                  <span>{group.name}</span>
+                </div>
                 {!group.alwaysExpanded && (
                   isExpanded
                     ? <ChevronUp className="size-3" />
@@ -386,7 +404,7 @@ export const Sidebar = ({
                 )}
               </button>
               {isExpanded && (
-                <div className="space-y-0.5 mt-1">
+                <div className="mt-1 space-y-1">
                   {filteredItems.map(item => (
                     <NavItem
                       key={item.href}
@@ -403,17 +421,19 @@ export const Sidebar = ({
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-2 space-y-2">
+      <div className="space-y-2 border-t border-border/60 p-2">
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start px-3 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          className="w-full justify-start rounded-xl px-3 text-muted-foreground hover:bg-accent hover:text-foreground"
           size="sm"
         >
           <LogOut className="size-4 shrink-0" />
           <span className="ml-2">Cerrar Sesión</span>
         </Button>
-        <p className="text-[10px] text-center text-muted-foreground">{companyName}</p>
+        <p className="text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
+          Centro de Operaciones
+        </p>
       </div>
     </div>
   );
@@ -430,8 +450,8 @@ export const Sidebar = ({
 
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 transition-all duration-300 h-screen",
-        isCollapsed ? "lg:w-16" : "lg:w-64"
+        "hidden h-screen transition-all duration-300 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col",
+        isCollapsed ? "lg:w-[4.5rem]" : "lg:w-72"
       )}>
         <SidebarContent />
       </div>

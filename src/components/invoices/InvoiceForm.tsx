@@ -154,14 +154,14 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   return (
-    <Card className="bg-card border max-h-[90vh] overflow-hidden flex flex-col">
-      <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
+    <Card className="flex max-h-[90vh] flex-col overflow-hidden border-border/70 bg-card">
+      <CardHeader className="flex-shrink-0 border-b border-border/70 bg-muted/20">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
-            <Receipt className="size-5" />
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Receipt className="size-5 text-primary" />
             {isEditing ? 'Editar Factura' : 'Nueva Factura'}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="text-white/80 hover:text-white hover:bg-white/20">
+          <Button variant="ghost" size="sm" onClick={onCancel}>
             <X className="size-4" />
           </Button>
         </div>
@@ -179,19 +179,19 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </div>
 
-          <div className="border-t bg-card p-4 flex-shrink-0 sticky bottom-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+          <div className="sticky bottom-0 flex-shrink-0 border-t border-border/70 bg-card p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             <div className="flex items-center justify-between">
-              <Button type="button" variant="outline" onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)} disabled={currentStep === 1} className="gap-2">
+              <Button type="button" variant="outline" onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)} disabled={currentStep === 1} className="gap-2 border-border/70 bg-background/60">
                 <ChevronLeft className="size-4" /> Anterior
               </Button>
               <div className="flex items-center gap-3">
-                <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+                <Button type="button" variant="outline" className="border-border/70 bg-background/60" onClick={onCancel}>Cancelar</Button>
                 {currentStep < 3 ? (
-                  <Button type="button" onClick={() => setCurrentStep(prev => Math.min(prev + 1, 3))} disabled={!canGoNext} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
+                  <Button type="button" onClick={() => setCurrentStep(prev => Math.min(prev + 1, 3))} disabled={!canGoNext} className="gap-2">
                     Siguiente <ChevronRight className="size-4" />
                   </Button>
                 ) : (
-                  <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 min-w-[140px]">
+                  <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="min-w-[140px] gap-2">
                     <Save className="size-4" />
                     {isSubmitting || isLoading ? 'Guardando...' : `${isEditing ? 'Actualizar' : 'Crear'} Factura`}
                   </Button>

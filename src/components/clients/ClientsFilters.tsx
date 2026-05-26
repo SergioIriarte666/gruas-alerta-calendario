@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type StatusFilter = 'all' | 'active' | 'inactive';
@@ -31,8 +32,8 @@ export const ClientsFilters = ({
   ];
 
   return (
-    <Card>
-      <CardContent className="p-4">
+    <Card className="border-border/70 bg-card/80 shadow-sm">
+      <CardContent className="space-y-4 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {/* Search */}
           <div className="relative flex-1">
@@ -42,7 +43,7 @@ export const ClientsFilters = ({
               placeholder="Buscar por nombre, RUT o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="h-11 rounded-xl border-border/70 bg-background/70 pl-10"
             />
           </div>
 
@@ -56,7 +57,7 @@ export const ClientsFilters = ({
                   'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border transition-colors',
                   statusFilter === opt.value
                     ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                    : 'bg-background/70 text-muted-foreground border-border/70 hover:bg-muted'
                 )}
               >
                 {opt.label}
@@ -77,13 +78,27 @@ export const ClientsFilters = ({
             <select
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Todos los deptos.</option>
               {departments.map(d => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
+          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <SlidersHorizontal className="size-4" />
+            Vista actual
+          </div>
+          <Badge variant="outline" className="rounded-full">
+            Estado: {statusOptions.find((opt) => opt.value === statusFilter)?.label ?? 'Todos'}
+          </Badge>
+          {selectedDepartment && (
+            <Badge variant="secondary" className="rounded-full">
+              Depto: {selectedDepartment}
+            </Badge>
           )}
         </div>
       </CardContent>

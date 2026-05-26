@@ -6,6 +6,7 @@ import { InvoicesMobileView } from '@/components/invoices/InvoicesMobileView';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import { Button } from '@/components/ui/button';
+import { SectionCard } from '@/components/ui/section-card';
 import { cn } from '@/lib/utils';
 import { AppPagination } from '@/components/shared/AppPagination';
 
@@ -89,32 +90,39 @@ export const InvoicesListTabContent = ({
 
       <InvoicesStats invoices={invoices.filter((invoice) => !invoice.folio.startsWith('HIST-'))} />
 
-      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
-        <div className="flex-grow w-full">
-          <InvoicesSearch
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
-          />
-        </div>
-        <div className="overflow-x-auto w-full">
-          <div className="flex items-center gap-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
-            {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
-              <Button
-                key={statusKey}
-                variant="ghost"
-                size="sm"
-                onClick={() => onStatusFilterChange(statusKey)}
-                className={cn(
-                  'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm flex-shrink-0',
-                  statusFilter === statusKey && 'bg-primary text-primary-foreground'
-                )}
-              >
-                {statusValue}
-              </Button>
-            ))}
+      <SectionCard
+        className="border-border/70 bg-card/80 shadow-sm"
+        contentClassName="space-y-4"
+        title="Búsqueda y Estado"
+        description="Filtra por cliente, folio, número fiscal o prioridad de cobranza."
+      >
+        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
+          <div className="flex-grow w-full">
+            <InvoicesSearch
+              searchTerm={searchTerm}
+              onSearchChange={onSearchChange}
+            />
+          </div>
+          <div className="overflow-x-auto w-full">
+            <div className="flex items-center gap-x-1 rounded-xl border border-border/70 bg-background/70 p-1 whitespace-nowrap">
+              {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
+                <Button
+                  key={statusKey}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onStatusFilterChange(statusKey)}
+                  className={cn(
+                    'capitalize rounded-lg px-3 py-1 text-sm text-muted-foreground hover:text-foreground flex-shrink-0',
+                    statusFilter === statusKey && 'bg-primary text-primary-foreground hover:text-primary-foreground'
+                  )}
+                >
+                  {statusValue}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </SectionCard>
 
       {selectedInvoiceIds.length > 0 && (
         <InvoiceBatchActions
@@ -152,11 +160,13 @@ export const InvoicesListTabContent = ({
         />
       )}
 
-      <AppPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-      />
+      {totalPages > 1 && (
+        <AppPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      )}
     </div>
   );
 };

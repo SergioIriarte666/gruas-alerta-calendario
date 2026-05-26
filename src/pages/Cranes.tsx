@@ -14,6 +14,19 @@ import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MaintenanceForm } from '@/components/cranes/forms/MaintenanceForm';
+import { MetricCard } from '@/components/ui/metric-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2, Shield, Truck, TriangleAlert } from 'lucide-react';
 
 
 const Cranes = () => {
@@ -34,6 +47,7 @@ const Cranes = () => {
   const [intakeOpen, setIntakeOpen] = useState<boolean>(!!quickMaintenancePrefill);
   const [intakeCraneId, setIntakeCraneId] = useState<string>('');
   const [maintenanceOpen, setMaintenanceOpen] = useState<boolean>(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'delete' | 'toggle'; crane: Crane } | null>(null);
 
   const handleSort = (field: CraneSortField) => {
     if (sortField === field) {
@@ -96,6 +110,25 @@ const Cranes = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  const craneMetrics = useMemo(() => {
+    const today = new Date();
+    const next30Days = new Date();
+    next30Days.setDate(next30Days.getDate() + 30);
+
+    const dueSoon = cranes.filter((crane) => {
+      const dates = [crane.technicalReviewExpiry, crane.insuranceExpiry, crane.circulationPermitExpiry]
+        .map((value) => parseFromDatabase(value))
+        .filter((date) => !Number.isNaN(date.getTime()));
+      return dates.some((date) => date >= today && date <= next30Days);
+    }).length;
+
+    return {
+      active: cranes.filter((crane) => crane.isActive).length,
+      inactive: cranes.filter((crane) => !crane.isActive).length,
+      dueSoon,
+    };
+  }, [cranes]);
+
   const handleCreate = () => {
     setEditingCrane(undefined);
     setIsDialogOpen(true);
@@ -117,16 +150,11 @@ const Cranes = () => {
   };
 
   const handleDelete = (crane: Crane) => {
-    if (window.confirm(`¿Está seguro de eliminar la grúa "${crane.licensePlate}"?`)) {
-      deleteCrane(crane.id);
-    }
+    setPendingAction({ type: 'delete', crane });
   };
 
   const handleToggleStatus = (crane: Crane) => {
-    const action = crane.isActive ? 'desactivar' : 'activar';
-    if (window.confirm(`¿Está seguro de ${action} la grúa "${crane.licensePlate}"?`)) {
-      toggleCraneStatus(crane.id);
-    }
+    setPendingAction({ type: 'toggle', crane });
   };
 
   const handleViewDetails = (crane: Crane) => {
@@ -147,8 +175,15 @@ const Cranes = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-foreground">Cargando grúas...</div>
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[...Array(4)].map((_, index) => (
+            <Skeleton key={index} className="h-32 w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-[420px] w-full" />
       </div>
     );
   }
@@ -162,15 +197,15 @@ const Cranes = () => {
           setQuickMaintenancePrefill(null);
         }
       }}>
-        <DialogContent>
+        <DialogContent className="border-border/70 bg-popover/95">
           <DialogHeader>
             <DialogTitle>Crear mantenimiento desde Registro Rápido</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm">Seleccione Grúa</label>
+              <label className="text-sm text-foreground">Seleccione Grúa</label>
               <select
-                className="w-full border rounded px-3 py-2 bg-background"
+                className="mt-2 w-full rounded-xl border border-border/70 bg-background/70 px-3 py-2 text-foreground"
                 value={intakeCraneId}
                 onChange={(e) => setIntakeCraneId(e.target.value)}
               >
@@ -180,7 +215,7 @@ const Cranes = () => {
                 ))}
               </select>
             </div>
-            <div className="text-sm">
+            <div className="rounded-xl border border-border/60 bg-background/60 p-4 text-sm">
               <div><span className="text-muted-foreground">Descripción:</span> {quickMaintenancePrefill?.description || '-'}</div>
               <div><span className="text-muted-foreground">Costo:</span> {quickMaintenancePrefill?.amount ?? quickMaintenancePrefill?.cost ?? 0}</div>
               <div><span className="text-muted-foreground">Fecha:</span> {quickMaintenancePrefill?.date || '-'}</div>
@@ -223,6 +258,13 @@ const Cranes = () => {
       )}
       <CranesHeader onNewCrane={handleCreate} />
 
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricCard title="Activas" value={craneMetrics.active} description="Disponibles en el parque" icon={CheckCircle2} tone="success" />
+        <MetricCard title="Inactivas" value={craneMetrics.inactive} description="Fuera de operación actual" icon={Truck} tone="warning" />
+        <MetricCard title="Vigencias Próximas" value={craneMetrics.dueSoon} description="Documentos que vencen en 30 días" icon={TriangleAlert} tone="danger" />
+        <MetricCard title="Total Grúas" value={cranes.length} description="Unidades registradas" icon={Shield} tone="primary" />
+      </div>
+
       <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
       <CranesTable
@@ -239,11 +281,13 @@ const Cranes = () => {
         onSort={handleSort}
       />
 
-      <AppPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {totalPages > 1 && (
+        <AppPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       <CraneDetailsModal
         crane={selectedCrane}
@@ -267,6 +311,38 @@ const Cranes = () => {
           }}
         />
       </Dialog>
+
+      <AlertDialog open={!!pendingAction} onOpenChange={(open) => !open && setPendingAction(null)}>
+        <AlertDialogContent className="border-border/70 bg-popover/95">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingAction?.type === 'delete' ? 'Eliminar grúa' : `${pendingAction?.crane.isActive ? 'Desactivar' : 'Activar'} grúa`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction?.type === 'delete'
+                ? `Se eliminará la grúa "${pendingAction.crane.licensePlate}". Esta acción no se puede deshacer.`
+                : `La grúa "${pendingAction?.crane.licensePlate}" pasará a estado ${pendingAction?.crane.isActive ? 'inactivo' : 'activo'}.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className={pendingAction?.type === 'delete' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+              onClick={() => {
+                if (!pendingAction) return;
+                if (pendingAction.type === 'delete') {
+                  deleteCrane(pendingAction.crane.id);
+                } else {
+                  toggleCraneStatus(pendingAction.crane.id);
+                }
+                setPendingAction(null);
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

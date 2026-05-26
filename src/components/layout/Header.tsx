@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { Menu, User, Settings, Truck, Receipt, ClipboardCheck, FileText, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Menu, User, Settings, Building2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
@@ -22,6 +21,7 @@ export const Header = ({
   setIsMobileMenuOpen
 }: HeaderProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useUser();
   const { settings } = useSettings();
   const { isMobile, isTablet } = useDeviceType();
@@ -29,6 +29,22 @@ export const Header = ({
   const isAdmin = user?.role === 'admin';
   const companyName = settings?.company?.name || 'Gruas 5 Norte';
   const companyLogo = settings?.company?.logo;
+  const routeMeta: Record<string, { title: string; description: string }> = {
+    '/dashboard': { title: 'Dashboard Principal', description: 'Resumen ejecutivo y actividad reciente' },
+    '/services': { title: 'Servicios', description: 'Operaciones y seguimiento diario' },
+    '/costs': { title: 'Costos', description: 'Control operativo y financiero' },
+    '/closures': { title: 'Cierres', description: 'Consolidado de cierre e ingresos' },
+    '/invoices': { title: 'Facturas', description: 'Facturación, vencimientos y cobros' },
+    '/clients': { title: 'Clientes', description: 'Cartera, contactos y actividad comercial' },
+    '/calendar': { title: 'Calendario', description: 'Programación operacional y eventos' },
+    '/reports': { title: 'Reportes', description: 'Análisis y métricas del negocio' },
+    '/settings': { title: 'Configuración', description: 'Preferencias y parámetros del sistema' },
+  };
+  const currentMeta =
+    routeMeta[location.pathname] ?? {
+      title: companyName,
+      description: 'Plataforma de gestión operacional',
+    };
 
   const handleLogout = async () => {
     try {
@@ -59,89 +75,47 @@ export const Header = ({
 
   return (
     <header className={cn(
-      "flex items-center justify-between bg-background border-b tms-border transition-colors duration-300",
-      isMobile ? "h-14 px-3" : isTablet ? "h-15 px-4" : "h-16 px-6"
+      "sticky top-0 z-30 flex items-center justify-between border-b border-border/70 bg-background/85 backdrop-blur-xl transition-colors duration-300",
+      isMobile ? "h-14 px-3" : isTablet ? "h-16 px-4" : "h-16 px-6"
     )}>
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <Button 
           variant="ghost" 
           size={isMobile ? "sm" : "icon"} 
           onClick={() => setIsMobileMenuOpen(true)} 
-          className="lg:hidden text-foreground hover:bg-primary hover:text-primary-foreground"
+          className="lg:hidden text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <Menu className={cn(isMobile ? "size-5" : "size-6")} />
           <span className="sr-only">Abrir menú</span>
         </Button>
 
-        {/* Company branding */}
-        <div className="flex items-center gap-x-2">
+        <div className="flex min-w-0 items-center gap-3">
           {companyLogo && <img src={companyLogo} alt="Logo empresa" className={cn(
-            "object-contain",
+            "rounded-md object-contain ring-1 ring-border/70",
             isMobile ? "size-6" : "size-8"
           )} />}
-          <div className={cn(isMobile ? "hidden" : "block")}>
-            <h1 className={cn(
-              "font-semibold text-foreground",
-              isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
-            )}>{companyName}</h1>
-            <p className="text-xs text-muted-foreground">Sistema de Gestión</p>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-semibold text-foreground">{currentMeta.title}</p>
+              {!isMobile && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <Building2 className="size-3" />
+                  {companyName}
+                </span>
+              )}
+            </div>
+            <p className={cn(
+              "truncate text-xs text-muted-foreground",
+              isMobile && "max-w-[160px]",
+            )}>
+              {isMobile ? currentMeta.title : currentMeta.description}
+            </p>
           </div>
         </div>
-        
-        <div className="hidden lg:flex items-center gap-3">
+
+        <div className="hidden min-w-0 flex-1 items-center justify-center px-6 lg:flex">
           <GlobalSearch />
-          
-          {/* Botones de Acceso Rápido */}
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/services')}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <Truck className="size-4 mr-1.5" />
-              Servicios
-            </Button>
-            
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/costs')}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <Receipt className="size-4 mr-1.5" />
-              Costos
-            </Button>
-            
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/closures')}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <ClipboardCheck className="size-4 mr-1.5" />
-              Cierres
-            </Button>
-            
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/invoices')}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <FileText className="size-4 mr-1.5" />
-              Facturas
-            </Button>
-            <Button 
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/clients')}
-              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
-            >
-              <Users className="size-4 mr-1.5" />
-              Clientes
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -157,15 +131,15 @@ export const Header = ({
             <Button 
               variant="ghost" 
               size={isMobile ? "sm" : "icon"} 
-              className="text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
+              className="rounded-full border border-border/70 bg-card text-foreground hover:bg-accent hover:text-foreground"
             >
               <User className={cn(
-                "text-violet-600",
+                "text-primary",
                 isMobile ? "size-4" : "size-5"
               )} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover border tms-shadow-lg min-w-[200px] z-50">
+          <DropdownMenuContent align="end" className="z-50 min-w-[220px] border border-border/70 bg-popover/95 shadow-lg backdrop-blur">
             <DropdownMenuLabel className="text-foreground font-semibold">
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>

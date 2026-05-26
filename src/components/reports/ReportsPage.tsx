@@ -1,18 +1,14 @@
-import * as React from 'react';
 import { useState, useMemo } from 'react';
 import { useReports } from '@/hooks/useReports';
 import { ReportsHeader } from './shared/ReportsHeader';
-import { ReportsDashboard } from './dashboard/ReportsDashboard';
 import { OperationalReports } from './operational/OperationalReports';
 import { CostAnalysisReports } from './cost-analysis/CostAnalysisReports';
-import { MaintenanceReport } from './MaintenanceReport';
 import { ReportMetricCard } from './shared/ReportMetricCard';
 import { useReportFilters } from '@/hooks/reports/useReportFilters';
 import { useReportActions } from '@/hooks/reports/useReportActions';
 import { useReportCharts } from '@/hooks/reports/useReportCharts';
 import { useCostReportActions } from '@/hooks/reports/useCostReportActions';
 import { useReportsRealtime } from '@/hooks/reports/useReportsRealtime';
-import { ReportFilters } from './shared/ReportFilters';
 import { useClients } from '@/hooks/useClients';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
@@ -21,16 +17,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { SectionCard } from '@/components/ui/section-card';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, toTitleCase } from '@/lib/utils';
 import {
   BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
-  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Wrench, Trophy,
+  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Trophy,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-  DropdownMenuSeparator, DropdownMenuLabel,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -79,11 +76,11 @@ const getPeriodDates = (period: string) => {
 };
 
 const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  scheduled: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
+  completed: 'border-success/30 bg-success/10 text-success',
+  pending: 'border-warning/30 bg-warning/10 text-warning',
+  in_progress: 'border-info/30 bg-info/10 text-info',
+  cancelled: 'border-danger/30 bg-danger/10 text-danger',
+  scheduled: 'border-primary/30 bg-primary/10 text-primary',
 };
 
 const statusLabels: Record<string, string> = {
@@ -95,9 +92,9 @@ const statusLabels: Record<string, string> = {
 };
 
 const rankBadgeColors = [
-  'bg-yellow-500 text-white',
-  'bg-gray-400 text-white',
-  'bg-amber-700 text-white',
+  'bg-warning text-warning-foreground',
+  'bg-muted text-foreground',
+  'bg-primary text-primary-foreground',
 ];
 
 const ReportsPage = () => {
@@ -123,12 +120,7 @@ const ReportsPage = () => {
     return getPeriodDates(selectedPeriod);
   }, [selectedPeriod, customFrom, customTo]);
 
-  const {
-    filters, appliedFilters, serviceReportFilters, costReportFilters,
-    handleDateChange, handleFilterChange, handleServiceReportDateChange,
-    handleServiceReportFilterChange, handleCostReportDateChange,
-    handleCostReportFilterChange, handleUpdate, handleClearFilters,
-  } = useReportFilters();
+  const { appliedFilters } = useReportFilters();
 
   const effectiveFilters = useMemo(() => ({
     ...appliedFilters,
@@ -141,7 +133,7 @@ const ReportsPage = () => {
     companyRut: selectedCompanyRut,
   }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab, selectedCompanyRut]);
 
-  const { metrics, loading, lastUpdate, forceRefresh } = useReports(effectiveFilters);
+  const { metrics, loading, forceRefresh } = useReports(effectiveFilters);
 
   const effectiveServiceFilters = useMemo(() => ({
     dateRange: {
@@ -342,7 +334,7 @@ const ReportsPage = () => {
     switch (activeTab) {
       case 'servicios':
         return (
-          <Card className="bg-card border">
+          <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground">Distribución de Servicios</CardTitle>
             </CardHeader>
@@ -377,7 +369,7 @@ const ReportsPage = () => {
         const maxClientRevenue = m.topClients.length > 0 ? m.topClients[0].revenue : 1;
         const clientList = selectedClientData ? [selectedClientData] : m.topClients;
         return (
-          <Card className="bg-card border">
+          <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Trophy className="size-5 text-yellow-500" />
@@ -430,7 +422,7 @@ const ReportsPage = () => {
       case 'operadores': {
         const maxOperatorServices = m.operatorUtilization.length > 0 ? m.operatorUtilization[0].services : 1;
         return (
-          <Card className="bg-card border">
+          <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Trophy className="size-5 text-yellow-500" />
@@ -480,7 +472,7 @@ const ReportsPage = () => {
       case 'flota': {
         const maxCraneServices = m.craneUtilization.length > 0 ? m.craneUtilization[0].services : 1;
         return (
-          <Card className="bg-card border">
+          <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
             </CardHeader>
@@ -541,7 +533,11 @@ const ReportsPage = () => {
       {/* Header */}
       <ReportsHeader />
 
-      {/* Card Navigation */}
+      <SectionCard
+        flush
+        className="border-border/70 bg-card/80 shadow-sm"
+        contentClassName="space-y-4 p-4"
+      >
       <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -555,8 +551,8 @@ const ReportsPage = () => {
               }}
               className={`flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-lg border text-sm font-medium transition-all duration-200 min-w-0 ${
                 isActive
-                  ? 'bg-violet-600 text-white border-violet-600 shadow-md'
-                  : 'bg-card text-foreground border-border hover:bg-muted/50 hover:border-violet-300'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-background/70 text-foreground border-border/70 hover:bg-muted/50 hover:border-primary/30'
               }`}
             >
               <Icon className="size-4 sm:size-5" />
@@ -569,7 +565,7 @@ const ReportsPage = () => {
       {/* Inline Filter Bar */}
       <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-card border">
+          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-background/70 border-border/70">
             <Calendar className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
@@ -585,7 +581,7 @@ const ReportsPage = () => {
           <>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customFrom && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-background/70 border-border/70 justify-start font-normal w-full sm:w-[150px]", !customFrom && "text-muted-foreground")}>
                   <Calendar className="size-3.5 mr-1.5" />
                   {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                 </Button>
@@ -603,7 +599,7 @@ const ReportsPage = () => {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customTo && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-background/70 border-border/70 justify-start font-normal w-full sm:w-[150px]", !customTo && "text-muted-foreground")}>
                   <Calendar className="size-3.5 mr-1.5" />
                   {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                 </Button>
@@ -625,7 +621,7 @@ const ReportsPage = () => {
         {/* Client selector - only visible on Clientes tab */}
         {(activeTab === 'clientes' || activeTab === 'servicios') && (
           <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
+            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
               <Users className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todos los clientes" />
             </SelectTrigger>
@@ -648,7 +644,7 @@ const ReportsPage = () => {
 
         {/* Company selector */}
         <Select value={selectedCompanyRut} onValueChange={setSelectedCompanyRut}>
-          <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
+          <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
             <Truck className="size-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue placeholder="Todas las empresas" />
           </SelectTrigger>
@@ -681,7 +677,7 @@ const ReportsPage = () => {
         {/* Cost category selector - only visible on Costos tab */}
         {activeTab === 'costos' && (
           <Select value={selectedCostCategoryId} onValueChange={setSelectedCostCategoryId}>
-            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
+            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
               <Receipt className="size-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todas las categorías" />
             </SelectTrigger>
@@ -694,7 +690,7 @@ const ReportsPage = () => {
           </Select>
         )}
 
-        <Badge variant="outline" className="h-9 px-3 text-xs font-normal text-muted-foreground border-border bg-card">
+        <Badge variant="outline" className="h-9 px-3 text-xs font-normal text-muted-foreground border-border/70 bg-background/70">
           {dateLabel}
         </Badge>
 
@@ -704,7 +700,7 @@ const ReportsPage = () => {
             size="sm"
             onClick={forceRefresh}
             disabled={loading}
-            className="h-9 border-input"
+            className="h-9 border-border/70 bg-background/70"
           >
             <RefreshCw className={`size-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
@@ -712,7 +708,7 @@ const ReportsPage = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="h-9 bg-violet-600 hover:bg-violet-700 text-white">
+              <Button size="sm" className="h-9">
                 <Download className="size-3.5 mr-1.5" />
                 Exportar
               </Button>
@@ -723,6 +719,7 @@ const ReportsPage = () => {
           </DropdownMenu>
         </div>
       </div>
+      </SectionCard>
 
       {/* Contextual KPIs */}
       {renderKPIs()}

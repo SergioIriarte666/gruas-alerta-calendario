@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
 import { formatForDisplayShort } from '@/utils/timezoneUtils';
 import { CalendarEvent } from '@/hooks/useCalendar';
@@ -24,7 +23,7 @@ export const WeekView = ({
     <div>
       <div className="grid grid-cols-7 gap-1 mb-4">
         {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-          <div key={day} className="p-3 text-center text-sm font-medium text-gray-400">
+          <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground">
             {day}
           </div>
         ))}
@@ -39,15 +38,15 @@ export const WeekView = ({
             <div
               key={day.toISOString()}
               className={`
-                min-h-32 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
-                ${isDayToday ? 'border-green-500' : ''}
+                min-h-32 rounded-lg border border-border/70 bg-card p-2 cursor-pointer transition-colors
+                ${isSelected ? 'border-primary bg-primary/10' : 'hover:bg-muted/40'}
+                ${isDayToday ? 'border-primary/60' : ''}
               `}
               onClick={() => onDateSelect(day)}
             >
               <div className={`
                 text-sm font-medium mb-2
-                ${isDayToday ? 'text-green-500' : 'text-gray-300'}
+                ${isDayToday ? 'text-primary' : 'text-foreground'}
               `}>
                 {formatForDisplayShort(day)}
               </div>
