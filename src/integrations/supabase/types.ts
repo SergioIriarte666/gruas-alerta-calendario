@@ -5332,6 +5332,54 @@ export type Database = {
           },
         ]
       }
+      whatsapp_settings: {
+        Row: {
+          admin_phone_1: string | null
+          admin_phone_2: string | null
+          created_at: string
+          id: string
+          notify_daily_reminder: boolean
+          notify_document_expiry: boolean
+          notify_invoice_overdue: boolean
+          notify_operator_assigned: boolean
+          notify_payment_pending: boolean
+          notify_service_completed: boolean
+          notify_service_no_operator: boolean
+          notify_service_no_quote: boolean
+          updated_at: string
+        }
+        Insert: {
+          admin_phone_1?: string | null
+          admin_phone_2?: string | null
+          created_at?: string
+          id?: string
+          notify_daily_reminder?: boolean
+          notify_document_expiry?: boolean
+          notify_invoice_overdue?: boolean
+          notify_operator_assigned?: boolean
+          notify_payment_pending?: boolean
+          notify_service_completed?: boolean
+          notify_service_no_operator?: boolean
+          notify_service_no_quote?: boolean
+          updated_at?: string
+        }
+        Update: {
+          admin_phone_1?: string | null
+          admin_phone_2?: string | null
+          created_at?: string
+          id?: string
+          notify_daily_reminder?: boolean
+          notify_document_expiry?: boolean
+          notify_invoice_overdue?: boolean
+          notify_operator_assigned?: boolean
+          notify_payment_pending?: boolean
+          notify_service_completed?: boolean
+          notify_service_no_operator?: boolean
+          notify_service_no_quote?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       orphan_crane_parts_candidates: {
