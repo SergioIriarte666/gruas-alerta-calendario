@@ -81,6 +81,8 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
       excess_amount,
       observations,
       service_types(id, name),
+      invoice_numero_fiscal,
+      invoice_folio,
       client:clients!services_client_id_fkey(id, name, rut),
       third_party_client:clients!services_third_party_client_id_fkey(id, name, rut),
       operators(id, name),
@@ -187,6 +189,17 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
         status: invoice.status,
         value: Number(invoice.total) || 0,
         numeroFiscal: invoice.numero_fiscal
+      };
+    } else if (service.invoice_numero_fiscal || service.invoice_folio) {
+      // Fallback: usar datos denormalizados en services cuando no hay vínculo en invoice_services
+      totalInvoices++;
+      relatedInvoice = {
+        id: '',
+        folio: service.invoice_folio || '-',
+        date: service.service_date,
+        status: service.status === 'invoiced' ? 'sent' : 'pending',
+        value: serviceValue,
+        numeroFiscal: service.invoice_numero_fiscal || undefined,
       };
     }
 
