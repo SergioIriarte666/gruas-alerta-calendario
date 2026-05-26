@@ -1,76 +1,39 @@
+## Problema
 
-# Diagnóstico React Doctor
+En el PDF (y también en la tabla UI) de **Historial Completo del Vehículo**, las columnas **"N° Fiscal"** y **"Factura"** aparecen como `-` / `Sin factura`, aun cuando el servicio sí tiene número fiscal asignado (el modal de Detalle del Servicio muestra `Número Fiscal: 4034`).
 
-**Score actual: 42/100 (Critical)** — 5.047 issues en 644/979 archivos.
+## Causa raíz
 
-```text
-Categoría          Errores  Advertencias  Total
-─────────────────────────────────────────────────
-Architecture          10        ~3407     3417
-Performance            0         ~631      631
-State & Effects       17         ~551      568
-Correctness           25         ~215      240
-Accessibility          6         ~132      138
-```
+`src/hooks/useVehicleFullHistory.ts` resuelve el número fiscal **solo a través del join `invoice_services → invoices.numero_fiscal`**. Si el servicio quedó marcado como facturado pero el vínculo en `invoice_services` no existe (caso muy frecuente: facturación rápida, cierres antiguos, importaciones), el hook no encuentra `relatedInvoice` y la tabla cae al fallback `-` / `Sin factura`.
 
-## Hallazgos críticos (errores reales que rompen comportamiento)
+La tabla `services` ya almacena `invoice_numero_fiscal` (y `invoice_folio`) de forma denormalizada — ese es el dato que usa el `ServiceDetailsModal` y por eso ahí sí se ve `4034`. El hook del historial no lo lee.
 
-1. **Componentes anidados (×25)** — `SortButton` definido dentro de `CommissionTable`, etc. Cada render crea una instancia nueva, destruyendo estado interno y rompiendo memoización. Archivos: `CommissionTable.tsx`, otros 24.
-2. **Efectos sin cleanup (×14)** — `useEffect` con `subscribe(...)` sin `return unsubscribe`. Fugas de listeners/timers. Archivos: `HistoricalSales.tsx:65` y otros 13.
-3. **Mutables en deps (×3)** — `location.pathname`, `ref.current` en arrays de dependencias (no disparan re-render). Archivos: `Costs.tsx:95` y 2 más.
-4. **Fast refresh roto (×10)** — Archivos que exportan componentes + no-componentes (constantes, hooks). Rompe HMR.
-5. **ARIA combobox sin `aria-controls` (×6)** — `SupplierSelector.tsx:88` y otros 5.
+## Solución
 
-## Hallazgos masivos (warnings de mayor impacto)
+Trabajo solo de lectura / presentación, sin tocar lógica de negocio.
 
-- **Tailwind `w-N h-N` → `size-N` (×2740)** — codemod trivial, mejora ~50 puntos potenciales.
-- **`space-x/y-*` en flex/grid (×258)** — reemplazar por `gap-*` (RTL-safe, sin phantom-gaps).
-- **Side-effects en `useEffect` que deberían ser handlers (×149)** — antipatrón documentado en react.dev.
-- **Array index como `key` (×81)** — bugs al reordenar/filtrar.
-- **`exhaustive-deps` (×63)** — refs capturadas en cleanup.
-- **`.map().filter()` doble iteración (×101)** — consolidar a un solo pase.
-- **`await` en `for…of` (×91)** — paralelizar con `Promise.all` donde sean independientes.
-- **Labels sin `htmlFor` (×66)** y **onClick sin onKey* (×19)** — accesibilidad.
+1. **`src/hooks/useVehicleFullHistory.ts`**
+   - Agregar `invoice_numero_fiscal, invoice_folio` al `select` de `services`.
+   - Al construir cada registro:
+     - Si existe `invoice` (vía `invoice_services`) → seguir igual.
+     - Si **no** existe pero el servicio tiene `invoice_numero_fiscal` o `invoice_folio` → construir un `relatedInvoice` "ligero" con los datos denormalizados (`id: null`, `folio: invoice_folio ?? '-'`, `date: service_date`, `status: service.status === 'invoiced' ? 'sent' : 'pending'`, `value: serviceValue`, `numeroFiscal: invoice_numero_fiscal`).
+   - Recalcular `totalInvoices` considerando también estos casos para que la métrica "Facturas" del resumen sea coherente.
 
----
+2. **`src/utils/pdf/vehicleHistoryPdfGenerator.ts`**
+   - No necesita cambios estructurales: al venir `relatedInvoice` poblado, las columnas "N° Fiscal" y "Factura" se rellenan automáticamente.
+   - Pequeño ajuste de la columna "Factura": mostrar `numeroFiscal` y, si no hay, el `folio` interno (en vez de `Pendiente`) para casos donde solo exista folio.
 
-## Plan de remediación (por fases, máximo impacto primero)
+3. **`src/components/vehicles/VehicleFullHistory.tsx`** (UI tabla del modal)
+   - Mismo beneficio automático; verificar que el badge "Sin factura" ya no aparezca cuando hay número fiscal.
 
-### Fase 1 — Codemods masivos seguros (suben el score ~20-30 puntos)
-- Ejecutar reemplazo automatizado `w-N h-N` (mismo N) → `size-N` en todo `src/`. Solo strings de className, regex acotada.
-- Reemplazar `space-x-N` / `space-y-N` por `gap-x-N` / `gap-y-N` en padres flex/grid (revisar caso a caso si el padre realmente es flex/grid; si no, mantener).
-- Verificación: build + revisión visual en módulos críticos (Costos, Servicios, Facturas).
+## Archivos a modificar
 
-### Fase 2 — Bugs correctness (errores reales)
-- Extraer los 25 componentes anidados a scope de módulo o archivos separados (empezando por `CommissionTable`).
-- Añadir cleanup a los 14 `useEffect` con suscripciones/timers sin liberar.
-- Mover `location.pathname` / `ref.current` desde deps al cuerpo del efecto en `Costs.tsx`, `Invoices.tsx`, `PortalServices.tsx`.
-- Convertir los efectos que son "event handlers disfrazados" (priorizar los 20 con más renders).
+- `src/hooks/useVehicleFullHistory.ts`
+- `src/utils/pdf/vehicleHistoryPdfGenerator.ts` (ajuste menor del fallback de texto)
+- `src/components/vehicles/VehicleFullHistory.tsx` (sin cambios funcionales, solo verificación)
 
-### Fase 3 — Fast refresh + a11y
-- Separar exports no-componente de los 10 archivos detectados (mover constantes/hooks a `*.utils.ts` o `*.hooks.ts`).
-- Añadir `aria-controls` a los 6 comboboxes Radix custom.
-- Asociar labels (`htmlFor`) en los 66 formularios señalados.
+## Validación
 
-### Fase 4 — Performance focalizada
-- Reescribir `.map().filter()` repetidos en tablas grandes (Closures, Reports, Commissions) a un solo pase.
-- Paralelizar `await` en loops donde las operaciones sean independientes (auditando uno por uno — algunos son secuenciales intencionalmente, ej. sync de pagos).
-- Reemplazar `key={index}` por id estable en las 81 listas señaladas (priorizar las que permiten reorden/filtro: `EnhancedServicesSelector`, tablas paginadas).
-
-### Fase 5 — Dead code (opcional, omitido en este scan)
-- Reactivar `--dead-code` en una corrida posterior para detectar archivos/exports/dependencias sin uso y ciclos de imports.
-
----
-
-## Detalles técnicos
-
-- Reporte JSON completo guardado en sandbox: `/tmp/react-doctor-d148d7de-...`
-- Comando usado: `npx react-doctor@latest -y --no-dead-code`
-- URL de resultados compartibles: https://www.react.doctor/share?p=vite_react_shadcn_ts&s=42&e=58&w=4989&f=644
-- Recomendado en CI: añadir GitHub Action con `--fail-on error` para no permitir regresiones de los 58 errores actuales.
-
----
-
-## ¿Cómo quieres avanzar?
-
-Cada fase es independiente. Sugiero ejecutar **Fase 1 primero** (codemods Tailwind) porque es bajo riesgo y elimina ~3000 warnings de una sola pasada, dejando visibles los problemas reales. Luego Fase 2 (bugs). ¿Apruebas comenzar por Fase 1, o prefieres priorizar Fase 2 (correctness) primero?
+- Buscar la patente `VGLB-42` en el modal: la fila SRV-6335 debe mostrar `N° Fiscal: 4034` y `Factura: 4034` (o el folio interno) en lugar de `-` / `Sin factura`.
+- Exportar PDF y confirmar las mismas columnas pobladas.
+- El contador "Facturas" del resumen debe pasar de `0` a `1` (o el número correcto).
