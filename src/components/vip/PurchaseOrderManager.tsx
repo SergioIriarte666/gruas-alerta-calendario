@@ -14,10 +14,13 @@ import {
   CheckCircle,
   AlertTriangle,
   Building2,
-  Filter
+  Filter,
+  MessageCircle
 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface PurchaseOrderManagerProps {
   services: Service[];
@@ -302,13 +305,43 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                       </div>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-400 hover:text-blue-300"
-                    >
-                      {service.status === 'purchase_order_pending' ? 'Registrar O.C.' : 'Ver Detalles'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {(service.purchaseOrderNumber || service.purchaseOrder) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+                              body: {
+                                event: 'orden_compra',
+                                data: {
+                                  proveedor: service.client?.name || '',
+                                  monto: getDisplayServiceValue(service).toLocaleString('es-CL') || '0',
+                                  descripcion: `OC ${service.purchaseOrderNumber || service.purchaseOrder} - Folio ${service.folio}`,
+                                },
+                              },
+                            });
+                            if (error) {
+                              toast.error('No se pudo enviar la notificación');
+                            } else {
+                              toast.success('Administradores notificados por WhatsApp');
+                            }
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          Notificar OC
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-400 hover:text-blue-300"
+                      >
+                        {service.status === 'purchase_order_pending' ? 'Registrar O.C.' : 'Ver Detalles'}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -321,7 +321,7 @@ const Closures = () => {
               Selecciona el rango de fechas y un cliente para generar el informe.
             </SheetDescription>
           </SheetHeader>
-          <ClosureReportForm onClose={() => setShowReportSheet(false)} />
+          <ClosureReportForm closures={closures} onClose={() => setShowReportSheet(false)} />
         </SheetContent>
       </Sheet>
 

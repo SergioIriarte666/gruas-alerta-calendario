@@ -41,6 +41,7 @@ import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EnhancedServiceFormProps {
   service?: Service | null;
@@ -595,6 +596,27 @@ export const EnhancedServiceForm = ({
       } else {
         console.log('🔄 Creating new service...');
         result = await createService(finalData);
+
+        if (!finalData.value || finalData.value === 0) {
+          supabase.functions
+            .invoke('send-whatsapp-admin', {
+              body: {
+                event: 'servicio_sin_cotizacion',
+                data: {
+                  folio: result.folio,
+                  clientName: result.client?.name || '',
+                  fechaServicio: new Date(result.serviceDate).toLocaleDateString('es-CL', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }),
+                },
+              },
+            })
+            .then(({ error }) => {
+              if (error) console.warn('WhatsApp admin no enviado:', error);
+            });
+        }
         
         if (selectedServiceType?.name === 'Venta de Productos' && 
             finalData.salesItems?.length > 0) {
@@ -617,6 +639,25 @@ export const EnhancedServiceForm = ({
       }
 
       console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
+
+      const assignedOperator = finalData.operators?.[0];
+      if (assignedOperator?.operatorId && result?.id) {
+        supabase.functions
+          .invoke('send-whatsapp-operator', {
+            body: {
+              operatorId: assignedOperator.operatorId,
+              folio: result.folio,
+              clientName: result.client?.name || '',
+              clientPhone: result.client?.phone || '',
+              serviceDate: result.serviceDate,
+              origin: result.origin,
+              destination: result.destination,
+            },
+          })
+          .then(({ error }) => {
+            if (error) console.warn('WhatsApp operador no enviado:', error);
+          });
+      }
 
       const action = service ? 'actualizado' : 'creado';
       playRetroSuccessSound();

@@ -73,8 +73,10 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
   };
 
   const getNextStatus = (currentStatus: ServiceStatus): ServiceStatus | null => {
-    // Flujo post-servicio: completed -> quoted -> purchase_order_pending -> with_purchase_order -> invoiced
+    // Flujo: pending -> in_progress -> completed -> quoted -> purchase_order_pending -> with_purchase_order -> invoiced
     const transitions: Record<string, ServiceStatus> = {
+      'pending': 'in_progress',
+      'in_progress': 'completed',
       'completed': 'quoted',
       'quoted': 'purchase_order_pending',
       'purchase_order_pending': 'with_purchase_order',
@@ -94,6 +96,8 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
 
   const getTransitionLabel = (currentStatus: ServiceStatus): string => {
     const labels: Record<string, string> = {
+      'pending': 'Iniciar Servicio',
+      'in_progress': 'Completar Servicio',
       'completed': 'Agregar Cotización',
       'quoted': 'Solicitar O.C.',
       'purchase_order_pending': 'Confirmar O.C.',
@@ -128,6 +132,30 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       if (error) throw error;
       
       toast.success(`Servicio actualizado a: ${getStatusConfig(nextStatus).label}`);
+
+      if (service.status === 'in_progress' && nextStatus === 'completed') {
+        supabase.functions
+          .invoke('send-whatsapp-admin', {
+            body: {
+              event: 'servicio_completado',
+              data: {
+                folio: service.folio,
+                operatorName: service.operator?.name || 'Sin operador',
+                clientName: service.client?.name || '',
+                fechaCompletado: new Date().toLocaleDateString('es-CL', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                }),
+              },
+            },
+          })
+          .then(({ error }) => {
+            if (error) console.warn('WhatsApp admin no enviado:', error);
+          });
+      }
+
       onUpdate();
     } catch (error) {
       console.error('Error updating service status:', error);
