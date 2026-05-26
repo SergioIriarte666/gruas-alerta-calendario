@@ -1,39 +1,44 @@
 ## Problema
 
-En el PDF (y también en la tabla UI) de **Historial Completo del Vehículo**, las columnas **"N° Fiscal"** y **"Factura"** aparecen como `-` / `Sin factura`, aun cuando el servicio sí tiene número fiscal asignado (el modal de Detalle del Servicio muestra `Número Fiscal: 4034`).
+En la pestaña "Servicios" del modal de facturas algunas facturas muestran "No hay servicios asociados" aunque sí tengan cierres asociados (ej. FACT-4235 → CIE-275). La causa es que la tabla `invoice_services` está vacía para esos registros, mientras que `invoice_closures` sí tiene el vínculo al cierre y `closure_services` contiene los servicios del cierre.
 
-## Causa raíz
+Diagnóstico en BD:
+- 433 facturas en total
+- 141 facturas sin filas en `invoice_services`
+- **140 de esas 141** tienen al menos un cierre en `invoice_closures` → se pueden reconstruir automáticamente.
 
-`src/hooks/useVehicleFullHistory.ts` resuelve el número fiscal **solo a través del join `invoice_services → invoices.numero_fiscal`**. Si el servicio quedó marcado como facturado pero el vínculo en `invoice_services` no existe (caso muy frecuente: facturación rápida, cierres antiguos, importaciones), el hook no encuentra `relatedInvoice` y la tabla cae al fallback `-` / `Sin factura`.
+## Solución (un único migration SQL idempotente)
 
-La tabla `services` ya almacena `invoice_numero_fiscal` (y `invoice_folio`) de forma denormalizada — ese es el dato que usa el `ServiceDetailsModal` y por eso ahí sí se ve `4034`. El hook del historial no lo lee.
+Recorrer la cadena `invoices → invoice_closures → closure_services → services` e insertar en `invoice_services` los pares `(invoice_id, service_id)` faltantes. Sin tocar nada más (no se modifican estados de facturas, servicios ni cierres).
 
-## Solución
+```sql
+INSERT INTO public.invoice_services (invoice_id, service_id)
+SELECT DISTINCT ic.invoice_id, cs.service_id
+FROM public.invoice_closures ic
+JOIN public.closure_services cs ON cs.closure_id = ic.closure_id
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.invoice_services isv
+   WHERE isv.invoice_id = ic.invoice_id
+     AND isv.service_id = cs.service_id
+);
+```
 
-Trabajo solo de lectura / presentación, sin tocar lógica de negocio.
+### Cobertura esperada
+- Repuebla las 140 facturas que tienen cierre pero no servicios vinculados.
+- Queda 1 factura sin cierre y sin servicios — esa no se puede recuperar automáticamente (requiere vinculación manual desde la UI).
 
-1. **`src/hooks/useVehicleFullHistory.ts`**
-   - Agregar `invoice_numero_fiscal, invoice_folio` al `select` de `services`.
-   - Al construir cada registro:
-     - Si existe `invoice` (vía `invoice_services`) → seguir igual.
-     - Si **no** existe pero el servicio tiene `invoice_numero_fiscal` o `invoice_folio` → construir un `relatedInvoice` "ligero" con los datos denormalizados (`id: null`, `folio: invoice_folio ?? '-'`, `date: service_date`, `status: service.status === 'invoiced' ? 'sent' : 'pending'`, `value: serviceValue`, `numeroFiscal: invoice_numero_fiscal`).
-   - Recalcular `totalInvoices` considerando también estos casos para que la métrica "Facturas" del resumen sea coherente.
+### Lo que NO hace (intencional)
+- No modifica `services.status`, `services.invoice_folio` ni `services.invoice_numero_fiscal`.
+- No crea ni borra cierres ni facturas.
+- No afecta facturas que ya tengan `invoice_services` poblado (los `NOT EXISTS` lo evitan).
+- Es seguro re-ejecutarla.
 
-2. **`src/utils/pdf/vehicleHistoryPdfGenerator.ts`**
-   - No necesita cambios estructurales: al venir `relatedInvoice` poblado, las columnas "N° Fiscal" y "Factura" se rellenan automáticamente.
-   - Pequeño ajuste de la columna "Factura": mostrar `numeroFiscal` y, si no hay, el `folio` interno (en vez de `Pendiente`) para casos donde solo exista folio.
+### Verificación post-migración
+Después de correrla, consultaremos:
+```sql
+SELECT COUNT(*) FROM invoices i
+WHERE NOT EXISTS (SELECT 1 FROM invoice_services s WHERE s.invoice_id = i.id);
+```
+Debería bajar de 141 a 1.
 
-3. **`src/components/vehicles/VehicleFullHistory.tsx`** (UI tabla del modal)
-   - Mismo beneficio automático; verificar que el badge "Sin factura" ya no aparezca cuando hay número fiscal.
-
-## Archivos a modificar
-
-- `src/hooks/useVehicleFullHistory.ts`
-- `src/utils/pdf/vehicleHistoryPdfGenerator.ts` (ajuste menor del fallback de texto)
-- `src/components/vehicles/VehicleFullHistory.tsx` (sin cambios funcionales, solo verificación)
-
-## Validación
-
-- Buscar la patente `VGLB-42` en el modal: la fila SRV-6335 debe mostrar `N° Fiscal: 4034` y `Factura: 4034` (o el folio interno) en lugar de `-` / `Sin factura`.
-- Exportar PDF y confirmar las mismas columnas pobladas.
-- El contador "Facturas" del resumen debe pasar de `0` a `1` (o el número correcto).
+¿Aplico la migración?
