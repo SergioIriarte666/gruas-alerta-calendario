@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Eye, Edit, Trash2, Truck, Check, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Truck, Check, ChevronUp, ChevronDown, MessageCircle } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -12,6 +12,8 @@ import { ServicesMobileView } from './ServicesMobileView';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ServicesTableProps {
   services: Service[];
@@ -275,6 +277,37 @@ export const ServicesTable = ({
                           >
                             <Eye className="size-4" />
                           </Button>
+
+                          {(service.purchaseOrderNumber || service.purchaseOrder) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
+                              onClick={async () => {
+                                const oc = service.purchaseOrderNumber || service.purchaseOrder;
+                                const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+                                  body: {
+                                    event: 'orden_compra',
+                                    data: {
+                                      proveedor: service.client?.name || '',
+                                      monto: getDisplayServiceValue(service).toLocaleString('es-CL') || '0',
+                                      descripcion: `OC ${oc} - Folio ${service.folio}`,
+                                    },
+                                  },
+                                });
+
+                                if (error) {
+                                  console.warn('WhatsApp admin no enviado:', error);
+                                  toast.error('No se pudo enviar la notificación');
+                                } else {
+                                  toast.success('Administradores notificados por WhatsApp');
+                                }
+                              }}
+                              title="Notificar O.C. por WhatsApp"
+                            >
+                              <MessageCircle className="size-4" />
+                            </Button>
+                          )}
                           
                           {onEdit && (
                             <Button 

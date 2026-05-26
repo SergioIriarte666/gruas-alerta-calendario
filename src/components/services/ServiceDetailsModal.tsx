@@ -22,7 +22,8 @@ import {
   Download,
   Timer,
   Gauge,
-  Copy
+  Copy,
+  MessageCircle
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
@@ -37,6 +38,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ServiceDetailsModalProps {
   service: Service | null;
@@ -246,6 +248,30 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     generatePDF(serviceData, totalCosts, totalCommissions, netProfit);
   };
 
+  const handleNotifyPurchaseOrder = async () => {
+    const oc = serviceData.purchaseOrderNumber || serviceData.purchaseOrder;
+    if (!oc) return;
+
+    const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+      body: {
+        event: 'orden_compra',
+        data: {
+          proveedor: serviceData.client?.name || '',
+          monto: displayServiceValue.toLocaleString('es-CL') || '0',
+          descripcion: `OC ${oc} - Folio ${serviceData.folio}`,
+        },
+      },
+    });
+
+    if (error) {
+      console.warn('WhatsApp admin no enviado:', error);
+      toast.error('No se pudo enviar la notificación');
+      return;
+    }
+
+    toast.success('Administradores notificados por WhatsApp');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex h-[90vh] max-w-4xl flex-col border-border/70 bg-card p-0">
@@ -263,6 +289,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               </DialogTitle>
             </div>
             <div className="flex items-center gap-2">
+              {(serviceData.purchaseOrderNumber || serviceData.purchaseOrder) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNotifyPurchaseOrder}
+                  className="flex items-center gap-2"
+                >
+                  <MessageCircle className="size-4" />
+                  Notificar OC
+                </Button>
+              )}
               {onDuplicate && (
                 <Button
                   variant="secondary"
