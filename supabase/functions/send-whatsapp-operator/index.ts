@@ -27,6 +27,24 @@ Deno.serve(async (req: Request) => {
       return withHeaders(authContext.response, corsHeaders);
     }
 
+    // Respect notify_operator_assigned flag
+    const { data: waSettings } = await authContext.supabaseAdmin
+      .from("whatsapp_settings")
+      .select("notify_operator_assigned")
+      .limit(1)
+      .maybeSingle();
+
+    if (waSettings && (waSettings as any).notify_operator_assigned === false) {
+      return withHeaders(
+        jsonResponse({
+          success: true,
+          skipped: true,
+          reason: "Notificación de operador desactivada en configuración",
+        }),
+        corsHeaders,
+      );
+    }
+
     const body: OperatorWhatsAppRequest = await req.json();
     const {
       operatorId,
