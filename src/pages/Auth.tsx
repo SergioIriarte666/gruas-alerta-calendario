@@ -241,7 +241,7 @@ const Auth = () => {
             <Sparkles className="mr-1 size-3.5" />
             Acceso seguro
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Gruas Alerta Calendario</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">Towing Manager Software</h1>
           <p className="text-sm text-white/65">Accede a la operación, clientes y facturación desde una interfaz unificada.</p>
         </div>
 
