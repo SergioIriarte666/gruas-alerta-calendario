@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
-import { notifyAdmins } from "../_shared/whatsapp.ts";
+import { notifyAdmins, sendWhatsAppTemplate, normalizeChileanPhone } from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +9,8 @@ const corsHeaders = {
 type AdminWhatsAppRequest = {
   event: string;
   data: Record<string, unknown>;
+  testMode?: boolean;
+  testPhone?: string;
 };
 
 const templates: Record<string, { name: string; params: (d: any) => string[] }> = {
@@ -52,6 +54,8 @@ Deno.serve(async (req: Request) => {
     const body: AdminWhatsAppRequest = await req.json();
     const event = body?.event;
     const data = body?.data;
+    const testMode = body?.testMode === true;
+    const testPhone = body?.testPhone;
 
     if (!event || typeof event !== "string") {
       return withHeaders(jsonResponse({ error: "event es requerido" }, 400), corsHeaders);
@@ -66,12 +70,51 @@ Deno.serve(async (req: Request) => {
     }
 
     const parameters = template.params(data);
-    await notifyAdmins(template.name, parameters);
 
-    const notified = [
-      Deno.env.get("ADMIN_WHATSAPP_1"),
-      Deno.env.get("ADMIN_WHATSAPP_2"),
-    ].filter(Boolean).length;
+    // Read WhatsApp settings from DB
+    const { data: waSettings } = await authContext.supabaseAdmin
+      .from("whatsapp_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    // Map event -> setting flag (manual buttons like orden_compra / cierre_mensual always send)
+    const eventToSettingKey: Record<string, string> = {
+      servicio_completado: "notify_service_completed",
+      documento_vencimiento: "notify_document_expiry",
+      pago_pendiente: "notify_payment_pending",
+      servicio_sin_cotizacion: "notify_service_no_quote",
+    };
+    const settingKey = eventToSettingKey[event];
+    if (!testMode && settingKey && waSettings && (waSettings as any)[settingKey] === false) {
+      return withHeaders(
+        jsonResponse({ success: true, skipped: true, reason: "Notificación desactivada en configuración" }),
+        corsHeaders,
+      );
+    }
+
+    let notified = 0;
+    if (testMode && testPhone) {
+      await sendWhatsAppTemplate(normalizeChileanPhone(testPhone), template.name, parameters);
+      notified = 1;
+    } else {
+      const numbers = [
+        (waSettings as any)?.admin_phone_1 || Deno.env.get("ADMIN_WHATSAPP_1"),
+        (waSettings as any)?.admin_phone_2 || Deno.env.get("ADMIN_WHATSAPP_2"),
+      ].filter(Boolean) as string[];
+
+      if (numbers.length === 0) {
+        return withHeaders(
+          jsonResponse({ error: "No hay números de administrador configurados" }, 422),
+          corsHeaders,
+        );
+      }
+
+      await Promise.all(
+        numbers.map((n) => sendWhatsAppTemplate(normalizeChileanPhone(n), template.name, parameters)),
+      );
+      notified = numbers.length;
+    }
 
     return withHeaders(
       jsonResponse({
