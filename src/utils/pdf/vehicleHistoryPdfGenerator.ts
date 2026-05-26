@@ -219,7 +219,7 @@ export const generateVehicleHistoryPDF = async (
       // Construir columna de factura - solo número fiscal
       let factura = 'Sin factura';
       if (service.relatedInvoice) {
-        factura = service.relatedInvoice.numeroFiscal || 'Pendiente';
+        factura = service.relatedInvoice.numeroFiscal || service.relatedInvoice.folio || 'Pendiente';
       }
       
       return [
