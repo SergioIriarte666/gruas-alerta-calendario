@@ -39,6 +39,7 @@ import { EditHistoricalInvoiceModal } from './historical/EditHistoricalInvoiceMo
 import { BatchEditHistoricalInvoicesModal } from './historical/BatchEditHistoricalInvoicesModal';
 import { HistoricalSalesGroupedList } from './historical/HistoricalSalesGroupedList';
 import { HistoricalSalesPipelineView } from './historical/HistoricalSalesPipelineView';
+import { RecentImportLogsCard } from './historical/RecentImportLogsCard';
 import { LayoutList, Users, LayoutGrid } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -299,10 +300,19 @@ export const HistoricalSales = () => {
             Gestiona y analiza el registro histórico de facturación
           </p>
         </div>
-        <Button onClick={() => setImportHistoryOpen(true)}>
-          <Plus className="mr-2 size-4" />
-          Importar Histórico
-        </Button>
+        <div className="w-full sm:w-auto space-y-3">
+          <RecentImportLogsCard
+            importType="sale"
+            accentClassName="text-violet-600"
+            title="Ultimas importaciones"
+          />
+          <div className="flex justify-start sm:justify-end">
+            <Button onClick={() => setImportHistoryOpen(true)} className="bg-violet-600 hover:bg-violet-700">
+              <Plus className="mr-2 size-4" />
+              Importar Histórico
+            </Button>
+          </div>
+        </div>
       </div>
 
       <HistoricalSalesStats invoices={filteredAndSortedInvoices} />

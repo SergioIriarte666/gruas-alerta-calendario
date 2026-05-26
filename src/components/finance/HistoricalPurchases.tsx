@@ -33,6 +33,7 @@ import PurchaseHistoryImport from './historical/PurchaseHistoryImport';
 import { HistoricalPurchasesPipelineView } from './historical/HistoricalPurchasesPipelineView';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { RecentImportLogsCard } from './historical/RecentImportLogsCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -327,7 +328,13 @@ export const HistoricalPurchases = () => {
             Gestiona y analiza el registro histórico de compras
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="w-full sm:w-auto space-y-3">
+            <RecentImportLogsCard
+              importType="purchase"
+              accentClassName="text-emerald-600"
+              title="Ultimas importaciones"
+            />
+        <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
@@ -347,7 +354,7 @@ export const HistoricalPurchases = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button onClick={() => setIsImportOpen(true)}>
+            <Button onClick={() => setIsImportOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
               <Plus className="mr-2 size-4" />
               Importar Histórico
             </Button>
@@ -355,6 +362,7 @@ export const HistoricalPurchases = () => {
               <Plus className="mr-2 size-4" />
               Nueva Factura
             </Button>
+        </div>
         </div>
       </div>
 

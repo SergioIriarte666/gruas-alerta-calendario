@@ -1,16 +1,15 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, Trash2, ArrowRight } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, RotateCw, FileSpreadsheet, CalendarRange } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { useClients } from '@/hooks/useClients';
@@ -19,6 +18,12 @@ import { stringSimilarity, toTitleCase } from '@/lib/utils';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useImportMappings, type ImportMappingResolution } from '@/hooks/useImportMappings';
+import { useImportHistoryLog, type ImportHistoryLogEntry } from '@/hooks/useImportHistoryLog';
 import {
   parseCSVFile,
   parseXLSXFile,
@@ -38,8 +43,20 @@ interface InvoiceHistoryImportProps {
 
 type Step = 'upload' | 'preview' | 'importing' | 'done';
 
+type ResolvedUnmatchedClient = UnmatchedClient & {
+  autoResolvedByMapping?: boolean;
+  mappingSourceResolution?: ImportMappingResolution;
+};
+
 const formatCLP = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+
+const formatDate = (value?: string | null) => {
+  if (!value) return '-';
+  const [year, month, day] = value.slice(0, 10).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+};
 
 const normalizeRut = (rut: string): string =>
   rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
@@ -67,12 +84,33 @@ const formatClientWithDepartment = (client: Client): string => {
   return `${name} (${client.rut})`;
 };
 
+const sortUnmatchedClients = (items: ResolvedUnmatchedClient[]) =>
+  [...items].sort((a, b) => b.invoiceCount - a.invoiceCount || a.razonSocial.localeCompare(b.razonSocial, 'es'));
+
+const getPreviewDateRange = (preview: ImportPreview | null) => {
+  if (!preview) {
+    return { start: null as string | null, end: null as string | null };
+  }
+
+  const allDates = [...preview.matched, ...preview.unmatched, ...preview.duplicates]
+    .map((invoice) => invoice.issueDate?.slice(0, 10))
+    .filter(Boolean)
+    .sort();
+
+  return {
+    start: allDates[0] ?? null,
+    end: allDates[allDates.length - 1] ?? null,
+  };
+};
+
 const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { clients, createClient } = useClients();
+  const { getMappings, saveMapping } = useImportMappings('sale');
+  const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('sale', 5);
   const [step, setStep] = useState<Step>('upload');
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [unmatchedClients, setUnmatchedClients] = useState<UnmatchedClient[]>([]);
+  const [unmatchedClients, setUnmatchedClients] = useState<ResolvedUnmatchedClient[]>([]);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -90,6 +128,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     address: string;
     email: string;
   }>({ name: '', address: '', email: '' });
+  const [instructionsOpen, setInstructionsOpen] = useState(true);
+  const [overlappingImportLog, setOverlappingImportLog] = useState<ImportHistoryLogEntry | null>(null);
 
   const resetState = () => {
     setStep('upload');
@@ -104,6 +144,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setProgressCurrent(0);
     setProgressTotal(0);
     setProgressStage('');
+    setInstructionsOpen(importLogs.length === 0);
+    setOverlappingImportLog(null);
   };
 
   // Initialize selection when preview changes
@@ -112,9 +154,15 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       const allKeys = new Set<string>();
       preview.matched.forEach((inv, i) => allKeys.add(`matched-${inv.folio}-${i}`));
       preview.unmatched.forEach((inv, i) => allKeys.add(`unmatched-${inv.folio}-${i}`));
+      preview.duplicates.forEach((inv, i) => allKeys.add(`duplicates-${inv.folio}-${i}`));
       setSelectedInvoices(allKeys);
     }
   }, [preview]);
+
+  useEffect(() => {
+    if (!open) return;
+    setInstructionsOpen(importLogs.length === 0);
+  }, [open, importLogs.length]);
 
   // Compute suggestions when unmatched clients are set
   useEffect(() => {
@@ -137,8 +185,17 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               }
             }
             
-            // Threshold for suggestion (e.g., 0.6)
+            // Auto-preselect strong suggestions to reduce clicks.
             if (bestMatch.score > 0.6) {
+              if (bestMatch.score > 0.75) {
+                return {
+                  ...uc,
+                  suggestion: bestMatch,
+                  resolution: 'assign',
+                  assignedClientId: bestMatch.clientId,
+                };
+              }
+
               return { ...uc, suggestion: bestMatch };
             }
             
@@ -148,6 +205,117 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       }
     }
   }, [unmatchedClients.length, clients.length]);
+
+  useEffect(() => {
+    if (activeTab !== 'unmatched') return;
+    if (unmatchedClients.length === 0 || unmatchedClients.length >= 10) return;
+    if (selectedUnmatchedClientIndices.size > 0) return;
+
+    const allIndices = new Set<number>();
+    unmatchedClients.forEach((_, index) => allIndices.add(index));
+    setSelectedUnmatchedClientIndices(allIndices);
+  }, [activeTab, unmatchedClients, selectedUnmatchedClientIndices.size]);
+
+  const persistImportArtifacts = useCallback(
+    async (imported: number, errors: number, currentPreview: ImportPreview, resolvedClients: ResolvedUnmatchedClient[]) => {
+      const dateRange = getPreviewDateRange(currentPreview);
+      const skippedCount = Math.max(0, currentPreview.totalInvoices - imported - errors);
+      const status =
+        imported === 0 ? 'failed' : errors === 0 ? 'success' : 'partial';
+
+      try {
+        await saveLog({
+          importType: 'sale',
+          fileName,
+          importedCount: imported,
+          errorCount: errors,
+          skippedCount,
+          dateRangeStart: dateRange.start,
+          dateRangeEnd: dateRange.end,
+          status,
+        });
+      } catch (logError) {
+        console.error('Error saving import history log:', logError);
+      }
+
+      if (imported <= 0) return;
+
+      try {
+        await Promise.all(
+          resolvedClients
+            .filter((client) => client.resolution !== 'pending')
+            .map(async (client) => {
+              const assignedClient = client.assignedClientId
+                ? clients.find((existingClient) => existingClient.id === client.assignedClientId)
+                : null;
+
+              await saveMapping(
+                'sale',
+                client.rut,
+                client.razonSocial,
+                client.resolution as ImportMappingResolution,
+                client.resolution === 'assign' ? client.assignedClientId ?? null : null,
+                client.resolution === 'assign'
+                  ? assignedClient?.name ?? client.suggestion?.name ?? null
+                  : client.resolution === 'create'
+                    ? client.razonSocial
+                    : null
+              );
+            })
+        );
+      } catch (mappingError) {
+        console.error('Error saving import mappings:', mappingError);
+      }
+    },
+    [clients, fileName, saveLog, saveMapping]
+  );
+
+  const resolveClientFromMapping = useCallback(
+    (
+      client: UnmatchedClient,
+      mapping: Awaited<ReturnType<typeof getMappings>>[number] | undefined
+    ): ResolvedUnmatchedClient => {
+      if (!mapping) return client;
+
+      if (mapping.resolution === 'ignore') {
+        return {
+          ...client,
+          resolution: 'ignore',
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      if (mapping.resolution === 'assign' && mapping.mapped_entity_id) {
+        return {
+          ...client,
+          resolution: 'assign',
+          assignedClientId: mapping.mapped_entity_id,
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      const existingClient = clients.find((currentClient) => rutMatches(currentClient.rut, client.rut));
+      if (existingClient) {
+        return {
+          ...client,
+          resolution: 'assign',
+          assignedClientId: existingClient.id,
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      return {
+        ...client,
+        resolution: 'create',
+        autoResolvedByMapping: true,
+        mappingSourceResolution: mapping.resolution,
+      };
+    },
+    [clients, getMappings]
+  );
 
   const toggleUnmatchedClientSelection = (index: number) => {
     setSelectedUnmatchedClientIndices(prev => {
@@ -175,13 +343,35 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     }
 
     setUnmatchedClients(prev => {
-      return prev.map((uc, i) => {
+      const nextClients = prev.map((uc, i) => {
         if (selectedUnmatchedClientIndices.has(i)) {
-          return { ...uc, resolution: action, assignedClientId };
+          return { ...uc, resolution: action, assignedClientId, autoResolvedByMapping: false };
         }
         return uc;
       });
+
+      if (preview) {
+        const keysToUpdate: string[] = [];
+        preview.unmatched.forEach((inv, index) => {
+          const ownerIndex = nextClients.findIndex((client) => rutMatches(client.rut, inv.rut));
+          if (selectedUnmatchedClientIndices.has(ownerIndex)) {
+            keysToUpdate.push(`unmatched-${inv.folio}-${index}`);
+          }
+        });
+
+        setSelectedInvoices((prevSelected) => {
+          const nextSelected = new Set(prevSelected);
+          keysToUpdate.forEach((key) => {
+            if (action === 'ignore') nextSelected.delete(key);
+            else nextSelected.add(key);
+          });
+          return nextSelected;
+        });
+      }
+
+      return nextClients;
     });
+
     // Clear selection after action
     setSelectedUnmatchedClientIndices(new Set());
     toast.success(`Acción aplicada a ${selectedUnmatchedClientIndices.size} clientes`);
@@ -233,7 +423,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         razonSocial: editClientForm.name,
         address: editClientForm.address,
         email: editClientForm.email,
-        resolution: 'create' // Auto-set to create after edit
+        resolution: 'create',
+        autoResolvedByMapping: false,
       };
       return updated;
     });
@@ -275,13 +466,31 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       );
 
       const result = processInvoiceRows(rows, clients, existingNumeros, existingFolios);
+      const savedMappings = await getMappings('sale');
+      const mappingByRut = new Map(
+        savedMappings.map((mapping) => [normalizeRut(mapping.source_rut), mapping])
+      );
+      const resolvedUnmatchedClients = sortUnmatchedClients(
+        result.unmatchedClients.map((client) =>
+          resolveClientFromMapping(client, mappingByRut.get(normalizeRut(client.rut)))
+        )
+      );
+      const previewDateRange = getPreviewDateRange(result);
+      const overlappingLogs =
+        previewDateRange.start && previewDateRange.end
+          ? await getOverlappingLogs('sale', previewDateRange.start, previewDateRange.end)
+          : [];
+
       setPreview(result);
-      setUnmatchedClients(result.unmatchedClients);
+      setUnmatchedClients(resolvedUnmatchedClients);
+      setOverlappingImportLog(overlappingLogs[0] ?? null);
       setStep('preview');
       
-      // Auto-switch to unmatched tab if there are unmatched clients
-      if (result.unmatchedClients.length > 0) {
+      const hasPendingClients = resolvedUnmatchedClients.some((client) => client.resolution === 'pending');
+      if (hasPendingClients) {
         setActiveTab('unmatched');
+      } else {
+        setActiveTab('matched');
       }
 
       const parts = [`${result.facturaCount} facturas`];
@@ -294,7 +503,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       console.error('Error parsing file:', error);
       toast.error('Error al procesar archivo', { description: 'Verifique el formato del archivo.' });
     }
-  }, [clients]);
+  }, [clients, getMappings, getOverlappingLogs, resolveClientFromMapping]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -309,9 +518,35 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const handleClientResolution = (index: number, resolution: 'create' | 'assign' | 'ignore', assignedClientId?: string) => {
     setUnmatchedClients(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], resolution, assignedClientId };
+      updated[index] = {
+        ...updated[index],
+        resolution,
+        assignedClientId,
+        autoResolvedByMapping: false,
+      };
       return updated;
     });
+
+    if (preview) {
+      const targetClient = unmatchedClients[index];
+      if (!targetClient) return;
+
+      const keysToUpdate: string[] = [];
+      preview.unmatched.forEach((invoice, invoiceIndex) => {
+        if (rutMatches(targetClient.rut, invoice.rut)) {
+          keysToUpdate.push(`unmatched-${invoice.folio}-${invoiceIndex}`);
+        }
+      });
+
+      setSelectedInvoices((prevSelected) => {
+        const nextSelected = new Set(prevSelected);
+        keysToUpdate.forEach((key) => {
+          if (resolution === 'ignore') nextSelected.delete(key);
+          else nextSelected.add(key);
+        });
+        return nextSelected;
+      });
+    }
   };
 
   const toggleInvoice = (key: string) => {
@@ -340,6 +575,12 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       const next = new Set(prev);
       preview?.unmatched.forEach((inv, i) => {
         const key = `unmatched-${inv.folio}-${i}`;
+        const client = unmatchedClients.find((item) => rutMatches(item.rut, inv.rut));
+        const isResolvable = client && client.resolution !== 'pending' && client.resolution !== 'ignore';
+        if (!isResolvable) {
+          next.delete(key);
+          return;
+        }
         if (checked) next.add(key);
         else next.delete(key);
       });
@@ -579,6 +820,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               description: "Verifique que las fechas y clientes sean válidos."
           });
           setLastError("No se pudieron preparar facturas. Verifique fechas y clientes.");
+          await persistImportArtifacts(0, errors, preview, unmatchedClients);
           setImportResult({ imported: 0, errors });
           setStep('done');
           return;
@@ -628,6 +870,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         updateProgress(batch.length);
       }
 
+      await persistImportArtifacts(imported, errors, preview, unmatchedClients);
       setImportResult({ imported, errors });
       setStep('done');
 
@@ -651,6 +894,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       toast.error('Error durante la importación', {
         description: msg,
       });
+      await persistImportArtifacts(imported, errors || totalItems, preview, unmatchedClients);
       setImportResult({ imported: imported, errors: errors || totalItems });
       setStep('done');
     } finally {
@@ -663,6 +907,11 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   };
 
   const totalToImport = getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount();
+  const pendingUnmatchedClients = useMemo(
+    () => unmatchedClients.filter((client) => client.resolution === 'pending'),
+    [unmatchedClients]
+  );
+  const allUnmatchedPending = unmatchedClients.length > 0 && pendingUnmatchedClients.length === unmatchedClients.length;
 
   return (
     <>
@@ -676,28 +925,97 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         </DialogHeader>
 
         {step === 'upload' && (
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
-              ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-medium text-foreground">
-              {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Archivo de reporte de ventas del sistema de facturación
-            </p>
-            <Button variant="outline" className="mt-4">
-              Seleccionar archivo
-            </Button>
+          <div className="space-y-4">
+            <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
+              <Card className="border-violet-200/70 bg-violet-50/40">
+                <CardHeader className="pb-3">
+                  <CollapsibleTrigger asChild>
+                    <button type="button" className="flex w-full items-center justify-between text-left">
+                      <div>
+                        <CardTitle className="text-base text-violet-700">¿Cómo obtener este archivo?</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Descarga el libro desde Facturacion.cl antes de importarlo.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="border-violet-200 text-violet-700">
+                        {instructionsOpen ? 'Ocultar' : 'Mostrar'}
+                      </Badge>
+                    </button>
+                  </CollapsibleTrigger>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent className="space-y-3 pt-0">
+                    {[
+                      'Ingresa a Facturacion.cl y abre Ventas > Libro de Ventas.',
+                      'Selecciona el rango de fechas que quieres importar y haz clic en Buscar.',
+                      'Usa Exportar y descarga el archivo en formato Excel (.xlsx) o CSV.',
+                    ].map((stepText, index) => (
+                      <div key={stepText} className="flex items-start gap-3 rounded-lg border border-violet-200/60 bg-background/90 p-3">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-semibold text-white">
+                          {index + 1}
+                        </div>
+                        <p className="text-sm text-foreground">{stepText}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
+                ${isDragActive ? 'border-violet-600 bg-violet-600/5' : 'border-muted-foreground/30 hover:border-violet-600/50'}`}
+            >
+              <input {...getInputProps()} />
+              <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-lg font-medium text-foreground">
+                {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Reporte exportado manualmente desde Facturacion.cl
+              </p>
+              <Button variant="outline" className="mt-4">
+                Seleccionar archivo
+              </Button>
+            </div>
+
+            <Card>
+              <CardContent className="grid gap-3 p-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <FileSpreadsheet className="size-4 text-violet-600" />
+                    Formatos aceptados
+                  </div>
+                  <p className="text-sm text-muted-foreground">`.csv`, `.xlsx`, `.xls`</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CalendarRange className="size-4 text-violet-600" />
+                    Columnas esperadas
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Folio, Fecha, RUT, Razón Social, Neto, IVA, Total, Pagado
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {step === 'preview' && preview && (
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-none px-1 py-4 gap-y-4">
+              {overlappingImportLog && (
+                <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                  <AlertTriangle className="size-4" />
+                  <AlertTitle>Posible período ya importado</AlertTitle>
+                  <AlertDescription>
+                    Ya importaste documentos del período {formatDate(overlappingImportLog.date_range_start)} - {formatDate(overlappingImportLog.date_range_end)} el {formatDate(overlappingImportLog.created_at)} ({overlappingImportLog.file_name}). Es probable que este archivo contenga duplicados. Revisa la pestaña "Duplicados" antes de importar.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-2xl font-bold text-foreground">{preview.totalInvoices}</p>
@@ -723,6 +1041,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   {preview.skippedNonFactura > 0 && (
                     <> — {preview.skippedNonFactura} documentos omitidos</>
                   )}
+                </div>
+                <div>
+                  Rango detectado: <span className="font-medium text-foreground">{formatDate(getPreviewDateRange(preview).start)} - {formatDate(getPreviewDateRange(preview).end)}</span>
                 </div>
                 {(preview.creditNoteCount > 0 || preview.debitNoteCount > 0) && (
                   <div className="flex gap-3 flex-wrap">
@@ -752,7 +1073,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   </TabsTrigger>
                   <TabsTrigger value="unmatched" className="relative">
                     Sin Cliente ({preview.unmatched.length})
-                    {preview.unmatched.length > 0 && (
+                    {pendingUnmatchedClients.length > 0 && (
                       <span className="absolute top-0 right-0 -mt-1 -mr-1 flex size-3">
                         <span className="animate-ping absolute inline-flex size-full rounded-full bg-amber-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full size-3 bg-amber-500"></span>
@@ -812,7 +1133,15 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                             </h3>
                           </div>
 
-                          {/* Bulk Actions Toolbar */}
+                          {allUnmatchedPending && (
+                            <Button
+                              className="mb-4 bg-violet-600 hover:bg-violet-700"
+                              onClick={() => handleBulkAction('create')}
+                            >
+                              Crear todos como nuevos ({unmatchedClients.length})
+                            </Button>
+                          )}
+
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 p-3 bg-card border rounded-md">
                             <div className="flex items-center gap-2">
                                 <Checkbox
@@ -859,7 +1188,16 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                           
                           <div className="space-y-3 mb-6">
                             {unmatchedClients.map((uc, index) => (
-                              <div key={uc.rut} className={`border rounded-lg p-3 bg-card transition-colors ${selectedUnmatchedClientIndices.has(index) ? 'border-primary/50 bg-primary/5' : ''}`}>
+                              <div
+                                key={uc.rut}
+                                className={`border rounded-lg p-3 bg-card transition-colors ${
+                                  selectedUnmatchedClientIndices.has(index) ? 'border-primary/50 bg-primary/5' : ''
+                                } ${
+                                  uc.suggestion && uc.suggestion.score > 0.75 && uc.assignedClientId === uc.suggestion.clientId
+                                    ? 'border-violet-200 bg-violet-50/40'
+                                    : ''
+                                }`}
+                              >
                                 <div className="flex flex-col gap-3">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-start gap-3">
@@ -871,6 +1209,20 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <p className="text-sm font-medium text-foreground">{toTitleCase(uc.razonSocial)}</p>
+                                                {uc.autoResolvedByMapping && (
+                                                  <TooltipProvider>
+                                                    <Tooltip>
+                                                      <TooltipTrigger asChild>
+                                                        <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 p-1 text-violet-600">
+                                                          <RotateCw className="size-3" />
+                                                        </span>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent>
+                                                        Resuelto automaticamente por importacion anterior
+                                                      </TooltipContent>
+                                                    </Tooltip>
+                                                  </TooltipProvider>
+                                                )}
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
@@ -895,22 +1247,30 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                     <ResolutionBadge resolution={uc.resolution} />
                                   </div>
 
-                                  {/* Suggestions Area */}
-                                  {uc.suggestion && uc.resolution === 'pending' && (
-                                      <div className="ml-8 p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 rounded flex items-center justify-between gap-2">
-                                          <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400">
-                                              <Sparkles className="size-3.5" />
-                                              <span>Sugerencia: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)</span>
-                                          </div>
-                                          <Button 
-                                            size="sm" 
-                                            variant="ghost" 
-                                            className="h-6 text-xs hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700"
-                                            onClick={() => applySuggestion(index)}
-                                          >
-                                              Aplicar
-                                          </Button>
+                                  {uc.suggestion && uc.suggestion.score > 0.75 && uc.assignedClientId === uc.suggestion.clientId && (
+                                    <div className="ml-8 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+                                      <span className="inline-flex items-center gap-2">
+                                        <Sparkles className="size-3.5" />
+                                        Sugerencia preseleccionada: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {uc.suggestion && uc.suggestion.score <= 0.75 && uc.resolution === 'pending' && (
+                                    <div className="ml-8 p-2 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 rounded flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-400">
+                                        <Sparkles className="size-3.5" />
+                                        <span>Sugerencia: <strong>{uc.suggestion.name}</strong> ({(uc.suggestion.score * 100).toFixed(0)}%)</span>
                                       </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 text-xs hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700"
+                                        onClick={() => applySuggestion(index)}
+                                      >
+                                        Aplicar
+                                      </Button>
+                                    </div>
                                   )}
 
                                   <div className="flex flex-wrap gap-2 ml-8">
@@ -978,10 +1338,15 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                 </h3>
                                 <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                                   <Checkbox
-                                    checked={getSelectedUnmatchedCount() === preview.unmatched.length && preview.unmatched.length > 0}
+                                    checked={
+                                      getSelectedUnmatchedCount() === preview.unmatched.filter((invoice) => {
+                                        const client = unmatchedClients.find((item) => rutMatches(item.rut, invoice.rut));
+                                        return client && client.resolution !== 'pending' && client.resolution !== 'ignore';
+                                      }).length && preview.unmatched.length > 0
+                                    }
                                     onCheckedChange={(checked) => toggleAllUnmatched(!!checked)}
                                   />
-                                  Seleccionar todas
+                                  Seleccionar disponibles
                                 </label>
                               </div>
                               <InvoicePreviewTable

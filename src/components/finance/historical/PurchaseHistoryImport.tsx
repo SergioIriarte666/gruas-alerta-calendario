@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, Trash2, ArrowRight, Check } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertTriangle, Loader2, UserPlus, Users, Ban, Edit2, Sparkles, RotateCw, Check, FileSpreadsheet, CalendarRange } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -19,16 +18,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useImportMappings, type ImportMappingResolution } from '@/hooks/useImportMappings';
+import { useImportHistoryLog, type ImportHistoryLogEntry } from '@/hooks/useImportHistoryLog';
 import {
   parseCSVFile,
   parseXLSXFile,
   processPurchaseRows,
   PurchaseImportPreview,
   UnmatchedSupplier,
-  ProcessedPurchase,
 } from '@/utils/purchaseHistoryParser';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
-import { Supplier } from '@/types/suppliers';
 
 interface PurchaseHistoryImportProps {
   open: boolean;
@@ -38,8 +41,20 @@ interface PurchaseHistoryImportProps {
 
 type Step = 'upload' | 'preview' | 'importing' | 'done';
 
+type ResolvedUnmatchedSupplier = UnmatchedSupplier & {
+  autoResolvedByMapping?: boolean;
+  mappingSourceResolution?: ImportMappingResolution;
+};
+
 const formatCLP = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+
+const formatDate = (value?: string | null) => {
+  if (!value) return '-';
+  const [year, month, day] = value.slice(0, 10).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+};
 
 const normalizeRut = (rut: string): string =>
   rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
@@ -58,14 +73,46 @@ const rutMatches = (a: string, b: string): boolean => {
   return aC.some((c) => bC.has(c));
 };
 
+const sortUnmatchedSuppliers = (items: ResolvedUnmatchedSupplier[]) =>
+  [...items].sort((a, b) => b.invoiceCount - a.invoiceCount || a.razonSocial.localeCompare(b.razonSocial, 'es'));
+
+const getPreviewDateRange = (preview: PurchaseImportPreview | null) => {
+  if (!preview) {
+    return { start: null as string | null, end: null as string | null };
+  }
+
+  const allDates = [...preview.matched, ...preview.unmatched, ...preview.duplicates]
+    .map((invoice) => invoice.issueDate?.slice(0, 10))
+    .filter(Boolean)
+    .sort();
+
+  return {
+    start: allDates[0] ?? null,
+    end: allDates[allDates.length - 1] ?? null,
+  };
+};
+
+const getInvoiceStatusBadgeClass = (status: 'paid' | 'pending' | 'overdue') => {
+  if (status === 'paid') {
+    return 'border border-green-200 bg-green-50 text-green-700';
+  }
+
+  if (status === 'overdue') {
+    return 'border border-red-200 bg-red-50 text-red-700';
+  }
+
+  return 'border border-slate-200 bg-slate-100 text-slate-700';
+};
+
 const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { suppliers } = useSuppliers();
   const queryClient = useQueryClient();
+  const { getMappings, saveMapping } = useImportMappings('purchase');
+  const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('purchase', 5);
   const [step, setStep] = useState<Step>('upload');
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<PurchaseImportPreview | null>(null);
-  const [unmatchedSuppliers, setUnmatchedSuppliers] = useState<UnmatchedSupplier[]>([]);
-  const [importing, setImporting] = useState(false);
+  const [unmatchedSuppliers, setUnmatchedSuppliers] = useState<ResolvedUnmatchedSupplier[]>([]);
   const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
@@ -101,6 +148,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     email: '',
     phone: ''
   });
+  const [instructionsOpen, setInstructionsOpen] = useState(true);
+  const [overlappingImportLog, setOverlappingImportLog] = useState<ImportHistoryLogEntry | null>(null);
 
   // Compute suggestions when unmatched suppliers are set
   useEffect(() => {
@@ -123,8 +172,17 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               }
             }
             
-            // Threshold for suggestion (e.g., 0.6)
+            // Auto-preselect strong suggestions to reduce clicks.
             if (bestMatch.score > 0.6) {
+              if (bestMatch.score > 0.75) {
+                return {
+                  ...us,
+                  suggestion: bestMatch,
+                  resolution: 'assign',
+                  assignedSupplierId: bestMatch.supplierId,
+                };
+              }
+
               return { ...us, suggestion: bestMatch };
             }
             
@@ -135,15 +193,131 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     }
   }, [unmatchedSuppliers.length, suppliers.length]);
 
+  useEffect(() => {
+    if (!open) return;
+    setInstructionsOpen(importLogs.length === 0);
+  }, [open, importLogs.length]);
+
   // Initialize selection when preview changes
   useEffect(() => {
     if (preview) {
       const allKeys = new Set<string>();
       preview.matched.forEach((inv, i) => allKeys.add(`matched-${inv.invoice_number}-${i}`));
-      // Don't auto-select unmatched invoices until they are resolved
+      preview.duplicates.forEach((inv, i) => allKeys.add(`duplicate-${inv.invoice_number}-${i}`));
       setSelectedInvoices(allKeys);
     }
   }, [preview]);
+
+  useEffect(() => {
+    if (activeTab !== 'unmatched') return;
+    if (unmatchedSuppliers.length === 0 || unmatchedSuppliers.length >= 10) return;
+    if (selectedUnmatchedSupplierIndices.size > 0) return;
+
+    const allIndices = new Set<number>();
+    unmatchedSuppliers.forEach((_, index) => allIndices.add(index));
+    setSelectedUnmatchedSupplierIndices(allIndices);
+  }, [activeTab, unmatchedSuppliers, selectedUnmatchedSupplierIndices.size]);
+
+  const persistImportArtifacts = useCallback(
+    async (imported: number, errors: number, currentPreview: PurchaseImportPreview, resolvedSuppliers: ResolvedUnmatchedSupplier[]) => {
+      const dateRange = getPreviewDateRange(currentPreview);
+      const skippedCount = Math.max(0, currentPreview.totalInvoices - imported - errors);
+      const status =
+        imported === 0 ? 'failed' : errors === 0 ? 'success' : 'partial';
+
+      try {
+        await saveLog({
+          importType: 'purchase',
+          fileName,
+          importedCount: imported,
+          errorCount: errors,
+          skippedCount,
+          dateRangeStart: dateRange.start,
+          dateRangeEnd: dateRange.end,
+          status,
+        });
+      } catch (logError) {
+        console.error('Error saving import history log:', logError);
+      }
+
+      if (imported <= 0) return;
+
+      try {
+        await Promise.all(
+          resolvedSuppliers
+            .filter((supplier) => supplier.resolution !== 'pending')
+            .map(async (supplier) => {
+              const assignedSupplier = supplier.assignedSupplierId
+                ? suppliers.find((existingSupplier) => existingSupplier.id === supplier.assignedSupplierId)
+                : null;
+
+              await saveMapping(
+                'purchase',
+                supplier.rut,
+                supplier.razonSocial,
+                supplier.resolution as ImportMappingResolution,
+                supplier.resolution === 'assign' ? supplier.assignedSupplierId ?? null : null,
+                supplier.resolution === 'assign'
+                  ? assignedSupplier?.name ?? supplier.suggestion?.name ?? null
+                  : supplier.resolution === 'create'
+                    ? supplier.razonSocial
+                    : null
+              );
+            })
+        );
+      } catch (mappingError) {
+        console.error('Error saving import mappings:', mappingError);
+      }
+    },
+    [fileName, saveLog, saveMapping, suppliers]
+  );
+
+  const resolveSupplierFromMapping = useCallback(
+    (
+      supplier: UnmatchedSupplier,
+      mapping: Awaited<ReturnType<typeof getMappings>>[number] | undefined
+    ): ResolvedUnmatchedSupplier => {
+      if (!mapping) return supplier;
+
+      if (mapping.resolution === 'ignore') {
+        return {
+          ...supplier,
+          resolution: 'ignore',
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      if (mapping.resolution === 'assign' && mapping.mapped_entity_id) {
+        return {
+          ...supplier,
+          resolution: 'assign',
+          assignedSupplierId: mapping.mapped_entity_id,
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      const existingSupplier = suppliers.find((currentSupplier) => rutMatches(currentSupplier.rut || '', supplier.rut));
+      if (existingSupplier) {
+        return {
+          ...supplier,
+          resolution: 'assign',
+          assignedSupplierId: existingSupplier.id,
+          autoResolvedByMapping: true,
+          mappingSourceResolution: mapping.resolution,
+        };
+      }
+
+      return {
+        ...supplier,
+        resolution: 'create',
+        autoResolvedByMapping: true,
+        mappingSourceResolution: mapping.resolution,
+      };
+    },
+    [getMappings, suppliers]
+  );
 
   const toggleUnmatchedSupplierSelection = (index: number) => {
     setSelectedUnmatchedSupplierIndices(prev => {
@@ -171,12 +345,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     }
 
     setUnmatchedSuppliers(prev => {
-      return prev.map((us, i) => {
+      const nextSuppliers = prev.map((us, i) => {
         if (selectedUnmatchedSupplierIndices.has(i)) {
-          return { ...us, resolution: action, assignedSupplierId };
+          return { ...us, resolution: action, assignedSupplierId, autoResolvedByMapping: false };
         }
         return us;
       });
+      return nextSuppliers;
     });
     
     // Auto-select invoices for resolved suppliers
@@ -237,10 +412,18 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setBulkAssignSupplierId('');
   };
 
+  const applySuggestion = (index: number) => {
+    const supplier = unmatchedSuppliers[index];
+    if (!supplier?.suggestion) return;
+
+    handleSupplierResolution(index, 'assign', supplier.suggestion.supplierId);
+    toast.success('Sugerencia aplicada');
+  };
+
   const handleSupplierResolution = (index: number, resolution: 'create' | 'assign' | 'ignore', assignedSupplierId?: string) => {
     setUnmatchedSuppliers(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], resolution, assignedSupplierId };
+      updated[index] = { ...updated[index], resolution, assignedSupplierId, autoResolvedByMapping: false };
       return updated;
     });
 
@@ -285,7 +468,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       updated[editingSupplierIndex] = {
         ...updated[editingSupplierIndex],
         razonSocial: editSupplierForm.name,
-        resolution: 'create' // Auto-set to create after edit
+        resolution: 'create',
+        autoResolvedByMapping: false,
       };
       return updated;
     });
@@ -327,6 +511,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setProgressCurrent(0);
     setProgressTotal(0);
     setProgressStage('');
+    setInstructionsOpen(importLogs.length === 0);
+    setOverlappingImportLog(null);
   };
 
   const handleClose = () => {
@@ -394,13 +580,30 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       });
 
       const result = processPurchaseRows(rows, suppliers, existingKeys);
+      const savedMappings = await getMappings('purchase');
+      const mappingByRut = new Map(
+        savedMappings.map((mapping) => [normalizeRut(mapping.source_rut), mapping])
+      );
+      const resolvedUnmatchedSuppliers = sortUnmatchedSuppliers(
+        result.unmatchedSuppliers.map((supplier) =>
+          resolveSupplierFromMapping(supplier, mappingByRut.get(normalizeRut(supplier.rut)))
+        )
+      );
+      const previewDateRange = getPreviewDateRange(result);
+      const overlappingLogs =
+        previewDateRange.start && previewDateRange.end
+          ? await getOverlappingLogs('purchase', previewDateRange.start, previewDateRange.end)
+          : [];
+
       setPreview(result);
-      setUnmatchedSuppliers(result.unmatchedSuppliers);
+      setUnmatchedSuppliers(resolvedUnmatchedSuppliers);
+      setOverlappingImportLog(overlappingLogs[0] ?? null);
       setStep('preview');
       
-      // Auto-switch to unmatched tab if there are unmatched suppliers
-      if (result.unmatchedSuppliers.length > 0) {
+      if (resolvedUnmatchedSuppliers.some((supplier) => supplier.resolution === 'pending')) {
         setActiveTab('unmatched');
+      } else {
+        setActiveTab('matched');
       }
 
       const parts = [`${result.facturaCount} facturas`];
@@ -413,7 +616,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       console.error('Error parsing file:', error);
       toast.error('Error al leer el archivo', { description: 'Verifica el formato.' });
     }
-  }, [suppliers]);
+  }, [getMappings, getOverlappingLogs, resolveSupplierFromMapping, suppliers]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -544,23 +747,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setIsCreatingSupplier(false);
   };
 
-  const openCreateSupplier = (rut: string, name: string) => {
-    setNewSupplierData({
-        rut,
-        name,
-        category: 'General',
-        contactName: '',
-        email: '',
-        phone: ''
-    });
-    setIsCreatingSupplier(true);
-  };
-
   const handleImport = async () => {
     if (!preview) return;
 
     setStep('importing');
-    setImporting(true);
     setLastError(null);
     setProgressCurrent(0);
     setProgressTotal(0);
@@ -765,7 +955,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     // 3. Prepare invoices to insert
     setProgressStage('Preparando documentos...');
     const invoicesToInsert: any[] = [];
-    const withPaidOverride = (payload: any, invoiceAmount: number, status: string) => {
+    const withPaidOverride = (payload: any, status: string) => {
         if (!markAllAsPaid) return { ...payload, status };
         return {
             ...payload,
@@ -790,7 +980,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 net_amount: inv.net_amount,
                 description: psd,
                 product_service_description: psd,
-            }, inv.amount, inv.status));
+            }, inv.status));
         }
     });
 
@@ -819,7 +1009,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     description: psd,
                     product_service_description: psd,
-                }, inv.amount, inv.status));
+                }, inv.status));
             } else {
                 console.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
                 errors++;
@@ -846,7 +1036,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     description: psd,
                     product_service_description: psd,
-                }, inv.amount, inv.status));
+                }, inv.status));
              } else {
                  errors++;
              }
@@ -959,21 +1149,25 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         }
     }
 
+    await persistImportArtifacts(imported, errors, preview, unmatchedSuppliers);
     setImportResult({ imported, errors });
-    setImporting(false);
     
     // Invalidate queries to refresh lists
     await queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
     await queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    if (imported > 0) {
+      onImportComplete();
+    }
     
     setStep('done');
   };
 
-  const invoicesToInsertCount = () => {
-      return getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount();
-  };
-
   const totalToImport = getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount();
+  const pendingUnmatchedSuppliers = useMemo(
+    () => unmatchedSuppliers.filter((supplier) => supplier.resolution === 'pending'),
+    [unmatchedSuppliers]
+  );
+  const allUnmatchedPending = unmatchedSuppliers.length > 0 && pendingUnmatchedSuppliers.length === unmatchedSuppliers.length;
 
   return (
     <>
@@ -987,28 +1181,97 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         </DialogHeader>
 
         {step === 'upload' && (
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
-              ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50'}`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-medium text-foreground">
-              {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Archivo de reporte de compras (Libro de Compras)
-            </p>
-            <Button variant="outline" className="mt-4">
-              Seleccionar archivo
-            </Button>
+          <div className="space-y-4">
+            <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
+              <Card className="border-emerald-200/70 bg-emerald-50/40">
+                <CardHeader className="pb-3">
+                  <CollapsibleTrigger asChild>
+                    <button type="button" className="flex w-full items-center justify-between text-left">
+                      <div>
+                        <CardTitle className="text-base text-emerald-700">¿Cómo obtener este archivo?</CardTitle>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Descarga el libro de compras desde Facturacion.cl antes de importarlo.
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-background px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                        {instructionsOpen ? 'Ocultar' : 'Mostrar'}
+                      </span>
+                    </button>
+                  </CollapsibleTrigger>
+                </CardHeader>
+                <CollapsibleContent>
+                  <CardContent className="space-y-3 pt-0">
+                    {[
+                      'Ingresa a Facturacion.cl y abre Compras > Libro de Compras.',
+                      'Selecciona el rango de fechas y haz clic en Buscar.',
+                      'Usa Exportar y descarga el archivo en formato Excel (.xlsx) o CSV.',
+                    ].map((stepText, index) => (
+                      <div key={stepText} className="flex items-start gap-3 rounded-lg border border-emerald-200/60 bg-background/90 p-3">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">
+                          {index + 1}
+                        </div>
+                        <p className="text-sm text-foreground">{stepText}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
+                ${isDragActive ? 'border-emerald-600 bg-emerald-600/5' : 'border-muted-foreground/30 hover:border-emerald-600/50'}`}
+            >
+              <input {...getInputProps()} />
+              <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-lg font-medium text-foreground">
+                {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Archivo de reporte de compras (Libro de Compras)
+              </p>
+              <Button variant="outline" className="mt-4">
+                Seleccionar archivo
+              </Button>
+            </div>
+
+            <Card>
+              <CardContent className="grid gap-3 p-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <FileSpreadsheet className="size-4 text-emerald-600" />
+                    Formatos aceptados
+                  </div>
+                  <p className="text-sm text-muted-foreground">`.csv`, `.xlsx`, `.xls`</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CalendarRange className="size-4 text-emerald-600" />
+                    Columnas esperadas
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Documento, Folio, Fecha, RUT, Razón Social, Neto, IVA, Total
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {step === 'preview' && preview && (
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-none px-1 py-4 gap-y-4">
+              {overlappingImportLog && (
+                <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                  <AlertTriangle className="size-4" />
+                  <AlertTitle>Posible período ya importado</AlertTitle>
+                  <AlertDescription>
+                    Ya importaste documentos del período {formatDate(overlappingImportLog.date_range_start)} - {formatDate(overlappingImportLog.date_range_end)} el {formatDate(overlappingImportLog.created_at)} ({overlappingImportLog.file_name}). Es probable que este archivo contenga duplicados. Revisa la pestaña "Duplicados" antes de importar.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-2xl font-bold text-foreground">{preview.totalInvoices}</p>
@@ -1027,6 +1290,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                   <p className="text-xs text-muted-foreground">Duplicados</p>
                 </div>
               </div>
+              <div className="mt-3 text-sm text-muted-foreground">
+                Rango detectado: <span className="font-medium text-foreground">{formatDate(getPreviewDateRange(preview).start)} - {formatDate(getPreviewDateRange(preview).end)}</span>
+              </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
@@ -1035,8 +1301,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                   <TabsTrigger value="matched" className="flex-1">
                     Listas para importar ({preview.matched.length})
                   </TabsTrigger>
-                  <TabsTrigger value="unmatched" className="flex-1">
+                  <TabsTrigger value="unmatched" className="relative flex-1">
                     Sin proveedor ({preview.unmatched.length})
+                    {pendingUnmatchedSuppliers.length > 0 && (
+                      <span className="absolute right-2 top-2 flex size-2 rounded-full bg-amber-500" />
+                    )}
                   </TabsTrigger>
                   <TabsTrigger value="duplicates" className="flex-1">
                     Duplicados ({preview.duplicates.length})
@@ -1097,9 +1366,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
                                         <TableCell>
-                                            <Badge variant={effectiveStatus === 'paid' ? 'default' : effectiveStatus === 'overdue' ? 'destructive' : 'secondary'}>
+                                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getInvoiceStatusBadgeClass(effectiveStatus)}`}>
                                                 {effectiveStatus === 'paid' ? 'Pagada' : effectiveStatus === 'overdue' ? 'Vencida' : 'Pendiente'}
-                                            </Badge>
+                                            </span>
                                         </TableCell>
                                     </TableRow>
                                     );
@@ -1122,6 +1391,15 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                         Proveedores no encontrados ({unmatchedSuppliers.length}) — {preview?.unmatched.length} facturas
                                     </h3>
                                 </div>
+
+                                {allUnmatchedPending && (
+                                  <Button
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                    onClick={() => handleBulkAction('create')}
+                                  >
+                                    Crear todos como nuevos ({unmatchedSuppliers.length})
+                                  </Button>
+                                )}
 
                                 {/* Bulk Action Header Card */}
                                 <div className="bg-background border rounded-lg p-4 shadow-sm">
@@ -1172,7 +1450,18 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
                                 <div className="grid gap-3">
                                     {unmatchedSuppliers.map((us, i) => (
-                                        <div key={i} className={`flex flex-col p-4 bg-card rounded-lg border transition-colors ${us.resolution === 'ignore' ? 'opacity-60 bg-muted/50' : 'hover:border-primary/50'}`}>
+                                        <div
+                                          key={us.rut}
+                                          className={`flex flex-col rounded-lg border bg-card p-4 transition-colors ${
+                                            selectedUnmatchedSupplierIndices.has(i) ? 'border-primary/50 bg-primary/5' : ''
+                                          } ${
+                                            us.suggestion && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId
+                                              ? 'border-emerald-200 bg-emerald-50/40'
+                                              : ''
+                                          } ${
+                                            us.resolution === 'ignore' ? 'opacity-60' : 'hover:border-primary/50'
+                                          }`}
+                                        >
                                             <div className="flex items-start gap-3">
                                                 <Checkbox 
                                                     className="mt-1"
@@ -1189,6 +1478,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                         onChange={(e) => setEditSupplierForm(prev => ({ ...prev, name: e.target.value }))}
                                                                         className="h-8 w-[300px]"
                                                                         autoFocus
+                                                                        onBlur={() => setEditSupplierForm(prev => ({ ...prev, name: toTitleCase(prev.name) }))}
                                                                         onKeyDown={(e) => e.key === 'Enter' && saveQuickEdit()}
                                                                     />
                                                                     <Button size="icon" variant="ghost" className="size-8" onClick={saveQuickEdit}>
@@ -1196,8 +1486,22 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                     </Button>
                                                                 </div>
                                                             ) : (
-                                                                <div className="flex items-center gap-2 group">
-                                                                    <span className="font-medium text-lg">{us.razonSocial}</span>
+                                                                <div className="flex items-center gap-2 flex-wrap group">
+                                                                    <span className="font-medium text-lg">{toTitleCase(us.razonSocial)}</span>
+                                                                    {us.autoResolvedByMapping && (
+                                                                      <TooltipProvider>
+                                                                        <Tooltip>
+                                                                          <TooltipTrigger asChild>
+                                                                            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 p-1 text-emerald-600">
+                                                                              <RotateCw className="size-3" />
+                                                                            </span>
+                                                                          </TooltipTrigger>
+                                                                          <TooltipContent>
+                                                                            Resuelto automaticamente por importacion anterior
+                                                                          </TooltipContent>
+                                                                        </Tooltip>
+                                                                      </TooltipProvider>
+                                                                    )}
                                                                     <Button 
                                                                         size="icon" 
                                                                         variant="ghost" 
@@ -1208,7 +1512,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                     </Button>
                                                                 </div>
                                                             )}
-                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                                                                 <span>RUT: {us.rut}</span>
                                                                 <span>—</span>
                                                                 <span>{us.invoiceCount} facturas</span>
@@ -1217,33 +1521,40 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                             </div>
                                                         </div>
                                                         
-                                                        {/* Status Badge */}
                                                         <div>
-                                                            {us.resolution === 'create' && (
-                                                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 gap-1">
-                                                                    <UserPlus className="size-3" /> Se creará
-                                                                </Badge>
-                                                            )}
-                                                            {us.resolution === 'assign' && (
-                                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 gap-1">
-                                                                    <Users className="size-3" /> Asignado
-                                                                </Badge>
-                                                            )}
-                                                            {us.resolution === 'ignore' && (
-                                                                <Badge variant="outline" className="bg-muted text-muted-foreground gap-1">
-                                                                    <Ban className="size-3" /> Ignorado
-                                                                </Badge>
-                                                            )}
-                                                            {us.resolution === 'pending' && (
-                                                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                                                                    Pendiente
-                                                                </Badge>
-                                                            )}
+                                                          <ResolutionBadge resolution={us.resolution} />
                                                         </div>
                                                     </div>
 
-                                                    {/* Actions */}
-                                                    <div className="flex items-center gap-2">
+                                                    {us.suggestion && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId && (
+                                                      <div className="ml-8 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                                                        <span className="inline-flex items-center gap-2">
+                                                          <Sparkles className="size-3.5" />
+                                                          Sugerencia preseleccionada: <strong>{us.suggestion.name}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
+                                                        </span>
+                                                      </div>
+                                                    )}
+
+                                                    {us.suggestion && us.suggestion.score <= 0.75 && us.resolution === 'pending' && (
+                                                      <div className="ml-8 flex items-center justify-between gap-2 rounded border border-amber-200/50 bg-amber-50/50 p-2">
+                                                        <div className="flex items-center gap-2 text-xs text-amber-800">
+                                                          <Sparkles className="size-3.5" />
+                                                          <span>
+                                                            Sugerencia: <strong>{us.suggestion.name}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
+                                                          </span>
+                                                        </div>
+                                                        <Button
+                                                          size="sm"
+                                                          variant="ghost"
+                                                          className="h-6 text-xs text-amber-700 hover:bg-amber-100"
+                                                          onClick={() => applySuggestion(i)}
+                                                        >
+                                                          Aplicar
+                                                        </Button>
+                                                      </div>
+                                                    )}
+
+                                                    <div className="ml-8 flex flex-wrap items-center gap-2">
                                                         <Button 
                                                             size="sm" 
                                                             variant={us.resolution === 'create' ? "default" : "outline"}
@@ -1254,21 +1565,38 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                             Crear
                                                         </Button>
                                                         
-                                                        <Button 
-                                                            size="sm" 
-                                                            variant={us.resolution === 'assign' ? "default" : "outline"}
-                                                            className="h-8 gap-2"
-                                                            // For individual assign, we could open a dialog, but for now let's reuse bulk or just set logic
-                                                            // Ideally individual assign needs a selector. Let's trigger the bulk dialog but pre-select just this one if we had logic for that, 
-                                                            // or simpler: just toggle selection and open dialog.
-                                                            onClick={() => {
-                                                                setSelectedUnmatchedSupplierIndices(new Set([i]));
-                                                                setBulkAssignDialogOpen(true);
-                                                            }}
-                                                        >
-                                                            <Users className="size-3.5" />
-                                                            Asignar
-                                                        </Button>
+                                                        <div className="flex items-center gap-1">
+                                                          <Button 
+                                                              size="sm" 
+                                                              variant={us.resolution === 'assign' ? "default" : "outline"}
+                                                              className="h-8 gap-2"
+                                                              onClick={() => {
+                                                                if (us.resolution !== 'assign') {
+                                                                  handleSupplierResolution(i, 'assign', us.suggestion?.supplierId);
+                                                                }
+                                                              }}
+                                                          >
+                                                              <Users className="size-3.5" />
+                                                              Asignar
+                                                          </Button>
+                                                          {us.resolution === 'assign' && (
+                                                            <Select
+                                                              value={us.assignedSupplierId || ''}
+                                                              onValueChange={(value) => handleSupplierResolution(i, 'assign', value)}
+                                                            >
+                                                              <SelectTrigger className="h-8 w-[220px] text-xs">
+                                                                <SelectValue placeholder="Seleccionar proveedor..." />
+                                                              </SelectTrigger>
+                                                              <SelectContent>
+                                                                {suppliers.filter((supplier) => supplier.is_active).map((supplier) => (
+                                                                  <SelectItem key={supplier.id} value={supplier.id} className="text-xs">
+                                                                    {supplier.name} ({supplier.rut || 'Sin RUT'})
+                                                                  </SelectItem>
+                                                                ))}
+                                                              </SelectContent>
+                                                            </Select>
+                                                          )}
+                                                        </div>
 
                                                         <Button 
                                                             size="sm" 
@@ -1335,7 +1663,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
                                         <TableCell>
-                                            <div>{inv.razonSocial}</div>
+                                            <div>{toTitleCase(inv.razonSocial)}</div>
                                             <div className="text-xs text-muted-foreground">{inv.rut}</div>
                                         </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
@@ -1384,7 +1712,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
-                                        <TableCell>{inv.razonSocial}</TableCell>
+                                        <TableCell>{toTitleCase(inv.razonSocial)}</TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
                                     </TableRow>
@@ -1527,3 +1855,16 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 };
 
 export default PurchaseHistoryImport;
+
+const ResolutionBadge: React.FC<{ resolution: string }> = ({ resolution }) => {
+  switch (resolution) {
+    case 'create':
+      return <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Crear nuevo</span>;
+    case 'assign':
+      return <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">Asignado</span>;
+    case 'ignore':
+      return <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">Ignorado</span>;
+    default:
+      return <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">Pendiente</span>;
+  }
+};
