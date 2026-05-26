@@ -12,6 +12,7 @@ import { CompanySettingsTab } from '@/components/settings/CompanySettingsTab';
 import { SystemSettingsTab } from '@/components/settings/SystemSettingsTab';
 import { NotificationSettingsTab } from '@/components/settings/NotificationSettingsTab';
 import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
+import { WhatsAppSettingsSection } from '@/components/settings/WhatsAppSettingsSection';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
 import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid } from 'lucide-react';
@@ -176,6 +177,7 @@ const Settings = () => {
             <div className="space-y-6">
               <NotificationSettingsTab />
               <InvoiceAlertSettings />
+              <WhatsAppSettingsSection />
             </div>
           </TabsContent>
 
