@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { ProcessedServiceInfo } from '@/hooks/useServicesForClosures';
 import { toTitleCase } from '@/lib/utils';
+import { safeParseDateOnly } from '@/utils/timezoneUtils';
 
 interface EnhancedServicesSelectorProps {
   services: Service[];
@@ -220,7 +221,7 @@ const EnhancedServicesSelector = ({
     if (selectedServices.length === 0) return;
     
     const dates = selectedServices
-      .map(s => new Date(s.serviceDate))
+      .map(s => safeParseDateOnly(s.serviceDate))
       .filter(d => !isNaN(d.getTime()));
     
     if (dates.length === 0) return;
