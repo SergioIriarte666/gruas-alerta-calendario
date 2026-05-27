@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye } from 'lucide-react';
+import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye, Download } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
@@ -23,6 +23,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
+import { usePDFGeneration } from '@/hooks/usePDFGeneration';
+import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -47,7 +49,18 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     getComprehensiveDiagnosis,
     refetch,
   } = usePayments();
-  
+  const { isGenerating: isGeneratingReceipt, generateAndDownload } = usePDFGeneration();
+
+  const handleDownloadReceipt = (payment: PaymentWithDetails) => {
+    generateAndDownload(
+      async () => ({
+        blob: await generatePaymentReceiptPDF(payment.id),
+        fileName: `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+      }),
+      `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+    );
+  };
+
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -738,7 +751,19 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         ) : payment.status === 'pending' || payment.remaining_amount > 0 ? (
                           <span className="text-sm text-muted-foreground">Pendiente</span>
                         ) : null}
-                        
+
+                        {/* Botón Comprobante */}
+                        <Button
+                          onClick={() => handleDownloadReceipt(payment)}
+                          disabled={isGeneratingReceipt}
+                          size="sm"
+                          variant="ghost"
+                          className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950"
+                        >
+                          <Download className="size-4 mr-1" />
+                          Comprobante
+                        </Button>
+
                         {/* Botón Ver Detalle */}
                         {payment.applied_amount > 0 && (
                           <Button
