@@ -11,14 +11,14 @@ export const usePDFGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generateAndDownload = async (
-    generatorFn: () => Promise<Blob>,
-    fileName: string
+    generatorFn: () => Promise<{ blob: Blob; fileName: string }>,
+    fallbackFileName: string
   ) => {
     setIsGenerating(true);
     try {
-      const blob = await generatorFn();
+      const { blob, fileName } = await generatorFn();
       const url = URL.createObjectURL(blob);
-      triggerFileDownload(url, fileName);
+      triggerFileDownload(url, fileName || fallbackFileName);
       window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
       toast.success('PDF generado correctamente');
     } catch (error) {

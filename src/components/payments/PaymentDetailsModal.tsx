@@ -28,7 +28,10 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
 
   const handleDownloadReceipt = () =>
     generateAndDownload(
-      () => generatePaymentReceiptPDF(payment.id),
+      async () => ({
+        blob: await generatePaymentReceiptPDF(payment.id),
+        fileName: `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+      }),
       `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
     );
 

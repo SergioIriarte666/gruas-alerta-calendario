@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
-import { fetchCompanyData } from './companyDataFetcher';
-import { addPDFHeader } from './pdfHeader';
+import { Settings } from '@/types/settings';
+import { addCompanyHeader } from '@/utils/reports/reportUtils';
 import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 
@@ -29,20 +29,30 @@ const addDaysISO = (iso: string, days: number) => {
  * Genera un PDF de Cotización / Presupuesto para un servicio.
  * Sigue el patrón visual del módulo de Costos (violet brand color).
  */
-export const generateQuotePDF = async (service: Service): Promise<Blob> => {
-  const companyData = await fetchCompanyData();
+export const generateQuotePDF = async (
+  service: Service,
+  settings: Settings,
+): Promise<{ blob: Blob; fileName: string }> => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const marginX = 20;
   const contentWidth = pageWidth - marginX * 2;
 
-  // Header corporativo
-  let y = await addPDFHeader(doc, {
-    service,
-    inspection: {},
-    companyData,
-    title: 'COTIZACIÓN / PRESUPUESTO',
-  } as any);
+  // Header corporativo (mismo patrón que costDetailPdfGenerator)
+  let y = await addCompanyHeader(doc, settings.company, 15);
+
+  // Título
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...VIOLET);
+  doc.text('COTIZACIÓN / PRESUPUESTO', pageWidth / 2, y, { align: 'center' });
+  y += 8;
+  doc.setDrawColor(...VIOLET);
+  doc.setLineWidth(0.5);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 6;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'normal');
 
   const today = new Date().toISOString().slice(0, 10);
   const quoteNumber = service.quoteNumber || `COT-${service.folio}`;
@@ -204,5 +214,8 @@ export const generateQuotePDF = async (service: Service): Promise<Blob> => {
     doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 9, { align: 'right' });
   }
 
-  return doc.output('blob');
+  return {
+    blob: doc.output('blob'),
+    fileName: `cotizacion-${service.folio}.pdf`,
+  };
 };

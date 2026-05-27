@@ -1,8 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
-import { fetchCompanyData } from './companyDataFetcher';
-import { addPDFHeader } from './pdfHeader';
+import { Settings } from '@/types/settings';
+import { addCompanyHeader } from '@/utils/reports/reportUtils';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 
@@ -13,20 +13,26 @@ const MUTED: [number, number, number] = [100, 100, 100];
  * Genera una Orden de Trabajo para terreno (sin información financiera interna).
  * Tipografía grande, claro, con cuadros de firma al pie.
  */
-export const generateWorkOrderPDF = async (service: Service): Promise<Blob> => {
-  const companyData = await fetchCompanyData();
+export const generateWorkOrderPDF = async (
+  service: Service,
+  settings: Settings,
+): Promise<{ blob: Blob; fileName: string }> => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   const marginX = 20;
   const contentWidth = pageWidth - marginX * 2;
 
-  let y = await addPDFHeader(doc, {
-    service,
-    inspection: {},
-    companyData,
-    title: 'ORDEN DE TRABAJO',
-  } as any);
+  let y = await addCompanyHeader(doc, settings.company, 15);
+
+  // Título
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...VIOLET);
+  doc.text('ORDEN DE TRABAJO', pageWidth / 2, y, { align: 'center' });
+  y += 6;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(undefined, 'normal');
 
   // Folio destacado
   doc.setFillColor(...VIOLET);
@@ -175,5 +181,8 @@ export const generateWorkOrderPDF = async (service: Service): Promise<Blob> => {
     doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 7, { align: 'right' });
   }
 
-  return doc.output('blob');
+  return {
+    blob: doc.output('blob'),
+    fileName: `orden-trabajo-${service.folio}.pdf`,
+  };
 };
