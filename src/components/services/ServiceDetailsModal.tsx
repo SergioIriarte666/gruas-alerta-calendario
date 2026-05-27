@@ -42,6 +42,7 @@ import { toast } from 'sonner';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generateQuotePDF } from '@/utils/pdf/quotePdfGenerator';
 import { generateWorkOrderPDF } from '@/utils/pdf/workOrderPdfGenerator';
+import { useSettings } from '@/hooks/useSettings';
 
 interface ServiceDetailsModalProps {
   service: Service | null;
@@ -231,6 +232,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     }
   }, [isOpen, serviceData?.id, serviceData?.folio, serviceData?.operatorCommission, queryClient]);
 
+  // Hooks que deben ejecutarse SIEMPRE antes de cualquier early-return
+  const { settings } = useSettings();
+  const { isGenerating: isGeneratingDoc, generateAndDownload } = usePDFGeneration();
+
   if (!isOpen || !serviceData) return null;
   
   // Calcular totales usando datos mejorados si están disponibles
@@ -252,17 +257,15 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   };
 
   // Generación de documentos comerciales
-  const { isGenerating: isGeneratingDoc, generateAndDownload } = usePDFGeneration();
-
   const handleGenerateQuote = () =>
     generateAndDownload(
-      () => generateQuotePDF(serviceData as Service),
+      () => generateQuotePDF(serviceData as Service, settings),
       `cotizacion-${serviceData.folio}.pdf`,
     );
 
   const handleGenerateWorkOrder = () =>
     generateAndDownload(
-      () => generateWorkOrderPDF(serviceData as Service),
+      () => generateWorkOrderPDF(serviceData as Service, settings),
       `orden-trabajo-${serviceData.folio}.pdf`,
     );
 
