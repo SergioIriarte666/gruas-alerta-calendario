@@ -751,7 +751,19 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         ) : payment.status === 'pending' || payment.remaining_amount > 0 ? (
                           <span className="text-sm text-muted-foreground">Pendiente</span>
                         ) : null}
-                        
+
+                        {/* Botón Comprobante */}
+                        <Button
+                          onClick={() => handleDownloadReceipt(payment)}
+                          disabled={isGeneratingReceipt}
+                          size="sm"
+                          variant="ghost"
+                          className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950"
+                        >
+                          <Download className="size-4 mr-1" />
+                          Comprobante
+                        </Button>
+
                         {/* Botón Ver Detalle */}
                         {payment.applied_amount > 0 && (
                           <Button
