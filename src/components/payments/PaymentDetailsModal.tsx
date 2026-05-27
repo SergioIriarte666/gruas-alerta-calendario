@@ -8,9 +8,12 @@ import {
   Building,
   DollarSign,
   FileText,
-  Clock
+  Clock,
+  Download
 } from 'lucide-react';
 import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
+import { usePDFGeneration } from '@/hooks/usePDFGeneration';
+import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
 
 interface PaymentDetailsModalProps {
   payment: any | null;
@@ -19,7 +22,15 @@ interface PaymentDetailsModalProps {
 }
 
 export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetailsModalProps) => {
+  const { isGenerating, generateAndDownload } = usePDFGeneration();
+
   if (!payment) return null;
+
+  const handleDownloadReceipt = () =>
+    generateAndDownload(
+      () => generatePaymentReceiptPDF(payment.id),
+      `comprobante-${String(payment.id).slice(0, 8)}.pdf`,
+    );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -131,6 +142,16 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
           )}
 
           <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadReceipt}
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              <Download className="size-4" />
+              {isGenerating ? 'Generando...' : 'Descargar Comprobante'}
+            </Button>
             <Button variant="outline" onClick={onClose}>
               Cerrar
             </Button>
