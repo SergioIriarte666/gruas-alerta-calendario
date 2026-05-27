@@ -182,34 +182,108 @@ export class BackupGenerators {
 
   async generateSQLBackup(userEmail: string): Promise<BackupResult> {
     try {
-      if (!this.userClient) {
-        throw new Error('Se requiere un administrador autenticado para generar respaldos SQL');
+      const tables = [
+        'profiles', 'clients', 'service_types', 'cranes', 'operators',
+        'services', 'costs', 'cost_categories', 'company_data', 'system_settings'
+      ];
+
+      const parts: string[] = [];
+      parts.push('-- TMS Gruas - Respaldo SQL Completo');
+      parts.push(`-- Generado el: ${new Date().toISOString()}`);
+      parts.push(`-- Por usuario: ${userEmail}`);
+      parts.push(`-- Tablas: ${tables.join(', ')}`);
+      parts.push('');
+
+      const BATCH = 1000;
+
+      for (const table of tables) {
+        parts.push(`-- =====================================================`);
+        parts.push(`-- Tabla: public.${table}`);
+        parts.push(`-- =====================================================`);
+
+        try {
+          let from = 0;
+          let totalRows = 0;
+          let columns: string[] | null = null;
+
+          while (true) {
+            const { data, error } = await this.privilegedClient
+              .from(table)
+              .select('*')
+              .range(from, from + BATCH - 1);
+
+            if (error) {
+              parts.push(`-- ERROR leyendo ${table}: ${error.message}`);
+              break;
+            }
+
+            if (!data || data.length === 0) break;
+
+            if (!columns && data.length > 0) {
+              columns = Object.keys(data[0] as Record<string, unknown>);
+            }
+
+            if (columns) {
+              const colList = columns.map(quoteIdent).join(', ');
+              for (const row of data as Record<string, unknown>[]) {
+                const values = columns.map((c) => sqlLiteral(row[c])).join(', ');
+                parts.push(`INSERT INTO public.${quoteIdent(table)} (${colList}) VALUES (${values});`);
+              }
+            }
+
+            totalRows += data.length;
+            if (data.length < BATCH) break;
+            from += BATCH;
+          }
+
+          parts.push(`-- ${totalRows} filas exportadas de ${table}`);
+          parts.push('');
+        } catch (e) {
+          parts.push(`-- EXCEPCIÓN en ${table}: ${(e as Error).message}`);
+          parts.push('');
+        }
       }
 
-      // Generate SQL dump using the database function
-      const { data: sqlContent, error } = await this.userClient
-        .rpc('generate_database_backup');
+      parts.push('-- Respaldo completado exitosamente');
 
-      if (error) {
-        console.error('Error generating SQL backup:', error);
-        throw new Error(`Failed to generate SQL backup: ${error.message}`);
-      }
-
-      if (!sqlContent) {
-        throw new Error('No SQL content generated');
-      }
-
+      const content = parts.join('\n');
       const fileName = `tms-gruas-sql-backup-${new Date().toISOString().split('T')[0]}.sql`;
-      
+
       return {
-        content: sqlContent,
+        content,
         fileName,
         contentType: 'application/sql',
-        size: new Blob([sqlContent]).size
+        size: new Blob([content]).size
       };
     } catch (error) {
       console.error('Exception generating SQL backup:', error);
       throw error;
     }
   }
+}
+
+function quoteIdent(name: string): string {
+  return `"${name.replace(/"/g, '""')}"`;
+}
+
+function sqlLiteral(value: unknown): string {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : 'NULL';
+  }
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Date) {
+    return `'${value.toISOString()}'::timestamptz`;
+  }
+  if (typeof value === 'object') {
+    const json = JSON.stringify(value).replace(/'/g, "''");
+    return `'${json}'::jsonb`;
+  }
+  const str = String(value).replace(/'/g, "''");
+  // Detect ISO timestamp strings to cast appropriately
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str)) {
+    return `'${str}'::timestamptz`;
+  }
+  return `'${str}'`;
 }
