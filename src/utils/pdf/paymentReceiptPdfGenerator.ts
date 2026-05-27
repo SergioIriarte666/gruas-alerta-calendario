@@ -31,7 +31,7 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
           client_id, remaining_amount, created_at,
           clients ( name, rut, address, phone, email ),
           payment_applications (
-            amount,
+          applied_amount,
             invoices ( folio, numero_fiscal )
           )
         `,
@@ -127,14 +127,14 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
   // Documentos cubiertos
   const apps: any[] = payment.payment_applications || [];
   if (apps.length > 0) {
-    const totalApplied = apps.reduce((s, a) => s + Number(a.amount || 0), 0);
+    const totalApplied = apps.reduce((s, a) => s + Number(a.applied_amount || 0), 0);
     autoTable(doc, {
       startY: y,
       head: [['Folio', 'N° Fiscal', 'Monto aplicado']],
       body: apps.map((a) => [
         a.invoices?.folio || '—',
         a.invoices?.numero_fiscal || '—',
-        formatCLP(Number(a.amount || 0)),
+        formatCLP(Number(a.applied_amount || 0)),
       ]),
       foot: [['', 'Total aplicado', formatCLP(totalApplied)]],
       theme: 'grid',
