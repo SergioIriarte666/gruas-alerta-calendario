@@ -640,12 +640,18 @@ export const EnhancedServiceForm = ({
 
       console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
+      // Obtener operatorId desde operators[] o desde campo legacy operator
       const assignedOperator = finalData.operators?.[0];
-      if (assignedOperator?.operatorId && result?.id) {
+      const operatorId = assignedOperator?.operatorId ||
+                         (finalData as any).operator?.id ||
+                         result?.operator?.id ||
+                         null;
+
+      if (operatorId && result?.id) {
         supabase.functions
           .invoke('send-whatsapp-operator', {
             body: {
-              operatorId: assignedOperator.operatorId,
+              operatorId,
               folio: result.folio,
               clientName: result.client?.name || '',
               clientPhone: result.client?.phone || '',
