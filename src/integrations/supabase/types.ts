@@ -1764,6 +1764,87 @@ export type Database = {
         }
         Relationships: []
       }
+      import_history_log: {
+        Row: {
+          created_at: string
+          date_range_end: string | null
+          date_range_start: string | null
+          error_count: number
+          file_name: string
+          id: string
+          import_type: string
+          imported_count: number
+          organization_id: string
+          skipped_count: number
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          date_range_end?: string | null
+          date_range_start?: string | null
+          error_count?: number
+          file_name: string
+          id?: string
+          import_type: string
+          imported_count?: number
+          organization_id: string
+          skipped_count?: number
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          date_range_end?: string | null
+          date_range_start?: string | null
+          error_count?: number
+          file_name?: string
+          id?: string
+          import_type?: string
+          imported_count?: number
+          organization_id?: string
+          skipped_count?: number
+          status?: string | null
+        }
+        Relationships: []
+      }
+      import_rut_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          import_type: string
+          mapped_entity_id: string | null
+          mapped_entity_name: string | null
+          organization_id: string
+          resolution: string
+          source_name: string
+          source_rut: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          import_type: string
+          mapped_entity_id?: string | null
+          mapped_entity_name?: string | null
+          organization_id: string
+          resolution: string
+          source_name: string
+          source_rut: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          import_type?: string
+          mapped_entity_id?: string | null
+          mapped_entity_name?: string | null
+          organization_id?: string
+          resolution?: string
+          source_name?: string
+          source_rut?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       income_categories: {
         Row: {
           color: string | null

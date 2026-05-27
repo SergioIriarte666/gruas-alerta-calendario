@@ -39,6 +39,9 @@ import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, get
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
+import { usePDFGeneration } from '@/hooks/usePDFGeneration';
+import { generateQuotePDF } from '@/utils/pdf/quotePdfGenerator';
+import { generateWorkOrderPDF } from '@/utils/pdf/workOrderPdfGenerator';
 
 interface ServiceDetailsModalProps {
   service: Service | null;
@@ -248,6 +251,21 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     generatePDF(serviceData, totalCosts, totalCommissions, netProfit);
   };
 
+  // Generación de documentos comerciales
+  const { isGenerating: isGeneratingDoc, generateAndDownload } = usePDFGeneration();
+
+  const handleGenerateQuote = () =>
+    generateAndDownload(
+      () => generateQuotePDF(serviceData as Service),
+      `cotizacion-${serviceData.folio}.pdf`,
+    );
+
+  const handleGenerateWorkOrder = () =>
+    generateAndDownload(
+      () => generateWorkOrderPDF(serviceData as Service),
+      `orden-trabajo-${serviceData.folio}.pdf`,
+    );
+
   const handleNotifyPurchaseOrder = async () => {
     const oc = serviceData.purchaseOrderNumber || serviceData.purchaseOrder;
     if (!oc) return;
@@ -320,6 +338,26 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               >
                 <Download className="size-4" />
                 {isGenerating ? 'Generando...' : 'Descargar PDF'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateQuote}
+                disabled={isGeneratingDoc}
+                className="flex items-center gap-2"
+              >
+                <FileText className="size-4" />
+                Cotización
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateWorkOrder}
+                disabled={isGeneratingDoc}
+                className="flex items-center gap-2"
+              >
+                <FileText className="size-4" />
+                Orden de Trabajo
               </Button>
             </div>
           </div>
