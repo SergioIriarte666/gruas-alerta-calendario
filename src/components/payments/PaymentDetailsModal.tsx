@@ -141,7 +141,6 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
             </div>
           )}
 
-          <div className="flex justify-end">
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
