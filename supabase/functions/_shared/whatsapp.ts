@@ -16,31 +16,35 @@ export async function sendWhatsAppTemplate(
     };
   }
 
+  const payload = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: 'es_CL' },
+      components: [
+        {
+          type: 'body',
+          parameters: parameters.map((text) => ({ type: 'text', text })),
+        },
+      ],
+    },
+  };
+
   const response = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to,
-      type: 'template',
-      template: {
-        name: templateName,
-        language: { code: 'es' },
-        components: [
-          {
-            type: 'body',
-            parameters: parameters.map((text) => ({ type: 'text', text })),
-          },
-        ],
-      },
-    }),
+    body: JSON.stringify(payload),
   });
 
   const data = await response.json();
   if (!response.ok) return { success: false, error: data };
+
+  console.log('WhatsApp enviado:', { to, templateName, messageId: data.messages?.[0]?.id });
   return { success: true, messageId: data.messages?.[0]?.id };
 }
 
