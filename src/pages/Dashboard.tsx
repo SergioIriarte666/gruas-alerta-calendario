@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/ui/metric-card';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -167,13 +168,20 @@ const Dashboard: React.FC = () => {
             } : undefined}
           />
           
-          <MetricCard
-            title="Servicios Programados"
-            value={metrics.futureServices}
-            tone="warning"
-            icon={CalendarClock}
-            description="Servicios futuros con fecha comprometida"
-          />
+          <Link
+            to="/calendar"
+            className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-violet-500 transition-transform hover:-translate-y-0.5"
+            aria-label="Ver servicios programados en el calendario"
+          >
+            <MetricCard
+              title="Servicios Programados"
+              value={metrics.futureServices}
+              tone="warning"
+              icon={CalendarClock}
+              description="Servicios futuros — clic para ver calendario"
+              className="cursor-pointer hover:shadow-md"
+            />
+          </Link>
           
           <MetricCard
             title="Facturas Vencidas"

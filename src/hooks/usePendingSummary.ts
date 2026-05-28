@@ -38,11 +38,21 @@ export interface ExpiringDocument {
   entityType: 'crane' | 'operator';
 }
 
+export interface UpcomingService {
+  id: string;
+  folio: string;
+  serviceDate: string;
+  clientName: string;
+  daysUntil: number;
+  status: string;
+}
+
 export interface PendingSummaryData {
   servicesWithoutOC: PendingServiceWithoutOC[];
   pendingClosures: PendingClosure[];
   overdueInvoices: OverdueInvoice[];
   expiringDocuments: ExpiringDocument[];
+  upcomingServices: UpcomingService[];
   totalCritical: number;
   hasCriticalItems: boolean;
 }
@@ -63,7 +73,8 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     completedOldRes,
     overdueRes,
     expiringCranesRes,
-    expiringOperatorsRes
+    expiringOperatorsRes,
+    upcomingServicesRes
   ] = await Promise.all([
     supabase
       .from('services')
@@ -90,7 +101,14 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .from('operators')
       .select('id, name, exam_expiry')
       .eq('is_active', true)
-      .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd'))
+      .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd')),
+    supabase
+      .from('services')
+      .select('id, folio, service_date, status, client:clients!services_client_id_fkey(id, name)')
+      .gte('service_date', todayStr)
+      .in('status', ['pending', 'quoted', 'purchase_order_pending', 'with_purchase_order', 'in_progress'])
+      .order('service_date', { ascending: true })
+      .limit(100)
   ]);
 
   // Helper: hide monthly-billing services only if they belong to the current month (safe date-only)
@@ -145,6 +163,16 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     total: inv.total,
   }));
 
+  // Process upcoming services (programmed for today and the future)
+  const upcomingServices: UpcomingService[] = (upcomingServicesRes.data || []).map((s: any) => ({
+    id: s.id,
+    folio: s.folio,
+    serviceDate: s.service_date,
+    clientName: s.client?.name ?? 'N/A',
+    daysUntil: -safeDaysSince(s.service_date, todayStr),
+    status: s.status,
+  }));
+
   // Process expiring documents
   const expiringDocuments: ExpiringDocument[] = [];
   
@@ -189,13 +217,16 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     }
   });
 
-  const totalCritical = servicesWithoutOC.length + pendingClosures.length + overdueInvoices.length;
+  // Upcoming services count as critical only when imminent (<= 3 days)
+  const urgentUpcoming = upcomingServices.filter(s => s.daysUntil <= 3).length;
+  const totalCritical = servicesWithoutOC.length + pendingClosures.length + overdueInvoices.length + urgentUpcoming;
 
   return {
     servicesWithoutOC,
     pendingClosures,
     overdueInvoices,
     expiringDocuments,
+    upcomingServices,
     totalCritical,
     hasCriticalItems: totalCritical > 0 || expiringDocuments.some(d => d.daysUntil <= 7),
   };
