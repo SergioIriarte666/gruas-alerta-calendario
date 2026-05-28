@@ -34,6 +34,7 @@ export const useWhatsAppSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'ok' | 'error'>('unknown');
+  const [lastError, setLastError] = useState<string | null>(null);
   const [testingSend, setTestingSend] = useState(false);
 
   const fetchSettings = useCallback(async () => {
@@ -134,12 +135,13 @@ export const useWhatsAppSettings = () => {
 
       if (error) throw error;
       setConnectionStatus('ok');
+      setLastError(null);
       toast.success('Mensaje de prueba enviado correctamente');
     } catch (error: any) {
       setConnectionStatus('error');
-      toast.error('No se pudo enviar el mensaje de prueba', {
-        description: error.message,
-      });
+      const msg = error?.context?.error?.message || error?.message || 'Error desconocido';
+      setLastError(msg);
+      toast.error('No se pudo enviar el mensaje de prueba', { description: msg });
     } finally {
       setTestingSend(false);
     }
@@ -154,6 +156,7 @@ export const useWhatsAppSettings = () => {
     loading,
     saving,
     connectionStatus,
+    lastError,
     testingSend,
     updateSettings,
     saveSettings,
