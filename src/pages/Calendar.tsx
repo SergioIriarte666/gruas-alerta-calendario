@@ -105,6 +105,18 @@ const Calendar = () => {
     <div className="space-y-6 animate-fade-in">
       <CalendarHeader onCreateEvent={createEvent} selectedDate={selectedDate} />
 
+      {(upcomingCounts.thisMonthCount > 0 || upcomingCounts.futureCount > 0) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 px-4 py-2 text-sm">
+          <CalendarClock className="size-4 text-violet-600" />
+          <span className="font-medium text-foreground">
+            {upcomingCounts.thisMonthCount} servicio{upcomingCounts.thisMonthCount === 1 ? '' : 's'} programado{upcomingCounts.thisMonthCount === 1 ? '' : 's'} este mes
+          </span>
+          {upcomingCounts.futureCount > 0 && (
+            <span className="text-muted-foreground">· {upcomingCounts.futureCount} en meses siguientes</span>
+          )}
+        </div>
+      )}
+
       <CalendarControls 
         viewTitle={getViewTitle()}
         viewMode={viewMode}
