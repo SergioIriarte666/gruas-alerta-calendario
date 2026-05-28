@@ -10,7 +10,7 @@ const ACTIVE_STATUSES = [
   'purchase_order_pending',
   'with_purchase_order',
   'in_progress',
-];
+] as const;
 
 /**
  * Counts services scheduled for today and tomorrow with an active status.
