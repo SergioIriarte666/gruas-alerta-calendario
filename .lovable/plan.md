@@ -1,77 +1,30 @@
+## Problema detectado
 
-## Enfoque revisado: asociación al momento del XML (sin marcar el costo previamente)
+Al escribir en Origen/Destino del modal de servicios, el desplegable casi nunca muestra coincidencias históricas — aparece "Presiona Enter para usar esta ubicación" incluso cuando existen registros previos con ese texto (ej. "Santiago Miraflores").
 
-Tu propuesta es mejor por tres razones:
-1. **No obliga al usuario a anticipar** si la factura llegará por XML (la mayoría de costos lo son).
-2. **No agrega un toggle ni campos al form de costos** — cero fricción operativa diaria.
-3. **Aprovecha 100%** lo que ya existe: la RPC `find_matching_costs_for_invoice` y `useLinkInvoiceToCost` ya hacen el trabajo pesado.
+Tras revisar `useFrequentLocations.ts` y `LocationCombobox.tsx`, hay 4 causas reales:
 
-El cambio se concentra en **mejorar el panel de asociación del modal `XMLDocumentUpload`** para que sea más inteligente, más visible y más a prueba de duplicados.
+1. **`searchLocations` busca sólo en el Top 10 ya truncado.** Cualquier ubicación que no esté entre las 10 más usadas es invisible al escribir, aunque exista en el historial. Esto explica por qué "Santiago Miraflores" no aparece: probablemente está en el histórico pero no es top-10.
+2. **Agrupación sensible a mayúsculas/acentos.** "Salfa Freire", "salfa freire" y "SALFA FREIRE" se cuentan como ubicaciones distintas, fragmentando frecuencias y empujando entradas reales fuera del Top 10.
+3. **Doble filtrado con `cmdk`.** El `Command` de shadcn aplica su propio filtro fuzzy sobre `CommandItem value`, encima del filtro nuestro → items legítimos pueden desaparecer. Falta `shouldFilter={false}`.
+4. **"Presiona Enter" no hace nada.** El `CommandInput` no tiene handler de Enter; el usuario pulsa Enter y no pasa nada (el valor ya estaba seteado por `onValueChange` al escribir, pero el popover no se cierra y no hay feedback).
 
-## Cambios propuestos (todos en el modal XML)
+## Cambios
 
-### 1. Ampliar la búsqueda de costos candidatos
-Hoy: RPC busca por `supplier_rut` + monto ±5% en ventana de ±7 días.
+### `src/hooks/services/useFrequentLocations.ts`
+- Construir un **índice completo** de ubicaciones (sin truncar a 10) usando una clave normalizada (`trim` + `toLowerCase` + `normalize('NFD')` sin diacríticos) para agrupar variantes; preservar la primera forma legible vista como `displayLocation`.
+- Exportar dos cosas separadas:
+  - `frequentOrigins` / `frequentDestinations`: Top 10 para mostrar al abrir vacío.
+  - `searchLocations(query, type)`: recorrer el **índice completo** (no el top 10), filtrar por la clave normalizada con `includes`, ordenar por `count` desc, devolver hasta 15 resultados.
+- `query` también se normaliza antes de comparar (resuelve "miraflores" vs "Miraflores" y "frutillar" vs "Frútillar").
 
-Mejoras:
-- **Ventana ampliable a ±15 días** (default 7, con botón "Ampliar búsqueda" si no encuentra match).
-- **Doble criterio de búsqueda**: primero por `supplier_id` (FK directo, más confiable), y como fallback por `supplier_rut` (texto).
-- **Excluir** costos que ya tienen `supplier_invoice_id` (ya facturados) para no contaminar la lista.
+### `src/components/services/form/LocationCombobox.tsx`
+- Pasar `shouldFilter={false}` al `<Command>` para que cmdk respete nuestro filtrado.
+- Tras `searchLocations`, si el `inputValue` no coincide exactamente con ninguna sugerencia, añadir una fila sintética "Usar '<texto>'" al final que al seleccionarla cierra el popover con el valor tal cual escrito (reemplaza el mensaje muerto de "Presiona Enter").
+- Manejar `onKeyDown` en `CommandInput`: si el usuario pulsa Enter y no hay item resaltado, commit el `inputValue` actual y cerrar el popover.
+- Cuando el usuario abre el combobox y el campo ya tiene valor (modo edición), no resetear `inputValue` ni perder el contexto.
 
-### 2. Panel de asociación rediseñado
-En el step de matching del wizard (`XMLDocumentUpload.tsx:1360-1390`), para cada documento XML mostrar:
-
-```text
-┌────────────────────────────────────────────────────────┐
-│  Factura 12345 — Proveedor X — $245.000                │
-│  Emisión: 25-may-2026                                   │
-│                                                          │
-│  💡 Encontramos 2 costos posibles de este proveedor:    │
-│                                                          │
-│  ◉ Costo del 23-may $245.000 "Repuesto bomba" [✓ exacto]│
-│  ○ Costo del 20-may $240.000 "Mantención" [≈ similar]   │
-│  ○ Crear nuevo costo (no vincular a ninguno existente)  │
-│                                                          │
-│  [Ver detalle del costo seleccionado] [Ampliar ±15 días]│
-└────────────────────────────────────────────────────────┘
-```
-
-Detalles:
-- **Auto-seleccionar match exacto** (monto idéntico + mismo proveedor + ≤7 días).
-- **Marcar como "exacto" / "similar" / "posible"** con badges del design system (violeta/ámbar).
-- Botón **"Ver detalle"** que abre un popover con descripción, categoría, grúa, operador asignados al costo candidato — clave para que el usuario confirme que es el correcto antes de vincular.
-- Mostrar **antigüedad** del costo ("hace 3 días") para dar contexto temporal.
-
-### 3. Prevención activa de duplicados
-- Si hay **un match exacto único**, mostrar advertencia visual cuando el usuario intente cambiar a "Crear nuevo costo": *"⚠️ Existe un costo idéntico sin factura. ¿Seguro que quieres crear uno nuevo y dejar el otro huérfano?"* (modal de confirmación).
-- Al hacer hover sobre cada costo candidato, **resaltar** el monto, fecha y proveedor coincidentes vs el XML (visual diff).
-
-### 4. Hint en el formulario de creación de costos (opcional, mínimo)
-Sin agregar campos, solo un texto bajo el botón de guardar:
-> *"💡 Si el proveedor enviará factura electrónica después, podrás vincularla automáticamente al subir el XML — solo asegúrate de asignar el proveedor."*
-
-Esto educa sin agregar fricción.
-
-## Lo que NO hacemos (vs el plan anterior)
-
-- ❌ No agregamos columna `invoice_status` ni enum
-- ❌ No agregamos toggle "pendiente factura" al CostForm
-- ❌ No creamos vista "costos esperando factura"
-- ❌ No tocamos triggers ni schema de `costs`
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---|---|
-| `src/components/suppliers/XMLDocumentUpload.tsx` | Rediseño del panel de matching (líneas ~1360-1390), confirm de duplicado, botón ampliar ventana, panel de detalle del costo candidato |
-| `src/components/suppliers/XMLDocumentUpload.tsx` (analyze step, ~529-565) | Llamar a la RPC con búsqueda por `supplier_id` además de `rut`, excluir ya-facturados |
-| RPC `find_matching_costs_for_invoice` (migración SQL) | Aceptar parámetro opcional `p_supplier_id`, `p_window_days` (default 7), excluir costos con `supplier_invoice_id IS NOT NULL` |
-| `src/components/costs/CostForm.tsx` | Solo agregar el hint informativo (1 línea de texto) |
-
-## Resultado para el usuario
-
-- **Caso "factura llega 3 días después"**: usuario crea costo manualmente con el proveedor asignado. Cuando llega el XML, sube el archivo → el modal muestra el costo pre-seleccionado con badge "✓ exacto" → confirma → queda vinculado. Cero duplicados.
-- **Caso "factura llega el mismo día"**: funciona igual que hoy.
-- **Caso "factura ya estaba importada"**: el sistema detecta duplicado (ya existe), bloquea import.
-
-Mucho más simple, menos invasivo, y resuelve el problema real.
+## Fuera de alcance
+- No tocar el esquema de servicios ni la persistencia (las ubicaciones se siguen guardando como texto libre en `services.origin/destination`).
+- No agregar tabla dedicada de ubicaciones — el histórico se sigue derivando en memoria de `useServices`.
+- No cambiar el diseño visual (mantiene tokens, tipografía y patrón actual).
