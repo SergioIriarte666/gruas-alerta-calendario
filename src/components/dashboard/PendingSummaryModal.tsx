@@ -10,7 +10,8 @@ import {
   Clock, 
   AlertTriangle, 
   Shield,
-  Bell
+  Bell,
+  CalendarClock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -47,10 +48,11 @@ export const PendingSummaryModal: React.FC = () => {
 
   if (!data) return null;
 
-  const { servicesWithoutOC, pendingClosures, overdueInvoices, expiringDocuments } = data;
+  const { servicesWithoutOC, pendingClosures, overdueInvoices, expiringDocuments, upcomingServices } = data;
 
   const criticalDocs = expiringDocuments.filter(d => d.daysUntil <= 7);
   const warningDocs = expiringDocuments.filter(d => d.daysUntil > 7);
+  const urgentUpcoming = upcomingServices.filter(s => s.daysUntil <= 3).length;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
@@ -145,6 +147,24 @@ export const PendingSummaryModal: React.FC = () => {
                     label: toTitleCase(d.entityName),
                     sublabel: d.documentType,
                     extra: d.daysUntil <= 0 ? 'Vencido' : `${d.daysUntil}d`,
+                  }))}
+                  onNavigate={handleClose}
+                />
+
+                <PendingCategoryCard
+                  icon={CalendarClock}
+                  title="Próximos Servicios"
+                  count={upcomingServices.length}
+                  description={upcomingServices.length > 0
+                    ? `${urgentUpcoming > 0 ? `${urgentUpcoming} en ≤3 días, ` : ''}${upcomingServices.length} programados`
+                    : "Sin servicios programados próximamente"}
+                  severity={urgentUpcoming > 0 ? 'warning' : upcomingServices.length > 0 ? 'info' as any : 'success'}
+                  linkTo="/calendar"
+                  details={upcomingServices.map(s => ({
+                    id: s.id,
+                    label: s.folio,
+                    sublabel: toTitleCase(s.clientName),
+                    extra: s.daysUntil === 0 ? 'Hoy' : s.daysUntil === 1 ? 'Mañana' : `en ${s.daysUntil}d`,
                   }))}
                   onNavigate={handleClose}
                 />
