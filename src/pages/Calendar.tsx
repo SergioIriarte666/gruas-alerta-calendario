@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, CalendarClock } from 'lucide-react';
 import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarControls } from '@/components/calendar/CalendarControls';
@@ -27,6 +27,21 @@ const Calendar = () => {
   } = useCalendar();
   
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Count upcoming service events for awareness (today and onwards)
+  const upcomingCounts = useMemo(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const thisMonth = format(new Date(), 'yyyy-MM');
+    let thisMonthCount = 0;
+    let futureCount = 0;
+    for (const ev of events) {
+      if (ev.type !== 'service' || ev.status !== 'scheduled') continue;
+      if (!ev.date || ev.date < todayStr) continue;
+      if (ev.date.startsWith(thisMonth)) thisMonthCount++;
+      else futureCount++;
+    }
+    return { thisMonthCount, futureCount };
+  }, [events]);
 
   const getEventTypeColor = (type: CalendarEvent['type']) => {
     switch (type) {
