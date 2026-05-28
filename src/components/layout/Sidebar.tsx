@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { useUpcomingServicesCount } from '@/hooks/useUpcomingServicesCount';
 import { 
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
@@ -33,6 +34,7 @@ export const Sidebar = ({
   const { hasModuleAccess } = useUserModulePermissions();
   const location = useLocation();
   const companyName = settings?.company?.name || 'TMS Grúas';
+  const { data: upcomingCount = 0 } = useUpcomingServicesCount();
 
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['principal']);
 
@@ -203,6 +205,7 @@ export const Sidebar = ({
     onNavigate?: () => void;
   }> = ({ item, collapsed, onNavigate }) => {
     const isActive = location.pathname === item.href;
+    const showBadge = item.href === '/calendar' && upcomingCount > 0;
     const link = (
       <Link
         to={item.href}
@@ -220,6 +223,20 @@ export const Sidebar = ({
         )}
         <item.icon className={cn("size-4 shrink-0", isActive && "text-primary")} strokeWidth={isActive ? 2.5 : 2} />
         {!collapsed && <span className="truncate">{item.name}</span>}
+        {showBadge && !collapsed && (
+          <span
+            className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-violet-600 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+            aria-label={`${upcomingCount} servicios programados para hoy o mañana`}
+          >
+            {upcomingCount}
+          </span>
+        )}
+        {showBadge && collapsed && (
+          <span
+            className="absolute -right-0.5 -top-0.5 inline-flex size-2 rounded-full bg-violet-600 ring-2 ring-card"
+            aria-label={`${upcomingCount} servicios programados para hoy o mañana`}
+          />
+        )}
       </Link>
     );
 
@@ -228,7 +245,7 @@ export const Sidebar = ({
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>{link}</TooltipTrigger>
           <TooltipContent side="right" className="bg-foreground text-background text-xs font-medium">
-            {item.name}
+            {item.name}{showBadge ? ` · ${upcomingCount}` : ''}
           </TooltipContent>
         </Tooltip>
       );
