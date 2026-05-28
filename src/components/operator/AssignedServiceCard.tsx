@@ -5,7 +5,7 @@ import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play, Package
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
-import { getTodayString, safeDaysSince } from '@/utils/timezoneUtils';
+import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 interface AssignedServiceCardProps {
   service: Service;
   showDeliveryAction?: boolean;
@@ -32,7 +32,7 @@ export const AssignedServiceCard = ({
   // Imminence badge: Hoy / Mañana / en Xd (only meaningful for non-completed services)
   const getImminenceBadge = () => {
     if (!service.serviceDate) return null;
-    const todayStr = getTodayString();
+    const todayStr = getTodayLocal();
     const days = -safeDaysSince(service.serviceDate, todayStr); // positive = future
     if (days === 0) {
       return <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-600 text-white">Hoy</span>;
