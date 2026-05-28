@@ -1,9 +1,14 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
-import { notifyAdmins, sendWhatsAppTemplate, normalizeChileanPhone } from "../_shared/whatsapp.ts";
+import {
+  sendWhatsAppTemplate,
+  sendWhatsAppTemplateBulk,
+  normalizeChileanPhone,
+} from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 type AdminWhatsAppRequest = {
@@ -93,39 +98,85 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let notified = 0;
-    if (testMode && testPhone) {
-      await sendWhatsAppTemplate(normalizeChileanPhone(testPhone), template.name, parameters);
-      notified = 1;
-    } else {
-      const numbers = [
-        (waSettings as any)?.admin_phone_1 || Deno.env.get("ADMIN_WHATSAPP_1"),
-        (waSettings as any)?.admin_phone_2 || Deno.env.get("ADMIN_WHATSAPP_2"),
-      ].filter(Boolean) as string[];
+    const sendOpts = {
+      event,
+      triggeredBy: authContext.user?.id ?? null,
+      context: (data as Record<string, unknown>) ?? {},
+    };
 
-      if (numbers.length === 0) {
+    if (testMode && testPhone) {
+      const norm = normalizeChileanPhone(testPhone);
+      if (!norm.ok) {
         return withHeaders(
-          jsonResponse({ error: "No hay números de administrador configurados" }, 422),
+          jsonResponse({ success: false, error: { code: "INVALID_PHONE", message: norm.reason } }, 400),
           corsHeaders,
         );
       }
-
-      await Promise.all(
-        numbers.map((n) => sendWhatsAppTemplate(normalizeChileanPhone(n), template.name, parameters)),
+      const result = await sendWhatsAppTemplate(norm.phone, template.name, parameters, sendOpts);
+      return withHeaders(
+        jsonResponse(
+          { success: result.success, event, notified: result.success ? 1 : 0, error: result.error },
+          result.success ? 200 : 502,
+        ),
+        corsHeaders,
       );
-      notified = numbers.length;
     }
 
+    const rawNumbers = [
+      (waSettings as any)?.admin_phone_1 || Deno.env.get("ADMIN_WHATSAPP_1"),
+      (waSettings as any)?.admin_phone_2 || Deno.env.get("ADMIN_WHATSAPP_2"),
+    ].filter(Boolean) as string[];
+
+    if (rawNumbers.length === 0) {
+      return withHeaders(
+        jsonResponse({ error: "No hay números de administrador configurados" }, 422),
+        corsHeaders,
+      );
+    }
+
+    const normalized = rawNumbers.map((n) => normalizeChileanPhone(n));
+    const valid = normalized.filter((n) => n.ok).map((n) => n.phone);
+    const invalid = normalized.filter((n) => !n.ok);
+
+    if (valid.length === 0) {
+      return withHeaders(
+        jsonResponse(
+          {
+            success: false,
+            error: {
+              code: "ALL_PHONES_INVALID",
+              message: "Ningún número de administrador tiene formato válido",
+              invalid: invalid.map((i) => ({ phone: i.phone, reason: i.reason })),
+            },
+          },
+          422,
+        ),
+        corsHeaders,
+      );
+    }
+
+    const outcome = await sendWhatsAppTemplateBulk(valid, template.name, parameters, sendOpts);
+    const status = outcome.failed.length === 0 ? 200 : outcome.notified === 0 ? 502 : 207;
+
     return withHeaders(
-      jsonResponse({
-        success: true,
-        event,
-        notified,
-      }),
+      jsonResponse(
+        {
+          success: outcome.notified > 0,
+          event,
+          notified: outcome.notified,
+          failed: outcome.failed,
+          invalid: invalid.map((i) => ({ phone: i.phone, reason: i.reason })),
+        },
+        status,
+      ),
       corsHeaders,
     );
   } catch (error) {
-    return withHeaders(jsonResponse({ success: false, error }, 500), corsHeaders);
+    const message = error instanceof Error ? error.message : String(error);
+    return withHeaders(
+      jsonResponse({ success: false, error: { code: "INTERNAL_ERROR", message } }, 500),
+      corsHeaders,
+    );
   }
 });
 
