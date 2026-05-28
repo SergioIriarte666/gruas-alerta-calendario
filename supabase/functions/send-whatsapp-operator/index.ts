@@ -4,7 +4,45 @@ import { normalizeChileanPhone, sendWhatsAppTemplate } from "../_shared/whatsapp
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const MONTHS_ES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+const WEEKDAYS_ES = [
+  "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado",
+];
+
+/**
+ * Formatea una fecha de servicio sin sufrir el corrimiento de timezone que
+ * sucede al pasar `"YYYY-MM-DD"` directo a `new Date(...)` en Deno (UTC).
+ */
+function formatServiceDate(value: string): string {
+  if (!value) return "";
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (dateOnlyMatch) {
+    const [, y, m, d] = dateOnlyMatch;
+    const year = Number(y);
+    const month = Number(m);
+    const day = Number(d);
+    // Construimos en UTC para que getUTC* devuelva los valores tal cual
+    const utc = new Date(Date.UTC(year, month - 1, day));
+    const weekday = WEEKDAYS_ES[utc.getUTCDay()];
+    const monthName = MONTHS_ES[utc.getUTCMonth()];
+    return `${weekday} ${day} de ${monthName} de ${year}`;
+  }
+  // Si trae hora, dejamos que Date la interprete y formateamos en es-CL
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("es-CL", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 type OperatorWhatsAppRequest = {
   operatorId: string;
@@ -22,7 +60,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const authContext = await requireUserRoles(req, ["admin"]);
+    const authContext = await requireUserRoles(req, ["admin", "operator"]);
     if ("response" in authContext) {
       return withHeaders(authContext.response, corsHeaders);
     }
@@ -77,32 +115,48 @@ Deno.serve(async (req: Request) => {
     }
 
     const operatorName = (operator?.name || "Operador") as string;
-    const operatorPhone = (operator?.phone || "").trim();
+    const operatorPhone = (operator?.phone || "").toString().trim();
     if (!operatorPhone) {
       return withHeaders(
-        jsonResponse({ success: false, code: "NO_PHONE", error: "Operador sin teléfono" }, 422),
+        jsonResponse(
+          { success: false, error: { code: "NO_PHONE", message: "Operador sin teléfono" } },
+          422,
+        ),
         corsHeaders,
       );
     }
 
-    const to = normalizeChileanPhone(operatorPhone);
+    const normalized = normalizeChileanPhone(operatorPhone);
+    if (!normalized.ok) {
+      return withHeaders(
+        jsonResponse(
+          { success: false, error: { code: "INVALID_PHONE", message: normalized.reason } },
+          422,
+        ),
+        corsHeaders,
+      );
+    }
 
-    const formattedDate = new Date(serviceDate).toLocaleDateString("es-CL", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const formattedDate = formatServiceDate(serviceDate);
 
-    const result = await sendWhatsAppTemplate(to, "servicio_asignado", [
-      operatorName,
-      String(folio),
-      formattedDate,
-      origin || "",
-      destination || "",
-      clientName || "",
-      clientPhone || "",
-    ]);
+    const result = await sendWhatsAppTemplate(
+      normalized.phone,
+      "servicio_asignado",
+      [
+        operatorName,
+        String(folio),
+        formattedDate,
+        origin || "",
+        destination || "",
+        clientName || "",
+        clientPhone || "",
+      ],
+      {
+        event: "servicio_asignado",
+        triggeredBy: authContext.user?.id ?? null,
+        context: { folio, operatorId, serviceDate, clientName },
+      },
+    );
 
     if (!result.success) {
       return withHeaders(
@@ -120,6 +174,10 @@ Deno.serve(async (req: Request) => {
       corsHeaders,
     );
   } catch (error) {
-    return withHeaders(jsonResponse({ success: false, error }, 500), corsHeaders);
+    const message = error instanceof Error ? error.message : String(error);
+    return withHeaders(
+      jsonResponse({ success: false, error: { code: "INTERNAL_ERROR", message } }, 500),
+      corsHeaders,
+    );
   }
 });

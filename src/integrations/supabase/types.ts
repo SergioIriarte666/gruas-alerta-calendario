@@ -5413,6 +5413,60 @@ export type Database = {
           },
         ]
       }
+      whatsapp_message_log: {
+        Row: {
+          attempts: number
+          context: Json
+          created_at: string
+          direction: string
+          error_code: string | null
+          error_message: string | null
+          event: string | null
+          id: string
+          parameters: Json
+          provider_message_id: string | null
+          recipient_phone: string
+          status: string
+          template_name: string
+          triggered_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          context?: Json
+          created_at?: string
+          direction?: string
+          error_code?: string | null
+          error_message?: string | null
+          event?: string | null
+          id?: string
+          parameters?: Json
+          provider_message_id?: string | null
+          recipient_phone: string
+          status?: string
+          template_name: string
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          context?: Json
+          created_at?: string
+          direction?: string
+          error_code?: string | null
+          error_message?: string | null
+          event?: string | null
+          id?: string
+          parameters?: Json
+          provider_message_id?: string | null
+          recipient_phone?: string
+          status?: string
+          template_name?: string
+          triggered_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_settings: {
         Row: {
           admin_phone_1: string | null
