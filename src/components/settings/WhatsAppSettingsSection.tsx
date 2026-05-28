@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, MessageCircle, Send, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Loader2, MessageCircle, Send, CheckCircle, XCircle, AlertCircle, Settings as SettingsIcon, History } from 'lucide-react';
 import { useWhatsAppSettings, type WhatsAppSettings } from '@/hooks/useWhatsAppSettings';
 import { toast } from 'sonner';
+import { WhatsAppMessageHistory } from './WhatsAppMessageHistory';
 
 type NotificationKey = Exclude<keyof WhatsAppSettings, 'id' | 'adminPhone1' | 'adminPhone2'>;
 
@@ -23,12 +25,36 @@ const notifications: { key: NotificationKey; label: string; desc: string }[] = [
   { key: 'notifyDailyReminder', label: 'Recordatorio día anterior al operador', desc: 'WhatsApp al operador la noche anterior a su servicio' },
 ];
 
+// Validación visual de teléfono chileno (móvil)
+function validateChileanPhone(raw: string): { ok: boolean; normalized: string; reason?: string } {
+  if (!raw) return { ok: false, normalized: '', reason: 'Vacío' };
+  let digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  if (digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length === 9 && digits.startsWith('9')) digits = `56${digits}`;
+  else if (digits.length === 8) digits = `569${digits}`;
+  else if (!digits.startsWith('56')) digits = `56${digits}`;
+  const ok = /^569\d{8}$/.test(digits);
+  return ok ? { ok, normalized: `+${digits}` } : { ok: false, normalized: digits, reason: 'Formato inválido (esperado +569XXXXXXXX)' };
+}
+
+const PhoneHint: React.FC<{ value: string }> = ({ value }) => {
+  if (!value) return null;
+  const r = validateChileanPhone(value);
+  return (
+    <p className={`text-xs ${r.ok ? 'text-primary' : 'text-destructive'}`}>
+      {r.ok ? `✓ ${r.normalized}` : `✗ ${r.reason}`}
+    </p>
+  );
+};
+
 export const WhatsAppSettingsSection = () => {
   const {
     settings,
     loading,
     saving,
     connectionStatus,
+    lastError,
     testingSend,
     updateSettings,
     saveSettings,
@@ -50,7 +76,7 @@ export const WhatsAppSettingsSection = () => {
         <CheckCircle className="mr-1 h-3 w-3" /> Conectado
       </Badge>
     ) : connectionStatus === 'error' ? (
-      <Badge variant="destructive">
+      <Badge variant="destructive" title={lastError || undefined}>
         <XCircle className="mr-1 h-3 w-3" /> Error
       </Badge>
     ) : (
@@ -76,7 +102,23 @@ export const WhatsAppSettingsSection = () => {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent>
+        {connectionStatus === 'error' && lastError && (
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+            <strong>Último error de Meta:</strong> {lastError}
+          </div>
+        )}
+        <Tabs defaultValue="config">
+          <TabsList className="mb-4">
+            <TabsTrigger value="config">
+              <SettingsIcon className="mr-2 h-4 w-4" /> Configuración
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="mr-2 h-4 w-4" /> Historial
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="config" className="space-y-6">
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Números de administradores</h3>
           <p className="text-sm text-muted-foreground">
@@ -91,6 +133,7 @@ export const WhatsAppSettingsSection = () => {
                 value={settings.adminPhone1}
                 onChange={(e) => updateSettings({ adminPhone1: e.target.value })}
               />
+              <PhoneHint value={settings.adminPhone1} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="wa-admin-2">Administrador 2</Label>
@@ -100,6 +143,7 @@ export const WhatsAppSettingsSection = () => {
                 value={settings.adminPhone2}
                 onChange={(e) => updateSettings({ adminPhone2: e.target.value })}
               />
+              <PhoneHint value={settings.adminPhone2} />
             </div>
           </div>
         </div>
@@ -156,6 +200,12 @@ export const WhatsAppSettingsSection = () => {
             Guardar configuración
           </Button>
         </div>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <WhatsAppMessageHistory />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
