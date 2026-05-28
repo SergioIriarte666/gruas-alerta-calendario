@@ -46,12 +46,14 @@ function formatServiceDate(value: string): string {
 
 type OperatorWhatsAppRequest = {
   operatorId: string;
+  serviceId?: string;
   folio: string;
   clientName: string;
   clientPhone: string;
   serviceDate: string;
   origin: string;
   destination: string;
+  force?: boolean;
 };
 
 Deno.serve(async (req: Request) => {
@@ -86,12 +88,14 @@ Deno.serve(async (req: Request) => {
     const body: OperatorWhatsAppRequest = await req.json();
     const {
       operatorId,
+      serviceId,
       folio,
       clientName,
       clientPhone,
       serviceDate,
       origin,
       destination,
+      force,
     } = body ?? ({} as OperatorWhatsAppRequest);
 
     if (!operatorId || !folio || !serviceDate) {
@@ -99,6 +103,29 @@ Deno.serve(async (req: Request) => {
         jsonResponse({ error: "operatorId, folio y serviceDate son requeridos" }, 400),
         corsHeaders,
       );
+    }
+
+    // ── Idempotencia: si el mismo operador ya fue notificado para este servicio, no reenviar
+    if (serviceId && !force) {
+      const { data: existing } = await authContext.supabaseAdmin
+        .from("services")
+        .select("operator_notified_at, operator_notified_for")
+        .eq("id", serviceId)
+        .maybeSingle();
+      if (
+        existing?.operator_notified_at &&
+        existing?.operator_notified_for === operatorId
+      ) {
+        return withHeaders(
+          jsonResponse({
+            success: true,
+            skipped: true,
+            reason: "Operador ya notificado para este servicio",
+            notifiedAt: existing.operator_notified_at,
+          }),
+          corsHeaders,
+        );
+      }
     }
 
     const { data: operator, error: operatorError } = await authContext.supabaseAdmin
@@ -163,6 +190,21 @@ Deno.serve(async (req: Request) => {
         jsonResponse({ success: false, error: result.error }, 502),
         corsHeaders,
       );
+    }
+
+    // Marcar como notificado en services para idempotencia futura
+    if (serviceId) {
+      try {
+        await authContext.supabaseAdmin
+          .from("services")
+          .update({
+            operator_notified_at: new Date().toISOString(),
+            operator_notified_for: operatorId,
+          })
+          .eq("id", serviceId);
+      } catch (e) {
+        console.warn("[send-whatsapp-operator] no se pudo marcar operator_notified_at:", e);
+      }
     }
 
     return withHeaders(
