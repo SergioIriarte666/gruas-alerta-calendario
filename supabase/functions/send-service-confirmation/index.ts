@@ -12,7 +12,7 @@ const corsHeaders = {
 
 interface ServiceConfirmationRequest {
   serviceId: string;
-  clientEmail: string;
+  clientEmail?: string;
   folio: string;
   origin: string;
   destination: string;
@@ -54,7 +54,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { 
       serviceId, 
-      clientEmail, 
       folio, 
       origin, 
       destination, 
@@ -63,6 +62,29 @@ const handler = async (req: Request): Promise<Response> => {
       clientName 
     }: ServiceConfirmationRequest = await req.json();
 
+    // ── Derive recipient email server-side from the service's client (do NOT trust body input) ──
+    if (!serviceId || typeof serviceId !== 'string') {
+      return new Response(JSON.stringify({ error: 'serviceId requerido' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const { data: serviceRow, error: serviceError } = await supabase
+      .from('services')
+      .select('client_id, clients ( email )')
+      .eq('id', serviceId)
+      .maybeSingle();
+    if (serviceError || !serviceRow) {
+      return new Response(JSON.stringify({ error: 'Servicio no encontrado' }), {
+        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    const clientEmail = (serviceRow as any).clients?.email?.trim().toLowerCase();
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!clientEmail || !EMAIL_REGEX.test(clientEmail) || clientEmail.length > 254) {
+      return new Response(JSON.stringify({ error: 'El cliente del servicio no tiene un email válido registrado' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
     console.log(`Procesando confirmación para: ${clientEmail}, Folio: ${folio}`);
 
     // Obtener datos de la empresa

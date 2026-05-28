@@ -109,7 +109,25 @@ const handler = async (req: Request): Promise<Response> => {
       const token = authHeader.replace("Bearer ", "");
       const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
       if (!claimsError && claimsData?.claims) {
-        authenticated = true;
+        // Manual triggers require admin role (the report contains sensitive financial data
+        // and sends emails to admin recipients — only admins may dispatch it on demand)
+        const callerUid = (claimsData.claims as any).sub as string | undefined;
+        if (callerUid) {
+          const { data: roleRow } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', callerUid)
+            .eq('role', 'admin')
+            .maybeSingle();
+          if (roleRow) {
+            authenticated = true;
+          } else {
+            return new Response(JSON.stringify({ error: 'Forbidden: admin role required' }), {
+              status: 403,
+              headers: { "Content-Type": "application/json", ...corsHeaders },
+            });
+          }
+        }
       }
     }
 

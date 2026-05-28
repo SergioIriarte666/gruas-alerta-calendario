@@ -20,14 +20,15 @@ export class AuthValidator {
       throw new Error('Usuario no autenticado');
     }
 
-    // Verify user is admin
-    const { data: profile, error: profileError } = await this.supabase
-      .from('profiles')
+    // Verify user is admin via the authoritative user_roles table (matches RLS source of truth)
+    const { data: roleRow, error: roleError } = await this.supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (roleError || !roleRow) {
       throw new Error('Solo los administradores pueden generar respaldos');
     }
 
