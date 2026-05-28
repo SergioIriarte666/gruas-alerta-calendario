@@ -270,6 +270,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [matchedCosts, setMatchedCosts] = useState<Record<string, MatchedCost[]>>({});
   const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
   const [isSearchingMatches, setIsSearchingMatches] = useState(false);
+  const [expandedSearchKeys, setExpandedSearchKeys] = useState<Set<string>>(new Set());
+  const [expandingSearchKey, setExpandingSearchKey] = useState<string | null>(null);
   
   const {
     suppliers,
