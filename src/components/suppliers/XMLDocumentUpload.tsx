@@ -310,6 +310,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setDocumentDescriptionOverrides({});
       setExpandedDocumentDetails({});
       setHistoricalGlosaSuggestions({});
+      setExpandedSearchKeys(new Set());
+      setMatchedCosts({});
+      setLinkDecisions({});
     },
     onParsed: initAfterParse,
   });
