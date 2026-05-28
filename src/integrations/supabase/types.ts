@@ -4419,6 +4419,8 @@ export type Database = {
           observations: string | null
           operator_commission: number | null
           operator_id: string | null
+          operator_notified_at: string | null
+          operator_notified_for: string | null
           origin: string | null
           outsourced_cost: number | null
           outsourced_notes: string | null
@@ -4471,6 +4473,8 @@ export type Database = {
           observations?: string | null
           operator_commission?: number | null
           operator_id?: string | null
+          operator_notified_at?: string | null
+          operator_notified_for?: string | null
           origin?: string | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
@@ -4523,6 +4527,8 @@ export type Database = {
           observations?: string | null
           operator_commission?: number | null
           operator_id?: string | null
+          operator_notified_at?: string | null
+          operator_notified_for?: string | null
           origin?: string | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
@@ -5412,6 +5418,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_alert_dedupe: {
+        Row: {
+          alert_key: string
+          context: Json
+          created_at: string
+          id: string
+          sent_for_date: string
+        }
+        Insert: {
+          alert_key: string
+          context?: Json
+          created_at?: string
+          id?: string
+          sent_for_date?: string
+        }
+        Update: {
+          alert_key?: string
+          context?: Json
+          created_at?: string
+          id?: string
+          sent_for_date?: string
+        }
+        Relationships: []
       }
       whatsapp_message_log: {
         Row: {
