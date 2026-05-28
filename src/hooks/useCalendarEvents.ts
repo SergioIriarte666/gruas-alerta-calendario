@@ -57,13 +57,18 @@ export const useCalendarEvents = () => {
         source: 'manual' as const,
       }));
 
-      // Services → calendar events
+      // Services → calendar events (aligned with service_status enum in BD)
       const serviceStatusMap: Record<string, CalendarEvent['status']> = {
         pending: 'scheduled',
-        en_route: 'scheduled',
+        quoted: 'scheduled',
+        purchase_order_pending: 'scheduled',
+        with_purchase_order: 'scheduled',
         in_progress: 'scheduled',
+        inspection_completed: 'scheduled',
+        invoiced: 'completed',
         completed: 'completed',
         cancelled: 'cancelled',
+        failed: 'cancelled',
       };
 
       const serviceEvents: CalendarEvent[] = (servicesRes.data || []).map((s: any) => {
