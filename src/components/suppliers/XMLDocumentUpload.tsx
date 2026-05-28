@@ -1458,27 +1458,116 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     : 'border-border/60 bg-muted/30'
                             )}
                           >
-                            {hasMatches && (
-                              <div className="flex items-center gap-2 rounded bg-info/15 px-2 py-1.5 text-xs text-info">
-                                <Link2 className="size-3.5 flex-shrink-0" />
-                                <span className="font-medium">🔗 Costo encontrado:</span>
-                                <Select
-                                  value={currentDecision}
-                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [documentKey]: val }))}
-                                >
-                                  <SelectTrigger className="h-7 min-w-[200px] flex-1 bg-background text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="new">➕ Crear nuevo pago</SelectItem>
-                                    {costsForDoc.map(cost => (
-                                      <SelectItem key={cost.id} value={cost.id}>
-                                        🔗 {cost.description} — ${Number(cost.amount).toLocaleString('es-CL')} — {cost.date}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                            {hasMatches ? (
+                              <div className="rounded-md border border-info/30 bg-info/10 p-2.5 text-xs">
+                                <div className="mb-2 flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 font-medium text-info">
+                                    <Link2 className="size-3.5" />
+                                    Se encontraron {costsForDoc.length} costo{costsForDoc.length > 1 ? 's' : ''} de este proveedor
+                                  </div>
+                                  {!expandedSearchKeys.has(documentKey) && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[11px] text-info hover:bg-info/20"
+                                      disabled={expandingSearchKey === documentKey}
+                                      onClick={() => expandMatchSearchForDoc(document, 15)}
+                                    >
+                                      {expandingSearchKey === documentKey ? (
+                                        <Loader2 className="mr-1 size-3 animate-spin" />
+                                      ) : null}
+                                      Ampliar ±15 días
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  {costsForDoc.map(cost => {
+                                    const quality = getMatchQuality(cost, document);
+                                    const ageLabel = getCostAgeLabel(cost, document);
+                                    const isSelected = currentDecision === cost.id;
+                                    const toneClass =
+                                      quality.tone === 'exact'
+                                        ? 'border-primary/40 bg-primary/10 text-primary'
+                                        : quality.tone === 'similar'
+                                          ? 'border-warning/40 bg-warning/10 text-warning'
+                                          : 'border-border bg-muted text-muted-foreground';
+                                    return (
+                                      <label
+                                        key={cost.id}
+                                        className={cn(
+                                          'flex cursor-pointer items-start gap-2 rounded border bg-background p-2 transition-colors',
+                                          isSelected ? 'border-primary ring-1 ring-primary/30' : 'border-border/60 hover:border-border'
+                                        )}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`link-decision-${documentKey}`}
+                                          checked={isSelected}
+                                          onChange={() => handleLinkDecisionChange(documentKey, cost.id, document)}
+                                          className="mt-0.5 accent-primary"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className="font-medium text-foreground">
+                                              ${Number(cost.amount).toLocaleString('es-CL')}
+                                            </span>
+                                            <span className="text-muted-foreground">·</span>
+                                            <span className="text-muted-foreground">{cost.date}</span>
+                                            <span className="text-muted-foreground">({ageLabel})</span>
+                                            <Badge variant="outline" className={cn('h-5 border px-1.5 text-[10px]', toneClass)}>
+                                              {quality.label}
+                                            </Badge>
+                                          </div>
+                                          <p className="mt-0.5 break-words text-[11px] text-muted-foreground line-clamp-2">
+                                            {cost.description || 'Sin descripción'}
+                                          </p>
+                                        </div>
+                                      </label>
+                                    );
+                                  })}
+                                  <label
+                                    className={cn(
+                                      'flex cursor-pointer items-center gap-2 rounded border bg-background p-2 transition-colors',
+                                      currentDecision === 'new'
+                                        ? 'border-primary ring-1 ring-primary/30'
+                                        : 'border-border/60 hover:border-border'
+                                    )}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`link-decision-${documentKey}`}
+                                      checked={currentDecision === 'new'}
+                                      onChange={() => handleLinkDecisionChange(documentKey, 'new', document)}
+                                      className="accent-primary"
+                                    />
+                                    <span className="text-foreground">
+                                      ➕ Crear costo nuevo (no vincular)
+                                    </span>
+                                  </label>
+                                </div>
                               </div>
+                            ) : (
+                              !isDuplicate && document.supplier_rut && document.total_amount ? (
+                                <div className="flex items-center justify-between gap-2 rounded border border-dashed border-border/70 bg-muted/30 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                                  <span>Sin costos coincidentes en ±7 días</span>
+                                  {!expandedSearchKeys.has(documentKey) && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[11px]"
+                                      disabled={expandingSearchKey === documentKey}
+                                      onClick={() => expandMatchSearchForDoc(document, 15)}
+                                    >
+                                      {expandingSearchKey === documentKey ? (
+                                        <Loader2 className="mr-1 size-3 animate-spin" />
+                                      ) : null}
+                                      Buscar en ±15 días
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : null
                             )}
 
                             {isDuplicate && duplicateInfo.existingPayment && (
