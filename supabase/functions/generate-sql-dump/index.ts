@@ -37,14 +37,15 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Verificar rol de admin
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Verificar rol de admin contra la tabla autoritativa user_roles (consistente con RLS)
+    const { data: roleRow } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
 
-    if (profile?.role !== 'admin') {
+    if (!roleRow) {
       throw new Error('Admin access required');
     }
 

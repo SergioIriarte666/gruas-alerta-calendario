@@ -49,14 +49,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid authentication');
     }
 
-    // Check if caller is admin
-    const { data: callerProfile } = await supabaseAdmin
-      .from('profiles')
+    // Check if caller is admin via user_roles (authoritative source matching RLS)
+    const { data: callerRole } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
-      .eq('id', callerUser.id)
-      .single();
+      .eq('user_id', callerUser.id)
+      .eq('role', 'admin')
+      .maybeSingle();
 
-    if (callerProfile?.role !== 'admin') {
+    if (!callerRole) {
       throw new Error('Only admins can invite users');
     }
 
@@ -134,6 +135,16 @@ const handler = async (req: Request): Promise<Response> => {
       // Don't fail the whole operation, user is created
     } else {
       console.log('✅ Profile created successfully');
+    }
+
+    // Sync the role into the authoritative user_roles table so RLS works for the new user
+    const { error: roleUpsertError } = await supabaseAdmin
+      .from('user_roles')
+      .upsert({ user_id: newUserId, role }, { onConflict: 'user_id,role' });
+    if (roleUpsertError) {
+      console.error('❌ Error upserting user_role:', roleUpsertError);
+    } else {
+      console.log('✅ user_roles entry created');
     }
 
     // If role is operator and operatorId provided, link the operator record
