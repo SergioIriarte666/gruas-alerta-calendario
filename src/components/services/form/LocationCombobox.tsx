@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,10 @@ export const LocationCombobox = ({
 
   const frequentLocations = type === 'origin' ? frequentOrigins : frequentDestinations;
 
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
   const handleSelect = (selectedValue: string) => {
     onValueChange(selectedValue);
     setInputValue(selectedValue);
@@ -51,9 +55,16 @@ export const LocationCombobox = ({
     onValueChange(search);
   };
 
-  const displayedLocations = inputValue.length >= 2 
-    ? searchLocations(inputValue, type)
-    : frequentLocations.slice(0, 5);
+  const displayedLocations =
+    inputValue.trim().length >= 2
+      ? searchLocations(inputValue, type)
+      : frequentLocations.slice(0, 5);
+
+  const trimmedInput = inputValue.trim();
+  const hasExactMatch = displayedLocations.some(
+    (item) => item.location.toLowerCase() === trimmedInput.toLowerCase()
+  );
+  const showFreeText = trimmedInput.length > 0 && !hasExactMatch;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -72,20 +83,28 @@ export const LocationCombobox = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput
             placeholder="Escribir o buscar ubicación..."
             value={inputValue}
             onValueChange={handleInputChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && trimmedInput.length > 0) {
+                e.preventDefault();
+                handleSelect(trimmedInput);
+              }
+            }}
           />
           <CommandList>
-            <CommandEmpty>
-              <div className="p-2 text-sm text-muted-foreground">
-                {inputValue ? "Presiona Enter para usar esta ubicación" : "Escribir ubicación nueva"}
-              </div>
-            </CommandEmpty>
+            {displayedLocations.length === 0 && !showFreeText && (
+              <CommandEmpty>
+                <div className="p-2 text-sm text-muted-foreground">
+                  Escribir ubicación nueva
+                </div>
+              </CommandEmpty>
+            )}
             {displayedLocations.length > 0 && (
-              <CommandGroup heading="Ubicaciones frecuentes">
+              <CommandGroup heading={trimmedInput.length >= 2 ? 'Coincidencias del historial' : 'Ubicaciones frecuentes'}>
                 {displayedLocations.map((item) => (
                   <CommandItem
                     key={item.location}
@@ -106,6 +125,23 @@ export const LocationCombobox = ({
                     </div>
                   </CommandItem>
                 ))}
+              </CommandGroup>
+            )}
+            {showFreeText && (
+              <CommandGroup heading="Nueva ubicación">
+                <CommandItem
+                  key={`__use_${trimmedInput}`}
+                  value={`__use_${trimmedInput}`}
+                  onSelect={() => handleSelect(trimmedInput)}
+                >
+                  <Check className="mr-2 size-4 opacity-0" />
+                  <div className="flex-1">
+                    <div className="font-medium">Usar "{trimmedInput}"</div>
+                    <div className="text-xs text-muted-foreground">
+                      Guardar como ubicación nueva
+                    </div>
+                  </div>
+                </CommandItem>
               </CommandGroup>
             )}
           </CommandList>
