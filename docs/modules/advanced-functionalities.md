@@ -18,7 +18,7 @@ El repositorio implementa estas capacidades principalmente en:
 - Importación XML para costos y facturas proveedor: `XMLCostUpload` y utilidades `utils/xmlParser/*`.
 
 Referencias de implementación existente:
-- Documento base de replicación: [batch-upload-and-xml-prompt.md](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/docs/development/batch-upload-and-xml-prompt.md)
+- Código relacionado: `src/components/services/EnhancedCSVUploadServices.tsx`, `src/components/costs/XMLCostUpload.tsx`, `src/hooks/useEnhancedCSVUpload.ts`, `src/utils/xmlParser/*`
 - Módulos relacionados: [costs](./costs.md), [services](./services.md), [suppliers](./suppliers.md), [inventory](./inventory.md), [supabase-integration](./supabase-integration.md)
 
 ## Arquitectura reutilizable (pipeline de ingestión)

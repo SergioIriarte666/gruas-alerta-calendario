@@ -13,7 +13,7 @@ Módulo PWA que habilita:
 - Componentes: [src/components/pwa](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/pwa)
 - Docs existentes:
   - [pwa-configuration.md](../technical/pwa-configuration.md)
-  - [pwa-development-specification.md](../technical/pwa-development-specification.md)
+  - [notifications.md](./notifications.md)
 
 ## Arquitectura y componentes
 - UI:

@@ -41,7 +41,7 @@ flowchart TD
 
 | Superficie | Rutas base | Objetivo |
 |---|---|---|
-| Backoffice administrativo | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/incomes`, `/accounts-payable`, `/settings`, etc. | Operación, finanzas, activos y administración. |
+| Backoffice administrativo | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, etc. | Operación, finanzas, activos y administración. |
 | App de operador | `/operator`, `/operator/service/:id/inspection` | Ejecución en terreno, inspección, evidencia y seguimiento de servicios asignados. |
 | Portal cliente | `/portal/*` | Autoservicio, solicitud de servicios y consulta documental. |
 
@@ -57,8 +57,8 @@ flowchart TD
 | Grúas | `/cranes` | Activos, mantenciones y trazabilidad. | [cranes](./cranes.md) |
 | Operadores | `/operators` | Administración de operadores. | [operators-admin](./operators-admin.md) |
 | Facturas | `/invoices` | Facturación, pagos y reconciliación. | [invoices](./invoices.md) |
-| Ingresos | `/incomes` | Cobros y seguimiento financiero. | [incomes](./incomes.md) |
 | Costos | `/costs` | Costos, XML/CSV y cruces operativos. | [costs](./costs.md) |
+| Centros de costo | `/cost-centers` | Catálogo administrativo para costos y reportes. | [catalogos-admin](./catalogos-admin.md) |
 | Inventario | `/inventory` | Stock, movimientos y compras enlazadas. | [inventory](./inventory.md) |
 | Proveedores | `/suppliers` | Proveedores, pagos y documentos XML. | [suppliers](./suppliers.md) |
 | Cuentas por pagar | `/accounts-payable` | Deudas, cuotas y obligaciones financieras. | [accounts-payable](./accounts-payable.md) |
@@ -101,7 +101,6 @@ flowchart TD
 - [suppliers](./suppliers.md): proveedores, pagos y XML.
 - [accounts-payable](./accounts-payable.md): cuentas por pagar y deudas.
 - [commissions](./commissions.md): comisiones y sincronización.
-- [incomes](./incomes.md): ingresos y aplicación de pagos.
 - [projections](./projections.md): proyecciones, cashflow y aging.
 - [reports](./reports.md): reportes operativos/financieros y exportación (PDF/Excel).
 - [settings-admin](./settings-admin.md): configuración del sistema y herramientas administrativas.
@@ -122,3 +121,9 @@ flowchart TD
 - Configuración técnica: [docs/technical/configuration.md](../technical/configuration.md)
 - PWA: [docs/technical/pwa-configuration.md](../technical/pwa-configuration.md)
 - Guía admin: [docs/technical/system-admin-guide.md](../technical/system-admin-guide.md)
+
+## Notas de mantenimiento
+
+- Este índice debe seguir el routing real definido en `src/App.tsx`.
+- Si un módulo deja de existir como ruta o superficie activa, su documentación debe archivarse o eliminarse del índice principal.
+- El caso de `Incomes` queda fuera del mapa actual porque el flujo vigente de cobros/pagos se concentra en `Facturas` y `Proyecciones`.

@@ -1,55 +1,44 @@
-# TMS Grúas v2.2.0
-## Sistema de Gestión de Transporte y Servicios
+# Documentación TMS Grúas
 
-### 📋 **Documentación del Sistema**
+## Objetivo
 
-#### Manual del Usuario
-- **[Manual de Usuario](user-manual.md)** - Guía completa de uso del sistema v2.2.0
+Este directorio reúne documentación operativa y técnica del sistema. La intención es dejar como **fuentes de verdad** solo los documentos esenciales y tratar el resto como apoyo histórico, notas de implementación o material de trabajo.
 
-#### Documentación Técnica
-- **[Integración cruzada entre módulos](architecture/cross-module-integration.md)** — Cómo todos los módulos comparten datos y se sincronizan en tiempo real (característica principal del sistema)
-- **[Guía de Administrador](technical/system-admin-guide.md)** - Manual completo para administradores del sistema
-- **[Configuración PWA](technical/pwa-configuration.md)** - Configuración y optimización de la aplicación móvil
-- **[Sistema de Pagos](technical/payment-system.md)** - Configuración y funcionamiento del módulo de pagos
-- **[Configuración Global](technical/configuration.md)** - Parámetros y configuraciones del sistema
-- **[Resolución de Problemas](technical/troubleshooting.md)** - Guía de troubleshooting actualizada
-- **[Correcciones de Pagos](technical/payment-corrections.md)** - Fixes específicos implementados
+## Fuentes de verdad recomendadas
 
-### 🚀 **Características del Sistema v2.2.0**
-- **Gestión completa de servicios de grúas** con flujos optimizados
-- **Control de inventario avanzado** con integración automática a grúas
-- **Sistema de backup y restauración** automático
-- **Gestión integral de proveedores** con programación de pagos
-- **Entradas rápidas para operadores** móviles con GPS y fotografías
-- **Portal dedicado para clientes** con funcionalidades ampliadas
-- **Aplicación móvil PWA mejorada** con sincronización offline
-- **Reportes financieros en tiempo real** con métricas avanzadas
-- **Sistema de roles y permisos granular** con auditoría completa
-- **Integración automática inventario-grúas** para prevenir duplicados
+### Producto y alcance
 
-### ⚙️ **Tecnologías**
-- **Frontend**: React 18.3, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **PWA**: Service Workers, IndexedDB, Push Notifications
-- **Seguridad**: RLS Policies, Encrypted Storage, Audit Logs
-- **Despliegue**: PWA con capacidades offline avanzadas
+- [PRD](../PRD.md): alcance actual del producto, módulos vigentes, rutas, integraciones y riesgos.
+- [Documentación técnica por módulo](modules/README.md): mapa técnico alineado con el PRD y el código actual.
 
-### 🔧 **Novedades v2.2.0**
-- **Sistema de Backup Automático**: Respaldos programables con restauración completa
-- **Gestión de Proveedores**: Módulo completo para gestión de proveedores y pagos
-- **Entradas Rápidas**: Registro móvil de gastos y eventos con GPS
-- **Integración Inventario-Grúas**: Flujo unificado para prevenir duplicados
-- **PWA Mejorada**: Mejor experiencia offline y notificaciones push
-- **Auditoría Completa**: Trazabilidad de todas las operaciones del sistema
-- **Dashboard Avanzado**: Métricas en tiempo real y alertas inteligentes
-- **Mejores Prácticas**: Guías de flujo de trabajo y optimización
+### Operación y configuración
 
-### 📊 **Métricas del Sistema**
-- **27 páginas principales** de la aplicación
-- **Más de 50 componentes** reutilizables
-- **Sistema de auditoría completo** con logs detallados
-- **Integración en tiempo real** entre todos los módulos
-- **Respuesta móvil optimizada** para todos los dispositivos
+- [Manual de usuario vigente](user-manual-vigente.md): guia funcional actual del sistema.
+- [Guía de configuración WhatsApp](guia-configuracion-whatsapp.md): configuración operativa de WhatsApp Business.
+- [Configuración técnica](technical/configuration.md): variables, parámetros globales y puesta en marcha.
+- [Resolución de problemas](technical/troubleshooting.md): troubleshooting operativo y técnico.
+- [Guía de administrador](technical/system-admin-guide.md): tareas administrativas y criterios de operación.
 
----
-*Documentación v2.2.0 - TMS Grúas | Actualizada con todas las funcionalidades y mejores prácticas*
+### Arquitectura y capas transversales
+
+- [Overview de arquitectura](architecture/overview.md): visión general del sistema.
+- [Integración cruzada entre módulos](architecture/cross-module-integration.md): relaciones y sincronización entre áreas.
+- [Integración Supabase](modules/supabase-integration.md): acceso a datos, cliente tipado y patrones de uso.
+- [Notificaciones](modules/notifications.md): notificaciones UI, push y mensajería relacionada.
+- [PWA](modules/pwa.md): capacidades offline, service worker y sincronización.
+
+## Criterio de lectura
+
+- `PRD.md` define el alcance funcional real.
+- `docs/modules/*` detalla la implementación por módulo.
+- `docs/technical/*` mezcla documentación transversal vigente con notas puntuales de soporte/corrección; priorizar `configuration.md`, `troubleshooting.md` y `system-admin-guide.md`.
+- `docs/architecture/*` resume estructura y relaciones entre capas.
+
+## Material no canónico
+
+La documentación que no esté enlazada desde este índice, `PRD.md` o `docs/modules/README.md` debe tratarse como material de apoyo, notas históricas o planificación puntual, y siempre contrastarse con el código actual.
+
+En particular:
+
+- `docs/enhancements/*` contiene planificación y propuestas, no necesariamente funcionalidades activas
+- documentos históricos o de implementación puntual pueden archivarse o eliminarse si dejan de aportar valor operativo

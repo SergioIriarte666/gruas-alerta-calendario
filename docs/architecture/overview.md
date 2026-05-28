@@ -1,8 +1,8 @@
-# 📋 Arquitectura del Sistema - TMS Grúas v2.1.0
+# Arquitectura del Sistema
 
-## 🎯 Visión General del Sistema
+## Visión General del Sistema
 
-TMS Grúas v2.1.0 es un sistema integral de gestión de transporte especializado (TMS) diseñado específicamente para empresas de servicios de grúas. El sistema está construido con una arquitectura moderna, escalable y centrada en la experiencia móvil.
+TMS Grúas es un sistema integral de gestión de transporte especializado para operación de servicios de grúas. Este documento entrega una vista de alto nivel; para alcance funcional y rutas vigentes, la fuente principal es `PRD.md` y el routing real de `src/App.tsx`.
 
 ## 🏗️ Arquitectura de Alto Nivel
 
@@ -298,11 +298,9 @@ logger.error('Failed to create service', { error, context });
 
 ## 📚 Referencias Técnicas
 
-- **[Frontend Architecture](frontend.md)**: Detalles del frontend React
-- **[Backend Architecture](backend.md)**: Configuración de Supabase
-- **[Security Architecture](security.md)**: Seguridad y compliance
-- **[API Reference](../development/api-reference.md)**: Documentación de APIs
+- [PRD](../../PRD.md): alcance funcional, módulos y rutas vigentes
+- [Integración cruzada](./cross-module-integration.md): relaciones entre módulos y propagación de datos
+- [Integración Supabase](../modules/supabase-integration.md): acceso a datos, cliente tipado y patrones de integración
+- [Configuración técnica](../technical/configuration.md): variables y parámetros globales
 
 ---
-
-*Arquitectura actualizada para TMS Grúas v2.1.0 - Julio 2025*

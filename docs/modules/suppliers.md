@@ -8,9 +8,6 @@ La fuente operativa principal del catalogo hoy es `inventory_suppliers`, no una 
 ## Entrypoints vigentes
 - Pagina: [Suppliers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Suppliers.tsx)
 - Componentes: [src/components/suppliers](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/suppliers)
-- Referencias relacionadas:
-  - [supplier-payments.md](../features/supplier-payments.md)
-  - [supplier-payments-duplicate-elimination.md](../features/supplier-payments-duplicate-elimination.md)
 
 ## Ruta
 - `/suppliers`
