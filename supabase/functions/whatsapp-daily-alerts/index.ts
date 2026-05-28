@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
   if (settings?.notify_invoice_overdue) {
     const { data: overdue } = await supabase
       .from("invoices")
-      .select("id, folio, total, amount_paid, due_date, client:clients(name)")
+      .select("id, folio, total, paid_amount, due_date, client:clients(name)")
       .lt("due_date", todayISO)
       .neq("status", "paid")
       .neq("status", "cancelled")
@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
       .limit(20);
 
     const overdueList = (overdue ?? []).filter((inv: any) => {
-      const remaining = Number(inv.total ?? 0) - Number(inv.amount_paid ?? 0);
+      const remaining = Number(inv.total ?? 0) - Number(inv.paid_amount ?? 0);
       return remaining > 0;
     });
 
@@ -129,7 +129,7 @@ Deno.serve(async (req: Request) => {
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { invoiceId: inv.id });
       if (!ok) continue;
 
-      const remaining = Number(inv.total ?? 0) - Number(inv.amount_paid ?? 0);
+      const remaining = Number(inv.total ?? 0) - Number(inv.paid_amount ?? 0);
       const params = [
         (inv.client?.name as string) || "Cliente",
         String(inv.folio ?? ""),
