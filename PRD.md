@@ -2,10 +2,10 @@
 
 ## TMS Gruas - Towing Management System
 
-- **Version del documento:** 3.5
-- **Ultima actualizacion:** 2026-05-23
+- **Version del documento:** 3.6
+- **Ultima actualizacion:** 2026-05-28
 - **Estado:** Vigente
-- **Base de actualizacion:** lectura rapida del routing real, paginas activas, componentes, hooks, servicios y `docs/modules/*`
+- **Base de actualizacion:** lectura rapida del routing real, paginas activas, componentes, hooks, servicios, `docs/modules/*` y `docs/guia-configuracion-whatsapp.md`
 
 ---
 
@@ -32,13 +32,13 @@ El producto hoy no es solo un "sistema de servicios". Es un backoffice integral 
 | Area | Estado | Comentario |
 |---|---|---|
 | Servicios, calendario y cierres | Estable | Es el nucleo operacional del sistema. |
-| Facturas, ingresos, costos y cuentas por pagar | Estable | Cobertura amplia y madura del flujo financiero. |
+| Facturas, pagos/cobros, costos y cuentas por pagar | Estable | Cobertura amplia y madura del flujo financiero. |
 | Inventario, compras y proveedores | Estable | Hay trazabilidad cruzada con costos y XML. |
 | App operador / inspecciones | Estable | Flujo operativo real con fotos, firma y PDF. |
 | Portal cliente | Operativo | Permite solicitar servicios y revisar historial/facturas. |
 | PWA, push y offline | Operativo con consolidacion pendiente | Existen capacidades reales, pero requieren endurecer conflictos y sincronizacion. |
 | Integraciones externas | Operativas con dependencia | Email, push, OCR, mapas y peajes estan activos via Edge Functions. |
-| WhatsApp | No implementado | No se observo integracion activa en el frontend actual. |
+| WhatsApp | Operativo | Integracion via Meta WhatsApp Cloud API + Supabase Edge Functions (envio, alertas diarias y webhook). |
 | Multi-tenant | Fuera de alcance actual | El producto se comporta como una implementacion single-tenant. |
 
 ---
@@ -85,9 +85,14 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 
 | Superficie | Rutas principales | Proposito |
 |---|---|---|
-| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/incomes`, `/accounts-payable`, `/settings`, `/historical`, etc. | Operacion, finanzas, activos y administracion. |
+| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, `/historical`, etc. | Operacion, finanzas, activos y administracion. |
 | Operador | `/operator`, `/operator/service/:id/inspection` | Ejecucion de inspecciones y seguimiento de servicios asignados. |
 | Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
+
+Rutas transversales:
+
+- autenticacion: `/auth`, `/reset-password`
+- diagnostico/QA interno: `/performance-test`, `/debug-freeze`, `/connection-test`
 
 ### Roles soportados
 
@@ -115,14 +120,14 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 | Operadores | `/operators` | `admin` | servicios, inspecciones, comisiones |
 | Tipos de servicio | `/service-types` | `admin` | servicios, configuracion operativa |
 | Tarifas de servicio | `/service-rates` | `admin` | servicios, proyecciones, calculos operativos |
-| Facturas | `/invoices` | `admin`, `viewer` | cierres, clientes, pagos, ingresos, reportes |
-| Ingresos | `/incomes` | `admin`, `viewer` | facturas, pagos, proyecciones |
+| Facturas | `/invoices` | `admin`, `viewer` | cierres, clientes, pagos/cobros, reportes |
 | Costos | `/costs` | `admin`, `viewer` | servicios, proveedores, inventario, XML, reportes |
+| Centros de costo | `/cost-centers` | `admin` | costos, reportes, catalogos operativos |
 | Inventario | `/inventory` | `admin`, `viewer` | costos, proveedores, compras, gruas, movimientos |
 | Proveedores | `/suppliers` | `admin`, `viewer` | pagos, XML, costos, inventario |
 | Cuentas por pagar | `/accounts-payable` | `admin`, `viewer` | deudas, cuotas, pagos, reportes |
-| Reportes | `/reports` | `admin`, `viewer` | servicios, facturas, costos, inventario, ingresos |
-| Proyecciones | `/income-projections` | `admin`, `viewer` | facturas, ingresos, aging, cashflow |
+| Reportes | `/reports` | `admin`, `viewer` | servicios, facturas, costos, inventario, pagos/cobros |
+| Proyecciones | `/income-projections` | `admin`, `viewer` | facturas, pagos/cobros, aging, cashflow |
 | Comisiones | `/commissions` | `admin` | servicios, operadores, costos |
 | Quick Entries | `/quick-entries` | `admin` | OCR, costos, evidencia movil |
 | Daily Report | `/daily-report` | `admin`, `viewer` | servicios, finanzas, alertas |
@@ -195,7 +200,7 @@ flowchart LR
 
   subgraph Finanzas
     INV2[Facturas]
-    INC[Ingresos]
+    COB[Pagos/Cobros (en Facturas)]
     COS[Costos]
     AP[Cuentas por pagar]
     COM[Comisiones]
@@ -208,7 +213,7 @@ flowchart LR
   PORTAL --> SVC
   OP --> INS --> SVC
   SVC --> CAL
-  SVC --> CLO --> INV2 --> INC
+  SVC --> CLO --> INV2 --> COB
   SVC --> COS
   COS --> SUP
   COS --> INV
@@ -221,7 +226,7 @@ flowchart LR
   CLI --> SVC
   SVC --> COM
   INV2 --> REP
-  INC --> PROY
+  COB --> PROY
   COS --> REP
   AP --> REP
 ```
@@ -265,12 +270,13 @@ flowchart LR
 - genera y administra facturas
 - soporta vista tabular y pipeline
 - incluye pagos, historial y acciones de marcado/correccion
-- se integra con cierres, ingresos y alertas
+- se integra con cierres, pagos/cobros y alertas
 
-### 5.7 Ingresos
+### 5.7 Pagos y cobros (en Facturas)
 
-- registra y gestiona ingresos/cobros
-- complementa el seguimiento de facturas y pagos
+- no existe ruta dedicada `/incomes` en el routing actual
+- los cobros/pagos se gestionan dentro del modulo de Facturas
+- las vistas agregadas y proyecciones financieras se concentran en `Proyecciones` (`/income-projections`)
 
 ### 5.8 Costos
 
@@ -317,7 +323,7 @@ flowchart LR
 
 - reporteria operacional y financiera
 - exportaciones a PDF y Excel
-- combina datos de servicios, costos, facturas, ingresos e inventario
+- combina datos de servicios, costos, facturas (incluye pagos/cobros) e inventario
 
 ### 5.15 Proyecciones
 
@@ -387,7 +393,7 @@ flowchart LR
 5. Backoffice agrupa en cierres cuando aplica.
 6. Se genera factura.
 7. Se registra o concilia pago.
-8. Impacta dashboard, ingresos, reportes y proyecciones.
+8. Impacta dashboard, reportes y proyecciones.
 
 ### 6.2 Compra o costo con proveedor
 
@@ -482,23 +488,38 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 
 ## 9. Integraciones y Edge Functions confirmadas
 
-### Edge Functions observadas en uso
+### Edge Functions invocadas desde el frontend
 
+- `check-vehicle-patent`
+- `generate-backup`
+- `mapbox-proxy`
+- `parse-purchase-order-pdf`
+- `parse-quote-pdf`
+- `parse-receipt-image`
 - `send-user-invitation`
 - `send-password-reset`
 - `send-invoice-email`
 - `send-inspection-email`
 - `send-service-confirmation`
 - `send-daily-pending-report`
-- `generate-backup`
-- `generate-sql-dump`
-- `parse-receipt-image`
 - `sre-lookup`
 - `tollroutes-proxy`
-- `mapbox-proxy`
 - `save-push-subscription`
 - `remove-push-subscription`
 - `send-push-notification`
+- `scheduled-backup-email`
+- `send-whatsapp-admin`
+
+### Edge Functions server-side (cron/webhooks y utilidades)
+
+- `classify-cost`
+- `generate-sql-dump`
+- `send-document-alerts`
+- `send-operator-notification`
+- `send-payment-reminder`
+- `send-whatsapp-operator`
+- `whatsapp-daily-alerts`
+- `whatsapp-webhook`
 
 ### Integraciones funcionales derivadas
 
@@ -506,15 +527,82 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 - reporte diario programado por `pg_cron` con control por hora de negocio y anti-duplicado diario
 - push notifications
 - OCR server-side para comprobantes
+- importacion y parseo de PDFs (cotizaciones y ordenes de compra)
+- lookup/validacion externa de patentes
+- backups on-demand y configuracion de backup programado por email
 - mapas y rutas
 - peajes
 - busqueda/lookup externo de datos
 - backup y exportacion
 - endurecimiento progresivo de Edge Functions con validacion explicita de JWT y rol en backend
 
+### WhatsApp Business (Meta Cloud API)
+
+Arquitectura:
+
+```
+App TMS → Supabase Edge Functions → Meta WhatsApp Cloud API → WhatsApp del destinatario
+```
+
+Funciones desplegadas:
+
+- `send-whatsapp-operator` — notifica al operador cuando se le asigna un servicio
+- `send-whatsapp-admin` — notifica a los administradores segun el evento
+- `whatsapp-daily-alerts` — alertas programadas diarias (documentos, pagos, etc.)
+- `whatsapp-webhook` — recibe confirmaciones de entrega/lectura de Meta
+
+Plantillas requeridas (Fase 1):
+
+- `servicio_asignado`
+- `admin_servicio_completado`
+- `admin_documento_vence`
+- `admin_pago_pendiente`
+- `admin_servicio_sin_cotizacion`
+- `admin_orden_compra`
+- `admin_cierre_mensual`
+- `admin_servicio_sin_operador`
+- `admin_resumen_diario`
+
+Configuracion en Supabase (Edge Functions → Secrets):
+
+- `WHATSAPP_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `WHATSAPP_VERIFY_TOKEN`
+- `ADMIN_WHATSAPP_1` (fallback)
+- `ADMIN_WHATSAPP_2` (fallback)
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Configuracion desde la app:
+
+- ruta: `Configuracion → Alertas → WhatsApp Business`
+- define hasta 2 numeros de administradores (formato `+56 9 XXXX XXXX`)
+- permite activar/desactivar switches por tipo de notificacion
+- incluye accion de "Enviar prueba" para validar integracion
+- incluye pestaña de historial (ultimos 50 envios) con estados `queued/sent/delivered/read/failed`
+
+Persistencia y trazabilidad:
+
+- `whatsapp_settings`: numeros admin y flags de notificaciones
+- `whatsapp_message_log`: log de envios, estado, errores y `provider_message_id`
+- `whatsapp_alert_dedupe`: deduplicacion de alertas diarias para evitar re-envios
+
+Notas operativas y restricciones:
+
+- mientras el negocio no este verificado por Meta, solo se puede enviar a numeros registrados como testers (maximo 5)
+- el webhook de Meta valida contra `WHATSAPP_VERIFY_TOKEN` y debe apuntar a la Edge Function `whatsapp-webhook`
+- es necesario agregar metodo de pago en Meta para produccion
+- datos de referencia (IDs, URLs, numero productivo) estan centralizados en `docs/guia-configuracion-whatsapp.md`
+
+Solucion de problemas (referencia):
+
+- `[132001] Template name does not exist`: plantilla inexistente o idioma incorrecto (debe ser Spanish (CHL) en la cuenta productiva)
+- `[100] Object does not exist or missing permissions`: Phone Number ID incorrecto o token sin permisos
+- `[190] Authentication Error`: token vencido o revocado
+- `EarlyDrop` en logs Supabase: secrets faltantes (`SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`)
+
 ### Integraciones no confirmadas como activas en frontend actual
 
-- WhatsApp / Meta Cloud API
 - multi-tenant real
 
 ---
@@ -673,7 +761,10 @@ Toda funcionalidad nueva debe respetar:
 
 ### Prioridad baja / futura
 
-7. **Evaluar WhatsApp si se confirma decision de negocio**
+7. **Consolidar WhatsApp (hardening operacional)**
+   - monitoreo de fallas y trazabilidad de entregas/lecturas via webhook
+   - matriz oficial de eventos vs plantillas y control de opt-in/opt-out si aplica
+
 8. **Evaluar multi-tenant solo si cambia la estrategia comercial**
 
 ---
@@ -693,14 +784,14 @@ Toda funcionalidad nueva debe respetar:
 | Modulo | Entidades / tablas dominantes | Integraciones o dependencias criticas | Riesgo principal |
 |---|---|---|---|
 | Servicios | `services`, `service_resources`, relaciones con clientes, gruas y operadores | asignacion, inspecciones, calendario, cierres | inconsistencia entre estado operativo y recursos asignados |
-| Facturas e ingresos | `invoices`, pagos, cierres, clientes | email, conciliacion, pipeline, reportes | desalineacion entre emision, cobro y estado financiero |
+| Facturas y cobros/pagos | `invoices`, pagos, cierres, clientes | email, conciliacion, pipeline, reportes | desalineacion entre emision, cobro y estado financiero |
 | Costos | `costs`, clasificaciones, relaciones con servicio/proveedor | XML, CSV, inventario, proveedores | duplicados, clasificacion incorrecta o enlace incompleto |
 | Inventario | `inventory_items`, `inventory_stock`, `inventory_movements` | compras, costos, consumo en gruas, XML | quiebres de trazabilidad entre costo y movimiento fisico |
 | Proveedores | `inventory_suppliers`, pagos, documentos XML | costos, inventario, calendario de pagos | pagos o documentos sin asociacion consistente |
 | Cuentas por pagar | acreedores, deudas, cuotas, pagos | reportes financieros | divergencia entre deuda estructurada y caja real |
 | Operador / inspecciones | servicios asignados, inspecciones, adjuntos | PWA, PDF, email | perdida de evidencia o sync incompleto offline |
 | Portal cliente | servicios y facturas del cliente | auth, permisos, formularios dinamicos | exposicion indebida de datos o solicitudes incompletas |
-| Reportes y proyecciones | agregados de servicios, facturas, costos, ingresos | exportadores, filtros, calculos derivados | decisiones sobre datos incompletos o no sincronizados |
+| Reportes y proyecciones | agregados de servicios, facturas, costos, pagos/cobros | exportadores, filtros, calculos derivados | decisiones sobre datos incompletos o no sincronizados |
 
 ---
 
@@ -708,7 +799,6 @@ Toda funcionalidad nueva debe respetar:
 
 - multi-tenant real
 - automatizacion completa de conciliacion contable
-- WhatsApp operativo confirmado
 - apertura del sistema como plataforma generica para multiples verticales fuera del rubro de gruas
 
 ---
@@ -729,12 +819,12 @@ Tabla orientada a onboarding. Lista archivos y hooks representativos, no exhaust
 | Gruas | `src/pages/Cranes.tsx` | hooks de flota, mantenciones y consumo de inventario | `docs/modules/cranes.md` |
 | Vehiculos, tipos y tarifas | `src/pages/Vehicles.tsx`, `src/pages/ServiceTypes.tsx`, `src/pages/ServiceRates.tsx` | hooks y formularios catalogo para configuracion operativa | documentado transversalmente en codigo y docs relacionadas |
 | Reportes | `src/pages/Reports.tsx` | `useReports`, exportadores PDF/XLSX | `docs/modules/reports.md` |
-| Ingresos y proyecciones | `src/pages/Incomes.tsx`, `src/pages/IncomeProjections.tsx` | hooks de ingresos, pipeline y proyeccion | `docs/modules/incomes.md`, `docs/modules/projections.md` |
+| Proyecciones | `src/pages/IncomeProjections.tsx` | hooks de proyeccion (aging/cashflow) | `docs/modules/projections.md` |
 | Cuentas por pagar | `src/pages/AccountsPayable.tsx` | hooks de deudas, cuotas y pagos | `docs/modules/accounts-payable.md` |
 | Comisiones | `src/pages/Commissions.tsx` | hooks y RPCs de comisiones | `docs/modules/commissions.md` |
-| Operador | `src/pages/operator/OperatorDashboard.tsx`, `src/pages/operator/ServiceInspection.tsx` | `useServiceInspection` | `docs/modules/operator-app.md` |
+| Operador | `src/pages/OperatorDashboard.tsx`, `src/pages/operator/ServiceInspection.tsx` | `useServiceInspection` | `docs/modules/operator-app.md` |
 | Portal cliente | `src/pages/portal/PortalDashboard.tsx`, `src/pages/portal/PortalRequestService.tsx` | hooks del portal y formularios de solicitud | `docs/modules/portal.md` |
-| Backup y settings | `src/pages/Backup.tsx`, `src/pages/Settings.tsx` | `useBackupManager`, hooks de usuarios/permisos | `docs/modules/backup.md`, `docs/modules/settings-admin.md` |
+| Backup y settings | `src/pages/BackupPage.tsx`, `src/pages/Settings.tsx` | `useBackupManager`, hooks de usuarios/permisos | `docs/modules/backup.md`, `docs/modules/settings-admin.md` |
 | Realtime y sincronizacion | `src/App.tsx`, capas compartidas | `useUnifiedRealtimeManager`, `useUniversalSync`, `globalDataRefresh` | documentado transversalmente en el codigo y docs modulares |
 
 ---
