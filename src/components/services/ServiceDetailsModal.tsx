@@ -133,6 +133,7 @@ const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSe
 
 export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: ServiceDetailsModalProps) => {
   const queryClient = useQueryClient();
+  const [isSendingOperatorWhatsApp, setIsSendingOperatorWhatsApp] = React.useState(false);
   
   // Usar el nuevo sistema global para obtener datos completos del servicio
   const { enhancedService } = useServiceDetailsForView(service?.id || null);
@@ -293,6 +294,40 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     toast.success('Administradores notificados por WhatsApp');
   };
 
+  const handleNotifyOperator = async () => {
+    if (!primaryOperator?.id) {
+      toast.error('Este servicio no tiene un operador asignado');
+      return;
+    }
+
+    setIsSendingOperatorWhatsApp(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-whatsapp-operator', {
+        body: {
+          operatorId: primaryOperator.id,
+          serviceId: serviceData.id,
+          folio: serviceData.folio,
+          clientName: serviceData.client?.name || '',
+          clientPhone: serviceData.client?.phone || '',
+          serviceDate: serviceData.serviceDate,
+          origin: serviceData.origin || '',
+          destination: serviceData.destination || '',
+          force: true,
+        },
+      });
+
+      if (error) {
+        console.warn('WhatsApp operador no enviado:', error);
+        toast.error('No se pudo enviar la notificacion al operador');
+        return;
+      }
+
+      toast.success('Operador notificado por WhatsApp');
+    } finally {
+      setIsSendingOperatorWhatsApp(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex h-[90vh] max-w-4xl flex-col border-border/70 bg-card p-0">
@@ -310,6 +345,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               </DialogTitle>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNotifyOperator}
+                className="flex items-center gap-2"
+                title={primaryOperator?.name ? `Notificar a ${primaryOperator.name}` : 'Servicio sin operador asignado'}
+                disabled={!primaryOperator?.id || isSendingOperatorWhatsApp}
+              >
+                <MessageCircle className="size-4" />
+                {isSendingOperatorWhatsApp ? 'Enviando...' : 'Notificar Operador'}
+              </Button>
               {(serviceData.purchaseOrderNumber || serviceData.purchaseOrder) && (
                 <Button
                   variant="outline"

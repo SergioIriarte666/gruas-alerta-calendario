@@ -638,6 +638,7 @@ export const EnhancedServiceForm = ({
         }
       }
 
+      const action = service ? 'actualizado' : 'creado';
       console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
       // Obtener operatorId desde operators[] o desde campo legacy operator
@@ -647,7 +648,9 @@ export const EnhancedServiceForm = ({
                          result?.operator?.id ||
                          null;
 
-      if (operatorId && result?.id) {
+      if (!operatorId) {
+        toast.info(`Servicio ${action} sin operador asignado. No se envio WhatsApp al operador.`);
+      } else if (result?.id) {
         supabase.functions
           .invoke('send-whatsapp-operator', {
             body: {
@@ -661,12 +664,36 @@ export const EnhancedServiceForm = ({
               destination: result.destination,
             },
           })
-          .then(({ error }) => {
-            if (error) console.warn('WhatsApp operador no enviado:', error);
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn('WhatsApp operador no enviado:', error);
+              const message = error?.context?.error?.message || error.message || 'Error desconocido';
+              toast.error('No se pudo enviar el WhatsApp al operador', { description: message });
+              return;
+            }
+
+            if ((data as any)?.skipped) {
+              const reason = (data as any)?.reason || 'Envio omitido por configuracion';
+              toast.info('WhatsApp al operador omitido', { description: reason });
+              return;
+            }
+
+            const errorCode = (data as any)?.error?.code;
+            if (errorCode === 'NO_PHONE') {
+              toast.warning('WhatsApp al operador omitido', {
+                description: 'El operador asignado no tiene telefono configurado.',
+              });
+              return;
+            }
+
+            if (errorCode === 'INVALID_PHONE') {
+              toast.warning('WhatsApp al operador omitido', {
+                description: 'El telefono del operador no tiene un formato valido.',
+              });
+            }
           });
       }
 
-      const action = service ? 'actualizado' : 'creado';
       playRetroSuccessSound();
       toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
       

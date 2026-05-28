@@ -593,6 +593,7 @@ Notas operativas y restricciones:
 - el webhook de Meta valida contra `WHATSAPP_VERIFY_TOKEN` y debe apuntar a la Edge Function `whatsapp-webhook`
 - es necesario agregar metodo de pago en Meta para produccion
 - datos de referencia (IDs, URLs, numero productivo) estan centralizados en `docs/guia-configuracion-whatsapp.md`
+- la planificacion de expansion futura a clientes y proveedores esta documentada en `docs/enhancements/whatsapp-messaging-expansion-plan.md`
 
 Solucion de problemas (referencia):
 
@@ -836,6 +837,8 @@ Este PRD debe leerse junto con:
 - `src/App.tsx` para routing y superficies activas
 - `docs/modules/README.md` para mapa tecnico por modulo
 - `docs/modules/*.md` para detalle tecnico de cada area
+- `docs/guia-configuracion-whatsapp.md` para configuracion operativa de WhatsApp Business
+- `docs/enhancements/whatsapp-messaging-expansion-plan.md` para roadmap y planificacion de expansion de mensajeria
 - `src/hooks/*` y `src/services/*` para flujos funcionales reales
 
 Cuando exista diferencia entre documentacion historica y codigo vigente, debe prevalecer el comportamiento observable en el codigo y luego actualizar esta documentacion.
