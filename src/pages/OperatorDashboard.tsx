@@ -158,7 +158,7 @@ const OperatorDashboard = () => {
             {serviceTabs.asignados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                 <Clock className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios asignados pendientes</p>
-              </div> : serviceTabs.asignados.map(service => <AssignedServiceCard key={service.id} service={service} />)}
+              </div> : asignadosSorted.map(service => <AssignedServiceCard key={service.id} service={service} />)}
           </TabsContent>
 
           <TabsContent value="activos" className="space-y-4">
