@@ -158,7 +158,7 @@ export const PendingSummaryModal: React.FC = () => {
                   description={upcomingServices.length > 0
                     ? `${urgentUpcoming > 0 ? `${urgentUpcoming} en ≤3 días, ` : ''}${upcomingServices.length} programados`
                     : "Sin servicios programados próximamente"}
-                  severity={urgentUpcoming > 0 ? 'warning' : upcomingServices.length > 0 ? 'info' as any : 'success'}
+                  severity={urgentUpcoming > 0 ? 'warning' : 'success'}
                   linkTo="/calendar"
                   details={upcomingServices.map(s => ({
                     id: s.id,
