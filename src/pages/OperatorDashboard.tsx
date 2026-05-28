@@ -19,6 +19,10 @@ const OperatorDashboard = () => {
   } = useOperatorServicesTabs();
   const [activeTab, setActiveTab] = useState('asignados');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Sort assigned services so the most imminent (today, tomorrow, ...) appear first
+  const asignadosSorted = [...serviceTabs.asignados].sort((a, b) =>
+    (a.serviceDate || '').localeCompare(b.serviceDate || '')
+  );
   console.log('🏠 OperatorDashboard - Render state:', {
     user: user ? {
       id: user.id,
@@ -154,7 +158,7 @@ const OperatorDashboard = () => {
             {serviceTabs.asignados.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                 <Clock className="size-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios asignados pendientes</p>
-              </div> : serviceTabs.asignados.map(service => <AssignedServiceCard key={service.id} service={service} />)}
+              </div> : asignadosSorted.map(service => <AssignedServiceCard key={service.id} service={service} />)}
           </TabsContent>
 
           <TabsContent value="activos" className="space-y-4">

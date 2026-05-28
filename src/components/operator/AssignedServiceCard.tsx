@@ -5,6 +5,7 @@ import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play, Package
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 interface AssignedServiceCardProps {
   service: Service;
   showDeliveryAction?: boolean;
@@ -27,6 +28,24 @@ export const AssignedServiceCard = ({
         return null;
     }
   };
+
+  // Imminence badge: Hoy / Mañana / en Xd (only meaningful for non-completed services)
+  const getImminenceBadge = () => {
+    if (!service.serviceDate) return null;
+    const todayStr = getTodayLocal();
+    const days = -safeDaysSince(service.serviceDate, todayStr); // positive = future
+    if (days === 0) {
+      return <span className="px-2 py-1 text-xs font-bold rounded-full bg-red-600 text-white">Hoy</span>;
+    }
+    if (days === 1) {
+      return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-violet-600 text-white">Mañana</span>;
+    }
+    if (days > 1 && days <= 7) {
+      return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-violet-500/15 text-violet-700 dark:text-violet-300">en {days}d</span>;
+    }
+    return null;
+  };
+
   const isCompleted = service.status === 'completed';
   const isActive = service.status === 'in_progress';
   const isPending = service.status === 'pending';
@@ -161,6 +180,7 @@ export const AssignedServiceCard = ({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-bold text-foreground">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
+              {getImminenceBadge()}
               {getStatusChip(service.status)}
               <ChevronRight className="size-5 text-muted-foreground" />
             </div>
