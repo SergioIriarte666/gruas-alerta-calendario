@@ -608,6 +608,99 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
     return typeLabel || 'Factura';
   };
+
+  // Re-ejecuta la búsqueda de costos coincidentes para UN documento, opcionalmente con ventana ampliada
+  const expandMatchSearchForDoc = async (doc: XMLDocumentData, windowDays = 15) => {
+    if (!doc.supplier_rut || !doc.total_amount) {
+      toast.warning('Este documento no tiene RUT o monto: no se puede buscar costos.');
+      return;
+    }
+    const documentKey = getDocumentStateKey(doc);
+    setExpandingSearchKey(documentKey);
+    try {
+      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+      const dateFrom = new Date(issueDate);
+      dateFrom.setDate(dateFrom.getDate() - windowDays);
+      const dateTo = new Date(issueDate);
+      dateTo.setDate(dateTo.getDate() + windowDays);
+
+      const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
+        p_supplier_rut: doc.supplier_rut,
+        p_amount: doc.total_amount,
+        p_date_from: format(dateFrom, 'yyyy-MM-dd'),
+        p_date_to: format(dateTo, 'yyyy-MM-dd'),
+      });
+
+      if (error) throw error;
+      const results = (data || []) as MatchedCost[];
+      setMatchedCosts(prev => ({ ...prev, [documentKey]: results }));
+      setExpandedSearchKeys(prev => {
+        const next = new Set(prev);
+        next.add(documentKey);
+        return next;
+      });
+      // Auto-seleccionar match exacto si aparece y aún no había decisión
+      const exact = results.find(m => Math.abs(Number(m.amount) - doc.total_amount) < 1);
+      if (exact && (!linkDecisions[documentKey] || linkDecisions[documentKey] === 'new')) {
+        setLinkDecisions(prev => ({ ...prev, [documentKey]: exact.id }));
+      }
+      if (results.length === 0) {
+        toast.info(`No se encontraron costos coincidentes en ±${windowDays} días.`);
+      } else {
+        toast.success(`${results.length} costo(s) encontrado(s) en ±${windowDays} días.`);
+      }
+    } catch (e: any) {
+      console.error('expandMatchSearchForDoc error', e);
+      toast.error('Error al ampliar la búsqueda de costos.');
+    } finally {
+      setExpandingSearchKey(null);
+    }
+  };
+
+  // Etiqueta del grado de coincidencia entre un costo candidato y el documento XML
+  const getMatchQuality = (cost: MatchedCost, doc: XMLDocumentData): { label: string; tone: 'exact' | 'similar' | 'possible' } => {
+    const diff = Math.abs(Number(cost.amount) - (doc.total_amount || 0));
+    if (diff < 1) return { label: '✓ Exacto', tone: 'exact' };
+    const ratio = doc.total_amount ? diff / doc.total_amount : 1;
+    if (ratio <= 0.02) return { label: '≈ Casi exacto', tone: 'exact' };
+    if (ratio <= 0.05) return { label: '≈ Similar', tone: 'similar' };
+    return { label: '~ Posible', tone: 'possible' };
+  };
+
+  // Días transcurridos entre el costo y la emisión del documento
+  const getCostAgeLabel = (cost: MatchedCost, doc: XMLDocumentData): string => {
+    try {
+      const costDate = safeParseDateOnly(cost.date);
+      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+      const diffMs = issueDate.getTime() - costDate.getTime();
+      const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (days === 0) return 'mismo día';
+      if (days > 0) return `${days} día${days > 1 ? 's' : ''} antes`;
+      return `${Math.abs(days)} día${Math.abs(days) > 1 ? 's' : ''} después`;
+    } catch {
+      return cost.date;
+    }
+  };
+
+  // Cambio de decisión con confirmación si el usuario abandona un match exacto
+  const handleLinkDecisionChange = (documentKey: string, newValue: string, doc: XMLDocumentData) => {
+    const candidates = matchedCosts[documentKey] || [];
+    const currentDecision = linkDecisions[documentKey] || 'new';
+    const currentSelected = candidates.find(c => c.id === currentDecision);
+    const wasExactMatch =
+      currentSelected && Math.abs(Number(currentSelected.amount) - (doc.total_amount || 0)) < 1;
+
+    if (wasExactMatch && newValue === 'new') {
+      const confirmed = window.confirm(
+        '⚠️ Hay un costo existente con monto idéntico sin factura vinculada.\n\n' +
+        'Si creas uno nuevo, ese costo quedará huérfano y duplicarás el gasto en el sistema.\n\n' +
+        '¿Seguro que quieres crear un costo nuevo en vez de vincular el existente?'
+      );
+      if (!confirmed) return;
+    }
+    setLinkDecisions(prev => ({ ...prev, [documentKey]: newValue }));
+  };
+
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
     const documentKey = getDocumentStateKey(doc);
     const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
