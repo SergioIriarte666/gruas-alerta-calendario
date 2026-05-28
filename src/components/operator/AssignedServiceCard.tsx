@@ -180,6 +180,7 @@ export const AssignedServiceCard = ({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-bold text-foreground">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
+              {getImminenceBadge()}
               {getStatusChip(service.status)}
               <ChevronRight className="size-5 text-muted-foreground" />
             </div>
