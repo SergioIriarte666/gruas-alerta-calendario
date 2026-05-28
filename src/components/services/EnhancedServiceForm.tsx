@@ -652,6 +652,7 @@ export const EnhancedServiceForm = ({
           .invoke('send-whatsapp-operator', {
             body: {
               operatorId,
+              serviceId: result.id,
               folio: result.folio,
               clientName: result.client?.name || '',
               clientPhone: result.client?.phone || '',
