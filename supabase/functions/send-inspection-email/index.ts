@@ -46,6 +46,27 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
+    // Only staff (admin or operator) may dispatch branded inspection emails
+    const callerUid = (claimsData.claims as any).sub as string | undefined;
+    if (!callerUid) {
+      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    const supabaseService = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const { data: roleRows } = await supabaseService
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', callerUid)
+      .in('role', ['admin', 'operator']);
+    if (!roleRows || roleRows.length === 0) {
+      return new Response(JSON.stringify({ error: 'No autorizado: se requiere rol de administrador u operador' }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     console.log("📧 Iniciando envío de inspección por email");
     
     const { inspectionData, pdfBlob }: InspectionEmailRequest = await req.json();
