@@ -270,6 +270,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [matchedCosts, setMatchedCosts] = useState<Record<string, MatchedCost[]>>({});
   const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
   const [isSearchingMatches, setIsSearchingMatches] = useState(false);
+  const [expandedSearchKeys, setExpandedSearchKeys] = useState<Set<string>>(new Set());
+  const [expandingSearchKey, setExpandingSearchKey] = useState<string | null>(null);
   
   const {
     suppliers,
@@ -308,6 +310,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setDocumentDescriptionOverrides({});
       setExpandedDocumentDetails({});
       setHistoricalGlosaSuggestions({});
+      setExpandedSearchKeys(new Set());
+      setMatchedCosts({});
+      setLinkDecisions({});
     },
     onParsed: initAfterParse,
   });
@@ -606,6 +611,99 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
     return typeLabel || 'Factura';
   };
+
+  // Re-ejecuta la búsqueda de costos coincidentes para UN documento, opcionalmente con ventana ampliada
+  const expandMatchSearchForDoc = async (doc: XMLDocumentData, windowDays = 15) => {
+    if (!doc.supplier_rut || !doc.total_amount) {
+      toast.warning('Este documento no tiene RUT o monto: no se puede buscar costos.');
+      return;
+    }
+    const documentKey = getDocumentStateKey(doc);
+    setExpandingSearchKey(documentKey);
+    try {
+      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+      const dateFrom = new Date(issueDate);
+      dateFrom.setDate(dateFrom.getDate() - windowDays);
+      const dateTo = new Date(issueDate);
+      dateTo.setDate(dateTo.getDate() + windowDays);
+
+      const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
+        p_supplier_rut: doc.supplier_rut,
+        p_amount: doc.total_amount,
+        p_date_from: format(dateFrom, 'yyyy-MM-dd'),
+        p_date_to: format(dateTo, 'yyyy-MM-dd'),
+      });
+
+      if (error) throw error;
+      const results = (data || []) as MatchedCost[];
+      setMatchedCosts(prev => ({ ...prev, [documentKey]: results }));
+      setExpandedSearchKeys(prev => {
+        const next = new Set(prev);
+        next.add(documentKey);
+        return next;
+      });
+      // Auto-seleccionar match exacto si aparece y aún no había decisión
+      const exact = results.find(m => Math.abs(Number(m.amount) - doc.total_amount) < 1);
+      if (exact && (!linkDecisions[documentKey] || linkDecisions[documentKey] === 'new')) {
+        setLinkDecisions(prev => ({ ...prev, [documentKey]: exact.id }));
+      }
+      if (results.length === 0) {
+        toast.info(`No se encontraron costos coincidentes en ±${windowDays} días.`);
+      } else {
+        toast.success(`${results.length} costo(s) encontrado(s) en ±${windowDays} días.`);
+      }
+    } catch (e: any) {
+      console.error('expandMatchSearchForDoc error', e);
+      toast.error('Error al ampliar la búsqueda de costos.');
+    } finally {
+      setExpandingSearchKey(null);
+    }
+  };
+
+  // Etiqueta del grado de coincidencia entre un costo candidato y el documento XML
+  const getMatchQuality = (cost: MatchedCost, doc: XMLDocumentData): { label: string; tone: 'exact' | 'similar' | 'possible' } => {
+    const diff = Math.abs(Number(cost.amount) - (doc.total_amount || 0));
+    if (diff < 1) return { label: '✓ Exacto', tone: 'exact' };
+    const ratio = doc.total_amount ? diff / doc.total_amount : 1;
+    if (ratio <= 0.02) return { label: '≈ Casi exacto', tone: 'exact' };
+    if (ratio <= 0.05) return { label: '≈ Similar', tone: 'similar' };
+    return { label: '~ Posible', tone: 'possible' };
+  };
+
+  // Días transcurridos entre el costo y la emisión del documento
+  const getCostAgeLabel = (cost: MatchedCost, doc: XMLDocumentData): string => {
+    try {
+      const costDate = safeParseDateOnly(cost.date);
+      const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+      const diffMs = issueDate.getTime() - costDate.getTime();
+      const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (days === 0) return 'mismo día';
+      if (days > 0) return `${days} día${days > 1 ? 's' : ''} antes`;
+      return `${Math.abs(days)} día${Math.abs(days) > 1 ? 's' : ''} después`;
+    } catch {
+      return cost.date;
+    }
+  };
+
+  // Cambio de decisión con confirmación si el usuario abandona un match exacto
+  const handleLinkDecisionChange = (documentKey: string, newValue: string, doc: XMLDocumentData) => {
+    const candidates = matchedCosts[documentKey] || [];
+    const currentDecision = linkDecisions[documentKey] || 'new';
+    const currentSelected = candidates.find(c => c.id === currentDecision);
+    const wasExactMatch =
+      currentSelected && Math.abs(Number(currentSelected.amount) - (doc.total_amount || 0)) < 1;
+
+    if (wasExactMatch && newValue === 'new') {
+      const confirmed = window.confirm(
+        '⚠️ Hay un costo existente con monto idéntico sin factura vinculada.\n\n' +
+        'Si creas uno nuevo, ese costo quedará huérfano y duplicarás el gasto en el sistema.\n\n' +
+        '¿Seguro que quieres crear un costo nuevo en vez de vincular el existente?'
+      );
+      if (!confirmed) return;
+    }
+    setLinkDecisions(prev => ({ ...prev, [documentKey]: newValue }));
+  };
+
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
     const documentKey = getDocumentStateKey(doc);
     const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, documentKey);
@@ -1363,27 +1461,116 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     : 'border-border/60 bg-muted/30'
                             )}
                           >
-                            {hasMatches && (
-                              <div className="flex items-center gap-2 rounded bg-info/15 px-2 py-1.5 text-xs text-info">
-                                <Link2 className="size-3.5 flex-shrink-0" />
-                                <span className="font-medium">🔗 Costo encontrado:</span>
-                                <Select
-                                  value={currentDecision}
-                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [documentKey]: val }))}
-                                >
-                                  <SelectTrigger className="h-7 min-w-[200px] flex-1 bg-background text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="new">➕ Crear nuevo pago</SelectItem>
-                                    {costsForDoc.map(cost => (
-                                      <SelectItem key={cost.id} value={cost.id}>
-                                        🔗 {cost.description} — ${Number(cost.amount).toLocaleString('es-CL')} — {cost.date}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                            {hasMatches ? (
+                              <div className="rounded-md border border-info/30 bg-info/10 p-2.5 text-xs">
+                                <div className="mb-2 flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 font-medium text-info">
+                                    <Link2 className="size-3.5" />
+                                    Se encontraron {costsForDoc.length} costo{costsForDoc.length > 1 ? 's' : ''} de este proveedor
+                                  </div>
+                                  {!expandedSearchKeys.has(documentKey) && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[11px] text-info hover:bg-info/20"
+                                      disabled={expandingSearchKey === documentKey}
+                                      onClick={() => expandMatchSearchForDoc(document, 15)}
+                                    >
+                                      {expandingSearchKey === documentKey ? (
+                                        <Loader2 className="mr-1 size-3 animate-spin" />
+                                      ) : null}
+                                      Ampliar ±15 días
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="space-y-1.5">
+                                  {costsForDoc.map(cost => {
+                                    const quality = getMatchQuality(cost, document);
+                                    const ageLabel = getCostAgeLabel(cost, document);
+                                    const isSelected = currentDecision === cost.id;
+                                    const toneClass =
+                                      quality.tone === 'exact'
+                                        ? 'border-primary/40 bg-primary/10 text-primary'
+                                        : quality.tone === 'similar'
+                                          ? 'border-warning/40 bg-warning/10 text-warning'
+                                          : 'border-border bg-muted text-muted-foreground';
+                                    return (
+                                      <label
+                                        key={cost.id}
+                                        className={cn(
+                                          'flex cursor-pointer items-start gap-2 rounded border bg-background p-2 transition-colors',
+                                          isSelected ? 'border-primary ring-1 ring-primary/30' : 'border-border/60 hover:border-border'
+                                        )}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name={`link-decision-${documentKey}`}
+                                          checked={isSelected}
+                                          onChange={() => handleLinkDecisionChange(documentKey, cost.id, document)}
+                                          className="mt-0.5 accent-primary"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                          <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className="font-medium text-foreground">
+                                              ${Number(cost.amount).toLocaleString('es-CL')}
+                                            </span>
+                                            <span className="text-muted-foreground">·</span>
+                                            <span className="text-muted-foreground">{cost.date}</span>
+                                            <span className="text-muted-foreground">({ageLabel})</span>
+                                            <Badge variant="outline" className={cn('h-5 border px-1.5 text-[10px]', toneClass)}>
+                                              {quality.label}
+                                            </Badge>
+                                          </div>
+                                          <p className="mt-0.5 break-words text-[11px] text-muted-foreground line-clamp-2">
+                                            {cost.description || 'Sin descripción'}
+                                          </p>
+                                        </div>
+                                      </label>
+                                    );
+                                  })}
+                                  <label
+                                    className={cn(
+                                      'flex cursor-pointer items-center gap-2 rounded border bg-background p-2 transition-colors',
+                                      currentDecision === 'new'
+                                        ? 'border-primary ring-1 ring-primary/30'
+                                        : 'border-border/60 hover:border-border'
+                                    )}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`link-decision-${documentKey}`}
+                                      checked={currentDecision === 'new'}
+                                      onChange={() => handleLinkDecisionChange(documentKey, 'new', document)}
+                                      className="accent-primary"
+                                    />
+                                    <span className="text-foreground">
+                                      ➕ Crear costo nuevo (no vincular)
+                                    </span>
+                                  </label>
+                                </div>
                               </div>
+                            ) : (
+                              !isDuplicate && document.supplier_rut && document.total_amount ? (
+                                <div className="flex items-center justify-between gap-2 rounded border border-dashed border-border/70 bg-muted/30 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                                  <span>Sin costos coincidentes en ±7 días</span>
+                                  {!expandedSearchKeys.has(documentKey) && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[11px]"
+                                      disabled={expandingSearchKey === documentKey}
+                                      onClick={() => expandMatchSearchForDoc(document, 15)}
+                                    >
+                                      {expandingSearchKey === documentKey ? (
+                                        <Loader2 className="mr-1 size-3 animate-spin" />
+                                      ) : null}
+                                      Buscar en ±15 días
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : null
                             )}
 
                             {isDuplicate && duplicateInfo.existingPayment && (

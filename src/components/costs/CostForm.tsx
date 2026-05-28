@@ -812,6 +812,11 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                     )}
                                                 </div>
                                             </div>
+                                            {!cost && currentStep === 4 && (
+                                                <div className="border-t border-border/70 bg-primary/5 px-6 py-2 text-[11px] text-primary/80">
+                                                    💡 Si el proveedor enviará factura electrónica después, podrás vincularla automáticamente al subir el XML — solo asegúrate de asignar el proveedor.
+                                                </div>
+                                            )}
                                         </div>
                                     </Form>
                                 </div>
