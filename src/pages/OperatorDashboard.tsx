@@ -19,6 +19,10 @@ const OperatorDashboard = () => {
   } = useOperatorServicesTabs();
   const [activeTab, setActiveTab] = useState('asignados');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Sort assigned services so the most imminent (today, tomorrow, ...) appear first
+  const asignadosSorted = [...serviceTabs.asignados].sort((a, b) =>
+    (a.serviceDate || '').localeCompare(b.serviceDate || '')
+  );
   console.log('🏠 OperatorDashboard - Render state:', {
     user: user ? {
       id: user.id,
