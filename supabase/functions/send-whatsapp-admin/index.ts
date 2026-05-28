@@ -43,6 +43,14 @@ const templates: Record<string, { name: string; params: (d: any) => string[] }> 
     name: "admin_cierre_mensual",
     params: (d) => [d.mes, d.anio, String(d.totalServicios), d.totalIngresos].map(String),
   },
+  servicio_sin_operador: {
+    name: "admin_servicio_sin_operador",
+    params: (d) => [d.folio, d.clientName, d.fechaServicio].map(String),
+  },
+  resumen_diario: {
+    name: "admin_resumen_diario",
+    params: (d) => [d.fecha, String(d.serviciosHoy ?? 0), String(d.facturasPendientes ?? 0)].map(String),
+  },
 };
 
 Deno.serve(async (req: Request) => {
@@ -89,6 +97,8 @@ Deno.serve(async (req: Request) => {
       documento_vencimiento: "notify_document_expiry",
       pago_pendiente: "notify_payment_pending",
       servicio_sin_cotizacion: "notify_service_no_quote",
+      servicio_sin_operador: "notify_service_no_operator",
+      resumen_diario: "notify_daily_reminder",
     };
     const settingKey = eventToSettingKey[event];
     if (!testMode && settingKey && waSettings && (waSettings as any)[settingKey] === false) {
