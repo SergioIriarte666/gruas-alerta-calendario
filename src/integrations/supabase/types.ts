@@ -2007,6 +2007,8 @@ export type Database = {
           id: string
           operator_id: string
           operator_signature: string
+          pdf_uploaded_at: string | null
+          pdf_url: string | null
           photos_before_service: string[] | null
           photos_client_vehicle: string[] | null
           photos_equipment_used: string[] | null
@@ -2021,6 +2023,8 @@ export type Database = {
           id?: string
           operator_id: string
           operator_signature: string
+          pdf_uploaded_at?: string | null
+          pdf_url?: string | null
           photos_before_service?: string[] | null
           photos_client_vehicle?: string[] | null
           photos_equipment_used?: string[] | null
@@ -2035,6 +2039,8 @@ export type Database = {
           id?: string
           operator_id?: string
           operator_signature?: string
+          pdf_uploaded_at?: string | null
+          pdf_url?: string | null
           photos_before_service?: string[] | null
           photos_client_vehicle?: string[] | null
           photos_equipment_used?: string[] | null
@@ -5511,6 +5517,7 @@ export type Database = {
           id: string
           notify_daily_reminder: boolean
           notify_document_expiry: boolean
+          notify_inspection_completed: boolean
           notify_invoice_overdue: boolean
           notify_operator_assigned: boolean
           notify_payment_pending: boolean
@@ -5526,6 +5533,7 @@ export type Database = {
           id?: string
           notify_daily_reminder?: boolean
           notify_document_expiry?: boolean
+          notify_inspection_completed?: boolean
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
           notify_payment_pending?: boolean
@@ -5541,6 +5549,7 @@ export type Database = {
           id?: string
           notify_daily_reminder?: boolean
           notify_document_expiry?: boolean
+          notify_inspection_completed?: boolean
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
           notify_payment_pending?: boolean
@@ -5736,6 +5745,7 @@ export type Database = {
         Returns: Json
       }
       check_inventory_sync_status: { Args: never; Returns: Json }
+      check_operator_visibility: { Args: { p_email: string }; Returns: Json }
       check_security_compliance: { Args: never; Returns: Json }
       check_security_status: { Args: never; Returns: string }
       check_service_invoice_consistency: { Args: never; Returns: Json }
@@ -6221,6 +6231,18 @@ export type Database = {
       }
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
+      list_operators_config: {
+        Args: never
+        Returns: {
+          email: string
+          has_op_role: boolean
+          operator_id: string
+          operator_name: string
+          services_direct: number
+          services_resource: number
+          user_id_set: boolean
+        }[]
+      }
       log_audit_entry: {
         Args: {
           p_new_data?: Json
