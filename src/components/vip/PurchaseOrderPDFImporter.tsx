@@ -228,6 +228,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                     <SelectItem key={cand.id} value={cand.id} className="text-xs font-mono">
                                       {cand.folio}
                                       {cand.serviceDate && ` (${format(new Date(cand.serviceDate), 'dd/MM')})`}
+                                      {cand.quoteNumber ? ` · Cot: ${cand.quoteNumber}` : ''}
                                       {oc ? ` · ${oc}` : ' · sin OC'}
                                     </SelectItem>
                                   );
@@ -254,6 +255,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                             {match.service.serviceDate && (
                               <span className="text-muted-foreground ml-1 no-underline">
                                 ({format(new Date(match.service.serviceDate), 'dd/MM')})
+                              </span>
+                            )}
+                            {match.service.quoteNumber && (
+                              <span className="text-muted-foreground ml-1 no-underline text-[10px]">
+                                · Cot: {match.service.quoteNumber}
                               </span>
                             )}
                           </button>
@@ -324,6 +330,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                       <div className="text-muted-foreground">
                                         {c.service.licensePlate || '—'} · {formatCurrency(c.service.value, getUserCurrencySync())}
                                         {c.service.serviceDate && ` · ${format(new Date(c.service.serviceDate), 'dd/MM/yy')}`}
+                                        {c.service.quoteNumber && ` · Cot: ${c.service.quoteNumber}`}
                                       </div>
                                       <div className="text-violet-600">{c.reasons.join(' + ')}</div>
                                     </li>
