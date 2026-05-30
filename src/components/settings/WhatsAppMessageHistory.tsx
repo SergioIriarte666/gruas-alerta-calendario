@@ -58,6 +58,14 @@ const STATUS_META: Record<LogStatus, { label: string; icon: React.ElementType; c
   failed: { label: 'Fallido', icon: XCircle, className: 'bg-destructive/10 text-destructive border-destructive/30' },
 };
 
+const COUNTER_STATUSES: LogStatus[] = ['delivered', 'sent', 'failed'];
+
+const getStatusQueryValues = (status: 'all' | LogStatus): LogStatus[] => {
+  if (status === 'all') return [];
+  if (status === 'delivered') return ['delivered', 'read'];
+  return [status];
+};
+
 function fmtDate(iso: string): string {
   try {
     const d = new Date(iso);
@@ -90,7 +98,9 @@ export const WhatsAppMessageHistory: React.FC = () => {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(50);
-    if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+    const statusValues = getStatusQueryValues(statusFilter);
+    if (statusValues.length === 1) query = query.eq('status', statusValues[0]);
+    if (statusValues.length > 1) query = query.in('status', statusValues);
     if (showHidden) {
       query = query.not('hidden_at', 'is', null);
     } else {
@@ -102,13 +112,13 @@ export const WhatsAppMessageHistory: React.FC = () => {
     setLoading(false);
 
     // Counts independientes del filtro de estado (solo respetan visibilidad)
-    const statuses: LogStatus[] = ['delivered', 'sent', 'failed'];
     const results = await Promise.all(
-      statuses.map(async (s) => {
+      COUNTER_STATUSES.map(async (s) => {
         let q = (supabase as any)
           .from('whatsapp_message_log')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', s);
+          .select('id', { count: 'exact', head: true });
+        const values = getStatusQueryValues(s);
+        q = values.length === 1 ? q.eq('status', values[0]) : q.in('status', values);
         q = showHidden ? q.not('hidden_at', 'is', null) : q.is('hidden_at', null);
         const { count } = await q;
         return [s, count ?? 0] as const;
@@ -180,7 +190,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{showHidden ? 'Mensajes ocultos' : 'Últimos 50 mensajes'}</span>
-          {(['delivered', 'sent', 'failed'] as LogStatus[]).map((s) => (
+          {COUNTER_STATUSES.map((s) => (
             <Badge key={s} variant="outline" className={STATUS_META[s].className}>
               {STATUS_META[s].label}: {counts[s] ?? 0}
             </Badge>
