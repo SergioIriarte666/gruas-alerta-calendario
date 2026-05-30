@@ -412,6 +412,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 <FileText className="size-4" />
                 Orden de Trabajo
               </Button>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
