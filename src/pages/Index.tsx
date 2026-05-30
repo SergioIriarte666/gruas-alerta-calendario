@@ -5,6 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { debugAuthState } from '@/utils/authUtils';
 import { Button } from '@/components/ui/button';
+import { AuthBackground } from '@/components/auth/AuthBackground';
 
 const Index: React.FC = () => {
   const { user: authUser, loading: authLoading } = useAuth();
@@ -48,12 +49,12 @@ const Index: React.FC = () => {
 
   if (profileUser.role === 'admin' && profileUser.operator_id) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
-          <div className="space-y-1">
-            <h1 className="text-lg font-semibold text-foreground">Selecciona un portal</h1>
-            <p className="text-sm text-muted-foreground">
-              Cuenta: <span className="text-foreground">{authUser.email}</span>
+      <AuthBackground>
+        <div className="w-full rounded-2xl border border-white/15 bg-white/10 p-6 text-white shadow-sm backdrop-blur">
+          <div className="space-y-1 text-center">
+            <h1 className="text-lg font-semibold">Selecciona un portal</h1>
+            <p className="text-sm text-white/70">
+              Cuenta: <span className="text-white">{authUser.email}</span>
             </p>
           </div>
 
@@ -67,6 +68,7 @@ const Index: React.FC = () => {
             </Button>
             <Button
               variant="outline"
+              className="border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
               onClick={() => {
                 navigate('/operator', { replace: true });
               }}
@@ -74,9 +76,8 @@ const Index: React.FC = () => {
               Entrar como Operador
             </Button>
           </div>
-
         </div>
-      </div>
+      </AuthBackground>
     );
   }
 
