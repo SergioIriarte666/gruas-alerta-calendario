@@ -218,7 +218,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                               value={match.service?.id ?? ''}
                               onValueChange={(val) => reassignMatch(index, val)}
                             >
-                              <SelectTrigger className="h-7 text-xs font-mono w-[180px]">
+                              <SelectTrigger className="h-7 text-xs font-mono w-[320px]">
                                 <SelectValue placeholder="Seleccionar..." />
                               </SelectTrigger>
                               <SelectContent>
