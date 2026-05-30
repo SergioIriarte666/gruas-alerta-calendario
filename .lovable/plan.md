@@ -1,79 +1,38 @@
-# Servicios futuros: causa raíz y dónde mostrarlos
+## Problema
 
-## Diagnóstico
+En el modal de Servicio (`ServiceDetailsModal`), el header coloca el bloque del título (badges + "Detalle Operativo y Financiero") y la fila de 5 botones de acción dentro del mismo `flex justify-between`. Como los botones ocupan casi todo el ancho, el bloque del título se comprime y queda desordenado:
 
-### 1. Reporte de Pendientes (causa principal)
-`src/hooks/usePendingSummary.ts` filtra **solo** servicios con `status = 'completed'` en sus dos queries de servicios (líneas 71 y 80). Los servicios futuros tienen status `pending`, `quoted`, `purchase_order_pending`, `with_purchase_order` o `in_progress` → **nunca entran en ninguna categoría**. Además, la interfaz `PendingSummaryData` no tiene una sección para "Próximos servicios".
+- El badge "Servicio 3224823-2" se parte en dos líneas.
+- El título "Detalle Operativo y Financiero" se rompe verticalmente palabra por palabra.
+- Los botones se quedan apretados en una sola fila sin respiro.
 
-### 2. Calendario (bug menor de mapeo de status)
-`src/hooks/useCalendarEvents.ts` **sí descarga** los servicios futuros (sin filtro de status ni fecha, líneas 38‑42) y `getEventsForDate` compara correctamente. Los futuros deberían verse al navegar al mes correspondiente.
+## Cambios
 
-Problemas detectados:
-- `serviceStatusMap` (líneas 61‑67) incluye `en_route` (no existe en el enum de BD) y **omite** status válidos: `quoted`, `purchase_order_pending`, `with_purchase_order`, `invoiced`, `inspection_completed`, `failed`. Caen al fallback `'scheduled'` y se pintan todos verdes ("completados" visualmente confuso), lo que hace que el usuario perciba que "no aparecen como futuros".
-- El header del Calendario no avisa cuántos servicios programados existen en el mes actual / próximo, así que si están en otro mes pasan desapercibidos.
+Archivo: `src/components/services/ServiceDetailsModal.tsx` (solo el bloque `DialogHeader`, líneas ~339-418).
 
-### 3. Dashboard
-`useDashboardData.ts` calcula `metrics.futureServices` pero el número no se expone como tarjeta/link navegable; no hay forma de ver el listado.
+1. **Apilar el header en dos filas** en lugar de `justify-between` horizontal:
+   - Fila 1: badges (`Servicio {folio}` + estado) en línea, sin truncar.
+   - Fila 2: `DialogTitle` "Detalle Operativo y Financiero" en una sola línea, tamaño consistente con el sistema (mismo patrón que el módulo de Costos: `text-xl font-semibold tracking-tight`).
+   - Fila 3: barra de acciones en `flex flex-wrap gap-2`, alineada a la izquierda, separada con un margen superior.
 
----
+2. **Acciones uniformes**:
+   - Mantener los mismos botones y handlers; solo ajustar layout (`flex-wrap`) para que respiren en viewports angostos y no compriman el título.
+   - Conservar variantes existentes (outline / secondary) y el icono + label actuales.
 
-## Cambios propuestos (solo UI + lectura de datos, sin tocar lógica de negocio)
+3. **Spacing y tipografía** siguiendo el patrón del módulo Costos:
+   - `DialogHeader`: `px-6 pt-6 pb-4 border-b border-border/70 gap-3`.
+   - Bloque de identidad (badges + título) con `space-y-2`.
+   - Acciones separadas con `pt-2` para crear jerarquía visual.
 
-### A. `src/hooks/usePendingSummary.ts`
-1. Añadir 5ª query: servicios con `service_date >= today` y `status IN ('pending','quoted','purchase_order_pending','with_purchase_order','in_progress')`, ordenados por fecha ascendente, limit 100.
-2. Extender `PendingSummaryData` con:
-   ```ts
-   upcomingServices: UpcomingService[]  // {id, folio, serviceDate, clientName, daysUntil, status}
-   ```
-3. Sumar `upcomingServices.length` al cálculo de `totalCritical` solo si `daysUntil <= 3` (urgencia operativa). El resto cuenta como informativo.
+4. **Sin cambios de lógica**: no se tocan handlers, datos, ni el resto del modal (tabs, contenido). Solo reordenamiento visual del header.
 
-### B. `src/components/dashboard/PendingSummaryModal.tsx`
-Añadir un `PendingCategoryCard` nuevo "Próximos servicios" con icono `CalendarClock` (violeta, según design tokens), mostrando folio, cliente, fecha y badge "en X días". Patrón visual idéntico al del módulo Costos.
+### Resultado esperado
 
-### C. `src/hooks/useCalendarEvents.ts`
-Reemplazar `serviceStatusMap` por uno alineado al enum real:
-```ts
-const serviceStatusMap = {
-  pending: 'scheduled',
-  quoted: 'scheduled',
-  purchase_order_pending: 'scheduled',
-  with_purchase_order: 'scheduled',
-  in_progress: 'scheduled',
-  inspection_completed: 'scheduled',
-  invoiced: 'completed',
-  completed: 'completed',
-  cancelled: 'cancelled',
-  failed: 'cancelled',
-};
+```text
+[Servicio 3224823-2] [Completado]
+Detalle Operativo y Financiero
+─────────────────────────────────────────────
+[Notificar Operador] [Duplicar] [Descargar PDF] [Cotización] [Orden de Trabajo]
 ```
-(Elimina `en_route`.)
 
-### D. `src/pages/Calendar.tsx` (header)
-Mostrar un contador discreto: "📅 X servicios programados este mes · Y próximos". Permite ver de un vistazo que sí hay futuros aunque la vista actual esté vacía.
-
-### E. Dashboard — tarjeta navegable
-Convertir el KPI `futureServices` existente en un link/MetricCard que abra el `PendingSummaryModal` con la sección "Próximos servicios" expandida (o navegue a `/services?filter=upcoming`). Sin lógica nueva, solo onClick.
-
----
-
-## Otros lugares donde también deberían visibilizarse (recomendado)
-
-| Ubicación | Acción |
-|---|---|
-| **Sidebar/Notificaciones** | Badge con count de servicios programados para "mañana" |
-| **WhatsApp daily-alerts** (ya existe edge function) | Incluir lista de servicios programados para el día siguiente en el resumen diario que envía a admins/operadores |
-| **Operator App / OperatorDashboard** | Sección "Mis próximos servicios" filtrando por `operator_id = auth.uid()` y `service_date >= today` |
-
-Estos tres puntos son opcionales — confirma cuáles quieres incluir en esta iteración o si los dejamos para una fase posterior.
-
----
-
-## Archivos a modificar
-
-- `src/hooks/usePendingSummary.ts` (query + tipo + total)
-- `src/components/dashboard/PendingSummaryModal.tsx` (nueva categoría)
-- `src/hooks/useCalendarEvents.ts` (status map)
-- `src/pages/Calendar.tsx` o `src/components/calendar/CalendarHeader.tsx` (contador)
-- `src/pages/Dashboard.tsx` (link en KPI `futureServices`)
-
-Sin migraciones de BD. Sin cambios en edge functions (a menos que apruebes el punto de WhatsApp).
+Título y badges legibles en una línea cada uno; botones envolviendo con elegancia debajo.

@@ -336,21 +336,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex h-[90vh] max-w-4xl flex-col border-border/70 bg-card p-0">
-        <DialogHeader className="flex-shrink-0 border-b border-border/70 px-6 pb-4 pt-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                <Badge className="border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
-                  Servicio {serviceData.folio}
-                </Badge>
-                {getServiceStatusBadge(serviceData.status)}
-              </div>
-              <DialogTitle className="flex items-center gap-3 text-foreground">
-                <span>Detalle Operativo y Financiero</span>
-              </DialogTitle>
+        <DialogHeader className="flex flex-shrink-0 flex-col gap-3 border-b border-border/70 px-6 pb-4 pt-6">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="whitespace-nowrap border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+                Servicio {serviceData.folio}
+              </Badge>
+              {getServiceStatusBadge(serviceData.status)}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
+            <DialogTitle className="text-xl font-semibold tracking-tight text-foreground">
+              Detalle Operativo y Financiero
+            </DialogTitle>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button
                 variant="outline"
                 size="sm"
                 onClick={handleNotifyOperator}
@@ -413,8 +412,6 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 <FileText className="size-4" />
                 Orden de Trabajo
               </Button>
-            </div>
-          </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
