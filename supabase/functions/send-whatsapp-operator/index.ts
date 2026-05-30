@@ -48,8 +48,13 @@ type OperatorWhatsAppRequest = {
   operatorId: string;
   serviceId?: string;
   folio: string;
+  vehicleBrand?: string;
+  vehicleModel?: string;
+  licensePlate?: string;
   clientName: string;
   clientPhone: string;
+  contactPerson?: string;
+  contactPhone?: string;
   serviceDate: string;
   origin: string;
   destination: string;
@@ -90,8 +95,13 @@ Deno.serve(async (req: Request) => {
       operatorId,
       serviceId,
       folio,
+      vehicleBrand,
+      vehicleModel,
+      licensePlate,
       clientName,
       clientPhone,
+      contactPerson,
+      contactPhone,
       serviceDate,
       origin,
       destination,
@@ -168,15 +178,18 @@ Deno.serve(async (req: Request) => {
 
     const result = await sendWhatsAppTemplate(
       normalized.phone,
-      "servicio_asignado",
+      "servicio_asignado_v3",
       [
-        operatorName,
-        String(folio),
-        formattedDate,
-        origin || "",
-        destination || "",
-        clientName || "",
-        clientPhone || "",
+        operatorName,                                    // {{1}} nombre operador
+        String(folio),                                   // {{2}} folio
+        formattedDate,                                   // {{3}} fecha
+        vehicleBrand || "",                              // {{4}} marca
+        vehicleModel || "",                              // {{5}} modelo
+        licensePlate || "",                              // {{6}} patente
+        origin || "",                                    // {{7}} origen
+        destination || "",                               // {{8}} destino
+        contactPerson || clientName || "",               // {{9}} persona en el lugar
+        contactPhone || clientPhone || "",               // {{10}} teléfono persona en el lugar
       ],
       {
         event: "servicio_asignado",
