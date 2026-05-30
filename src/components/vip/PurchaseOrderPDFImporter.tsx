@@ -330,6 +330,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                                       <div className="text-muted-foreground">
                                         {c.service.licensePlate || '—'} · {formatCurrency(c.service.value, getUserCurrencySync())}
                                         {c.service.serviceDate && ` · ${format(new Date(c.service.serviceDate), 'dd/MM/yy')}`}
+                                        {c.service.quoteNumber && ` · Cot: ${c.service.quoteNumber}`}
                                       </div>
                                       <div className="text-violet-600">{c.reasons.join(' + ')}</div>
                                     </li>
