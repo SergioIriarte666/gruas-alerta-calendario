@@ -76,6 +76,14 @@ const Auth = () => {
           navigate('/operator', { replace: true });
           break;
         case 'admin':
+          if (profileUser.operator_id) {
+            console.log('Auth: Admin with operator profile detected, redirecting to / for portal selection');
+            navigate('/', { replace: true });
+            break;
+          }
+          console.log('Auth: Redirecting admin to /dashboard');
+          navigate('/dashboard', { replace: true });
+          break;
         case 'viewer':
           console.log('Auth: Redirecting admin/viewer to /dashboard');
           navigate('/dashboard', { replace: true });

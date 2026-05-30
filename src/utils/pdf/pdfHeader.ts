@@ -78,7 +78,7 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.setTextColor(...C.white);
   doc.text(docLabel, PAGE_W - MARGIN, 16, { align: 'right' });
 
-  let y = 36;
+  const y = 36;
 
   // ── Barra de metadatos: Folio / Fecha / Badge de estado ──────────────────
   doc.setFillColor(...C.grayLight);

@@ -11,6 +11,8 @@ interface UserProfile {
   role: 'admin' | 'operator' | 'viewer' | 'client';
   client_id?: string;
   avatar_url?: string | null;
+  operator_id?: string | null;
+  operator_name?: string | null;
 }
 
 interface UserContextType {
@@ -94,6 +96,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: newProfile.role,
               client_id: newProfile.client_id,
               avatar_url: newProfile.avatar_url,
+              operator_id: null,
+              operator_name: null,
             };
             cachedProfile = userProfile;
             cachedForUserId = authUser.id;
@@ -107,6 +111,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } else {
+        let operator_id: string | null = null;
+        let operator_name: string | null = null;
+        try {
+          const { data: operatorData, error: operatorError } = await supabase
+            .from('operators')
+            .select('id, name')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+          if (!operatorError && operatorData) {
+            operator_id = operatorData.id;
+            operator_name = operatorData.name;
+          }
+        } catch (operatorException) {
+          console.error('UserContext - Error fetching operator profile:', operatorException);
+        }
+
         const userProfile: UserProfile = {
           id: profileData.id,
           email: profileData.email,
@@ -114,6 +134,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: profileData.role,
           client_id: profileData.client_id,
           avatar_url: profileData.avatar_url,
+          operator_id,
+          operator_name,
         };
         cachedProfile = userProfile;
         cachedForUserId = authUser.id;

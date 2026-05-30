@@ -12,6 +12,8 @@ interface User {
   updated_at: string;
   client_id: string | null;
   client_name: string | null;
+  operator_id: string | null;
+  operator_name: string | null;
 }
 
 interface Client {
@@ -72,7 +74,35 @@ export const useUserManagement = () => {
       
       if (error) throw error;
       
-      setUsers(Array.isArray(data) ? data : []);
+      const rawUsers = (Array.isArray(data) ? data : []) as Omit<User, 'operator_id' | 'operator_name'>[];
+      const userIds = rawUsers.map(u => u.id).filter(Boolean);
+
+      let operatorRows: { id: string; name: string; user_id: string | null }[] = [];
+      if (userIds.length > 0) {
+        const { data: operatorData, error: operatorError } = await supabase
+          .from('operators')
+          .select('id, name, user_id')
+          .in('user_id', userIds);
+
+        if (operatorError) throw operatorError;
+        operatorRows = Array.isArray(operatorData) ? (operatorData as any) : [];
+      }
+
+      const operatorByUserId = new Map<string, { id: string; name: string }>();
+      for (const op of operatorRows) {
+        if (op.user_id) operatorByUserId.set(op.user_id, { id: op.id, name: op.name });
+      }
+
+      const enrichedUsers: User[] = rawUsers.map(u => {
+        const operator = operatorByUserId.get(u.id);
+        return {
+          ...(u as any),
+          operator_id: operator?.id || null,
+          operator_name: operator?.name || null,
+        };
+      });
+
+      setUsers(enrichedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
@@ -137,6 +167,68 @@ export const useUserManagement = () => {
       setOperators(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching operators:', error);
+    }
+  };
+
+  const assignOperatorToUser = async (userId: string, operatorId: string | null) => {
+    try {
+      setUpdating(userId);
+
+      const { data: existingOperatorLinks, error: existingError } = await supabase
+        .from('operators')
+        .select('id')
+        .eq('user_id', userId);
+
+      if (existingError) throw existingError;
+
+      const existingOperatorId = Array.isArray(existingOperatorLinks) && existingOperatorLinks.length > 0
+        ? existingOperatorLinks[0].id
+        : null;
+
+      if (operatorId) {
+        const { data: operatorRow, error: operatorRowError } = await supabase
+          .from('operators')
+          .select('id, user_id')
+          .eq('id', operatorId)
+          .single();
+
+        if (operatorRowError) throw operatorRowError;
+
+        if (operatorRow.user_id && operatorRow.user_id !== userId) {
+          throw new Error('Este operador ya está vinculado a otro usuario');
+        }
+      }
+
+      if (existingOperatorId && existingOperatorId !== operatorId) {
+        const { error: unlinkError } = await supabase
+          .from('operators')
+          .update({ user_id: null, updated_at: new Date().toISOString() })
+          .eq('id', existingOperatorId);
+
+        if (unlinkError) throw unlinkError;
+      }
+
+      if (operatorId) {
+        const { error: linkError } = await supabase
+          .from('operators')
+          .update({ user_id: userId, updated_at: new Date().toISOString() })
+          .eq('id', operatorId);
+
+        if (linkError) throw linkError;
+        toast.success('Operador vinculado correctamente');
+      } else {
+        toast.success('Operador desvinculado correctamente');
+      }
+
+      await fetchUsers();
+      await fetchOperators();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error assigning operator to user:', error);
+      toast.error(error.message || 'Error al vincular el operador');
+      return { success: false, error: error.message };
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -331,6 +423,7 @@ export const useUserManagement = () => {
     getInvitationStatus,
     updateUserRole,
     assignClientToUser,
+    assignOperatorToUser,
     toggleUserStatus,
     deleteUser,
     refetchUsers: fetchUsers

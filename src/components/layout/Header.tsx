@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, User, Settings, Building2 } from 'lucide-react';
+import { Menu, User, Settings, Building2, HardHat } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -148,6 +148,12 @@ export const Header = ({
               <User className="size-4 mr-2" />
               Perfil
             </DropdownMenuItem>
+            {user?.operator_id && (
+              <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={() => navigate('/operator')}>
+                <HardHat className="size-4 mr-2" />
+                Portal Operador
+              </DropdownMenuItem>
+            )}
             {isAdmin && <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={() => navigate('/settings')}>
                 <Settings className="size-4 mr-2" />
                 Configuración

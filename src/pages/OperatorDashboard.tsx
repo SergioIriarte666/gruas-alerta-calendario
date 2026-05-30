@@ -61,7 +61,7 @@ const OperatorDashboard = () => {
         </p>
         <p className="text-xs text-red-400/70 mb-4">
           {isNoOperator
-            ? 'Contacta al administrador para que vincule tu usuario.'
+            ? 'Tu usuario no tiene un operador asociado. Vincúlalo en Configuración → Gestión de Usuarios (Asignar Operador).'
             : error.message}
         </p>
         <button

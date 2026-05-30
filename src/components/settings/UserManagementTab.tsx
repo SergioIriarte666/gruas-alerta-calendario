@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, UserPlus, RefreshCw, Settings, Trash2, Shield } from 'lucide-react';
+import { Loader2, UserPlus, RefreshCw, Settings, Trash2, Shield, HardHat } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { CreateUserDialog } from './CreateUserDialog';
 import UserPermissionsModal from './UserPermissionsModal';
@@ -43,6 +43,7 @@ export const UserManagementTab = () => {
     createUser, 
     updateUserRole, 
     assignClientToUser, 
+    assignOperatorToUser,
     toggleUserStatus, 
     deleteUser,
     refetchUsers,
@@ -51,6 +52,7 @@ export const UserManagementTab = () => {
   } = useUserManagement();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
+  const [isOperatorAssignOpen, setIsOperatorAssignOpen] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [userForPermissions, setUserForPermissions] = useState<any>(null);
@@ -85,6 +87,14 @@ export const UserManagementTab = () => {
     if (selectedUser) {
       await assignClientToUser(selectedUser.id, clientId);
       setIsClientAssignOpen(false);
+      setSelectedUser(null);
+    }
+  };
+
+  const handleAssignOperator = async (operatorId: string | null) => {
+    if (selectedUser) {
+      await assignOperatorToUser(selectedUser.id, operatorId);
+      setIsOperatorAssignOpen(false);
       setSelectedUser(null);
     }
   };
@@ -184,7 +194,13 @@ export const UserManagementTab = () => {
 
                     {/* Client + Date */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{user.role === 'client' ? (toTitleCase(user.client_name || 'Sin asignar')) : 'No aplica'}</span>
+                      <span>
+                        {user.role === 'client'
+                          ? toTitleCase(user.client_name || 'Sin asignar')
+                          : user.operator_name
+                            ? `Operador: ${toTitleCase(user.operator_name)}`
+                            : 'Operador: Sin asignar'}
+                      </span>
                       <span>{format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}</span>
                     </div>
 
@@ -232,6 +248,38 @@ export const UserManagementTab = () => {
                           </DialogContent>
                         </Dialog>
                       )}
+                      {user.role !== 'client' && (
+                        <Dialog open={isOperatorAssignOpen && selectedUser?.id === user.id} onOpenChange={(open) => {
+                          setIsOperatorAssignOpen(open);
+                          if (!open) setSelectedUser(null);
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8" onClick={() => setSelectedUser(user)}>
+                              <HardHat className="size-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
+                            <DialogHeader>
+                              <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3">
+                              <div className="text-xs text-muted-foreground">
+                                Operador actual: <span className="text-foreground">{user.operator_name ? toTitleCase(user.operator_name) : 'Sin asignar'}</span>
+                              </div>
+                              <div className="space-y-2 max-h-60 overflow-y-auto">
+                                <Button variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignOperator(null)}>
+                                  Sin operador asignado
+                                </Button>
+                                {operators.map((op) => (
+                                  <Button key={op.id} variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignOperator(op.id)}>
+                                    {toTitleCase(op.name)} ({op.rut})
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                       <Button variant="ghost" size="icon" className="size-8 text-primary hover:bg-primary/10 hover:text-primary" onClick={() => setUserForPermissions(user)}>
                         <Shield className="size-4" />
                       </Button>
@@ -251,6 +299,7 @@ export const UserManagementTab = () => {
                   <TableRow>
                     <TableHead className="text-foreground font-medium">Usuario</TableHead>
                     <TableHead className="text-foreground font-medium">Rol</TableHead>
+                    <TableHead className="text-foreground font-medium">Operador Asociado</TableHead>
                     <TableHead className="text-foreground font-medium">Cliente Asociado</TableHead>
                     <TableHead className="text-foreground font-medium">Estado</TableHead>
                     <TableHead className="text-foreground font-medium">Estado Invitación</TableHead>
@@ -269,6 +318,47 @@ export const UserManagementTab = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={getRoleBadgeColor(user.role)}>{getRoleLabel(user.role)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.role === 'client' ? (
+                          <span className="text-sm text-muted-foreground">No aplica</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-foreground">
+                              {toTitleCase(user.operator_name || 'Sin asignar')}
+                            </span>
+                            <Dialog open={isOperatorAssignOpen && selectedUser?.id === user.id} onOpenChange={(open) => {
+                              setIsOperatorAssignOpen(open);
+                              if (!open) setSelectedUser(null);
+                            }}>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="size-6 p-0" onClick={() => setSelectedUser(user)} disabled={updating === user.id}>
+                                  <HardHat className="size-3" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="border-border/70 bg-card">
+                                <DialogHeader>
+                                  <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <p className="text-sm text-muted-foreground">
+                                    Selecciona el operador que será vinculado a este usuario. Para acceder al portal de operadores, el usuario debe tener un operador asociado.
+                                  </p>
+                                  <div className="space-y-2">
+                                    <Button variant="outline" className="w-full justify-start" onClick={() => handleAssignOperator(null)}>
+                                      Sin operador asignado
+                                    </Button>
+                                    {operators.map((op) => (
+                                      <Button key={op.id} variant="outline" className="w-full justify-start" onClick={() => handleAssignOperator(op.id)}>
+                                        {toTitleCase(op.name)} ({op.rut})
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {user.role === 'client' ? (

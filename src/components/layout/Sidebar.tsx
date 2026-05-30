@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -93,6 +93,7 @@ export const Sidebar = ({
       alwaysExpanded: true,
       items: [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
+        { name: 'Portal Operador', href: '/operator', icon: HardHat, adminOnly: false, requiresOperator: true },
         { name: 'Informe Diario', href: '/daily-report', icon: ClipboardList, adminOnly: false },
         { name: 'Servicios', href: '/services', icon: Truck, adminOnly: false },
       ]
@@ -166,6 +167,7 @@ export const Sidebar = ({
   const filterItems = (items: typeof navigationGroups[0]['items']) => {
     return items.filter(item => {
       if (item.adminOnly && (!user || user.role !== 'admin')) return false;
+      if ((item as any).requiresOperator && !user?.operator_id) return false;
       const moduleKey = routeToModuleKey[item.href];
       if (moduleKey && !hasModuleAccess(moduleKey)) return false;
       return true;

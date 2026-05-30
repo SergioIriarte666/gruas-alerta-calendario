@@ -1,13 +1,15 @@
 
 import React, { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { debugAuthState } from '@/utils/authUtils';
+import { Button } from '@/components/ui/button';
 
 const Index: React.FC = () => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
+  const navigate = useNavigate();
 
   console.log('Index page - Auth loading:', authLoading, 'Profile loading:', profileLoading);
   console.log('Index page - Auth user:', authUser?.email);
@@ -42,6 +44,40 @@ const Index: React.FC = () => {
   if (authUser && !profileUser) {
     console.log('Index - Auth user exists but no profile, redirecting to dashboard (fallback)');
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (profileUser.role === 'admin' && profileUser.operator_id) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md rounded-2xl border border-border/70 bg-card p-6 shadow-sm">
+          <div className="space-y-1">
+            <h1 className="text-lg font-semibold text-foreground">Selecciona un portal</h1>
+            <p className="text-sm text-muted-foreground">
+              Cuenta: <span className="text-foreground">{authUser.email}</span>
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-3">
+            <Button
+              onClick={() => {
+                navigate('/dashboard', { replace: true });
+              }}
+            >
+              Entrar como Administrador
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigate('/operator', { replace: true });
+              }}
+            >
+              Entrar como Operador
+            </Button>
+          </div>
+
+        </div>
+      </div>
+    );
   }
 
   // Redirect based on user role
