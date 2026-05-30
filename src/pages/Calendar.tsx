@@ -45,11 +45,11 @@ const Calendar = () => {
 
   const getEventTypeColor = (type: CalendarEvent['type']) => {
     switch (type) {
-      case 'service': return 'bg-green-500 text-white';
-      case 'maintenance': return 'bg-blue-500 text-white';
-      case 'meeting': return 'bg-purple-500 text-white';
-      case 'deadline': return 'bg-red-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case 'service': return 'bg-green-100 text-green-900';
+      case 'maintenance': return 'bg-blue-100 text-blue-900';
+      case 'meeting': return 'bg-purple-100 text-purple-900';
+      case 'deadline': return 'bg-red-100 text-red-900';
+      default: return 'bg-gray-100 text-gray-900';
     }
   };
 

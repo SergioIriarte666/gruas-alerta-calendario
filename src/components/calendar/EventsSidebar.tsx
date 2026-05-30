@@ -176,7 +176,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
               events.map((event) => (
                 <div
                   key={event.id}
-                  className={`p-3 rounded-lg ${getEventTypeColor(event.type)} bg-opacity-20 border border-opacity-30`}
+                  className={`p-3 rounded-lg border border-border/60 ${getEventTypeColor(event.type)}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

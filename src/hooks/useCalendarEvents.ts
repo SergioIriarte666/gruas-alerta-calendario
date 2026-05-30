@@ -3,6 +3,8 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
 import { sanitizeEventData } from '@/utils/calendarValidation';
+import { toast } from 'sonner';
+import { getBusinessToday } from '@/utils/timezoneUtils';
 
 const CALENDAR_EVENTS_SELECT = `
   id,
@@ -29,6 +31,8 @@ export const useCalendarEvents = () => {
     try {
       setLoading(true);
 
+      const businessToday = getBusinessToday();
+
       // Fetch all sources in parallel
       const [calendarRes, servicesRes, maintenanceRes] = await Promise.all([
         supabase
@@ -37,8 +41,11 @@ export const useCalendarEvents = () => {
           .order('date', { ascending: true }),
         supabase
           .from('services')
-          .select('id, folio, service_date, start_time, end_time, status, client_id, crane_id, operator_id, origin, destination, clients(name)')
-          .order('service_date', { ascending: false })
+          .select('id, folio, service_date, start_time, end_time, status, client_id, crane_id, operator_id, origin, destination, client:clients!services_client_id_fkey(name)')
+          .not('service_date', 'is', null)
+          .gte('service_date', businessToday)
+          .eq('status', 'pending')
+          .order('service_date', { ascending: true, nullsFirst: false })
           .limit(2000),
         supabase
           .from('crane_maintenance')
@@ -47,9 +54,18 @@ export const useCalendarEvents = () => {
           .limit(500),
       ]);
 
-      if (calendarRes.error) console.error('Error loading calendar events:', calendarRes.error);
-      if (servicesRes.error) console.error('Error loading services for calendar:', servicesRes.error);
-      if (maintenanceRes.error) console.error('Error loading maintenance for calendar:', maintenanceRes.error);
+      if (calendarRes.error) {
+        console.error('Error loading calendar events:', calendarRes.error);
+        toast.error('No se pudieron cargar eventos del calendario', { description: calendarRes.error.message });
+      }
+      if (servicesRes.error) {
+        console.error('Error loading services for calendar:', servicesRes.error);
+        toast.error('No se pudieron cargar servicios en el calendario', { description: servicesRes.error.message });
+      }
+      if (maintenanceRes.error) {
+        console.error('Error loading maintenance for calendar:', maintenanceRes.error);
+        toast.error('No se pudieron cargar mantenimientos en el calendario', { description: maintenanceRes.error.message });
+      }
 
       // Manual calendar events
       const manualEvents: CalendarEvent[] = (calendarRes.data || []).map(d => ({
@@ -72,7 +88,7 @@ export const useCalendarEvents = () => {
       };
 
       const serviceEvents: CalendarEvent[] = (servicesRes.data || []).map((s: any) => {
-        const clientName = s.clients?.name || '';
+        const clientName = s.client?.name || '';
         const routeInfo = [s.origin, s.destination].filter(Boolean).join(' → ');
         const description = routeInfo || undefined;
 
@@ -123,9 +139,7 @@ export const useCalendarEvents = () => {
         };
       });
 
-      // Merge all events
-      const allEvents = [...manualEvents, ...serviceEvents, ...maintenanceEvents];
-      setEvents(allEvents);
+      setEvents(serviceEvents);
     } catch (error) {
       console.error('Error loading calendar events:', error);
     } finally {
