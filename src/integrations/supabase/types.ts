@@ -5452,6 +5452,8 @@ export type Database = {
           error_code: string | null
           error_message: string | null
           event: string | null
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           parameters: Json
           provider_message_id: string | null
@@ -5469,6 +5471,8 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           event?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           parameters?: Json
           provider_message_id?: string | null
@@ -5486,6 +5490,8 @@ export type Database = {
           error_code?: string | null
           error_message?: string | null
           event?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           parameters?: Json
           provider_message_id?: string | null
