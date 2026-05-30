@@ -46,6 +46,9 @@ export interface Service {
   custodyNotes?: string;
   // Insured client name (for insurance companies)
   insuredName?: string;
+  // Contact person at service location
+  contactPerson?: string;
+  contactPhone?: string;
   // Outsourced/Third-party service fields
   outsourcedProviderId?: string;
   outsourcedCost?: number;
@@ -111,6 +114,9 @@ export interface ServiceFormData {
   custodyNotes?: string;
   // Insured client name (for insurance companies)
   insuredName?: string;
+  // Contact person at service location
+  contactPerson?: string;
+  contactPhone?: string;
   // Outsourced/Third-party service fields
   outsourcedProviderId?: string;
   outsourcedCost?: number;

@@ -307,8 +307,13 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           operatorId: primaryOperator.id,
           serviceId: serviceData.id,
           folio: serviceData.folio,
+          vehicleBrand: serviceData.vehicleBrand || '',
+          vehicleModel: serviceData.vehicleModel || '',
+          licensePlate: serviceData.licensePlate || '',
           clientName: serviceData.client?.name || '',
           clientPhone: serviceData.client?.phone || '',
+          contactPerson: serviceData.contactPerson || (serviceData as any).contact_person || '',
+          contactPhone: serviceData.contactPhone || (serviceData as any).contact_phone || '',
           serviceDate: serviceData.serviceDate,
           origin: serviceData.origin || '',
           destination: serviceData.destination || '',
@@ -434,6 +439,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       <DetailItem icon={Phone} label="Teléfono" value={serviceData.client.phone} />
                       <DetailItem icon={Mail} label="Email" value={serviceData.client.email} />
                       <DetailItem icon={MapPin} label="Dirección" value={serviceData.client.address} isFullWidth={true} />
+                      {(serviceData.contactPerson || (serviceData as any).contact_person) && (
+                        <DetailItem icon={UserCheck} label="Persona en el Lugar" value={serviceData.contactPerson || (serviceData as any).contact_person} />
+                      )}
+                      {(serviceData.contactPhone || (serviceData as any).contact_phone) && (
+                        <DetailItem icon={Phone} label="Teléfono Persona en el Lugar" value={serviceData.contactPhone || (serviceData as any).contact_phone} />
+                      )}
                   </DetailSection>
                   {shouldShowVehicleInfo(serviceData) && (
                       <DetailSection title="Vehículo" icon={Truck} color="cyan">

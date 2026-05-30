@@ -127,6 +127,8 @@ export const EnhancedServiceForm = ({
     custodyTotalAmount: service?.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
     custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || '',
     insuredName: service?.insuredName || (service as any)?.insured_name || '',
+    contactPerson: service?.contactPerson || (service as any)?.contact_person || '',
+    contactPhone: service?.contactPhone || (service as any)?.contact_phone || '',
     // Outsourced/Third-party service fields
     outsourcedProviderId: service?.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
     outsourcedCost: service?.outsourcedCost || (service as any)?.outsourced_cost || 0,
@@ -174,11 +176,13 @@ export const EnhancedServiceForm = ({
         custodyTotalAmount: prefilledData.custodyDetails?.totalAmount,
         custodyNotes: '',
         insuredName: '',
+        contactPerson: '',
+        contactPhone: '',
         outsourcedProviderId: '',
         outsourcedCost: 0,
         outsourcedNotes: ''
       });
-      
+
       setEnableCustody(prefilledData.inCustody || false);
     }
   }, [prefilledData, service]);
@@ -351,6 +355,8 @@ export const EnhancedServiceForm = ({
         custodyTotalAmount: service.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
         custodyNotes: service.custodyNotes || (service as any)?.custody_notes || '',
         insuredName: service.insuredName || (service as any)?.insured_name || '',
+        contactPerson: service.contactPerson || (service as any)?.contact_person || '',
+        contactPhone: service.contactPhone || (service as any)?.contact_phone || '',
         outsourcedProviderId: service.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
         outsourcedCost: service.outsourcedCost || (service as any)?.outsourced_cost || 0,
         outsourcedNotes: service.outsourcedNotes || (service as any)?.outsourced_notes || ''
@@ -657,8 +663,13 @@ export const EnhancedServiceForm = ({
               operatorId,
               serviceId: result.id,
               folio: result.folio,
+              vehicleBrand: result.vehicleBrand || finalData.vehicleBrand || '',
+              vehicleModel: result.vehicleModel || finalData.vehicleModel || '',
+              licensePlate: result.licensePlate || finalData.licensePlate || '',
               clientName: result.client?.name || '',
               clientPhone: result.client?.phone || '',
+              contactPerson: (result as any).contactPerson || (result as any).contact_person || finalData.contactPerson || '',
+              contactPhone: (result as any).contactPhone || (result as any).contact_phone || finalData.contactPhone || '',
               serviceDate: result.serviceDate,
               origin: result.origin,
               destination: result.destination,
@@ -879,6 +890,10 @@ export const EnhancedServiceForm = ({
                     onQuoteNumberChange={(value) => setFormData(prev => ({ ...prev, quoteNumber: value }))}
                     insuredName={formData.insuredName}
                     onInsuredNameChange={(value) => setFormData(prev => ({ ...prev, insuredName: value }))}
+                    contactPerson={formData.contactPerson}
+                    onContactPersonChange={(value) => setFormData(prev => ({ ...prev, contactPerson: value }))}
+                    contactPhone={formData.contactPhone}
+                    onContactPhoneChange={(value) => setFormData(prev => ({ ...prev, contactPhone: value }))}
                     serviceTypeId={formData.serviceType}
                     onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
                     serviceTypes={serviceTypes}

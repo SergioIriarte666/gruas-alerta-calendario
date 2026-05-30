@@ -15,6 +15,10 @@ interface ClientServiceSectionProps {
   onQuoteNumberChange?: (value: string) => void;
   insuredName?: string;
   onInsuredNameChange?: (value: string) => void;
+  contactPerson?: string;
+  onContactPersonChange?: (value: string) => void;
+  contactPhone?: string;
+  onContactPhoneChange?: (value: string) => void;
   serviceTypeId: string;
   onServiceTypeChange: (serviceTypeId: string) => void;
   serviceTypes: ServiceType[];
@@ -35,6 +39,10 @@ export const ClientServiceSection = ({
   onQuoteNumberChange,
   insuredName = '',
   onInsuredNameChange,
+  contactPerson = '',
+  onContactPersonChange,
+  contactPhone = '',
+  onContactPhoneChange,
   serviceTypeId,
   onServiceTypeChange,
   serviceTypes,
@@ -99,6 +107,30 @@ export const ClientServiceSection = ({
         <InsuredNameCombobox
           value={insuredName}
           onValueChange={(value) => onInsuredNameChange?.(value)}
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Persona en el Lugar */}
+      <div className="space-y-2">
+        <Label htmlFor="contactPerson">Persona en el Lugar <span className="text-muted-foreground text-xs">(Opcional)</span></Label>
+        <Input
+          id="contactPerson"
+          placeholder="Nombre de quien recibe al operador"
+          value={contactPerson}
+          onChange={(e) => onContactPersonChange?.(e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Teléfono Persona en el Lugar */}
+      <div className="space-y-2">
+        <Label htmlFor="contactPhone">Teléfono Persona en el Lugar <span className="text-muted-foreground text-xs">(Opcional)</span></Label>
+        <Input
+          id="contactPhone"
+          placeholder="+56 9 XXXX XXXX"
+          value={contactPhone}
+          onChange={(e) => onContactPhoneChange?.(e.target.value)}
           disabled={disabled}
         />
       </div>
