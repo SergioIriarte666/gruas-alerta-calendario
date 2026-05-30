@@ -1,7 +1,7 @@
-
 export interface PhotoData {
   name: string;
   dataUrl: string;
+  storageUrl?: string;
 }
 
 export interface PhotoCaptureProps {

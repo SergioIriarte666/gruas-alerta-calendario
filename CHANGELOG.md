@@ -6,6 +6,50 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-05-30
+
+### Added — Portal del Operador: UI nativa móvil
+
+- **`OperatorThemeForcer`**: componente que aplica tema oscuro solo en el portal del operador sin afectar el resto de la app
+- **`OperatorBottomNav`**: barra de navegación inferior fija con tabs Inicio / Activos / Historial, compatible con safe-area iOS
+- **`NextServiceCard`**: tarjeta de próximo servicio en el dashboard con countdown dinámico ("Hoy en 2h", "Mañana", "En 3 días")
+- **`InspectionProgressBar`**: barra de progreso de inspección por secciones (Vehículo → Equipamiento → Fotos → Firma), reactiva en tiempo real con `form.watch()`
+- **`navigationUtils.ts`**: helper `openNavigation()` que abre Google Maps con la dirección de destino
+- **`inspectionPdfUpload.ts`**: utilidades para subir el PDF al bucket `inspection-pdfs` y guardar la URL firmada en la tabla `inspections`
+- **Edge Function `send-whatsapp-inspection`**: envía link de descarga del PDF por WhatsApp al cliente y al receptor final tras completar la inspección
+
+### Changed — Portal del Operador: mejoras de contenido
+
+- **`OperatorLayout`**: rediseño completo con header compacto tipo app, fondo negro (`zinc-950`), padding safe-area iOS/Android
+- **`OperatorDashboard`**: eliminado sistema de tabs; navegación migrada a bottom nav; contador rápido de servicios por estado; footer de debug eliminado
+- **`AssignedServiceCard`**: refactorizado en subcomponente `ServiceCardContent` eliminando duplicación de 5 ramas; borde izquierdo de color por urgencia (`rojo=hoy`, `violeta=mañana`, `ámbar=esta semana`); agrega marca, modelo y patente del vehículo; botón de navegación integrado
+- **`ServiceDetailsCard`**: expandido con vehículo, patente, fecha completa con hora, persona de contacto y teléfono tappable (`tel:`)
+- **`PDFProgress`**: movido de `fixed top-4 right-4` a `fixed bottom-0` con `env(safe-area-inset-bottom)` para evitar solapamiento con teclado virtual en móviles
+- **`InspectionHeader`**: rediseñado con estilo dark nativo y botón de volver compacto
+- **`index.html`**: agregado `viewport-fit=cover` para soporte de safe-area en iPhones con notch
+
+### Changed — PDF de inspección: rediseño visual profesional
+
+- **`pdfHeader.ts`**: banda superior verde de ancho completo con logo integrado, nombre de empresa y badge de tipo de documento (PRE-SERVICIO / FINAL)
+- **`serviceInfo.ts`**: dos tablas en columnas lado a lado (info del servicio + info del vehículo); kilometraje formateado con puntos de miles
+- **`equipmentChecklist.ts`**: colores por celda ("SI" verde, "NO" rojo); barra de progreso visual de completitud
+- **`pdfSignatures.ts`**: cajas con header verde, área de firma con borde y línea verde bajo cada firma
+- **`observations.ts`**: observaciones en recuadro redondeado; footer con separador verde y número de página
+
+### Fixed — Portal del Operador: bugs críticos
+
+- **PDF stuck at 80%**: tres causas corregidas — `company_data` retornaba 406 para operadores (cambiado a `maybeSingle()`); `canvas.toDataURL()` lanzaba `SecurityError` con URLs externas (guard agregado); `setIsGeneratingPDF(false)` nunca se llamaba en caso de error (agregado `finally`)
+- **Servicios no visibles en "Asignados"**: diagnóstico y corrección de política RLS `services_operator_select_scoped` — el campo `user_id` en la tabla `operators` no estaba vinculado al perfil de auth del operador
+- **Console.log en producción**: 84 llamadas a `console.log/warn` en archivos del portal del operador reemplazadas por `createLogger()` del sistema de logging existente (`src/lib/logger.ts`)
+
+### Infrastructure — Base de datos y Storage
+
+- **Bucket `inspection-pdfs`**: almacenamiento privado para PDFs de inspección con políticas RLS
+- **Bucket `inspection-photos`**: almacenamiento para fotos de inspección — fotos ya no dependen solo de localStorage
+- **Migración `inspections`**: columnas `pdf_url TEXT` y `pdf_uploaded_at TIMESTAMPTZ` agregadas
+- **Migración `whatsapp_settings`**: columna `notify_inspection_completed BOOLEAN DEFAULT true` agregada
+- **Plantilla Meta `inspeccion_completada_link`**: creada en WhatsApp Manager, pendiente aprobación (24-48h)
+
 ## [2.1.1] - 2025-01-29
 
 ### Added - Sistema de Métricas de Servicios

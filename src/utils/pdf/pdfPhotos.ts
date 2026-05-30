@@ -5,11 +5,12 @@ import { drawPhotoPlaceholder } from './photos/photoPlaceholder';
 import { getPhotoFromStorage } from './photos/photoStorage';
 
 export const addPhotographicSetSection = async (
-  doc: jsPDF, 
+  doc: jsPDF,
   photographicSet: Array<{
     fileName: string;
     category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
-  }>, 
+    storageUrl?: string;
+  }>,
   yPosition: number
 ): Promise<number> => {
   if (!photographicSet || photographicSet.length === 0) {
@@ -82,7 +83,7 @@ export const addPhotographicSetSection = async (
         doc.text(item.label, xPos, yPosition);
         
         try {
-          const photoData = getPhotoFromStorage(item.photo!.fileName);
+          const photoData = getPhotoFromStorage(item.photo!.fileName, item.photo!.storageUrl);
           
           if (photoData) {
             try {

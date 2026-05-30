@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useServiceInspection } from '@/hooks/useServiceInspection';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
@@ -8,6 +7,9 @@ import { InspectionErrorState } from '@/components/operator/inspection/Inspectio
 import { InspectionLoadingState } from '@/components/operator/inspection/InspectionLoadingState';
 import { InspectionForm } from '@/components/operator/inspection/InspectionForm';
 import { AlertTriangle } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServiceInspection');
 
 const ServiceInspection = () => {
   const {
@@ -26,29 +28,26 @@ const ServiceInspection = () => {
     navigate
   } = useServiceInspection();
 
-  // Agregar logging detallado para debug
-  console.log('🎬 ServiceInspection Component Render:', {
+  logger.debug('Component Render:', {
     id,
     hasService: !!service,
     serviceFolio: service?.folio,
     isLoading,
     errorMessage: error?.message,
-    currentURL: window.location.href,
-    pathname: window.location.pathname
   });
 
   const handleBack = () => navigate(-1);
 
-  // Mostrar error si no hay ID del servicio
   if (!id) {
-    console.error('❌ No service ID found. URL params issue.');
-    console.error('❌ Current pathname:', window.location.pathname);
-    console.error('❌ Expected pattern: /operator/service/:id/inspection');
-    
+    logger.error('No service ID found. URL params issue.', {
+      pathname: window.location.pathname,
+      expected: '/operator/service/:id/inspection',
+    });
+
     return (
       <div className="space-y-6">
         <InspectionHeader onBack={() => navigate('/operator')} />
-        
+
         <div className="text-center p-8 bg-destructive/10 rounded-lg border border-destructive/30">
           <AlertTriangle className="size-16 mx-auto mb-4 text-destructive" />
           <h2 className="text-xl font-semibold mb-2 text-destructive">URL inválida</h2>
@@ -67,14 +66,14 @@ const ServiceInspection = () => {
       </div>
     );
   }
-  
+
   if (isLoading) {
     return <InspectionLoadingState serviceId={id} onBack={handleBack} />;
   }
 
   if (error || !service) {
     return (
-      <InspectionErrorState 
+      <InspectionErrorState
         error={error}
         serviceId={id}
         onRetry={handleRetry}
@@ -85,7 +84,7 @@ const ServiceInspection = () => {
 
   return (
     <div className="space-y-6">
-      <PDFProgress 
+      <PDFProgress
         isGenerating={isGeneratingPDF}
         progress={pdfProgress}
         currentStep={pdfStep}

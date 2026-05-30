@@ -17,12 +17,14 @@ interface InspectionFormSectionsProps {
   form: UseFormReturn<InspectionFormValues>;
   phase?: 'initial' | 'final';
   isInitialCompleted?: boolean;
+  serviceId: string;
 }
 
-export const InspectionFormSections = ({ 
-  form, 
-  phase = 'initial', 
-  isInitialCompleted = false 
+export const InspectionFormSections = ({
+  form,
+  phase = 'initial',
+  isInitialCompleted = false,
+  serviceId,
 }: InspectionFormSectionsProps) => {
   const { user } = useUser();
   const operatorSignatureRef = useRef<SignaturePadRef>(null);
@@ -204,8 +206,10 @@ export const InspectionFormSections = ({
               photos={field.value?.filter(photo => photo.fileName) as Array<{
                 fileName: string;
                 category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
+                storageUrl?: string;
               }> || []}
               onPhotosChange={field.onChange}
+              serviceId={serviceId}
             />
             <FormMessage />
           </FormItem>

@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useOperatorServices');
 
 const OPERATOR_SERVICES_SELECT = `
   id,
@@ -87,7 +90,7 @@ const OPERATOR_SERVICES_SELECT = `
 
 const fetchOperatorServices = async (userId: string): Promise<any[]> => {
   try {
-    console.log('Fetching operator services for user:', userId);
+    logger.debug('Fetching operator services for user:', userId);
     
     // Primero, obtener el operator_id basado en el user_id
     const { data: operatorData, error: operatorError } = await supabase
@@ -97,16 +100,16 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
       .single();
 
     if (operatorError) {
-      console.error('Error fetching operator by user_id:', operatorError);
+      logger.error('Error fetching operator by user_id:', operatorError);
       throw new Error(`No se encontró operador para el usuario: ${operatorError.message}`);
     }
 
     if (!operatorData) {
-      console.log('No operator found for user:', userId);
+      logger.debug('No operator found for user:', userId);
       throw new Error('No se encontró un operador asociado a este usuario');
     }
 
-    console.log('Found operator:', operatorData.id);
+    logger.debug('Found operator:', operatorData.id);
 
     const statusFilter = ['pending', 'in_progress', 'inspection_completed', 'completed'] as const;
 
@@ -125,11 +128,11 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
     ]);
 
     if (directError) {
-      console.error('Error fetching operator services (direct):', directError);
+      logger.error('Error fetching operator services (direct):', directError);
       throw new Error(`Error al obtener servicios: ${directError.message}`);
     }
     if (resourceError) {
-      console.error('Error fetching operator services (service_resources):', resourceError);
+      logger.error('Error fetching operator services (service_resources):', resourceError);
       throw new Error(`Error al obtener asignaciones: ${resourceError.message}`);
     }
 
@@ -147,7 +150,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         .order('service_date', { ascending: true });
 
       if (resServicesError) {
-        console.error('Error fetching operator services (by service_resources):', resServicesError);
+        logger.error('Error fetching operator services (by service_resources):', resServicesError);
         throw new Error(`Error al obtener servicios asignados: ${resServicesError.message}`);
       }
 
@@ -159,10 +162,10 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
     for (const s of resourceServices) mergedById.set((s as any).id, s);
 
     const merged = Array.from(mergedById.values());
-    console.log('Operator services fetched successfully:', merged.length, 'services');
+    logger.debug('Operator services fetched successfully:', merged.length, 'services');
     return merged;
   } catch (error: any) {
-    console.error('Unexpected error in fetchOperatorServices:', error);
+    logger.error('Unexpected error in fetchOperatorServices:', error);
     throw error;
   }
 };
@@ -179,12 +182,12 @@ export const useOperatorServices = (userId?: string) => {
       try {
         return transformRawServiceData(data).filter(Boolean) as Service[];
       } catch (error) {
-        console.error('Error transforming operator services:', error);
+        logger.error('Error transforming operator services:', error);
         return [];
       }
     },
     retry: (failureCount, error) => {
-      console.log(`Operator services query retry attempt ${failureCount}:`, error.message);
+      logger.debug(`Operator services query retry attempt ${failureCount}:`, error.message);
       if (error.message.includes('permission') || error.message.includes('No se encontró operador')) {
         toast.error('Error de acceso', {
           description: 'No tienes acceso a servicios como operador. Contacta al administrador.',
@@ -196,7 +199,7 @@ export const useOperatorServices = (userId?: string) => {
     retryDelay: 1000,
     meta: {
       onError: (error: Error) => {
-        console.error('Operator services query error:', error);
+        logger.error('Operator services query error:', error);
         toast.error('Error al cargar servicios', {
           description: 'No se pudieron cargar los servicios asignados. Por favor, intenta recargar la página.',
         });

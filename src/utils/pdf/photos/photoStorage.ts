@@ -1,19 +1,29 @@
+import { createLogger } from '@/lib/logger';
 
-export const getPhotoFromStorage = (photoName: string): string | null => {
+const logger = createLogger('PdfPhotoStorage');
+
+/**
+ * Obtiene una foto para el PDF.
+ * Prioridad: storageUrl (Supabase) → localStorage (caché local).
+ */
+export const getPhotoFromStorage = (
+  photoName: string,
+  storageUrl?: string
+): string | null => {
+  // Prioridad 1: URL de Supabase Storage
+  if (storageUrl) return storageUrl;
+
   if (!photoName || typeof photoName !== 'string') {
-    console.warn(`Nombre de foto inválido: ${photoName}`);
+    logger.warn(`Nombre de foto inválido: ${photoName}`);
     return null;
   }
 
-  // Verificar múltiples posibles claves en localStorage
-  let photoData = localStorage.getItem(`photo-${photoName}`);
-  
-  // Si no se encuentra, intentar solo con el nombre
-  if (!photoData) {
-    photoData = localStorage.getItem(photoName);
-  }
-  
-  console.log(`Buscando foto: photo-${photoName}, encontrada: ${!!photoData}`);
-  
-  return photoData && photoData.startsWith('data:image') ? photoData : null;
+  // Prioridad 2: localStorage (compatibilidad con fotos anteriores)
+  const localData =
+    localStorage.getItem(`photo-${photoName}`) ??
+    localStorage.getItem(photoName);
+
+  logger.debug(`Buscando foto: photo-${photoName}, encontrada: ${!!localData}`);
+
+  return localData?.startsWith('data:image') ? localData : null;
 };

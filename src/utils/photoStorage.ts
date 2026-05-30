@@ -1,10 +1,12 @@
-
 import { PhotoData } from '@/types/photo';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('PhotoStorage');
 
 export class PhotoStorage {
   static save(photo: PhotoData): void {
     localStorage.setItem(`photo-${photo.name}`, photo.dataUrl);
-    console.log(`Saved photo to localStorage: photo-${photo.name}`);
+    logger.debug(`Saved photo to localStorage: photo-${photo.name}`);
   }
 
   static load(photoName: string): PhotoData | null {
@@ -17,20 +19,20 @@ export class PhotoStorage {
 
   static loadMultiple(photoNames: string[]): PhotoData[] {
     const loadedPhotos: PhotoData[] = [];
-    
+
     photoNames.forEach(photoName => {
       const photo = this.load(photoName);
       if (photo) {
         loadedPhotos.push(photo);
       }
     });
-    
+
     return loadedPhotos;
   }
 
   static remove(photoName: string): void {
     localStorage.removeItem(`photo-${photoName}`);
-    console.log(`Removed photo from localStorage: photo-${photoName}`);
+    logger.debug(`Removed photo from localStorage: photo-${photoName}`);
   }
 
   static saveMultiple(photos: PhotoData[]): void {

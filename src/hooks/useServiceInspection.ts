@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -7,30 +6,35 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useInspectionPDF } from '@/hooks/inspection/useInspectionPDF';
 import { useInspectionEmail } from '@/hooks/inspection/useInspectionEmail';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
+import { uploadInspectionPdf, savePdfUrlToInspection } from '@/utils/inspectionPdfUpload';
+import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useServiceInspection');
 
 export const useServiceInspection = () => {
   const params = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const serviceId = params.id || params.serviceId;
-  
-  console.log('🎯 Service Inspection Hook - Service ID:', serviceId);
-  
+
+  logger.debug('Service ID:', serviceId);
+
   const { data: service, isLoading, error, refetch } = useOperatorService(serviceId || '');
-  const { 
-    pdfProgress, 
-    pdfStep, 
-    isGeneratingPDF, 
-    pdfDownloadUrl, 
-    generatePDF, 
+  const {
+    pdfProgress,
+    pdfStep,
+    isGeneratingPDF,
+    pdfDownloadUrl,
+    generatePDF,
     handleManualDownload,
-    cleanupPDF 
+    cleanupPDF
   } = useInspectionPDF();
   const { sendInspectionEmailMutation } = useInspectionEmail();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(serviceId);
 
-  console.log('📊 Service Inspection State:', {
+  logger.debug('State:', {
     serviceId,
     hasService: !!service,
     serviceFolio: service?.folio,
@@ -44,130 +48,149 @@ export const useServiceInspection = () => {
       if (!service || !serviceId) {
         throw new Error('No hay datos del servicio disponibles.');
       }
-      
-      console.log('📋 [PROCESS] Iniciando procesamiento para:', service.folio, 'Fase:', phase);
-      
-      // 1. Generar PDF (final para fase final, parcial para fase inicial)
+
+      logger.debug('Iniciando procesamiento para:', service.folio, 'Fase:', phase);
+
       const { blob } = await generatePDF(service, values, phase === 'final');
-      
-      // 2. Intentar enviar email si el cliente tiene email válido
+
       let emailSent = false;
       if (service.client?.email && service.client.email.includes('@')) {
         try {
-          console.log('📧 [PROCESS] Enviando email de inspección...');
+          logger.debug('Enviando email de inspección...');
           await sendInspectionEmailMutation.mutateAsync({
             pdfBlob: blob,
             service,
             inspection: values
           });
           emailSent = true;
-          console.log('✅ [PROCESS] Email de inspección enviado exitosamente');
+          logger.debug('Email de inspección enviado exitosamente');
         } catch (emailError) {
-          console.error('⚠️ [PROCESS] Error en email:', emailError);
+          logger.error('Error en email:', emailError);
           toast.error('PDF generado correctamente, pero no se pudo enviar por email');
         }
       } else {
-        console.log('⚠️ [PROCESS] Cliente sin email válido');
+        logger.debug('Cliente sin email válido');
         toast.info('PDF generado correctamente. Cliente sin email válido para envío.');
       }
-      
-      return { values, emailSent, phase };
+
+      return { values, emailSent, phase, blob };
     },
     onSuccess: async (result) => {
       const { emailSent, phase } = result;
-      
-      console.log('✅ [PROCESS] Procesamiento completado para fase:', phase);
-      
+
+      logger.debug('Procesamiento completado para fase:', phase);
+
       if (phase === 'initial') {
         if (emailSent) {
           toast.success('PDF de retiro generado y enviado exitosamente');
         } else {
           toast.success('PDF de retiro generado exitosamente');
         }
-        
-        // Actualizar estado del servicio a inspection_completed
+
         if (serviceId) {
-          console.log('🔄 [PROCESS] Actualizando estado a inspection_completed...');
+          logger.debug('Actualizando estado a inspection_completed...');
           try {
-            await updateServiceStatusMutation.mutateAsync({ 
-              id: serviceId, 
-              targetStatus: 'inspection_completed' 
+            await updateServiceStatusMutation.mutateAsync({
+              id: serviceId,
+              targetStatus: 'inspection_completed'
             });
-            console.log('✅ [PROCESS] Estado actualizado a inspection_completed');
-            
-            // Forzar refetch del servicio actual y todas las queries relacionadas
+            logger.debug('Estado actualizado a inspection_completed');
+
             await Promise.all([
               queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] }),
               queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
               queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
               refetch()
             ]);
-            
+
             toast.success('Inspección inicial completada. Regresando al menú principal...');
-            
-            // Navegación automática después de completar fase inicial
+
             setTimeout(() => {
-              console.log('🔄 [PROCESS] Navegando al dashboard...');
+              logger.debug('Navegando al dashboard...');
               navigate('/operator');
             }, 1500);
-            
+
           } catch (statusError) {
-            console.error('💥 [PROCESS] Error al actualizar estado:', statusError);
+            logger.error('Error al actualizar estado:', statusError);
             toast.error(`Error al actualizar estado: ${statusError.message}`);
           }
         }
       } else {
-        // Fase final
         if (emailSent) {
           toast.success('PDF de entrega generado y enviado exitosamente');
         } else {
           toast.success('PDF de entrega generado exitosamente');
         }
-        
-        // Limpiar fotos del localStorage SOLO después de completar TODO
-        console.log('🧹 [PROCESS] Limpiando fotos después de completar el servicio...');
+
+        // ── Subir PDF a Storage y notificar por WhatsApp ──────────────────
+        try {
+          const uploadResult = await uploadInspectionPdf(result.blob, serviceId, service.folio);
+          if (uploadResult) {
+            await savePdfUrlToInspection(serviceId, uploadResult.signedUrl);
+
+            const clientPhone = service.client?.phone || '';
+            const contactPhone = (service as any).contactPhone || '';
+
+            if (clientPhone || contactPhone) {
+              await supabase.functions.invoke('send-whatsapp-inspection', {
+                body: {
+                  folio: service.folio,
+                  serviceId,
+                  clientName: service.client?.name || '',
+                  clientPhone,
+                  contactPhone,
+                  contactPerson: (service as any).contactPerson || '',
+                  pdfUrl: uploadResult.signedUrl,
+                  serviceDate: service.serviceDate,
+                  operatorName: service.operator?.name || '',
+                },
+              });
+            }
+          }
+        } catch (uploadErr) {
+          logger.error('Error subiendo PDF o enviando WhatsApp:', uploadErr);
+        }
+        // ─────────────────────────────────────────────────────────────────
+
+        logger.debug('Limpiando fotos después de completar el servicio...');
         result.values.photographicSet?.forEach(photo => {
           localStorage.removeItem(`photo-${photo.fileName}`);
         });
-        
-        // Limpiar persistencia de inspección
+
         localStorage.removeItem(`inspection_${serviceId}`);
         localStorage.removeItem(`inspection_metadata_${serviceId}`);
-        
-        // Actualizar estado del servicio a completed
+
         if (serviceId) {
-          console.log('🔄 [PROCESS] Actualizando estado a completed...');
+          logger.debug('Actualizando estado a completed...');
           try {
-            await updateServiceStatusMutation.mutateAsync({ 
-              id: serviceId, 
-              targetStatus: 'completed' 
+            await updateServiceStatusMutation.mutateAsync({
+              id: serviceId,
+              targetStatus: 'completed'
             });
-            console.log('✅ [PROCESS] Estado actualizado a completed');
-            
-            // Forzar refetch de todas las queries antes de navegar
+            logger.debug('Estado actualizado a completed');
+
             await Promise.all([
               queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
               queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
               queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] })
             ]);
-            
-            // Navegar al dashboard después de completar
+
             setTimeout(() => {
-              console.log('🔄 [PROCESS] Navegando al dashboard...');
+              logger.debug('Navegando al dashboard...');
               navigate('/operator');
             }, 1500);
           } catch (statusError) {
-            console.error('💥 [PROCESS] Error crítico al actualizar estado:', statusError);
+            logger.error('Error crítico al actualizar estado:', statusError);
             toast.error(`Error crítico: ${statusError.message}`);
           }
         } else {
-          console.error('💥 [PROCESS] No hay serviceId para actualizar');
+          logger.error('No hay serviceId para actualizar');
           toast.error('Error: No se pudo identificar el servicio');
         }
       }
     },
     onError: (error: Error) => {
-      console.error('💥 [PROCESS] Error en procesamiento:', error);
+      logger.error('Error en procesamiento:', error);
       toast.error(`Error al procesar la inspección: ${error.message}`);
     },
     onSettled: () => {
@@ -176,9 +199,8 @@ export const useServiceInspection = () => {
   });
 
   const handleRetry = async () => {
-    console.log('🔄 Retrying service fetch...');
+    logger.debug('Retrying service fetch...');
     await refetch();
-    // También invalidar las queries del operador para refrescar las tabs
     await queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
     await queryClient.invalidateQueries({ queryKey: ['operator-services'] });
   };

@@ -1,9 +1,10 @@
-
 import { useState } from 'react';
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
-
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useInspectionPDF');
 
 export const useInspectionPDF = () => {
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -12,33 +13,37 @@ export const useInspectionPDF = () => {
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
 
   const generatePDF = async (service: any, inspection: InspectionFormValues, isFinal: boolean = true) => {
-    console.log('📄 [PDF] Iniciando generación de PDF...');
+    logger.debug('Iniciando generación de PDF...');
     setIsGeneratingPDF(true);
     setPdfProgress(0);
     setPdfStep('Iniciando generación...');
-    
+
     try {
       const pdfGenerator = createPDFGenerator((progress, step) => {
         setPdfProgress(progress);
         setPdfStep(step);
       });
-      
+
       const { blob, downloadUrl } = await pdfGenerator.generateWithProgress({
         service: service,
         inspection: inspection,
         isFinal: isFinal,
       });
-      
+
       setPdfDownloadUrl(downloadUrl);
-      
+
       const filename = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
       await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
-      
-      console.log('✅ [PDF] PDF generado exitosamente');
+
       return { blob, filename };
     } catch (error) {
-      console.error('💥 [PDF] Error generando PDF:', error);
+      logger.error('Error generando PDF:', error);
+      // Resetear progreso para que el operador sepa que falló y pueda reintentar
+      setPdfProgress(0);
+      setPdfStep('Error al generar PDF');
       throw error;
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -53,7 +58,6 @@ export const useInspectionPDF = () => {
 
   const cleanupPDF = () => {
     setTimeout(() => {
-      setIsGeneratingPDF(false);
       setPdfProgress(0);
       setPdfStep('');
       if (pdfDownloadUrl) {
@@ -70,6 +74,6 @@ export const useInspectionPDF = () => {
     pdfDownloadUrl,
     generatePDF,
     handleManualDownload,
-    cleanupPDF
+    cleanupPDF,
   };
 };

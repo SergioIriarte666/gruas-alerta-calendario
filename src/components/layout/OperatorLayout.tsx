@@ -1,19 +1,20 @@
-
 import React, { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
-import { User, Truck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { RefreshCw, LogOut, Truck } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { OperatorThemeForcer } from '@/components/operator/OperatorThemeForcer';
+import { OperatorBottomNav } from '@/components/operator/OperatorBottomNav';
 
 export const OperatorLayout = () => {
   const { user, logout } = useUser();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  // Fetch company data for logo and name
   const { data: companyData } = useQuery({
     queryKey: ['company-data-operator'],
     queryFn: async () => {
@@ -21,83 +22,87 @@ export const OperatorLayout = () => {
         .from('company_data')
         .select('business_name, logo_url')
         .limit(1)
-        .single();
-      
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 30,
   });
 
   const handleLogout = async () => {
     try {
       await logout();
-      toast({
-        type: 'success',
-        title: 'Sesión cerrada',
-        description: 'Has cerrado sesión correctamente'
-      });
+      toast({ type: 'success', title: 'Sesión cerrada' });
       window.location.href = '/auth';
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast({
-        type: 'error',
-        title: 'Error al cerrar sesión',
-        description: 'Por favor, intenta de nuevo.'
-      });
+    } catch {
+      toast({ type: 'error', title: 'Error al cerrar sesión' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-3 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-x-3">
+    <>
+      <OperatorThemeForcer />
+
+      <div className="min-h-screen bg-zinc-950 flex flex-col">
+
+        {/* ── Header ── */}
+        <header
+          className="flex-shrink-0 bg-zinc-900 border-b border-white/5 px-4 flex items-center justify-between"
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+            paddingBottom: '10px',
+          }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
             {companyData?.logo_url ? (
-              <img 
-                src={companyData.logo_url} 
-                alt={companyData.business_name || 'Logo empresa'} 
-                className="size-10 rounded-lg object-contain"
+              <img
+                src={companyData.logo_url}
+                alt="Logo"
+                className="size-8 rounded-lg object-contain flex-shrink-0"
               />
             ) : (
-              <div className="size-10 bg-violet-600 rounded-lg flex items-center justify-center">
-                <Truck className="size-6 text-white" />
+              <div className="size-8 bg-violet-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Truck className="size-4 text-white" />
               </div>
             )}
-            <div>
-              <h1 className="text-lg font-bold text-foreground">
-                {companyData?.business_name || 'Panel del Operador'}
-              </h1>
-              <p className="text-xs text-muted-foreground">Panel del Operador</p>
+            <div className="min-w-0">
+              <p className="text-[11px] text-zinc-500 leading-none mb-0.5">Portal Operador</p>
+              <p className="text-sm font-semibold text-white truncate leading-none">
+                {user?.name || user?.email}
+              </p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-x-2 sm:gap-x-4">
-            <div className="hidden sm:flex items-center gap-x-2 text-foreground">
-              <User className="size-4 flex-shrink-0" />
-              <span className="text-sm truncate max-w-[120px]">{user?.name}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-            >
-              Salir
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="p-4 sm:p-6">
-        <ErrorBoundary name="Portal Operador">
-          <Suspense fallback={null}>
-            <Outlet />
-          </Suspense>
-        </ErrorBoundary>
-      </main>
-    </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-950/30 transition-colors text-xs"
+          >
+            <LogOut className="size-3.5" />
+            <span>Salir</span>
+          </button>
+        </header>
+
+        {/* ── Contenido ── */}
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+        >
+          <div className="px-4 py-4">
+            <ErrorBoundary name="Portal Operador">
+              <Suspense fallback={
+                <div className="flex items-center justify-center py-20">
+                  <RefreshCw className="size-6 text-violet-500 animate-spin" />
+                </div>
+              }>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+        </main>
+
+        {/* ── Bottom nav ── */}
+        <OperatorBottomNav />
+      </div>
+    </>
   );
 };

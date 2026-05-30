@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +8,21 @@ import { toast } from 'sonner';
 import { PhotoProcessor } from '@/utils/photoProcessor';
 import { PhotoStorage } from '@/utils/photoStorage';
 import { PhotoData } from '@/types/photo';
+import { uploadInspectionPhoto, deleteInspectionPhoto } from '@/utils/photoUpload';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('PhotographicSet');
 
 interface PhotographicSetPhoto {
   fileName: string;
   category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
+  storageUrl?: string;
 }
 
 interface PhotographicSetProps {
   photos: PhotographicSetPhoto[];
   onPhotosChange: (photos: PhotographicSetPhoto[]) => void;
+  serviceId: string;
 }
 
 const PHOTO_CATEGORIES = [
@@ -29,61 +34,49 @@ const PHOTO_CATEGORIES = [
   { id: 'motor', label: 'Motor', shortLabel: 'Motor', icon: '⚙️' }
 ] as const;
 
-export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps) => {
+export const PhotographicSet = ({ photos, onPhotosChange, serviceId }: PhotographicSetProps) => {
   const [loadedPhotoData, setLoadedPhotoData] = useState<Record<string, PhotoData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('izquierdo');
 
-  // Enhanced photo loading with better error handling and logging
   useEffect(() => {
-    console.log('📷 PhotographicSet - Loading photos...', {
-      photosCount: photos.length,
-      photoFileNames: photos.map(p => p.fileName)
-    });
+    logger.debug('Loading photos...', { photosCount: photos.length });
 
     const loadExistingPhotos = async () => {
       const photoDataMap: Record<string, PhotoData> = {};
       let loadedCount = 0;
       let failedCount = 0;
-      
+
       for (const photo of photos) {
         try {
           const photoData = PhotoStorage.load(photo.fileName);
           if (photoData) {
             photoDataMap[photo.fileName] = photoData;
             loadedCount++;
-            console.log(`✅ Photo loaded: ${photo.fileName} (${photo.category})`);
           } else {
             failedCount++;
-            console.warn(`⚠️ Photo not found in storage: ${photo.fileName} (${photo.category})`);
+            logger.warn(`Photo not found in storage: ${photo.fileName} (${photo.category})`);
           }
         } catch (error) {
           failedCount++;
-          console.error(`❌ Error loading photo ${photo.fileName}:`, error);
+          logger.error(`Error loading photo ${photo.fileName}:`, error);
         }
       }
-      
-      console.log(`📊 Photo loading summary: ${loadedCount} loaded, ${failedCount} failed`);
+
+      logger.debug(`Photo loading summary: ${loadedCount} loaded, ${failedCount} failed`);
       setLoadedPhotoData(photoDataMap);
     };
 
     if (photos.length > 0) {
       loadExistingPhotos();
     } else {
-      console.log('📷 No photos to load, clearing loaded data');
       setLoadedPhotoData({});
     }
   }, [photos]);
 
-  // Debug effect to monitor photo data changes
-  useEffect(() => {
-    const loadedPhotoCount = Object.keys(loadedPhotoData).length;
-    console.log(`📷 Loaded photo data changed: ${loadedPhotoCount} photos available`);
-  }, [loadedPhotoData]);
-
   const handleFileSelect = async (files: FileList | null, category: string) => {
     if (!files || files.length === 0) return;
-    
+
     const file = files[0];
     if (!PhotoProcessor.validateImageFile(file)) {
       toast.error('Solo se permiten archivos de imagen');
@@ -91,37 +84,44 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
     }
 
     setIsLoading(true);
-    
+
     try {
-      console.log(`📷 Processing new photo for category: ${category}`);
+      logger.debug(`Processing new photo for category: ${category}`);
       const processedPhoto = await PhotoProcessor.processImage(file, `Set_Fotografico_${category}`);
-      
-      // Guardar en localStorage
+
+      // Guardar en localStorage (caché inmediata)
       PhotoStorage.save(processedPhoto);
-      console.log(`💾 Photo saved to storage: ${processedPhoto.name}`);
-      
-      // Actualizar estado local
-      setLoadedPhotoData(prev => ({
-        ...prev,
-        [processedPhoto.name]: processedPhoto
-      }));
-      
-      // Actualizar fotos en el formulario
+      logger.debug(`Photo saved to storage: ${processedPhoto.name}`);
+
+      setLoadedPhotoData(prev => ({ ...prev, [processedPhoto.name]: processedPhoto }));
+
       const newPhoto: PhotographicSetPhoto = {
         fileName: processedPhoto.name,
-        category: category as any
+        category: category as PhotographicSetPhoto['category'],
       };
-      
-      // Remover foto anterior de esta categoría si existe
+
       const filteredPhotos = photos.filter(p => p.category !== category);
       const updatedPhotos = [...filteredPhotos, newPhoto];
-      
-      console.log(`📝 Updating photos array: ${updatedPhotos.length} total photos`);
+
       onPhotosChange(updatedPhotos);
-      
-      toast.success(`Foto ${category} agregada exitosamente`);
+      toast.success(`Foto ${category} agregada`);
+
+      // Subir a Supabase Storage en segundo plano
+      uploadInspectionPhoto(processedPhoto.name, processedPhoto.dataUrl, serviceId).then((url) => {
+        if (url) {
+          logger.debug(`Foto subida a Supabase: ${processedPhoto.name}`);
+          // Actualizar el array con la storageUrl para que el PDF la use
+          onPhotosChange(
+            updatedPhotos.map(p =>
+              p.fileName === processedPhoto.name ? { ...p, storageUrl: url } : p
+            )
+          );
+        } else {
+          logger.warn(`Foto sin backup en Supabase: ${processedPhoto.name} (se usará localStorage)`);
+        }
+      });
     } catch (error) {
-      console.error('Error processing photo:', error);
+      logger.error('Error processing photo:', error);
       toast.error('Error al procesar la fotografía');
     } finally {
       setIsLoading(false);
@@ -129,45 +129,34 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
   };
 
   const removePhoto = (fileName: string, category: string) => {
-    console.log(`🗑️ Removing photo: ${fileName} (${category})`);
-    
-    // Remover del localStorage
+    logger.debug(`Removing photo: ${fileName} (${category})`);
+
     PhotoStorage.remove(fileName);
-    
-    // Actualizar estado local
+    deleteInspectionPhoto(fileName, serviceId); // fire-and-forget
+
     setLoadedPhotoData(prev => {
       const updated = { ...prev };
       delete updated[fileName];
       return updated;
     });
-    
-    // Actualizar fotos en el formulario
+
     const updatedPhotos = photos.filter(p => p.fileName !== fileName);
-    console.log(`📝 Photos after removal: ${updatedPhotos.length} total photos`);
     onPhotosChange(updatedPhotos);
-    
     toast.success(`Foto ${category} eliminada`);
   };
 
-  const getPhotoForCategory = (category: string) => {
-    return photos.find(p => p.category === category);
-  };
+  const getPhotoForCategory = (category: string) => photos.find(p => p.category === category);
 
-  const getCategoryCount = () => {
-    const categoriesWithPhotos = new Set(photos.map(p => p.category));
-    return categoriesWithPhotos.size;
-  };
+  const getCategoryCount = () => new Set(photos.map(p => p.category)).size;
 
   return (
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
           <span>Set Fotográfico</span>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">
-              {photos.length} foto(s) • {getCategoryCount()}/6 categorías
-            </Badge>
-          </div>
+          <Badge variant="secondary">
+            {photos.length} foto(s) • {getCategoryCount()}/6 categorías
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -233,12 +222,14 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        Archivo: {photo!.fileName}
+                      <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
+                        <span>{photo!.fileName}</span>
+                        {photo!.storageUrl && (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓ guardada</span>
+                        )}
                       </div>
                     </div>
                   ) : photo ? (
-                    // Photo exists in form data but not loaded from storage
                     <div className="border border-red-500 rounded-lg p-4 bg-red-50">
                       <p className="text-red-600 text-sm mb-2">
                         ⚠️ Foto registrada pero no disponible: {photo.fileName}
@@ -264,7 +255,6 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                       </div>
                     </div>
                   ) : (
-                    // No photo for this category
                     <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                       <Camera className="size-12 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground mb-4">

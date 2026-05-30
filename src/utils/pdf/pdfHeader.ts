@@ -1,15 +1,23 @@
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 
+const C = {
+  green:      [0, 130, 100]   as [number, number, number],
+  greenLight: [230, 248, 244] as [number, number, number],
+  gray:       [80, 80, 80]    as [number, number, number],
+  grayLight:  [245, 245, 245] as [number, number, number],
+  black:      [20, 20, 20]    as [number, number, number],
+  white:      [255, 255, 255] as [number, number, number],
+};
+
+const PAGE_W = 210;
+const MARGIN = 14;
+const CONTENT_W = PAGE_W - MARGIN * 2;
+
 const loadImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
-    console.log('Cargando imagen desde:', url);
     const response = await fetch(url);
-    if (!response.ok) {
-      console.warn('Error al cargar imagen:', response.status);
-      return null;
-    }
-    
+    if (!response.ok) return null;
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -17,128 +25,85 @@ const loadImageAsBase64 = async (url: string): Promise<string | null> => {
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
-  } catch (error) {
-    console.warn('Error procesando imagen:', error);
+  } catch {
     return null;
   }
 };
 
-const getImageDimensions = (base64: string): Promise<{width: number, height: number}> => {
-  return new Promise((resolve) => {
+const getImageDimensions = (base64: string): Promise<{ width: number; height: number }> =>
+  new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => {
-      resolve({ width: img.width, height: img.height });
-    };
-    img.onerror = () => {
-      resolve({ width: 100, height: 50 }); // Dimensiones por defecto
-    };
+    img.onload = () => resolve({ width: img.width, height: img.height });
+    img.onerror = () => resolve({ width: 100, height: 50 });
     img.src = base64;
   });
-};
-
-const calculateLogoDimensions = (originalWidth: number, originalHeight: number, maxWidth: number = 50, maxHeight: number = 30) => {
-  // Calcular el ratio de aspecto
-  const aspectRatio = originalWidth / originalHeight;
-  
-  let width = maxWidth;
-  let height = maxWidth / aspectRatio;
-  
-  // Si la altura calculada excede el máximo, ajustar por altura
-  if (height > maxHeight) {
-    height = maxHeight;
-    width = maxHeight * aspectRatio;
-  }
-  
-  return { width, height };
-};
 
 export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
-  const pageWidth = doc.internal.pageSize.width;
-  let yPosition = 20;
+  const isFinal = data.isFinal ?? false;
 
-  console.log('📄 [PDF-HEADER] Iniciando generación de header con datos:', {
-    companyName: data.companyData?.businessName,
-    hasLogo: !!data.companyData?.logoUrl,
-    logoUrl: data.companyData?.logoUrl
-  });
+  // ── Banda superior de color ───────────────────────────────────────────────
+  doc.setFillColor(...C.green);
+  doc.rect(0, 0, PAGE_W, 28, 'F');
 
+  // ── Logo en la banda ─────────────────────────────────────────────────────
+  let logoEndX = MARGIN;
   try {
-    // Agregar logo local
-    try {
-      console.log('🖼️ [PDF-HEADER] Cargando logo local...');
-      const logoUrl = '/logo-gruas-5-norte.png';
-      const logoBase64 = await loadImageAsBase64(logoUrl);
-      
-      if (logoBase64) {
-        console.log('✅ [PDF-HEADER] Logo local cargado exitosamente');
-        
-        // Obtener dimensiones originales de la imagen
-        const { width: originalWidth, height: originalHeight } = await getImageDimensions(logoBase64);
-        
-        // Calcular dimensiones manteniendo proporciones (máximo 50x30)
-        const { width: logoWidth, height: logoHeight } = calculateLogoDimensions(
-          originalWidth, 
-          originalHeight, 
-          50, // Ancho máximo
-          30  // Alto máximo
-        );
-        
-        // Agregar logo en la esquina superior izquierda
-        doc.addImage(logoBase64, 'PNG', 20, yPosition, logoWidth, logoHeight);
-        
-        // Ajustar posición del texto para dar espacio al logo
-        yPosition += Math.max(logoHeight + 5, 25);
-        console.log('✅ [PDF-HEADER] Logo agregado exitosamente al PDF');
-      } else {
-        console.warn('⚠️ [PDF-HEADER] No se pudo cargar el logo local');
-      }
-    } catch (error) {
-      console.error('❌ [PDF-HEADER] Error al cargar logo local:', error);
+    const logoBase64 = await loadImageAsBase64('/logo-gruas-5-norte.png');
+    if (logoBase64) {
+      const { width: w, height: h } = await getImageDimensions(logoBase64);
+      const maxH = 22;
+      const logoH = Math.min(maxH, h);
+      const logoW = (w / h) * logoH;
+      doc.addImage(logoBase64, 'PNG', MARGIN, 3, logoW, logoH);
+      logoEndX = MARGIN + logoW + 6;
     }
+  } catch { /* sin logo */ }
 
-    // Header principal mejorado
-    doc.setFontSize(18);
-    doc.setTextColor(0, 150, 136); // tms-green
-    const documentTitle = data.title || 'REPORTE DE INSPECCION PRE-SERVICIO';
-    doc.text(documentTitle, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 12;
+  // ── Nombre empresa en la banda ────────────────────────────────────────────
+  doc.setTextColor(...C.white);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(data.companyData?.businessName || 'Grúas 5 Norte', logoEndX, 13);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(
+    `RUT: ${data.companyData?.rut || ''} · ${data.companyData?.address || ''} · Tel: ${data.companyData?.phone || ''}`,
+    logoEndX, 21
+  );
 
-    // Información de la empresa - USAR DATOS REALES
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text(data.companyData?.businessName || 'Grúas 5 Norte', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 8;
-    
-    doc.setFontSize(10);
-    doc.setTextColor(60, 60, 60);
-    doc.text(`RUT: ${data.companyData?.rut || '76.769.841-0'}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 6;
-    
-    doc.text(data.companyData?.address || 'Panamericana Norte Km. 841, Copiapó', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 5;
-    
-    doc.text(`Tel: ${data.companyData?.phone || '+56 9 62380627'} | Email: ${data.companyData?.email || 'asistencia@gruas5norte.cl'}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+  // ── Tipo de documento (esquina derecha) ───────────────────────────────────
+  const docLabel = isFinal ? 'INFORME FINAL DE SERVICIO' : 'REPORTE DE INSPECCIÓN PRE-SERVICIO';
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...C.white);
+  doc.text(docLabel, PAGE_W - MARGIN, 16, { align: 'right' });
 
-    // Línea separadora
-    doc.setDrawColor(0, 150, 136);
-    doc.setLineWidth(0.5);
-    doc.line(20, yPosition, pageWidth - 20, yPosition);
-    yPosition += 10;
+  let y = 36;
 
-    // Información del documento
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    const now = new Date();
-    const timestamp = now.toLocaleString('es-CL');
-    doc.text(`Documento generado: ${timestamp}`, pageWidth - 20, yPosition, { align: 'right' });
-    doc.text(`Folio: ${data.service.folio || 'N/A'}`, 20, yPosition);
-    yPosition += 15;
+  // ── Barra de metadatos: Folio / Fecha / Badge de estado ──────────────────
+  doc.setFillColor(...C.grayLight);
+  doc.rect(MARGIN, y, CONTENT_W, 10, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.rect(MARGIN, y, CONTENT_W, 10, 'S');
 
-    console.log('Header corporativo agregado correctamente');
-    return yPosition;
-  } catch (error) {
-    console.error('Error en addPDFHeader:', error);
-    return yPosition + 50; // Fallback position
-  }
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...C.green);
+  doc.text(`Folio: ${data.service.folio || 'N/A'}`, MARGIN + 4, y + 6.5);
+
+  const now = new Date().toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generado: ${now}`, PAGE_W / 2, y + 6.5, { align: 'center' });
+
+  const badgeLabel = isFinal ? 'DOCUMENTO FINAL' : 'PRE-SERVICIO';
+  const badgeColor: [number, number, number] = isFinal ? [0, 130, 100] : [180, 100, 0];
+  doc.setFillColor(...badgeColor);
+  doc.roundedRect(PAGE_W - MARGIN - 38, y + 1.5, 36, 7, 2, 2, 'F');
+  doc.setTextColor(...C.white);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.text(badgeLabel, PAGE_W - MARGIN - 20, y + 6.5, { align: 'center' });
+
+  return y + 18;
 };

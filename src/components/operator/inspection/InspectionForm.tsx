@@ -9,10 +9,14 @@ import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { InspectionStatusCard } from './InspectionStatusCard';
+import { InspectionProgressBar } from './InspectionProgressBar';
 import { Download, FileText, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
 import { useInitialInspectionPDF } from '@/hooks/inspection/useInitialInspectionPDF';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('InspectionForm');
 
 interface InspectionFormProps {
   service: Service;
@@ -72,14 +76,14 @@ export const InspectionForm = ({
   useEffect(() => {
     if (isInitialized) return; // Evitar re-ejecuciones
     
-    console.log('🔄 InspectionForm - Initializing...');
-    console.log('📊 Service status:', service?.status);
-    console.log('📋 Saved data exists:', !!savedData);
-    console.log('📊 Metadata exists:', !!metadata);
+    logger.debug('🔄 InspectionForm - Initializing...');
+    logger.debug('📊 Service status:', service?.status);
+    logger.debug('📋 Saved data exists:', !!savedData);
+    logger.debug('📊 Metadata exists:', !!metadata);
     
     // Si el servicio está en estado "pending", comenzar limpio
     if (service?.status === 'pending') {
-      console.log('🧹 Service is pending - starting fresh');
+      logger.debug('🧹 Service is pending - starting fresh');
       clearPersistedData();
       setCurrentPhase('initial');
       setIsInitialized(true);
@@ -88,22 +92,22 @@ export const InspectionForm = ({
     
     // Si hay datos guardados, cargarlos
     if (savedData && metadata) {
-      console.log('✅ Loading saved inspection data');
-      console.log('📷 Photos count:', savedData.photographicSet?.length || 0);
-      console.log('🔄 Loading phase:', metadata.inspection_phase);
+      logger.debug('✅ Loading saved inspection data');
+      logger.debug('📷 Photos count:', savedData.photographicSet?.length || 0);
+      logger.debug('🔄 Loading phase:', metadata.inspection_phase);
       
       // Verificar que las fotos existen en localStorage
       if (savedData.photographicSet && savedData.photographicSet.length > 0) {
         const validPhotos = savedData.photographicSet.filter(photo => {
           const photoExists = localStorage.getItem(`photo-${photo.fileName}`) !== null;
           if (!photoExists) {
-            console.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
+            logger.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
           }
           return photoExists;
         });
         
         if (validPhotos.length !== savedData.photographicSet.length) {
-          console.log(`📷 Cleaned photos: ${validPhotos.length}/${savedData.photographicSet.length}`);
+          logger.debug(`📷 Cleaned photos: ${validPhotos.length}/${savedData.photographicSet.length}`);
           const cleanedData = { ...savedData, photographicSet: validPhotos };
           saveFormData(cleanedData, metadata.inspection_phase);
           form.reset(cleanedData);
@@ -116,7 +120,7 @@ export const InspectionForm = ({
       
       // Determinar fase correcta basada en el estado del servicio Y los metadatos
       if (service?.status === 'inspection_completed' && metadata.inspection_phase === 'initial') {
-        console.log('🚚 Service completed initial inspection - transitioning to final phase');
+        logger.debug('🚚 Service completed initial inspection - transitioning to final phase');
         setCurrentPhase('final');
         // Guardar los datos como fase final para continuar con la entrega
         saveFormData(savedData, 'final');
@@ -166,7 +170,7 @@ export const InspectionForm = ({
                 setCurrentPhase('initial');
               }
             } else {
-              console.log('🚚 Service inspection completed - ready for final phase but no photos found');
+              logger.debug('🚚 Service inspection completed - ready for final phase but no photos found');
               setCurrentPhase('final');
               if (!toastShownRef.current) {
                 toast({ 
@@ -177,8 +181,8 @@ export const InspectionForm = ({
               }
             }
           } else {
-            console.log('🚚 Service inspection completed - ready for final phase but no data found');
-            console.warn('⚠️ No hay datos de fase inicial guardados, pero el servicio está listo para entrega');
+            logger.debug('🚚 Service inspection completed - ready for final phase but no data found');
+            logger.warn('⚠️ No hay datos de fase inicial guardados, pero el servicio está listo para entrega');
             setCurrentPhase('final');
             if (!toastShownRef.current) {
               toast({ 
@@ -190,7 +194,7 @@ export const InspectionForm = ({
             }
           }
         } catch (error) {
-          console.error('Error al recuperar datos persistidos:', error);
+          logger.error('Error al recuperar datos persistidos:', error);
           // Limpiar datos corruptos
           localStorage.removeItem(`inspection_${serviceId}`);
           localStorage.removeItem(`inspection_metadata_${serviceId}`);
@@ -201,7 +205,7 @@ export const InspectionForm = ({
           }
         }
       } else {
-        console.log('🔄 Starting initial phase');
+        logger.debug('🔄 Starting initial phase');
         setCurrentPhase('initial');
       }
     }
@@ -227,7 +231,7 @@ export const InspectionForm = ({
   }, [currentPhase, form, saveFormData, isInitialized]);
 
   const handleSubmit = (values: InspectionFormValues) => {
-    console.log('📤 Submitting inspection form:', {
+    logger.debug('📤 Submitting inspection form:', {
       phase: currentPhase,
       photosCount: values.photographicSet?.length || 0,
       hasOperatorSignature: !!values.operatorSignature,
@@ -248,7 +252,7 @@ export const InspectionForm = ({
 
   const handleGeneratePartialPDF = () => {
     const values = form.getValues();
-    console.log('📄 Generating partial PDF with photos:', values.photographicSet?.length || 0);
+    logger.debug('📄 Generating partial PDF with photos:', values.photographicSet?.length || 0);
     
     if (onGeneratePartialPDF) {
       onGeneratePartialPDF(values);
@@ -256,11 +260,11 @@ export const InspectionForm = ({
   };
 
   const handleContinueToDelivery = () => {
-    console.log('🚚 Continuing to delivery phase...');
+    logger.debug('🚚 Continuing to delivery phase...');
     
     // Obtener valores actuales y asegurar que se guarden
     const currentValues = form.getValues();
-    console.log('📷 Photos before phase change:', currentValues.photographicSet?.length || 0);
+    logger.debug('📷 Photos before phase change:', currentValues.photographicSet?.length || 0);
     
     // Guardar estado actual antes del cambio de fase
     saveFormData(currentValues, 'final');
@@ -275,7 +279,7 @@ export const InspectionForm = ({
 
   const handleGenerateInitialPDF = () => {
     const values = form.getValues();
-    console.log('📄 [INITIAL] Generating initial inspection PDF with photos:', values.photographicSet?.length || 0);
+    logger.debug('📄 [INITIAL] Generating initial inspection PDF with photos:', values.photographicSet?.length || 0);
     generateInitialPDF({ service, values });
   };
 
@@ -291,11 +295,14 @@ export const InspectionForm = ({
         />
       )}
       
+      <InspectionProgressBar form={form} phase={currentPhase} />
+
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <InspectionFormSections 
-          form={form} 
+        <InspectionFormSections
+          form={form}
           phase={currentPhase}
           isInitialCompleted={isInitialPhaseCompleted()}
+          serviceId={serviceId}
         />
 
         <div className="flex justify-end gap-2">
