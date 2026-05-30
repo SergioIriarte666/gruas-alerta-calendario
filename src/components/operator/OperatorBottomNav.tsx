@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Play, CheckCircle } from 'lucide-react';
+import { Home, Play, CheckCircle, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/operator',                   icon: Home,        label: 'Inicio'    },
   { to: '/operator?tab=activos',       icon: Play,        label: 'Activos'   },
+  { to: '/operator?tab=pendientes_entrega', icon: Package, label: 'Entrega'  },
   { to: '/operator?tab=completados',   icon: CheckCircle, label: 'Historial' },
 ] as const;
 
