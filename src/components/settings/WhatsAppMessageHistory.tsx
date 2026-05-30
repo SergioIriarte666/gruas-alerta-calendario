@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,6 +73,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | LogStatus>('all');
   const [showHidden, setShowHidden] = useState(false);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState<
     | { type: 'one'; id: string }
@@ -99,15 +100,24 @@ export const WhatsAppMessageHistory: React.FC = () => {
     if (!error) setRows((data as LogRow[]) ?? []);
     setSelected(new Set());
     setLoading(false);
+
+    // Counts independientes del filtro de estado (solo respetan visibilidad)
+    const statuses: LogStatus[] = ['delivered', 'sent', 'failed'];
+    const results = await Promise.all(
+      statuses.map(async (s) => {
+        let q = (supabase as any)
+          .from('whatsapp_message_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', s);
+        q = showHidden ? q.not('hidden_at', 'is', null) : q.is('hidden_at', null);
+        const { count } = await q;
+        return [s, count ?? 0] as const;
+      })
+    );
+    setCounts(Object.fromEntries(results));
   }, [statusFilter, showHidden]);
 
   useEffect(() => { load(); }, [load]);
-
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { total: rows.length };
-    rows.forEach((r) => { c[r.status] = (c[r.status] ?? 0) + 1; });
-    return c;
-  }, [rows]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
