@@ -344,7 +344,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               </Badge>
               {getServiceStatusBadge(serviceData.status)}
             </div>
-            <DialogTitle className="text-xl font-semibold tracking-tight text-foreground">
+            <DialogTitle className="text-xl font-semibold tracking-tight text-foreground text-center">
               Detalle Operativo y Financiero
             </DialogTitle>
           </div>
