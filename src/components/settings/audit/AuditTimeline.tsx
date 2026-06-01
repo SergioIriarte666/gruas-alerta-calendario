@@ -93,8 +93,10 @@ export const AuditTimeline = ({
           <div className="space-y-0.5">
             {group.entries.map((entry) => {
               const isSelected = entry.id === selectedEntryId;
-              const isBackupOrNotif =
-                entry.source === 'backup_logs' || entry.source === 'notification_logs';
+              const isSystemOrActivity =
+                entry.source === 'backup_logs' ||
+                entry.source === 'notification_logs' ||
+                entry.source === 'user_activity_log';
 
               return (
                 <button
@@ -116,7 +118,7 @@ export const AuditTimeline = ({
                   <span
                     className={cn(
                       'mt-1.5 size-2 shrink-0 rounded-full',
-                      isBackupOrNotif ? 'bg-violet-500' : dotColor(entry.operation),
+                      isSystemOrActivity ? 'bg-violet-500' : dotColor(entry.operation),
                     )}
                   />
 
@@ -131,7 +133,7 @@ export const AuditTimeline = ({
                   </div>
 
                   {/* Badge operación */}
-                  {!isBackupOrNotif && (
+                  {!isSystemOrActivity && (
                     <span
                       className={cn(
                         'ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',

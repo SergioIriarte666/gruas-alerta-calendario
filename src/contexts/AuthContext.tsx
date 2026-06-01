@@ -19,6 +19,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const logActivity = async (params: { userId: string; eventType: string; path?: string }) => {
+    try {
+      await (supabase as any)
+        .from('user_activity_log')
+        .insert({
+          user_id: params.userId,
+          event_type: params.eventType,
+          path: params.path ?? null,
+          metadata: null,
+        });
+    } catch {
+      return;
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -28,6 +43,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!mounted) return;
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        if (event === 'SIGNED_IN' && currentSession?.user?.id) {
+          logActivity({ userId: currentSession.user.id, eventType: 'login', path: window.location.pathname });
+        }
         // Do NOT setLoading here — only the initial load controls it
       }
     );
@@ -73,6 +91,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      if (user?.id) {
+        await logActivity({ userId: user.id, eventType: 'logout', path: window.location.pathname });
+      }
       cleanupAuthState();
       await performGlobalSignOut(supabase);
       setSession(null);

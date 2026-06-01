@@ -39,6 +39,47 @@ export function useFrequentCostDescriptions() {
   return suggestions;
 }
 
+export function useFrequentCostLocations() {
+  const { data: values = [] } = useQuery({
+    queryKey: ['costs_locations_autocomplete'],
+    queryFn: async () => {
+      const [costsResult, servicesResult] = await Promise.all([
+        supabase
+          .from('costs')
+          .select('location_text')
+          .not('location_text', 'is', null)
+          .not('location_text', 'eq', '')
+          .order('created_at', { ascending: false })
+          .limit(500),
+
+        supabase
+          .from('services')
+          .select('origin, destination')
+          .order('created_at', { ascending: false })
+          .limit(500),
+      ]);
+
+      if (costsResult.error) throw costsResult.error;
+      if (servicesResult.error) throw servicesResult.error;
+
+      const costLocations = (costsResult.data || []).map((c: any) => c.location_text).filter(Boolean);
+      const serviceLocations = (servicesResult.data || [])
+        .flatMap((s: any) => [s.origin, s.destination])
+        .filter(Boolean);
+
+      return [...costLocations, ...serviceLocations];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const suggestions = useMemo(
+    () => buildSuggestions((values as any[]).filter(Boolean)),
+    [values]
+  );
+
+  return suggestions;
+}
+
 export function useFrequentObservations() {
   const { data: services = [] } = useQuery({
     queryKey: ['services_observations_autocomplete'],

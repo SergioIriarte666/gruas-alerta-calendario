@@ -12,6 +12,7 @@ export type AuditModule =
   | 'invoices'
   | 'settings'
   | 'users'
+  | 'activity'
   | 'backup'
   | 'notifications'
   | 'other';
@@ -33,7 +34,7 @@ export interface AuditEntry {
   oldValue?: string | null;
   newValue?: string | null;
   changeSummary?: string | null;
-  source: 'audit_log' | 'service_change_history' | 'backup_logs' | 'notification_logs';
+  source: 'audit_log' | 'service_change_history' | 'backup_logs' | 'notification_logs' | 'user_activity_log';
 }
 
 export interface AuditFilters {
@@ -85,6 +86,8 @@ export function tableToModule(tableName: string): AuditModule {
     case 'user_roles':
     case 'user_invitations':
       return 'users';
+    case 'user_activity_log':
+      return 'activity';
     case 'backup_logs':
       return 'backup';
     case 'notification_logs':
@@ -136,13 +139,36 @@ function nextId() {
 export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogResult {
   const pageSize = PAGE_SIZE;
 
+  const { data: usersData } = useQuery({
+    queryKey: ['audit-users'],
+    queryFn: async (): Promise<AuditUser[]> => {
+      const { data, error } = await (supabase as any)
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name', { ascending: true })
+        .limit(5000);
+
+      if (error) {
+        console.error('profiles error:', error);
+        return [];
+      }
+
+      return (data || []).map((r: any) => ({
+        id: r.id,
+        name: r.full_name || r.email || r.id,
+        email: r.email || '',
+      }));
+    },
+    staleTime: 300_000,
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ['audit-log', filters, page],
     queryFn: async (): Promise<{ entries: AuditEntry[]; availableUsers: AuditUser[] }> => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const [auditResult, serviceHistResult, backupResult, notifResult] = await Promise.all([
+      const [auditResult, serviceHistResult, backupResult, notifResult, activityResult] = await Promise.all([
         (supabase as any)
           .from('audit_log')
           .select(
@@ -170,12 +196,19 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
           .select('id, created_at, type, status, recipient')
           .order('created_at', { ascending: false })
           .limit(200),
+
+        (supabase as any)
+          .from('user_activity_log')
+          .select('id, created_at, user_id, event_type, path, profiles:user_id (id, full_name, email)')
+          .order('created_at', { ascending: false })
+          .range(from, to),
       ]);
 
       if (auditResult.error) console.error('audit_log error:', auditResult.error);
       if (serviceHistResult.error) console.error('service_change_history error:', serviceHistResult.error);
       if (backupResult.error) console.error('backup_logs error:', backupResult.error);
       if (notifResult.error) console.error('notification_logs error:', notifResult.error);
+      if (activityResult.error) console.error('user_activity_log error:', activityResult.error);
 
       const auditEntries: AuditEntry[] = (auditResult.data || []).map((r: any) => ({
         id: nextId(),
@@ -245,14 +278,31 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         source: 'notification_logs' as const,
       }));
 
-      const all = [...auditEntries, ...serviceEntries, ...backupEntries, ...notifEntries].sort(
+      const activityEntries: AuditEntry[] = (activityResult.data || []).map((r: any) => ({
+        id: nextId(),
+        tableName: 'user_activity_log',
+        module: 'activity' as AuditModule,
+        operation: 'INSERT' as AuditOperation,
+        timestamp: r.created_at,
+        userId: r.user_id || null,
+        userEmail: r.profiles?.email || null,
+        userName: r.profiles?.full_name || null,
+        oldData: null,
+        newData: { event_type: r.event_type, path: r.path },
+        changeSummary: r.event_type,
+        source: 'user_activity_log' as const,
+      }));
+
+      const all = [...auditEntries, ...serviceEntries, ...backupEntries, ...notifEntries, ...activityEntries].sort(
         (a, b) => b.timestamp.localeCompare(a.timestamp),
       );
 
       const usersMap = new Map<string, AuditUser>();
       all.forEach((e) => {
-        if (e.userId && e.userEmail) {
-          usersMap.set(e.userId, { id: e.userId, name: e.userName || e.userEmail, email: e.userEmail });
+        if (e.userId) {
+          const email = e.userEmail || '';
+          const name = e.userName || e.userEmail || `Usuario ${e.userId.slice(0, 8)}`;
+          usersMap.set(e.userId, { id: e.userId, name, email });
         }
       });
 
@@ -262,7 +312,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
   });
 
   const allEntries = data?.entries ?? [];
-  const availableUsers = data?.availableUsers ?? [];
+  const availableUsers = usersData && usersData.length > 0 ? usersData : data?.availableUsers ?? [];
 
   const filtered = applyFilters(allEntries, filters);
   const total = filtered.length;

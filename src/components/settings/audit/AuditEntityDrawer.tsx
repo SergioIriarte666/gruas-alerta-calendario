@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { AuditEntry } from '@/hooks/useAuditLog';
 import { useServiceChangeHistory } from '@/hooks/useServiceChangeHistory';
-import { moduleLabel, moduleNavigationPath, formatTimeLabel } from './auditHelpers';
+import { moduleLabel, moduleNavigationPath, formatTimeLabel, formatFieldLabel, formatFieldValue } from './auditHelpers';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -33,9 +33,13 @@ const JsonDiff = ({ oldData, newData }: JsonDiffProps) => {
       const oldStr = oldVal !== undefined ? JSON.stringify(oldVal) : undefined;
       const newStr = newVal !== undefined ? JSON.stringify(newVal) : undefined;
       if (oldStr === newStr) return null;
-      return { key, oldStr, newStr };
+      return {
+        key,
+        oldDisplay: oldVal !== undefined ? formatFieldValue(key, oldVal) : undefined,
+        newDisplay: newVal !== undefined ? formatFieldValue(key, newVal) : undefined,
+      };
     })
-    .filter(Boolean) as { key: string; oldStr?: string; newStr?: string }[];
+    .filter(Boolean) as { key: string; oldDisplay?: string; newDisplay?: string }[];
 
   if (rows.length === 0) {
     return <p className="text-xs text-muted-foreground">Sin diferencias detectadas.</p>;
@@ -52,22 +56,22 @@ const JsonDiff = ({ oldData, newData }: JsonDiffProps) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map(({ key, oldStr, newStr }) => (
+          {rows.map(({ key, oldDisplay, newDisplay }) => (
             <tr key={key} className="border-b border-border/30 last:border-0">
-              <td className="px-3 py-2 font-mono text-muted-foreground">{key}</td>
+              <td className="px-3 py-2 text-muted-foreground">{formatFieldLabel(key)}</td>
               <td className="px-3 py-2 font-mono">
-                {oldStr !== undefined ? (
+                {oldDisplay !== undefined ? (
                   <span className="rounded bg-red-50 px-1 text-red-700 dark:bg-red-900/20 dark:text-red-300">
-                    {oldStr}
+                    {oldDisplay}
                   </span>
                 ) : (
                   <span className="italic text-muted-foreground/50">—</span>
                 )}
               </td>
               <td className="px-3 py-2 font-mono">
-                {newStr !== undefined ? (
+                {newDisplay !== undefined ? (
                   <span className="rounded bg-green-50 px-1 text-green-700 dark:bg-green-900/20 dark:text-green-300">
-                    {newStr}
+                    {newDisplay}
                   </span>
                 ) : (
                   <span className="italic text-muted-foreground/50">—</span>
@@ -99,15 +103,15 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
       <div className="space-y-3">
         <div className="rounded-lg border border-border/50 p-3">
           <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {entry.fieldName}
+            {formatFieldLabel(entry.fieldName)}
           </p>
           <div className="flex items-center gap-2 text-sm">
             <span className="rounded bg-red-50 px-2 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
-              {entry.oldValue ?? '—'}
+              {formatFieldValue(entry.fieldName, entry.oldValue)}
             </span>
             <span className="text-muted-foreground">→</span>
             <span className="rounded bg-green-50 px-2 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
-              {entry.newValue ?? '—'}
+              {formatFieldValue(entry.fieldName, entry.newValue)}
             </span>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
@@ -128,15 +132,15 @@ const FieldChangesTab = ({ entry }: FieldChangesTabProps) => {
                 {changes.slice(0, 20).map((c) => (
                   <div key={c.id} className="rounded-lg border border-border/40 bg-muted/20 p-3">
                     <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      {c.fieldName}
+                      {formatFieldLabel(c.fieldName)}
                     </p>
                     <div className="flex items-center gap-2 text-sm">
                       <span className="rounded bg-red-50 px-1.5 py-0.5 font-mono text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300">
-                        {c.oldValue ?? '—'}
+                        {formatFieldValue(c.fieldName, c.oldValue)}
                       </span>
                       <span className="text-muted-foreground">→</span>
                       <span className="rounded bg-green-50 px-1.5 py-0.5 font-mono text-xs text-green-700 dark:bg-green-900/20 dark:text-green-300">
-                        {c.newValue ?? '—'}
+                        {formatFieldValue(c.fieldName, c.newValue)}
                       </span>
                     </div>
                     <p className="mt-1.5 text-xs text-muted-foreground">

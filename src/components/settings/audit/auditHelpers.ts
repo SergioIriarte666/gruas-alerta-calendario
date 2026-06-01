@@ -2,8 +2,95 @@ import { AuditEntry, AuditModule, tableToModule } from '@/hooks/useAuditLog';
 
 export { tableToModule };
 
+const FIELD_LABELS: Record<string, string> = {
+  value: 'Valor del servicio',
+  purchase_order: 'Orden de compra',
+  purchase_order_number: 'N° orden de compra',
+  quote_number: 'N° cotización',
+  status: 'Estado',
+  operator_commission: 'Comisión operador',
+  client_covered_amount: 'Monto cubierto por cliente',
+  excess_amount: 'Excedente',
+  insured_name: 'Nombre asegurado',
+  origin: 'Origen',
+  destination: 'Destino',
+  observations: 'Observaciones',
+  vehicle_brand: 'Marca vehículo',
+  vehicle_model: 'Modelo vehículo',
+  license_plate: 'Patente',
+  service_type_id: 'Tipo de servicio',
+  client_id: 'Cliente',
+  operator_id: 'Operador',
+  crane_id: 'Grúa',
+  event_type: 'Tipo de evento',
+  path: 'Ruta',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+  invoiced: 'Facturado',
+  in_progress: 'En progreso',
+  quoted: 'Cotizado',
+  purchase_order_pending: 'Orden de compra pendiente',
+  with_purchase_order: 'Con orden de compra',
+};
+
+function titleCaseWords(input: string): string {
+  return input
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => (w.length === 0 ? w : w[0]!.toUpperCase() + w.slice(1)))
+    .join(' ');
+}
+
+export function formatFieldLabel(fieldName: string | null | undefined): string {
+  if (!fieldName) return 'Campo';
+  const label = FIELD_LABELS[fieldName];
+  if (label) return label;
+  return titleCaseWords(fieldName.replace(/_/g, ' '));
+}
+
+export function formatFieldValue(fieldName: string | null | undefined, value: unknown): string {
+  if (value === null || value === undefined || value === '') return '—';
+
+  const stringValue =
+    typeof value === 'string' ? value : typeof value === 'number' || typeof value === 'boolean' ? String(value) : null;
+
+  if (fieldName && ['value', 'operator_commission', 'client_covered_amount', 'excess_amount'].includes(fieldName)) {
+    const numValue = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+    if (!Number.isNaN(numValue)) {
+      return `$${numValue.toLocaleString('es-CL')}`;
+    }
+  }
+
+  if (fieldName === 'status' && stringValue) {
+    return STATUS_LABELS[stringValue] || stringValue;
+  }
+
+  if (stringValue !== null) return stringValue;
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
 export function formatAuditDescription(entry: AuditEntry): string {
   const { source, operation, module, entityFolio, fieldName, changeSummary, newData, tableName } = entry;
+
+  if (source === 'user_activity_log') {
+    const data = newData as any;
+    const eventType = String(data?.event_type || changeSummary || '').toLowerCase();
+    const path = data?.path ? String(data.path) : '';
+
+    if (eventType === 'login') return 'Inicio de sesión';
+    if (eventType === 'logout') return 'Cierre de sesión';
+    if (eventType === 'page_view') return path ? `Visita: ${path}` : 'Visita';
+    return path ? `Actividad: ${eventType} · ${path}` : `Actividad: ${eventType || 'evento'}`;
+  }
 
   if (source === 'backup_logs') {
     const data = newData as any;
@@ -17,7 +104,7 @@ export function formatAuditDescription(entry: AuditEntry): string {
 
   if (source === 'service_change_history') {
     if (entityFolio && fieldName) {
-      return `Servicio ${entityFolio}: ${fieldName} modificado`;
+      return `Servicio ${entityFolio}: ${formatFieldLabel(fieldName)} modificado`;
     }
     if (entityFolio) {
       return changeSummary || `Servicio ${entityFolio} actualizado`;
@@ -90,6 +177,7 @@ export function moduleLabel(module: AuditModule): string {
     invoices: 'Facturas',
     settings: 'Configuración',
     users: 'Usuarios',
+    activity: 'Actividad',
     backup: 'Backup',
     notifications: 'Notificaciones',
     other: 'Otros',
@@ -107,6 +195,7 @@ export function moduleNavigationPath(module: AuditModule): string {
     invoices: '/invoices',
     settings: '/settings',
     users: '/settings',
+    activity: '/settings',
     backup: '/settings',
     notifications: '/settings',
     other: '/',

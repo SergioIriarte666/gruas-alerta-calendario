@@ -15,6 +15,8 @@ import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCar
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentCostLocations } from '@/hooks/useFrequentFormData';
 
 interface CostFormStep2Props {
   form: UseFormReturn<CostFormValues>;
@@ -50,6 +52,7 @@ export const CostFormStep2 = ({
   
   const hasSubcategories = subcategories.length > 0;
   const selectedSubcategoryRow = subcategories.find(s => s.name === selectedSubcategory);
+  const costLocationSuggestions = useFrequentCostLocations();
 
   const [isCreateSubcategoryOpen, setIsCreateSubcategoryOpen] = React.useState(false);
   const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
@@ -258,9 +261,10 @@ export const CostFormStep2 = ({
             <FormItem>
               <Label className="text-foreground">Ubicación / Tramo *</Label>
               <FormControl>
-                <Input
-                  {...field}
+                <AutocompleteInput
                   value={field.value || ''}
+                  onValueChange={field.onChange}
+                  suggestions={costLocationSuggestions}
                   placeholder="Ej: Ruta 5 - Tramo X / Plaza Y"
                 />
               </FormControl>

@@ -1,8 +1,9 @@
 
-import { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -19,6 +20,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
 import { businessClock } from '@/utils/businessClock';
+import { supabase } from '@/integrations/supabase/client';
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -123,6 +125,37 @@ const queryClient = new QueryClient({
   },
 });
 
+function RouteActivityTracker() {
+  const { user } = useAuth();
+  const location = useLocation();
+  const lastPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const path = location.pathname;
+    if (lastPathRef.current === path) return;
+    lastPathRef.current = path;
+
+    (async () => {
+      try {
+        await (supabase as any)
+          .from('user_activity_log')
+          .insert({
+            user_id: user.id,
+            event_type: 'page_view',
+            path,
+            metadata: null,
+          });
+      } catch {
+        return;
+      }
+    })();
+  }, [location.pathname, user?.id]);
+
+  return null;
+}
+
 function AppContent() {
   // Activar triggers de notificaciones
   useNotificationTriggers();
@@ -135,6 +168,7 @@ function AppContent() {
   
   return (
     <div className="min-h-screen bg-background text-foreground">
+        <RouteActivityTracker />
         <Routes>
         <Route path="/auth" element={<ErrorBoundary name="Auth"><Suspense fallback={null}><Auth /></Suspense></ErrorBoundary>} />
         <Route path="/reset-password" element={<ErrorBoundary name="ResetPassword"><Suspense fallback={null}><ResetPassword /></Suspense></ErrorBoundary>} />
