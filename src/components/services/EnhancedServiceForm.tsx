@@ -1244,9 +1244,13 @@ export const EnhancedServiceForm = ({
           <div className="flex-shrink-0">
             {currentStep < totalSteps ? (
               <Button
+                key="next"
                 type="button"
                 size="sm"
-                onClick={handleNext}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNext();
+                }}
                 disabled={!canGoNext()}
                 className="text-xs sm:text-sm px-2 sm:px-3"
               >
@@ -1255,6 +1259,7 @@ export const EnhancedServiceForm = ({
               </Button>
             ) : (
               <Button
+                key="submit"
                 type="submit"
                 form="enhanced-service-form"
                 size="sm"
