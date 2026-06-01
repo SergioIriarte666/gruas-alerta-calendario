@@ -272,6 +272,9 @@ const transformToService = (data: any): Service => {
     outsourcedProviderId: data.outsourced_provider_id || undefined,
     outsourcedCost: data.outsourced_cost ?? undefined,
     outsourcedNotes: data.outsourced_notes || undefined,
+    // Contact person at service location (independent of client master data)
+    contactPerson: data.contact_person || undefined,
+    contactPhone: data.contact_phone || undefined,
     custodyMode: data.custody_mode || 'none',
     custodyDays: data.custody_days || 0,
     custodyDailyRate: parseFloat(data.custody_daily_rate) || 0,
