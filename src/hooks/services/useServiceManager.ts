@@ -316,6 +316,9 @@ export const useServiceManager = () => {
           custody_total_amount: serviceData.custodyTotalAmount || null,
           custody_notes: serviceData.custodyNotes || null,
           insured_name: serviceData.insuredName || null,
+          // Contacto en el lugar (usado para notificaciones WhatsApp al operador)
+          contact_person: serviceData.contactPerson || null,
+          contact_phone: serviceData.contactPhone || null,
           // Outsourced/Third-party service fields
           outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
             ? serviceData.outsourcedProviderId 
@@ -730,6 +733,13 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.insuredName !== undefined && {
             insured_name: serviceData.insuredName
+          }),
+          // Contacto en el lugar (usado para notificaciones WhatsApp al operador)
+          ...(serviceData.contactPerson !== undefined && {
+            contact_person: serviceData.contactPerson || null
+          }),
+          ...(serviceData.contactPhone !== undefined && {
+            contact_phone: serviceData.contactPhone || null
           }),
           // ✅ CAMPOS OUTSOURCED - Proveedor tercerizado
           ...(serviceData.outsourcedProviderId !== undefined && {
