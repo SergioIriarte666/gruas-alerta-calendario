@@ -324,6 +324,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     outsourcedCost: serviceData.outsourced_cost,
     outsourcedNotes: serviceData.outsourced_notes,
     outsourcedProviderName: (serviceData as any).outsourced_provider?.name || null,
+    // Contact person at service location
+    contactPerson: serviceData.contact_person || undefined,
+    contactPhone: serviceData.contact_phone || undefined,
     createdAt: serviceData.created_at,
     updatedAt: serviceData.updated_at,
     createdBy: serviceData.created_by || undefined,

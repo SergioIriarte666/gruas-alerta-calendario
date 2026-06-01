@@ -59,14 +59,19 @@ export const ServicesDialogs = ({
               {editingService ? `Editar Servicio` : 'Nuevo Servicio'}
             </DialogTitle>
           </DialogHeader>
-          <EnhancedServiceForm
-            key={editingService?.id ?? 'new'}
-            service={editingService}
-            prefilledData={prefilledData}
-            onSubmit={editingService ? onUpdateService : onCreateService}
-            onCancel={() => onFormOpenChange(false)}
-            fromCalendarEvent={fromCalendarEvent}
-          />
+          {/* Renderizado condicional para forzar desmontaje completo al cerrar.
+              Radix Dialog no desmonta por defecto, lo que dejaba isSubmitting=true
+              entre aperturas. Con esto React destruye y recrea el form en cada apertura. */}
+          {isFormOpen && (
+            <EnhancedServiceForm
+              key={editingService?.id ?? 'new'}
+              service={editingService}
+              prefilledData={prefilledData}
+              onSubmit={editingService ? onUpdateService : onCreateService}
+              onCancel={() => onFormOpenChange(false)}
+              fromCalendarEvent={fromCalendarEvent}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
