@@ -1,21 +1,35 @@
-## Objetivo
+# Persistir Persona en el Lugar y Teléfono en servicios
 
-En el modal "Importar OC desde PDF", mostrar el número de cotización (`quoteNumber`) junto al folio del servicio para diferenciar servicios de la misma patente. Solo cambio visual; no se altera la lógica de matching ni de aplicación.
+## Problema
 
-## Archivo a modificar
+Los campos **Persona en el Lugar** (`contactPerson`) y **Teléfono Persona en el Lugar** (`contactPhone`) se capturan en el formulario y se muestran en el modal de detalles, pero **nunca se envían a la base de datos** al crear o editar un servicio. Por eso desaparecen al editar y no llegan a las notificaciones de WhatsApp del operador (`send-whatsapp-operator` los espera como `contactPerson` / `contactPhone`).
 
-`src/components/vip/PurchaseOrderPDFImporter.tsx` — columna "Servicio" (líneas ~211-263).
+La tabla `services` ya tiene las columnas `contact_person` y `contact_phone` (migración `20260529120000_add_contact_person_to_services.sql`), y el tipo `ServiceFormData` ya las define. El único punto roto es el mapeo camelCase → snake_case en el manager de servicios.
 
 ## Cambios
 
-1. **Caso múltiples candidatos (`Select` de Radix, líneas 215-247)**: en cada `SelectItem`, después del folio y antes de la fecha, añadir `· Cot: {quoteNumber}` si `cand.quoteNumber` existe. Mantener el resto del formato (`(dd/MM)` y `· OC`/`sin OC`).
+Archivo único: `src/hooks/services/useServiceManager.ts`
 
-2. **Caso un solo candidato (botón con folio, líneas 248-259)**: tras `{match.service.folio}`, si `match.service.quoteNumber` existe, renderizar un pequeño badge/span con estilo del módulo de Costos (`text-[10px] text-muted-foreground` o `Badge variant="outline"` con clases violeta sutiles) que diga `Cot: {quoteNumber}`. Mantener fecha entre paréntesis tal cual.
+1. **createServiceMutation** (bloque `transformedData` ~líneas 234–326): añadir
+   ```
+   contact_person: serviceData.contactPerson || null,
+   contact_phone: serviceData.contactPhone || null,
+   ```
+   junto a `insured_name`.
 
-3. **Popover "Mejores candidatos descartados" (líneas 318-330)**: añadir `quoteNumber` en la línea de datos del candidato (`{c.service.licensePlate || '—'} · Cot: {quoteNumber} · {monto} · {fecha}`) cuando exista, para mantener consistencia.
+2. **updateServiceMutation**, rama de actualización completa (~líneas 561–746): añadir los spreads condicionales siguiendo el patrón existente:
+   ```
+   ...(serviceData.contactPerson !== undefined && {
+     contact_person: serviceData.contactPerson || null,
+   }),
+   ...(serviceData.contactPhone !== undefined && {
+     contact_phone: serviceData.contactPhone || null,
+   }),
+   ```
 
-## Consideraciones
+No se toca lógica de negocio, validaciones, ni la rama de actualización parcial (esa sólo maneja folio/OC/cotización/status).
 
-- Usar tokens semánticos (`text-muted-foreground`, `text-violet-600`) — sin colores hardcoded.
-- `quoteNumber` ya existe en el tipo `Service` (línea 16 y 71 de `src/types/index.ts`) y en los candidatos, por lo que no hay cambios de tipos ni de hooks.
-- Sin tocar `usePurchaseOrderPDFImport`, `reassignMatch`, ni lógica de scoring/aplicación.
+## Verificación
+
+- Editar un servicio existente, rellenar Persona en el Lugar y Teléfono, guardar y reabrir: los valores deben persistir y mostrarse en el modal de detalles.
+- Asignar un operador a ese servicio: el WhatsApp `servicio_asignado_v3` debe llegar con los placeholders `{{9}}` y `{{10}}` poblados con esos datos (en vez de caer al nombre/teléfono del cliente).

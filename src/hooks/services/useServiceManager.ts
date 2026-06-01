@@ -316,6 +316,9 @@ export const useServiceManager = () => {
           custody_total_amount: serviceData.custodyTotalAmount || null,
           custody_notes: serviceData.custodyNotes || null,
           insured_name: serviceData.insuredName || null,
+          // Contacto en el lugar (usado para notificaciones WhatsApp al operador)
+          contact_person: serviceData.contactPerson || null,
+          contact_phone: serviceData.contactPhone || null,
           // Outsourced/Third-party service fields
           outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
             ? serviceData.outsourcedProviderId 
