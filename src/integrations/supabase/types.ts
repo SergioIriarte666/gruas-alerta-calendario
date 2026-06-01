@@ -4398,6 +4398,8 @@ export type Database = {
           client_id: string
           company_name: string | null
           company_rut: string | null
+          contact_person: string | null
+          contact_phone: string | null
           crane_id: string | null
           crane_mileage: number | null
           created_at: string | null
@@ -4452,6 +4454,8 @@ export type Database = {
           client_id: string
           company_name?: string | null
           company_rut?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           crane_id?: string | null
           crane_mileage?: number | null
           created_at?: string | null
@@ -4506,6 +4510,8 @@ export type Database = {
           client_id?: string
           company_name?: string | null
           company_rut?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           crane_id?: string | null
           crane_mileage?: number | null
           created_at?: string | null
