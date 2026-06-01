@@ -712,7 +712,7 @@ export const EnhancedServiceForm = ({
       
       console.log('📞 Calling onSubmit callback...');
       onSubmit?.(result);
-      
+      setIsSubmitting(false);
       onCancel?.();
       
       console.log('✅ Form submission completed successfully');

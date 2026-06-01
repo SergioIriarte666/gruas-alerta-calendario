@@ -60,6 +60,7 @@ export const ServicesDialogs = ({
             </DialogTitle>
           </DialogHeader>
           <EnhancedServiceForm
+            key={editingService?.id ?? 'new'}
             service={editingService}
             prefilledData={prefilledData}
             onSubmit={editingService ? onUpdateService : onCreateService}

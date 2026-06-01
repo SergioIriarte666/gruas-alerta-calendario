@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,6 +35,10 @@ export const DateSection = ({
   const [enableStartTime, setEnableStartTime] = useState(!!startTime);
   const [enableEndTime, setEnableEndTime] = useState(!!endTime);
   const [enableCraneMileage, setEnableCraneMileage] = useState(!!craneMileage);
+
+  useEffect(() => { setEnableStartTime(!!startTime); }, [startTime]);
+  useEffect(() => { setEnableEndTime(!!endTime); }, [endTime]);
+  useEffect(() => { setEnableCraneMileage(!!craneMileage); }, [craneMileage]);
   const [startTimeError, setStartTimeError] = useState<string | undefined>();
   const [endTimeError, setEndTimeError] = useState<string | undefined>();
 
