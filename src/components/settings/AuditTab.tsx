@@ -22,6 +22,8 @@ export const AuditTab = () => {
   const [page, setPage] = useState(1);
   const [selectedEntry, setSelectedEntry] = useState<AuditEntry | null>(null);
 
+  const { entries, loading, total, hasMore, availableUsers } = useAuditLog(filters, page);
+
   if (!isAdmin) {
     return (
       <Card>
@@ -32,8 +34,6 @@ export const AuditTab = () => {
       </Card>
     );
   }
-
-  const { entries, loading, total, hasMore, availableUsers } = useAuditLog(filters, page);
 
   const handleFiltersChange = (f: AuditFilters) => {
     setFilters(f);
