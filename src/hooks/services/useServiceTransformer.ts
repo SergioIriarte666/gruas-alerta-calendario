@@ -151,6 +151,9 @@ export const useServiceTransformer = () => {
         outsourcedProviderId: item.outsourced_provider_id || undefined,
         outsourcedCost: item.outsourced_cost ?? undefined,
         outsourcedNotes: item.outsourced_notes || undefined,
+        // Contact person at service location (independent of client master data)
+        contactPerson: item.contact_person || undefined,
+        contactPhone: item.contact_phone || undefined,
         // Custody fields - Transform from snake_case to camelCase
         custodyMode: item.custody_mode || 'none',
         custodyDays: item.custody_days || 0,

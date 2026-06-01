@@ -80,6 +80,7 @@ export const EnhancedServiceForm = ({
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
   const [valueFromRate, setValueFromRate] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Detectar si está duplicando
   const isDuplicating = prefilledData?._isDuplicating;
@@ -529,9 +530,10 @@ export const EnhancedServiceForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isCreating || isUpdating) {
+    if (isCreating || isUpdating || isSubmitting) {
       return;
     }
+    setIsSubmitting(true);
 
     try {
       let finalFolio = folio;
@@ -749,6 +751,8 @@ export const EnhancedServiceForm = ({
       
       playRetroErrorSound();
       toast.error(`Error al ${service ? 'actualizar' : 'crear'} el servicio: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1250,8 +1254,7 @@ export const EnhancedServiceForm = ({
               <Button
                 type="submit"
                 size="sm"
-                onClick={handleSubmit}
-                disabled={hasErrors || isCreating || isUpdating}
+                disabled={hasErrors || isCreating || isUpdating || isSubmitting}
                 className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
               >
                 {isCreating || isUpdating ? (
