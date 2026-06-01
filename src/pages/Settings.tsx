@@ -15,12 +15,13 @@ import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings
 import { WhatsAppSettingsSection } from '@/components/settings/WhatsAppSettingsSection';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid } from 'lucide-react';
+import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid, ClipboardList } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
 import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { ServiceHealthDashboard } from '@/components/dashboard/ServiceHealthDashboard';
+import { AuditTab } from '@/components/settings/AuditTab';
 
 const Settings = () => {
   const {
@@ -82,7 +83,8 @@ const Settings = () => {
     { value: 'users', label: 'Usuarios', icon: Users },
     { value: 'categories', label: 'Categorías', icon: Tag },
     ...(isAdmin ? [
-      { value: 'integrity', label: 'Integridad', icon: Shield },
+      { value: 'audit',      label: 'Auditoría',  icon: ClipboardList },
+      { value: 'integrity',  label: 'Integridad', icon: Shield },
       { value: 'liberation', label: 'Liberación', icon: Unlock },
     ] : []),
   ];
@@ -134,7 +136,7 @@ const Settings = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
           <div className="overflow-x-auto">
-            <TabsList className={`grid w-full min-w-[760px] ${isAdmin ? 'grid-cols-9' : 'grid-cols-7'} rounded-xl bg-transparent p-0`}>
+            <TabsList className={`grid w-full min-w-[760px] ${isAdmin ? 'grid-cols-10' : 'grid-cols-7'} rounded-xl bg-transparent p-0`}>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
 
@@ -188,6 +190,12 @@ const Settings = () => {
           <TabsContent value="categories" className="mt-4">
             <CategoriesTab />
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="audit" className="mt-4">
+              <AuditTab />
+            </TabsContent>
+          )}
 
           {isAdmin && (
             <TabsContent value="integrity" className="mt-4">
