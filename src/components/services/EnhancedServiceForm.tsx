@@ -831,7 +831,7 @@ export const EnhancedServiceForm = ({
             <ServiceValidationAlerts errors={validationErrors} />
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="enhanced-service-form" onSubmit={handleSubmit} className="space-y-4">
             {/* Step 1: Información Básica */}
             {currentStep === 1 && (
               <div className="space-y-4 animate-fade-in">
@@ -1256,6 +1256,7 @@ export const EnhancedServiceForm = ({
             ) : (
               <Button
                 type="submit"
+                form="enhanced-service-form"
                 size="sm"
                 disabled={hasErrors || isCreating || isUpdating || isSubmitting}
                 className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
