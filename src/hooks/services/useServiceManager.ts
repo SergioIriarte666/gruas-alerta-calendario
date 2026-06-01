@@ -734,6 +734,13 @@ export const useServiceManager = () => {
           ...(serviceData.insuredName !== undefined && {
             insured_name: serviceData.insuredName
           }),
+          // Contacto en el lugar (usado para notificaciones WhatsApp al operador)
+          ...(serviceData.contactPerson !== undefined && {
+            contact_person: serviceData.contactPerson || null
+          }),
+          ...(serviceData.contactPhone !== undefined && {
+            contact_phone: serviceData.contactPhone || null
+          }),
           // ✅ CAMPOS OUTSOURCED - Proveedor tercerizado
           ...(serviceData.outsourcedProviderId !== undefined && {
             outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
