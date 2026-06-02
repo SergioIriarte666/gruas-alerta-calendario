@@ -3,6 +3,9 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettings } from '@/hooks/useSettings';
 import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('FolioGenerator');
 
 export const useFolioGenerator = () => {
   const { settings } = useSettings();
@@ -11,14 +14,14 @@ export const useFolioGenerator = () => {
   const generateNextFolio = useCallback(async (): Promise<string> => {
     setLoading(true);
     try {
-      console.log('🔄 Generating new folio with correlative numbering...');
+      logger.debug('🔄 Generating new folio with correlative numbering...');
       
       // Obtener el formato de folio y próximo número de la configuración de la empresa
       const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
       const nextNumber = settings.company?.nextServiceFolioNumber || 1000;
       
-      console.log('📋 Using folio format:', folioFormat);
-      console.log('🔢 Next number from settings:', nextNumber);
+      logger.debug('📋 Using folio format:', folioFormat);
+      logger.debug('🔢 Next number from settings:', nextNumber);
       
       // Obtener los datos actuales de la empresa para usar la transacción
       const { data: companyData, error: fetchError } = await supabase
@@ -28,7 +31,7 @@ export const useFolioGenerator = () => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('❌ Error fetching company data:', fetchError);
+        logger.error('❌ Error fetching company data:', fetchError);
         throw fetchError;
       }
 
@@ -38,11 +41,11 @@ export const useFolioGenerator = () => {
 
       // Usar el número más actualizado de la base de datos
       const currentNumber = companyData.next_service_folio_number || 1000;
-      console.log('📊 Current number from database:', currentNumber);
+      logger.debug('📊 Current number from database:', currentNumber);
 
       // Generar el nuevo folio
       const newFolio = folioFormat.replace('{number}', String(currentNumber).padStart(4, '0'));
-      console.log('✅ Generated new folio:', newFolio);
+      logger.debug('✅ Generated new folio:', newFolio);
 
       // Actualizar el próximo número en la base de datos
       const { error: updateError } = await supabase
@@ -54,11 +57,11 @@ export const useFolioGenerator = () => {
         .eq('id', companyData.id);
 
       if (updateError) {
-        console.error('❌ Error updating next folio number:', updateError);
+        logger.error('❌ Error updating next folio number:', updateError);
         throw updateError;
       }
 
-      console.log('🔄 Updated next folio number to:', currentNumber + 1);
+      logger.debug('🔄 Updated next folio number to:', currentNumber + 1);
       
       // Disparar evento para actualizar la configuración en memoria
       setTimeout(() => {
@@ -67,14 +70,14 @@ export const useFolioGenerator = () => {
       
       return newFolio;
     } catch (error: any) {
-      console.error('❌ Error generating folio:', error);
+      logger.error('❌ Error generating folio:', error);
       toast.error("Error", {
         description: "No se pudo generar el folio automáticamente.",
       });
       // Retornar un folio por defecto basado en timestamp como fallback
       const timestamp = Date.now();
       const fallbackFolio = `SRV-${String(timestamp).slice(-4)}`;
-      console.log('🔧 Using fallback folio:', fallbackFolio);
+      logger.debug('🔧 Using fallback folio:', fallbackFolio);
       return fallbackFolio;
     } finally {
       setLoading(false);
@@ -83,7 +86,7 @@ export const useFolioGenerator = () => {
 
   const validateFolioUniqueness = useCallback(async (folio: string): Promise<boolean> => {
     try {
-      console.log('🔍 Validating folio uniqueness:', folio);
+      logger.debug('🔍 Validating folio uniqueness:', folio);
       
       const { data, error } = await supabase
         .from('services')
@@ -92,16 +95,16 @@ export const useFolioGenerator = () => {
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error validating folio:', error);
+        logger.error('❌ Error validating folio:', error);
         throw error;
       }
 
       const isUnique = !data;
-      console.log(isUnique ? '✅ Folio is unique' : '⚠️ Folio already exists');
+      logger.debug(isUnique ? '✅ Folio is unique' : '⚠️ Folio already exists');
       
       return isUnique;
     } catch (error: any) {
-      console.error('❌ Error validating folio uniqueness:', error);
+      logger.error('❌ Error validating folio uniqueness:', error);
       toast.error("Error", {
         description: "No se pudo validar la unicidad del folio.",
       });
@@ -111,17 +114,17 @@ export const useFolioGenerator = () => {
 
   const syncFolioCounter = useCallback(async (manualFolio: string): Promise<void> => {
     try {
-      console.log('🔄 Syncing folio counter for manual folio:', manualFolio);
+      logger.debug('🔄 Syncing folio counter for manual folio:', manualFolio);
       
       // Extraer número del folio manual si sigue el formato estándar
       const match = manualFolio.match(/^[A-Z]+-(\d+)$/);
       if (!match) {
-        console.log('📝 Manual folio does not follow standard format, skipping sync');
+        logger.debug('📝 Manual folio does not follow standard format, skipping sync');
         return;
       }
 
       const manualNumber = parseInt(match[1]);
-      console.log('🔢 Manual folio number:', manualNumber);
+      logger.debug('🔢 Manual folio number:', manualNumber);
 
       // Obtener datos actuales de la empresa
       const { data: companyData, error: fetchError } = await supabase
@@ -131,7 +134,7 @@ export const useFolioGenerator = () => {
         .maybeSingle();
 
       if (fetchError || !companyData) {
-        console.error('❌ Error fetching company data for sync:', fetchError);
+        logger.error('❌ Error fetching company data for sync:', fetchError);
         return;
       }
 
@@ -140,7 +143,7 @@ export const useFolioGenerator = () => {
       // Si el número manual es mayor o igual al contador actual, actualizar
       if (manualNumber >= currentNumber) {
         const newNextNumber = manualNumber + 1;
-        console.log('📈 Updating counter from', currentNumber, 'to', newNextNumber);
+        logger.debug('📈 Updating counter from', currentNumber, 'to', newNextNumber);
 
         const { error: updateError } = await supabase
           .from('company_data')
@@ -151,28 +154,28 @@ export const useFolioGenerator = () => {
           .eq('id', companyData.id);
 
         if (updateError) {
-          console.error('❌ Error syncing folio counter:', updateError);
+          logger.error('❌ Error syncing folio counter:', updateError);
         } else {
-          console.log('✅ Folio counter synced successfully');
+          logger.debug('✅ Folio counter synced successfully');
           // Disparar evento para actualizar la configuración en memoria
           setTimeout(() => {
             window.dispatchEvent(new Event('settings-updated'));
           }, 100);
         }
       } else {
-        console.log('📊 Manual folio number is lower than current counter, no sync needed');
+        logger.debug('📊 Manual folio number is lower than current counter, no sync needed');
       }
     } catch (error: any) {
-      console.error('❌ Error syncing folio counter:', error);
+      logger.error('❌ Error syncing folio counter:', error);
     }
   }, []);
 
   const syncAllFoliosAfterBulkUpload = useCallback(async (folios: string[]): Promise<void> => {
     try {
-      console.log('🔄 Syncing folio counter after bulk upload with', folios.length, 'folios');
+      logger.debug('🔄 Syncing folio counter after bulk upload with', folios.length, 'folios');
       
       if (folios.length === 0) {
-        console.log('📝 No folios to sync');
+        logger.debug('📝 No folios to sync');
         return;
       }
 
@@ -191,13 +194,13 @@ export const useFolioGenerator = () => {
       }
 
       if (folioNumbers.length === 0) {
-        console.log('📝 No standard format folios found, skipping sync');
+        logger.debug('📝 No standard format folios found, skipping sync');
         return;
       }
 
       // Encontrar el número máximo
       const maxNumber = Math.max(...folioNumbers);
-      console.log('🔢 Maximum folio number found:', maxNumber);
+      logger.debug('🔢 Maximum folio number found:', maxNumber);
 
       // Obtener datos actuales de la empresa
       const { data: companyData, error: fetchError } = await supabase
@@ -207,7 +210,7 @@ export const useFolioGenerator = () => {
         .maybeSingle();
 
       if (fetchError || !companyData) {
-        console.error('❌ Error fetching company data for bulk sync:', fetchError);
+        logger.error('❌ Error fetching company data for bulk sync:', fetchError);
         return;
       }
 
@@ -216,7 +219,7 @@ export const useFolioGenerator = () => {
       // Si el número máximo es mayor o igual al contador actual, actualizar
       if (maxNumber >= currentNumber) {
         const newNextNumber = maxNumber + 1;
-        console.log('📈 Updating counter from', currentNumber, 'to', newNextNumber);
+        logger.debug('📈 Updating counter from', currentNumber, 'to', newNextNumber);
 
         const { error: updateError } = await supabase
           .from('company_data')
@@ -227,9 +230,9 @@ export const useFolioGenerator = () => {
           .eq('id', companyData.id);
 
         if (updateError) {
-          console.error('❌ Error syncing folio counter after bulk upload:', updateError);
+          logger.error('❌ Error syncing folio counter after bulk upload:', updateError);
         } else {
-          console.log('✅ Folio counter synced successfully to', newNextNumber);
+          logger.debug('✅ Folio counter synced successfully to', newNextNumber);
           toast.success('Contador de folios actualizado', {
             description: `Próximo folio disponible: ${folioFormat.replace('{number}', String(newNextNumber).padStart(4, '0'))}`
           });
@@ -239,10 +242,10 @@ export const useFolioGenerator = () => {
           }, 100);
         }
       } else {
-        console.log('📊 Maximum folio number is lower than current counter, no sync needed');
+        logger.debug('📊 Maximum folio number is lower than current counter, no sync needed');
       }
     } catch (error: any) {
-      console.error('❌ Error syncing folio counter after bulk upload:', error);
+      logger.error('❌ Error syncing folio counter after bulk upload:', error);
     }
   }, [settings.company]);
 

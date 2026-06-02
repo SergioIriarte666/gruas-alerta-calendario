@@ -167,41 +167,65 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
     queryFn: async (): Promise<{ entries: AuditEntry[]; availableUsers: AuditUser[] }> => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
+      const hasDateFilters = !!(filters.dateFrom || filters.dateTo);
+      const scopedLimit = hasDateFilters ? 50 : 200;
+
+      const dateToEnd = filters.dateTo ? filters.dateTo + 'T23:59:59' : null;
+
+      let auditQuery = supabase
+        .from('audit_log')
+        .select(
+          'id, table_name, operation, timestamp, user_id, old_data, new_data, profiles:user_id (id, full_name, email)',
+        )
+        .order('timestamp', { ascending: false })
+        .range(from, to);
+      if (filters.dateFrom) auditQuery = auditQuery.gte('timestamp', filters.dateFrom);
+      if (dateToEnd) auditQuery = auditQuery.lte('timestamp', dateToEnd);
+      if (filters.userId) auditQuery = auditQuery.eq('user_id', filters.userId);
+
+      let serviceHistQuery = supabase
+        .from('service_change_history')
+        .select(
+          'id, service_id, service_folio, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)',
+        )
+        .order('changed_at', { ascending: false })
+        .limit(scopedLimit);
+      if (filters.dateFrom) serviceHistQuery = serviceHistQuery.gte('changed_at', filters.dateFrom);
+      if (dateToEnd) serviceHistQuery = serviceHistQuery.lte('changed_at', dateToEnd);
+      if (filters.userId) serviceHistQuery = serviceHistQuery.eq('changed_by', filters.userId);
+
+      let backupQuery = supabase
+        .from('backup_logs')
+        .select('id, created_at, backup_type, status, file_size_bytes')
+        .order('created_at', { ascending: false })
+        .limit(scopedLimit);
+      if (filters.dateFrom) backupQuery = backupQuery.gte('created_at', filters.dateFrom);
+      if (dateToEnd) backupQuery = backupQuery.lte('created_at', dateToEnd);
+
+      let notifQuery = supabase
+        .from('notification_logs')
+        .select('id, created_at, type, status, user_id')
+        .order('created_at', { ascending: false })
+        .limit(scopedLimit);
+      if (filters.dateFrom) notifQuery = notifQuery.gte('created_at', filters.dateFrom);
+      if (dateToEnd) notifQuery = notifQuery.lte('created_at', dateToEnd);
+      if (filters.userId) notifQuery = notifQuery.eq('user_id', filters.userId);
+
+      let activityQuery = supabase
+        .from('user_activity_log')
+        .select('id, created_at, user_id, event_type, path, profiles:user_id (id, full_name, email)')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      if (filters.dateFrom) activityQuery = activityQuery.gte('created_at', filters.dateFrom);
+      if (dateToEnd) activityQuery = activityQuery.lte('created_at', dateToEnd);
+      if (filters.userId) activityQuery = activityQuery.eq('user_id', filters.userId);
 
       const [auditResult, serviceHistResult, backupResult, notifResult, activityResult] = await Promise.all([
-        supabase
-          .from('audit_log')
-          .select(
-            'id, table_name, operation, timestamp, user_id, old_data, new_data, profiles:user_id (id, full_name, email)',
-          )
-          .order('timestamp', { ascending: false })
-          .range(from, to),
-
-        supabase
-          .from('service_change_history')
-          .select(
-            'id, service_id, service_folio, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)',
-          )
-          .order('changed_at', { ascending: false })
-          .limit(200),
-
-        supabase
-          .from('backup_logs')
-          .select('id, created_at, backup_type, status, file_size_bytes')
-          .order('created_at', { ascending: false })
-          .limit(200),
-
-        supabase
-          .from('notification_logs')
-          .select('id, created_at, type, status, user_id')
-          .order('created_at', { ascending: false })
-          .limit(200),
-
-        supabase
-          .from('user_activity_log')
-          .select('id, created_at, user_id, event_type, path, profiles:user_id (id, full_name, email)')
-          .order('created_at', { ascending: false })
-          .range(from, to),
+        auditQuery,
+        serviceHistQuery,
+        backupQuery,
+        notifQuery,
+        activityQuery,
       ]);
 
       if (auditResult.error) console.error('audit_log error:', auditResult.error);

@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeviceType } from '@/hooks/useDeviceType';
-import { cleanupAuthState } from '@/utils/authCleanup';
 import { cn } from '@/lib/utils';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { GlobalSearch } from './GlobalSearch';
@@ -15,14 +15,17 @@ import PWAInstallButton from '@/components/PWAInstallButton';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
+  isMobileMenuOpen: boolean;
 }
 
 export const Header = ({
-  setIsMobileMenuOpen
+  setIsMobileMenuOpen,
+  isMobileMenuOpen,
 }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useUser();
+  const { user } = useUser();
+  const { signOut } = useAuth();
   const { settings } = useSettings();
   const { isMobile, isTablet } = useDeviceType();
   
@@ -48,24 +51,15 @@ export const Header = ({
 
   const handleLogout = async () => {
     try {
-      console.log('Header: Logout initiated...');
-      
       toast.info('Cerrando sesión...', {
         description: 'Limpiando datos de usuario'
       });
       
-      // Use the improved logout from UserContext
-      await logout();
+      await signOut();
     } catch (error) {
-      console.error("Header: Logout failed:", error);
-      
       toast.error('Error al cerrar sesión', {
         description: 'Sesión cerrada forzosamente'
       });
-      
-      // Forzar limpieza y redirección como último recurso
-      cleanupAuthState();
-      window.location.href = '/auth';
     }
   };
 
@@ -86,7 +80,7 @@ export const Header = ({
           className="lg:hidden text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <Menu className={cn(isMobile ? "size-5" : "size-6")} />
-          <span className="sr-only">Abrir menú</span>
+          <span className="sr-only">{isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}</span>
         </Button>
 
         <div className="flex min-w-0 items-center gap-3">

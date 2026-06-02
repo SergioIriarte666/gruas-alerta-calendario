@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServiceTransformer } from './useServiceTransformer';
 import { useQuery } from '@tanstack/react-query';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServiceFetcher');
 
 // Only select the columns actually used by the app
 const SERVICE_SELECT = `
@@ -55,14 +58,14 @@ const fetchServicesFromDB = async (transformFn: (data: any[]) => Service[]): Pro
     if (!data.length) return [];
     return transformFn(data);
   } catch (error) {
-    console.error('Error fetching services (main query):', error);
-    console.warn('[SERVICE_FETCHER] FALLING BACK to SELECT * - embedded relations will be missing!');
+    logger.error('Error fetching services (main query):', error);
+    logger.warn('[SERVICE_FETCHER] FALLING BACK to SELECT * - embedded relations will be missing!');
     try {
       const simpleData = await fetchAllPages('*');
       if (!simpleData.length) return [];
       return transformFn(simpleData);
     } catch (fallbackError) {
-      console.error('Fallback query also failed:', fallbackError);
+      logger.error('Fallback query also failed:', fallbackError);
       return [];
     }
   }

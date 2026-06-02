@@ -28,3 +28,6 @@ supabase/.temp/
 
 # Environment files
 .env
+
+# Tesseract OCR trained data (loaded from CDN)
+eng.traineddata

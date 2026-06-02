@@ -2,6 +2,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { Notification } from '@/types/notifications';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('NotificationContext');
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -42,7 +45,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }));
         setNotifications(mergedNotifications);
       } catch (error) {
-        console.error('Error loading notifications:', error);
+        logger.error('Error loading notifications:', error);
         setNotifications(fetchedNotifications.map(n => ({ ...n, read: false })));
       }
     }
@@ -70,7 +73,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         )
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read:', error);
     }
   };
 
@@ -82,7 +85,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         prev.map(notification => ({ ...notification, read: true }))
       );
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      logger.error('Error marking all notifications as read:', error);
     }
   };
 
@@ -91,7 +94,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setNotifications([]);
       localStorage.setItem('read_notification_ids', JSON.stringify([]));
     } catch (error) {
-      console.error('Error clearing all notifications:', error);
+      logger.error('Error clearing all notifications:', error);
     }
   };
 

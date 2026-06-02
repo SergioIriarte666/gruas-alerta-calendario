@@ -2,6 +2,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('FolioValidation');
 
 interface FolioValidationResult {
   isValid: boolean;
@@ -37,7 +40,7 @@ export const useFolioValidation = () => {
     }));
 
     try {
-      console.log(`[useFolioValidation] Validating folio: ${folio}${excludeServiceId ? ` (excluding service: ${excludeServiceId})` : ''}`);
+      logger.debug(`[useFolioValidation] Validating folio: ${folio}${excludeServiceId ? ` (excluding service: ${excludeServiceId})` : ''}`);
       
       let query = supabase
         .from('services')
@@ -57,7 +60,7 @@ export const useFolioValidation = () => {
       const { data, error } = await query.maybeSingle();
 
       if (error) {
-        console.error('[useFolioValidation] Error validating folio:', error);
+        logger.error('[useFolioValidation] Error validating folio:', error);
         const result = {
           isValid: false,
           isValidating: false,
@@ -92,7 +95,7 @@ export const useFolioValidation = () => {
         return result;
       }
     } catch (error) {
-      console.error('[useFolioValidation] Unexpected error:', error);
+      logger.error('[useFolioValidation] Unexpected error:', error);
       const result = {
         isValid: false,
         isValidating: false,

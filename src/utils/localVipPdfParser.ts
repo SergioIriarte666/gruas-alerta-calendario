@@ -401,7 +401,11 @@ const extractPdfTextWithOcr = async (pdf: any) => {
 
   let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
   try {
-    worker = await createWorker('eng');
+    worker = await createWorker('eng', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
+    });
     const chunks: string[] = [];
 
     for (let pageNumber = 1; pageNumber <= maxPages; pageNumber += 1) {

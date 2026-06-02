@@ -11,6 +11,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { useServiceQueries } from './useServiceQueries';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServicesPage');
 
 export const useServicesPage = () => {
   const { services, loading: loadingAll, deleteService: legacyDeleteService, refetch } = useServices();
@@ -66,7 +69,7 @@ export const useServicesPage = () => {
   // Handle pre-filled data from calendar events
   useEffect(() => {
     if (location.state?.prefilledData && location.state?.openForm) {
-      console.log('🎯 Detected calendar event conversion, setting up form');
+      logger.debug('🎯 Detected calendar event conversion, setting up form');
       setPrefilledData(location.state.prefilledData);
       setFromCalendarEvent(true);
       setIsFormOpen(true);
@@ -80,7 +83,7 @@ export const useServicesPage = () => {
     const search = new URLSearchParams(location.search);
     if (search.get('newSale') === 'true' && !newSaleHandledRef.current) {
       newSaleHandledRef.current = true;
-      console.log('🛒 Detected newSale parameter, opening form for sale');
+      logger.debug('🛒 Detected newSale parameter, opening form for sale');
       setIsFormOpen(true);
       // Clear the newSale parameter from URL to prevent re-opening on refresh
       const newSearch = new URLSearchParams(location.search);
@@ -281,7 +284,7 @@ export const useServicesPage = () => {
       await refetch();
       toast.success('Datos actualizados correctamente');
     } catch (error) {
-      console.error('Error refreshing services:', error);
+      logger.error('Error refreshing services:', error);
       toast.error('No se pudieron actualizar los datos');
     } finally {
       setRefreshing(false);
@@ -290,7 +293,7 @@ export const useServicesPage = () => {
 
   const handleCreateService = async (createdService: Service) => {
     try {
-      console.log('📝 [UNIFIED_PAGE] Post-processing created service:', createdService.folio);
+      logger.debug('📝 [UNIFIED_PAGE] Post-processing created service:', createdService.folio);
       // El servicio ya fue creado exitosamente en EnhancedServiceForm
       // Solo cerramos modal y refrescamos lista
       setIsFormOpen(false);
@@ -298,16 +301,16 @@ export const useServicesPage = () => {
       setPrefilledData(null);
       setFromCalendarEvent(false);
       await refetch();
-      console.log('✅ [UNIFIED_PAGE] Service creation post-processing completed');
+      logger.debug('✅ [UNIFIED_PAGE] Service creation post-processing completed');
     } catch (error) {
-      console.error('Error in post-creation processing:', error);
+      logger.error('Error in post-creation processing:', error);
       toast.error('Servicio creado pero error al actualizar la lista');
     }
   };
 
   const handleUpdateService = async (updatedService: Service) => {
     try {
-      console.log('📝 [UNIFIED_PAGE] Post-processing updated service:', updatedService.folio);
+      logger.debug('📝 [UNIFIED_PAGE] Post-processing updated service:', updatedService.folio);
       // El servicio ya fue actualizado exitosamente en EnhancedServiceForm
       // Solo cerramos modal y refrescamos lista
       setEditingService(null);
@@ -315,9 +318,9 @@ export const useServicesPage = () => {
       setPrefilledData(null);
       setFromCalendarEvent(false);
       await refetch();
-      console.log('✅ [UNIFIED_PAGE] Service update post-processing completed');
+      logger.debug('✅ [UNIFIED_PAGE] Service update post-processing completed');
     } catch (error) {
-      console.error('Error in post-update processing:', error);
+      logger.error('Error in post-update processing:', error);
       toast.error('Servicio actualizado pero error al actualizar la lista');
     }
   };
@@ -338,30 +341,30 @@ export const useServicesPage = () => {
     }
 
     try {
-      console.log('🔄 [CLOSE_SERVICE] Attempting to close service:', service.folio, service.id);
+      logger.debug('🔄 [CLOSE_SERVICE] Attempting to close service:', service.folio, service.id);
       
       // SOLUCIÓN DEFINITIVA: Función de emergencia que bypassa todos los triggers
       const { data, error: updateError } = await supabase.rpc('emergency_close_service', {
         p_service_id: service.id
       });
 
-      console.log('🔄 [CLOSE_SERVICE] Database function result:', { data, updateError });
+      logger.debug('🔄 [CLOSE_SERVICE] Database function result:', { data, updateError });
 
       if (updateError) {
-        console.error('🚨 [CLOSE_SERVICE] RPC error:', updateError);
+        logger.error('🚨 [CLOSE_SERVICE] RPC error:', updateError);
         throw new Error(`Error al cerrar servicio: ${updateError.message}`);
       }
 
       if (!(data as any)?.success) {
-        console.error('🚨 [CLOSE_SERVICE] Function returned error:', (data as any)?.error);
+        logger.error('🚨 [CLOSE_SERVICE] Function returned error:', (data as any)?.error);
         throw new Error(`Error al cerrar servicio: ${(data as any)?.error || 'Error desconocido'}`);
       }
       
-      console.log('✅ [CLOSE_SERVICE] Service closed successfully:', service.folio);
+      logger.debug('✅ [CLOSE_SERVICE] Service closed successfully:', service.folio);
       await refetch();
       toast.success('El servicio se ha cerrado exitosamente');
     } catch (error) {
-      console.error('Error closing service:', error);
+      logger.error('Error closing service:', error);
       toast.error('No se pudo cerrar el servicio');
     }
   };
@@ -393,13 +396,13 @@ export const useServicesPage = () => {
           });
 
           if (error || !(data as any)?.success) {
-            console.error(`Error closing service ${service.id}:`, error || (data as any)?.error);
+            logger.error(`Error closing service ${service.id}:`, error || (data as any)?.error);
             errorCount++;
           } else {
             successCount++;
           }
         } catch (err) {
-          console.error(`Error closing service ${service.id}:`, err);
+          logger.error(`Error closing service ${service.id}:`, err);
           errorCount++;
         }
       }
@@ -417,7 +420,7 @@ export const useServicesPage = () => {
         toast.warning(`${successCount} cerrado${successCount > 1 ? 's' : ''}, ${errorCount} con error`);
       }
     } catch (error) {
-      console.error('Error in batch close:', error);
+      logger.error('Error in batch close:', error);
       toast.error('Error al cerrar servicios por lotes');
     } finally {
       setIsBatchClosing(false);
@@ -452,7 +455,7 @@ export const useServicesPage = () => {
     try {
       await deleteService(service.id);
     } catch (error) {
-      console.error('Error deleting service:', error);
+      logger.error('Error deleting service:', error);
       throw error;
     }
   };
@@ -496,7 +499,7 @@ export const useServicesPage = () => {
   };
 
   const handleCSVSuccess = async (count: number) => {
-    console.log('🎯 CSV Success handler - refreshing services...');
+    logger.debug('🎯 CSV Success handler - refreshing services...');
     setIsCSVUploadOpen(false);
     
     // Resetear filtros para mostrar todos los servicios
@@ -511,10 +514,10 @@ export const useServicesPage = () => {
     // Refrescar datos desde Supabase
     try {
       await refetch();
-      console.log('✅ Services refreshed successfully after CSV upload');
+      logger.debug('✅ Services refreshed successfully after CSV upload');
       toast.success(`${count} servicios cargados exitosamente y lista actualizada`);
     } catch (error) {
-      console.error('❌ Error refreshing services after CSV upload:', error);
+      logger.error('❌ Error refreshing services after CSV upload:', error);
       toast.success(`${count} servicios cargados exitosamente`);
       toast.error('Error al actualizar la lista. Refrescar la página.');
     }

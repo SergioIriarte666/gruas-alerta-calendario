@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('InventoryHelper');
 
 export interface SimilarItem {
   id: string;
@@ -234,10 +237,10 @@ export const findDuplicateCandidateGroups = (
  * Busca productos similares en el inventario
  */
 export const findSimilarItems = async (partName: string, similarityThreshold = 0.8): Promise<SimilarityResult> => {
-  console.log('🔍 [findSimilarItems] Iniciando búsqueda para:', partName);
+  logger.debug('🔍 [findSimilarItems] Iniciando búsqueda para:', partName);
   
   if (!partName || partName.trim().length < 2) {
-    console.log('❌ [findSimilarItems] Nombre demasiado corto:', partName);
+    logger.debug('❌ [findSimilarItems] Nombre demasiado corto:', partName);
     return {
       similarItems: [],
       shouldAlert: false,
@@ -246,7 +249,7 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
   }
 
   try {
-    console.log('📡 [findSimilarItems] Consultando Supabase...');
+    logger.debug('📡 [findSimilarItems] Consultando Supabase...');
     // Obtener todos los items activos del inventario
     const { data: inventoryItems, error } = await supabase
       .from('inventory_items')
@@ -259,14 +262,14 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
       .eq('is_active', true);
 
     if (error) {
-      console.error('❌ [findSimilarItems] Error en consulta Supabase:', error);
+      logger.error('❌ [findSimilarItems] Error en consulta Supabase:', error);
       throw error;
     }
 
-    console.log('✅ [findSimilarItems] Items encontrados:', inventoryItems?.length || 0);
+    logger.debug('✅ [findSimilarItems] Items encontrados:', inventoryItems?.length || 0);
     
     if (!inventoryItems || inventoryItems.length === 0) {
-      console.log('⚠️ [findSimilarItems] No hay items en inventario');
+      logger.debug('⚠️ [findSimilarItems] No hay items en inventario');
       return {
         similarItems: [],
         shouldAlert: false,
@@ -275,7 +278,7 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
     }
 
     const normalizedInput = normalizeItemName(partName);
-    console.log('🔄 [findSimilarItems] Texto normalizado:', `"${partName}" -> "${normalizedInput}"`);
+    logger.debug('🔄 [findSimilarItems] Texto normalizado:', `"${partName}" -> "${normalizedInput}"`);
     
     const results: SimilarItem[] = [];
     let exactMatch: SimilarItem | undefined;
@@ -295,7 +298,7 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
       const similarity = calculateSimilarity(normalizedInput, normalizedItemName);
       
       if (similarity > 0.5) { // Solo log items con cierta similitud
-        console.log(`🎯 [findSimilarItems] Comparando "${normalizedInput}" vs "${normalizedItemName}" = ${Math.round(similarity * 100)}%`);
+        logger.debug(`🎯 [findSimilarItems] Comparando "${normalizedInput}" vs "${normalizedItemName}" = ${Math.round(similarity * 100)}%`);
       }
       
       const similarItem: SimilarItem = {
@@ -310,12 +313,12 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
 
       // Coincidencia exacta
       if (similarity === 1) {
-        console.log('🎯 [findSimilarItems] ¡COINCIDENCIA EXACTA encontrada!:', item.name);
+        logger.debug('🎯 [findSimilarItems] ¡COINCIDENCIA EXACTA encontrada!:', item.name);
         exactMatch = similarItem;
       }
       // Coincidencia similar (por encima del umbral)
       else if (similarity >= similarityThreshold) {
-        console.log(`🔍 [findSimilarItems] Similitud alta (${Math.round(similarity * 100)}%):`, item.name);
+        logger.debug(`🔍 [findSimilarItems] Similitud alta (${Math.round(similarity * 100)}%):`, item.name);
         results.push(similarItem);
       }
     }
@@ -335,11 +338,11 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
       alertMessage = `⚠️ Producto Similar: "${topMatch.name}" (${percentage}% similar, Stock: ${topMatch.current_stock})`;
     }
 
-    console.log('📊 [findSimilarItems] Resultados finales:');
-    console.log(`  - Coincidencia exacta: ${exactMatch ? 'SÍ' : 'NO'}`);
-    console.log(`  - Items similares: ${results.length}`);
-    console.log(`  - Debe alertar: ${shouldAlert ? 'SÍ' : 'NO'}`);
-    console.log(`  - Mensaje: ${alertMessage}`);
+    logger.debug('📊 [findSimilarItems] Resultados finales:');
+    logger.debug(`  - Coincidencia exacta: ${exactMatch ? 'SÍ' : 'NO'}`);
+    logger.debug(`  - Items similares: ${results.length}`);
+    logger.debug(`  - Debe alertar: ${shouldAlert ? 'SÍ' : 'NO'}`);
+    logger.debug(`  - Mensaje: ${alertMessage}`);
 
     return {
       exactMatch,
@@ -348,7 +351,7 @@ export const findSimilarItems = async (partName: string, similarityThreshold = 0
       alertMessage
     };
   } catch (error) {
-    console.error('Error searching for similar items:', error);
+    logger.error('Error searching for similar items:', error);
     return {
       similarItems: [],
       shouldAlert: false,
@@ -369,10 +372,10 @@ export const useSimilarItemsSearch = (partName: string, enabled = true) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log('🚀 [useSimilarItemsSearch] Hook ejecutado:', { partName, enabled, length: partName?.trim().length });
+    logger.debug('🚀 [useSimilarItemsSearch] Hook ejecutado:', { partName, enabled, length: partName?.trim().length });
     
     if (!enabled || !partName || partName.trim().length < 2) {
-      console.log('⏹️ [useSimilarItemsSearch] Búsqueda deshabilitada o texto muy corto');
+      logger.debug('⏹️ [useSimilarItemsSearch] Búsqueda deshabilitada o texto muy corto');
       setResults({
         similarItems: [],
         shouldAlert: false,
@@ -382,14 +385,14 @@ export const useSimilarItemsSearch = (partName: string, enabled = true) => {
     }
 
     const timeoutId = setTimeout(async () => {
-      console.log('⏱️ [useSimilarItemsSearch] Iniciando búsqueda después de debounce:', partName);
+      logger.debug('⏱️ [useSimilarItemsSearch] Iniciando búsqueda después de debounce:', partName);
       setIsLoading(true);
       try {
         const similarityResults = await findSimilarItems(partName);
-        console.log('✅ [useSimilarItemsSearch] Resultados recibidos:', similarityResults);
+        logger.debug('✅ [useSimilarItemsSearch] Resultados recibidos:', similarityResults);
         setResults(similarityResults);
       } catch (error) {
-        console.error('❌ [useSimilarItemsSearch] Error en búsqueda:', error);
+        logger.error('❌ [useSimilarItemsSearch] Error en búsqueda:', error);
         setResults({
           similarItems: [],
           shouldAlert: false,

@@ -4,6 +4,26 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 const isDev = import.meta.env.DEV;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+const reportFrontendError = (payload: {
+  componentName: string;
+  errorMessage: string;
+  errorStack?: string;
+  url: string;
+}) => {
+  const fnUrl = `${SUPABASE_URL}/functions/v1/log-frontend-error`;
+
+  return fetch(fnUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
+};
 
 interface Props {
   children: ReactNode;
@@ -31,6 +51,17 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error(`[ErrorBoundary] Error in ${this.props.name || 'Component'}:`, error, errorInfo);
     this.setState({ errorInfo });
+
+    if (!isDev) {
+      try {
+        reportFrontendError({
+          componentName: this.props.name || 'Unknown',
+          errorMessage: error.message || String(error),
+          errorStack: error.stack || errorInfo.componentStack || undefined,
+          url: window.location.href || '',
+        }).catch(() => {});
+      } catch { }
+    }
   }
 
   private handleReset = () => {

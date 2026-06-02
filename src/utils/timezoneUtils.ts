@@ -3,6 +3,9 @@ import { format, parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 
 import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { businessClock } from './businessClock';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('TimezoneUtils');
 
 // Zona horaria por defecto para Chile como fallback
 const CHILE_TIMEZONE = 'America/Santiago';
@@ -57,7 +60,7 @@ const getUserSettingsFromCache = async () => {
 
     return userSettingsCache;
   } catch (error) {
-    console.warn('Error fetching user settings, using defaults:', error);
+    logger.warn('Error fetching user settings, using defaults:', error);
     userSettingsCache = {
       dateFormat: 'DD/MM/YYYY',
       lastUpdate: now
@@ -76,7 +79,7 @@ export const getSystemTimezone = (): string => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   } catch (error) {
-    console.warn('No se pudo detectar la zona horaria del sistema, usando Chile como fallback');
+    logger.warn('No se pudo detectar la zona horaria del sistema, usando Chile como fallback');
     return CHILE_TIMEZONE;
   }
 };
@@ -181,8 +184,8 @@ export const getWeekStart = (date?: Date) => {
 
 // Crear fecha local desde calendar component manteniendo día exacto
 export const createLocalDateFromCalendar = (calendarDate: Date): Date => {
-  console.log('[createLocalDateFromCalendar] Input date:', calendarDate);
-  console.log('[createLocalDateFromCalendar] Input components - Year:', calendarDate.getFullYear(), 'Month:', calendarDate.getMonth() + 1, 'Day:', calendarDate.getDate());
+  logger.debug('[createLocalDateFromCalendar] Input date:', calendarDate);
+  logger.debug('[createLocalDateFromCalendar] Input components - Year:', calendarDate.getFullYear(), 'Month:', calendarDate.getMonth() + 1, 'Day:', calendarDate.getDate());
   
   // Extraer componentes de fecha directamente sin conversiones timezone
   const year = calendarDate.getFullYear();
@@ -192,8 +195,8 @@ export const createLocalDateFromCalendar = (calendarDate: Date): Date => {
   // Crear nueva fecha local usando mediodía para evitar problemas DST
   const localDate = new Date(year, month, day, 12, 0, 0);
   
-  console.log('[createLocalDateFromCalendar] Created local date:', localDate);
-  console.log('[createLocalDateFromCalendar] Result components - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
+  logger.debug('[createLocalDateFromCalendar] Created local date:', localDate);
+  logger.debug('[createLocalDateFromCalendar] Result components - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
   
   return localDate;
 };
@@ -225,22 +228,22 @@ export const formatForInput = (date: Date | string): string => {
 
 // Parse date from form input creando fecha local (sin conversión timezone)
 export const parseFromInput = (dateString: string): Date => {
-  console.log('[parseFromInput] Input dateString:', dateString);
+  logger.debug('[parseFromInput] Input dateString:', dateString);
   
   if (!dateString) {
     const fallback = getCurrentChileDate();
-    console.log('[parseFromInput] No dateString, using fallback:', fallback);
+    logger.debug('[parseFromInput] No dateString, using fallback:', fallback);
     return fallback;
   }
   
   // Crear fecha local interpretando el string directamente
   const [year, month, day] = dateString.split('-').map(Number);
-  console.log('[parseFromInput] Parsed components:', { year, month, day });
+  logger.debug('[parseFromInput] Parsed components:', { year, month, day });
   
   // Usar mediodía para evitar problemas de DST
   const localDate = new Date(year, month - 1, day, 12, 0, 0);
-  console.log('[parseFromInput] Created Date object:', localDate);
-  console.log('[parseFromInput] Date components check - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
+  logger.debug('[parseFromInput] Created Date object:', localDate);
+  logger.debug('[parseFromInput] Date components check - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
   
   return localDate;
 };
@@ -271,12 +274,12 @@ export const parseFromDatabase = (dateString: string): Date => {
 
 // Convertir Date a string para base de datos (formato yyyy-MM-dd)
 export const formatForDatabase = (date: Date): string => {
-  console.log('[formatForDatabase] Input date:', date);
-  console.log('[formatForDatabase] Date type:', typeof date);
-  console.log('[formatForDatabase] Is Date instance:', date instanceof Date);
+  logger.debug('[formatForDatabase] Input date:', date);
+  logger.debug('[formatForDatabase] Date type:', typeof date);
+  logger.debug('[formatForDatabase] Is Date instance:', date instanceof Date);
   
   if (!date) {
-    console.log('[formatForDatabase] No date provided, returning empty string');
+    logger.debug('[formatForDatabase] No date provided, returning empty string');
     return '';
   }
   
@@ -286,8 +289,8 @@ export const formatForDatabase = (date: Date): string => {
   const day = String(date.getDate()).padStart(2, '0');
   
   const result = `${year}-${month}-${day}`;
-  console.log('[formatForDatabase] Components - Year:', year, 'Month:', month, 'Day:', day);
-  console.log('[formatForDatabase] Final result:', result);
+  logger.debug('[formatForDatabase] Components - Year:', year, 'Month:', month, 'Day:', day);
+  logger.debug('[formatForDatabase] Final result:', result);
   
   return result;
 };
@@ -461,7 +464,7 @@ export const getBusinessTimezone = async (): Promise<string> => {
       }
     }
   } catch (error) {
-    console.warn('Error fetching business timezone, using fallback:', error);
+    logger.warn('Error fetching business timezone, using fallback:', error);
   }
 
   const fallback = CHILE_TIMEZONE;

@@ -163,7 +163,7 @@ export const ServicesTable = ({
               <TableHeader>
                 <TableRow className="border-border/60 bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (
-                    <TableHead className="w-12 pl-6">
+                    <TableHead scope="col" className="w-12 pl-6">
                       <Checkbox
                         checked={allVisibleSelected}
                         onCheckedChange={handleSelectAll}
@@ -172,32 +172,32 @@ export const ServicesTable = ({
                       />
                     </TableHead>
                   )}
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="folio">Folio</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="date">Fecha Servicio</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="client">Cliente</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="vehicle">Vehículo</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">Origen/Destino</TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">Origen/Destino</TableHead>
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="crane">Grúa</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="operator">Operador</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="value">Valor</SortableHeader>
                   </TableHead>
-                  <TableHead className="font-semibold text-foreground">
+                  <TableHead scope="col" className="font-semibold text-foreground">
                     <SortableHeader field="status">Estado</SortableHeader>
                   </TableHead>
-                  <TableHead className="min-w-[140px] pr-6 font-semibold text-foreground">Acciones</TableHead>
+                  <TableHead scope="col" className="min-w-[140px] pr-6 font-semibold text-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

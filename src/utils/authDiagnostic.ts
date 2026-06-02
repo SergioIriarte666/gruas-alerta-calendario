@@ -1,10 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('AuthDiagnostic');
 
 /**
  * Comprehensive auth diagnostic utility
  */
 export const runAuthDiagnostic = async () => {
-  console.log('=== RUNNING COMPREHENSIVE AUTH DIAGNOSTIC ===');
+  logger.debug('=== RUNNING COMPREHENSIVE AUTH DIAGNOSTIC ===');
   
   const results = {
     timestamp: new Date().toISOString(),
@@ -18,7 +21,7 @@ export const runAuthDiagnostic = async () => {
 
   try {
     // 1. Check Supabase configuration
-    console.log('1. Checking Supabase configuration...');
+    logger.debug('1. Checking Supabase configuration...');
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const currentUrl = window.location.origin;
     
@@ -29,7 +32,7 @@ export const runAuthDiagnostic = async () => {
     };
 
     // 2. Check session status
-    console.log('2. Checking session status...');
+    logger.debug('2. Checking session status...');
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
@@ -52,7 +55,7 @@ export const runAuthDiagnostic = async () => {
     }
 
     // 3. Test database connectivity
-    console.log('3. Testing database connectivity...');
+    logger.debug('3. Testing database connectivity...');
     try {
       // Test basic query
       const { data: testData, error: testError } = await supabase
@@ -75,7 +78,7 @@ export const runAuthDiagnostic = async () => {
     }
 
     // 4. Test RLS policies with auth.uid()
-    console.log('4. Testing RLS policies...');
+    logger.debug('4. Testing RLS policies...');
     try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -99,7 +102,7 @@ export const runAuthDiagnostic = async () => {
     }
 
     // 5. Check localStorage auth state
-    console.log('5. Checking localStorage auth state...');
+    logger.debug('5. Checking localStorage auth state...');
     const authKeys = [];
     if (typeof localStorage !== 'undefined') {
       for (let i = 0; i < localStorage.length; i++) {
@@ -123,9 +126,9 @@ export const runAuthDiagnostic = async () => {
     results.errors.push(`Diagnostic Failed: ${error.message}`);
   }
 
-  console.log('=== DIAGNOSTIC RESULTS ===');
-  console.log(JSON.stringify(results, null, 2));
-  console.log('=== END DIAGNOSTIC ===');
+  logger.debug('=== DIAGNOSTIC RESULTS ===');
+  logger.debug(JSON.stringify(results, null, 2));
+  logger.debug('=== END DIAGNOSTIC ===');
   
   return results;
 };
@@ -134,49 +137,49 @@ export const runAuthDiagnostic = async () => {
  * Auto-repair common auth issues
  */
 export const attemptAuthRepair = async () => {
-  console.log('=== ATTEMPTING AUTH REPAIR ===');
+  logger.debug('=== ATTEMPTING AUTH REPAIR ===');
   
   try {
     // Step 1: Clean localStorage
-    console.log('1. Cleaning localStorage...');
+    logger.debug('1. Cleaning localStorage...');
     if (typeof localStorage !== 'undefined') {
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('supabase.auth.') || key.startsWith('sb-')) {
           localStorage.removeItem(key);
-          console.log(`Removed: ${key}`);
+          logger.debug(`Removed: ${key}`);
         }
       });
     }
     
     // Step 2: Clean sessionStorage
-    console.log('2. Cleaning sessionStorage...');
+    logger.debug('2. Cleaning sessionStorage...');
     if (typeof sessionStorage !== 'undefined') {
       Object.keys(sessionStorage).forEach(key => {
         if (key.startsWith('supabase.auth.') || key.startsWith('sb-')) {
           sessionStorage.removeItem(key);
-          console.log(`Removed from session: ${key}`);
+          logger.debug(`Removed from session: ${key}`);
         }
       });
     }
     
     // Step 3: Force sign out
-    console.log('3. Forcing sign out...');
+    logger.debug('3. Forcing sign out...');
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (error) {
-      console.log('Sign out error (expected):', error);
+      logger.debug('Sign out error (expected):', error);
     }
     
     // Step 4: Test fresh connection
-    console.log('4. Testing fresh connection...');
+    logger.debug('4. Testing fresh connection...');
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error('Fresh connection test failed:', error);
+      logger.error('Fresh connection test failed:', error);
       return { success: false, error: error.message };
     }
     
-    console.log('=== REPAIR COMPLETED ===');
+    logger.debug('=== REPAIR COMPLETED ===');
     return { 
       success: true, 
       message: 'Auth state cleaned successfully',
@@ -184,7 +187,7 @@ export const attemptAuthRepair = async () => {
     };
     
   } catch (error: any) {
-    console.error('=== REPAIR FAILED ===', error);
+    logger.error('=== REPAIR FAILED ===', error);
     return { success: false, error: error.message };
   }
 };

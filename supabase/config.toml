@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.whatsapp-daily-alerts]
 verify_jwt = false
+
+[functions.log-frontend-error]
+verify_jwt = false

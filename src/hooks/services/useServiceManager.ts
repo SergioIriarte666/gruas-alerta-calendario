@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServiceManager');
 
 interface CreateServiceOptions {
   silent?: boolean;
@@ -47,7 +50,7 @@ const detectExistingCommissions = async (serviceId: string, newOperators: any[])
     .eq('category_id', commissionCategoryId);
 
   if (error) {
-    console.error('Error fetching existing commissions:', error);
+    logger.error('Error fetching existing commissions:', error);
     return { toCreate: [], toUpdate: [], toDelete: [], existingCommissions: [] };
   }
 
@@ -378,7 +381,7 @@ export const useServiceManager = () => {
               throw new Error(readableResourceError);
             }
 
-            console.error('[useServiceManager - createService] Non-blocking service_resources error:', resourceError);
+            logger.error('[useServiceManager - createService] Non-blocking service_resources error:', resourceError);
           }
         }
 
@@ -466,7 +469,7 @@ export const useServiceManager = () => {
               .insert(outsourcedCostData);
 
             if (outsourcedCostError) {
-              console.error('Error creating outsourced cost:', outsourcedCostError);
+              logger.error('Error creating outsourced cost:', outsourcedCostError);
               // No lanzar error, solo log - el servicio ya se creó
             }
           }
@@ -479,7 +482,7 @@ export const useServiceManager = () => {
         return transformedService;
 
       } catch (error) {
-        console.error('Error en creación de servicio:', error);
+        logger.error('Error en creación de servicio:', error);
         throw error instanceof Error
           ? error
           : new Error(getReadableSupabaseError(error, 'No se pudo crear el servicio'));
@@ -491,7 +494,7 @@ export const useServiceManager = () => {
       }
     },
     onError: (error: any, variables) => {
-      console.error('[useServiceManager - createService] Error:', error);
+      logger.error('[useServiceManager - createService] Error:', error);
 
       if (variables.options?.silent) {
         return;
@@ -800,7 +803,7 @@ export const useServiceManager = () => {
           .neq('category_id', commissionCategoryId);
       
         if (deleteCostsError) {
-          console.error('[updateService] Error deleting existing service costs:', deleteCostsError);
+          logger.error('[updateService] Error deleting existing service costs:', deleteCostsError);
         }
       
         // Filter valid cost details
@@ -848,7 +851,7 @@ export const useServiceManager = () => {
             .insert(serviceCosts);
       
           if (insertCostsError) {
-            console.error('[updateService] Error inserting updated service costs:', insertCostsError);
+            logger.error('[updateService] Error inserting updated service costs:', insertCostsError);
           }
         }
       }
@@ -892,7 +895,7 @@ export const useServiceManager = () => {
             .in('id', toDelete.map(c => c.id));
 
           if (deleteCommissionsError) {
-            console.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
+            logger.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
           }
         }
 
@@ -911,7 +914,7 @@ export const useServiceManager = () => {
               .eq('id', updateData.id);
 
             if (updateError) {
-              console.error('[SMART SYNC] Error updating commission:', updateError);
+              logger.error('[SMART SYNC] Error updating commission:', updateError);
             }
           }
           
@@ -941,7 +944,7 @@ export const useServiceManager = () => {
             .insert(newCommissionCosts);
 
           if (insertCommissionsError) {
-            console.error('[SMART SYNC] Error inserting new commission costs:', insertCommissionsError);
+            logger.error('[SMART SYNC] Error inserting new commission costs:', insertCommissionsError);
             
             // Fallback: Intentar inserción individual con manejo de errores de duplicados
             for (const cost of newCommissionCosts) {
@@ -953,7 +956,7 @@ export const useServiceManager = () => {
                 // Solo reportar errores que no sean de duplicados
                 if (!individualError.message.includes('duplicate') && 
                     !individualError.message.includes('violates unique constraint')) {
-                  console.error('[SMART SYNC] Individual insert error:', individualError);
+                  logger.error('[SMART SYNC] Individual insert error:', individualError);
                 }
               }
             }
@@ -990,7 +993,7 @@ export const useServiceManager = () => {
               .in('id', resourcesToDelete.map(r => r.id));
             
             if (deleteResourcesError) {
-              console.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
+              logger.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
             }
           }
         }
@@ -1016,7 +1019,7 @@ export const useServiceManager = () => {
               .eq('id', existingResource.id);
             
             if (updateResourceError) {
-              console.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
+              logger.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
             }
           } else {
             // Crear nuevo registro
@@ -1032,7 +1035,7 @@ export const useServiceManager = () => {
               });
             
             if (createResourceError) {
-              console.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
+              logger.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
             }
           }
         }
@@ -1070,7 +1073,7 @@ export const useServiceManager = () => {
         .single();
 
       if (error) {
-        console.error('Error updating service:', error);
+        logger.error('Error updating service:', error);
         throw new Error(`Error al actualizar servicio: ${error.message || 'Error desconocido'}`);
       }
 
@@ -1092,7 +1095,7 @@ export const useServiceManager = () => {
           .maybeSingle();
 
         if (findCostError) {
-          console.error('[OUTSOURCED SYNC] Error buscando costo existente:', findCostError);
+          logger.error('[OUTSOURCED SYNC] Error buscando costo existente:', findCostError);
         } else if (existingOutsourcedCost) {
           const newSupplierId = serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
             ? serviceData.outsourcedProviderId 
@@ -1110,7 +1113,7 @@ export const useServiceManager = () => {
             .eq('id', existingOutsourcedCost.id);
 
           if (updateCostError) {
-            console.error('[OUTSOURCED SYNC] Error actualizando costo outsourced:', updateCostError);
+            logger.error('[OUTSOURCED SYNC] Error actualizando costo outsourced:', updateCostError);
           } else {
 
             // ✅ TAMBIÉN actualizar el supplier_payment asociado a este costo
@@ -1121,7 +1124,7 @@ export const useServiceManager = () => {
               .maybeSingle();
 
             if (findPaymentError) {
-              console.error('[OUTSOURCED SYNC] Error buscando payment existente:', findPaymentError);
+              logger.error('[OUTSOURCED SYNC] Error buscando payment existente:', findPaymentError);
             } else if (existingPayment) {
               const { error: updatePaymentError } = await supabase
                 .from('supplier_payments')
@@ -1133,7 +1136,7 @@ export const useServiceManager = () => {
                 .eq('id', existingPayment.id);
 
               if (updatePaymentError) {
-                console.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
+                logger.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
               }
             }
           }
@@ -1144,7 +1147,7 @@ export const useServiceManager = () => {
           serviceData.outsourcedCost > 0
         ) {
           // ✅ NUEVO: Si no existe el costo pero el servicio tiene proveedor + monto > 0, CREARLO
-          console.log('[OUTSOURCED SYNC] Costo no encontrado, creando nuevo costo outsourced...');
+          logger.debug('[OUTSOURCED SYNC] Costo no encontrado, creando nuevo costo outsourced...');
           
           let categoryId: string | null = null;
           const { data: existingCategory } = await supabase
@@ -1186,9 +1189,9 @@ export const useServiceManager = () => {
               });
 
             if (createCostError) {
-              console.error('[OUTSOURCED SYNC] Error creando costo outsourced:', createCostError);
+              logger.error('[OUTSOURCED SYNC] Error creando costo outsourced:', createCostError);
             } else {
-              console.log('[OUTSOURCED SYNC] ✅ Costo outsourced creado exitosamente');
+              logger.debug('[OUTSOURCED SYNC] ✅ Costo outsourced creado exitosamente');
             }
           }
         }
@@ -1213,7 +1216,7 @@ export const useServiceManager = () => {
       toast.success('Servicio actualizado exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error updating service:', error);
+      logger.error('Error updating service:', error);
       
       let errorMessage = 'Error al actualizar servicio';
       
@@ -1251,7 +1254,7 @@ export const useServiceManager = () => {
       });
 
       if (error) {
-        console.error('Error eliminando servicio:', error);
+        logger.error('Error eliminando servicio:', error);
         throw new Error(`Error al eliminar el servicio: ${error.message}`);
       }
       
@@ -1263,7 +1266,7 @@ export const useServiceManager = () => {
       toast.success('Servicio eliminado correctamente');
     },
     onError: (error: Error) => {
-      console.error('Error eliminando servicio:', error);
+      logger.error('Error eliminando servicio:', error);
       toast.error(error.message || 'Error al eliminar el servicio');
     }
   });

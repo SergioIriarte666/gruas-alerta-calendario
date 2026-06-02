@@ -9,6 +9,9 @@ import {
   formatForDatabase
 } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServicesMetrics');
 
 export interface ServicesMetrics {
   totalServices: number;
@@ -33,7 +36,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
     
     switch (filter) {
       case 'today':
-        console.log('📅 Filtro TODAY aplicado:', currentChileDateString);
+        logger.debug('📅 Filtro TODAY aplicado:', currentChileDateString);
         return { 
           type: 'exact', 
           date: currentChileDateString 
@@ -42,7 +45,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
         const weekRange = getCurrentWeekRange();
         const weekStartString = formatForDatabase(weekRange.start);
         const weekEndString = formatForDatabase(weekRange.end);
-        console.log('📅 Filtro WEEK aplicado desde:', weekStartString, 'hasta:', weekEndString, '(lunes a domingo)');
+        logger.debug('📅 Filtro WEEK aplicado desde:', weekStartString, 'hasta:', weekEndString, '(lunes a domingo)');
         return { 
           type: 'range', 
           start: weekStartString, 
@@ -53,7 +56,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
         const monthRange = getCurrentMonthRange();
         const monthStartString = formatForDatabase(monthRange.start);
         const monthEndString = formatForDatabase(monthRange.end);
-        console.log('📅 Filtro MONTH aplicado desde:', monthStartString, 'hasta:', monthEndString);
+        logger.debug('📅 Filtro MONTH aplicado desde:', monthStartString, 'hasta:', monthEndString);
         return { 
           type: 'range', 
           start: monthStartString, 
@@ -62,7 +65,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
       }
       case 'all':
       default:
-        console.log('📅 Filtro ALL aplicado: sin restricciones de fecha');
+        logger.debug('📅 Filtro ALL aplicado: sin restricciones de fecha');
         return null;
     }
   }, []);
@@ -104,7 +107,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
         from += PAGE_SIZE;
       }
       
-      console.log(`🔍 Servicios encontrados para filtro "${dateFilter}":`, allServices.length);
+      logger.debug(`🔍 Servicios encontrados para filtro "${dateFilter}":`, allServices.length);
       setServices(allServices);
       
       // Fetch costs related to services
@@ -129,11 +132,11 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
       
       if (costsError) throw costsError;
       
-      console.log(`💰 Costos encontrados para filtro "${dateFilter}":`, costsData?.length || 0);
+      logger.debug(`💰 Costos encontrados para filtro "${dateFilter}":`, costsData?.length || 0);
       setCosts(costsData || []);
       
     } catch (error) {
-      console.error('Error fetching services metrics:', error);
+      logger.error('Error fetching services metrics:', error);
       toast.error('Error al cargar las métricas de servicios');
     } finally {
       setLoading(false);
@@ -147,7 +150,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
   // Escuchar evento global de refresh para actualizar metricas
   useEffect(() => {
     const handleGlobalRefresh = () => {
-      console.log('🔄 [ServicesMetrics] Global refresh detectado, actualizando metricas...');
+      logger.debug('🔄 [ServicesMetrics] Global refresh detectado, actualizando metricas...');
       fetchData();
     };
     

@@ -3,6 +3,9 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('AuthContext');
 
 interface AuthContextType {
   session: Session | null;
@@ -69,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
       } catch (error) {
-        console.error('AuthContext: Critical error:', error);
+        logger.error('AuthContext: Critical error:', error);
         if (mounted) {
           setSession(null);
           setUser(null);
@@ -100,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       window.location.href = '/auth';
     } catch (error) {
-      console.error('AuthContext: Error during sign out:', error);
+      logger.error('AuthContext: Error during sign out:', error);
       cleanupAuthState();
       setSession(null);
       setUser(null);
@@ -119,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(refreshed);
       setUser(refreshed?.user ?? null);
     } catch (error) {
-      console.error('AuthContext: Failed to refresh session:', error);
+      logger.error('AuthContext: Failed to refresh session:', error);
       throw error;
     }
   };

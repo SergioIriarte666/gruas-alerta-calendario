@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceWorkerManager } from './useServiceWorkerManager';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('PushNotifications');
 
 export interface PushNotificationPreferences {
   newServices: boolean;
@@ -44,7 +47,7 @@ export const usePushNotifications = (): PushNotificationHook => {
              'Notification' in window &&
              !window.navigator.userAgent.includes('jsdom'); // Exclude test environments
     } catch (error) {
-      console.warn('[PushNotifications] Error checking support:', error);
+      logger.warn('[PushNotifications] Error checking support:', error);
       return false;
     }
   });
@@ -55,7 +58,7 @@ export const usePushNotifications = (): PushNotificationHook => {
     try {
       return typeof window !== 'undefined' ? Notification.permission : 'default';
     } catch (error) {
-      console.warn('[PushNotifications] Error checking permission:', error);
+      logger.warn('[PushNotifications] Error checking permission:', error);
       return 'default';
     }
   });
@@ -67,12 +70,12 @@ export const usePushNotifications = (): PushNotificationHook => {
 
     const checkSubscriptionStatus = async () => {
       try {
-        console.log('[PushNotifications] Checking subscription status...');
+        logger.debug('[PushNotifications] Checking subscription status...');
         
         // First check if SW is registered
         const registration = await navigator.serviceWorker.getRegistration();
         if (!registration) {
-          console.log('[PushNotifications] No Service Worker registered yet');
+          logger.debug('[PushNotifications] No Service Worker registered yet');
           setIsSubscribed(false);
           return;
         }
@@ -80,14 +83,14 @@ export const usePushNotifications = (): PushNotificationHook => {
         // Check for existing subscription
         const subscription = await (registration as any).pushManager.getSubscription();
         const subscribed = !!subscription;
-        console.log('[PushNotifications] Subscription status:', subscribed);
+        logger.debug('[PushNotifications] Subscription status:', subscribed);
         setIsSubscribed(subscribed);
         
         if (subscribed) {
           setError(null); // Clear any previous errors if we have a valid subscription
         }
       } catch (error) {
-        console.error('[PushNotifications] Error checking subscription:', error);
+        logger.error('[PushNotifications] Error checking subscription:', error);
         setIsSubscribed(false);
         setError(`Error checking subscription: ${error}`);
       }
@@ -105,10 +108,10 @@ export const usePushNotifications = (): PushNotificationHook => {
       if (stored) {
         const parsed = JSON.parse(stored);
         setPreferences({ ...defaultPreferences, ...parsed });
-        console.log('[PushNotifications] Preferences loaded:', parsed);
+        logger.debug('[PushNotifications] Preferences loaded:', parsed);
       }
     } catch (error) {
-      console.error('[PushNotifications] Error loading preferences:', error);
+      logger.error('[PushNotifications] Error loading preferences:', error);
     }
   }, [user]);
 
@@ -122,7 +125,7 @@ export const usePushNotifications = (): PushNotificationHook => {
       setPermission(result);
       return result;
     } catch (error) {
-      console.error('Error requesting permission:', error);
+      logger.error('Error requesting permission:', error);
       setPermission('denied');
       return 'denied';
     }
@@ -130,7 +133,7 @@ export const usePushNotifications = (): PushNotificationHook => {
 
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!user || !isSupported) {
-      console.warn('[PushNotifications] Cannot subscribe - missing requirements:', { 
+      logger.warn('[PushNotifications] Cannot subscribe - missing requirements:', { 
         user: !!user, 
         isSupported, 
         permission,
@@ -140,17 +143,17 @@ export const usePushNotifications = (): PushNotificationHook => {
     }
 
     if (isLoading) {
-      console.log('[PushNotifications] Already loading, skipping...');
+      logger.debug('[PushNotifications] Already loading, skipping...');
       return false;
     }
 
-    console.log('[PushNotifications] Starting subscription process...');
+    logger.debug('[PushNotifications] Starting subscription process...');
     setIsLoading(true);
     
     try {
       // Validate environment
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        console.error('[PushNotifications] HTTPS required for push notifications');
+        logger.error('[PushNotifications] HTTPS required for push notifications');
         return false;
       }
 
@@ -159,7 +162,7 @@ export const usePushNotifications = (): PushNotificationHook => {
         const newPermission = await Notification.requestPermission();
         setPermission(newPermission);
         if (newPermission !== 'granted') {
-          console.warn('[PushNotifications] Permission denied by user');
+          logger.warn('[PushNotifications] Permission denied by user');
           return false;
         }
       }
@@ -168,22 +171,22 @@ export const usePushNotifications = (): PushNotificationHook => {
       let registration: ServiceWorkerRegistration;
       
       if (isRegistered && swRegistration) {
-        console.log('[PushNotifications] Using existing SW registration from manager');
+        logger.debug('[PushNotifications] Using existing SW registration from manager');
         registration = swRegistration;
       } else {
-        console.log('[PushNotifications] Registering SW through manager...');
+        logger.debug('[PushNotifications] Registering SW through manager...');
         const newRegistration = await registerServiceWorker();
         if (!newRegistration) {
           throw new Error('Failed to register Service Worker');
         }
         registration = newRegistration;
       }
-      console.log('[PushNotifications] Service Worker ready');
+      logger.debug('[PushNotifications] Service Worker ready');
       
       // Check for existing subscription
       const existingSubscription = await (registration as any).pushManager.getSubscription();
       if (existingSubscription) {
-        console.log('[PushNotifications] Already subscribed, updating status');
+        logger.debug('[PushNotifications] Already subscribed, updating status');
         setIsSubscribed(true);
         return true;
       }
@@ -191,13 +194,13 @@ export const usePushNotifications = (): PushNotificationHook => {
       // Create new subscription with error handling
       const vapidPublicKey = 'BCgV2cFaHf2z1mhsxvWf7ul2lugBGh9xyrn9HT7foKzL3QFSE9bbO5sbl1zbCJ65qTZNoCuorQ8UtCHWbZ6wvNU';
       
-      console.log('[PushNotifications] Creating subscription...');
+      logger.debug('[PushNotifications] Creating subscription...');
       const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: vapidPublicKey
       });
 
-      console.log('[PushNotifications] Subscription created, saving to server...');
+      logger.debug('[PushNotifications] Subscription created, saving to server...');
 
       // Save to server with improved error handling
       try {
@@ -218,23 +221,23 @@ export const usePushNotifications = (): PushNotificationHook => {
         const { error } = await Promise.race([savePromise, timeoutPromise]) as any;
 
         if (error) {
-          console.error('[PushNotifications] Server error:', error);
-          await subscription.unsubscribe().catch(e => console.warn('Failed to cleanup subscription:', e));
+          logger.error('[PushNotifications] Server error:', error);
+          await subscription.unsubscribe().catch(e => logger.warn('Failed to cleanup subscription:', e));
           return false;
         }
       } catch (serverError) {
-        console.error('[PushNotifications] Failed to save subscription:', serverError);
-        await subscription.unsubscribe().catch(e => console.warn('Failed to cleanup subscription:', e));
+        logger.error('[PushNotifications] Failed to save subscription:', serverError);
+        await subscription.unsubscribe().catch(e => logger.warn('Failed to cleanup subscription:', e));
         return false;
       }
 
-      console.log('[PushNotifications] Subscription saved successfully');
+      logger.debug('[PushNotifications] Subscription saved successfully');
       setIsSubscribed(true);
       setError(null);
       return true;
     } catch (error: any) {
       const errorMessage = error.message || error.toString();
-      console.error('[PushNotifications] Subscription failed:', errorMessage);
+      logger.error('[PushNotifications] Subscription failed:', errorMessage);
       setError(errorMessage);
       setIsSubscribed(false);
       return false;
@@ -245,16 +248,16 @@ export const usePushNotifications = (): PushNotificationHook => {
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     if (!user || !isSupported) {
-      console.error('[PushNotifications] Cannot unsubscribe - missing requirements');
+      logger.error('[PushNotifications] Cannot unsubscribe - missing requirements');
       return false;
     }
 
     if (isLoading) {
-      console.log('[PushNotifications] Already loading, skipping...');
+      logger.debug('[PushNotifications] Already loading, skipping...');
       return false;
     }
 
-    console.log('[PushNotifications] Starting unsubscription process...');
+    logger.debug('[PushNotifications] Starting unsubscription process...');
     setIsLoading(true);
     
     try {
@@ -263,7 +266,7 @@ export const usePushNotifications = (): PushNotificationHook => {
       const subscription = await (registration as any).pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
-        console.log('[PushNotifications] Local unsubscription successful');
+        logger.debug('[PushNotifications] Local unsubscription successful');
       }
 
       // Notify server with timeout
@@ -279,9 +282,9 @@ export const usePushNotifications = (): PushNotificationHook => {
 
       try {
         await Promise.race([removePromise, timeoutPromise]);
-        console.log('[PushNotifications] Server notification successful');
+        logger.debug('[PushNotifications] Server notification successful');
       } catch (serverError) {
-        console.warn('[PushNotifications] Server notification failed:', serverError);
+        logger.warn('[PushNotifications] Server notification failed:', serverError);
         // Continue anyway, local unsubscription was successful
       }
 
@@ -290,7 +293,7 @@ export const usePushNotifications = (): PushNotificationHook => {
       return true;
     } catch (error: any) {
       const errorMessage = error.message || error.toString();
-      console.error('[PushNotifications] Unsubscription failed:', errorMessage);
+      logger.error('[PushNotifications] Unsubscription failed:', errorMessage);
       setError(errorMessage);
       return false;
     } finally {
@@ -306,9 +309,9 @@ export const usePushNotifications = (): PushNotificationHook => {
     
     try {
       localStorage.setItem(`push-preferences-${user.id}`, JSON.stringify(updated));
-      console.log('[PushNotifications] Preferences updated:', updated);
+      logger.debug('[PushNotifications] Preferences updated:', updated);
     } catch (error) {
-      console.error('[PushNotifications] Error saving preferences:', error);
+      logger.error('[PushNotifications] Error saving preferences:', error);
     }
   }, [user, preferences]);
 
@@ -323,7 +326,7 @@ export const usePushNotifications = (): PushNotificationHook => {
         const subscription = await (registration as any).pushManager.getSubscription();
         setIsSubscribed(!!subscription);
       } catch (error) {
-        console.error('[PushNotifications] Error during retry check:', error);
+        logger.error('[PushNotifications] Error during retry check:', error);
       }
     }
   }, [isSupported, user]);

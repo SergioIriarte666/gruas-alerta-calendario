@@ -2,7 +2,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('UserContext');
 
 interface UserProfile {
   id: string;
@@ -18,6 +20,7 @@ interface UserProfile {
 interface UserContextType {
   user: UserProfile | null;
   loading: boolean;
+  /** @deprecated Usa `signOut()` de `useAuth()` en su lugar. Este método ahora solo limpia estado local y delega a AuthContext. */
   logout: () => Promise<void>;
   updateUser: (updates: Partial<UserProfile>) => Promise<void>;
   forceRefreshProfile: () => Promise<void>;
@@ -55,7 +58,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error('UserContext - Error fetching profile:', error);
+        logger.error('UserContext - Error fetching profile:', error);
 
         if (error.code === 'PGRST116') {
           // Profile doesn't exist, create one
@@ -112,7 +115,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             operator_name = operatorData.name;
           }
         } catch (operatorException) {
-          console.error('UserContext - Error fetching operator profile:', operatorException);
+          logger.error('UserContext - Error fetching operator profile:', operatorException);
         }
 
         const userProfile: UserProfile = {
@@ -129,7 +132,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userProfile);
       }
     } catch (error) {
-      console.error('UserContext - Exception:', error);
+      logger.error('UserContext - Exception:', error);
       if (retryCount < 2) {
         fetchingRef.current = false;
         setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
@@ -177,14 +180,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
-      cleanupAuthState();
-      await performGlobalSignOut(supabase);
-      window.location.href = '/auth';
+      await signOut();
     } catch (error) {
-      console.error('UserContext - Logout error:', error);
-      cleanupAuthState();
+      logger.error('UserContext - Logout error:', error);
+      profileCacheRef.current = null;
       setUser(null);
-      window.location.href = '/auth';
+      setLoading(false);
+      fetchingRef.current = false;
     }
   };
 
@@ -226,7 +228,7 @@ export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {
     // During HMR, context may temporarily be undefined - return safe defaults
-    console.warn('useUser called outside UserProvider (likely HMR). Returning defaults.');
+    logger.warn('useUser called outside UserProvider (likely HMR). Returning defaults.');
     return {
       user: null,
       loading: true,

@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServiceQueries');
 
 const CLIENT_SELECT = `
   id,
@@ -301,7 +304,7 @@ export const useServiceQueries = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('❌ [QUERY] Error al obtener servicios:', error);
+          logger.error('❌ [QUERY] Error al obtener servicios:', error);
           throw new Error(error.message);
         }
 
@@ -326,7 +329,7 @@ export const useServiceQueries = () => {
           .single();
 
         if (error) {
-          console.error('❌ [QUERY] Error al obtener servicio:', error);
+          logger.error('❌ [QUERY] Error al obtener servicio:', error);
           throw new Error(error.message);
         }
 
@@ -352,7 +355,7 @@ export const useServiceQueries = () => {
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('❌ [QUERY] Error al obtener servicios del operador:', error);
+          logger.error('❌ [QUERY] Error al obtener servicios del operador:', error);
           throw new Error(error.message);
         }
 
@@ -378,7 +381,7 @@ export const useServiceQueries = () => {
           .range(from, to);
 
         if (error) {
-          console.error('❌ [QUERY] Error al obtener servicios paginados:', error);
+          logger.error('❌ [QUERY] Error al obtener servicios paginados:', error);
           throw new Error(error.message);
         }
 

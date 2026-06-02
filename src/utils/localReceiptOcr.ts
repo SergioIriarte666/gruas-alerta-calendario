@@ -196,7 +196,11 @@ export const extractReceiptDataLocally = async (imageSource: string | Blob): Pro
     revoke = resolved.revoke;
     console.log('[LocalOCR] Imagen resuelta, creando worker OCR...');
 
-    worker = await createWorker('eng');
+    worker = await createWorker('eng', 1, {
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
+    });
     console.log('[LocalOCR] Worker creado, ejecutando reconocimiento...');
 
     const result = await worker.recognize(resolved.source);

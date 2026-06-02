@@ -3,6 +3,9 @@ import * as XLSX from 'xlsx';
 import { DataMapper, MappedServiceData } from './dataMapper';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('EnhancedCsvUpload');
 
 export interface ValidationError {
   row: number;
@@ -50,13 +53,13 @@ export class EnhancedCSVUploader {
   }
 
   async initialize() {
-    console.log('🔄 Initializing CSV uploader...');
+    logger.debug('🔄 Initializing CSV uploader...');
     await this.dataMapper.initialize();
-    console.log('✅ CSV uploader initialized successfully');
+    logger.debug('✅ CSV uploader initialized successfully');
   }
 
   async parseFile(file: File, onProgress?: (progress: UploadProgress) => void): Promise<any[]> {
-    console.log('📁 Starting file parsing:', file.name, 'Size:', file.size, 'Type:', file.type);
+    logger.debug('📁 Starting file parsing:', file.name, 'Size:', file.size, 'Type:', file.type);
     
     return new Promise((resolve, reject) => {
       if (onProgress) {
@@ -71,7 +74,7 @@ export class EnhancedCSVUploader {
       }
 
       const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
-      console.log('📊 File type detected:', isExcel ? 'Excel' : 'CSV');
+      logger.debug('📊 File type detected:', isExcel ? 'Excel' : 'CSV');
 
       if (isExcel) {
         this.parseExcelFile(file, resolve, reject, onProgress);
@@ -87,13 +90,13 @@ export class EnhancedCSVUploader {
     reject: (reason: any) => void,
     onProgress?: (progress: UploadProgress) => void
   ) {
-    console.log('📄 Parsing CSV file...');
+    logger.debug('📄 Parsing CSV file...');
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header: string) => {
         const trimmed = header.trim();
-        console.log('🏷️ Header found:', trimmed);
+        logger.debug('🏷️ Header found:', trimmed);
         return trimmed;
       },
       step: (results, parser) => {
@@ -111,15 +114,15 @@ export class EnhancedCSVUploader {
       },
       complete: (results) => {
         if (results.errors.length > 0) {
-          console.error('❌ CSV parsing errors:', results.errors);
+          logger.error('❌ CSV parsing errors:', results.errors);
           reject(new Error(`Error parsing CSV: ${results.errors[0].message}`));
         } else {
-          console.log('✅ CSV parsed successfully. Rows:', results.data.length);
+          logger.debug('✅ CSV parsed successfully. Rows:', results.data.length);
           resolve(results.data as any[]);
         }
       },
       error: (error) => {
-        console.error('❌ CSV file reading error:', error);
+        logger.error('❌ CSV file reading error:', error);
         reject(new Error(`Error reading CSV file: ${error.message}`));
       }
     });
@@ -131,7 +134,7 @@ export class EnhancedCSVUploader {
     reject: (reason: any) => void,
     onProgress?: (progress: UploadProgress) => void
   ) {
-    console.log('📊 Parsing Excel file...');
+    logger.debug('📊 Parsing Excel file...');
     const reader = new FileReader();
     
     reader.onload = (event) => {
@@ -152,7 +155,7 @@ export class EnhancedCSVUploader {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         
-        console.log('📋 Excel workbook loaded. Sheet:', sheetName);
+        logger.debug('📋 Excel workbook loaded. Sheet:', sheetName);
         
         // Convert to JSON with raw values so we can safely convert Date cells
         // ourselves using UTC components (avoids local-TZ off-by-one days).
@@ -162,10 +165,10 @@ export class EnhancedCSVUploader {
           raw: true,
         });
         
-        console.log('📊 Raw Excel data rows:', jsonData.length);
+        logger.debug('📊 Raw Excel data rows:', jsonData.length);
         
         if (jsonData.length < 2) {
-          console.log('⚠️ Excel file has no data rows');
+          logger.debug('⚠️ Excel file has no data rows');
           resolve([]);
           return;
         }
@@ -173,14 +176,14 @@ export class EnhancedCSVUploader {
         const headers = jsonData[0] as string[];
         const rows = jsonData.slice(1) as any[][];
 
-        console.log('🏷️ Excel headers found:', headers);
-        console.log('📊 Excel data rows:', rows.length);
+        logger.debug('🏷️ Excel headers found:', headers);
+        logger.debug('📊 Excel data rows:', rows.length);
 
         const processedData = rows
           .filter(row => {
             const hasData = row.some(cell => cell !== '');
             if (!hasData) {
-              console.log('🗑️ Skipping empty row');
+              logger.debug('🗑️ Skipping empty row');
             }
             return hasData;
           })
@@ -214,7 +217,7 @@ export class EnhancedCSVUploader {
                 if (ddmmyyyy) {
                   const [, d, m, y] = ddmmyyyy;
                   value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-                  console.log(`📅 Converted date ${trimmed} to ${value}`);
+                  logger.debug(`📅 Converted date ${trimmed} to ${value}`);
                 } else if (yyyymmdd) {
                   const [, y, m, d] = yyyymmdd;
                   value = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
@@ -225,7 +228,7 @@ export class EnhancedCSVUploader {
             });
             
             if (index === 0) {
-              console.log('🔍 Sample processed row:', rowObject);
+              logger.debug('🔍 Sample processed row:', rowObject);
             }
             
             return rowObject;
@@ -242,16 +245,16 @@ export class EnhancedCSVUploader {
           });
         }
 
-        console.log('✅ Excel parsed successfully. Final processed rows:', processedData.length);
+        logger.debug('✅ Excel parsed successfully. Final processed rows:', processedData.length);
         resolve(processedData);
       } catch (error) {
-        console.error('❌ Excel processing error:', error);
+        logger.error('❌ Excel processing error:', error);
         reject(new Error(`Error processing Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`));
       }
     };
 
     reader.onerror = () => {
-      console.error('❌ File reading error');
+      logger.error('❌ File reading error');
       reject(new Error('Error reading file'));
     };
     
@@ -263,7 +266,7 @@ export class EnhancedCSVUploader {
     existingFolios: string[] = [],
     onProgress?: (progress: UploadProgress) => void
   ): Promise<ValidationResult> {
-    console.log('🔍 Starting validation and mapping for', csvData.length, 'rows');
+    logger.debug('🔍 Starting validation and mapping for', csvData.length, 'rows');
     
     const errors: ValidationError[] = [];
     const validRows: MappedServiceData[] = [];
@@ -283,13 +286,13 @@ export class EnhancedCSVUploader {
     // Validate headers first
     if (csvData.length > 0) {
       const headers = Object.keys(csvData[0]);
-      console.log('🏷️ Headers to validate:', headers);
+      logger.debug('🏷️ Headers to validate:', headers);
       
       const headerValidation = this.dataMapper.validateHeaders(headers);
-      console.log('📋 Header validation result:', headerValidation);
+      logger.debug('📋 Header validation result:', headerValidation);
       
       if (!headerValidation.valid) {
-        console.log('❌ Missing required headers:', headerValidation.missing);
+        logger.debug('❌ Missing required headers:', headerValidation.missing);
         headerValidation.missing.forEach(missing => {
           errors.push({
             row: -1,
@@ -305,7 +308,7 @@ export class EnhancedCSVUploader {
       const nonEmptyExtras = headerValidation.extra.filter(extra => extra && extra.trim() !== '');
       
       if (nonEmptyExtras.length > 0) {
-        console.log('⚠️ Extra headers found:', nonEmptyExtras);
+        logger.debug('⚠️ Extra headers found:', nonEmptyExtras);
         nonEmptyExtras.forEach(extra => {
           errors.push({
             row: -1,
@@ -322,7 +325,7 @@ export class EnhancedCSVUploader {
     // Process each row
     for (let i = 0; i < csvData.length; i++) {
       const row = csvData[i];
-      console.log(`🔍 Processing row ${i + 1}:`, row);
+      logger.debug(`🔍 Processing row ${i + 1}:`, row);
       
       if (onProgress) {
         onProgress({
@@ -338,13 +341,13 @@ export class EnhancedCSVUploader {
       // Map headers to expected format
       const mappedRow: any = {};
       const mappedHeaders = this.dataMapper.mapHeaders(Object.keys(row));
-      console.log(`🗺️ Row ${i + 1} header mapping:`, Object.keys(row), '→', mappedHeaders);
+      logger.debug(`🗺️ Row ${i + 1} header mapping:`, Object.keys(row), '→', mappedHeaders);
       
       Object.keys(row).forEach((key, index) => {
         mappedRow[mappedHeaders[index]] = row[key];
       });
       
-      console.log(`🔄 Row ${i + 1} mapped data:`, mappedRow);
+      logger.debug(`🔄 Row ${i + 1} mapped data:`, mappedRow);
 
       // Validate required fields
       const requiredFields = [
@@ -353,14 +356,14 @@ export class EnhancedCSVUploader {
         'serviceType', 'value', 'craneLicensePlate', 'operatorRut', 'operatorCommission'
       ];
       
-      console.log(`🔍 Row ${i + 1} checking required fields:`, requiredFields);
+      logger.debug(`🔍 Row ${i + 1} checking required fields:`, requiredFields);
       
       for (const field of requiredFields) {
         const value = mappedRow[field];
         const isEmpty = !value || value.toString().trim() === '';
         
         if (isEmpty) {
-          console.log(`❌ Row ${i + 1} missing field '${field}':`, value);
+          logger.debug(`❌ Row ${i + 1} missing field '${field}':`, value);
           errors.push({
             row: i,
             field,
@@ -369,13 +372,13 @@ export class EnhancedCSVUploader {
             severity: 'error'
           });
         } else {
-          console.log(`✅ Row ${i + 1} field '${field}' ok:`, value);
+          logger.debug(`✅ Row ${i + 1} field '${field}' ok:`, value);
         }
       }
 
       // Check for duplicate folios
       if (mappedRow.folio && existingFolios.includes(mappedRow.folio.toString())) {
-        console.log(`❌ Row ${i + 1} duplicate folio:`, mappedRow.folio);
+        logger.debug(`❌ Row ${i + 1} duplicate folio:`, mappedRow.folio);
         errors.push({
           row: i,
           field: 'folio',
@@ -386,12 +389,12 @@ export class EnhancedCSVUploader {
       }
 
       // Map data to IDs and validate
-      console.log(`🔄 Row ${i + 1} starting data mapping...`);
+      logger.debug(`🔄 Row ${i + 1} starting data mapping...`);
       const mappingResult = await this.dataMapper.mapRowData(mappedRow);
-      console.log(`📊 Row ${i + 1} mapping result:`, mappingResult);
+      logger.debug(`📊 Row ${i + 1} mapping result:`, mappingResult);
       
       if (!mappingResult.success) {
-        console.log(`❌ Row ${i + 1} mapping failed:`, mappingResult.errors);
+        logger.debug(`❌ Row ${i + 1} mapping failed:`, mappingResult.errors);
         mappingResult.errors.forEach(error => {
           errors.push({
             row: i,
@@ -402,13 +405,13 @@ export class EnhancedCSVUploader {
           });
         });
       } else {
-        console.log(`✅ Row ${i + 1} mapping successful`);
+        logger.debug(`✅ Row ${i + 1} mapping successful`);
         validRows.push(mappingResult.data!);
       }
 
       // Add warnings
       if (mappingResult.warnings) {
-        console.log(`⚠️ Row ${i + 1} warnings:`, mappingResult.warnings);
+        logger.debug(`⚠️ Row ${i + 1} warnings:`, mappingResult.warnings);
         mappingResult.warnings.forEach(warning => {
           errors.push({
             row: i,
@@ -434,7 +437,7 @@ export class EnhancedCSVUploader {
       warningCount
     };
     
-    console.log('📊 Final validation result:', {
+    logger.debug('📊 Final validation result:', {
       isValid: finalResult.isValid,
       totalRows: finalResult.totalRows,
       validCount: finalResult.validCount,
@@ -458,7 +461,7 @@ export class EnhancedCSVUploader {
     const errorDetails: ValidationError[] = [];
     const insertedFolios: string[] = [];
 
-    console.log('🚀 Starting service upload:', {
+    logger.debug('🚀 Starting service upload:', {
       total,
       batchSize: this.batchSize,
       totalBatches
@@ -480,13 +483,13 @@ export class EnhancedCSVUploader {
         const batch = services.slice(i * this.batchSize, (i + 1) * this.batchSize);
         const currentBatch = i + 1;
 
-        console.log(`📦 Processing batch ${currentBatch}/${totalBatches} with ${batch.length} services`);
+        logger.debug(`📦 Processing batch ${currentBatch}/${totalBatches} with ${batch.length} services`);
 
         for (let j = 0; j < batch.length; j++) {
           const service = batch[j];
           const globalIndex = i * this.batchSize + j;
 
-          console.log(`🔄 Creating service ${globalIndex + 1}/${total}:`, service);
+          logger.debug(`🔄 Creating service ${globalIndex + 1}/${total}:`, service);
 
           try {
             // Validate required fields before creating service
@@ -519,14 +522,14 @@ export class EnhancedCSVUploader {
               hasExcess: false
             };
 
-            console.log(`📤 Sending service data:`, serviceData);
+            logger.debug(`📤 Sending service data:`, serviceData);
 
             await createService(serviceData);
             processed++;
             insertedFolios.push(service.folio);
-            console.log(`✅ Service ${globalIndex + 1} created successfully`);
+            logger.debug(`✅ Service ${globalIndex + 1} created successfully`);
           } catch (error) {
-            console.error(`❌ Error creating service at row ${globalIndex}:`, error);
+            logger.error(`❌ Error creating service at row ${globalIndex}:`, error);
             errors++;
             failedRows.push(globalIndex);
             
@@ -554,7 +557,7 @@ export class EnhancedCSVUploader {
 
         // Small delay between batches to avoid overwhelming the API
         if (i < totalBatches - 1) {
-          console.log('⏳ Waiting between batches...');
+          logger.debug('⏳ Waiting between batches...');
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
@@ -571,11 +574,11 @@ export class EnhancedCSVUploader {
         insertedFolios: insertedFolios.length > 0 ? insertedFolios : undefined
       };
 
-      console.log('📊 Upload completed:', result);
+      logger.debug('📊 Upload completed:', result);
       return result;
 
     } catch (error) {
-      console.error('❌ Error during batch upload:', error);
+      logger.error('❌ Error during batch upload:', error);
       return {
         success: false,
         processed,

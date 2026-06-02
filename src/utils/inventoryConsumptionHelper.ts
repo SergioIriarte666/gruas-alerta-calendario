@@ -1,5 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('InventoryConsumptionHelper');
 
 interface CreateDirectConsumptionData {
   costId: string;
@@ -32,7 +35,7 @@ export const createDirectInventoryConsumption = async ({
   supplierId,
 }: CreateDirectConsumptionData): Promise<boolean> => {
   try {
-    console.log('[InventoryConsumption] Starting direct consumption for cost:', costId);
+    logger.debug('[InventoryConsumption] Starting direct consumption for cost:', costId);
     
     // 1. Find or create inventory item
     let inventoryItemId: string;
@@ -46,7 +49,7 @@ export const createDirectInventoryConsumption = async ({
     
     if (existingItem) {
       inventoryItemId = existingItem.id;
-      console.log('[InventoryConsumption] Found existing item:', inventoryItemId);
+      logger.debug('[InventoryConsumption] Found existing item:', inventoryItemId);
     } else {
       // Create new inventory item
       const { data: newItem, error: createItemError } = await supabase
@@ -61,12 +64,12 @@ export const createDirectInventoryConsumption = async ({
         .single();
       
       if (createItemError || !newItem) {
-        console.error('[InventoryConsumption] Error creating item:', createItemError);
+        logger.error('[InventoryConsumption] Error creating item:', createItemError);
         throw new Error('No se pudo crear el ítem de inventario');
       }
       
       inventoryItemId = newItem.id;
-      console.log('[InventoryConsumption] Created new item:', inventoryItemId);
+      logger.debug('[InventoryConsumption] Created new item:', inventoryItemId);
     }
     
     // 2. Get active warehouse location
@@ -78,12 +81,12 @@ export const createDirectInventoryConsumption = async ({
       .single();
     
     if (!location) {
-      console.error('[InventoryConsumption] No active location found');
+      logger.error('[InventoryConsumption] No active location found');
       throw new Error('No hay ubicación de inventario activa');
     }
     
     const locationId = location.id;
-    console.log('[InventoryConsumption] Using location:', locationId);
+    logger.debug('[InventoryConsumption] Using location:', locationId);
     
     // 3. Create ENTRY movement (purchase)
     const { data: entryMovement, error: entryError } = await supabase
@@ -106,11 +109,11 @@ export const createDirectInventoryConsumption = async ({
       .single();
     
     if (entryError || !entryMovement) {
-      console.error('[InventoryConsumption] Error creating entry movement:', entryError);
+      logger.error('[InventoryConsumption] Error creating entry movement:', entryError);
       throw new Error('No se pudo crear el movimiento de entrada');
     }
     
-    console.log('[InventoryConsumption] Created entry movement:', entryMovement.id);
+    logger.debug('[InventoryConsumption] Created entry movement:', entryMovement.id);
     
     // 4. Create EXIT movement (consumption to crane)
     const { data: exitMovement, error: exitError } = await supabase
@@ -133,11 +136,11 @@ export const createDirectInventoryConsumption = async ({
       .single();
     
     if (exitError || !exitMovement) {
-      console.error('[InventoryConsumption] Error creating exit movement:', exitError);
+      logger.error('[InventoryConsumption] Error creating exit movement:', exitError);
       throw new Error('No se pudo crear el movimiento de salida');
     }
     
-    console.log('[InventoryConsumption] Created exit movement:', exitMovement.id);
+    logger.debug('[InventoryConsumption] Created exit movement:', exitMovement.id);
     
     // 5. Update cost with inventory_movement_id (link to exit movement)
     const { error: updateCostError } = await supabase
@@ -146,18 +149,18 @@ export const createDirectInventoryConsumption = async ({
       .eq('id', costId);
     
     if (updateCostError) {
-      console.error('[InventoryConsumption] Error linking cost to movement:', updateCostError);
+      logger.error('[InventoryConsumption] Error linking cost to movement:', updateCostError);
       // Non-fatal, movements are already created
     }
     
-    console.log('[InventoryConsumption] Successfully completed direct consumption');
+    logger.debug('[InventoryConsumption] Successfully completed direct consumption');
     toast.success('Inventario Actualizado', {
       description: `Se registró entrada y consumo de ${quantity} unidad(es) de "${itemName}"`,
     });
     
     return true;
   } catch (error) {
-    console.error('[InventoryConsumption] Error in createDirectInventoryConsumption:', error);
+    logger.error('[InventoryConsumption] Error in createDirectInventoryConsumption:', error);
     toast.error('Error de Inventario', {
       description: error instanceof Error ? error.message : 'No se pudieron crear los movimientos de inventario',
     });
@@ -188,7 +191,7 @@ export const createDirectInventoryEntry = async ({
   supplierId,
 }: CreateDirectEntryData): Promise<boolean> => {
   try {
-    console.log('[InventoryEntry] Starting entry for cost:', costId);
+    logger.debug('[InventoryEntry] Starting entry for cost:', costId);
 
     const { data: existingEntry } = await supabase
       .from('inventory_movements')
@@ -232,7 +235,7 @@ export const createDirectInventoryEntry = async ({
         .single();
 
       if (createItemError || !newItem) {
-        console.error('[InventoryEntry] Error creating item:', createItemError);
+        logger.error('[InventoryEntry] Error creating item:', createItemError);
         throw new Error('No se pudo crear el ítem de inventario');
       }
       inventoryItemId = newItem.id;
@@ -295,7 +298,7 @@ export const createDirectInventoryEntry = async ({
         }
       }
 
-      console.error('[InventoryEntry] Error creating entry:', entryError);
+      logger.error('[InventoryEntry] Error creating entry:', entryError);
       throw new Error('No se pudo crear el movimiento de entrada');
     }
 
@@ -305,10 +308,10 @@ export const createDirectInventoryEntry = async ({
       .update({ inventory_movement_id: entryMovement.id })
       .eq('id', costId);
 
-    console.log('[InventoryEntry] Entry created:', entryMovement.id);
+    logger.debug('[InventoryEntry] Entry created:', entryMovement.id);
     return true;
   } catch (error) {
-    console.error('[InventoryEntry] Error:', error);
+    logger.error('[InventoryEntry] Error:', error);
     return false;
   }
 };
@@ -321,7 +324,7 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
   synced: number;
   errors: number;
 }> => {
-  console.log('[InventorySync] Starting retroactive sync...');
+  logger.debug('[InventorySync] Starting retroactive sync...');
   
   let synced = 0;
   let errors = 0;
@@ -337,16 +340,16 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
       .not('purchase_unit_cost', 'is', null);
     
     if (queryError) {
-      console.error('[InventorySync] Error querying unsynced costs:', queryError);
+      logger.error('[InventorySync] Error querying unsynced costs:', queryError);
       throw queryError;
     }
     
     if (!unsyncedCosts?.length) {
-      console.log('[InventorySync] No costs with immediate consumption found');
+      logger.debug('[InventorySync] No costs with immediate consumption found');
       return { synced: 0, errors: 0 };
     }
     
-    console.log('[InventorySync] Found', unsyncedCosts.length, 'costs with immediate consumption');
+    logger.debug('[InventorySync] Found', unsyncedCosts.length, 'costs with immediate consumption');
     
     // Check each cost to see if it already has movements
     for (const cost of unsyncedCosts) {
@@ -357,11 +360,11 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
         .limit(1);
       
       if (existingMovements && existingMovements.length > 0) {
-        console.log('[InventorySync] Cost', cost.id, 'already has movements, skipping');
+        logger.debug('[InventorySync] Cost', cost.id, 'already has movements, skipping');
         continue;
       }
       
-      console.log('[InventorySync] Syncing cost:', cost.id, '-', cost.description);
+      logger.debug('[InventorySync] Syncing cost:', cost.id, '-', cost.description);
       
       try {
         const success = await createDirectInventoryConsumption({
@@ -376,17 +379,17 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
         
         if (success) {
           synced++;
-          console.log('[InventorySync] Successfully synced cost:', cost.id);
+          logger.debug('[InventorySync] Successfully synced cost:', cost.id);
         } else {
           errors++;
         }
       } catch (err) {
-        console.error('[InventorySync] Error syncing cost:', cost.id, err);
+        logger.error('[InventorySync] Error syncing cost:', cost.id, err);
         errors++;
       }
     }
     
-    console.log('[InventorySync] Sync completed. Synced:', synced, 'Errors:', errors);
+    logger.debug('[InventorySync] Sync completed. Synced:', synced, 'Errors:', errors);
     
     if (synced > 0) {
       toast.success('Sincronización Completada', {
@@ -396,7 +399,7 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
     
     return { synced, errors };
   } catch (error) {
-    console.error('[InventorySync] Fatal error during sync:', error);
+    logger.error('[InventorySync] Fatal error during sync:', error);
     toast.error('Error en Sincronización', {
       description: 'No se pudo completar la sincronización retroactiva',
     });

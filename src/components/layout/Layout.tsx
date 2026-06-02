@@ -20,6 +20,9 @@ export const Layout = () => {
 
   return (
     <QuickEntryProvider>
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lg focus:outline-none">
+        Saltar al contenido
+      </a>
       <div className="flex min-h-screen overflow-hidden bg-background text-foreground">
         <Sidebar 
           isCollapsed={isCollapsed}
@@ -34,8 +37,9 @@ export const Layout = () => {
             isCollapsed && "lg:ml-[4.5rem]"
           )}
         >
-          <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
+          <Header setIsMobileMenuOpen={setIsMobileMenuOpen} isMobileMenuOpen={isMobileMenuOpen} />
           <main
+            id="main-content"
             className={cn(
               "flex-1 overflow-x-hidden overflow-y-auto bg-background",
               isMobile ? "p-3" : isTablet ? "p-4" : "p-6"

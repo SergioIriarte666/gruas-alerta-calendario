@@ -8,9 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OperatorThemeForcer } from '@/components/operator/OperatorThemeForcer';
 import { OperatorBottomNav } from '@/components/operator/OperatorBottomNav';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const OperatorLayout = () => {
-  const { user, logout } = useUser();
+  const { user } = useUser();
+  const { signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -31,9 +33,8 @@ export const OperatorLayout = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       toast({ type: 'success', title: 'Sesión cerrada' });
-      window.location.href = '/auth';
     } catch {
       toast({ type: 'error', title: 'Error al cerrar sesión' });
     }

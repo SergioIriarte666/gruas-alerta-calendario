@@ -42,6 +42,9 @@ import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('EnhancedServiceForm');
 
 interface EnhancedServiceFormProps {
   service?: Service | null;
@@ -139,7 +142,7 @@ export const EnhancedServiceForm = ({
   // Map prefilledData to formData when duplicating
   useEffect(() => {
     if (prefilledData && !service) {
-      console.log('🔄 [FORM] Mapping prefilledData to formData:', prefilledData);
+      logger.debug('🔄 [FORM] Mapping prefilledData to formData:', prefilledData);
       setFormData({
         requestDate: prefilledData.requestDate || getCurrentChileDateString(),
         serviceDate: prefilledData.serviceDate || getCurrentChileDateString(),
@@ -240,7 +243,7 @@ export const EnhancedServiceForm = ({
 
   // Cargar datos completos del servicio desde el hook mejorado
   useEffect(() => {
-    console.log('🔄 [FORM] useEffect triggered:', { 
+    logger.debug('🔄 [FORM] useEffect triggered:', { 
       enhancedService: !!enhancedService, 
       serviceId: service?.id,
       loadingEnhancedService,
@@ -248,7 +251,7 @@ export const EnhancedServiceForm = ({
     });
     
     if (enhancedService && service?.id) {
-      console.log('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
+      logger.debug('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
       
       const costDetails = enhancedService.serviceCosts?.map(cost => ({
         id: cost.id,
@@ -301,7 +304,7 @@ export const EnhancedServiceForm = ({
         custodyNotes: enhancedService.custodyNotes || enhancedService.custody_notes || prev.custodyNotes
       }));
 
-      console.log('✅ [FORM] Enhanced service data loaded:', {
+      logger.debug('✅ [FORM] Enhanced service data loaded:', {
         operators: enhancedService.operators?.length || 0,
         costs: costDetails.length,
         totalCommissions: enhancedService.totalCommissions,
@@ -314,7 +317,7 @@ export const EnhancedServiceForm = ({
   // Efecto para cargar datos existentes del servicio
   useEffect(() => {
     if (service && !enhancedService && !loadingEnhancedService) {
-      console.log('🔄 [FORM] Loading basic service data (no enhanced service yet)');
+      logger.debug('🔄 [FORM] Loading basic service data (no enhanced service yet)');
       setFolio(service.folio);
       setFormData({
         requestDate: service.requestDate,
@@ -542,13 +545,13 @@ export const EnhancedServiceForm = ({
       let finalFolio = folio;
       
       if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
-        console.log('🔄 Generating folio at submission time...');
+        logger.debug('🔄 Generating folio at submission time...');
         try {
           finalFolio = await generateUniqueValidFolio();
           setFolio(finalFolio);
-          console.log('✅ Folio generated successfully:', finalFolio);
+          logger.debug('✅ Folio generated successfully:', finalFolio);
         } catch (error) {
-          console.error('❌ Error generating folio:', error);
+          logger.error('❌ Error generating folio:', error);
           playRetroErrorSound();
           toast.error('Error al generar el folio. Por favor, intenta nuevamente.');
           return;
@@ -567,7 +570,7 @@ export const EnhancedServiceForm = ({
         return;
       }
 
-      console.log('🔄 Form submission started:', { folio: finalFolio, serviceType: formData.serviceType });
+      logger.debug('🔄 Form submission started:', { folio: finalFolio, serviceType: formData.serviceType });
       
       const finalData = {
         ...formData,
@@ -576,12 +579,12 @@ export const EnhancedServiceForm = ({
         costDetails: formData.costDetails || []
       };
 
-      console.log('📤 Final data prepared:', finalData);
+      logger.debug('📤 Final data prepared:', finalData);
 
       let result: Service;
       
       if (service) {
-        console.log('🔄 Updating existing service...');
+        logger.debug('🔄 Updating existing service...');
         result = await updateService(service.id, finalData);
         
         if (selectedServiceType?.name === 'Venta de Productos' && 
@@ -589,7 +592,7 @@ export const EnhancedServiceForm = ({
             service.status !== 'completed' &&
             finalData.salesItems?.length > 0) {
           
-          console.log('🔄 Processing inventory deduction for completed service update...');
+          logger.debug('🔄 Processing inventory deduction for completed service update...');
           const deductionResult = await processInventoryDeduction({
             serviceId: result.id,
             serviceFolio: result.folio,
@@ -605,7 +608,7 @@ export const EnhancedServiceForm = ({
           }
         }
       } else {
-        console.log('🔄 Creating new service...');
+        logger.debug('🔄 Creating new service...');
         result = await createService(finalData);
 
         if (!finalData.value || finalData.value === 0) {
@@ -625,14 +628,14 @@ export const EnhancedServiceForm = ({
               },
             })
             .then(({ error }) => {
-              if (error) console.warn('WhatsApp admin no enviado:', error);
+              if (error) logger.warn('WhatsApp admin no enviado:', error);
             });
         }
         
         if (selectedServiceType?.name === 'Venta de Productos' && 
             finalData.salesItems?.length > 0) {
           
-          console.log('🔄 Processing inventory deduction for new product sale...');
+          logger.debug('🔄 Processing inventory deduction for new product sale...');
           const deductionResult = await processInventoryDeduction({
             serviceId: result.id,
             serviceFolio: result.folio,
@@ -650,7 +653,7 @@ export const EnhancedServiceForm = ({
       }
 
       const action = service ? 'actualizado' : 'creado';
-      console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
+      logger.debug('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
       // Obtener operatorId desde operators[] o desde campo legacy operator
       const assignedOperator = finalData.operators?.[0];
@@ -682,7 +685,7 @@ export const EnhancedServiceForm = ({
           })
           .then(({ data, error }) => {
             if (error) {
-              console.warn('WhatsApp operador no enviado:', error);
+              logger.warn('WhatsApp operador no enviado:', error);
               const message = error?.context?.error?.message || error.message || 'Error desconocido';
               toast.error('No se pudo enviar el WhatsApp al operador', { description: message });
               return;
@@ -713,16 +716,16 @@ export const EnhancedServiceForm = ({
       playRetroSuccessSound();
       toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
       
-      console.log('📞 Calling onSubmit callback...');
+      logger.debug('📞 Calling onSubmit callback...');
       onSubmit?.(result);
       setIsSubmitting(false);
       onCancel?.();
       
-      console.log('✅ Form submission completed successfully');
+      logger.debug('✅ Form submission completed successfully');
       
     } catch (error) {
-      console.error('❌ Error en envío del formulario:', error);
-      console.error('❌ Error details:', {
+      logger.error('❌ Error en envío del formulario:', error);
+      logger.error('❌ Error details:', {
         name: error?.name,
         message: error?.message,
         code: error?.code,
@@ -850,7 +853,7 @@ export const EnhancedServiceForm = ({
                         const newFolio = await generateUniqueValidFolio();
                         setFolio(newFolio);
                       } catch (error) {
-                        console.error('Error generando folio:', error);
+                        logger.error('Error generando folio:', error);
                         toast.error('Error generando folio');
                       }
                     }}

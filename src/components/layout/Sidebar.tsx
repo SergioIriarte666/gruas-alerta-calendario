@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
 import { cn } from '@/lib/utils';
@@ -29,7 +30,8 @@ export const Sidebar = ({
   isMobileMenuOpen,
   setIsMobileMenuOpen
 }: SidebarProps) => {
-  const { user, logout } = useUser();
+  const { user } = useUser();
+  const { signOut } = useAuth();
   const { settings } = useSettings();
   const { hasModuleAccess } = useUserModulePermissions();
   const location = useLocation();
@@ -176,9 +178,9 @@ export const Sidebar = ({
 
   const handleLogout = async () => {
     try {
-      await logout();
-    } catch (error) {
-      console.error('Error during logout:', error);
+      await signOut();
+    } catch {
+      // redirect handled by AuthContext
     }
   };
 
@@ -212,6 +214,7 @@ export const Sidebar = ({
       <Link
         to={item.href}
         onClick={onNavigate}
+        aria-current={isActive ? 'page' : undefined}
         className={cn(
           "group relative flex items-center gap-3 rounded-xl text-sm transition-all duration-150",
           collapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5",
@@ -280,6 +283,8 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
+          aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+          aria-expanded={!isCollapsed}
           className="hidden lg:flex size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           {isCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
@@ -289,6 +294,7 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-label="Cerrar menú"
           className="lg:hidden size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />
@@ -296,7 +302,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
+      <nav className="flex-1 overflow-y-auto px-2 py-3" role="navigation" aria-label="Navegación principal">
         <TooltipProvider disableHoverableContent>
           {navigationGroups.map(group => {
             const filteredItems = filterItems(group.items);
@@ -311,6 +317,8 @@ export const Sidebar = ({
                 ) : (
                   <button
                     onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
+                    aria-expanded={group.alwaysExpanded ? undefined : isExpanded}
+                    aria-label={`${group.name}${group.alwaysExpanded ? '' : isExpanded ? ' - colapsar' : ' - expandir'}`}
                     className={cn(
                       "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                       !group.alwaysExpanded && "cursor-pointer hover:text-foreground"
@@ -391,6 +399,7 @@ export const Sidebar = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsMobileMenuOpen(false)}
+          aria-label="Cerrar menú"
           className="size-8 shrink-0 rounded-full border border-border/70 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />
@@ -398,7 +407,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
+      <nav className="flex-1 overflow-y-auto px-2 py-3" role="navigation" aria-label="Navegación principal">
         {navigationGroups.map(group => {
           const filteredItems = filterItems(group.items);
           if (filteredItems.length === 0) return null;
@@ -407,6 +416,8 @@ export const Sidebar = ({
             <div key={group.id} className="mb-4">
               <button
                 onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
+                aria-expanded={group.alwaysExpanded ? undefined : isExpanded}
+                aria-label={`${group.name}${group.alwaysExpanded ? '' : isExpanded ? ' - colapsar' : ' - expandir'}`}
                 className={cn(
                   "flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground",
                   !group.alwaysExpanded && "cursor-pointer hover:text-foreground"

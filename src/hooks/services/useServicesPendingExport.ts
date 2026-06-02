@@ -4,6 +4,9 @@ import { useSettings } from '@/hooks/useSettings';
 import { exportServiceReport } from '@/utils/reports/serviceReportExporter';
 import { Service } from '@/types';
 import { format as formatDate } from 'date-fns';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ServicesPendingExport');
 
 export const useServicesPendingExport = (services: Service[]) => {
   const [isExporting, setIsExporting] = useState(false);
@@ -49,7 +52,7 @@ export const useServicesPendingExport = (services: Service[]) => {
         description: `Se exportaron ${pendingServices.length} servicios pendientes a PDF.`
       });
     } catch (error) {
-      console.error('Error exporting pending services:', error);
+      logger.error('Error exporting pending services:', error);
       toast.error('Error al exportar', {
         description: 'Hubo un problema al generar el PDF. Inténtalo de nuevo.'
       });
