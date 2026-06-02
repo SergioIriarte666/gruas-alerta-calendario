@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toTitleCase } from '@/lib/utils';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 const roleBadgeClassNames: Record<string, string> = {
   admin: 'border-danger/20 bg-danger/10 text-danger',
@@ -40,6 +41,7 @@ const formatClientOption = (client: { name: string; rut: string; department?: st
 
 export const UserManagementTab = () => {
   const isMobile = useIsMobile();
+  const { isAdmin } = useUserPermissions();
   const { 
     users, 
     clients, 
@@ -127,6 +129,19 @@ export const UserManagementTab = () => {
           <Loader2 className="size-6 animate-spin text-foreground" />
           <span className="text-foreground">Cargando usuarios...</span>
         </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-foreground">Gestión de Usuarios</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Esta sección solo está disponible para administradores.
+          </CardDescription>
+        </CardHeader>
       </Card>
     );
   }

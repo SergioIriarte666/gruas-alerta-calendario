@@ -80,9 +80,9 @@ const Settings = () => {
     { value: 'system', label: 'Sistema', icon: SettingsIcon },
     { value: 'payment-terms', label: 'Cond. pago', icon: CreditCard },
     { value: 'notifications', label: 'Alertas', icon: Bell },
-    { value: 'users', label: 'Usuarios', icon: Users },
     { value: 'categories', label: 'Categorías', icon: Tag },
     ...(isAdmin ? [
+      { value: 'users',      label: 'Usuarios',    icon: Users },
       { value: 'audit',      label: 'Auditoría',  icon: ClipboardList },
       { value: 'integrity',  label: 'Integridad', icon: Shield },
       { value: 'liberation', label: 'Liberación', icon: Unlock },
@@ -183,9 +183,11 @@ const Settings = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="users" className="mt-4">
-            <UserManagementTab />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="users" className="mt-4">
+              <UserManagementTab />
+            </TabsContent>
+          )}
 
           <TabsContent value="categories" className="mt-4">
             <CategoriesTab />

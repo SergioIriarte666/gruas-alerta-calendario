@@ -29,6 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   const [hasTriedRefresh, setHasTriedRefresh] = React.useState(false);
   const [waitingForProfile, setWaitingForProfile] = React.useState(false);
   const [giveUp, setGiveUp] = React.useState(false);
+  const [hasSyncedClientProfile, setHasSyncedClientProfile] = React.useState(false);
 
   // Handle profile refresh in useEffect to avoid setState during render
   React.useEffect(() => {
@@ -38,6 +39,13 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
       forceRefreshProfile();
     }
   }, [authLoading, authUser, profileUser, profileLoading, hasTriedRefresh, forceRefreshProfile]);
+
+  React.useEffect(() => {
+    if (requireRole === 'client' && authUser && profileUser && !hasSyncedClientProfile) {
+      setHasSyncedClientProfile(true);
+      forceRefreshProfile();
+    }
+  }, [requireRole, authUser, profileUser, hasSyncedClientProfile, forceRefreshProfile]);
 
   // Timeout for waiting
   React.useEffect(() => {
@@ -72,7 +80,7 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   if (authUser && !profileUser) {
-    if (requireRole === 'admin' || (allowedRoles && allowedRoles.includes('admin'))) {
+    if (requireRole) {
       return <Navigate to="/auth" replace />;
     }
     return (
@@ -89,6 +97,19 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   
   if (effectiveAllowedRoles.length === 0) {
     return <>{children}</>;
+  }
+
+  if (requireRole === 'client' && profileUser?.role === 'client' && !profileUser.client_id) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+        <div className="w-full max-w-lg rounded-2xl border border-yellow-500/20 bg-card p-6 shadow-sm">
+          <h1 className="text-xl font-semibold text-foreground">Acceso pendiente de vinculacion</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Tu cuenta cliente aun no tiene una empresa asociada. Solicita a un administrador que te vincule a un cliente para habilitar el portal.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!effectiveAllowedRoles.includes(profileUser!.role)) {

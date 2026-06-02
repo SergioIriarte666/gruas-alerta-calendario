@@ -8,6 +8,7 @@ import PortalSidebar from './PortalSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useClientNotifications } from '@/hooks/portal/useClientNotifications';
+import { useSettings } from '@/hooks/useSettings';
 
 interface PortalLayoutProps {
   children?: React.ReactNode;
@@ -17,6 +18,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
   useClientNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { settings } = useSettings();
+  const companyName = settings?.company?.name || 'Portal de Clientes';
+  const companyLogo = settings?.company?.logo;
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -49,7 +53,15 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
             >
               <Menu className="size-6" />
             </Button>
-            <span className="ml-3 text-lg font-semibold text-primary">Portal de Clientes</span>
+            <div className="ml-3 flex items-center gap-3">
+              {companyLogo && (
+                <img src={companyLogo} alt="Logo empresa" className="size-8 object-contain" />
+              )}
+              <div>
+                <div className="text-sm font-semibold text-foreground">{companyName}</div>
+                <div className="text-xs text-muted-foreground">Portal de Clientes</div>
+              </div>
+            </div>
           </div>
         )}
         
