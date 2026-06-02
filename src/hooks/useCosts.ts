@@ -592,8 +592,11 @@ export const useLinkInvoiceToCost = () => {
 
       if (invoiceError) throw new Error(`Error creando factura: ${invoiceError.message}`);
 
-      // 2. Update cost notes and payment_date with invoice reference
+      // 2. Update cost with real invoice data
       const costUpdate: Record<string, any> = {
+        amount: invoiceData.amount,
+        description: invoiceData.description,
+        service_folio: invoiceData.folio,
         notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
         supplier_invoice_id: invoice.id,
         updated_at: new Date().toISOString(),

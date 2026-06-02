@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import {
   XMLImportDialogHeader,
   XMLImportProgressCard,
@@ -283,6 +284,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
   const linkInvoiceMutation = useLinkInvoiceToCost();
+  const batchProgress = useBatchProgress();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
@@ -546,9 +548,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               
               const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
               const dateFrom = new Date(issueDate);
-              dateFrom.setDate(dateFrom.getDate() - 7);
+              dateFrom.setDate(dateFrom.getDate() - 30);
               const dateTo = new Date(issueDate);
-              dateTo.setDate(dateTo.getDate() + 7);
+              dateTo.setDate(dateTo.getDate() + 30);
               
               const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
                 p_supplier_rut: doc.supplier_rut,
@@ -841,7 +843,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         let exactFolioSkipped = 0;
         let linkedCount = 0;
 
+        batchProgress.start('Cargando Documentos desde XML', paymentsData.length);
+
         for (const paymentData of paymentsData) {
+          let createdPaymentId: string | null = null;
+          batchProgress.update(paymentsCreated + paymentsFailed, `${paymentData.reference_number}`);
           try {
             let supplierId = createdSupplierMap.get(paymentData.supplier_rut);
             
@@ -901,7 +907,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 logger.debug(`Folio ${docFolio} ya existe en supplier_payments, omitiendo`);
                 toast.info(`Folio ${docFolio} ya registrado, omitido`);
                 processed++;
-                setUploadProgress(processed / totalItems * 100);
                 continue;
               }
             }
@@ -930,7 +935,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 linkedCount++;
               }
               processed++;
-              setUploadProgress(processed / totalItems * 100);
               continue;
             }
 
@@ -959,10 +963,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               }
 
               processed++;
-              setUploadProgress(processed / totalItems * 100);
               continue;
             }
-            
+
             // Resolve category name to UUID for DB storage
             const categoryId = resolveCategoryId(supplierCategoryMapping[paymentData.supplier_rut] || paymentData.category) || paymentData.category;
             const subcatName = supplierSubcategoryMapping[paymentData.supplier_rut] || null;
@@ -985,7 +988,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 paid_date: paidDate,
                 paid_amount: status === 'paid' ? paymentData.amount : undefined
               }, {
-                onSuccess: (data) => resolve(data),
+                onSuccess: (data) => {
+                  createdPaymentId = (data as any)?.id ?? null;
+                  resolve(data);
+                },
                 onError: reject
               });
             });
@@ -994,11 +1000,26 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             // Cost creation is handled automatically by the DB trigger
             // create_cost_from_supplier_payment on supplier_payments INSERT
             processed++;
-            setUploadProgress(processed / totalItems * 100);
           } catch (error) {
-            logger.error(`Error creating payment:`, error);
+            logger.error(`Error creating payment for ${paymentData.reference_number}:`, error);
+            try {
+              if (createdPaymentId) {
+                await supabase.from('costs').delete().eq('supplier_payment_id', createdPaymentId);
+                await supabase.from('supplier_payments').delete().eq('id', createdPaymentId);
+                logger.debug(`Rollback completado para pago ${paymentData.reference_number}`);
+              }
+            } catch (rollbackError) {
+              logger.error(`Error durante rollback de pago ${paymentData.reference_number}:`, rollbackError);
+            }
             paymentsFailed++;
           }
+        }
+
+        if (paymentsFailed === 0) {
+          batchProgress.complete();
+          setTimeout(() => { batchProgress.close(); }, 1500);
+        } else {
+          batchProgress.error(`${paymentsFailed} de ${paymentsData.length} con error`);
         }
 
         if (exactFolioUpdated > 0 || exactFolioSkipped > 0) {
@@ -1828,5 +1849,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             </div>}
         </div>
       </DialogContent>
+      <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
     </Dialog>;
 };

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2, X, RotateCcw } from 'lucide-react';
-import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
+import { FileText, AlertCircle, CheckCircle2, Loader2, Package, Receipt, Plus, Check, ChevronsUpDown, ChevronDown, ChevronUp, Link2, X, RotateCcw } from 'lucide-react';
+import { useXMLParsing } from '@/hooks/useXMLParsing';
+import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 import { XMLCompleteParseResult, XMLDocumentData, XMLDocumentItem, Supplier } from '@/types/suppliers';
 import { useCreateInventoryItem, useInventoryCategories, useInventoryItems, useInventoryLocations } from '@/hooks/useInventory';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -205,7 +205,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const parser = useMemo(() => new XMLSupplierParser(), []);
   const { data: inventoryItems = [], refetch: refetchInventoryItems } = useInventoryItems();
   const { data: categories = [] } = useInventoryCategories();
   const { data: costCategories = [] } = useCostCategories();
@@ -218,8 +217,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const { suppliers = [], createSupplierAsync } = useSuppliers();
   const { invalidateAll, refetchCritical } = useUniversalSync();
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [parseResult, setParseResult] = useState<XMLCompleteParseResult | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [lineDescriptionOverrides, setLineDescriptionOverrides] = useState<Record<string, string>>({});
   const [manualMatchedItems, setManualMatchedItems] = useState<Record<string, InventoryCatalogItem>>({});
@@ -239,11 +236,50 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const [isPaid, setIsPaid] = useState(false);
   const [showAdvancedAssociations, setShowAdvancedAssociations] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [pendingProductSuggestion, setPendingProductSuggestion] = useState<PendingProductSuggestion | null>(null);
   const [suggestedProductDetails, setSuggestedProductDetails] = useState<SimilarItem | null>(null);
+
+  const {
+    selectedFile,
+    parseResult,
+    isAnalyzing,
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    reset: resetParsing,
+  } = useXMLParsing({
+    onFileSelected: () => {
+      setSelectedDocuments(new Set());
+      setLineDescriptionOverrides({});
+      setManualMatchedItems({});
+      setDiscardedLines(new Set());
+      setEditedDescriptions(new Map());
+    },
+    onParsed: (result) => {
+      const validFolios = new Set(
+        result.documents
+          .filter((doc) => doc.folio && (doc.items?.length || 0) > 0)
+          .map((doc) => doc.folio)
+      );
+      setSelectedDocuments(validFolios);
+
+      if (!selectedCostCategoryId && costCategories.length > 0) {
+        const defaultCostCategory =
+          costCategories.find((c) => normalizeText(c.name).includes('inventario')) ||
+          costCategories.find((c) => normalizeText(c.name).includes('mantenimiento')) ||
+          costCategories[0];
+        if (defaultCostCategory) setSelectedCostCategoryId(defaultCostCategory.id);
+      }
+
+      if (!selectedLocationId && locations.length > 0) {
+        const defaultLocation = locations.find((l) => l.code === 'MAIN') || locations[0];
+        if (defaultLocation) setSelectedLocationId(defaultLocation.id);
+      }
+    },
+  });
+
   const { subcategories: costSubcategories = [] } = useCostSubcategories(selectedCostCategoryId || undefined);
   const servicesForCosts = useMemo(() => getServicesForCosts(), [getServicesForCosts]);
   const selectedService = useMemo(
@@ -501,8 +537,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   }, [validatedDocuments]);
 
   const resetState = () => {
-    setSelectedFile(null);
-    setParseResult(null);
+    resetParsing();
     setSelectedDocuments(new Set());
     setLineDescriptionOverrides({});
     setManualMatchedItems({});
@@ -520,7 +555,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     setServiceSearchQuery('');
     setIsPaid(false);
     setShowAdvancedAssociations(false);
-    setIsAnalyzing(false);
     setIsImporting(false);
     setProgress(0);
     setPendingProductSuggestion(null);
@@ -552,71 +586,6 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
     resetState();
     onClose();
   };
-
-  const analyzeFile = async (file: File) => {
-    setIsAnalyzing(true);
-    setSelectedFile(file);
-    setParseResult(null);
-    setSelectedDocuments(new Set());
-    setLineDescriptionOverrides({});
-    setProgress(0);
-
-    try {
-      const result = await parser.parseXMLCompleteFile(file);
-      setParseResult(result);
-
-      if (!selectedCostCategoryId && costCategories.length > 0) {
-        const defaultCostCategory =
-          costCategories.find((category) => normalizeText(category.name).includes('inventario')) ||
-          costCategories.find((category) => normalizeText(category.name).includes('mantenimiento')) ||
-          costCategories[0];
-        if (defaultCostCategory) {
-          setSelectedCostCategoryId(defaultCostCategory.id);
-        }
-      }
-
-      if (!selectedLocationId && locations.length > 0) {
-        const defaultLocation = locations.find((location) => location.code === 'MAIN') || locations[0];
-        if (defaultLocation) setSelectedLocationId(defaultLocation.id);
-      }
-
-      const validFolios = new Set(
-        result.documents
-          .filter((doc) => doc.folio && (doc.items?.length || 0) > 0)
-          .map((doc) => doc.folio)
-      );
-      setSelectedDocuments(validFolios);
-    } catch (error) {
-      logger.error('Error analyzing inventory XML:', error);
-      toast.error('No se pudo analizar el XML de inventario');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
-
-      if (file.type === 'text/xml' || file.type === 'application/xml' || file.name.toLowerCase().endsWith('.xml')) {
-        void analyzeFile(file);
-        return;
-      }
-
-      toast.error('Selecciona un archivo XML válido');
-    },
-    [costCategories, locations.length, parser, selectedCostCategoryId]
-  );
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/xml': ['.xml'],
-      'application/xml': ['.xml'],
-    },
-    multiple: false,
-  });
 
   const toggleSelectedDocument = (folio: string, checked: boolean) => {
     setSelectedDocuments((prev) => {
@@ -1379,31 +1348,17 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
         <div className="grid min-h-0 flex-1 gap-4 px-6 pb-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-h-0 gap-y-4 lg:flex lg:flex-col">
-            <div
-              {...getRootProps()}
-              className={`relative overflow-hidden border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                isDragActive
-                  ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                  : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
-              }`}
-            >
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
-              <input {...getInputProps()} />
-              <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-                <Upload className="size-8" />
-              </div>
-              <p className="relative font-semibold text-base">
-                {selectedFile ? selectedFile.name : 'Arrastra un XML o haz clic para seleccionarlo'}
-              </p>
-              <p className="relative mt-1 text-sm text-muted-foreground">
-                Se leerá el detalle línea por línea y se validará contra el catálogo de productos.
-              </p>
-              <div className="relative mt-4 flex flex-wrap justify-center gap-2">
-                <Badge variant="secondary" className="bg-background/80">Validación por líneas</Badge>
-                <Badge variant="secondary" className="bg-background/80">Match con catálogo</Badge>
-                <Badge variant="secondary" className="bg-background/80">Trazabilidad completa</Badge>
-              </div>
-            </div>
+            <XMLDropzoneArea
+              selectedFile={selectedFile}
+              parseResult={parseResult}
+              isAnalyzing={isAnalyzing}
+              isDragActive={isDragActive}
+              getRootProps={getRootProps}
+              getInputProps={getInputProps}
+              onAnalyze={() => {}}
+              onReset={resetState}
+              badges={['Validación por líneas', 'Match con catálogo', 'Trazabilidad completa']}
+            />
 
             <XMLImportStatsGrid
               className="sm:grid-cols-2"

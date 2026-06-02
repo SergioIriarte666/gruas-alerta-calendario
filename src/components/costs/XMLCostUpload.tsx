@@ -700,9 +700,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               if (!doc.supplier_rut || !doc.total_amount) continue;
               const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
               const dateFrom = new Date(issueDate);
-              dateFrom.setDate(dateFrom.getDate() - 7);
+              dateFrom.setDate(dateFrom.getDate() - 30);
               const dateTo = new Date(issueDate);
-              dateTo.setDate(dateTo.getDate() + 7);
+              dateTo.setDate(dateTo.getDate() + 30);
 
               const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
                 p_supplier_rut: doc.supplier_rut,
@@ -926,6 +926,10 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         const effectiveGlosa = getEffectiveGlosa(doc);
         batchProgress.update(i + 1, `${doc.folio} - ${effectiveGlosa.substring(0, 30)}`);
 
+        let createdCostId: string | null = null;
+
+        try {
+
         const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
         const condition = getSelectedCondition(doc.supplier_rut);
         const isManuallyPaid = !!paidOverrides[documentKey];
@@ -1006,11 +1010,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         await new Promise<void>((resolve) => {
           addCost(costData, {
             onSuccess: async (data) => {
+              const costRecord = Array.isArray(data) ? data[0] : data;
+              createdCostId = costRecord?.id ?? null;
               successCount++;
 
               // Create inventory entry if sync is enabled
               if (syncToInventory && data) {
-                const costRecord = Array.isArray(data) ? data[0] : data;
                 if (costRecord?.id) {
                   try {
                     await createDirectInventoryEntry({
@@ -1038,6 +1043,19 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         });
 
         await new Promise(resolve => setTimeout(resolve, 100));
+
+        } catch (docError) {
+          logger.error(`Error importando gasto ${doc.folio}, ejecutando rollback:`, docError);
+          try {
+            if (createdCostId) {
+              await supabase.from('costs').delete().eq('id', createdCostId);
+              logger.debug(`Rollback completado para gasto ${doc.folio}`);
+            }
+          } catch (rollbackError) {
+            logger.error(`Error durante rollback de gasto ${doc.folio}:`, rollbackError);
+          }
+          errorCount++;
+        }
       }
 
       if (errorCount === 0) {
