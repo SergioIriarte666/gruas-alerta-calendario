@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceWorkerManager");
 export const useServiceWorkerManager = () => {
   const [isRegistered, setIsRegistered] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
@@ -13,12 +16,12 @@ export const useServiceWorkerManager = () => {
     }
 
     try {
-      console.log('[SW Manager] Registering Service Worker...');
+      logger.debug('[SW Manager] Registering Service Worker...');
       
       // Check if already registered
       const existingRegistration = await navigator.serviceWorker.getRegistration();
       if (existingRegistration) {
-        console.log('[SW Manager] Using existing registration');
+        logger.debug('[SW Manager] Using existing registration');
         setRegistration(existingRegistration);
         setIsRegistered(true);
         setError(null);
@@ -30,7 +33,7 @@ export const useServiceWorkerManager = () => {
         scope: '/'
       });
 
-      console.log('[SW Manager] Service Worker registered successfully');
+      logger.debug('[SW Manager] Service Worker registered successfully');
       
       // Wait for it to be ready
       await navigator.serviceWorker.ready;
@@ -42,7 +45,7 @@ export const useServiceWorkerManager = () => {
       return newRegistration;
     } catch (error: any) {
       const errorMsg = `Service Worker registration failed: ${error.message}`;
-      console.error('[SW Manager]', errorMsg);
+      logger.error('[SW Manager]', errorMsg);
       setError(errorMsg);
       setIsRegistered(false);
       setRegistration(null);
@@ -53,7 +56,7 @@ export const useServiceWorkerManager = () => {
   // Auto-register on mount if supported
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      registerServiceWorker().catch(console.error);
+      registerServiceWorker().catch(err => logger.error('[SW Manager]', err));
     }
   }, [registerServiceWorker]);
 

@@ -3,7 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import EnhancedClosureSelector from '@/components/invoices/EnhancedClosureSelector';
 import { ClosureWithClient } from '@/hooks/useClosuresForInvoices';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PerformanceTest");
 const PerformanceTest = () => {
   const [closures, setClosures] = useState<ClosureWithClient[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +37,7 @@ const PerformanceTest = () => {
       }));
       
       const endTime = performance.now();
-      console.log(`Generated ${count} closures in ${(endTime - startTime).toFixed(2)}ms`);
+      logger.debug(`Generated ${count} closures in ${(endTime - startTime).toFixed(2)}ms`);
       
       setClosures(newClosures);
       setLoading(false);

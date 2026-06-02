@@ -1,5 +1,8 @@
 import { formatCurrency } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("currencyUtils");
 // Cache para configuraciones del usuario
 let userCurrencyCache: {
   currency: string;
@@ -44,7 +47,7 @@ const getUserCurrencyFromCache = async (): Promise<string> => {
     };
     return 'CLP';
   } catch (error) {
-    console.warn('Error fetching user currency, using CLP:', error);
+    logger.warn('Error fetching user currency, using CLP:', error);
     userCurrencyCache = {
       currency: 'CLP',
       lastUpdate: now

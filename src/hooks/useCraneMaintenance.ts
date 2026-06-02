@@ -5,7 +5,10 @@ import { useUniversalSync } from './useUniversalSync';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCraneMaintenance");
 export interface MaintenanceRecord {
   id: string;
   craneId: string;
@@ -55,7 +58,7 @@ const getMaintenanceCategoryId = async (): Promise<string | null> => {
     .limit(1)
     .single();
   if (error || !data) {
-    console.error('Could not find Mantenimiento category:', error);
+    logger.error('Could not find Mantenimiento category:', error);
     return null;
   }
   return data.id;
@@ -75,7 +78,7 @@ const syncMaintenanceCost = async (params: {
 }) => {
   const categoryId = await getMaintenanceCategoryId();
   if (!categoryId) {
-    console.warn('Skipping cost sync: no Mantenimiento category found');
+    logger.warn('Skipping cost sync: no Mantenimiento category found');
     return;
   }
 
@@ -101,7 +104,7 @@ const syncMaintenanceCost = async (params: {
       })
       .eq('id', existingCost.id);
     if (updateErr) {
-      console.error('Error updating maintenance cost:', updateErr);
+      logger.error('Error updating maintenance cost:', updateErr);
       throw updateErr;
     }
   } else {
@@ -122,7 +125,7 @@ const syncMaintenanceCost = async (params: {
         payment_date: paymentDate,
       });
     if (insertErr) {
-      console.error('Error creating maintenance cost:', insertErr);
+      logger.error('Error creating maintenance cost:', insertErr);
       throw insertErr;
     }
   }
@@ -139,7 +142,7 @@ export const useCraneMaintenance = (craneId: string) => {
         .order('scheduled_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching maintenance records:', error);
+        logger.error('Error fetching maintenance records:', error);
         throw error;
       }
 
@@ -209,7 +212,7 @@ export const useCreateMaintenance = () => {
             markAsPaid: maintenance.markAsPaid,
           });
         } catch (e: any) {
-          console.error('Error syncing maintenance cost:', e);
+          logger.error('Error syncing maintenance cost:', e);
           toast.error('Mantenimiento creado, pero hubo un error al registrar el costo: ' + (e?.message || 'Error desconocido'));
         }
       }
@@ -277,7 +280,7 @@ export const useUpdateMaintenance = () => {
             markAsPaid: updates.markAsPaid,
           });
         } catch (e: any) {
-          console.error('Error syncing maintenance cost:', e);
+          logger.error('Error syncing maintenance cost:', e);
           toast.error('Mantenimiento actualizado, pero hubo un error al sincronizar el costo: ' + (e?.message || 'Error desconocido'));
         }
       } else if (finalStatus !== 'completed') {
@@ -288,7 +291,7 @@ export const useUpdateMaintenance = () => {
             .delete()
             .eq('maintenance_id', id);
         } catch (e) {
-          console.error('Error removing maintenance cost:', e);
+          logger.error('Error removing maintenance cost:', e);
         }
       }
 

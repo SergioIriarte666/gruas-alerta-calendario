@@ -1,6 +1,9 @@
 
 import { useEffect, useCallback, useRef } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useGenericFormPersistence");
 interface FormPersistenceOptions {
   key: string;
   debounceMs?: number;
@@ -21,16 +24,16 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
   const saveFormData = useCallback(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(formData));
-      console.log(`Form data saved for ${key}:`, formData);
+      logger.debug(`Form data saved for ${key}:`, formData);
     } catch (error) {
-      console.error(`Error saving form data for ${key}:`, error);
+      logger.error(`Error saving form data for ${key}:`, error);
     }
   }, [formData, storageKey, key]);
 
   const loadFormData = useCallback(() => {
     // Si skipLoadRef está activo, no cargar datos
     if (skipLoadRef.current) {
-      console.log(`Skipping data load for ${key} due to recent clear`);
+      logger.debug(`Skipping data load for ${key} due to recent clear`);
       skipLoadRef.current = false;
       return null;
     }
@@ -39,12 +42,12 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        console.log(`Loading saved form data for ${key}:`, parsedData);
+        logger.debug(`Loading saved form data for ${key}:`, parsedData);
         setFormData(parsedData);
         return parsedData;
       }
     } catch (error) {
-      console.error(`Error loading form data for ${key}:`, error);
+      logger.error(`Error loading form data for ${key}:`, error);
       localStorage.removeItem(storageKey);
     }
     return null;
@@ -54,9 +57,9 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
     try {
       localStorage.removeItem(storageKey);
       skipLoadRef.current = true; // Activar flag para evitar siguiente carga
-      console.log(`Form data cleared for ${key}, skip load activated`);
+      logger.debug(`Form data cleared for ${key}, skip load activated`);
     } catch (error) {
-      console.error(`Error clearing form data for ${key}:`, error);
+      logger.error(`Error clearing form data for ${key}:`, error);
     }
   }, [storageKey, key]);
 

@@ -1,7 +1,10 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { connectionManager } from './connectionManager';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("supabaseErrorHandler");
 /**
  * Enhanced Supabase client wrapper with error handling and retry logic
  */
@@ -33,7 +36,7 @@ export class SupabaseErrorHandler {
       const result = await operation();
       
       if (result.error && !this.isConnectionError(result.error)) {
-        console.error(`Supabase ${context} error:`, result.error);
+        logger.error(`Supabase ${context} error:`, result.error);
       }
       
       return result;

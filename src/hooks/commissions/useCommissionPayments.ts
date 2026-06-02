@@ -2,7 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatForDatabase } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCommissionPayments");
 interface UpdateCommissionPaymentDateParams {
   commissionIds: string[];
   paymentDate: Date;
@@ -14,7 +17,7 @@ export const useCommissionPayments = () => {
 
   const updatePaymentDateMutation = useMutation({
     mutationFn: async ({ commissionIds, paymentDate, paymentBatchId }: UpdateCommissionPaymentDateParams) => {
-      console.log('🔄 [useCommissionPayments] Actualizando fechas de pago:', {
+      logger.debug('🔄 [useCommissionPayments] Actualizando fechas de pago:', {
         commissionIds,
         paymentDate,
         paymentBatchId
@@ -27,11 +30,11 @@ export const useCommissionPayments = () => {
       });
 
       if (error) {
-        console.error('❌ [useCommissionPayments] Error updating payment dates:', error);
+        logger.error('❌ [useCommissionPayments] Error updating payment dates:', error);
         throw error;
       }
 
-      console.log('✅ [useCommissionPayments] Payment dates updated successfully:', data);
+      logger.debug('✅ [useCommissionPayments] Payment dates updated successfully:', data);
       return data;
     },
     onSuccess: (data) => {
@@ -51,7 +54,7 @@ export const useCommissionPayments = () => {
       );
     },
     onError: (error: any) => {
-      console.error('[useCommissionPayments] Error updating payment dates:', error);
+      logger.error('[useCommissionPayments] Error updating payment dates:', error);
       toast.error(
         "Error al Actualizar Fechas", 
         { description: error.message || "No se pudieron actualizar las fechas de pago" }

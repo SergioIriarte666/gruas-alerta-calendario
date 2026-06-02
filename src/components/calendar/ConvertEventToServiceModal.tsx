@@ -9,7 +9,10 @@ import { Service } from '@/types';
 import { ServiceFormData, ServiceOperator } from '@/types/serviceDetails';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
 import { formatForDatabase, getCurrentChileDate, getCurrentChileDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ConvertEventToServiceModal");
 interface ConvertEventToServiceModalProps {
   event: CalendarEvent;
   open: boolean;
@@ -58,7 +61,7 @@ export const ConvertEventToServiceModal = ({
 
   const handleServiceSubmit = async (serviceData: any) => {
     try {
-      console.log('[ConvertEventToServiceModal] Creating service from calendar event:', {
+      logger.debug('[ConvertEventToServiceModal] Creating service from calendar event:', {
         eventId: event.id,
         serviceData
       });
@@ -79,7 +82,7 @@ export const ConvertEventToServiceModal = ({
         description: 'El evento se ha convertido exitosamente a servicio.'
       });
     } catch (error) {
-      console.error('[ConvertEventToServiceModal] Error creating service:', error);
+      logger.error('[ConvertEventToServiceModal] Error creating service:', error);
       toast({
         type: 'error',
         title: 'Error',

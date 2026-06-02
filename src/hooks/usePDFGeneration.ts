@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { triggerFileDownload } from '@/utils/fileDownload';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePDFGeneration");
 /**
  * Generic hook to generate a PDF Blob and trigger a browser download.
  * Uses triggerFileDownload from @/utils/fileDownload — mismo patrón que
@@ -22,7 +25,7 @@ export const usePDFGeneration = () => {
       window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
       toast.success('PDF generado correctamente');
     } catch (error) {
-      console.error('[usePDFGeneration] Error:', error);
+      logger.error('[usePDFGeneration] Error:', error);
       toast.error('Error al generar el PDF');
     } finally {
       setIsGenerating(false);

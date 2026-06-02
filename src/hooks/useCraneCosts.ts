@@ -2,7 +2,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Cost } from '@/types/costs';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCraneCosts");
 export const useCraneCosts = (craneId: string) => {
   return useQuery({
     queryKey: ['crane-costs', craneId],
@@ -19,7 +22,7 @@ export const useCraneCosts = (craneId: string) => {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching crane costs:', error);
+        logger.error('Error fetching crane costs:', error);
         throw error;
       }
 

@@ -13,7 +13,10 @@ import { CheckCircle } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Invoice } from '@/types';
 import { format } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MarkAsPaidModal");
 interface MarkAsPaidModalProps {
   invoice: Invoice | null;
   isOpen: boolean;
@@ -32,7 +35,7 @@ export const MarkAsPaidModal = ({ invoice, isOpen, onClose, onConfirm }: MarkAsP
       await onConfirm(invoice.id, paymentDate);
       onClose();
     } catch (error) {
-      console.error('Error marking as paid:', error);
+      logger.error('Error marking as paid:', error);
     } finally {
       setIsSubmitting(false);
     }

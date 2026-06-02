@@ -1,7 +1,10 @@
 /** Service value calculation utilities — rebuilt to clear Vite dep cache */
 import { Service } from '@/types';
 import { getCustodyDisplayInfo } from './custodyCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("serviceValueCalculations");
 /**
  * Checks if a service is an equipment rental service
  */
@@ -43,7 +46,7 @@ export const getCustodyTotalAmount = (service: any): number => {
  */
 export const getCompleteServiceValue = (service: any): number => {
   if (!service) {
-    console.warn('⚠️ getCompleteServiceValue: service is null or undefined');
+    logger.warn('⚠️ getCompleteServiceValue: service is null or undefined');
     return 0;
   }
 
@@ -74,7 +77,7 @@ export const getCompleteServiceValue = (service: any): number => {
 export const getServiceValueForClosure = (service: any): number => {
   // Input validation
   if (!service) {
-    console.warn('⚠️ getServiceValueForClosure: service is null or undefined');
+    logger.warn('⚠️ getServiceValueForClosure: service is null or undefined');
     return 0;
   }
   

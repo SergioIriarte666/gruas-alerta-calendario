@@ -24,7 +24,7 @@ export const useMigrateLegacyCranePartsData = () => {
 
   return useMutation({
     mutationFn: async (craneId?: string) => {
-      const { data, error } = await supabase.rpc('migrate_legacy_crane_parts_data' as any, {
+      const { data, error } = await supabase.rpc('migrate_legacy_crane_parts_data', {
         p_crane_id: craneId || null
       });
 
@@ -49,7 +49,7 @@ export const useMigrateLegacyCranePartsData = () => {
 export const useDetectDuplicateParts = () => {
   return useMutation({
     mutationFn: async (craneId?: string) => {
-      const { data, error } = await supabase.rpc('detect_duplicate_crane_parts' as any, {
+      const { data, error } = await supabase.rpc('detect_duplicate_crane_parts', {
         p_crane_id: craneId || null
       });
 

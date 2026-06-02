@@ -12,7 +12,10 @@ import { formatRut } from '@/utils/rutFormatter';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
 import { Operator } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("OperatorForm");
 interface OperatorFormProps {
   operator?: Operator;
   onSubmit: (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -65,7 +68,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
         description: 'El operador se ha guardado correctamente'
       });
     } catch (error) {
-      console.error('Error submitting operator form:', error);
+      logger.error('Error submitting operator form:', error);
       toast({
         type: 'error',
         title: 'Error al guardar',

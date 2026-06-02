@@ -5,7 +5,10 @@ import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSupplierPayments");
 const SUPPLIER_PAYMENTS_SELECT = `
   id,
   supplier_id,
@@ -73,7 +76,7 @@ export const useSupplierPayments = () => {
   }) {
     let supplierName = 'Proveedor';
     if (paymentData.supplier_id) {
-      const { data: supplierData } = await (supabase as any)
+      const { data: supplierData } = await supabase
         .from('inventory_suppliers')
         .select('name')
         .eq('id', paymentData.supplier_id)
@@ -443,7 +446,7 @@ export const useSupplierPayments = () => {
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {
-      console.error('Error creating payment:', error);
+      logger.error('Error creating payment:', error);
       toast.error('Error al crear el pago');
     }
   });
@@ -514,7 +517,7 @@ export const useSupplierPayments = () => {
       toast.success('Pago actualizado exitosamente');
     },
     onError: (error) => {
-      console.error('Error updating payment:', error);
+      logger.error('Error updating payment:', error);
       toast.error('Error al actualizar el pago');
     }
   });
@@ -586,7 +589,7 @@ export const useSupplierPayments = () => {
       toast.success(message);
     },
     onError: (error) => {
-      console.error('Error marking payment as paid:', error);
+      logger.error('Error marking payment as paid:', error);
       toast.error('Error al marcar el pago como pagado');
     }
   });
@@ -605,7 +608,7 @@ export const useSupplierPayments = () => {
       toast.success('Pago eliminado exitosamente');
     },
     onError: (error) => {
-      console.error('Error deleting payment:', error);
+      logger.error('Error deleting payment:', error);
       toast.error('Error al eliminar el pago');
     }
   });
@@ -621,7 +624,7 @@ export const useSupplierPayments = () => {
       toast.success('Pagos vencidos actualizados');
     },
     onError: (error) => {
-      console.error('Error updating overdue payments:', error);
+      logger.error('Error updating overdue payments:', error);
       toast.error('Error al actualizar pagos vencidos');
     }
   });

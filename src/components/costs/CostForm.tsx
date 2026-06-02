@@ -27,7 +27,10 @@ import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
 import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CostForm");
 interface CostFormProps {
     isOpen: boolean;
     onClose: () => void;
@@ -591,14 +594,14 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     .update({ receipt_photo_paths: receiptPhotoPaths } as any)
                                     .eq('id', data[0].id);
                             } catch (error) {
-                                console.error('Error saving receipt photos to cost:', error);
+                                logger.error('Error saving receipt photos to cost:', error);
                             }
                         }
                         if (quickEntryId) {
                             try {
                                 await deleteEntry(quickEntryId);
                             } catch (error) {
-                                console.error('Error deleting quick entry after cost creation:', error);
+                                logger.error('Error deleting quick entry after cost creation:', error);
                             }
                         }
                         

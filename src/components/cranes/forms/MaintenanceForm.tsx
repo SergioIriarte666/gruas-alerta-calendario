@@ -14,7 +14,10 @@ import { useCreateMaintenance, useUpdateMaintenance, type MaintenanceRecord } fr
 import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { formatForDatabase, parseFromDatabase, formatForDisplayLong } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MaintenanceForm");
 interface MaintenanceFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -153,14 +156,14 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
               .update({ receipt_photo_paths: receiptPhotoPaths } as any)
               .eq('id', (created as any).id);
           } catch (error) {
-            console.error('Error saving receipt photos to maintenance:', error);
+            logger.error('Error saving receipt photos to maintenance:', error);
           }
         }
         if (quickEntryId) {
           try {
             await deleteEntry(quickEntryId);
           } catch (error) {
-            console.error('Error deleting quick entry after maintenance creation:', error);
+            logger.error('Error deleting quick entry after maintenance creation:', error);
           }
         }
         if (onCreated) onCreated();

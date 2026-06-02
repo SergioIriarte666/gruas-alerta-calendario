@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUserPermissions");
 export interface UserProfile {
   id: string;
   email: string;
@@ -18,10 +21,10 @@ export const useUserPermissions = () => {
       try {
         // First check session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('🔑 useUserPermissions: Session check:', !!session, 'User ID:', session?.user?.id);
+        logger.debug('🔑 useUserPermissions: Session check:', !!session, 'User ID:', session?.user?.id);
         
         if (sessionError || !session || !session.user) {
-          console.log('❌ useUserPermissions: No valid session');
+          logger.debug('❌ useUserPermissions: No valid session');
           setIsAuthenticated(false);
           setUser(null);
           setIsLoading(false);
@@ -30,10 +33,10 @@ export const useUserPermissions = () => {
 
         // Double check with getUser for consistency
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        console.log('👤 useUserPermissions: Auth user check:', !!authUser, 'User ID:', authUser?.id);
+        logger.debug('👤 useUserPermissions: Auth user check:', !!authUser, 'User ID:', authUser?.id);
         
         if (authError || !authUser) {
-          console.log('❌ useUserPermissions: Auth user check failed');
+          logger.debug('❌ useUserPermissions: Auth user check failed');
           setIsAuthenticated(false);
           setUser(null);
           setIsLoading(false);
@@ -50,14 +53,14 @@ export const useUserPermissions = () => {
           .single();
 
         if (error) {
-          console.error('❌ useUserPermissions: Error fetching user profile:', error);
+          logger.error('❌ useUserPermissions: Error fetching user profile:', error);
           setUser(null);
         } else {
-          console.log('✅ useUserPermissions: User profile loaded:', profile.email, 'Role:', profile.role);
+          logger.debug('✅ useUserPermissions: User profile loaded:', profile.email, 'Role:', profile.role);
           setUser(profile);
         }
       } catch (error) {
-        console.error('❌ useUserPermissions: Error checking authentication:', error);
+        logger.error('❌ useUserPermissions: Error checking authentication:', error);
         setIsAuthenticated(false);
         setUser(null);
       } finally {

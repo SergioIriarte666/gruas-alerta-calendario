@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("invoiceUtils");
 // Safe number conversion with fallback
 const safeNumber = (value: any, fallback: number = 0): number => {
   const num = Number(value);
@@ -51,12 +54,12 @@ export const updateOverdueInvoices = async (invoiceIds: string[]): Promise<void>
       .in('id', invoiceIds);
       
     if (error) {
-      console.error('Error updating overdue invoices:', error);
+      logger.error('Error updating overdue invoices:', error);
     } else {
-      console.log(`Updated ${invoiceIds.length} invoices to overdue status`);
+      logger.debug(`Updated ${invoiceIds.length} invoices to overdue status`);
     }
   } catch (error) {
-    console.error('Error updating overdue invoices:', error);
+    logger.error('Error updating overdue invoices:', error);
   }
 };
 
@@ -136,7 +139,7 @@ export const generateInvoiceFolio = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('preview_next_invoice_folio');
     
     if (error) {
-      console.error('Error in generateInvoiceFolio RPC call:', error);
+      logger.error('Error in generateInvoiceFolio RPC call:', error);
       throw new Error(`Error generando folio: ${error.message}`);
     }
     
@@ -149,10 +152,10 @@ export const generateInvoiceFolio = async (): Promise<string> => {
       throw new Error('Formato de folio inválido recibido del servidor');
     }
     
-    console.log('✅ Generated invoice folio:', data);
+    logger.debug('✅ Generated invoice folio:', data);
     return data;
   } catch (error: any) {
-    console.error('❌ Error generating invoice folio:', error);
+    logger.error('❌ Error generating invoice folio:', error);
     
     // Provide specific error messages
     if (error.message?.includes('network')) {
@@ -169,7 +172,7 @@ export const generateInvoiceFolio = async (): Promise<string> => {
 export const getBillableAmount = (service: any): number => {
   // Validate input
   if (!service || typeof service !== 'object') {
-    console.warn('Invalid service object provided to getBillableAmount');
+    logger.warn('Invalid service object provided to getBillableAmount');
     return 0;
   }
 
@@ -178,7 +181,7 @@ export const getBillableAmount = (service: any): number => {
     if (service.has_excess === true && service.client_covered_amount !== undefined && service.client_covered_amount !== null) {
       const clientAmount = safeNumber(service.client_covered_amount);
       if (clientAmount < 0) {
-        console.warn('Negative client covered amount detected, using service value instead');
+        logger.warn('Negative client covered amount detected, using service value instead');
         return getDisplayServiceValue(service);
       }
       return clientAmount;
@@ -187,7 +190,7 @@ export const getBillableAmount = (service: any): number => {
     // Return standard service value
     return getDisplayServiceValue(service);
   } catch (error) {
-    console.error('Error calculating billable amount:', error);
+    logger.error('Error calculating billable amount:', error);
     return 0;
   }
 };

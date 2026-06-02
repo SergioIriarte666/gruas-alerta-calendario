@@ -15,7 +15,10 @@
  */
 
 import { formatInTimeZone } from 'date-fns-tz';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("businessClock");
 const FALLBACK_TZ = 'America/Santiago';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 
@@ -43,7 +46,7 @@ async function fetchTimezone(): Promise<string> {
     }
     return data.report_timezone || FALLBACK_TZ;
   } catch (err) {
-    console.warn('[businessClock] No se pudo cargar TZ del negocio, usando fallback:', err);
+    logger.warn('[businessClock] No se pudo cargar TZ del negocio, usando fallback:', err);
     return FALLBACK_TZ;
   }
 }

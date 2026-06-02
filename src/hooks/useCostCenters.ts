@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CostCenter, CostCenterFormData, CostCenterWithStats } from '@/types/costCenters';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCostCenters");
 const fetchCostCenters = async (): Promise<CostCenter[]> => {
   const { data, error } = await supabase
     .from('cost_centers')
@@ -13,7 +16,7 @@ const fetchCostCenters = async (): Promise<CostCenter[]> => {
     .order('code');
 
   if (error) {
-    console.error('Error fetching cost centers:', error);
+    logger.error('Error fetching cost centers:', error);
     throw new Error(error.message);
   }
 
@@ -31,7 +34,7 @@ const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
     .order('code');
 
   if (centersError) {
-    console.error('Error fetching cost centers:', centersError);
+    logger.error('Error fetching cost centers:', centersError);
     throw new Error(centersError.message);
   }
 
@@ -42,7 +45,7 @@ const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
     .not('cost_center_id', 'is', null);
 
   if (statsError) {
-    console.error('Error fetching cost stats:', statsError);
+    logger.error('Error fetching cost stats:', statsError);
     throw new Error(statsError.message);
   }
 
@@ -94,7 +97,7 @@ const addCostCenter = async (costCenterData: CostCenterFormData) => {
     .single();
 
   if (error) {
-    console.error('Error adding cost center:', error);
+    logger.error('Error adding cost center:', error);
     throw new Error(error.message);
   }
   
@@ -125,7 +128,7 @@ const updateCostCenter = async ({ id, ...costCenterData }: { id: string } & Part
     .single();
 
   if (error) {
-    console.error('Error updating cost center:', error);
+    logger.error('Error updating cost center:', error);
     throw new Error(error.message);
   }
   
@@ -154,7 +157,7 @@ const deleteCostCenter = async (id: string) => {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting cost center:', error);
+    logger.error('Error deleting cost center:', error);
     throw new Error(error.message);
   }
 };

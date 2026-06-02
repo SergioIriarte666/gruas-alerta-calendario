@@ -7,7 +7,10 @@ import { useClients } from './useClients';
 import { useCranes } from './useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServices } from './useServices';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCSVUpload");
 interface CSVUploadState {
   file: File | null;
   csvData: UploadedServiceRow[];
@@ -69,7 +72,7 @@ export const useCSVUpload = () => {
       }));
       return parsedData;
     } catch (error) {
-      console.error('Error parsing CSV:', error);
+      logger.error('Error parsing CSV:', error);
       setState(prev => ({
         ...prev,
         isValidating: false,
@@ -141,7 +144,7 @@ export const useCSVUpload = () => {
 
       return result;
     } catch (error) {
-      console.error('Error uploading services:', error);
+      logger.error('Error uploading services:', error);
       setState(prev => ({
         ...prev,
         isUploading: false,

@@ -8,7 +8,10 @@ import { Unlock, AlertTriangle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ClosureEmergencyActions");
 interface ClosureEmergencyActionsProps {
   closureId: string;
   closureFolio: string;
@@ -41,7 +44,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
     setIsFreeing(true);
     
     try {
-      console.log('Emergency closure liberation - Starting for closure:', closureId);
+      logger.debug('Emergency closure liberation - Starting for closure:', closureId);
 
       // 1. Get services in this closure
       const { data: closureServices, error: servicesError } = await supabase
@@ -61,7 +64,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
           .in('id', serviceIds);
 
         if (revertError) throw revertError;
-        console.log('Emergency liberation - Reverted', serviceIds.length, 'services to completed');
+        logger.debug('Emergency liberation - Reverted', serviceIds.length, 'services to completed');
       }
 
       // 3. Delete closure service relationships
@@ -80,7 +83,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
 
       if (closureError) throw closureError;
 
-      console.log('Emergency liberation - Successfully freed closure:', closureFolio);
+      logger.debug('Emergency liberation - Successfully freed closure:', closureFolio);
       
       toast.success('Cierre liberado completamente', {
         description: `El cierre ${closureFolio} ha sido eliminado y los ${serviceIds.length} servicios están disponibles para nuevo cierre.`,
@@ -90,7 +93,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
       setConfirmationText('');
 
     } catch (error: any) {
-      console.error('Emergency liberation failed:', error);
+      logger.error('Emergency liberation failed:', error);
       toast.error('Error en liberación de emergencia', {
         description: 'No se pudo completar la liberación. Revisa los logs para más detalles.',
       });

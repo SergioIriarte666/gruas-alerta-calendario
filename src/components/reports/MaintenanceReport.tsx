@@ -13,7 +13,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useSettings } from '@/hooks/useSettings';
 import { exportMaintenanceReport } from '@/utils/reportExporter';
 import { useToast } from '@/components/ui/custom-toast';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MaintenanceReport");
 const defaultFilters: MaintenanceReportFilters = {
   dateFrom: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
   dateTo: format(new Date(), 'yyyy-MM-dd'),
@@ -104,7 +107,7 @@ export const MaintenanceReport = () => {
         type: "success",
       });
     } catch (error) {
-      console.error('Error al exportar:', error);
+      logger.error('Error al exportar:', error);
       toast({
         title: "Error de exportación",
         description: "No se pudo exportar el reporte",

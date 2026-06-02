@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { Database } from '@/integrations/supabase/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePurchaseInvoices");
 type CreateSupplierInvoice = Database['public']['Tables']['supplier_invoices']['Insert'];
 type UpdateSupplierInvoice = Database['public']['Tables']['supplier_invoices']['Update'];
 
@@ -42,7 +45,7 @@ export const usePurchaseInvoices = () => {
 
       return allData;
     } catch (error: any) {
-      console.warn('Fallo fetch con JOIN, intentando fetch manual:', error.message);
+      logger.warn('Fallo fetch con JOIN, intentando fetch manual:', error.message);
 
       // Intento 2: Fetch manual sin JOIN (si falta FK en base de datos)
       // 1. Obtener facturas
@@ -57,7 +60,7 @@ export const usePurchaseInvoices = () => {
           .range(from, from + PAGE_SIZE - 1);
 
         if (invoicesError) {
-          console.error('Error fetching purchase invoices (fallback):', invoicesError);
+          logger.error('Error fetching purchase invoices (fallback):', invoicesError);
           throw invoicesError;
         }
 
@@ -79,13 +82,13 @@ export const usePurchaseInvoices = () => {
       const suppliers: any[] = [];
       const BATCH = 500;
       for (let i = 0; i < supplierIds.length; i += BATCH) {
-        const { data: chunk, error: suppliersError } = await (supabase as any)
+        const { data: chunk, error: suppliersError } = await supabase
           .from('inventory_suppliers')
           .select('id, name, rut')
           .in('id', supplierIds.slice(i, i + BATCH));
 
         if (suppliersError) {
-          console.error('Error fetching suppliers for manual join:', suppliersError);
+          logger.error('Error fetching suppliers for manual join:', suppliersError);
           return invoices.map(inv => ({ ...inv, supplier: null })) as SupplierInvoiceWithDetails[];
         }
         if (chunk) suppliers.push(...chunk);
@@ -126,7 +129,7 @@ export const usePurchaseInvoices = () => {
       toast.success('Factura de compra creada exitosamente');
     },
     onError: (error) => {
-      console.error('Error creating purchase invoice:', error);
+      logger.error('Error creating purchase invoice:', error);
       toast.error('Error al crear la factura de compra');
     },
   });
@@ -152,7 +155,7 @@ export const usePurchaseInvoices = () => {
       toast.success('Factura de compra actualizada exitosamente');
     },
     onError: (error) => {
-      console.error('Error updating purchase invoice:', error);
+      logger.error('Error updating purchase invoice:', error);
       toast.error('Error al actualizar la factura de compra');
     },
   });
@@ -171,7 +174,7 @@ export const usePurchaseInvoices = () => {
       toast.success('Factura de compra eliminada exitosamente');
     },
     onError: (error) => {
-      console.error('Error deleting purchase invoice:', error);
+      logger.error('Error deleting purchase invoice:', error);
       toast.error('Error al eliminar la factura de compra');
     },
   });
@@ -208,7 +211,7 @@ export const usePurchaseInvoiceItems = () => {
         .not('reference_document', 'is', null);
 
       if (error) {
-        console.error('Error fetching purchase invoice items:', error);
+        logger.error('Error fetching purchase invoice items:', error);
         throw error;
       }
       

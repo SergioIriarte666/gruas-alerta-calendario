@@ -4,7 +4,10 @@ import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceData");
 const PAGE_SIZE = 1000;
 
 const fetchAllInvoices = async (): Promise<any[]> => {
@@ -211,7 +214,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
       const { data: invoicesData, error: invoicesError, count } = await query;
 
       if (invoicesError) {
-        console.error('Error fetching paged invoices:', invoicesError);
+        logger.error('Error fetching paged invoices:', invoicesError);
         toast.error('Error al cargar facturas paginadas', {
           description: 'No se pudieron cargar las facturas. Verifica la conexión.',
         });
@@ -229,7 +232,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
             .select('invoice_id, closure_id')
             .in('invoice_id', invoiceIds.slice(i, i + BATCH));
           if (error) {
-            console.error('Error fetching invoice closures:', error);
+            logger.error('Error fetching invoice closures:', error);
           } else if (data) {
             closuresData.push(...data);
           }

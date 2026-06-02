@@ -8,7 +8,10 @@ import { CostCenter } from '@/types/costCenters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CostCentersPage");
 export const CostCentersPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenter | null>(null);
@@ -30,7 +33,7 @@ export const CostCentersPage = () => {
           table: 'costs'
         },
         () => {
-          console.log('Cost updated, refreshing cost centers stats');
+          logger.debug('Cost updated, refreshing cost centers stats');
           queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
         }
       )
@@ -42,7 +45,7 @@ export const CostCentersPage = () => {
           table: 'cost_centers'
         },
         () => {
-          console.log('Cost center updated, refreshing data');
+          logger.debug('Cost center updated, refreshing data');
           queryClient.invalidateQueries({ queryKey: ['cost-centers'] });
           queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
         }
@@ -66,7 +69,7 @@ export const CostCentersPage = () => {
   };
 
   const handleRefresh = async () => {
-    console.log('Manual refresh triggered for cost centers');
+    logger.debug('Manual refresh triggered for cost centers');
     try {
       // Force refetch with fresh data
       await Promise.all([
@@ -74,9 +77,9 @@ export const CostCentersPage = () => {
         queryClient.refetchQueries({ queryKey: ['cost-centers'] }),
         queryClient.refetchQueries({ queryKey: ['costs'] }),
       ]);
-      console.log('All queries refetched successfully');
+      logger.debug('All queries refetched successfully');
     } catch (error) {
-      console.error('Error refreshing cost centers:', error);
+      logger.error('Error refreshing cost centers:', error);
     }
   };
 

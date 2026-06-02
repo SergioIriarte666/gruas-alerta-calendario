@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCraneMetrics");
 export interface CraneMetrics {
   totalServices: number;
   completedServices: number;
@@ -21,7 +24,7 @@ export const useCraneMetrics = (craneId: string) => {
         .rpc('get_crane_metrics', { p_crane_id: craneId });
 
       if (error) {
-        console.error('Error fetching crane metrics:', error);
+        logger.error('Error fetching crane metrics:', error);
         throw error;
       }
 

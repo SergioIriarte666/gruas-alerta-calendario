@@ -10,13 +10,16 @@ import { fetchCompanyData } from './pdf/companyDataFetcher';
 import { validateInspectionData } from './pdf/pdfValidation';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("inspectionPdfGenerator");
 export const generateInspectionPDF = async (data: {
   service: Service;
   inspection: InspectionFormValues;
 }, isFinal: boolean = true): Promise<Blob> => {
   try {
-    console.log('Iniciando generación de PDF con datos:', data);
+    logger.debug('Iniciando generación de PDF con datos:', data);
 
     // Validar datos de entrada
     const validationErrors = validateInspectionData(data);
@@ -26,7 +29,7 @@ export const generateInspectionPDF = async (data: {
 
     // Obtener datos de la empresa
     const companyData = await fetchCompanyData();
-    console.log('=== DATOS DE EMPRESA FINALES ===', companyData);
+    logger.debug('=== DATOS DE EMPRESA FINALES ===', companyData);
 
     const doc = new jsPDF();
     
@@ -46,7 +49,7 @@ export const generateInspectionPDF = async (data: {
       isFinal
     };
 
-    console.log('Generando PDF con datos completos:', {
+    logger.debug('Generando PDF con datos completos:', {
       serviceId: pdfData.service.id,
       companyName: pdfData.companyData.businessName,
       equipmentCount: pdfData.inspection.equipment?.length || 0,
@@ -55,44 +58,44 @@ export const generateInspectionPDF = async (data: {
 
     // Add header corporativo (ahora es asíncrono)
     let yPosition = await addPDFHeader(doc, pdfData);
-    console.log('Header agregado, yPosition:', yPosition);
+    logger.debug('Header agregado, yPosition:', yPosition);
 
     // Add service information
     yPosition = addServiceInfo(doc, pdfData, yPosition);
-    console.log('Información de servicio agregada, yPosition:', yPosition);
+    logger.debug('Información de servicio agregada, yPosition:', yPosition);
 
     // Add equipment checklist
     yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
-    console.log('Checklist agregado, yPosition:', yPosition);
+    logger.debug('Checklist agregado, yPosition:', yPosition);
 
     // Add photographic set section
     try {
       if (validPhotos.length > 0) {
-        console.log('Procesando set fotográfico:', validPhotos);
+        logger.debug('Procesando set fotográfico:', validPhotos);
         const { addPhotographicSetSection } = await import('./pdf/pdfPhotos');
         yPosition = await addPhotographicSetSection(
           doc, 
           validPhotos, 
           yPosition
         );
-        console.log('Set fotográfico agregado, yPosition:', yPosition);
+        logger.debug('Set fotográfico agregado, yPosition:', yPosition);
       }
     } catch (photoError) {
-      console.error('Error procesando set fotográfico:', photoError);
+      logger.error('Error procesando set fotográfico:', photoError);
     }
 
     // Add digital signatures
     yPosition = await addDigitalSignatures(doc, pdfData, yPosition);
-    console.log('Firmas digitales agregadas, yPosition:', yPosition);
+    logger.debug('Firmas digitales agregadas, yPosition:', yPosition);
 
     // Add observations and signatures (texto)
     addObservationsAndSignatures(doc, pdfData, yPosition);
-    console.log('Observaciones agregadas');
+    logger.debug('Observaciones agregadas');
 
-    console.log('PDF generado exitosamente');
+    logger.debug('PDF generado exitosamente');
     return doc.output('blob');
   } catch (error) {
-    console.error('Error crítico generando PDF:', error);
+    logger.error('Error crítico generando PDF:', error);
     throw new Error(`Error al generar el PDF de inspección: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };

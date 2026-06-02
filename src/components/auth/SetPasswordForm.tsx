@@ -6,7 +6,10 @@ import { Lock, Eye, EyeOff, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { validatePassword } from '@/utils/passwordValidation';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SetPasswordForm");
 interface SetPasswordFormProps {
   onSuccess: () => void;
 }
@@ -39,7 +42,7 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
       });
 
       if (error) {
-        console.error('Error setting password:', error);
+        logger.error('Error setting password:', error);
         toast.error('Error al configurar la contraseña');
         return;
       }
@@ -47,7 +50,7 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
       toast.success('¡Contraseña configurada exitosamente!');
       onSuccess();
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error('Error al configurar la contraseña');
     } finally {
       setLoading(false);

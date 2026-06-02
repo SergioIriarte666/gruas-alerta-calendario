@@ -17,7 +17,10 @@ import {
   Clock
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServiceHealthDashboard");
 /**
  * FASE 6: DASHBOARD DE MONITOREO CONTINUO
  * 
@@ -72,7 +75,7 @@ export const ServiceHealthDashboard = () => {
       const result = await autoRepairAllIssues();
       setLastRepairResult(result);
     } catch (error) {
-      console.error('Error en reparación automática:', error);
+      logger.error('Error en reparación automática:', error);
     } finally {
       setIsRepairing(false);
     }

@@ -14,7 +14,10 @@ import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } fro
 import { useSimilarItemsSearch, type SimilarItem } from '@/utils/inventoryHelper';
 import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
 import { ProductDetailsModal } from './ProductDetailsModal';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ProductFormModal");
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   description: z.string().optional(),
@@ -126,7 +129,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
       
       onSuccess();
     } catch (error) {
-      console.error('Error saving product:', error);
+      logger.error('Error saving product:', error);
       
       // Manejo específico de errores de duplicado
       if (isDuplicateError(error)) {

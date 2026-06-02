@@ -14,7 +14,10 @@ import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServicesTable");
 interface ServicesTableProps {
   services: Service[];
   hasInitialServices: boolean;
@@ -297,7 +300,7 @@ export const ServicesTable = ({
                                 });
 
                                 if (error) {
-                                  console.warn('WhatsApp admin no enviado:', error);
+                                  logger.warn('WhatsApp admin no enviado:', error);
                                   toast.error('No se pudo enviar la notificación');
                                 } else {
                                   toast.success('Administradores notificados por WhatsApp');

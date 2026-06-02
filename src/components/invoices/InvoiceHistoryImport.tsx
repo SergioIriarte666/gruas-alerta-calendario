@@ -34,7 +34,10 @@ import {
   DocumentType,
 } from '@/utils/invoiceHistoryParser';
 import { Client } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InvoiceHistoryImport");
 interface InvoiceHistoryImportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -235,7 +238,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           status,
         });
       } catch (logError) {
-        console.error('Error saving import history log:', logError);
+        logger.error('Error saving import history log:', logError);
       }
 
       if (imported <= 0) return;
@@ -264,7 +267,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             })
         );
       } catch (mappingError) {
-        console.error('Error saving import mappings:', mappingError);
+        logger.error('Error saving import mappings:', mappingError);
       }
     },
     [clients, fileName, saveLog, saveMapping]
@@ -500,7 +503,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         description: `${result.totalInvoices} documentos detectados: ${parts.join(', ')}.`,
       });
     } catch (error) {
-      console.error('Error parsing file:', error);
+      logger.error('Error parsing file:', error);
       toast.error('Error al procesar archivo', { description: 'Verifique el formato del archivo.' });
     }
   }, [clients, getMappings, getOverlappingLogs, resolveClientFromMapping]);
@@ -680,7 +683,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               setClientRutToId(nRut, result.clients[0].id);
             }
           } catch (err) {
-            console.error('Error creating client:', uc.rut, err);
+            logger.error('Error creating client:', uc.rut, err);
             errors++;
           }
         } else if (uc.resolution === 'assign' && uc.assignedClientId) {
@@ -699,7 +702,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         if (!selectedInvoices.has(key)) continue;
 
         if (!inv.issueDate) {
-          console.error('Factura omitida por fecha inválida:', inv);
+          logger.error('Factura omitida por fecha inválida:', inv);
           errors++;
           continue;
         }
@@ -735,12 +738,12 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         
         if (ucEntry?.resolution === 'ignore') continue;
         if (!clientId) {
-            console.error('Factura omitida por falta de cliente:', inv);
+            logger.error('Factura omitida por falta de cliente:', inv);
             errors++;
             continue;
         }
         if (!inv.issueDate) {
-          console.error('Factura omitida por fecha inválida:', inv);
+          logger.error('Factura omitida por fecha inválida:', inv);
           errors++;
           continue;
         }
@@ -784,13 +787,13 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           }
 
           if (!clientId) {
-             console.error('Factura duplicada omitida por falta de cliente:', inv);
+             logger.error('Factura duplicada omitida por falta de cliente:', inv);
              errors++;
              continue;
           }
 
           if (!inv.issueDate) {
-             console.error('Factura duplicada omitida por fecha inválida:', inv);
+             logger.error('Factura duplicada omitida por fecha inválida:', inv);
              errors++;
              continue;
           }
@@ -854,7 +857,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             }
           }
 
-          console.error('Batch insert error:', error);
+          logger.error('Batch insert error:', error);
           errors += batch.length;
           const isDuplicate = error.message?.includes('invoices_folio_key') || error.message?.includes('duplicate key');
           const msg = isDuplicate
@@ -888,7 +891,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           onImportComplete();
       }
     } catch (err: any) {
-      console.error('Import error:', err);
+      logger.error('Import error:', err);
       const msg = err.message || 'Error desconocido durante la importación';
       setLastError(msg);
       toast.error('Error durante la importación', {

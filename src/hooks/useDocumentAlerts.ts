@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useDocumentAlerts");
 export interface DocumentAlert {
   id: string;
   craneId: string;
@@ -43,7 +46,7 @@ export const useDocumentAlerts = (craneId?: string) => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching document alerts:', error);
+        logger.error('Error fetching document alerts:', error);
         throw error;
       }
 
@@ -67,7 +70,7 @@ export const useExpiryAlerts = () => {
       const { data, error } = await supabase.rpc('get_document_expiry_alerts');
 
       if (error) {
-        console.error('Error fetching expiry alerts:', error);
+        logger.error('Error fetching expiry alerts:', error);
         throw error;
       }
 
@@ -108,7 +111,7 @@ export const useCreateDocumentAlert = () => {
       toast.success('Alerta de documento configurada exitosamente');
     },
     onError: (error) => {
-      console.error('Error creating document alert:', error);
+      logger.error('Error creating document alert:', error);
       toast.error('Error al configurar la alerta de documento');
     }
   });
@@ -139,7 +142,7 @@ export const useUpdateDocumentAlert = () => {
       toast.success('Alerta de documento actualizada exitosamente');
     },
     onError: (error) => {
-      console.error('Error updating document alert:', error);
+      logger.error('Error updating document alert:', error);
       toast.error('Error al actualizar la alerta de documento');
     }
   });

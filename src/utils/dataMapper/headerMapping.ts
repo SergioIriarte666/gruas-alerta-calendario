@@ -1,4 +1,7 @@
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("headerMapping");
 // Función auxiliar para normalizar texto (quitar acentos)
 const normalizeForComparison = (text: string): string => {
   return text
@@ -158,7 +161,7 @@ export class HeaderMapper {
   };
 
   mapHeaders(headers: string[]): string[] {
-    console.log('🗺️ Mapping headers:', headers);
+    logger.debug('🗺️ Mapping headers:', headers);
     
     const mappedHeaders = headers.map(header => {
       const trimmedHeader = header.trim();
@@ -179,22 +182,22 @@ export class HeaderMapper {
       }
       
       if (mapped) {
-        console.log(`✅ Header mapped: "${trimmedHeader}" → "${mapped}"`);
+        logger.debug(`✅ Header mapped: "${trimmedHeader}" → "${mapped}"`);
         return mapped;
       } else {
         // Fallback: convert to camelCase
         const fallback = trimmedHeader.toLowerCase().replace(/\s+/g, '');
-        console.log(`⚠️ Header not found in map: "${trimmedHeader}", using fallback: "${fallback}"`);
+        logger.debug(`⚠️ Header not found in map: "${trimmedHeader}", using fallback: "${fallback}"`);
         return fallback;
       }
     });
     
-    console.log('🗺️ Final mapped headers:', mappedHeaders);
+    logger.debug('🗺️ Final mapped headers:', mappedHeaders);
     return mappedHeaders;
   }
 
   validateHeaders(headers: string[]): { valid: boolean; missing: string[]; extra: string[] } {
-    console.log('🔍 Validating headers:', headers);
+    logger.debug('🔍 Validating headers:', headers);
     
     const required = [
       'folio', 'requestDate', 'serviceDate', 'clientRut', 'clientName', 'clientDepartment',
@@ -212,7 +215,7 @@ export class HeaderMapper {
       extra
     };
     
-    console.log('📋 Header validation result:', result);
+    logger.debug('📋 Header validation result:', result);
     return result;
   }
 

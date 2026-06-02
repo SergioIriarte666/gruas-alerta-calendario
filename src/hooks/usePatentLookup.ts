@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePatentLookup");
 interface VehicleData {
   marca: string;
   modelo: string;
@@ -54,7 +57,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
         setHistory(historyData);
       }
     } catch (err) {
-      console.error('Error loading history:', err);
+      logger.error('Error loading history:', err);
     }
   };
 
@@ -80,7 +83,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
       // Reload history after insert
       await loadHistory();
     } catch (err) {
-      console.error('Error saving to history:', err);
+      logger.error('Error saving to history:', err);
     }
   };
 
@@ -115,7 +118,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
       );
 
       if (invokeError) {
-        console.error('Error invoking function:', invokeError);
+        logger.error('Error invoking function:', invokeError);
         setError('Error al consultar la patente');
         toast.error('Error al consultar la patente');
         return;
@@ -135,7 +138,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
         toast.success('Patente consultada exitosamente');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      logger.error('Unexpected error:', err);
       setError('Error inesperado al consultar la patente');
       toast.error('Error inesperado al consultar la patente');
     } finally {
@@ -174,7 +177,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
       setHistory([]);
       toast.success('Historial eliminado');
     } catch (err) {
-      console.error('Error clearing history:', err);
+      logger.error('Error clearing history:', err);
       toast.error('Error al eliminar historial');
     }
   };

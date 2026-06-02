@@ -1,6 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("globalDataRefresh");
 /**
  * Utilidad para refrescar globalmente todos los datos relacionados con servicios
  * Útil después de cambios importantes en la base de datos
@@ -47,7 +50,7 @@ export const refreshAllServiceData = async (queryClient: QueryClient) => {
     
     return { success: true };
   } catch (error) {
-    console.error('❌ GLOBAL REFRESH: Error durante actualización global:', error);
+    logger.error('❌ GLOBAL REFRESH: Error durante actualización global:', error);
     const message = error instanceof Error ? error.message : 'Error desconocido';
     
     // Disparar evento de error

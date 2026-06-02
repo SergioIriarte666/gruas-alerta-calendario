@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useVehicleHistory");
 export interface VehicleHistoryEntry {
   id: string;
   folio: string;
@@ -25,7 +28,7 @@ export interface VehicleHistoryEntry {
 const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistoryEntry[]> => {
   if (!licensePlate) return [];
 
-  console.log('Fetching vehicle history for license plate:', licensePlate);
+  logger.debug('Fetching vehicle history for license plate:', licensePlate);
 
   const { data, error } = await supabase
     .from('services')
@@ -51,11 +54,11 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching vehicle history:', error);
+    logger.error('Error fetching vehicle history:', error);
     throw new Error('Could not fetch vehicle history');
   }
 
-  console.log(`Found ${data?.length || 0} services for license plate ${licensePlate}:`, data);
+  logger.debug(`Found ${data?.length || 0} services for license plate ${licensePlate}:`, data);
 
   return (data || []).map((item: any) => ({
     id: item.id,

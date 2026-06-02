@@ -26,7 +26,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2 } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServicesPageContent");
 type ViewMode = 'table' | 'pipeline';
 
 export const ServicesPageContent = () => {
@@ -101,15 +104,15 @@ export const ServicesPageContent = () => {
 
   // Función para crear servicio - SIMPLIFICADA para evitar errores
   const handleCreateService = async (serviceData: any) => {
-    console.log('📝 [PAGE_CREATE] Iniciando creación desde página...');
+    logger.debug('📝 [PAGE_CREATE] Iniciando creación desde página...');
     
     try {
       await createService(serviceData);
-      console.log('✅ [PAGE_CREATE] Servicio creado, cerrando formulario');
+      logger.debug('✅ [PAGE_CREATE] Servicio creado, cerrando formulario');
       setIsFormOpen(false);
       setEditingService(null);
     } catch (error) {
-      console.error('❌ [PAGE_CREATE] Error:', error);
+      logger.error('❌ [PAGE_CREATE] Error:', error);
       // Error ya manejado por ConsolidatedServiceManager
     }
   };
@@ -128,7 +131,7 @@ export const ServicesPageContent = () => {
         });
       }
     } catch (error) {
-      console.error('Error updating service:', error);
+      logger.error('Error updating service:', error);
       toast({
         type: 'error',
         title: 'Error',
@@ -152,7 +155,7 @@ export const ServicesPageContent = () => {
         description: 'El servicio se ha eliminado correctamente'
       });
     } catch (error) {
-      console.error('Error deleting service:', error);
+      logger.error('Error deleting service:', error);
       toast({
         type: 'error',
         title: 'Error',
@@ -203,7 +206,7 @@ export const ServicesPageContent = () => {
         description: result.message || 'El servicio se ha cerrado exitosamente'
       });
     } catch (error) {
-      console.error('Error closing service:', error);
+      logger.error('Error closing service:', error);
       toast({
         type: 'error',
         title: 'Error',
@@ -233,7 +236,7 @@ export const ServicesPageContent = () => {
         description: 'Los datos se han actualizado correctamente'
       });
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      logger.error('Error refreshing data:', error);
       toast({
         type: 'error',
         title: 'Error',

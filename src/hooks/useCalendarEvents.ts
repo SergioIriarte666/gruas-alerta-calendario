@@ -5,7 +5,10 @@ import { CalendarEvent } from '@/types/calendar';
 import { sanitizeEventData } from '@/utils/calendarValidation';
 import { toast } from 'sonner';
 import { getBusinessToday } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCalendarEvents");
 const CALENDAR_EVENTS_SELECT = `
   id,
   title,
@@ -55,15 +58,15 @@ export const useCalendarEvents = () => {
       ]);
 
       if (calendarRes.error) {
-        console.error('Error loading calendar events:', calendarRes.error);
+        logger.error('Error loading calendar events:', calendarRes.error);
         toast.error('No se pudieron cargar eventos del calendario', { description: calendarRes.error.message });
       }
       if (servicesRes.error) {
-        console.error('Error loading services for calendar:', servicesRes.error);
+        logger.error('Error loading services for calendar:', servicesRes.error);
         toast.error('No se pudieron cargar servicios en el calendario', { description: servicesRes.error.message });
       }
       if (maintenanceRes.error) {
-        console.error('Error loading maintenance for calendar:', maintenanceRes.error);
+        logger.error('Error loading maintenance for calendar:', maintenanceRes.error);
         toast.error('No se pudieron cargar mantenimientos en el calendario', { description: maintenanceRes.error.message });
       }
 
@@ -141,7 +144,7 @@ export const useCalendarEvents = () => {
 
       setEvents(serviceEvents);
     } catch (error) {
-      console.error('Error loading calendar events:', error);
+      logger.error('Error loading calendar events:', error);
     } finally {
       setLoading(false);
     }
@@ -168,14 +171,14 @@ export const useCalendarEvents = () => {
         .single();
 
       if (error) {
-        console.error('Error creating event:', error);
+        logger.error('Error creating event:', error);
         throw error;
       }
 
       const newEvent: CalendarEvent = { ...sanitizeEventData(data), source: 'manual' };
       setEvents(prev => [...prev, newEvent]);
     } catch (error) {
-      console.error('Error creating event:', error);
+      logger.error('Error creating event:', error);
       throw error;
     }
   };
@@ -183,7 +186,7 @@ export const useCalendarEvents = () => {
   const updateEvent = async (id: string, eventData: Partial<CalendarEvent>) => {
     // Only allow editing manual events
     if (id.startsWith('svc-') || id.startsWith('mnt-')) {
-      console.warn('Cannot edit synced events from calendar. Edit them in their original module.');
+      logger.warn('Cannot edit synced events from calendar. Edit them in their original module.');
       return;
     }
 
@@ -208,7 +211,7 @@ export const useCalendarEvents = () => {
         .single();
 
       if (error) {
-        console.error('Error updating event:', error);
+        logger.error('Error updating event:', error);
         return;
       }
 
@@ -217,14 +220,14 @@ export const useCalendarEvents = () => {
         event.id === id ? updatedEvent : event
       ));
     } catch (error) {
-      console.error('Error updating event:', error);
+      logger.error('Error updating event:', error);
     }
   };
 
   const deleteEvent = async (id: string) => {
     // Only allow deleting manual events
     if (id.startsWith('svc-') || id.startsWith('mnt-')) {
-      console.warn('Cannot delete synced events from calendar. Delete them in their original module.');
+      logger.warn('Cannot delete synced events from calendar. Delete them in their original module.');
       return;
     }
 
@@ -235,13 +238,13 @@ export const useCalendarEvents = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting event:', error);
+        logger.error('Error deleting event:', error);
         return;
       }
 
       setEvents(prev => prev.filter(event => event.id !== id));
     } catch (error) {
-      console.error('Error deleting event:', error);
+      logger.error('Error deleting event:', error);
     }
   };
 

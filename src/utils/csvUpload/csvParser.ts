@@ -2,7 +2,10 @@
 import { parse } from 'papaparse';
 import { CSVRow, CSVUploadResult } from './types';
 import { DataMapper, MappedServiceData } from '../dataMapper';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("csvParser");
 export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CSVUploadResult> => {
   return new Promise((resolve, reject) => {
     parse<CSVRow>(file, {
@@ -11,7 +14,7 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
       transformHeader: (header) => dataMapper.mapHeaders([header.trim()])[0] || header.trim(),
       complete: async (results) => {
         if (results.errors.length > 0) {
-          console.error('CSV Parsing Errors:', results.errors);
+          logger.error('CSV Parsing Errors:', results.errors);
           return resolve({
             success: false,
             message: 'Error al analizar el archivo CSV.',
@@ -21,7 +24,7 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
 
         const headerValidation = dataMapper.validateHeaders(results.meta.fields || []);
         if (!headerValidation.valid) {
-          console.error('CSV Header Errors:', headerValidation);
+          logger.error('CSV Header Errors:', headerValidation);
           const missingHeaders = headerValidation.missing.map(header => `Falta la columna "${header}"`);
           const extraHeaders = headerValidation.extra.map(header => `Columna no reconocida "${header}"`);
           return resolve({
@@ -47,7 +50,7 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
         }
 
         if (allErrors.length > 0) {
-          console.error('Data Mapping Errors:', allErrors);
+          logger.error('Data Mapping Errors:', allErrors);
           return resolve({
             success: false,
             message: 'Error al procesar los datos del archivo CSV.',
@@ -64,7 +67,7 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
         });
       },
       error: (error) => {
-        console.error('CSV Processing Error:', error);
+        logger.error('CSV Processing Error:', error);
         reject(error);
       }
     });

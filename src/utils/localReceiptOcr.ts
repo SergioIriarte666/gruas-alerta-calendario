@@ -1,5 +1,8 @@
 import { createWorker } from 'tesseract.js';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("localReceiptOcr");
 type ReceiptTotals = {
   neto?: number;
   iva?: number;
@@ -187,24 +190,24 @@ const resolveImageSource = async (imageSource: string | Blob) => {
 };
 
 export const extractReceiptDataLocally = async (imageSource: string | Blob): Promise<LocalReceiptExtractionResult> => {
-  console.log('[LocalOCR] Iniciando extracción local...');
+  logger.debug('[LocalOCR] Iniciando extracción local...');
   let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
   let revoke: (() => void) | null = null;
 
   try {
     const resolved = await resolveImageSource(imageSource);
     revoke = resolved.revoke;
-    console.log('[LocalOCR] Imagen resuelta, creando worker OCR...');
+    logger.debug('[LocalOCR] Imagen resuelta, creando worker OCR...');
 
     worker = await createWorker('eng', 1, {
       workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
       langPath: 'https://tessdata.projectnaptha.com/4.0.0',
       corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
     });
-    console.log('[LocalOCR] Worker creado, ejecutando reconocimiento...');
+    logger.debug('[LocalOCR] Worker creado, ejecutando reconocimiento...');
 
     const result = await worker.recognize(resolved.source);
-    console.log('[LocalOCR] Reconocimiento completado. Confianza:', result.data.confidence);
+    logger.debug('[LocalOCR] Reconocimiento completado. Confianza:', result.data.confidence);
     const rawText = result.data.text || '';
     const normalizedText = cleanText(rawText);
 

@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUpdateCostsBatch");
 export interface CostBatchUpdateData {
   fields: {
     category_id?: string;
@@ -84,7 +87,7 @@ export const useUpdateCostsBatch = () => {
       // Verificar errores
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) {
-        console.error('Errors during batch update:', errors);
+        logger.error('Errors during batch update:', errors);
         throw new Error(`${errors.length} costos no pudieron actualizarse`);
       }
 
@@ -97,7 +100,7 @@ export const useUpdateCostsBatch = () => {
       toast.success(`${variables.costIds.length} costos actualizados correctamente`);
     },
     onError: (error: any) => {
-      console.error('Error en actualización por lotes:', error);
+      logger.error('Error en actualización por lotes:', error);
       toast.error(error.message || 'Error al actualizar los costos');
     },
   });
@@ -108,7 +111,7 @@ export const useMarkCostsPaidBatch = () => {
 
   return useMutation({
     mutationFn: async ({ costIds, paymentDate }: MarkCostsPaidBatchData) => {
-      const { data, error } = await (supabase as any).rpc('mark_costs_paid_batch', {
+      const { data, error } = await supabase.rpc('mark_costs_paid_batch', {
         p_cost_ids: costIds,
         p_payment_date: paymentDate,
       });
@@ -129,7 +132,7 @@ export const useMarkCostsPaidBatch = () => {
       toast.success(`${result.processed_count ?? result.processed_ids.length} costos marcados como pagados`);
     },
     onError: (error: any) => {
-      console.error('Error en marcado masivo de pagos:', error);
+      logger.error('Error en marcado masivo de pagos:', error);
       toast.error(error.message || 'Error al marcar costos como pagados');
     },
   });

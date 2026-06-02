@@ -42,7 +42,7 @@ export const useCostChangeHistory = (costId: string | null) =>
     queryKey: ['cost-change-history', costId],
     queryFn: async (): Promise<ChangeHistoryEntry[]> => {
       if (!costId) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('cost_change_history')
         .select('id, cost_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('cost_id', costId)
@@ -58,7 +58,7 @@ export const useInventoryMovementChangeHistory = (movementId: string | null) =>
     queryKey: ['inventory-movement-change-history', movementId],
     queryFn: async (): Promise<ChangeHistoryEntry[]> => {
       if (!movementId) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('inventory_movement_change_history')
         .select('id, movement_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('movement_id', movementId)
@@ -74,7 +74,7 @@ export const useCranePartChangeHistory = (cranePartId: string | null) =>
     queryKey: ['crane-part-change-history', cranePartId],
     queryFn: async (): Promise<ChangeHistoryEntry[]> => {
       if (!cranePartId) return [];
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('crane_part_change_history')
         .select('id, crane_part_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('crane_part_id', cranePartId)

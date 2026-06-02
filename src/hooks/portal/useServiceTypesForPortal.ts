@@ -1,7 +1,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceTypesForPortal");
 interface ServiceType {
   id: string;
   name: string;
@@ -20,7 +23,7 @@ const fetchServiceTypesForPortal = async (): Promise<ServiceType[]> => {
     .order('name');
 
   if (error) {
-    console.error('Error loading service types:', error);
+    logger.error('Error loading service types:', error);
     throw new Error('Error al cargar los tipos de servicio');
   }
 

@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { verifySessionConsistency, forceReAuthentication } from '@/utils/authCleanup';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("AuthErrorHandler");
 interface AuthErrorHandlerProps {
   onRetry?: () => void;
   children: React.ReactNode;
@@ -35,7 +38,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
       if (result.isValid) {
         setSessionStatus('valid');
       } else {
-        console.error('Session verification failed:', result.reason, result.error);
+        logger.error('Session verification failed:', result.reason, result.error);
         setSessionStatus('desync');
         
         if (result.reason === 'auth_uid_null' || result.reason === 'invalid_jwt') {
@@ -47,7 +50,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
         }
       }
     } catch (error) {
-      console.error('Error verifying session:', error);
+      logger.error('Error verifying session:', error);
       setSessionStatus('invalid');
     } finally {
       setIsVerifying(false);
@@ -70,7 +73,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
         onRetry?.();
       }
     } catch (error) {
-      console.error('Failed to refresh session:', error);
+      logger.error('Failed to refresh session:', error);
       setSessionStatus('invalid');
       addNotification({
         title: 'Error de Sesión',
@@ -102,7 +105,7 @@ export const AuthErrorHandler = ({ onRetry, children }: AuthErrorHandlerProps) =
   // Enhanced logging for debugging
   useEffect(() => {
     if (hasAuthInconsistency || hasSessionDesync) {
-      console.warn('Auth issue detected:', {
+      logger.warn('Auth issue detected:', {
         hasAuthInconsistency,
         hasSessionDesync,
         sessionStatus,

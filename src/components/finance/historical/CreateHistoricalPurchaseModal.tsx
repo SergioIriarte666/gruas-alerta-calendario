@@ -25,7 +25,10 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Loader2 } from 'lucide-react';
 import { format, parse } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CreateHistoricalPurchaseModal");
 const purchaseSchema = z.object({
   supplier_id: z.string().min(1, 'El proveedor es requerido'),
   invoice_number: z.string().min(1, 'El número de factura es requerido'),
@@ -91,7 +94,7 @@ export const CreateHistoricalPurchaseModal = ({
       form.reset();
       onClose();
     } catch (error) {
-      console.error('Error creating purchase invoice:', error);
+      logger.error('Error creating purchase invoice:', error);
     } finally {
       setIsSubmitting(false);
     }

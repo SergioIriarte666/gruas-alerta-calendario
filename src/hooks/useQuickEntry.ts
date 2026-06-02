@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useQuickEntry");
 const QUICK_ENTRY_SELECT = `
   id,
   type,
@@ -55,7 +58,7 @@ export function useQuickEntry() {
 
       return data;
     } catch (error) {
-      console.error('Error creating quick entry:', error);
+      logger.error('Error creating quick entry:', error);
       toast({
         title: "Error",
         description: "No se pudo guardar el registro",
@@ -78,7 +81,7 @@ export function useQuickEntry() {
       if (error) throw error;
       return data as QuickEntry[];
     } catch (error) {
-      console.error('Error fetching pending entries:', error);
+      logger.error('Error fetching pending entries:', error);
       return [];
     }
   };
@@ -98,7 +101,7 @@ export function useQuickEntry() {
         type: "success",
       });
     } catch (error) {
-      console.error('Error updating entry status:', error);
+      logger.error('Error updating entry status:', error);
       toast({
         title: "Error",
         description: "No se pudo actualizar el estado",
@@ -159,7 +162,7 @@ export function useQuickEntry() {
         type: "success",
       });
     } catch (error) {
-      console.error('Error deleting entry:', error);
+      logger.error('Error deleting entry:', error);
       toast({
         title: "Error",
         description: "No se pudo eliminar el registro",
@@ -176,7 +179,7 @@ export function useQuickEntry() {
       try {
         await supabase.storage.from('quick-entry-photos').remove(paths);
       } catch (error) {
-        console.error('Error deleting quick entry photos:', error);
+        logger.error('Error deleting quick entry photos:', error);
       }
     }
     await deleteEntry(entry.id);

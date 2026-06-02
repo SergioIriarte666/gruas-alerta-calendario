@@ -3,7 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInspectionEmail");
 export const useInspectionEmail = () => {
   const sendInspectionEmailMutation = useMutation({
     mutationFn: async ({ pdfBlob, service, inspection }: {
@@ -11,7 +14,7 @@ export const useInspectionEmail = () => {
       service: any;
       inspection: InspectionFormValues;
     }) => {
-      console.log('📧 [EMAIL] Enviando inspección por email...');
+      logger.debug('📧 [EMAIL] Enviando inspección por email...');
       
       const arrayBuffer = await pdfBlob.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -29,26 +32,26 @@ export const useInspectionEmail = () => {
         pdfBlob: base64,
       };
 
-      console.log('📧 [EMAIL] Datos del email:', emailData.inspectionData);
+      logger.debug('📧 [EMAIL] Datos del email:', emailData.inspectionData);
 
       const { data, error } = await supabase.functions.invoke('send-inspection-email', {
         body: emailData
       });
 
       if (error) {
-        console.error('❌ [EMAIL] Error invocando función:', error);
+        logger.error('❌ [EMAIL] Error invocando función:', error);
         throw new Error(`Error al invocar función de email: ${error.message}`);
       }
 
-      console.log('✅ [EMAIL] Función invocada exitosamente:', data);
+      logger.debug('✅ [EMAIL] Función invocada exitosamente:', data);
       return data;
     },
     onSuccess: () => {
-      console.log('✅ [EMAIL] Email enviado exitosamente');
+      logger.debug('✅ [EMAIL] Email enviado exitosamente');
       toast.success('Inspección enviada por email exitosamente');
     },
     onError: (error) => {
-      console.error('💥 [EMAIL] Error enviando email:', error);
+      logger.error('💥 [EMAIL] Error enviando email:', error);
       toast.error(`Error al enviar email: ${error.message}`);
     }
   });

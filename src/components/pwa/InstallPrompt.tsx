@@ -5,7 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { X, Download, Smartphone } from 'lucide-react';
 import { usePWACapabilities } from '@/hooks/usePWACapabilities';
 import { useUser } from '@/contexts/UserContext';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InstallPrompt");
 interface InstallPromptProps {
   userRole?: string;
 }
@@ -74,9 +77,9 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole }) => {
       setShow(false);
       
       // Analytics
-      console.log('PWA installed:', { trigger: installTrigger, userRole: user?.role });
+      logger.debug('PWA installed:', { trigger: installTrigger, userRole: user?.role });
     } catch (error) {
-      console.error('Installation failed:', error);
+      logger.error('Installation failed:', error);
     }
   };
 

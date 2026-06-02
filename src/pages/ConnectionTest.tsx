@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ConnectionTest");
 const StatusIcon = ({ success }: { success?: boolean }) => {
   if (success === undefined) return <Loader2 className="size-5 animate-spin text-gray-400" />;
   return success ? <CheckCircle2 className="size-5 text-green-500" /> : <XCircle className="size-5 text-red-500" />;
@@ -85,7 +88,7 @@ export default function ConnectionTest() {
       };
 
     } catch (err: any) {
-      console.error('Test failed unexpectedly:', err);
+      logger.error('Test failed unexpectedly:', err);
     } finally {
       setResults(newResults);
       setLoading(false);

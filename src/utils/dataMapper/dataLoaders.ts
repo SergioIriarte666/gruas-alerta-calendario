@@ -1,7 +1,10 @@
 
 import { Client, Crane, Operator, ServiceType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("dataLoaders");
 export class DataLoaders {
   async loadClients(): Promise<Client[]> {
     try {
@@ -25,7 +28,7 @@ export class DataLoaders {
         updatedAt: client.updated_at || ''
       })) || [];
     } catch (error) {
-      console.error('Error loading clients:', error);
+      logger.error('Error loading clients:', error);
       return [];
     }
   }
@@ -53,7 +56,7 @@ export class DataLoaders {
         updatedAt: crane.updated_at || ''
       })) || [];
     } catch (error) {
-      console.error('Error loading cranes:', error);
+      logger.error('Error loading cranes:', error);
       return [];
     }
   }
@@ -82,7 +85,7 @@ export class DataLoaders {
         updatedAt: operator.updated_at || ''
       })) || [];
     } catch (error) {
-      console.error('Error loading operators:', error);
+      logger.error('Error loading operators:', error);
       return [];
     }
   }
@@ -115,7 +118,7 @@ export class DataLoaders {
         updatedAt: serviceType.updated_at || ''
       })) || [];
     } catch (error) {
-      console.error('Error loading service types:', error);
+      logger.error('Error loading service types:', error);
       return [];
     }
   }

@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePurchaseVoid");
 export interface VoidablePurchase {
   id: string;
   date: string;
@@ -63,10 +66,10 @@ export const useSearchVoidablePurchases = (search: string, enabled: boolean = tr
         { p_search: term || null }
       );
       if (error) {
-        console.error('[PurchaseVoid] search rpc error:', error);
+        logger.error('[PurchaseVoid] search rpc error:', error);
         throw error;
       }
-      console.log('[PurchaseVoid] term:', term, 'rows:', data?.length || 0);
+      logger.debug('[PurchaseVoid] term:', term, 'rows:', data?.length || 0);
       return (data || []).map((row: any) => ({
         id: row.id,
         date: row.date,
@@ -99,7 +102,7 @@ export const usePurchaseVoidImpact = (cost: VoidablePurchase | null) => {
         p_cost_id: cost.id,
       });
       if (error) {
-        console.error('[PurchaseVoid] impact rpc error:', error);
+        logger.error('[PurchaseVoid] impact rpc error:', error);
         throw error;
       }
       const impact = (data || {}) as any;

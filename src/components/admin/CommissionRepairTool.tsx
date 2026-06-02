@@ -16,7 +16,10 @@ import {
 import { AlertTriangle, CheckCircle, Loader2, ScanSearch, Wrench } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CommissionRepairTool");
 /**
  * Herramienta de auditoría y reparación del sistema de comisiones.
  * Migrada desde el antiguo módulo de respaldos. Pertenece al panel
@@ -37,7 +40,7 @@ export const CommissionRepairTool = () => {
       setAuditData(data);
       toast.success('Auditoría completada');
     } catch (error: any) {
-      console.error('Error in audit:', error);
+      logger.error('Error in audit:', error);
       toast.error(error.message || 'Error al ejecutar auditoría');
     } finally {
       setAuditing(false);
@@ -54,7 +57,7 @@ export const CommissionRepairTool = () => {
       toast.success(`Sistema reparado: ${info.commissions_created} comisiones creadas, ${info.services_synced} servicios sincronizados`);
       await auditCommissionSystem();
     } catch (error: any) {
-      console.error('Error in repair:', error);
+      logger.error('Error in repair:', error);
       toast.error(error.message || 'Error al reparar sistema');
     } finally {
       setRepairing(false);

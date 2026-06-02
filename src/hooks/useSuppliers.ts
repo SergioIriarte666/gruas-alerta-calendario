@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Supplier, SupplierFormData } from '@/types/suppliers';
 import { dedupeSuppliersByIdentity, findSupplierByIdentity, normalizeSupplierRut } from '@/utils/supplierIdentity';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSuppliers");
 /**
  * Unified suppliers hook - reads from inventory_suppliers (single source of truth)
  */
@@ -65,7 +68,7 @@ const pickPreferredSupplier = (current: Supplier, incoming: Supplier): Supplier 
 const sortSuppliers = (suppliers: Supplier[]) => suppliers.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
 const fetchSuppliers = async (): Promise<Supplier[]> => {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('inventory_suppliers')
     .select(SUPPLIERS_SELECT)
     .order('created_at', { ascending: false });
@@ -96,7 +99,7 @@ export const useSuppliers = () => {
       }
 
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const { data: result, error } = await (supabase as any)
+      const { data: result, error } = await supabase
         .from('inventory_suppliers')
         .insert([{
           name: data.name,
@@ -130,7 +133,7 @@ export const useSuppliers = () => {
       toast.success(wasReused ? 'Proveedor existente reutilizado' : 'Proveedor creado exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error creating supplier:', error);
+      logger.error('Error creating supplier:', error);
       toast.error('Error al crear el proveedor');
     },
   });
@@ -157,7 +160,7 @@ export const useSuppliers = () => {
         updateData.category = data.category;
       }
       
-      const { data: result, error } = await (supabase as any)
+      const { data: result, error } = await supabase
         .from('inventory_suppliers')
         .update(updateData)
         .eq('id', id)
@@ -173,14 +176,14 @@ export const useSuppliers = () => {
       toast.success('Proveedor actualizado exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error updating supplier:', error);
+      logger.error('Error updating supplier:', error);
       toast.error('Error al actualizar el proveedor');
     },
   });
 
   const deleteSupplierMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('inventory_suppliers')
         .delete()
         .eq('id', id);
@@ -193,14 +196,14 @@ export const useSuppliers = () => {
       toast.success('Proveedor eliminado exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error deleting supplier:', error);
+      logger.error('Error deleting supplier:', error);
       toast.error('Error al eliminar el proveedor');
     },
   });
 
   const toggleSupplierStatusMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { data: current, error: fetchError } = await (supabase as any)
+      const { data: current, error: fetchError } = await supabase
         .from('inventory_suppliers')
         .select('is_active')
         .eq('id', id)
@@ -208,7 +211,7 @@ export const useSuppliers = () => {
 
       if (fetchError) throw fetchError;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('inventory_suppliers')
         .update({ 
           is_active: !current.is_active,
@@ -227,7 +230,7 @@ export const useSuppliers = () => {
       toast.success('Estado del proveedor actualizado');
     },
     onError: (error: any) => {
-      console.error('Error toggling supplier status:', error);
+      logger.error('Error toggling supplier status:', error);
       toast.error('Error al cambiar el estado del proveedor');
     },
   });

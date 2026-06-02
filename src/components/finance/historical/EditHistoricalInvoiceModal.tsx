@@ -22,7 +22,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Invoice } from '@/types';
 import { format } from 'date-fns';
 import { ShieldAlert } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("EditHistoricalInvoiceModal");
 interface EditHistoricalInvoiceModalProps {
   invoice: Invoice | null;
   isOpen: boolean;
@@ -92,7 +95,7 @@ export const EditHistoricalInvoiceModal = ({
           setShippingInfo(parsed.shippingInfo || '');
           setPaymentMethod(parsed.paymentMethod || '');
         } catch (e) {
-          console.error('Error parsing metadata:', e);
+          logger.error('Error parsing metadata:', e);
           setMetadata({});
         }
       } else {
@@ -164,7 +167,7 @@ export const EditHistoricalInvoiceModal = ({
       await onSave(invoice.id, updates);
       onClose();
     } catch (error) {
-      console.error('Error saving invoice:', error);
+      logger.error('Error saving invoice:', error);
     } finally {
       setIsSubmitting(false);
     }

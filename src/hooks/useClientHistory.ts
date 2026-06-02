@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientHistory");
 export interface ClientHistoryEntry {
   id: string;
   folio: string;
@@ -36,7 +39,7 @@ const fetchClientHistory = async (clientId: string): Promise<ClientHistoryEntry[
     .order('service_date', { ascending: false });
 
   if (error) {
-    console.error('Error fetching client history:', error);
+    logger.error('Error fetching client history:', error);
     throw new Error('Could not fetch client history');
   }
 

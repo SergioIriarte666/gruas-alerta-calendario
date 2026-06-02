@@ -21,7 +21,10 @@ import { useQuery } from '@tanstack/react-query';
 import { CostSubcategory } from '@/types/costs';
 import { useOperators } from '@/hooks/useOperators';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServiceCostDetailsSection");
 interface ServiceCostDetail {
   id: string;
   description: string;
@@ -59,9 +62,9 @@ export const ServiceCostDetailsSection = ({
   onCostDetailsChange,
   disabled = false
 }: ServiceCostDetailsSectionProps) => {
-  console.log('[ServiceCostDetailsSection] Rendered with serviceId:', serviceId, 'costDetails:', costDetails);
-  console.log('[ServiceCostDetailsSection] Disabled prop:', disabled);
-  console.log('[ServiceCostDetailsSection] Add button should be disabled?', disabled);
+  logger.debug('[ServiceCostDetailsSection] Rendered with serviceId:', serviceId, 'costDetails:', costDetails);
+  logger.debug('[ServiceCostDetailsSection] Disabled prop:', disabled);
+  logger.debug('[ServiceCostDetailsSection] Add button should be disabled?', disabled);
   
   const [nextId, setNextId] = useState(1);
   const { data: categories = [] } = useCostCategories();
@@ -131,7 +134,7 @@ export const ServiceCostDetailsSection = ({
         costDetails.length === 0 && 
         !existingCostsLoading) {
       
-      console.log('[ServiceCostDetailsSection] Loading existing costs (excluding commissions):', filteredExistingCosts);
+      logger.debug('[ServiceCostDetailsSection] Loading existing costs (excluding commissions):', filteredExistingCosts);
       
       const mappedCosts = filteredExistingCosts.map(cost => ({
         id: cost.id,
@@ -198,13 +201,13 @@ export const ServiceCostDetailsSection = ({
       // Delete from database if it's an existing cost
       deleteCost(id, {
         onSuccess: () => {
-          console.log('[ServiceCostDetailsSection] Cost deleted successfully:', id);
+          logger.debug('[ServiceCostDetailsSection] Cost deleted successfully:', id);
           onCostDetailsChange(costDetails.filter(cost => cost.id !== id));
           refetchCosts();
           toast.success("Costo eliminado correctamente");
         },
         onError: (error) => {
-          console.error('[ServiceCostDetailsSection] Error deleting cost:', error);
+          logger.error('[ServiceCostDetailsSection] Error deleting cost:', error);
           toast.error("Error al eliminar el costo");
         }
       });
@@ -259,7 +262,7 @@ export const ServiceCostDetailsSection = ({
 
   const saveCostDetail = async (costDetail: ServiceCostDetail) => {
     if (!serviceId) {
-      console.log('[ServiceCostDetailsSection] No serviceId, cost will be saved on service creation');
+      logger.debug('[ServiceCostDetailsSection] No serviceId, cost will be saved on service creation');
       return;
     }
 
@@ -374,12 +377,12 @@ export const ServiceCostDetailsSection = ({
       // Update existing cost
       updateCost({ id: costDetail.id, ...costData }, {
         onSuccess: () => {
-          console.log('[ServiceCostDetailsSection] Cost updated successfully:', costDetail.id);
+          logger.debug('[ServiceCostDetailsSection] Cost updated successfully:', costDetail.id);
           refetchCosts();
           toast.success("Costo actualizado correctamente");
         },
         onError: (error) => {
-          console.error('[ServiceCostDetailsSection] Error updating cost:', error);
+          logger.error('[ServiceCostDetailsSection] Error updating cost:', error);
           toast.error("Error al actualizar el costo");
         }
       });
@@ -387,7 +390,7 @@ export const ServiceCostDetailsSection = ({
       // Add new cost
       addCost(costData, {
         onSuccess: (data) => {
-          console.log('[ServiceCostDetailsSection] Cost added successfully:', data);
+          logger.debug('[ServiceCostDetailsSection] Cost added successfully:', data);
           
           // Update the cost detail with the new ID from database
           if (data && data[0]) {
@@ -399,7 +402,7 @@ export const ServiceCostDetailsSection = ({
           toast.success("Costo agregado correctamente");
         },
         onError: (error) => {
-          console.error('[ServiceCostDetailsSection] Error adding cost:', error);
+          logger.error('[ServiceCostDetailsSection] Error adding cost:', error);
           toast.error("Error al agregar el costo");
         }
       });

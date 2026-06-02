@@ -1,7 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { BeforeInstallPromptEvent } from '@/types/pwa';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePWAInstall");
 interface UsePWAInstallReturn {
   isInstallable: boolean;
   isInstalled: boolean;
@@ -22,7 +25,7 @@ export const usePWAInstall = (): UsePWAInstallReturn => {
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
-      console.log('PWA: beforeinstallprompt event captured');
+      logger.debug('PWA: beforeinstallprompt event captured');
       e.preventDefault();
       setDeferredPrompt(e);
       setIsInstallable(true);
@@ -30,7 +33,7 @@ export const usePWAInstall = (): UsePWAInstallReturn => {
 
     // Listen for app installed event
     const handleAppInstalled = () => {
-      console.log('PWA: App installed successfully');
+      logger.debug('PWA: App installed successfully');
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
@@ -47,27 +50,27 @@ export const usePWAInstall = (): UsePWAInstallReturn => {
 
   const promptInstall = async (): Promise<void> => {
     if (!deferredPrompt) {
-      console.log('PWA: No deferred prompt available');
+      logger.debug('PWA: No deferred prompt available');
       return;
     }
 
     try {
-      console.log('PWA: Showing install prompt');
+      logger.debug('PWA: Showing install prompt');
       await deferredPrompt.prompt();
       
       const choiceResult = await deferredPrompt.userChoice;
-      console.log('PWA: User choice:', choiceResult.outcome);
+      logger.debug('PWA: User choice:', choiceResult.outcome);
       
       if (choiceResult.outcome === 'accepted') {
-        console.log('PWA: User accepted installation');
+        logger.debug('PWA: User accepted installation');
       } else {
-        console.log('PWA: User dismissed installation');
+        logger.debug('PWA: User dismissed installation');
       }
       
       setDeferredPrompt(null);
       setIsInstallable(false);
     } catch (error) {
-      console.error('PWA: Error showing install prompt:', error);
+      logger.error('PWA: Error showing install prompt:', error);
     }
   };
 

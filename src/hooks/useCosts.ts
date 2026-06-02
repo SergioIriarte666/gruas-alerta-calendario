@@ -5,7 +5,10 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCosts");
 const COSTS_PAGE_SIZE = 500;
 const COSTS_SELECT_CLAUSE = `
       *,
@@ -56,7 +59,7 @@ const fetchCostsCount = async () => {
     .select('*', { count: 'exact', head: true });
 
   if (error) {
-    console.error('Error fetching costs count:', error);
+    logger.error('Error fetching costs count:', error);
     throw new Error(error.message);
   }
 
@@ -67,7 +70,7 @@ const fetchCostsChunk = async (from: number, to: number): Promise<Cost[]> => {
   const { data, error } = await buildCostsQuery().range(from, to);
 
   if (error) {
-    console.error('Error fetching costs chunk:', error);
+    logger.error('Error fetching costs chunk:', error);
     throw new Error(error.message);
   }
 
@@ -127,7 +130,7 @@ export const usePagedCosts = (page: number, pageSize: number) => {
         .range(from, to);
 
       if (error) {
-        console.error('Error fetching paged costs:', error);
+        logger.error('Error fetching paged costs:', error);
         throw new Error(error.message);
       }
 
@@ -145,7 +148,7 @@ export const usePagedCosts = (page: number, pageSize: number) => {
 };
 
 const addCost = async (costData: CostFormData) => {
-  console.log('[useCosts - addCost] Attempting to create cost with data:', costData);
+  logger.debug('[useCosts - addCost] Attempting to create cost with data:', costData);
   
   try {
     // Get current user for created_by
@@ -210,14 +213,14 @@ const addCost = async (costData: CostFormData) => {
       .select();
 
     if (costError) {
-      console.error('[useCosts - addCost] Database error:', costError);
-      console.error('[useCosts - addCost] Error code:', costError.code);
-      console.error('[useCosts - addCost] Error details:', costError.details);
+      logger.error('[useCosts - addCost] Database error:', costError);
+      logger.error('[useCosts - addCost] Error code:', costError.code);
+      logger.error('[useCosts - addCost] Error details:', costError.details);
       throw new Error(`Error de base de datos: ${costError.message}`);
     }
     
     if (!costResult || costResult.length === 0) {
-      console.error('[useCosts - addCost] No data returned from insert');
+      logger.error('[useCosts - addCost] No data returned from insert');
       throw new Error('No se pudo crear el costo - sin datos devueltos');
     }
 
@@ -251,29 +254,29 @@ const addCost = async (costData: CostFormData) => {
           created_by: null // No trigger automático porque ya tenemos cost_id
         };
 
-        console.log('[useCosts - addCost] Inserting crane_parts with data:', cranePartData);
+        logger.debug('[useCosts - addCost] Inserting crane_parts with data:', cranePartData);
 
         const { error: partsError } = await supabase
           .from('crane_parts')
           .insert([cranePartData]);
 
         if (partsError) {
-          console.error('[useCosts - addCost] Error creating crane part:', partsError);
-          console.error('[useCosts - addCost] Parts error code:', partsError.code);
-          console.error('[useCosts - addCost] Parts error details:', partsError.details);
+          logger.error('[useCosts - addCost] Error creating crane part:', partsError);
+          logger.error('[useCosts - addCost] Parts error code:', partsError.code);
+          logger.error('[useCosts - addCost] Parts error details:', partsError.details);
           
           // Eliminar el costo creado si hay error en las piezas
           await supabase.from('costs').delete().eq('id', createdCost.id);
           throw new Error(`Error al registrar las piezas: ${partsError.message}`);
         } else {
-          console.log('[useCosts - addCost] Crane part created successfully');
+          logger.debug('[useCosts - addCost] Crane part created successfully');
         }
       }
     }
 
     return costResult;
   } catch (error) {
-    console.error('[useCosts - addCost] Unexpected error:', error);
+    logger.error('[useCosts - addCost] Unexpected error:', error);
     throw error;
   }
 };
@@ -286,7 +289,7 @@ export const useAddCost = () => {
   return useMutation({
     mutationFn: addCost,
     onSuccess: (data, variables) => {
-      console.log('[useAddCost] Mutation success with data:', data);
+      logger.debug('[useAddCost] Mutation success with data:', data);
       invalidateAll();
       toast.success('Costo registrado correctamente');
       
@@ -310,7 +313,7 @@ export const useAddCost = () => {
 };
 
 const updateCost = async ({ id, ...costData }: { id: string } & any) => {
-  console.log('[useCosts - updateCost] Attempting to update cost:', id, costData);
+  logger.debug('[useCosts - updateCost] Attempting to update cost:', id, costData);
   
   // Separar campos de costs y campos de crane_parts
   const { part_name, supplier, supplier_phone, quantity, unit_price, kilometraje, ...validCostData } = costData;
@@ -323,16 +326,16 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
     .select();
 
   if (error) {
-    console.error(`[useCosts - updateCost] Supabase error for ID ${id}:`, error);
+    logger.error(`[useCosts - updateCost] Supabase error for ID ${id}:`, error);
     throw new Error(error.message);
   }
   
   if (!data || data.length === 0) {
-    console.error('[useCosts - updateCost] No data returned from update');
+    logger.error('[useCosts - updateCost] No data returned from update');
     throw new Error('No se pudo actualizar el costo - sin datos devueltos');
   }
 
-  console.log('[useCosts - updateCost] Cost updated successfully:', data);
+  logger.debug('[useCosts - updateCost] Cost updated successfully:', data);
   return data;
 };
 
@@ -344,7 +347,7 @@ export const useUpdateCost = () => {
   return useMutation({
     mutationFn: updateCost,
     onSuccess: (data) => {
-      console.log('[useUpdateCost] Mutation success with data:', data);
+      logger.debug('[useUpdateCost] Mutation success with data:', data);
       
       // FASE 5: Invalidar todas las queries relacionadas
       invalidateAll();
@@ -369,7 +372,7 @@ const deleteCost = async (id: string) => {
     .single();
 
   if (fetchError) {
-    console.error('Error fetching cost data before deletion:', fetchError);
+    logger.error('Error fetching cost data before deletion:', fetchError);
     throw new Error(fetchError.message);
   }
 
@@ -385,7 +388,7 @@ const deleteCost = async (id: string) => {
       .maybeSingle();
 
     if (invoiceError) {
-      console.error('Error fetching linked supplier invoice:', invoiceError);
+      logger.error('Error fetching linked supplier invoice:', invoiceError);
       throw new Error(invoiceError.message);
     }
 
@@ -400,7 +403,7 @@ const deleteCost = async (id: string) => {
     .eq('cost_id', id);
 
   if (costMovementsError) {
-    console.error('Error fetching inventory movements linked by cost_id:', costMovementsError);
+    logger.error('Error fetching inventory movements linked by cost_id:', costMovementsError);
     throw new Error(costMovementsError.message);
   }
 
@@ -414,7 +417,7 @@ const deleteCost = async (id: string) => {
       .eq('supplier_invoice_id', linkedInvoiceId);
 
     if (invoiceMovementsError) {
-      console.error('Error fetching inventory movements linked by supplier_invoice_id:', invoiceMovementsError);
+      logger.error('Error fetching inventory movements linked by supplier_invoice_id:', invoiceMovementsError);
       throw new Error(invoiceMovementsError.message);
     }
 
@@ -428,7 +431,7 @@ const deleteCost = async (id: string) => {
       .in('inventory_movement_id', Array.from(movementIds));
 
     if (deleteCranePartsByMovementError) {
-      console.error('Error deleting crane parts linked by inventory movement:', deleteCranePartsByMovementError);
+      logger.error('Error deleting crane parts linked by inventory movement:', deleteCranePartsByMovementError);
       throw new Error(deleteCranePartsByMovementError.message);
     }
 
@@ -438,7 +441,7 @@ const deleteCost = async (id: string) => {
       .in('id', Array.from(movementIds));
 
     if (deleteMovementsError) {
-      console.error('Error deleting linked inventory movements:', deleteMovementsError);
+      logger.error('Error deleting linked inventory movements:', deleteMovementsError);
       throw new Error(deleteMovementsError.message);
     }
   }
@@ -449,7 +452,7 @@ const deleteCost = async (id: string) => {
     .eq('cost_id', id);
 
   if (deleteCranePartsByCostError) {
-    console.error('Error deleting crane parts linked by cost:', deleteCranePartsByCostError);
+    logger.error('Error deleting crane parts linked by cost:', deleteCranePartsByCostError);
     throw new Error(deleteCranePartsByCostError.message);
   }
 
@@ -470,7 +473,7 @@ const deleteCost = async (id: string) => {
     );
 
   if (linkedPaymentsError) {
-    console.error('Error fetching linked supplier payments:', linkedPaymentsError);
+    logger.error('Error fetching linked supplier payments:', linkedPaymentsError);
     throw new Error(linkedPaymentsError.message);
   }
 
@@ -483,7 +486,7 @@ const deleteCost = async (id: string) => {
       .in('id', Array.from(paymentIds));
 
     if (deletePaymentsError) {
-      console.error('Error deleting linked supplier payments:', deletePaymentsError);
+      logger.error('Error deleting linked supplier payments:', deletePaymentsError);
       throw new Error(deletePaymentsError.message);
     }
   }
@@ -503,12 +506,12 @@ const deleteCost = async (id: string) => {
       ]);
 
       if (otherCostsResult.error) {
-        console.error('Error checking other costs linked to supplier invoice:', otherCostsResult.error);
+        logger.error('Error checking other costs linked to supplier invoice:', otherCostsResult.error);
         throw new Error(otherCostsResult.error.message);
       }
 
       if (otherPaymentsResult.error) {
-        console.error('Error checking other payments linked to supplier invoice:', otherPaymentsResult.error);
+        logger.error('Error checking other payments linked to supplier invoice:', otherPaymentsResult.error);
         throw new Error(otherPaymentsResult.error.message);
       }
 
@@ -522,7 +525,7 @@ const deleteCost = async (id: string) => {
           .eq('id', linkedInvoiceId);
 
         if (deleteInvoiceError) {
-          console.error('Error deleting linked supplier invoice:', deleteInvoiceError);
+          logger.error('Error deleting linked supplier invoice:', deleteInvoiceError);
           throw new Error(deleteInvoiceError.message);
         }
       }
@@ -531,7 +534,7 @@ const deleteCost = async (id: string) => {
   const { error } = await supabase.from('costs').delete().eq('id', id);
 
   if (error) {
-    console.error('Error deleting cost:', error);
+    logger.error('Error deleting cost:', error);
     throw new Error(error.message);
   }
 
@@ -658,7 +661,7 @@ export const useLinkInvoiceToCost = () => {
       toast.success('Factura vinculada al costo existente');
     },
     onError: (error: Error) => {
-      console.error('Error linking invoice to cost:', error);
+      logger.error('Error linking invoice to cost:', error);
       toast.error(error.message);
     },
   });
@@ -672,7 +675,7 @@ export const useDeleteCost = () => {
   return useMutation({
     mutationFn: deleteCost,
     onSuccess: (serviceId) => {
-      console.log('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
+      logger.debug('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
       invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
       queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });

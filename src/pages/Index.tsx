@@ -6,15 +6,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { debugAuthState } from '@/utils/authUtils';
 import { Button } from '@/components/ui/button';
 import { AuthBackground } from '@/components/auth/AuthBackground';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Index");
 const Index: React.FC = () => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
 
-  console.log('Index page - Auth loading:', authLoading, 'Profile loading:', profileLoading);
-  console.log('Index page - Auth user:', authUser?.email);
-  console.log('Index page - Profile user role:', profileUser?.role);
+  logger.debug('Index page - Auth loading:', authLoading, 'Profile loading:', profileLoading);
+  logger.debug('Index page - Auth user:', authUser?.email);
+  logger.debug('Index page - Profile user role:', profileUser?.role);
 
   // Debug auth state on mount
   useEffect(() => {
@@ -37,13 +40,13 @@ const Index: React.FC = () => {
 
   // If no authenticated user, redirect to auth
   if (!authUser) {
-    console.log('Index - No auth user, redirecting to /auth');
+    logger.debug('Index - No auth user, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
 
   // If auth user but no profile, still allow redirect based on a fallback
   if (authUser && !profileUser) {
-    console.log('Index - Auth user exists but no profile, redirecting to dashboard (fallback)');
+    logger.debug('Index - Auth user exists but no profile, redirecting to dashboard (fallback)');
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -82,24 +85,24 @@ const Index: React.FC = () => {
   }
 
   // Redirect based on user role
-  console.log(`Index - Redirecting user with role: ${profileUser.role}`);
+  logger.debug(`Index - Redirecting user with role: ${profileUser.role}`);
   
   switch (profileUser.role) {
     case 'client':
-      console.log('Index - Client user detected, redirecting to /portal');
+      logger.debug('Index - Client user detected, redirecting to /portal');
       return <Navigate to="/portal" replace />;
       
     case 'operator':
-      console.log('Index - Operator user detected, redirecting to /operator');
+      logger.debug('Index - Operator user detected, redirecting to /operator');
       return <Navigate to="/operator" replace />;
       
     case 'admin':
     case 'viewer':
-      console.log('Index - Admin/Viewer user detected, redirecting to /dashboard');
+      logger.debug('Index - Admin/Viewer user detected, redirecting to /dashboard');
       return <Navigate to="/dashboard" replace />;
       
     default:
-      console.error('Index - Unknown role, redirecting to /dashboard');
+      logger.error('Index - Unknown role, redirecting to /dashboard');
       return <Navigate to="/dashboard" replace />;
   }
 };

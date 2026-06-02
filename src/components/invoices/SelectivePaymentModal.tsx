@@ -11,7 +11,10 @@ import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SelectivePaymentModal");
 interface SelectivePaymentModalProps {
   payment: PaymentWithDetails;
   isOpen: boolean;
@@ -66,7 +69,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
       // Usar remaining_amount directamente de la DB (calculado por trigger)
       setAvailableInvoices(data || []);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      logger.error('Error loading invoices:', error);
       toast.error('Error al cargar facturas disponibles');
     } finally {
       setLoading(false);
@@ -111,7 +114,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
         onClose();
       }, 1500);
     } catch (error) {
-      console.error('Error applying payment:', error);
+      logger.error('Error applying payment:', error);
       batchProgress.error('Error al aplicar el pago');
     } finally {
       setIsApplying(false);

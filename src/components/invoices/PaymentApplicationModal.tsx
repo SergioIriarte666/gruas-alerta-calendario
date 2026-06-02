@@ -12,7 +12,10 @@ import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentApplicationModal");
 interface PaymentApplicationModalProps {
   payment: PaymentWithDetails;
   availableInvoices: any[];
@@ -126,7 +129,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
         onClose();
       }, 1500);
     } catch (error) {
-      console.error('Error applying payment:', error);
+      logger.error('Error applying payment:', error);
       batchProgress.error('Error al aplicar el pago');
     } finally {
       setLoading(false);

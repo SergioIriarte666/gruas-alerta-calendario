@@ -3,7 +3,10 @@ import { generateServiceDetailsPDF } from '@/utils/pdf/serviceDetailsPdfGenerato
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceDetailsPDF");
 export const useServiceDetailsPDF = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -16,7 +19,7 @@ export const useServiceDetailsPDF = () => {
     setIsGenerating(true);
     
     try {
-      console.log('📄 Generando PDF de detalles del servicio...');
+      logger.debug('📄 Generando PDF de detalles del servicio...');
       
       const blob = await generateServiceDetailsPDF({
         service: serviceData,
@@ -36,10 +39,10 @@ export const useServiceDetailsPDF = () => {
       URL.revokeObjectURL(url);
       
       toast.success('PDF generado exitosamente');
-      console.log('✅ PDF generado y descargado');
+      logger.debug('✅ PDF generado y descargado');
       
     } catch (error) {
-      console.error('❌ Error generando PDF:', error);
+      logger.error('❌ Error generando PDF:', error);
       toast.error('Error al generar el PDF');
     } finally {
       setIsGenerating(false);

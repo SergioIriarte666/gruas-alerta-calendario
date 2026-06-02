@@ -1,6 +1,9 @@
 
 import { DataMapper } from '../dataMapper';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("serviceCreator");
 export const createServiceFromCsvRow = async (row: any, dataMapper: DataMapper) => {
   try {
     // Find existing entities
@@ -10,22 +13,22 @@ export const createServiceFromCsvRow = async (row: any, dataMapper: DataMapper) 
     const foundServiceType = dataMapper.findServiceTypeByName(row.serviceType);
 
     if (!foundClient) {
-      console.warn(`Client not found for RUT: ${row.clientRut} or Name: ${row.clientName}`);
+      logger.warn(`Client not found for RUT: ${row.clientRut} or Name: ${row.clientName}`);
       return { success: false, error: `Cliente no encontrado: ${row.clientRut || row.clientName}` };
     }
 
     if (!foundCrane) {
-      console.warn(`Crane not found for License Plate: ${row.craneLicensePlate}`);
+      logger.warn(`Crane not found for License Plate: ${row.craneLicensePlate}`);
       return { success: false, error: `Grúa no encontrada: ${row.craneLicensePlate}` };
     }
 
     if (!foundOperator) {
-      console.warn(`Operator not found for RUT: ${row.operatorRut}`);
+      logger.warn(`Operator not found for RUT: ${row.operatorRut}`);
       return { success: false, error: `Operador no encontrado: ${row.operatorRut}` };
     }
 
     if (!foundServiceType) {
-      console.warn(`Service Type not found for Name: ${row.serviceType}`);
+      logger.warn(`Service Type not found for Name: ${row.serviceType}`);
       return { success: false, error: `Tipo de servicio no encontrado: ${row.serviceType}` };
     }
 
@@ -79,7 +82,7 @@ export const createServiceFromCsvRow = async (row: any, dataMapper: DataMapper) 
       }
     };
   } catch (error: any) {
-    console.error("Error creating service from CSV row:", error);
+    logger.error("Error creating service from CSV row:", error);
     return { success: false, error: `Error al crear el servicio: ${error.message || error}` };
   }
 };

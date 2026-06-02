@@ -7,7 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Trash2, Package, CreditCard, Wrench, Loader2, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Cost } from '@/types/costs';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CostDeleteConfirmDialog");
 interface RelatedData {
   supplierPayments: number;
   inventoryMovements: number;
@@ -46,7 +49,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
     setLoading(true);
     try {
       // Supplier payments linked to this cost
-      const paymentsQuery = supabase.from('supplier_payments' as any)
+      const paymentsQuery = supabase.from('supplier_payments')
         .select('id', { count: 'exact', head: true })
         .or(`cost_id.eq.${cost.id}${cost.supplier_payment_id ? `,id.eq.${cost.supplier_payment_id}` : ''}`);
 
@@ -68,7 +71,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
         craneParts: parts.count || 0,
       });
     } catch (err) {
-      console.error('Error fetching related data:', err);
+      logger.error('Error fetching related data:', err);
       setRelatedData({ supplierPayments: 0, inventoryMovements: 0, craneParts: 0 });
     } finally {
       setLoading(false);

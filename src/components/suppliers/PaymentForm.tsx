@@ -33,7 +33,10 @@ import { parseFromDatabase, formatForDisplay, getTodayLocal } from '@/utils/time
 import { Badge } from '@/components/ui/badge';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentForm");
 const paymentSchema = z.object({
   supplier_id: z.string().min(1, 'El proveedor es requerido'),
   amount: z.number().min(0.01, 'El monto debe ser mayor a 0'),
@@ -129,7 +132,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           return;
         }
       } catch (error) {
-        console.error('Error checking duplicate:', error);
+        logger.error('Error checking duplicate:', error);
       }
       setIsCheckingDuplicate(false);
     }

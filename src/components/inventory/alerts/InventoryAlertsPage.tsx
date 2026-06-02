@@ -12,7 +12,10 @@ import { AlertDashboard } from './AlertDashboard';
 import { AlertHistoryView } from './AlertHistoryView';
 import { AuthErrorHandler } from './AuthErrorHandler';
 import SessionVerifier from '@/components/auth/SessionVerifier';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InventoryAlertsPage");
 export const InventoryAlertsPage: React.FC = () => {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
@@ -21,7 +24,7 @@ export const InventoryAlertsPage: React.FC = () => {
   const { canCreateAlerts, user, isAuthenticated, isLoading: permissionsLoading } = useUserPermissions();
 
   const handleNewAlertClick = () => {
-    console.log('Nueva Alerta button clicked');
+    logger.debug('Nueva Alerta button clicked');
     setShowNewAlertForm(true);
     setActiveTab("configuration");
   };
@@ -44,7 +47,7 @@ export const InventoryAlertsPage: React.FC = () => {
     );
   }
 
-  console.log('InventoryAlertsPage render - showNewAlertForm:', showNewAlertForm);
+  logger.debug('InventoryAlertsPage render - showNewAlertForm:', showNewAlertForm);
 
   return (
     <div className="space-y-6">
@@ -196,11 +199,11 @@ export const InventoryAlertsPage: React.FC = () => {
           <AlertConfigurationPanel 
             showNewForm={showNewAlertForm}
             onShowNewForm={() => {
-              console.log('onShowNewForm called, setting showNewAlertForm to true');
+              logger.debug('onShowNewForm called, setting showNewAlertForm to true');
               setShowNewAlertForm(true);
             }}
             onCloseNewForm={() => {
-              console.log('onCloseNewForm called, setting showNewAlertForm to false');
+              logger.debug('onCloseNewForm called, setting showNewAlertForm to false');
               setShowNewAlertForm(false);
             }}
           />

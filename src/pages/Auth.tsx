@@ -15,7 +15,10 @@ import { validatePassword } from '@/utils/passwordValidation';
 import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Auth");
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get('email');
@@ -41,7 +44,7 @@ const Auth = () => {
   // Check if user needs to set password (invited user who just clicked the link)
   useEffect(() => {
     if (authUser && needsPasswordSetup && !profileLoading) {
-      console.log('Auth: User needs to set password');
+      logger.debug('Auth: User needs to set password');
       setShowSetPassword(true);
     }
   }, [authUser, needsPasswordSetup, profileLoading]);
@@ -65,33 +68,33 @@ const Auth = () => {
     if (showSetPassword) return;
     
     if (authUser && profileUser) {
-      console.log(`Auth: User authenticated with role: ${profileUser.role}`);
+      logger.debug(`Auth: User authenticated with role: ${profileUser.role}`);
       
       // Redirección directa basada en rol
       switch (profileUser.role) {
         case 'client':
-          console.log('Auth: Redirecting client to /portal');
+          logger.debug('Auth: Redirecting client to /portal');
           navigate('/portal', { replace: true });
           break;
         case 'operator':
-          console.log('Auth: Redirecting operator to /operator');
+          logger.debug('Auth: Redirecting operator to /operator');
           navigate('/operator', { replace: true });
           break;
         case 'admin':
           if (profileUser.operator_id) {
-            console.log('Auth: Admin with operator profile detected, redirecting to / for portal selection');
+            logger.debug('Auth: Admin with operator profile detected, redirecting to / for portal selection');
             navigate('/', { replace: true });
             break;
           }
-          console.log('Auth: Redirecting admin to /dashboard');
+          logger.debug('Auth: Redirecting admin to /dashboard');
           navigate('/dashboard', { replace: true });
           break;
         case 'viewer':
-          console.log('Auth: Redirecting admin/viewer to /dashboard');
+          logger.debug('Auth: Redirecting admin/viewer to /dashboard');
           navigate('/dashboard', { replace: true });
           break;
         default:
-          console.log('Auth: Defaulting to / for unknown role');
+          logger.debug('Auth: Defaulting to / for unknown role');
           navigate('/', { replace: true });
           break;
       }
@@ -118,17 +121,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      console.log('🔑 Auth: Starting login for:', email);
+      logger.debug('🔑 Auth: Starting login for:', email);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password
       });
 
-      console.log('🔑 Auth: Login response:', { data: !!data, error: !!error });
+      logger.debug('🔑 Auth: Login response:', { data: !!data, error: !!error });
 
       if (error) {
-        console.error('🚨 Auth: Login error:', error);
+        logger.error('🚨 Auth: Login error:', error);
 
         recordFailedAttempt();
 
@@ -143,13 +146,13 @@ const Auth = () => {
 
         toast.error(errorMessage);
       } else if (data?.user) {
-        console.log('✅ Auth: Login successful for user:', data.user.email);
+        logger.debug('✅ Auth: Login successful for user:', data.user.email);
         resetAttempts();
         toast.success('¡Inicio de sesión exitoso!');
         // La redirección se maneja en el useEffect
       }
     } catch (error: any) {
-      console.error('🚨 Auth: Critical login error:', error);
+      logger.error('🚨 Auth: Critical login error:', error);
 
       // Network/CORS errors are not credential failures — don't penalize the counter
       let errorMessage = 'Error de conexión';

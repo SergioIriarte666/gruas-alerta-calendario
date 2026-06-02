@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientInvoices");
 export const useClientInvoices = (clientId: string | null) => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -11,7 +14,7 @@ export const useClientInvoices = (clientId: string | null) => {
     const fetchInvoicesByClient = useCallback(async (id: string) => {
         setLoading(true);
         try {
-            console.log('Fetching invoices for client ID:', id);
+            logger.debug('Fetching invoices for client ID:', id);
             
             const { data, error } = await supabase
                 .from('invoices')
@@ -20,11 +23,11 @@ export const useClientInvoices = (clientId: string | null) => {
                 .order('issue_date', { ascending: false });
 
             if (error) {
-                console.error('Supabase error fetching client invoices:', error);
+                logger.error('Supabase error fetching client invoices:', error);
                 throw new Error(`Error en consulta: ${error.message}`);
             }
 
-            console.log('Client invoices fetched:', data?.length || 0, 'for client:', id);
+            logger.debug('Client invoices fetched:', data?.length || 0, 'for client:', id);
             
             // Format invoices and detect overdue ones
             const formattedInvoices: Invoice[] = [];
@@ -48,7 +51,7 @@ export const useClientInvoices = (clientId: string | null) => {
 
             setInvoices(formattedInvoices);
         } catch (error: any) {
-            console.error('Error fetching client invoices:', error);
+            logger.error('Error fetching client invoices:', error);
             toast.error("Error", {
                 description: "No se pudieron cargar las facturas del cliente.",
             });

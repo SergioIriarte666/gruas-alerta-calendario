@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useProjectionFilters");
 interface ProjectionFilters {
   dateRange: number;
   clientId: string | null;
@@ -22,7 +25,7 @@ export const useProjectionFilters = () => {
         return JSON.parse(saved);
       }
     } catch (error) {
-      console.error('Error loading saved filters:', error);
+      logger.error('Error loading saved filters:', error);
     }
     return defaultFilters;
   });
@@ -31,7 +34,7 @@ export const useProjectionFilters = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
     } catch (error) {
-      console.error('Error saving filters:', error);
+      logger.error('Error saving filters:', error);
     }
   }, [filters]);
 

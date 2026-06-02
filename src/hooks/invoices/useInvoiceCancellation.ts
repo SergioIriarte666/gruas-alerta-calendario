@@ -1,7 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceCancellation");
 export interface CancellationData {
   invoiceId: string;
   creditNoteNumber: string;
@@ -39,26 +42,26 @@ export const useInvoiceCancellation = () => {
 
   const cancelInvoice = async (data: CancellationData): Promise<void> => {
     try {
-      console.log('🚀 Iniciando anulación de factura:', data.invoiceId);
+      logger.debug('🚀 Iniciando anulación de factura:', data.invoiceId);
 
       // 1. Verificar y refrescar sesión si es necesario
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        console.error('❌ Error obteniendo sesión:', sessionError);
+        logger.error('❌ Error obteniendo sesión:', sessionError);
         throw new Error('Error de autenticación. Por favor, recargue la página e intente nuevamente.');
       }
       
       if (!sessionData.session) {
-        console.log('⚠️ No hay sesión activa, intentando refrescar...');
+        logger.debug('⚠️ No hay sesión activa, intentando refrescar...');
         const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
         
         if (refreshError || !refreshData.session) {
-          console.error('❌ No se pudo refrescar la sesión:', refreshError);
+          logger.error('❌ No se pudo refrescar la sesión:', refreshError);
           throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
         }
         
-        console.log('✅ Sesión refrescada exitosamente');
+        logger.debug('✅ Sesión refrescada exitosamente');
       }
 
       // 2. Obtener datos de la factura para registro
@@ -69,7 +72,7 @@ export const useInvoiceCancellation = () => {
         .maybeSingle();
 
       if (invoiceError) {
-        console.error('❌ Error consultando factura:', invoiceError);
+        logger.error('❌ Error consultando factura:', invoiceError);
         throw new Error('Error al acceder a la factura. Verifique su conexión e intente nuevamente.');
       }
       
@@ -112,11 +115,11 @@ export const useInvoiceCancellation = () => {
         });
 
       if (cancellationError) {
-        console.error('❌ Error creando registro de anulación:', cancellationError);
+        logger.error('❌ Error creando registro de anulación:', cancellationError);
         throw new Error('Error al registrar la anulación');
       }
 
-      console.log('✅ Registro de anulación creado');
+      logger.debug('✅ Registro de anulación creado');
 
       // 5. Actualizar estado de la factura a cancelled
       const { error: updateError } = await supabase
@@ -132,7 +135,7 @@ export const useInvoiceCancellation = () => {
         throw new Error('Error al actualizar estado de la factura');
       }
 
-      console.log('✅ Factura marcada como anulada');
+      logger.debug('✅ Factura marcada como anulada');
 
       // 6. Obtener relaciones invoice_closures
       const { data: invoiceClosures, error: closureError } = await supabase
@@ -169,9 +172,9 @@ export const useInvoiceCancellation = () => {
             .eq('status', 'invoiced');
 
           if (revertServicesError) {
-            console.error('Error revirtiendo servicios:', revertServicesError);
+            logger.error('Error revirtiendo servicios:', revertServicesError);
           } else {
-            console.log('✅ Servicios revertidos a completed');
+            logger.debug('✅ Servicios revertidos a completed');
           }
         }
 
@@ -183,9 +186,9 @@ export const useInvoiceCancellation = () => {
           .eq('status', 'invoiced');
 
         if (closureRevertError) {
-          console.error('Error revirtiendo cierres:', closureRevertError);
+          logger.error('Error revirtiendo cierres:', closureRevertError);
         } else {
-          console.log('✅ Cierres revertidos a closed');
+          logger.debug('✅ Cierres revertidos a closed');
         }
 
         // 10. Eliminar relación invoice_closures para liberar el cierre para re-facturación
@@ -195,9 +198,9 @@ export const useInvoiceCancellation = () => {
           .eq('invoice_id', data.invoiceId);
 
         if (deleteRelationError) {
-          console.error('Error eliminando relación invoice_closures:', deleteRelationError);
+          logger.error('Error eliminando relación invoice_closures:', deleteRelationError);
         } else {
-          console.log('✅ Relación invoice_closures eliminada - Cierre disponible para re-facturar');
+          logger.debug('✅ Relación invoice_closures eliminada - Cierre disponible para re-facturar');
         }
       }
 
@@ -225,7 +228,7 @@ export const useInvoiceCancellation = () => {
           .delete()
           .eq('invoice_id', data.invoiceId);
         
-        console.log('✅ Servicios directos revertidos y relaciones eliminadas');
+        logger.debug('✅ Servicios directos revertidos y relaciones eliminadas');
       }
 
       // 11. Invalidar queries
@@ -244,7 +247,7 @@ export const useInvoiceCancellation = () => {
       });
 
     } catch (error: any) {
-      console.error('❌ Error en anulación:', error);
+      logger.error('❌ Error en anulación:', error);
       toast.error("No se pudo anular la factura", {
         description: error.message || "Ocurrió un error inesperado. Por favor, intenta nuevamente.",
       });
@@ -273,7 +276,7 @@ export const useInvoiceCancellation = () => {
       .order('cancelled_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching cancellations:', error);
+      logger.error('Error fetching cancellations:', error);
       throw error;
     }
 

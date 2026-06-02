@@ -5,7 +5,10 @@ import { MappedServiceData } from '@/utils/dataMapper';
 import { useServices } from '@/hooks/useServices';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useEnhancedCSVUpload");
 export const useEnhancedCSVUpload = () => {
   const { createService, services } = useServices();
   const { syncAllFoliosAfterBulkUpload } = useFolioGenerator();
@@ -24,9 +27,9 @@ export const useEnhancedCSVUpload = () => {
       try {
         await uploader.initialize();
         setIsInitialized(true);
-        console.log('CSV uploader initialized successfully');
+        logger.debug('CSV uploader initialized successfully');
       } catch (error) {
-        console.error('Error initializing CSV uploader:', error);
+        logger.error('Error initializing CSV uploader:', error);
         toast.error('Error al inicializar el cargador de archivos');
       }
     }
@@ -43,10 +46,10 @@ export const useEnhancedCSVUpload = () => {
       setUploadProgress(null);
       const data = await uploader.parseFile(file, setUploadProgress);
       setCsvData(data);
-      console.log(`Parsed ${data.length} rows from file`);
+      logger.debug(`Parsed ${data.length} rows from file`);
       return data;
     } catch (error) {
-      console.error('Error parsing file:', error);
+      logger.error('Error parsing file:', error);
       toast.error(`Error al procesar archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       throw error;
     }
@@ -83,7 +86,7 @@ export const useEnhancedCSVUpload = () => {
         toast.warning(`Validación completada: ${result.validCount} válidos, ${result.errorCount} errores`);
       }
 
-      console.log('Validation result:', {
+      logger.debug('Validation result:', {
         valid: result.isValid,
         total: result.totalRows,
         validCount: result.validCount,
@@ -92,7 +95,7 @@ export const useEnhancedCSVUpload = () => {
       });
 
     } catch (error) {
-      console.error('Error validating data:', error);
+      logger.error('Error validating data:', error);
       toast.error(`Error en validación: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setIsValidating(false);
@@ -130,14 +133,14 @@ export const useEnhancedCSVUpload = () => {
 
       // Sincronizar el contador de folios después de la carga masiva
       if (result.insertedFolios && result.insertedFolios.length > 0) {
-        console.log('🔄 Syncing folio counter after bulk upload...');
+        logger.debug('🔄 Syncing folio counter after bulk upload...');
         await syncAllFoliosAfterBulkUpload(result.insertedFolios);
       }
 
       return result;
 
     } catch (error) {
-      console.error('Error uploading services:', error);
+      logger.error('Error uploading services:', error);
       const errorResult: UploadResult = {
         success: false,
         processed: 0,

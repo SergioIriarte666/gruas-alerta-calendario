@@ -35,6 +35,9 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { RecentImportLogsCard } from './historical/RecentImportLogsCard';
 import {
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("HistoricalPurchases");
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -241,7 +244,7 @@ export const HistoricalPurchases = () => {
       toast.success('Factura actualizada correctamente');
       setEditingInvoice(null);
     } catch (error) {
-      console.error('Error updating invoice:', error);
+      logger.error('Error updating invoice:', error);
       toast.error('Error al actualizar la factura');
     }
   };
@@ -263,7 +266,7 @@ export const HistoricalPurchases = () => {
         toast.success('Factura eliminada correctamente');
       }
     } catch (error: any) {
-      console.error('Error deleting invoice(s):', error);
+      logger.error('Error deleting invoice(s):', error);
       if (error?.code === 'PROTECTED_INVOICE') {
         toast.error('Factura protegida', {
           description: 'Esta factura fue creada en la app y requiere confirmación reforzada para ser eliminada.',
@@ -304,7 +307,7 @@ export const HistoricalPurchases = () => {
       toast.success(`${selectedIds.length} facturas actualizadas correctamente`);
       setSelectedIds([]);
     } catch (error) {
-      console.error('Error updating status:', error);
+      logger.error('Error updating status:', error);
       toast.error('Error al actualizar estado');
     }
   };
@@ -314,7 +317,7 @@ export const HistoricalPurchases = () => {
       await createInvoice(data);
       setIsCreateOpen(false);
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      logger.error('Error creating invoice:', error);
       // Toast is handled by the hook
     }
   };

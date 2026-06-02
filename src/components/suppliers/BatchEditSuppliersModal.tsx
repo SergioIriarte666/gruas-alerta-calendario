@@ -22,7 +22,10 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("BatchEditSuppliersModal");
 interface BatchEditSuppliersModalProps {
   selectedSuppliers: SupplierWithStats[];
   isOpen: boolean;
@@ -76,7 +79,7 @@ export const BatchEditSuppliersModal = ({
       }
 
       const promises = selectedSuppliers.map(supplier => 
-        (supabase as any)
+        supabase
           .from('inventory_suppliers')
           .update(updates)
           .eq('id', supplier.id)
@@ -97,7 +100,7 @@ export const BatchEditSuppliersModal = ({
       setStatus('no_change');
     },
     onError: (error) => {
-      console.error('Error updating suppliers:', error);
+      logger.error('Error updating suppliers:', error);
       toast.error('Error al actualizar proveedores');
     },
   });

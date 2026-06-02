@@ -29,7 +29,10 @@ import { useSupplierDuplicateCheck, SupplierDuplicateResult } from '@/hooks/useD
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("XMLSupplierUpload");
 interface XMLSupplierUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -119,7 +122,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
             }
           }
         } catch (dupError) {
-          console.error('Error checking duplicates:', dupError);
+          logger.error('Error checking duplicates:', dupError);
         } finally {
           setIsCheckingDuplicates(false);
         }
@@ -128,7 +131,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
       }
     } catch (error) {
       toast.error('Error procesando el archivo XML');
-      console.error('XML parsing error:', error);
+      logger.error('XML parsing error:', error);
     }
   };
 
@@ -169,7 +172,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
               resolve();
             },
             onError: (error) => {
-              console.error(`Error creando proveedor ${i + 1}:`, error);
+              logger.error(`Error creando proveedor ${i + 1}:`, error);
               setUploadProgress(((i + 1) / total) * 100);
               resolve(); // Continuar con el siguiente aunque falle
             }
@@ -186,7 +189,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
       
     } catch (error) {
       toast.error('Error durante la carga masiva');
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

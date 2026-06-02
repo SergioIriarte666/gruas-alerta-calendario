@@ -32,7 +32,10 @@ import {
   Eye
 } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentReconciliationUpdated");
 interface PaymentReconciliationProps {
   onClose?: () => void;
 }
@@ -94,7 +97,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       const stats = await getReconciliationStats();
       setReconciliationStats(stats);
     } catch (error) {
-      console.error('Error loading reconciliation stats:', error);
+      logger.error('Error loading reconciliation stats:', error);
     }
   };
 
@@ -110,7 +113,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       };
       setSystemDiagnosis(diagnosis);
     } catch (error) {
-      console.error('Error loading system diagnosis:', error);
+      logger.error('Error loading system diagnosis:', error);
     } finally {
       setDiagnosisLoading(false);
     }
@@ -122,7 +125,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       await loadReconciliationStats();
       await loadSystemDiagnosis();
     } catch (error) {
-      console.error('Error in automatic maintenance:', error);
+      logger.error('Error in automatic maintenance:', error);
     }
   };
 
@@ -167,7 +170,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       await refetch();
       toast.success("Sistema reparado exitosamente");
     } catch (error) {
-      console.error('Error repairing system:', error);
+      logger.error('Error repairing system:', error);
       toast.error("Error al reparar el sistema");
     } finally {
       setDiagnosisLoading(false);

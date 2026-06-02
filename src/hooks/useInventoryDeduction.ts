@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInventoryDeduction");
 interface ProductSaleItem {
   productId: string;
   quantity: number;
@@ -20,7 +23,7 @@ export const useInventoryDeduction = () => {
     }
 
     try {
-      console.log(`🔄 Processing inventory deduction for service ${serviceFolio}...`);
+      logger.debug(`🔄 Processing inventory deduction for service ${serviceFolio}...`);
 
       // Check if inventory has already been deducted for this service
       const { data: existingMovements, error: checkError } = await supabase
@@ -32,7 +35,7 @@ export const useInventoryDeduction = () => {
       if (checkError) throw checkError;
 
       if (existingMovements && existingMovements.length > 0) {
-        console.log(`⚠️ Inventory already deducted for service ${serviceFolio}`);
+        logger.debug(`⚠️ Inventory already deducted for service ${serviceFolio}`);
         return { 
           success: true, 
           message: 'El inventario ya fue descontado para este servicio' 
@@ -56,7 +59,7 @@ export const useInventoryDeduction = () => {
 
       // Process each sales item
       for (const item of salesItems) {
-        console.log(`📦 Processing product sale: ${item.productId}, quantity: ${item.quantity}`);
+        logger.debug(`📦 Processing product sale: ${item.productId}, quantity: ${item.quantity}`);
 
         // Create inventory movement for the sale
         const { error: movementError } = await supabase
@@ -89,7 +92,7 @@ export const useInventoryDeduction = () => {
           .maybeSingle();
 
         if (getStockError) {
-          console.warn(`Warning getting current stock for ${item.productId}:`, getStockError);
+          logger.warn(`Warning getting current stock for ${item.productId}:`, getStockError);
           continue; // Skip this item and continue with others
         }
 
@@ -105,12 +108,12 @@ export const useInventoryDeduction = () => {
           .eq('location_id', defaultLocationId);
 
         if (stockError) {
-          console.warn(`Warning updating stock for ${item.productId}:`, stockError);
+          logger.warn(`Warning updating stock for ${item.productId}:`, stockError);
           // Continue processing other items even if stock update fails
         }
       }
 
-      console.log(`✅ Inventory deduction completed for service ${serviceFolio}`);
+      logger.debug(`✅ Inventory deduction completed for service ${serviceFolio}`);
       
       return { 
         success: true, 
@@ -118,7 +121,7 @@ export const useInventoryDeduction = () => {
       };
 
     } catch (error) {
-      console.error('❌ Error processing inventory deduction:', error);
+      logger.error('❌ Error processing inventory deduction:', error);
       
       // Don't throw error to avoid blocking service creation/completion
       // Just log and show warning

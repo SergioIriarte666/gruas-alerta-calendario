@@ -11,7 +11,10 @@ import { isEquipmentRentalService } from '../serviceValueCalculations';
 import { getCustodyDisplayInfo } from '../custodyCalculations';
 import { Service } from '@/types';
 import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("serviceReportExporter");
 // Función para obtener el valor de una columna dado un servicio
 const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsConfig): string => {
   // Calcular maxChars dinámicamente basado en el ancho configurado
@@ -185,8 +188,8 @@ export const exportServiceReport = async ({
 
   if (format === 'pdf') {
     try {
-      console.log('📄 [PDF Export] Iniciando generación de PDF con', services.length, 'servicios');
-      console.log('📄 [PDF Export] Columnas visibles:', visibleColumns.length);
+      logger.debug('📄 [PDF Export] Iniciando generación de PDF con', services.length, 'servicios');
+      logger.debug('📄 [PDF Export] Columnas visibles:', visibleColumns.length);
       
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
@@ -257,11 +260,11 @@ export const exportServiceReport = async ({
             styles: { fontSize: 7, cellPadding: 1.5 },
           });
         } catch (rentalSectionError) {
-          console.warn('⚠️ [PDF Export] No se pudo generar el detalle de arriendos:', rentalSectionError);
+          logger.warn('⚠️ [PDF Export] No se pudo generar el detalle de arriendos:', rentalSectionError);
         }
       }
 
-      console.log('✅ [PDF Export] PDF generado exitosamente');
+      logger.debug('✅ [PDF Export] PDF generado exitosamente');
       const pdfBlob = doc.output('blob');
       if (sendBlobToDownloadWindow(downloadWindow, pdfBlob, `${exportFileDefaultName}.pdf`)) {
         return;
@@ -270,7 +273,7 @@ export const exportServiceReport = async ({
       try {
         doc.save(`${exportFileDefaultName}.pdf`);
       } catch (saveError) {
-        console.error('❌ [PDF Export] doc.save falló, usando descarga alternativa:', saveError);
+        logger.error('❌ [PDF Export] doc.save falló, usando descarga alternativa:', saveError);
         const pdfUrl = URL.createObjectURL(pdfBlob);
         const pdfLink = document.createElement('a');
         pdfLink.href = pdfUrl;
@@ -286,7 +289,7 @@ export const exportServiceReport = async ({
         }, 100);
       }
     } catch (error) {
-      console.error('❌ [PDF Export] Error generando PDF:', error);
+      logger.error('❌ [PDF Export] Error generando PDF:', error);
       throw new Error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
 
@@ -351,7 +354,7 @@ export const exportServiceReport = async ({
         const rental_ws = XLSX.utils.json_to_sheet(rentalRows.map(row => row.excelRow));
         XLSX.utils.book_append_sheet(wb, rental_ws, 'Arriendos de Equipos');
       } catch (rentalSheetError) {
-        console.warn('⚠️ [Excel Export] No se pudo generar la hoja de arriendos:', rentalSheetError);
+        logger.warn('⚠️ [Excel Export] No se pudo generar la hoja de arriendos:', rentalSheetError);
       }
     }
 
@@ -364,7 +367,7 @@ export const exportServiceReport = async ({
     try {
       XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
     } catch (writeError) {
-      console.error('❌ [Excel Export] XLSX.writeFile falló, usando descarga alternativa:', writeError);
+      logger.error('❌ [Excel Export] XLSX.writeFile falló, usando descarga alternativa:', writeError);
       const xlsxUrl = URL.createObjectURL(xlsxBlob);
       const xlsxLink = document.createElement('a');
       xlsxLink.href = xlsxUrl;

@@ -24,7 +24,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Clients");
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
   const { metrics, serviceCountByClient } = useClientsDashboardMetrics(clients);
@@ -193,7 +196,7 @@ const Clients = () => {
           setIsDialogOpen(false);
           setSelectedClient(undefined);
         } catch (error) {
-          console.error('Error updating client:', error);
+          logger.error('Error updating client:', error);
         }
       }
     }

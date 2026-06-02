@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useAuditLog");
 export type AuditOperation = 'INSERT' | 'UPDATE' | 'DELETE';
 
 export type AuditModule =
@@ -149,7 +152,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         .limit(5000);
 
       if (error) {
-        console.error('profiles error:', error);
+        logger.error('profiles error:', error);
         return [];
       }
 
@@ -228,11 +231,11 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         activityQuery,
       ]);
 
-      if (auditResult.error) console.error('audit_log error:', auditResult.error);
-      if (serviceHistResult.error) console.error('service_change_history error:', serviceHistResult.error);
-      if (backupResult.error) console.error('backup_logs error:', backupResult.error);
-      if (notifResult.error) console.error('notification_logs error:', notifResult.error);
-      if (activityResult.error) console.error('user_activity_log error:', activityResult.error);
+      if (auditResult.error) logger.error('audit_log error:', auditResult.error);
+      if (serviceHistResult.error) logger.error('service_change_history error:', serviceHistResult.error);
+      if (backupResult.error) logger.error('backup_logs error:', backupResult.error);
+      if (notifResult.error) logger.error('notification_logs error:', notifResult.error);
+      if (activityResult.error) logger.error('user_activity_log error:', activityResult.error);
 
       const auditEntries: AuditEntry[] = (auditResult.data || []).map((r: any) => ({
         id: nextId(),

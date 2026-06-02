@@ -19,7 +19,10 @@ import { useClients } from '@/hooks/useClients';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ClosureForm");
 interface ClosureFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -130,7 +133,7 @@ const ClosureForm = ({
         setCurrentStep(1);
       }, 0);
     } catch (error) {
-      console.error('Error creating closure:', error);
+      logger.error('Error creating closure:', error);
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ServiceStatus } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUpdateServicesBatch");
 export interface BatchProgressCallback {
   current: number;
   total: number;
@@ -51,7 +54,7 @@ export const useUpdateServicesBatch = () => {
               .single();
             
             if (fetchObsError) {
-              console.error('Error fetching observations:', fetchObsError);
+              logger.error('Error fetching observations:', fetchObsError);
             }
             
             const existingObs = existing?.observations || '';
@@ -99,7 +102,7 @@ export const useUpdateServicesBatch = () => {
             .limit(1);
 
           if (fetchError) {
-            console.error('Error fetching service_resources primary operator:', fetchError);
+            logger.error('Error fetching service_resources primary operator:', fetchError);
             throw new Error(`Error fetching operator data: ${fetchError.message}`);
           }
 
@@ -118,7 +121,7 @@ export const useUpdateServicesBatch = () => {
                 .eq('id', existingPrimaryId);
 
               if (updateError) {
-                console.error('Error updating primary operator resource:', updateError);
+                logger.error('Error updating primary operator resource:', updateError);
                 throw new Error(`Error updating operator: ${updateError.message}`);
               }
 
@@ -132,7 +135,7 @@ export const useUpdateServicesBatch = () => {
                 .eq('is_primary', true);
 
               if (demoteError) {
-                console.error('Error demoting other primary operator resources:', demoteError);
+                logger.error('Error demoting other primary operator resources:', demoteError);
               }
             } else {
               // Remove operator assignment (operatorId is null)
@@ -142,7 +145,7 @@ export const useUpdateServicesBatch = () => {
                 .eq('id', existingPrimaryId);
 
               if (deleteError) {
-                console.error('Error removing operator resource:', deleteError);
+                logger.error('Error removing operator resource:', deleteError);
                 throw new Error(`Error removing operator: ${deleteError.message}`);
               }
             }
@@ -159,7 +162,7 @@ export const useUpdateServicesBatch = () => {
               });
 
             if (insertError) {
-              console.error('Error assigning operator:', insertError);
+              logger.error('Error assigning operator:', insertError);
               throw new Error(`Error assigning operator: ${insertError.message}`);
             }
           }
@@ -181,7 +184,7 @@ export const useUpdateServicesBatch = () => {
       toast.success(`${data.count} servicio${data.count > 1 ? 's' : ''} actualizado${data.count > 1 ? 's' : ''} exitosamente`);
     },
     onError: (error: Error) => {
-      console.error('Error updating services batch:', error);
+      logger.error('Error updating services batch:', error);
       toast.error(`Error al actualizar servicios: ${error.message}`);
     },
   });

@@ -2,7 +2,10 @@
 import { useEffect, useCallback } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useFormPersistence");
 export const useFormPersistence = (
   form: UseFormReturn<InspectionFormValues>,
   serviceId: string
@@ -13,9 +16,9 @@ export const useFormPersistence = (
     try {
       const formData = form.getValues();
       localStorage.setItem(storageKey, JSON.stringify(formData));
-      console.log('Form data saved to localStorage:', formData);
+      logger.debug('Form data saved to localStorage:', formData);
     } catch (error) {
-      console.error('Error saving form data:', error);
+      logger.error('Error saving form data:', error);
     }
   }, [form, storageKey]);
 
@@ -24,7 +27,7 @@ export const useFormPersistence = (
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        console.log('Loading saved form data:', parsedData);
+        logger.debug('Loading saved form data:', parsedData);
         
         // Restaurar cada campo individualmente
         Object.keys(parsedData).forEach((key) => {
@@ -36,7 +39,7 @@ export const useFormPersistence = (
         return parsedData;
       }
     } catch (error) {
-      console.error('Error parsing saved form data:', error);
+      logger.error('Error parsing saved form data:', error);
       localStorage.removeItem(storageKey);
     }
     return null;
@@ -45,9 +48,9 @@ export const useFormPersistence = (
   const clearFormData = useCallback(() => {
     try {
       localStorage.removeItem(storageKey);
-      console.log('Form data cleared from localStorage');
+      logger.debug('Form data cleared from localStorage');
     } catch (error) {
-      console.error('Error clearing form data:', error);
+      logger.error('Error clearing form data:', error);
     }
   }, [storageKey]);
 

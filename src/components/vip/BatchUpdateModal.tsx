@@ -23,7 +23,10 @@ interface BatchUpdateModalProps {
 }
 
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("BatchUpdateModal");
 export interface BatchUpdateData {
   types: ('quote' | 'purchase_order')[];
   services: {
@@ -237,7 +240,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       setOverwriteQuote(false);
       setOverwritePO(false);
     } catch (error) {
-      console.error('Error en actualización por lotes:', error);
+      logger.error('Error en actualización por lotes:', error);
       toast.error('Error al actualizar los servicios');
     } finally {
       setIsLoading(false);

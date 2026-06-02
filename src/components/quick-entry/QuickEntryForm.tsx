@@ -15,7 +15,10 @@ import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("QuickEntryForm");
 interface QuickEntryFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -52,7 +55,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
       if (error) throw error;
       return data;
     } catch (err) {
-      console.error('Receipt extraction failed:', err);
+      logger.error('Receipt extraction failed:', err);
       return null;
     }
   };

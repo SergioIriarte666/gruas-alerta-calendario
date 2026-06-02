@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUnifiedParts");
 export interface PartsTraceability {
   part_id: string;
   part_name: string;
@@ -165,7 +168,7 @@ export const useUnifiedPartsPurchase = () => {
       // Calcular total_value explícitamente
       const total_value = purchaseData.quantity * purchaseData.unit_price;
 
-      console.log('🔧 Datos de compra validados:', {
+      logger.debug('🔧 Datos de compra validados:', {
         ...purchaseData,
         total_value,
         calculated_from: `${purchaseData.quantity} × ${purchaseData.unit_price}`
@@ -190,7 +193,7 @@ export const useUnifiedPartsPurchase = () => {
 
       if (existingItem) {
         inventoryItemId = existingItem.id;
-        console.log('📦 Usando item de inventario existente:', inventoryItemId, existingItem.name);
+        logger.debug('📦 Usando item de inventario existente:', inventoryItemId, existingItem.name);
       } else {
         const { generateAutoSku } = await import('@/utils/skuGenerator');
         const { data: newItem, error: itemError } = await supabase
@@ -206,12 +209,12 @@ export const useUnifiedPartsPurchase = () => {
           .single();
 
         if (itemError) {
-          console.error('❌ Error creando item de inventario:', itemError);
+          logger.error('❌ Error creando item de inventario:', itemError);
           throw itemError;
         }
 
         inventoryItemId = newItem.id;
-        console.log('✅ Nuevo item de inventario creado:', inventoryItemId);
+        logger.debug('✅ Nuevo item de inventario creado:', inventoryItemId);
       }
 
       // FASE 2: Obtener ubicación por defecto
@@ -224,7 +227,7 @@ export const useUnifiedPartsPurchase = () => {
         .single();
 
       if (locationError) {
-        console.error('❌ Error encontrando ubicación de inventario:', locationError);
+        logger.error('❌ Error encontrando ubicación de inventario:', locationError);
         throw new Error('No se encontró ubicación de inventario activa');
       }
 
@@ -247,11 +250,11 @@ export const useUnifiedPartsPurchase = () => {
         .single();
 
       if (movementError) {
-        console.error('❌ Error creando movimiento de inventario:', movementError);
+        logger.error('❌ Error creando movimiento de inventario:', movementError);
         throw movementError;
       }
 
-      console.log('✅ Movimiento de inventario creado:', inventoryMovement);
+      logger.debug('✅ Movimiento de inventario creado:', inventoryMovement);
 
       // FASE 4: Crear crane_parts con inventory_movement_id para prevenir trigger automático
       const { data: cranePart, error: cranePartError } = await supabase
@@ -272,13 +275,13 @@ export const useUnifiedPartsPurchase = () => {
         .single();
 
       if (cranePartError) {
-        console.error('❌ Error insertando crane_parts:', cranePartError);
+        logger.error('❌ Error insertando crane_parts:', cranePartError);
         // Rollback: eliminar movimiento de inventario creado
         await supabase.from('inventory_movements').delete().eq('id', inventoryMovement.id);
         throw cranePartError;
       }
 
-      console.log('✅ Crane part creado exitosamente:', cranePart);
+      logger.debug('✅ Crane part creado exitosamente:', cranePart);
       
       return { cranePart, inventoryMovement };
     },
@@ -296,7 +299,7 @@ export const useUnifiedPartsPurchase = () => {
       toast.success('Pieza registrada exitosamente. Se creó automáticamente la entrada de inventario.');
     },
     onError: (error: any) => {
-      console.error('Error in unified parts purchase:', error);
+      logger.error('Error in unified parts purchase:', error);
       toast.error(error.message || 'Error al registrar la compra de pieza');
     },
   });
@@ -327,7 +330,7 @@ export const useInventoryConsumption = () => {
       toast.success('Consumo de inventario registrado exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error in inventory consumption:', error);
+      logger.error('Error in inventory consumption:', error);
       toast.error(error.message || 'Error al registrar el consumo de inventario');
     },
   });
@@ -415,7 +418,7 @@ export const useInventorySyncStats = () => {
   return useQuery({
     queryKey: ['inventory-sync-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('check_inventory_sync_status' as any);
+      const { data, error } = await supabase.rpc('check_inventory_sync_status');
       
       if (error) throw error;
       
@@ -475,7 +478,7 @@ export const useMigrateConsumptionMovements = () => {
       const { data, error } = await supabase.rpc('migrate_existing_consumption_movements');
       
       if (error) {
-        console.error('Consumption migration error:', error);
+        logger.error('Consumption migration error:', error);
         throw error;
       }
       
@@ -500,7 +503,7 @@ export const useMigrateConsumptionMovements = () => {
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
     },
     onError: (error: any) => {
-      console.error('Consumption migration failed:', error);
+      logger.error('Consumption migration failed:', error);
       toast.error(`Error en migración de consumos: ${error.message}`);
     },
   });
@@ -514,7 +517,7 @@ export const useBidirectionalSyncStats = () => {
       const { data, error } = await supabase.rpc('check_bidirectional_sync_status');
       
       if (error) {
-        console.error('Error fetching bidirectional sync stats:', error);
+        logger.error('Error fetching bidirectional sync stats:', error);
         throw error;
       }
       
@@ -530,7 +533,7 @@ export const useForceResyncPart = () => {
 
   return useMutation({
     mutationFn: async (partId: string) => {
-      const { data, error } = await supabase.rpc('force_resync_crane_part' as any, {
+      const { data, error } = await supabase.rpc('force_resync_crane_part', {
         part_id: partId
       });
       

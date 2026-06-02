@@ -10,7 +10,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { Cost, CostCategory } from '@/types/costs';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useReports");
 export interface ReportMetrics {
   totalServices: number;
   totalRevenue: number;
@@ -336,7 +339,7 @@ export const useReports = (filters?: ReportFilters) => {
         .select('cost_id, supplier, part_name');
 
       if (error) {
-        console.error('Error fetching crane parts for reports:', error);
+        logger.error('Error fetching crane parts for reports:', error);
       }
 
       // Crear un mapa de cost_id a datos de pieza para búsqueda rápida
@@ -385,7 +388,7 @@ export const useReports = (filters?: ReportFilters) => {
         }))
         .sort((a, b) => b.total - a.total);
     } catch (error) {
-      console.error('Error in calculateCostsByCategory:', error);
+      logger.error('Error in calculateCostsByCategory:', error);
       // Retornar datos básicos en caso de error
       const categoryData: { [key: string]: { total: number; name: string } } = {};
       
@@ -417,7 +420,7 @@ export const useReports = (filters?: ReportFilters) => {
   };
 
   const forceRefresh = () => {
-    console.log('Manual reports refresh triggered');
+    logger.debug('Manual reports refresh triggered');
     refreshMetrics();
   };
 

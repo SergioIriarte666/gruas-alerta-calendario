@@ -9,7 +9,10 @@ import { es } from 'date-fns/locale';
 import { useInvoiceCancellation, InvoiceCancellation, CANCELLATION_REASONS } from '@/hooks/invoices/useInvoiceCancellation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InvoiceCancellationsHistory");
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
@@ -45,7 +48,7 @@ export const InvoiceCancellationsHistory = () => {
         const data = await fetchCancellations();
         setCancellations(data);
       } catch (error) {
-        console.error('Error loading cancellations:', error);
+        logger.error('Error loading cancellations:', error);
       } finally {
         setLoading(false);
       }

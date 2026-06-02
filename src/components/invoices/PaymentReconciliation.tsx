@@ -25,7 +25,10 @@ import { useUser } from '@/contexts/UserContext';
 import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentReconciliation");
 interface PaymentReconciliationProps {
   onClose?: () => void;
 }
@@ -122,7 +125,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       setSelectedPayment(payment);
       setShowApplicationModal(true);
     } catch (error) {
-      console.error('Error loading invoices:', error);
+      logger.error('Error loading invoices:', error);
       toast.error('Error al cargar facturas pendientes');
     }
   };
@@ -136,7 +139,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       setSelectedPayment(null);
       await refetch();
     } catch (error) {
-      console.error('Error in selective application:', error);
+      logger.error('Error in selective application:', error);
     }
   };
 
@@ -155,7 +158,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       const stats = await getReconciliationStats();
       setReconciliationStats(stats);
     } catch (error) {
-      console.error('Error loading reconciliation stats:', error);
+      logger.error('Error loading reconciliation stats:', error);
     }
   };
 
@@ -164,7 +167,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       const diagnosis = await getComprehensiveDiagnosis();
       setSystemDiagnosis(diagnosis);
     } catch (error) {
-      console.error('Error loading system diagnosis:', error);
+      logger.error('Error loading system diagnosis:', error);
     }
   };
 

@@ -3,7 +3,10 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useNotificationTriggers");
 interface NotificationTrigger {
   type: 'service_assigned' | 'service_completed' | 'inspection_ready' | 'invoice_generated';
   title: string;
@@ -203,7 +206,7 @@ export const useNotificationTriggers = () => {
         }
       });
     } catch (error) {
-      console.error('Error sending push notification:', error);
+      logger.error('Error sending push notification:', error);
     }
   };
 

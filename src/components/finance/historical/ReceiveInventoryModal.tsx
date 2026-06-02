@@ -35,7 +35,10 @@ import { useInventoryItems, useInventoryLocations, useCreateInventoryMovement, u
 import { Loader2, Plus, Trash2, PackageCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ReceiveInventoryModal");
 const inventoryItemSchema = z.object({
   item_id: z.string().min(1, 'Selecciona un producto'),
   quantity: z.coerce.number().min(1, 'La cantidad debe ser mayor a 0'),
@@ -132,7 +135,7 @@ export const ReceiveInventoryModal = ({
       toast.success('Inventario recibido correctamente');
       onClose();
     } catch (error) {
-      console.error('Error receiving inventory:', error);
+      logger.error('Error receiving inventory:', error);
       // Toast is handled by mutation hook error handler usually, but here we loop so maybe catch global
     }
   };

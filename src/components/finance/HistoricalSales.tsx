@@ -43,7 +43,10 @@ import { RecentImportLogsCard } from './historical/RecentImportLogsCard';
 import { LayoutList, Users, LayoutGrid } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("HistoricalSales");
 const HISTORICAL_NOTE = 'Importación historial';
 
 export const HistoricalSales = () => {
@@ -64,7 +67,7 @@ export const HistoricalSales = () => {
 
   // Real-time subscription
   useEffect(() => {
-    console.log('Setting up real-time subscription for historical sales...');
+    logger.debug('Setting up real-time subscription for historical sales...');
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -75,7 +78,7 @@ export const HistoricalSales = () => {
           table: 'invoices',
         },
         (payload) => {
-          console.log('Real-time update received:', payload);
+          logger.debug('Real-time update received:', payload);
           refetch();
         }
       )
@@ -274,7 +277,7 @@ export const HistoricalSales = () => {
         toast.success('Factura eliminada correctamente');
       }
     } catch (error: any) {
-      console.error('Error deleting invoice(s):', error);
+      logger.error('Error deleting invoice(s):', error);
       if (error?.code === 'PROTECTED_INVOICE') {
         toast.error('Factura protegida', {
           description: 'Esta factura fue creada en la app y requiere confirmación reforzada para ser eliminada.',

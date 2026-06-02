@@ -36,7 +36,10 @@ import { InvoiceDetailsModal } from '@/components/invoices/InvoiceDetailsModal';
 import { PaymentDetailsModal } from '@/components/payments/PaymentDetailsModal';
 import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';
 import { OperatorDetailsModal } from '@/components/operators/OperatorDetailsModal';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("DailyReportPage");
 const DailyReportPage = () => {
   const [selectedDate, setSelectedDate] = useState(formatForInput(new Date()));
   const [isExporting, setIsExporting] = useState(false);
@@ -100,7 +103,7 @@ const DailyReportPage = () => {
         type: "success"
       });
     } catch (error) {
-      console.error('Error exporting to PDF:', error);
+      logger.error('Error exporting to PDF:', error);
       toast({
         title: "Error",
         description: "Error al exportar el informe a PDF",
@@ -136,7 +139,7 @@ const DailyReportPage = () => {
         type: "success"
       });
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
+      logger.error('Error exporting to Excel:', error);
       toast({
         title: "Error",
         description: "Error al exportar el informe a Excel", 

@@ -1,7 +1,10 @@
 import { useSettings } from '@/hooks/useSettings';
 import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceReport");
 interface InvoiceReportFilters {
   clientId?: string;
   clientName?: string;
@@ -43,7 +46,7 @@ export const useInvoiceReport = ({ invoices, metrics }: UseInvoiceReportProps) =
       // Las facturas ya vienen filtradas desde el modal
       const filteredInvoices = invoices;
       
-      console.log('🔍 Exportando facturas:', {
+      logger.debug('🔍 Exportando facturas:', {
         totalInvoices: invoices.length,
         firstInvoice: invoices[0],
         filters,
@@ -74,7 +77,7 @@ export const useInvoiceReport = ({ invoices, metrics }: UseInvoiceReportProps) =
         description: `Se ha descargado el informe de facturas en formato ${format.toUpperCase()}.`,
       });
     } catch (error) {
-      console.error('Error al generar informe de facturas:', error);
+      logger.error('Error al generar informe de facturas:', error);
       toast.error('Error al generar informe', {
         description: 'Hubo un problema al generar el informe de facturas. Inténtalo de nuevo.',
       });

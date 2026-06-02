@@ -24,7 +24,10 @@ import { SupplierWithStats } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SupplierList");
 type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive';
 type SortDirection = 'asc' | 'desc';
 
@@ -117,7 +120,7 @@ export const SupplierList: React.FC = () => {
         toast.success('Proveedor eliminado correctamente');
       }
     } catch (error) {
-      console.error('Error deleting supplier(s):', error);
+      logger.error('Error deleting supplier(s):', error);
       toast.error('Error al eliminar proveedor(s)');
     } finally {
       setDeleteDialogOpen(false);

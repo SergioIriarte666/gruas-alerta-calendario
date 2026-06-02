@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCraneServices");
 export interface CraneService {
   id: string;
   folio: string;
@@ -39,7 +42,7 @@ export const useCraneServices = (craneId: string) => {
         .order('service_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching crane services:', error);
+        logger.error('Error fetching crane services:', error);
         throw error;
       }
 

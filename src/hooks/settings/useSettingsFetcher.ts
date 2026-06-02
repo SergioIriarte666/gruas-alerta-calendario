@@ -3,7 +3,10 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Settings, defaultSettings } from '@/types/settings';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSettingsFetcher");
 const COMPANY_DATA_SELECT = `
   business_name,
   address,
@@ -57,7 +60,7 @@ export const useSettingsFetcher = () => {
       return finalSettings;
 
     } catch (error) {
-      console.error("Error fetching settings:", error);
+      logger.error("Error fetching settings:", error);
       toast.error("Error", {
         description: "No se pudo cargar la configuración.",
       });

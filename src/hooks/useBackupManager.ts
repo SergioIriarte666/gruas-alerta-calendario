@@ -5,7 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { BackupLog, BackupProgress, BackupResult } from '@/types/backup';
 import { downloadTextFile } from '@/utils/fileDownload';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useBackupManager");
 export const useBackupManager = () => {
   const [progress, setProgress] = useState<BackupProgress>({
     isGenerating: false,
@@ -29,13 +32,13 @@ export const useBackupManager = () => {
           .limit(10);
 
         if (error) {
-          console.error('Error fetching backup logs:', error);
+          logger.error('Error fetching backup logs:', error);
           throw error;
         }
 
         return data as (BackupLog & { profiles: { email: string; full_name: string } })[];
       } catch (error) {
-        console.error('Failed to fetch backup logs:', error);
+        logger.error('Failed to fetch backup logs:', error);
         throw error;
       }
     },
@@ -68,7 +71,7 @@ export const useBackupManager = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        logger.error('Edge function error:', error);
         throw error;
       }
 
@@ -110,7 +113,7 @@ export const useBackupManager = () => {
       };
 
     } catch (error: any) {
-      console.error('Error generating backup:', error);
+      logger.error('Error generating backup:', error);
       
       setProgress({
         isGenerating: false,
@@ -134,7 +137,7 @@ export const useBackupManager = () => {
       downloadTextFile({ content, fileName, contentType });
       return true;
     } catch (error) {
-      console.error('Error downloading backup:', error);
+      logger.error('Error downloading backup:', error);
       return false;
     }
   }, []);
@@ -168,7 +171,7 @@ export const useBackupManager = () => {
         });
       }
     } catch (error) {
-      console.error('Error in generateAndDownloadBackup:', error);
+      logger.error('Error in generateAndDownloadBackup:', error);
       toast.error('Error en respaldo', {
         description: 'Ocurrió un error inesperado al generar el respaldo.'
       });

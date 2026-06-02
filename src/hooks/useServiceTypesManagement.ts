@@ -4,7 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceTypesManagement");
 interface CreateServiceTypeData {
   name: string;
   description?: string;
@@ -74,7 +77,7 @@ export const useServiceTypesManagement = () => {
         .order('name');
 
       if (error) {
-        console.error('Error loading service types:', error);
+        logger.error('Error loading service types:', error);
         throw new Error('Error al cargar tipos de servicio');
       }
 
@@ -109,7 +112,7 @@ export const useServiceTypesManagement = () => {
         .insert([dbData]);
 
       if (error) {
-        console.error('Error creating service type:', error);
+        logger.error('Error creating service type:', error);
         throw new Error('Error al crear tipo de servicio');
       }
     },
@@ -134,7 +137,7 @@ export const useServiceTypesManagement = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error updating service type:', error);
+        logger.error('Error updating service type:', error);
         throw new Error('Error al actualizar tipo de servicio');
       }
     },
@@ -157,7 +160,7 @@ export const useServiceTypesManagement = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting service type:', error);
+        logger.error('Error deleting service type:', error);
         throw new Error('Error al eliminar tipo de servicio');
       }
     },

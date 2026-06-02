@@ -4,7 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClients");
 const mapClient = (client: any): any => ({
   id: client.id,
   name: client.name,
@@ -187,7 +190,7 @@ export const useClients = () => {
       }
     },
     onError: (error: any) => {
-      console.error('Error creating client:', error);
+      logger.error('Error creating client:', error);
       
       // Check for duplicate errors
       if (error?.code === '23505' || error?.message?.includes('duplicate key value')) {
@@ -235,7 +238,7 @@ export const useClients = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error updating client:', error);
+      logger.error('Error updating client:', error);
       toast.error("Error", {
         description: "No se pudo actualizar el cliente.",
       });
@@ -258,7 +261,7 @@ export const useClients = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error deleting client:', error);
+      logger.error('Error deleting client:', error);
       toast.error("Error", {
         description: "No se pudo eliminar el cliente.",
       });
@@ -285,7 +288,7 @@ export const useClients = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error toggling client status:', error);
+      logger.error('Error toggling client status:', error);
       toast.error("Error", {
         description: "No se pudo cambiar el estado del cliente.",
       });

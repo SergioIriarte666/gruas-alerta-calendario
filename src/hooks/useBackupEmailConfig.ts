@@ -22,7 +22,7 @@ export const useBackupEmailConfig = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('backup_email_config')
       .select('*')
       .limit(1)
@@ -36,7 +36,7 @@ export const useBackupEmailConfig = () => {
   const save = useCallback(async (updates: Partial<BackupEmailConfig>) => {
     if (!config) return { error: 'No config' };
     setSaving(true);
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('backup_email_config')
       .update(updates)
       .eq('id', config.id);

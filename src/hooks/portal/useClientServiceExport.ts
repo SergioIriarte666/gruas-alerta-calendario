@@ -6,7 +6,10 @@ import { useSettings } from '@/hooks/useSettings';
 import { exportServiceReport } from '@/utils/reports/serviceReportExporter';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientServiceExport");
 interface ClientService {
   id: string;
   folio: string;
@@ -59,7 +62,7 @@ const fetchClientServicesForExport = async (clientId: string): Promise<ClientSer
     .order('service_date', { ascending: false });
 
   if (error) {
-    console.error('Error fetching client services for export:', error);
+    logger.error('Error fetching client services for export:', error);
     throw error;
   }
 
@@ -92,7 +95,7 @@ const fetchClientName = async (clientId: string): Promise<string> => {
     .single();
 
   if (error) {
-    console.error('Error fetching client name:', error);
+    logger.error('Error fetching client name:', error);
     return 'Cliente Portal';
   }
   return data.name;
@@ -240,7 +243,7 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting services to PDF:', error);
+      logger.error('Error exporting services to PDF:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error al generar el PDF. Por favor intente nuevamente.",
@@ -296,7 +299,7 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting services to Excel:', error);
+      logger.error('Error exporting services to Excel:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error al generar el Excel. Por favor intente nuevamente.",

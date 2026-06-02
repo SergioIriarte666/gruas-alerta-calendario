@@ -1,6 +1,9 @@
 
 import * as XLSX from 'xlsx';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("templateGenerator");
 export class TemplateGenerator {
   static downloadTemplate(): void {
     const headers = [
@@ -36,7 +39,7 @@ export class TemplateGenerator {
 
   static downloadExcelTemplate(): void {
     try {
-      console.log('📊 Generating Excel template with valid sample data...');
+      logger.debug('📊 Generating Excel template with valid sample data...');
       
       // Headers exactly matching the expected format
       const headers = [
@@ -100,16 +103,16 @@ export class TemplateGenerator {
       XLSX.utils.book_append_sheet(wb, ws, 'Servicios');
 
       // Generate and download file
-      console.log('💾 Downloading Excel template...');
+      logger.debug('💾 Downloading Excel template...');
       const timestamp = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `plantilla_servicios_${timestamp}.xlsx`);
-      console.log('✅ Excel template downloaded successfully');
+      logger.debug('✅ Excel template downloaded successfully');
 
     } catch (error) {
-      console.error('❌ Error generating Excel template:', error);
+      logger.error('❌ Error generating Excel template:', error);
       
       // Fallback to CSV template if Excel generation fails
-      console.warn('Error generando plantilla Excel. Descargando plantilla CSV como alternativa.');
+      logger.warn('Error generando plantilla Excel. Descargando plantilla CSV como alternativa.');
       this.downloadTemplate();
     }
   }

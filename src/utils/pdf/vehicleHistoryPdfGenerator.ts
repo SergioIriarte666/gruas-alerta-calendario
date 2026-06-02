@@ -3,7 +3,10 @@ import autoTable from 'jspdf-autotable';
 import { fetchCompanyData } from './companyDataFetcher';
 import { formatCurrency } from '@/utils/statusHelpers';
 import { VehicleFullHistoryData, VehicleHistoryRecord } from '@/hooks/useVehicleFullHistory';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("vehicleHistoryPdfGenerator");
 const TMS_GREEN = [0, 150, 136] as [number, number, number];
 const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
 const WHITE = [255, 255, 255] as [number, number, number];
@@ -93,7 +96,7 @@ export const generateVehicleHistoryPDF = async (
       doc.addImage(logoBase64, 'PNG', margin, yPosition, logoW, logoH);
     }
   } catch (e) {
-    console.warn('No se pudo cargar el logo:', e);
+    logger.warn('No se pudo cargar el logo:', e);
   }
 
   // Título centrado

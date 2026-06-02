@@ -21,7 +21,10 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { toast } from 'sonner';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InventoryMovementForm");
 const movementSchema = z.object({
   item_id: z.string().min(1, 'Seleccione un producto'),
   location_id: z.string().min(1, 'Seleccione una ubicación'),
@@ -117,7 +120,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
 
   const onSubmit = async (data: MovementFormData) => {
     try {
-      console.log('Form submission data:', data);
+      logger.debug('Form submission data:', data);
       
       // Validate stock for exit movements
       if ((data.movement_type === 'exit' || data.movement_type === 'transfer') && data.quantity > currentStock) {
@@ -127,7 +130,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
 
       const total_cost = data.unit_cost ? data.quantity * data.unit_cost : undefined;
       
-      console.log('Calling createMovement with:', {
+      logger.debug('Calling createMovement with:', {
         item_id: data.item_id,
         location_id: data.location_id,
         movement_type: data.movement_type,
@@ -175,7 +178,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
       });
       onSuccess?.();
     } catch (error) {
-      console.error('Error creating movement:', error);
+      logger.error('Error creating movement:', error);
       toast.error(`Error al registrar el movimiento: ${error.message || 'Error desconocido'}`);
     }
   };

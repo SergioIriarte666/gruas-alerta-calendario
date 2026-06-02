@@ -14,7 +14,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServiceStatusTransition");
 interface ServiceStatusTransitionProps {
   service: Service;
   onUpdate: () => void;
@@ -152,13 +155,13 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
             },
           })
           .then(({ error }) => {
-            if (error) console.warn('WhatsApp admin no enviado:', error);
+            if (error) logger.warn('WhatsApp admin no enviado:', error);
           });
       }
 
       onUpdate();
     } catch (error) {
-      console.error('Error updating service status:', error);
+      logger.error('Error updating service status:', error);
       toast.error('Error al actualizar el estado');
     }
   };

@@ -1,6 +1,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useOfflineStorage");
 interface OfflineAction {
   id: string;
   type: string;
@@ -65,7 +68,7 @@ export const useOfflineStorage = () => {
         setIsReady(true);
       })
       .catch(error => {
-        console.error('Failed to initialize IndexedDB:', error);
+        logger.error('Failed to initialize IndexedDB:', error);
       });
   }, []);
 
@@ -188,7 +191,7 @@ export const useOfflineStorage = () => {
         });
       }
     } catch (error) {
-      console.error('Error caching services:', error);
+      logger.error('Error caching services:', error);
     }
   }, [db]);
 
@@ -212,7 +215,7 @@ export const useOfflineStorage = () => {
         }
       });
     } catch (error) {
-      console.error('Error getting cached services:', error);
+      logger.error('Error getting cached services:', error);
       return [];
     }
   }, [db]);

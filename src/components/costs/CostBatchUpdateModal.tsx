@@ -26,6 +26,9 @@ import { BarChart3, Calendar, CheckCircle, Download, Tag, Building2, User, FileT
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import * as XLSX from 'xlsx';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("CostBatchUpdateModal");
 interface CostBatchUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -262,7 +265,7 @@ export const CostBatchUpdateModal = ({
         batchProgress.close();
       }, 1500);
     } catch (error) {
-      console.error('Error updating batch:', error);
+      logger.error('Error updating batch:', error);
       batchProgress.error('Error al actualizar');
     }
   };

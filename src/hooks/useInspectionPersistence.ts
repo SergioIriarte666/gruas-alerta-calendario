@@ -1,7 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInspectionPersistence");
 export interface InspectionPhaseMetadata {
   inspection_phase: 'initial' | 'final';
   initial_completion_date?: string;
@@ -28,13 +31,13 @@ export const useInspectionPersistence = (serviceId: string) => {
     if (saved) {
       try {
         const parsedData = JSON.parse(saved);
-        console.log('📋 Loaded inspection data:', {
+        logger.debug('📋 Loaded inspection data:', {
           photos: parsedData.photographicSet?.length || 0,
           phase: savedMetadata ? JSON.parse(savedMetadata).inspection_phase : 'unknown'
         });
         setSavedData(parsedData);
       } catch (error) {
-        console.error('Error parsing saved inspection data:', error);
+        logger.error('Error parsing saved inspection data:', error);
         localStorage.removeItem(storageKey);
       }
     }
@@ -44,14 +47,14 @@ export const useInspectionPersistence = (serviceId: string) => {
         const parsedMetadata = JSON.parse(savedMetadata);
         setMetadata(parsedMetadata);
       } catch (error) {
-        console.error('Error parsing metadata:', error);
+        logger.error('Error parsing metadata:', error);
         localStorage.removeItem(metadataKey);
       }
     }
   }, [storageKey, metadataKey]);
 
   const saveFormData = (data: InspectionFormValues, phase: 'initial' | 'final') => {
-    console.log('💾 Saving inspection data:', {
+    logger.debug('💾 Saving inspection data:', {
       phase,
       photos: data.photographicSet?.length || 0,
       hasOperatorSignature: !!data.operatorSignature,
@@ -94,7 +97,7 @@ export const useInspectionPersistence = (serviceId: string) => {
   };
 
   const clearPersistedData = () => {
-    console.log('🧹 Clearing all inspection persistence data');
+    logger.debug('🧹 Clearing all inspection persistence data');
     localStorage.removeItem(storageKey);
     localStorage.removeItem(metadataKey);
     setSavedData(null);

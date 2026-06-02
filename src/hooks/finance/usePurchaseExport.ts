@@ -7,7 +7,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePurchaseExport");
 export const usePurchaseExport = () => {
   const exportToExcel = useCallback((invoices: SupplierInvoiceWithDetails[], fileName: string = 'reporte-compras') => {
     try {
@@ -51,7 +54,7 @@ export const usePurchaseExport = () => {
       
       toast.success('Reporte Excel generado correctamente');
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
+      logger.error('Error exporting to Excel:', error);
       toast.error('Error al generar el reporte Excel');
     }
   }, []);
@@ -100,7 +103,7 @@ export const usePurchaseExport = () => {
       
       toast.success('Reporte PDF generado correctamente');
     } catch (error) {
-      console.error('Error exporting to PDF:', error);
+      logger.error('Error exporting to PDF:', error);
       toast.error('Error al generar el reporte PDF');
     }
   }, []);

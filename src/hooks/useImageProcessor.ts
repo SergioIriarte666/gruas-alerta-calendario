@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useImageProcessor");
 export const useImageProcessor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -37,7 +40,7 @@ export const useImageProcessor = () => {
       reader.onload = (e) => {
         const img = new window.Image();
         img.onload = () => {
-          console.log("useImageProcessor: Image loaded. Original dimensions:", img.width, "x", img.height);
+          logger.debug("useImageProcessor: Image loaded. Original dimensions:", img.width, "x", img.height);
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
@@ -67,22 +70,22 @@ export const useImageProcessor = () => {
                 type: 'image/png',
                 lastModified: Date.now(),
               });
-              console.log("useImageProcessor: Canvas blob created. Processed size:", processedFile.size);
+              logger.debug("useImageProcessor: Canvas blob created. Processed size:", processedFile.size);
               resolve(processedFile);
             } else {
-              console.error("useImageProcessor: Failed to create blob from canvas.");
+              logger.error("useImageProcessor: Failed to create blob from canvas.");
               reject(new Error('Failed to create blob from canvas'));
             }
           }, 'image/png', 0.8);
         };
         img.onerror = () => {
-            console.error("useImageProcessor: Error loading image.");
+            logger.error("useImageProcessor: Error loading image.");
             reject(new Error('Error processing image'));
         };
         img.src = e.target?.result as string;
       };
       reader.onerror = () => {
-        console.error("useImageProcessor: Error reading file.");
+        logger.error("useImageProcessor: Error reading file.");
         reject(new Error('Error reading file'));
       };
       reader.readAsDataURL(file);
@@ -94,12 +97,12 @@ export const useImageProcessor = () => {
 
     setIsProcessing(true);
     try {
-      console.log("useImageProcessor: Starting image processing for:", file.name);
+      logger.debug("useImageProcessor: Starting image processing for:", file.name);
       const logoFile = await processImage(file);
-      console.log("useImageProcessor: Image processing successful for:", logoFile.name);
+      logger.debug("useImageProcessor: Image processing successful for:", logoFile.name);
       return logoFile;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       toast.error("Error", {
         description: "Error al procesar la imagen",
       });

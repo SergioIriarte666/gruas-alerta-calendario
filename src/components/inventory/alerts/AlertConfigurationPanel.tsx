@@ -36,7 +36,10 @@ import { QuickLogin } from '@/components/auth/QuickLogin';
 import { AlertConfigurationForm } from './AlertConfigurationForm';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("AlertConfigurationPanel");
 interface AlertConfigurationPanelProps {
   showNewForm: boolean;
   onShowNewForm: () => void;
@@ -180,12 +183,12 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
             <AlertConfigurationForm
               alertId={editingAlert}
               onSuccess={() => {
-                console.log('Alert form success callback triggered');
+                logger.debug('Alert form success callback triggered');
                 setEditingAlert(null);
                 onCloseNewForm();
               }}
               onCancel={() => {
-                console.log('Alert form cancel callback triggered');
+                logger.debug('Alert form cancel callback triggered');
                 setEditingAlert(null);
                 onCloseNewForm();
               }}
@@ -217,7 +220,7 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
               </p>
               <Button 
                 onClick={() => {
-                  console.log('Create first alert button clicked');
+                  logger.debug('Create first alert button clicked');
                   onShowNewForm();
                 }}
                 className="flex items-center gap-2"

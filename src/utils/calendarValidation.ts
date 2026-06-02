@@ -1,6 +1,9 @@
 
 import { CalendarEvent } from '@/types/calendar';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("calendarValidation");
 // Type guard functions for validation
 export const isValidEventType = (type: string): type is CalendarEvent['type'] => {
   return ['service', 'maintenance', 'meeting', 'deadline', 'other'].includes(type);
@@ -18,10 +21,10 @@ export const sanitizeEventData = (data: any): CalendarEvent => {
 
   // Log warnings for invalid data
   if (!isValidEventType(data.type)) {
-    console.warn(`Invalid event type received: ${data.type}, defaulting to 'other'`);
+    logger.warn(`Invalid event type received: ${data.type}, defaulting to 'other'`);
   }
   if (!isValidEventStatus(data.status)) {
-    console.warn(`Invalid event status received: ${data.status}, defaulting to 'scheduled'`);
+    logger.warn(`Invalid event status received: ${data.status}, defaulting to 'scheduled'`);
   }
 
   return {

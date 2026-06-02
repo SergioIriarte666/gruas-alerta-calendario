@@ -9,7 +9,10 @@ import { format } from 'date-fns';
 import { InventoryMovement } from '@/hooks/useInventory';
 import { exportInventoryMovementReport } from '@/utils/reports/inventoryMovementExporter';
 import { useSettings } from '@/hooks/useSettings';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MovementExportOptions");
 interface MovementExportOptionsProps {
   movements: InventoryMovement[];
   appliedFilters: {
@@ -43,8 +46,8 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
     setIsExporting(true);
     
     try {
-      console.log('Starting export with format:', exportFormat);
-      console.log('Number of movements:', movements.length);
+      logger.debug('Starting export with format:', exportFormat);
+      logger.debug('Number of movements:', movements.length);
       
       const filterLabels: string[][] = [];
       
@@ -73,8 +76,8 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
         filterLabels.push(['Rango de fechas', `${dateFrom || 'Sin límite'} - ${dateTo || 'Sin límite'}`]);
       }
 
-      console.log('Filter labels:', filterLabels);
-      console.log('Settings:', settings);
+      logger.debug('Filter labels:', filterLabels);
+      logger.debug('Settings:', settings);
 
       await exportInventoryMovementReport({
         format: exportFormat,
@@ -92,7 +95,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
         filterLabels
       });
       
-      console.log('Export completed successfully');
+      logger.debug('Export completed successfully');
       
       toast.success('Reporte exportado', {
         description: `El reporte ha sido descargado en formato ${exportFormat.toUpperCase()}`
@@ -100,7 +103,7 @@ export const MovementExportOptions: React.FC<MovementExportOptionsProps> = ({
       
       onClose();
     } catch (error) {
-      console.error('Error exporting movement report:', error);
+      logger.error('Error exporting movement report:', error);
       toast.error('Error al exportar', {
         description: error instanceof Error ? error.message : 'No se pudo generar el reporte. Inténtalo nuevamente.'
       });

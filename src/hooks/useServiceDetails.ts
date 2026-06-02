@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { useEnhancedServiceDetails } from './useEnhancedServiceDetails';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceDetails");
 const fetchServiceById = async (serviceId: string, transformRawServiceData: (data: any[]) => Service[]): Promise<Service | null> => {
   if (!serviceId) return null;
 
@@ -22,7 +25,7 @@ const fetchServiceById = async (serviceId: string, transformRawServiceData: (dat
     .single();
 
   if (error) {
-    console.error(`Error fetching service details for id ${serviceId}:`, error);
+    logger.error(`Error fetching service details for id ${serviceId}:`, error);
     throw new Error('No se pudo cargar el servicio');
   }
 

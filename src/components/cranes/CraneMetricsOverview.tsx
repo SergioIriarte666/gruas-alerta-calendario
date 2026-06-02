@@ -20,7 +20,10 @@ import { Crane } from '@/types';
 import { useCraneMetrics } from '@/hooks/useCraneMetrics';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { CraneDocumentsSection } from './CraneDocumentsSection';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CraneMetricsOverview");
 interface CraneMetricsOverviewProps {
   crane: Crane;
 }
@@ -33,12 +36,12 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
   const getDaysUntilExpiry = (date: string) => {
     try {
       if (!date) {
-        console.warn('Date is null or undefined:', date);
+        logger.warn('Date is null or undefined:', date);
         return 0;
       }
       const expiry = new Date(date);
       if (isNaN(expiry.getTime())) {
-        console.warn('Invalid date:', date);
+        logger.warn('Invalid date:', date);
         return 0;
       }
       const today = new Date();
@@ -46,7 +49,7 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
       const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return days;
     } catch (error) {
-      console.error('Error calculating days until expiry:', error, 'Date:', date);
+      logger.error('Error calculating days until expiry:', error, 'Date:', date);
       return 0;
     }
   };

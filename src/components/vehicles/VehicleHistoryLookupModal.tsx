@@ -15,7 +15,10 @@ import { generateVehicleHistoryPDF } from '@/utils/pdf/vehicleHistoryPdfGenerato
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("VehicleHistoryLookupModal");
 interface VehicleHistoryLookupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -62,7 +65,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
       
       toast.success('PDF generado exitosamente');
     } catch (err) {
-      console.error('Error generando PDF:', err);
+      logger.error('Error generando PDF:', err);
       toast.error('Error al generar el PDF');
     } finally {
       setIsGeneratingPdf(false);

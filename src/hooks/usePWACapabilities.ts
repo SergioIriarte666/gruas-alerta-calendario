@@ -2,7 +2,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import type { BeforeInstallPromptEvent, ServiceWorkerRegistrationWithSync } from '@/types/pwa';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePWACapabilities");
 interface InstallPrompt {
   canInstall: boolean;
   install: () => Promise<void>;
@@ -131,7 +134,7 @@ export const usePWACapabilities = (): PWACapabilities => {
           setPendingActions(totalPending);
           db.close();
         } catch (error) {
-          console.error('Error checking pending actions:', error);
+          logger.error('Error checking pending actions:', error);
         }
       }
     };
@@ -180,7 +183,7 @@ export const usePWACapabilities = (): PWACapabilities => {
 
     try {
       const result = await installPrompt.prompt();
-      console.log('Install prompt result:', result);
+      logger.debug('Install prompt result:', result);
       
       const choice = await installPrompt.userChoice;
       if (choice.outcome === 'accepted') {
@@ -188,7 +191,7 @@ export const usePWACapabilities = (): PWACapabilities => {
         setInstallPrompt(null);
       }
     } catch (error) {
-      console.error('Error during app installation:', error);
+      logger.error('Error during app installation:', error);
       throw error;
     }
   };
@@ -213,14 +216,14 @@ export const usePWACapabilities = (): PWACapabilities => {
               applicationServerKey: null // Configurar con VAPID key si es necesario
             });
           } catch (pushError) {
-            console.warn('Push notifications not available:', pushError);
+            logger.warn('Push notifications not available:', pushError);
           }
         }
       }
 
       return permission;
     } catch (error) {
-      console.error('Error enabling notifications:', error);
+      logger.error('Error enabling notifications:', error);
       throw error;
     }
   };
@@ -245,7 +248,7 @@ export const usePWACapabilities = (): PWACapabilities => {
       setPendingActions(0);
       setLastSync(null);
     } catch (error) {
-      console.error('Error clearing offline data:', error);
+      logger.error('Error clearing offline data:', error);
       throw error;
     }
   };

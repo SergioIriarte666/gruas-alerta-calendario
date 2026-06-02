@@ -1,5 +1,8 @@
 import { XMLCostData, XMLParseResult, XMLValidationError, XMLStructure } from '@/types/costs';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("xmlCostParser");
 export class XMLCostParser {
   private parser: DOMParser;
 
@@ -229,7 +232,7 @@ export class XMLCostParser {
             try {
               value = fieldMapping.transform(value);
             } catch (error) {
-              console.warn(`Error transformando campo ${fieldMapping.xmlField}:`, error);
+              logger.warn(`Error transformando campo ${fieldMapping.xmlField}:`, error);
             }
           }
           

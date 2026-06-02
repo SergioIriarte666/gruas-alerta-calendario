@@ -1,4 +1,7 @@
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("connectionManager");
 /**
  * Connection Manager utility for handling WebSocket connections and network errors
  */
@@ -44,7 +47,7 @@ export class ConnectionManager {
         this.retryCount++;
         
         if (this.config.enableLogging) {
-          console.log(`Retrying ${context} (attempt ${this.retryCount}/${this.config.maxRetries})`);
+          logger.debug(`Retrying ${context} (attempt ${this.retryCount}/${this.config.maxRetries})`);
         }
         
         await this.delay(this.config.retryDelay || 2000);
@@ -53,7 +56,7 @@ export class ConnectionManager {
       
       // Log only critical errors, filter out external service errors
       if (!this.isExternalServiceError(error)) {
-        console.error(`${context} failed after ${this.config.maxRetries} retries:`, error);
+        logger.error(`${context} failed after ${this.config.maxRetries} retries:`, error);
       }
       
       throw error;

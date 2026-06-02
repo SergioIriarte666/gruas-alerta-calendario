@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InventoryFixPanel");
 interface FixResult {
   success: boolean;
   deleted_costs: number;
@@ -36,7 +39,7 @@ export function InventoryFixPanel() {
       });
       
     } catch (error: any) {
-      console.error('Error ejecutando limpieza global:', error);
+      logger.error('Error ejecutando limpieza global:', error);
       toast.error('Error al ejecutar limpieza global', {
         description: error.message || 'Error desconocido'
       });

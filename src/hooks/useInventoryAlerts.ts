@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInventoryAlerts");
 const INVENTORY_ALERTS_SELECT = `
   id,
   alert_type,
@@ -124,7 +127,7 @@ export const useActiveAlerts = () => {
         .eq('is_active', true);
 
       if (configError) {
-        console.error('❌ Error fetching alert configs:', configError);
+        logger.error('❌ Error fetching alert configs:', configError);
         throw configError;
       }
 
@@ -134,7 +137,7 @@ export const useActiveAlerts = () => {
         .select(STOCK_FOR_ALERTS_SELECT);
 
       if (stockError) {
-        console.error('❌ useActiveAlerts: Error fetching stock data:', stockError);
+        logger.error('❌ useActiveAlerts: Error fetching stock data:', stockError);
         throw stockError;
       }
 
@@ -284,7 +287,7 @@ export const useCreateAlert = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session || !session.user) {
-        console.error('❌ Session error:', sessionError);
+        logger.error('❌ Session error:', sessionError);
         throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
 
@@ -292,7 +295,7 @@ export const useCreateAlert = () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
-        console.error('❌ Authentication error:', authError);
+        logger.error('❌ Authentication error:', authError);
         throw new Error('Usuario no autenticado. Por favor, inicia sesión para continuar.');
       }
 
@@ -304,7 +307,7 @@ export const useCreateAlert = () => {
         .single();
 
       if (profileError || !profile) {
-        console.error('Profile error:', profileError);
+        logger.error('Profile error:', profileError);
         throw new Error('Error verificando permisos de usuario');
       }
 
@@ -329,8 +332,8 @@ export const useCreateAlert = () => {
         .single();
 
       if (error) {
-        console.error('❌ Database error creating alert:', error);
-        console.error('❌ Error details:', {
+        logger.error('❌ Database error creating alert:', error);
+        logger.error('❌ Error details:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -339,12 +342,12 @@ export const useCreateAlert = () => {
         
         // Enhanced auth-specific error detection
         if (error.code === 'PGRST116' || error.message.includes('JWT') || error.message.includes('auth.uid()')) {
-          console.error('🔐 Authentication error - auth.uid() likely NULL on server');
+          logger.error('🔐 Authentication error - auth.uid() likely NULL on server');
           throw new Error('AUTH_UID_NULL');
         }
         
         if (error.code === '42501' || error.message.includes('row-level security')) {
-          console.error('🚫 RLS policy failed - likely auth issue');
+          logger.error('🚫 RLS policy failed - likely auth issue');
           throw new Error('AUTH_PERMISSION_DENIED');
         }
         
@@ -368,7 +371,7 @@ export const useCreateAlert = () => {
       });
     },
     onError: (error) => {
-      console.error('Create alert error:', error);
+      logger.error('Create alert error:', error);
       
       // Handle authentication errors specifically
       if (error.message === 'AUTH_UID_NULL') {

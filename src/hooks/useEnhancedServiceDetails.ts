@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { EnhancedService, ServiceOperator } from '@/types/serviceDetails';
 import { Cost } from '@/types/costs';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useEnhancedServiceDetails");
 /**
  * Hook global para cargar datos completos de un servicio incluyendo:
  * - Datos básicos del servicio
@@ -14,11 +17,11 @@ import { Cost } from '@/types/costs';
 
 const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedService | null> => {
   if (!serviceId) {
-    console.log('❌ [ENHANCED_SERVICE] No serviceId provided');
+    logger.debug('❌ [ENHANCED_SERVICE] No serviceId provided');
     return null;
   }
 
-  console.log('🔍 [ENHANCED_SERVICE] Fetching complete service data for:', serviceId);
+  logger.debug('🔍 [ENHANCED_SERVICE] Fetching complete service data for:', serviceId);
 
   // 1. Obtener datos básicos del servicio con relaciones (incluyendo campos de custodia y proveedor tercerizado)
   const { data: serviceData, error: serviceError } = await supabase
@@ -37,13 +40,13 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     .single();
 
   if (serviceError) {
-    console.error('❌ [ENHANCED_SERVICE] Error fetching service:', serviceError);
+    logger.error('❌ [ENHANCED_SERVICE] Error fetching service:', serviceError);
     throw new Error('No se pudo cargar el servicio');
   }
 
   if (!serviceData) return null;
 
-  console.log('🔍 [ENHANCED_SERVICE] Service creator data:', {
+  logger.debug('🔍 [ENHANCED_SERVICE] Service creator data:', {
     created_by: serviceData.created_by,
     creator: serviceData.creator,
     creator_full_name: serviceData.creator?.full_name,
@@ -63,7 +66,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     .order('created_at', { ascending: false });
 
   if (costsError) {
-    console.error('❌ [ENHANCED_SERVICE] Error fetching costs:', costsError);
+    logger.error('❌ [ENHANCED_SERVICE] Error fetching costs:', costsError);
     throw new Error('No se pudieron cargar los costos del servicio');
   }
 
@@ -83,7 +86,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     const inv = directInvoiceLink.invoices as any;
     resolvedInvoiceFolio = inv.folio;
     resolvedInvoiceNumeroFiscal = inv.numero_fiscal;
-    console.log('🔗 [ENHANCED_SERVICE] Factura resuelta por vínculo directo:', inv.folio);
+    logger.debug('🔗 [ENHANCED_SERVICE] Factura resuelta por vínculo directo:', inv.folio);
   }
 
   // Prioridad 2: vínculo por cierre (closure_services → invoice_closures → invoices)
@@ -108,7 +111,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
         const inv = invoiceClosureLink.invoices as any;
         resolvedInvoiceFolio = inv.folio;
         resolvedInvoiceNumeroFiscal = inv.numero_fiscal;
-        console.log('🔗 [ENHANCED_SERVICE] Factura resuelta por cierre:', inv.folio, 'via', closure.folio);
+        logger.debug('🔗 [ENHANCED_SERVICE] Factura resuelta por cierre:', inv.folio, 'via', closure.folio);
       }
     }
   }
@@ -117,7 +120,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   if (!resolvedInvoiceFolio && serviceData.invoice_folio) {
     resolvedInvoiceFolio = serviceData.invoice_folio;
     resolvedInvoiceNumeroFiscal = serviceData.invoice_numero_fiscal;
-    console.log('⚠️ [ENHANCED_SERVICE] Factura resuelta por metadata (fallback):', serviceData.invoice_folio);
+    logger.debug('⚠️ [ENHANCED_SERVICE] Factura resuelta por metadata (fallback):', serviceData.invoice_folio);
   }
 
   // 3. Separar costos de comisiones de operadores vs otros costos
@@ -133,8 +136,8 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     !cost.description?.toLowerCase().includes('operador')
   ) || [];
 
-  console.log('📊 [ENHANCED_SERVICE] Commission costs found:', commissionCosts.length);
-  console.log('📊 [ENHANCED_SERVICE] Service costs found:', serviceCosts.length);
+  logger.debug('📊 [ENHANCED_SERVICE] Commission costs found:', commissionCosts.length);
+  logger.debug('📊 [ENHANCED_SERVICE] Service costs found:', serviceCosts.length);
 
   // 4. Construir array de operadores desde service_resources (fuente de verdad)
   const operators: ServiceOperator[] = [];
@@ -146,7 +149,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     .eq('service_id', serviceId)
     .eq('resource_type', 'operator');
 
-  console.log('🔍 [ENHANCED_SERVICE] service_resources found:', resourcesData?.length || 0);
+  logger.debug('🔍 [ENHANCED_SERVICE] service_resources found:', resourcesData?.length || 0);
 
   if (resourcesData && resourcesData.length > 0) {
     // Fuente primaria: service_resources con asignaciones reales.
@@ -177,10 +180,10 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
         });
       }
     });
-    console.log('✅ [ENHANCED_SERVICE] Operators loaded from service_resources:', operators.map(o => ({ name: o.operator?.name, role: o.role, commission: o.commission })));
+    logger.debug('✅ [ENHANCED_SERVICE] Operators loaded from service_resources:', operators.map(o => ({ name: o.operator?.name, role: o.role, commission: o.commission })));
   } else {
     // Fallback para servicios legacy sin service_resources
-    console.log('⚠️ [ENHANCED_SERVICE] No service_resources found, using legacy fallback');
+    logger.debug('⚠️ [ENHANCED_SERVICE] No service_resources found, using legacy fallback');
     const processedOperatorIds = new Set<string>();
 
     if (serviceData.operators && serviceData.operator_id) {
@@ -342,7 +345,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     resolvedClosureFolio
   };
 
-  console.log('✅ [ENHANCED_SERVICE] Enhanced service created:', {
+  logger.debug('✅ [ENHANCED_SERVICE] Enhanced service created:', {
     folio: enhancedService.folio,
     purchaseOrder: enhancedService.purchaseOrder,
     purchaseOrderNumber: enhancedService.purchaseOrderNumber,
@@ -363,7 +366,7 @@ export const useEnhancedServiceDetails = (serviceId: string | null) => {
     queryFn: () => fetchEnhancedServiceDetails(serviceId!),
     enabled: !!serviceId,
     retry: (failureCount, error) => {
-      console.log(`Enhanced service details query retry attempt ${failureCount}:`, error.message);
+      logger.debug(`Enhanced service details query retry attempt ${failureCount}:`, error.message);
       return failureCount < 2;
     },
     retryDelay: 1000,

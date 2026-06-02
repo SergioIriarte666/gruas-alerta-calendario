@@ -5,7 +5,10 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { generateInspectionPDF } from './inspectionPdfGenerator';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("enhancedPdfGenerator");
 interface ProgressCallback {
   (progress: number, step: string): void;
 }
@@ -21,7 +24,7 @@ export class EnhancedPDFGenerator {
     if (this.progressCallback) {
       this.progressCallback(progress, step);
     }
-    console.log(`PDF Progress: ${progress}% - ${step}`);
+    logger.debug(`PDF Progress: ${progress}% - ${step}`);
   }
 
   async generateWithProgress(data: {
@@ -51,7 +54,7 @@ export class EnhancedPDFGenerator {
       // Verificar fotos disponibles
       const totalPhotos = data.inspection.photographicSet?.length || 0;
       
-      console.log(`Total de fotos a procesar: ${totalPhotos}`);
+      logger.debug(`Total de fotos a procesar: ${totalPhotos}`);
       
       this.updateProgress(60, 'Procesando fotografías...');
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -71,7 +74,7 @@ export class EnhancedPDFGenerator {
       return { blob: pdfBlob, downloadUrl };
       
     } catch (error) {
-      console.error('Error en generación de PDF:', error);
+      logger.error('Error en generación de PDF:', error);
       throw new Error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   }
@@ -103,7 +106,7 @@ export class EnhancedPDFGenerator {
       
       return true;
     } catch (error) {
-      console.error('Error en descarga automática:', error);
+      logger.error('Error en descarga automática:', error);
       return false;
     }
   }

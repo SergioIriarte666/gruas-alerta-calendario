@@ -8,7 +8,10 @@ import { type TripCalculationResult } from '@/hooks/useTripCalculation';
 import { getFuelTypeLabel } from '@/hooks/useFuelPrices';
 import { useAddTripEstimate } from '@/hooks/useTripEstimates';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("TripCostBreakdown");
 interface TripCostBreakdownProps {
   result: TripCalculationResult;
   originName: string;
@@ -64,7 +67,7 @@ export const TripCostBreakdown = ({
       {
         onSuccess: () => toast.success('Estimación guardada'),
         onError: (err) => {
-          console.error('Error saving trip estimate:', err);
+          logger.error('Error saving trip estimate:', err);
           toast.error(`Error al guardar: ${err.message}`);
         },
       }

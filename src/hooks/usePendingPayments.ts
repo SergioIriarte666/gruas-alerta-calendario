@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { SupplierPayment } from '@/types/suppliers';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePendingPayments");
 export interface PendingPaymentWithSupplier extends SupplierPayment {
   supplier_name?: string;
 }
@@ -89,7 +92,7 @@ export const usePendingPayments = (supplierId?: string) => {
       toast.success(`${count} pago(s) registrado(s) exitosamente`);
     },
     onError: (error) => {
-      console.error('Error registering payments:', error);
+      logger.error('Error registering payments:', error);
       toast.error('Error al registrar los pagos');
     }
   });

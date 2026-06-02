@@ -3,13 +3,16 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
 import { useInspectionPDF } from './useInspectionPDF';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInitialInspectionPDF");
 export const useInitialInspectionPDF = () => {
   const { generatePDF, isGeneratingPDF } = useInspectionPDF();
 
   const generateInitialPDFMutation = useMutation({
     mutationFn: async ({ service, values }: { service: Service; values: InspectionFormValues }) => {
-      console.log('📄 [INITIAL] Generando PDF de inspección inicial (pre-servicio)...');
+      logger.debug('📄 [INITIAL] Generando PDF de inspección inicial (pre-servicio)...');
       
       // Generar PDF inicial (isFinal = false indica inspección inicial/pre-servicio)
       const { blob, filename } = await generatePDF(service, values, false);
@@ -30,11 +33,11 @@ export const useInitialInspectionPDF = () => {
       return { blob, filename: initialFilename };
     },
     onSuccess: (result) => {
-      console.log('✅ [INITIAL] PDF de inspección inicial generado:', result.filename);
+      logger.debug('✅ [INITIAL] PDF de inspección inicial generado:', result.filename);
       toast.success('PDF de Inspección Inicial descargado exitosamente');
     },
     onError: (error: Error) => {
-      console.error('💥 [INITIAL] Error en PDF de inspección inicial:', error);
+      logger.error('💥 [INITIAL] Error en PDF de inspección inicial:', error);
       toast.error(`Error al generar PDF: ${error.message}`);
     }
   });

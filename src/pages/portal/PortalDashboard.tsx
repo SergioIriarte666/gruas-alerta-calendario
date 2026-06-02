@@ -8,7 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PortalDashboard");
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
@@ -24,7 +27,7 @@ const PortalDashboard: React.FC = () => {
   const serviciosRecientes = services?.slice(0, 5) || [];
 
   const handleRetryServices = () => {
-    console.log('Retrying services fetch...');
+    logger.debug('Retrying services fetch...');
     refetchServices();
   };
 

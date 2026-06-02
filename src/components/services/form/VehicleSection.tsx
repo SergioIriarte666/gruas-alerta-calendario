@@ -28,7 +28,10 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { isChileanPlate } from '@/utils/vehicleIdentifiers';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("VehicleSection");
 // --- Normalization utilities ---
 const normalizeText = (text: string): string =>
   text
@@ -235,7 +238,7 @@ export const VehicleSection = ({
               onVehicleModelChange(newModel.name);
             }
           } catch (error) {
-            console.error('Error creating model from suggestion:', error);
+            logger.error('Error creating model from suggestion:', error);
           }
         }
         setPendingModel(null);
@@ -332,7 +335,7 @@ export const VehicleSection = ({
         setIsNewBrandDialogOpen(false);
       }
     } catch (error) {
-      console.error('Error creating brand:', error);
+      logger.error('Error creating brand:', error);
     }
   };
 
@@ -350,7 +353,7 @@ export const VehicleSection = ({
         setIsNewModelDialogOpen(false);
       }
     } catch (error) {
-      console.error('Error creating model:', error);
+      logger.error('Error creating model:', error);
     }
   };
 
@@ -410,7 +413,7 @@ export const VehicleSection = ({
       setSuggestionStep('preview');
       toast.success('Datos del vehículo aplicados');
     } catch (error) {
-      console.error('Error applying suggestion:', error);
+      logger.error('Error applying suggestion:', error);
       toast.error('Error al aplicar sugerencia');
     } finally {
       setIsApplyingSuggestion(false);
@@ -448,7 +451,7 @@ export const VehicleSection = ({
       setSuggestionStep('preview');
       toast.success('Datos del vehículo aplicados');
     } catch (error) {
-      console.error('Error creating brand/model:', error);
+      logger.error('Error creating brand/model:', error);
       toast.error('Error al crear marca/modelo');
     } finally {
       setIsApplyingSuggestion(false);

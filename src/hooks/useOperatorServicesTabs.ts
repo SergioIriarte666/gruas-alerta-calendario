@@ -4,7 +4,10 @@ import { useOperatorServices } from './useOperatorServices';
 import { Service } from '@/types';
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useOperatorServicesTabs");
 export const useOperatorServicesTabs = () => {
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -37,7 +40,7 @@ export const useOperatorServicesTabs = () => {
         refetch()
       ]);
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      logger.error('Error refreshing data:', error);
     }
   };
 

@@ -8,7 +8,10 @@ import { Trash2, AlertTriangle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("InvoiceEmergencyActions");
 interface InvoiceEmergencyActionsProps {
   invoiceId: string;
   invoiceFolio: string;
@@ -41,7 +44,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
     setIsDeleting(true);
     
     try {
-      console.log('Emergency deletion - Starting for invoice:', invoiceId);
+      logger.debug('Emergency deletion - Starting for invoice:', invoiceId);
 
       // 1. Get invoice closure relationships
       const { data: invoiceClosures, error: closureError } = await supabase
@@ -78,7 +81,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
             .eq('status', 'invoiced');
 
           if (revertError) throw revertError;
-          console.log('Emergency deletion - Reverted', serviceIds.length, 'services to completed (cleared invoice data)');
+          logger.debug('Emergency deletion - Reverted', serviceIds.length, 'services to completed (cleared invoice data)');
         }
 
         // 4. Revert closure status from 'invoiced' to 'closed'
@@ -89,7 +92,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
           .eq('status', 'invoiced');
 
         if (closureRevertError) throw closureRevertError;
-        console.log('Emergency deletion - Reverted', closureIds.length, 'closures to closed');
+        logger.debug('Emergency deletion - Reverted', closureIds.length, 'closures to closed');
       }
 
       // 4b. Also revert services linked directly via invoice_services
@@ -116,7 +119,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
           .delete()
           .eq('invoice_id', invoiceId);
         
-        console.log('Emergency deletion - Reverted', directServiceIds.length, 'direct services');
+        logger.debug('Emergency deletion - Reverted', directServiceIds.length, 'direct services');
       }
 
       // 5. Delete invoice closure relationships
@@ -135,7 +138,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
 
       if (invoiceError) throw invoiceError;
 
-      console.log('Emergency deletion - Successfully deleted invoice:', invoiceFolio);
+      logger.debug('Emergency deletion - Successfully deleted invoice:', invoiceFolio);
       
       toast.success('Factura eliminada completamente', {
         description: `La factura ${invoiceFolio} y todas sus relaciones han sido eliminadas. Los servicios están disponibles para nuevo cierre.`,
@@ -145,7 +148,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
       setConfirmationText('');
 
     } catch (error: any) {
-      console.error('Emergency deletion failed:', error);
+      logger.error('Emergency deletion failed:', error);
       toast.error('Error en eliminación de emergencia', {
         description: 'No se pudo completar la eliminación. Revisa los logs para más detalles.',
       });

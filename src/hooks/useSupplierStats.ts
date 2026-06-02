@@ -8,7 +8,7 @@ interface ExtendedSupplierStats extends SupplierStats {
 }
 
 const fetchSupplierStats = async (): Promise<ExtendedSupplierStats> => {
-  const { data: suppliers, error: suppliersError } = await (supabase as any)
+  const { data: suppliers, error: suppliersError } = await supabase
     .from('inventory_suppliers')
     .select('id, is_active, category');
 

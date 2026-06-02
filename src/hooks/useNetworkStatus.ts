@@ -1,6 +1,9 @@
 
 import { useState, useEffect } from 'react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useNetworkStatus");
 export const useNetworkStatus = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
@@ -9,7 +12,7 @@ export const useNetworkStatus = () => {
     const handleOnline = () => {
       setIsOnline(true);
       if (wasOffline) {
-        console.log('Network connection restored');
+        logger.debug('Network connection restored');
         setWasOffline(false);
         // Trigger any necessary reconnections here
         window.location.reload(); // Simple approach to refresh data
@@ -19,7 +22,7 @@ export const useNetworkStatus = () => {
     const handleOffline = () => {
       setIsOnline(false);
       setWasOffline(true);
-      console.warn('Network connection lost');
+      logger.warn('Network connection lost');
     };
 
     window.addEventListener('online', handleOnline);

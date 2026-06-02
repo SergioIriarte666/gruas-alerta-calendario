@@ -3,7 +3,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { verifySessionConsistency, forceReAuthentication } from '@/utils/authCleanup';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SessionVerifier");
 interface SessionVerifierProps {
   checkInterval?: number; // in milliseconds, default 30 seconds
   autoRecover?: boolean; // automatically attempt session recovery
@@ -19,7 +22,7 @@ export const SessionVerifier = ({
   const verificationStatusRef = useRef<'unknown' | 'valid' | 'invalid'>('unknown');
 
   const logVerificationStatus = useCallback((status: 'valid' | 'invalid', checkedAt: Date) => {
-    console.log(`🔐 SessionVerifier: Status = ${status}, Last Check = ${checkedAt.toISOString()}`);
+    logger.debug(`🔐 SessionVerifier: Status = ${status}, Last Check = ${checkedAt.toISOString()}`);
   }, []);
 
   const verifySession = useCallback(async () => {
@@ -29,29 +32,29 @@ export const SessionVerifier = ({
     }
 
     try {
-      console.log('🔍 SessionVerifier: Checking session consistency...');
+      logger.debug('🔍 SessionVerifier: Checking session consistency...');
       const result = await verifySessionConsistency(supabase);
       
       if (result.isValid) {
         verificationStatusRef.current = 'valid';
-        console.log('✅ SessionVerifier: Session is valid');
+        logger.debug('✅ SessionVerifier: Session is valid');
       } else {
         verificationStatusRef.current = 'invalid';
-        console.error('❌ SessionVerifier: Session invalid -', result.reason);
+        logger.error('❌ SessionVerifier: Session invalid -', result.reason);
         
         if (result.reason === 'auth_uid_null' || result.reason === 'invalid_jwt') {
           if (autoRecover) {
-            console.log('🔄 SessionVerifier: Attempting automatic session recovery...');
+            logger.debug('🔄 SessionVerifier: Attempting automatic session recovery...');
             try {
               await refreshSession();
               
               // Re-verify after refresh
               const retryResult = await verifySessionConsistency(supabase);
               if (!retryResult.isValid) {
-                console.error('🚨 SessionVerifier: Auto-recovery failed, forcing re-auth');
+                logger.error('🚨 SessionVerifier: Auto-recovery failed, forcing re-auth');
                 await forceReAuthentication(supabase);
               } else {
-                console.log('✅ SessionVerifier: Auto-recovery successful');
+                logger.debug('✅ SessionVerifier: Auto-recovery successful');
                 verificationStatusRef.current = 'valid';
                 addNotification({
                   title: 'Sesión Recuperada',
@@ -60,7 +63,7 @@ export const SessionVerifier = ({
                 });
               }
             } catch (error) {
-              console.error('🚨 SessionVerifier: Recovery failed:', error);
+              logger.error('🚨 SessionVerifier: Recovery failed:', error);
               await forceReAuthentication(supabase);
             }
           } else {
@@ -77,7 +80,7 @@ export const SessionVerifier = ({
       lastCheckRef.current = checkedAt;
       logVerificationStatus(verificationStatusRef.current === 'valid' ? 'valid' : 'invalid', checkedAt);
     } catch (error) {
-      console.error('🚨 SessionVerifier: Error during verification:', error);
+      logger.error('🚨 SessionVerifier: Error during verification:', error);
       verificationStatusRef.current = 'invalid';
       const checkedAt = new Date();
       lastCheckRef.current = checkedAt;

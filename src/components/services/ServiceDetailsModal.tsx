@@ -43,7 +43,10 @@ import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generateQuotePDF } from '@/utils/pdf/quotePdfGenerator';
 import { generateWorkOrderPDF } from '@/utils/pdf/workOrderPdfGenerator';
 import { useSettings } from '@/hooks/useSettings';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServiceDetailsModal");
 interface ServiceDetailsModalProps {
   service: Service | null;
   isOpen: boolean;
@@ -194,7 +197,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           .eq('category_id', commissionCategoryId);
 
         if (error) {
-          console.error('[MODAL_VERIFY] ❌ Error verificando comisiones:', error);
+          logger.error('[MODAL_VERIFY] ❌ Error verificando comisiones:', error);
           return;
         }
 
@@ -206,7 +209,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           );
 
           if (syncError) {
-            console.error('[MODAL_VERIFY] ❌ Error en sincronización silenciosa:', syncError);
+            logger.error('[MODAL_VERIFY] ❌ Error en sincronización silenciosa:', syncError);
           } else if (syncResult && typeof syncResult === 'object' && 'success' in syncResult) {
             // Invalidar queries después de la sincronización
             queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData.id] });
@@ -216,7 +219,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           }
         }
       } catch (error) {
-        console.error('[MODAL_VERIFY] ❌ Error en verificación silenciosa:', error);
+        logger.error('[MODAL_VERIFY] ❌ Error en verificación silenciosa:', error);
       }
     };
 
@@ -286,7 +289,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     });
 
     if (error) {
-      console.warn('WhatsApp admin no enviado:', error);
+      logger.warn('WhatsApp admin no enviado:', error);
       toast.error('No se pudo enviar la notificación');
       return;
     }
@@ -322,7 +325,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       });
 
       if (error) {
-        console.warn('WhatsApp operador no enviado:', error);
+        logger.warn('WhatsApp operador no enviado:', error);
         toast.error('No se pudo enviar la notificacion al operador');
         return;
       }

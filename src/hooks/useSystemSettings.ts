@@ -5,7 +5,10 @@ import { toast } from 'sonner';
 import type { SystemSettings, NotificationSettings } from '@/types/settings';
 import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
 import type { Json } from '@/integrations/supabase/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSystemSettings");
 interface SystemSettingsFromDB {
   id: string;
   auto_backup: boolean;
@@ -76,7 +79,7 @@ export const useSystemSettings = () => {
               ? JSON.parse(data.report_column_config) 
               : data.report_column_config;
           } catch (e) {
-            console.warn('Error parsing report_column_config, using defaults');
+            logger.warn('Error parsing report_column_config, using defaults');
           }
         }
 
@@ -97,7 +100,7 @@ export const useSystemSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching system settings:', error);
+      logger.error('Error fetching system settings:', error);
       toast.error('Error', {
         description: 'No se pudo cargar la configuración del sistema.',
       });
@@ -161,7 +164,7 @@ export const useSystemSettings = () => {
 
       return { success: true };
     } catch (error) {
-      console.error('Error saving system settings:', error);
+      logger.error('Error saving system settings:', error);
       return { 
         success: false, 
         error: 'Error al guardar la configuración del sistema: ' + (error?.message || 'Desconocido') 

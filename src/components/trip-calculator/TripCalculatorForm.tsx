@@ -15,7 +15,10 @@ import { useTollCalculation, useTollLocations, matchTollLocation } from '@/hooks
 import { TripCostBreakdown } from './TripCostBreakdown';
 import { TripRouteMap } from './TripRouteMap';
 import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("TripCalculatorForm");
 interface GeoResult {
   name: string;
   coordinates: [number, number];
@@ -207,7 +210,7 @@ export const TripCalculatorForm = () => {
     const destMatched = hasLocations ? !!matchTollLocation(destCity, tollLocations) : true;
     const shouldAttemptTolls = originMatched && destMatched;
 
-    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched, hasLocations });
+    logger.debug('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched, hasLocations });
 
     let tollData = null;
     if (shouldAttemptTolls) {

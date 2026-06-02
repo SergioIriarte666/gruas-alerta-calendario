@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 import { useServiceTransformer } from '../services/useServiceTransformer';
 import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useEditClosure");
 interface UseEditClosureProps {
   closure: ServiceClosure;
   onUpdate: (updates: Partial<ServiceClosure>) => void;
@@ -22,7 +25,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
   const fetchServicesForEdit = async () => {
     try {
       setLoading(true);
-      console.log('Fetching services for closure edit:', closure.id);
+      logger.debug('Fetching services for closure edit:', closure.id);
 
       // Get current services in this closure
       const { data: closureServices, error: closureError } = await supabase
@@ -41,7 +44,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .eq('closure_id', closure.id);
 
       if (closureError) {
-        console.error('Error fetching current closure services:', closureError);
+        logger.error('Error fetching current closure services:', closureError);
         throw closureError;
       }
 
@@ -69,7 +72,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       const { data: completedServicesData, error: completedError } = await completedQuery;
 
       if (completedError) {
-        console.error('Error fetching completed services:', completedError);
+        logger.error('Error fetching completed services:', completedError);
         throw completedError;
       }
 
@@ -96,7 +99,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       const { data: pendingServicesData, error: pendingError } = await pendingQuery;
 
       if (pendingError) {
-        console.error('Error fetching pending services:', pendingError);
+        logger.error('Error fetching pending services:', pendingError);
         throw pendingError;
       }
 
@@ -107,7 +110,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .neq('closure_id', closure.id);
 
       if (allClosureError) {
-        console.error('Error fetching all closure services:', allClosureError);
+        logger.error('Error fetching all closure services:', allClosureError);
       }
 
       const usedServiceIds = new Set(allClosureServices?.map(cs => cs.service_id) || []);
@@ -131,14 +134,14 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       const transformedPendingServices = transformRawServiceData(pendingServicesData || []);
       setPendingServices(transformedPendingServices);
 
-      console.log('Services loaded for edit:', {
+      logger.debug('Services loaded for edit:', {
         current: transformedCurrentServices.length,
         available: transformedAvailableServices.length,
         pending: transformedPendingServices.length
       });
 
     } catch (error: any) {
-      console.error('Error fetching services for edit:', error);
+      logger.error('Error fetching services for edit:', error);
       toast({
         type: "error",
         title: "Error",
@@ -151,7 +154,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
 
   const updateClosureServices = async (newServiceIds: string[]) => {
     try {
-      console.log('Updating closure services:', { closure: closure.id, newServiceIds });
+      logger.debug('Updating closure services:', { closure: closure.id, newServiceIds });
 
       // Delete existing relationships
       const { error: deleteError } = await supabase
@@ -160,7 +163,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .eq('closure_id', closure.id);
 
       if (deleteError) {
-        console.error('Error deleting existing closure services:', deleteError);
+        logger.error('Error deleting existing closure services:', deleteError);
         throw deleteError;
       }
 
@@ -176,7 +179,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
           .insert(closureServices);
 
         if (insertError) {
-          console.error('Error inserting new closure services:', insertError);
+          logger.error('Error inserting new closure services:', insertError);
           throw insertError;
         }
       }
@@ -196,7 +199,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .eq('id', closure.id);
 
       if (updateError) {
-        console.error('Error updating closure total:', updateError);
+        logger.error('Error updating closure total:', updateError);
         throw updateError;
       }
 
@@ -222,7 +225,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       await fetchServicesForEdit();
 
     } catch (error: any) {
-      console.error('Error updating closure services:', error);
+      logger.error('Error updating closure services:', error);
       toast({
         type: "error",
         title: "Error",
@@ -248,7 +251,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         description: "El servicio ha sido marcado como completado.",
       });
     } catch (error: any) {
-      console.error('Error completing service:', error);
+      logger.error('Error completing service:', error);
       toast({
         type: "error",
         title: "Error",
@@ -274,7 +277,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         description: `${serviceIds.length} servicio(s) han sido marcados como completados.`,
       });
     } catch (error: any) {
-      console.error('Error completing services:', error);
+      logger.error('Error completing services:', error);
       toast({
         type: "error",
         title: "Error",

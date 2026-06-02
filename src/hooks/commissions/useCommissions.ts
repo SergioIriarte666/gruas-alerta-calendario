@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Commission } from '@/types/commissions';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCommissions");
 const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
 
 const mapRawCommissionToCommission = (commission: any): Commission => {
@@ -60,7 +63,7 @@ const fetchCommissionCategoryIds = async (): Promise<string[]> => {
  * Se usa como fallback cuando el RPC falla.
  */
 const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
-  console.log('🔁 Falling back to costs-based commissions query...');
+  logger.debug('🔁 Falling back to costs-based commissions query...');
 
   const commissionCategoryIds = await fetchCommissionCategoryIds();
   const categoryIdsToUse = [...new Set([COMMISSION_CATEGORY_ID, ...commissionCategoryIds])];
@@ -98,12 +101,12 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
   const costsData = Array.from(mergedById.values());
 
   if (error) {
-    console.error('❌ Error fetching commissions from costs:', error);
+    logger.error('❌ Error fetching commissions from costs:', error);
     throw new Error(`Error fetching commissions from costs: ${error.message}`);
   }
 
   if (!costsData || costsData.length === 0) {
-    console.log('📭 No commissions found in costs');
+    logger.debug('📭 No commissions found in costs');
     return [];
   }
 
@@ -227,7 +230,7 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
  * Ahora solo: RPC + fallback costs, deduplicados por id.
  */
 const fetchCommissions = async (): Promise<Commission[]> => {
-  console.log('🔍 Fetching commissions (single source: costs table)...');
+  logger.debug('🔍 Fetching commissions (single source: costs table)...');
   
   // Try RPC first
   try {
@@ -235,26 +238,26 @@ const fetchCommissions = async (): Promise<Commission[]> => {
     
     if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
       const mapped = rpcData.map(mapRawCommissionToCommission);
-      console.log('✅ Commissions from RPC:', mapped.length);
+      logger.debug('✅ Commissions from RPC:', mapped.length);
       return mapped;
     }
     
     if (rpcError) {
-      console.warn('⚠️ RPC error:', rpcError.message, rpcError.code, rpcError.details);
+      logger.warn('⚠️ RPC error:', rpcError.message, rpcError.code, rpcError.details);
     } else {
-      console.warn('⚠️ RPC returned empty/invalid data, trying costs fallback');
+      logger.warn('⚠️ RPC returned empty/invalid data, trying costs fallback');
     }
   } catch (e) {
-    console.error('❌ RPC exception:', e);
+    logger.error('❌ RPC exception:', e);
   }
 
   // Fallback to costs table
   try {
     const costsData = await fetchCommissionsFromCosts();
-    console.log('✅ Commissions from costs fallback:', costsData.length);
+    logger.debug('✅ Commissions from costs fallback:', costsData.length);
     return costsData;
   } catch (e) {
-    console.error('❌ Costs fallback failed:', e);
+    logger.error('❌ Costs fallback failed:', e);
     throw e;
   }
 };

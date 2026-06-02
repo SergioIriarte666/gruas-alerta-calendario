@@ -5,7 +5,10 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import type { Database } from '@/integrations/supabase/types';
 import { Operator } from '@/types';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useOperatorMutations");
 type OperatorCreationData = Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>;
 type OperatorUpdateData = Partial<OperatorCreationData>;
 
@@ -40,7 +43,7 @@ export const useOperatorMutations = () => {
     toast.error("Error", {
       description: message,
     });
-    console.error(error);
+    logger.error(error);
   };
 
   const createOperatorMutation = useMutation({

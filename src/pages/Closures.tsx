@@ -38,6 +38,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ClosuresPage');
 
 const Closures = () => {
   const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
@@ -168,7 +171,7 @@ const Closures = () => {
         description: "El cierre ha sido actualizado exitosamente.",
       });
     } catch (error) {
-      console.error('Error updating closure:', error);
+      logger.error('Error updating closure:', error);
       toast.error("Error", {
         description: "No se pudo actualizar el cierre.",
       });
@@ -176,7 +179,7 @@ const Closures = () => {
   };
 
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
-    console.time('manualCreateClosure');
+    logger.debug('manualCreateClosure - start');
     try {
       
       const newClosure = await createClosure(closureData);
@@ -192,12 +195,12 @@ const Closures = () => {
       }, 300);
       
     } catch (error) {
-      console.error('Error creating closure:', error);
+      logger.error('Error creating closure:', error);
       toast.error("Error", {
         description: "No se pudo crear el cierre.",
       });
     } finally {
-      console.timeEnd('manualCreateClosure');
+      logger.debug('manualCreateClosure - end');
     }
   };
 

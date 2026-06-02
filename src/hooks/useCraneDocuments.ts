@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCraneDocuments");
 export interface CraneDocument {
   id: string;
   craneId: string;
@@ -130,7 +133,7 @@ export const useCraneDocuments = (craneId: string) => {
       toast.success("Documento subido correctamente y fecha de vencimiento actualizada");
     },
     onError: (error: any) => {
-      console.error('Error uploading document:', error);
+      logger.error('Error uploading document:', error);
       toast.error(error.message || "Ocurrió un error al subir el documento");
     }
   });
@@ -149,7 +152,7 @@ export const useCraneDocuments = (craneId: string) => {
 
       toast.success(`Descargando ${doc.fileName}`);
     } catch (error) {
-      console.error('Error downloading document:', error);
+      logger.error('Error downloading document:', error);
       toast.error("No se pudo descargar el documento");
     }
   };

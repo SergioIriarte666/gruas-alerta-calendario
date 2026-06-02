@@ -5,7 +5,10 @@ import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import { useInvoiceData } from './invoices/useInvoiceData';
 import { useInvoiceOperations } from './invoices/useInvoiceOperations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoices");
 export const useInvoices = () => {
   const { invoices, loading, addInvoice, updateInvoice: updateInvoiceData, removeInvoice, refetch } = useInvoiceData();
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid } = useInvoiceOperations();
@@ -40,7 +43,7 @@ export const useInvoices = () => {
           const batches = [];
           for (let i = 0; i < ids.length; i += BATCH_SIZE) {
             batches.push(
-              (supabase.from(table as any) as any).select(fields).in('id', ids.slice(i, i + BATCH_SIZE))
+              supabase.from(table as any).select(fields).in('id', ids.slice(i, i + BATCH_SIZE))
             );
           }
           const results = await Promise.all(batches);
@@ -83,7 +86,7 @@ export const useInvoices = () => {
           });
         }
       } catch (error) {
-        console.error('Error fetching related data:', error);
+        logger.error('Error fetching related data:', error);
         // Silent error to avoid toast spam
       }
     };
@@ -99,7 +102,7 @@ export const useInvoices = () => {
       // No redundant refetch — React Query invalidation in useInvoiceOperations handles it
       return newInvoice;
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      logger.error('Error creating invoice:', error);
       throw error;
     }
   };
@@ -110,7 +113,7 @@ export const useInvoices = () => {
       updateInvoiceData(id, updatedInvoice);
       return updatedInvoice;
     } catch (error) {
-      console.error('Error updating invoice:', error);
+      logger.error('Error updating invoice:', error);
       throw error;
     }
   };
@@ -120,7 +123,7 @@ export const useInvoices = () => {
       await deleteInvoiceOp(id, options);
       removeInvoice(id);
     } catch (error) {
-      console.error('Error deleting invoice:', error);
+      logger.error('Error deleting invoice:', error);
       throw error;
     }
   };

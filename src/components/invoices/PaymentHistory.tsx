@@ -21,7 +21,10 @@ import {
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { PaymentWithDetails } from '@/types/payments';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentHistory");
 interface PaymentHistoryProps {
   onClose?: () => void;
 }
@@ -49,7 +52,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         await loadClientHistory(selectedClient);
       }
     } catch (error) {
-      console.error('Error syncing:', error);
+      logger.error('Error syncing:', error);
     } finally {
       setSyncing(false);
     }
@@ -63,7 +66,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
       const data = await getClientPaymentHistory(clientId);
       setHistoryData(data);
     } catch (error) {
-      console.error('Error loading history:', error);
+      logger.error('Error loading history:', error);
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,10 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings } from '@/types/settings';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSettingsSaver");
 interface CompanyDataPayload {
   business_name: string;
   address: string;
@@ -36,7 +39,7 @@ export const useSettingsSaver = () => {
         next_service_folio_number: settings.company.nextServiceFolioNumber || 1000,
       };
 
-      console.log('Intentando guardar datos de empresa (payload enviado):', companyPayload);
+      logger.debug('Intentando guardar datos de empresa (payload enviado):', companyPayload);
 
       const { data: existingCompany, error: selectError } = await supabase
         .from('company_data')
@@ -45,7 +48,7 @@ export const useSettingsSaver = () => {
         .maybeSingle();
 
       if (selectError) {
-        console.error('Error al consultar company_data:', selectError);
+        logger.error('Error al consultar company_data:', selectError);
         throw selectError;
       }
 
@@ -56,10 +59,10 @@ export const useSettingsSaver = () => {
           .eq('id', existingCompany.id);
 
         if (updateError) {
-          console.error('Error al actualizar la empresa:', updateError);
+          logger.error('Error al actualizar la empresa:', updateError);
           throw updateError;
         }
-        console.log('Empresa actualizada correctamente');
+        logger.debug('Empresa actualizada correctamente');
 
       } else {
         const { data: newCompany, error: insertError } = await supabase
@@ -69,13 +72,13 @@ export const useSettingsSaver = () => {
           .maybeSingle();
 
         if (insertError) {
-          console.error('Error al insertar empresa:', insertError);
+          logger.error('Error al insertar empresa:', insertError);
           throw insertError;
         }
         if (!newCompany || !newCompany.id) {
           throw new Error('No se pudo crear el registro de empresa');
         }
-        console.log('Empresa creada correctamente:', newCompany.id);
+        logger.debug('Empresa creada correctamente:', newCompany.id);
       }
 
       // Otros settings a local storage (user, system, notifications)
@@ -89,7 +92,7 @@ export const useSettingsSaver = () => {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error saving settings:', error);
+      logger.error('Error saving settings:', error);
       return { success: false, error: 'Error al guardar la configuración: ' + (error?.message || 'Desconocido') };
     } finally {
       setSaving(false);

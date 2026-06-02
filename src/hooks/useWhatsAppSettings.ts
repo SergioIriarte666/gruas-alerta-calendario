@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useWhatsAppSettings");
 export interface WhatsAppSettings {
   id?: string;
   adminPhone1: string;
@@ -40,7 +43,7 @@ export const useWhatsAppSettings = () => {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('whatsapp_settings')
         .select('*')
         .limit(1)
@@ -64,7 +67,7 @@ export const useWhatsAppSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching WhatsApp settings:', error);
+      logger.error('Error fetching WhatsApp settings:', error);
     } finally {
       setLoading(false);
     }
@@ -92,12 +95,12 @@ export const useWhatsAppSettings = () => {
 
       let error;
       if (settings.id) {
-        ({ error } = await (supabase as any)
+        ({ error } = await supabase
           .from('whatsapp_settings')
           .update(payload)
           .eq('id', settings.id));
       } else {
-        ({ error } = await (supabase as any)
+        ({ error } = await supabase
           .from('whatsapp_settings')
           .insert(payload));
       }

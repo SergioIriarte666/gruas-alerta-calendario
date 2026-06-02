@@ -2,7 +2,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
 import { formatClosureData, generateClosureFolio } from '@/utils/closureUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClosureOperations");
 export const useClosureOperations = () => {
 
   const createClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
@@ -31,7 +34,7 @@ export const useClosureOperations = () => {
       }
 
       const folio = `CIE-${String(nextNumber).padStart(3, '0')}`;
-      console.log('Generating new closure with folio:', folio);
+      logger.debug('Generating new closure with folio:', folio);
 
       const { data, error } = await supabase
         .from('service_closures')
@@ -49,15 +52,15 @@ export const useClosureOperations = () => {
         .single();
 
       if (error) {
-        console.error('Supabase error creating closure:', error);
+        logger.error('Supabase error creating closure:', error);
         throw error;
       }
 
-      console.log('Closure created successfully, ID:', data.id);
+      logger.debug('Closure created successfully, ID:', data.id);
 
       // Create closure-service relationships
       if (closureData.serviceIds.length > 0) {
-        console.log(`Linking ${closureData.serviceIds.length} services to closure...`);
+        logger.debug(`Linking ${closureData.serviceIds.length} services to closure...`);
         const closureServices = closureData.serviceIds.map(serviceId => ({
           closure_id: data.id,
           service_id: serviceId
@@ -72,11 +75,11 @@ export const useClosureOperations = () => {
             .insert(batch);
 
           if (relationError) {
-            console.error('Error creating closure-service relationships (batch):', relationError);
+            logger.error('Error creating closure-service relationships (batch):', relationError);
             throw relationError;
           }
         }
-        console.log('Services linked successfully');
+        logger.debug('Services linked successfully');
       }
 
       const newClosure: ServiceClosure = formatClosureData(data);
@@ -88,7 +91,7 @@ export const useClosureOperations = () => {
 
       return newClosure;
     } catch (error: any) {
-      console.error('Error creating closure:', error);
+      logger.error('Error creating closure:', error);
       toast.error("Error", {
         description: "No se pudo crear el cierre.",
       });
@@ -130,7 +133,7 @@ export const useClosureOperations = () => {
 
       return { ...closureData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
-      console.error('Error updating closure:', error);
+      logger.error('Error updating closure:', error);
       toast.error("Error", {
         description: "No se pudo actualizar el cierre.",
       });
@@ -151,7 +154,7 @@ export const useClosureOperations = () => {
         description: "El cierre ha sido eliminado exitosamente.",
       });
     } catch (error: any) {
-      console.error('Error deleting closure:', error);
+      logger.error('Error deleting closure:', error);
       toast.error("Error", {
         description: "No se pudo eliminar el cierre.",
       });
@@ -174,7 +177,7 @@ export const useClosureOperations = () => {
 
       return { status: 'closed' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
-      console.error('Error closing closure:', error);
+      logger.error('Error closing closure:', error);
       toast.error("Error", {
         description: "No se pudo procesar el cierre.",
       });

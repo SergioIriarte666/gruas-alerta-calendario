@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useDuplicateCheck");
 // Tipos para duplicados de costos
 export interface CostDuplicateResult {
   index: number;
@@ -73,7 +76,7 @@ export const useCostDuplicateCheck = () => {
         });
 
         if (error) {
-          console.error('Error checking cost duplicates:', error);
+          logger.error('Error checking cost duplicates:', error);
           continue;
         }
 
@@ -134,7 +137,7 @@ export const useSupplierInvoiceDuplicateCheck = () => {
         });
 
         if (error) {
-          console.error('Error checking invoice duplicates:', error);
+          logger.error('Error checking invoice duplicates:', error);
           continue;
         }
 
@@ -193,7 +196,7 @@ export const useSupplierDuplicateCheck = () => {
         });
 
         if (error) {
-          console.error('Error checking supplier duplicates:', error);
+          logger.error('Error checking supplier duplicates:', error);
           continue;
         }
 

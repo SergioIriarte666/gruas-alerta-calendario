@@ -5,7 +5,10 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useSettings } from '@/hooks/useSettings';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCommissionExport");
 export const useCommissionExport = () => {
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
@@ -64,7 +67,7 @@ export const useCommissionExport = () => {
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting commissions:', error);
+      logger.error('Error exporting commissions:', error);
       toast({
         title: "Error en la exportación",
         description: "No se pudo generar el reporte. Inténtalo nuevamente.",

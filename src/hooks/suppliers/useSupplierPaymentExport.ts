@@ -4,7 +4,10 @@ import { exportSupplierPaymentReport } from '@/utils/reports/supplierPaymentRepo
 import { useToast } from '@/components/ui/custom-toast';
 import { useSettings } from '@/hooks/useSettings';
 import { addDays, isBefore, isAfter } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSupplierPaymentExport");
 export const useSupplierPaymentExport = () => {
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
@@ -79,7 +82,7 @@ export const useSupplierPaymentExport = () => {
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting supplier payments:', error);
+      logger.error('Error exporting supplier payments:', error);
       toast({
         title: "Error en la exportación",
         description: "No se pudo generar el reporte. Inténtalo nuevamente.",

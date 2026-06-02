@@ -27,7 +27,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("VipClientPipeline");
 export default function VipClientPipeline() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
@@ -81,7 +84,7 @@ export default function VipClientPipeline() {
       toast.success('Servicio creado correctamente');
       refetch();
     } catch (error) {
-      console.error('Error creando servicio:', error);
+      logger.error('Error creando servicio:', error);
     }
   };
 
@@ -96,14 +99,14 @@ export default function VipClientPipeline() {
         refetch();
       }
     } catch (error) {
-      console.error('Error actualizando servicio:', error);
+      logger.error('Error actualizando servicio:', error);
     }
   };
 
   // Función para actualización por lotes
   const handleBatchUpdate = async (updates: any) => {
     try {
-      console.log('🔄 Iniciando actualización por lotes:', updates);
+      logger.debug('🔄 Iniciando actualización por lotes:', updates);
       
       // Start progress modal
       batchProgress.start('REGISTRANDO LOTE', updates.services.length);
@@ -149,7 +152,7 @@ export default function VipClientPipeline() {
       }, 1500);
     } catch (error) {
       batchProgress.close();
-      console.error('❌ Error en actualización por lotes:', error);
+      logger.error('❌ Error en actualización por lotes:', error);
       toast.error('Error al actualizar los servicios');
       throw error;
     }

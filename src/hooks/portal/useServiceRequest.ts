@@ -6,7 +6,10 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { PortalRequestServiceSchema } from '@/schemas/portalRequestServiceSchema';
 import { useToast } from '@/components/ui/custom-toast';
 import { useNavigate } from 'react-router-dom';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceRequest");
 const createServiceRequest = async ({
   formData,
   clientId,
@@ -49,7 +52,7 @@ const createServiceRequest = async ({
     .single();
 
   if (error) {
-    console.error('Error creating service request:', error);
+    logger.error('Error creating service request:', error);
     
     // Lanzar el error para que lo maneje el createMutationErrorHandler
     throw error;
@@ -92,7 +95,7 @@ export const useServiceRequest = () => {
 
         // Enviar email de confirmación si el cliente tiene email
         if (clientData?.email && data) {
-          console.log('📧 Enviando email de confirmación de solicitud...');
+          logger.debug('📧 Enviando email de confirmación de solicitud...');
           await supabase.functions.invoke('send-service-confirmation', {
             body: {
               serviceId: data.id,
@@ -105,7 +108,7 @@ export const useServiceRequest = () => {
               clientName: clientData.name
             }
           });
-          console.log('✅ Email de confirmación enviado exitosamente');
+          logger.debug('✅ Email de confirmación enviado exitosamente');
         }
 
         toast({
@@ -114,7 +117,7 @@ export const useServiceRequest = () => {
           description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada y se asignarán los recursos necesarios.`,
         });
       } catch (emailError) {
-        console.error('Error enviando email de confirmación:', emailError);
+        logger.error('Error enviando email de confirmación:', emailError);
         // No fallar la operación si el email falla
         toast({
           type: 'success',

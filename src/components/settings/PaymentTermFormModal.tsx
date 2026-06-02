@@ -14,7 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentTermFormModal");
 const paymentTermSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   code: z.string().min(1, 'El código es requerido').regex(/^[a-z0-9_]+$/, 'Solo letras minúsculas, números y guiones bajos'),
@@ -91,7 +94,7 @@ export const PaymentTermFormModal = ({
       onClose();
       reset();
     } catch (error) {
-      console.error('Error saving payment term:', error);
+      logger.error('Error saving payment term:', error);
     }
   };
 

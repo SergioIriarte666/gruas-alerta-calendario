@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useVehicleBrands");
 type VehicleBrand = Tables<'vehicle_brands'>;
 type VehicleBrandInsert = TablesInsert<'vehicle_brands'>;
 type VehicleBrandUpdate = TablesUpdate<'vehicle_brands'>;
@@ -56,7 +59,7 @@ export const useVehicleBrands = () => {
       });
     },
     onError: (error) => {
-      console.error('Error creating brand:', error);
+      logger.error('Error creating brand:', error);
       toast({
         type: "error",
         title: "Error",
@@ -86,7 +89,7 @@ export const useVehicleBrands = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating brand:', error);
+      logger.error('Error updating brand:', error);
       toast({
         type: "error",
         title: "Error",
@@ -113,7 +116,7 @@ export const useVehicleBrands = () => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting brand:', error);
+      logger.error('Error deleting brand:', error);
       toast({
         type: "error",
         title: "Error",

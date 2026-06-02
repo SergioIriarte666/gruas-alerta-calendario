@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useSupplierInvoices");
 export interface SupplierInvoice {
   id: string;
   supplier_id: string | null;
@@ -130,7 +133,7 @@ export const useSupplierInvoices = (supplierId?: string) => {
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
     },
     onError: (error) => {
-      console.error('Error updating invoice:', error);
+      logger.error('Error updating invoice:', error);
       toast.error('Error al actualizar la factura');
     }
   });

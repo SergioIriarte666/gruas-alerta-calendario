@@ -37,7 +37,10 @@ import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAle
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
 import { findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
 import { XMLImportDialogHeader, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("XMLInventoryUpload");
 interface XMLInventoryUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -584,7 +587,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
       );
       setSelectedDocuments(validFolios);
     } catch (error) {
-      console.error('Error analyzing inventory XML:', error);
+      logger.error('Error analyzing inventory XML:', error);
       toast.error('No se pudo analizar el XML de inventario');
     } finally {
       setIsAnalyzing(false);
@@ -669,7 +672,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
       await refetchInventoryItems();
       toast.success(`Producto "${name}" creado y agregado al catálogo`);
     } catch (error) {
-      console.error('Error creating missing inventory product:', error);
+      logger.error('Error creating missing inventory product:', error);
     } finally {
       setPendingProductSuggestion(null);
       setCreatingProductKeys((prev) => {
@@ -705,7 +708,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
       await createMissingProductDirect(doc, line, lineKey);
     } catch (error) {
-      console.error('Error validating similar products before creation:', error);
+      logger.error('Error validating similar products before creation:', error);
       toast.error('No se pudo validar productos similares antes de crear el item');
     } finally {
       setCreatingProductKeys((prev) => {
@@ -1259,7 +1262,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
 
         } catch (docError) {
           // Compensatory rollback: delete created records in reverse order
-          console.error(`Error importando factura ${doc.folio}, ejecutando rollback:`, docError);
+          logger.error(`Error importando factura ${doc.folio}, ejecutando rollback:`, docError);
 
           try {
             const movementIdsToRollback = new Set(createdMovementIds);
@@ -1335,9 +1338,9 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
             if (createdInvoiceId) {
               await supabase.from('supplier_invoices').delete().eq('id', createdInvoiceId);
             }
-            console.log(`Rollback completado para factura ${doc.folio}`);
+            logger.debug(`Rollback completado para factura ${doc.folio}`);
           } catch (rollbackError) {
-            console.error(`Error durante rollback de factura ${doc.folio}:`, rollbackError);
+            logger.error(`Error durante rollback de factura ${doc.folio}:`, rollbackError);
           }
 
           throw docError;
@@ -1355,7 +1358,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
       onSuccess(importedCount);
       handleClose();
     } catch (error) {
-      console.error('Error importing inventory XML:', error);
+      logger.error('Error importing inventory XML:', error);
       toast.error(error instanceof Error ? error.message : 'Error desconocido durante la importación');
     } finally {
       setIsImporting(false);

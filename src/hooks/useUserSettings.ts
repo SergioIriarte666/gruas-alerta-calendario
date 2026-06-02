@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { UserSettings, UserDatabaseSettings } from '@/types/settings';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUserSettings");
 const USER_SETTINGS_SELECT = `
   id,
   user_id,
@@ -45,7 +48,7 @@ export const useUserSettings = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user settings:', error);
+        logger.error('Error fetching user settings:', error);
         toast.error('Error al cargar configuraciones del usuario');
         return;
       }
@@ -62,7 +65,7 @@ export const useUserSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching user settings:', error);
+      logger.error('Error fetching user settings:', error);
       toast.error('Error al cargar configuraciones del usuario');
     } finally {
       setLoading(false);
@@ -95,7 +98,7 @@ export const useUserSettings = () => {
         });
 
       if (error) {
-        console.error('Error saving user settings:', error);
+        logger.error('Error saving user settings:', error);
         toast.error('Error al guardar configuraciones');
         return false;
       }
@@ -117,7 +120,7 @@ export const useUserSettings = () => {
       toast.success('Configuraciones guardadas exitosamente');
       return true;
     } catch (error) {
-      console.error('Error saving user settings:', error);
+      logger.error('Error saving user settings:', error);
       toast.error('Error al guardar configuraciones');
       return false;
     } finally {

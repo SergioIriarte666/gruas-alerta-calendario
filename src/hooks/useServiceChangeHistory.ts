@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceChangeHistory");
 export interface ServiceChangeEntry {
   id: string;
   serviceId: string;
@@ -56,7 +59,7 @@ export const useServiceChangeHistory = (serviceId: string | null) => {
         .order('changed_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching service change history:', error);
+        logger.error('Error fetching service change history:', error);
         throw error;
       }
 

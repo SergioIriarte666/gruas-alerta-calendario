@@ -36,7 +36,10 @@ import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from
 import { useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("XMLDocumentUpload");
 // Type for matched cost
 interface MatchedCost {
   id: string;
@@ -365,7 +368,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       try {
         const supplierRuts = uniqueSuppliers.map(s => s.rut).filter(Boolean);
         if (supplierRuts.length > 0) {
-          const { data, error } = await (supabase as any)
+          const { data, error } = await supabase
             .from('inventory_suppliers')
             .select('id, rut, category, subcategory, default_payment_term_id, credit_date')
             .in('rut', supplierRuts);
@@ -400,14 +403,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 { data: historicalPayments, error: paymentHistoryError },
                 { data: historicalCosts, error: historyError },
               ] = await Promise.all([
-                (supabase as any)
+                supabase
                   .from('supplier_payments')
                   .select('supplier_id, description, amount, due_date, created_at')
                   .in('supplier_id', supplierIds)
                   .not('description', 'is', null)
                   .order('due_date', { ascending: false })
                   .limit(500),
-                (supabase as any)
+                supabase
                   .from('costs')
                   .select('supplier_id, description, amount, date, created_at')
                   .in('supplier_id', supplierIds)
@@ -449,7 +452,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           }
         }
       } catch (error) {
-        console.error('Error cargando configuración de crédito:', error);
+        logger.error('Error cargando configuración de crédito:', error);
       }
       uniqueSuppliers.forEach(s => {
         if (!initialSupplierCondition[s.rut]) initialSupplierCondition[s.rut] = 'none';
@@ -525,7 +528,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               }
             }
           } catch (dupError) {
-            console.error('Error checking duplicates:', dupError);
+            logger.error('Error checking duplicates:', dupError);
           } finally {
             setIsCheckingDuplicates(false);
           }
@@ -571,7 +574,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               toast.info(`🔗 Se encontraron ${matchCount} costos existentes que coinciden con documentos del XML`);
             }
           } catch (matchError) {
-            console.error('Error searching matches:', matchError);
+            logger.error('Error searching matches:', matchError);
           } finally {
             setIsSearchingMatches(false);
           }
@@ -653,7 +656,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         toast.success(`${results.length} costo(s) encontrado(s) en ±${windowDays} días.`);
       }
     } catch (e: any) {
-      console.error('expandMatchSearchForDoc error', e);
+      logger.error('expandMatchSearchForDoc error', e);
       toast.error('Error al ampliar la búsqueda de costos.');
     } finally {
       setExpandingSearchKey(null);
@@ -717,7 +720,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     if (!normalizedRut) return null;
     
     // Try exact match first, then normalized match
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('inventory_suppliers')
       .select('id, rut')
       .order('created_at', { ascending: false });
@@ -772,13 +775,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               });
             } catch (createError) {
               // Fallback: search directly in DB (handles RLS or race conditions)
-              console.warn(`Create failed for ${supplier.name}, trying DB lookup...`);
+              logger.warn(`Create failed for ${supplier.name}, trying DB lookup...`);
               const dbSupplierId = await findSupplierInDb(supplier.rut);
               if (dbSupplierId) {
                 createdSupplierMap.set(supplier.rut, dbSupplierId);
                 suppliersReused++;
               } else {
-                console.error(`Could not find or create supplier ${supplier.name}`);
+                logger.error(`Could not find or create supplier ${supplier.name}`);
                 suppliersFailed++;
               }
             }
@@ -807,19 +810,19 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             }
             if (Object.keys(updateData).length > 0) {
               try {
-                await (supabase as any)
+                await supabase
                   .from('inventory_suppliers')
                   .update(updateData)
                   .eq('id', mappedId);
               } catch (e) {
-                console.error('Error actualizando configuración de crédito/condición:', e);
+                logger.error('Error actualizando configuración de crédito/condición:', e);
               }
             }
           }
           processed++;
           setUploadProgress(processed / totalItems * 100);
         } catch (error) {
-          console.error(`Error processing supplier ${supplier.name}:`, error);
+          logger.error(`Error processing supplier ${supplier.name}:`, error);
           suppliersFailed++;
         }
       }
@@ -849,7 +852,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 supplierId = dbId;
                 createdSupplierMap.set(paymentData.supplier_rut, dbId);
               } else {
-                console.error(`No supplier found for RUT ${paymentData.supplier_rut}, skipping payment`);
+                logger.error(`No supplier found for RUT ${paymentData.supplier_rut}, skipping payment`);
                 paymentsFailed++;
                 continue;
               }
@@ -895,7 +898,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 .maybeSingle();
               
               if (existingPayment) {
-                console.log(`Folio ${docFolio} ya existe en supplier_payments, omitiendo`);
+                logger.debug(`Folio ${docFolio} ya existe en supplier_payments, omitiendo`);
                 toast.info(`Folio ${docFolio} ya registrado, omitido`);
                 processed++;
                 setUploadProgress(processed / totalItems * 100);
@@ -993,7 +996,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             processed++;
             setUploadProgress(processed / totalItems * 100);
           } catch (error) {
-            console.error(`Error creating payment:`, error);
+            logger.error(`Error creating payment:`, error);
             paymentsFailed++;
           }
         }
@@ -1022,7 +1025,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error('Error uploading data:', error);
+      logger.error('Error uploading data:', error);
       toast.error('Error durante la importación');
     } finally {
       setIsUploading(false);

@@ -58,7 +58,10 @@ import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useCostDuplicateCheck, CostDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("XMLCostUpload");
 // Inline subcategory select that fetches its own data
 const CostSubcategorySelect: React.FC<{
   categoryId: string;
@@ -409,7 +412,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       try {
         const supplierRuts = uniqueSuppliers.map(s => s.rut).filter(Boolean);
         if (supplierRuts.length > 0) {
-          const { data, error } = await (supabase as any)
+          const { data, error } = await supabase
             .from('inventory_suppliers')
             .select('id, rut, category, subcategory, default_payment_term_id, credit_date')
             .in('rut', supplierRuts);
@@ -445,14 +448,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 { data: historicalCosts, error: historyError },
                 { data: historicalPayments, error: paymentHistoryError },
               ] = await Promise.all([
-                (supabase as any)
+                supabase
                   .from('costs')
                   .select('supplier_id, description, amount, date, created_at')
                   .in('supplier_id', supplierIds)
                   .not('description', 'is', null)
                   .order('date', { ascending: false })
                   .limit(500),
-                (supabase as any)
+                supabase
                   .from('supplier_payments')
                   .select('supplier_id, description, amount, due_date, created_at')
                   .in('supplier_id', supplierIds)
@@ -494,7 +497,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           }
         }
       } catch (error) {
-        console.error('Error cargando configuración de crédito:', error);
+        logger.error('Error cargando configuración de crédito:', error);
       }
 
       uniqueSuppliers.forEach(s => {
@@ -561,7 +564,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
             try {
               const supplierRuts = Array.from(new Set(result.documents.map(d => d.supplier_rut).filter(Boolean)));
               if (supplierRuts.length > 0) {
-                const { data: supplierRows, error: supplierError } = await (supabase as any)
+                const { data: supplierRows, error: supplierError } = await supabase
                   .from('inventory_suppliers')
                   .select('id, rut')
                   .in('rut', supplierRuts);
@@ -578,13 +581,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     const folios = Array.from(new Set(result.documents.filter(d => d.supplier_rut === rut).map(d => d.folio).filter(Boolean)));
                     if (folios.length === 0) continue;
 
-                    const { data: existingPayments, error: paymentsError } = await (supabase as any)
+                    const { data: existingPayments, error: paymentsError } = await supabase
                       .from('supplier_payments')
                       .select('id, due_date, description, amount, reference_number, created_at')
                       .eq('supplier_id', supplierId)
                       .in('reference_number', folios);
 
-                    const { data: existingCosts, error: costsError } = await (supabase as any)
+                    const { data: existingCosts, error: costsError } = await supabase
                       .from('costs')
                       .select('id, date, description, amount, service_folio, created_at')
                       .eq('supplier_id', supplierId)
@@ -653,7 +656,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 }
               }
             } catch (error) {
-              console.error('Error checking cost folio duplicates:', error);
+              logger.error('Error checking cost folio duplicates:', error);
             }
 
             const duplicates = Array.from(duplicatesByIndex.values());
@@ -680,7 +683,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               }
             }
           } catch (dupError) {
-            console.error('Error checking duplicates:', dupError);
+            logger.error('Error checking duplicates:', dupError);
           } finally {
             setIsCheckingDuplicates(false);
           }
@@ -722,7 +725,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               toast.info(`🔗 Se encontraron ${matchCount} costos existentes que coinciden con documentos del XML`);
             }
           } catch (matchError) {
-            console.error('Error searching matches:', matchError);
+            logger.error('Error searching matches:', matchError);
           } finally {
             setIsSearchingMatches(false);
           }
@@ -733,7 +736,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   // Find supplier by RUT or name in inventory_suppliers
   const findSupplierByRutOrName = async (rut: string, name: string): Promise<string | null> => {
     if (rut && rut.trim()) {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('inventory_suppliers')
         .select('id')
         .eq('rut', rut.trim())
@@ -741,7 +744,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       if (data) return data.id;
     }
     if (name && name.trim()) {
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('inventory_suppliers')
         .select('id, name')
         .ilike('name', `%${name.trim()}%`)
@@ -824,7 +827,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         const supplierCategory = resolveCategoryId(supplierCategoryMapping[rut] || 'otros');
         const supplierSubcategory = (supplierSubcategoryMapping[rut] || '').trim() || null;
-        const { data: created, error } = await (supabase as any)
+        const { data: created, error } = await supabase
           .from('inventory_suppliers')
           .insert([{
             name: name || 'Proveedor',
@@ -863,7 +866,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           updateData.credit_date = null;
         }
 
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('inventory_suppliers')
           .update(updateData)
           .eq('id', supplierId);
@@ -894,7 +897,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       for (const [supplierId, folios] of foliosBySupplierId.entries()) {
         const uniqueFolios = Array.from(new Set(folios)).filter(Boolean);
         if (uniqueFolios.length === 0) continue;
-        const { data: paymentData, error: paymentError } = await (supabase as any)
+        const { data: paymentData, error: paymentError } = await supabase
           .from('supplier_payments')
           .select('reference_number')
           .eq('supplier_id', supplierId)
@@ -905,7 +908,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
             existingPaymentKeys.add(`${supplierId}|${row.reference_number}`);
           });
         }
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from('costs')
           .select('service_folio')
           .eq('supplier_id', supplierId)
@@ -1019,7 +1022,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       supplierId: supplierId,
                     });
                   } catch (invErr) {
-                    console.warn('[XMLCostUpload] Inventory sync failed for cost:', costRecord.id, invErr);
+                    logger.warn('[XMLCostUpload] Inventory sync failed for cost:', costRecord.id, invErr);
                   }
                 }
               }
@@ -1027,7 +1030,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               resolve();
             },
             onError: (error) => {
-              console.error(`Error cargando gasto ${doc.folio}:`, error);
+              logger.error(`Error cargando gasto ${doc.folio}:`, error);
               errorCount++;
               resolve();
             },
@@ -1051,7 +1054,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         batchProgress.error(`${errorCount} de ${docsToImport.length} con error`);
       }
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       batchProgress.error('Error durante la carga');
     } finally {
       setIsUploading(false);

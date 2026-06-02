@@ -1,7 +1,10 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceRate } from '@/types/serviceRates';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceRateLookup");
 const SERVICE_RATE_SELECT = `
   id,
   client_id,
@@ -123,7 +126,7 @@ export const useServiceRateLookup = () => {
       setMatchedRate(null);
       return null;
     } catch (error) {
-      console.error('Error looking up service rate:', error);
+      logger.error('Error looking up service rate:', error);
       setMatchedRate(null);
       return null;
     } finally {

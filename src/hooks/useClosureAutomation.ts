@@ -6,6 +6,9 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ClosureAutomation');
 
 interface ServiceIssue {
   type: 'warning' | 'error';
@@ -108,7 +111,7 @@ export const useClosureAutomation = () => {
 
       // Fetch services for the selected month
       // FIXED: Changed service_types!inner to service_types!left to include services without service type
-      console.time('fetchServices');
+      logger.debug('fetchServices - start');
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
@@ -124,10 +127,10 @@ export const useClosureAutomation = () => {
         .in('status', ['completed', 'with_purchase_order', 'pending', 'failed'])
         .order('service_date', { ascending: true })
         .limit(1000); // Add limit to prevent massive payloads
-      console.timeEnd('fetchServices');
+      logger.debug('fetchServices - end');
 
       if (servicesError) {
-        console.error('Error fetching services:', servicesError);
+        logger.error('Error fetching services:', servicesError);
         throw servicesError;
       }
 
@@ -139,19 +142,19 @@ export const useClosureAutomation = () => {
         });
       }
 
-      console.time('transformServices');
+      logger.debug('transformServices - start');
       // Process in chunks to avoid blocking UI
       const services = transformRawServiceData(servicesData || []);
-      console.timeEnd('transformServices');
+      logger.debug('transformServices - end');
       
-      console.log(`Fetched ${services.length} services for automation`);
+      logger.debug(`Fetched ${services.length} services for automation`);
 
       // Get only closure links for the candidate service IDs (not full table)
       const candidateIds = services.map(s => s.id);
       let usedServiceIds = new Set<string>();
 
       if (candidateIds.length > 0) {
-        console.time('fetchClosureLinks');
+        logger.debug('fetchClosureLinks - start');
         
         // Batch requests if there are too many IDs
         const BATCH_SIZE = 200;
@@ -170,10 +173,10 @@ export const useClosureAutomation = () => {
         const results = await Promise.all(batches);
         const closureServices = results.flatMap(r => r.data || []);
         
-        console.timeEnd('fetchClosureLinks');
+        logger.debug('fetchClosureLinks - end');
 
         results.forEach(r => {
-          if (r.error) console.error('Error fetching closure services batch:', r.error);
+          if (r.error) logger.error('Error fetching closure services batch:', r.error);
         });
 
         usedServiceIds = new Set(closureServices.map(cs => cs.service_id));
@@ -244,15 +247,15 @@ export const useClosureAutomation = () => {
       });
 
       setClientsData(clientsClosureData);
-      console.log('Clients closure data prepared:', clientsClosureData.length);
-      console.log('Clients summary:', clientsClosureData.map(c => ({ 
+      logger.debug('Clients closure data prepared:', clientsClosureData.length);
+      logger.debug('Clients summary:', clientsClosureData.map(c => ({ 
         name: c.client.name, 
         services: c.services.length,
         completed: c.completedServices,
         total: c.totalAmount
       })));
     } catch (error: any) {
-      console.error('Error fetching clients for month:', error);
+      logger.error('Error fetching clients for month:', error);
       toast({
         type: "error",
         title: "Error",
@@ -324,7 +327,7 @@ export const useClosureAutomation = () => {
         description: "El servicio ha sido marcado como completado.",
       });
     } catch (error: any) {
-      console.error('Error completing service:', error);
+      logger.error('Error completing service:', error);
       toast({
         type: "error",
         title: "Error",

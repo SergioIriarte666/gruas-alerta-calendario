@@ -5,7 +5,10 @@ import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { Invoice } from '@/types';
 import { InvoicesProtectedDeleteDialogState } from '@/components/invoices/InvoicesProtectedDeleteDialog';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoicesPageActions");
 interface InvoiceFormStateLike {
   editingInvoice: Invoice | null;
 }
@@ -101,7 +104,7 @@ export const useInvoicesPageActions = ({
           const paymentDate = data.paymentDate || data.issueDate || getTodayLocal();
           await markAsPaid(newInvoice.id, paymentDate);
         } catch (payError) {
-          console.error('Error registering automatic payment:', payError);
+          logger.error('Error registering automatic payment:', payError);
           toast.warning("Factura creada", {
             description: "La factura se creó pero no se pudo registrar el pago automático.",
           });
@@ -113,7 +116,7 @@ export const useInvoicesPageActions = ({
         description: "La factura ha sido creada exitosamente.",
       });
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      logger.error('Error creating invoice:', error);
     }
   };
 
@@ -125,7 +128,7 @@ export const useInvoicesPageActions = ({
       await updateInvoice(editingInvoice.id, data);
       closeInvoiceForm();
     } catch (error) {
-      console.error('Invoices page - Error updating invoice:', error);
+      logger.error('Invoices page - Error updating invoice:', error);
     }
   };
 
@@ -147,7 +150,7 @@ export const useInvoicesPageActions = ({
                 description: "La factura histórica ha sido eliminada.",
               });
             } catch (error) {
-              console.error('Error deleting invoice:', error);
+              logger.error('Error deleting invoice:', error);
               toast.error('No se pudo eliminar la factura histórica');
             }
           },
@@ -205,7 +208,7 @@ export const useInvoicesPageActions = ({
         }
       }
     } catch (error) {
-      console.error('Error deleting protected invoice:', error);
+      logger.error('Error deleting protected invoice:', error);
     } finally {
       closeProtectedDeleteDialog();
     }
@@ -263,7 +266,7 @@ export const useInvoicesPageActions = ({
         batchProgress.error(`${errorCount} factura(s) con error`);
       }
     } catch (error) {
-      console.error('Error marking invoices as paid:', error);
+      logger.error('Error marking invoices as paid:', error);
       batchProgress.error('Error al procesar');
     }
   };

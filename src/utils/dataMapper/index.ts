@@ -5,7 +5,10 @@ import { DataLoaders } from './dataLoaders';
 import { EntityFinders } from './entityFinders';
 import { DataValidators } from './dataValidators';
 import { RowMapper } from './rowMapper';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("dataMapper");
 export type { MappedServiceData, MappingResult } from './types';
 
 export class DataMapper {
@@ -23,7 +26,7 @@ export class DataMapper {
   private rowMapper!: RowMapper;
 
   async initialize() {
-    console.log('Initializing data mapper...');
+    logger.debug('Initializing data mapper...');
     
     // Load all reference data
     const [clients, cranes, operators, serviceTypes] = await Promise.all([
@@ -39,7 +42,7 @@ export class DataMapper {
     this.entityFinders = new EntityFinders(clients, cranes, operators, serviceTypes);
     this.rowMapper = new RowMapper(this.entityFinders, this.validators);
 
-    console.log('Data mapper initialized with:', {
+    logger.debug('Data mapper initialized with:', {
       clients: clients.length,
       cranes: cranes.length,
       operators: operators.length,

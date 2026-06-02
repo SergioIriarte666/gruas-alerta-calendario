@@ -1,6 +1,9 @@
 
 import { ServiceClosure } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("closureUtils");
 export const formatClosureData = (data: any): ServiceClosure => {
   
   
@@ -26,7 +29,7 @@ export const formatClosureData = (data: any): ServiceClosure => {
     
     return formatted;
   } catch (error) {
-    console.error('Error in formatClosureData:', error, data);
+    logger.error('Error in formatClosureData:', error, data);
     throw error;
   }
 };

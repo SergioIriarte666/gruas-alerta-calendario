@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { InvoiceAlertSettings, OverdueInvoice, InvoiceDueSoon } from '@/types/notifications';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceAlerts");
 const INVOICE_ALERT_SETTINGS_SELECT = `
   id,
   user_id,
@@ -93,7 +96,7 @@ export const useInvoiceAlerts = () => {
       });
     },
     onError: (error) => {
-      console.error('Error updating alert settings:', error);
+      logger.error('Error updating alert settings:', error);
       addNotification({
         title: 'Error',
         message: 'No se pudo actualizar la configuración de alertas.',

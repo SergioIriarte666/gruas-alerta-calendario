@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useVehicleModels");
 type VehicleModel = Tables<'vehicle_models'> & {
   vehicle_brands?: { name: string };
 };
@@ -58,7 +61,7 @@ export const useVehicleModels = (brandId?: string) => {
       });
     },
     onError: (error) => {
-      console.error('Error creating model:', error);
+      logger.error('Error creating model:', error);
       toast({
         type: "error",
         title: "Error",
@@ -88,7 +91,7 @@ export const useVehicleModels = (brandId?: string) => {
       });
     },
     onError: (error) => {
-      console.error('Error updating model:', error);
+      logger.error('Error updating model:', error);
       toast({
         type: "error",
         title: "Error",
@@ -115,7 +118,7 @@ export const useVehicleModels = (brandId?: string) => {
       });
     },
     onError: (error) => {
-      console.error('Error deleting model:', error);
+      logger.error('Error deleting model:', error);
       toast({
         type: "error",
         title: "Error",

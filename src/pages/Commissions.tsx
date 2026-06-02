@@ -18,7 +18,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/components/ui/custom-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Commissions");
 const Commissions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -142,7 +145,7 @@ const Commissions = () => {
   const baseFilteredCommissions = useMemo(() => {
     if (!commissions) return [];
     
-    console.log('🔍 [Commissions] Filtering commissions:', {
+    logger.debug('🔍 [Commissions] Filtering commissions:', {
       total: commissions.length,
       searchTerm,
       filters,
@@ -184,7 +187,7 @@ const Commissions = () => {
       return passes;
     });
 
-    console.log('✅ [Commissions] Filtered results:', {
+    logger.debug('✅ [Commissions] Filtered results:', {
       filtered: filtered.length,
       total: commissions.length
     });
@@ -309,7 +312,7 @@ const Commissions = () => {
 
   const handleCreatePaymentBatch = async (batchData: any) => {
     try {
-      console.log('📦 [Commissions] Creando lote de pago:', batchData);
+      logger.debug('📦 [Commissions] Creando lote de pago:', batchData);
       await createPaymentBatch.mutateAsync(batchData);
       toast({
         type: "success",
@@ -320,7 +323,7 @@ const Commissions = () => {
       setSelectedCommissions([]);
       setSelectedOperatorCommissions({});
     } catch (error: any) {
-      console.error('❌ [Commissions] Error creando lote:', error);
+      logger.error('❌ [Commissions] Error creando lote:', error);
       const errorMessage = error?.message || "No se pudo crear el lote de pago.";
       toast({
         type: "error",

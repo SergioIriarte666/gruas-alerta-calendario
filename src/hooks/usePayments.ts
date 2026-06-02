@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Payment, PaymentWithDetails, ManualApplication, PaymentStatus } from '@/types/payments';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePayments");
 const PAYMENTS_SELECT = `
   id,
   client_id,
@@ -77,7 +80,7 @@ export const usePayments = () => {
       
       setPayments(processedPayments);
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      logger.error('Error fetching payments:', error);
       handleNetworkError(error, {
         customMessage: 'No se pudieron cargar los pagos. Verifique su conexión e intente nuevamente',
         showToast: true
@@ -99,7 +102,7 @@ export const usePayments = () => {
       if (error) throw error;
       return data as any;
     } catch (error) {
-      console.error('Error checking for duplicate payment:', error);
+      logger.error('Error checking for duplicate payment:', error);
       return { has_duplicates: false, duplicate_count: 0, similar_payments: [] };
     }
   };
@@ -122,7 +125,7 @@ export const usePayments = () => {
           `${p.amount} (${p.payment_date}) - ${p.status}`
         ).join(', ');
         
-        console.warn('⚠️ Potential duplicate payment detected:', duplicateCheck);
+        logger.warn('⚠️ Potential duplicate payment detected:', duplicateCheck);
         toast.warning(`Advertencia: Se encontraron ${duplicateCheck.duplicate_count} pagos similares: ${duplicateInfo}`);
         
         // Continuar con la creación pero con advertencia
@@ -135,7 +138,7 @@ export const usePayments = () => {
         .single();
 
       if (error) {
-        console.error('🚨 Payment creation error:', error);
+        logger.error('🚨 Payment creation error:', error);
         throw error;
       }
       
@@ -150,8 +153,8 @@ export const usePayments = () => {
       await fetchPayments();
       return data;
     } catch (error) {
-      console.error('🚨 Error creating payment:', error);
-      console.error('🚨 Error details:', JSON.stringify(error, null, 2));
+      logger.error('🚨 Error creating payment:', error);
+      logger.error('🚨 Error details:', JSON.stringify(error, null, 2));
       handleError(error, {
         title: 'Error al Registrar Pago',
         context: 'usePayments - createPayment'
@@ -183,7 +186,7 @@ export const usePayments = () => {
       await fetchPayments();
       return data;
     } catch (error) {
-      console.error('Error applying selective payment:', error);
+      logger.error('Error applying selective payment:', error);
       handleError(error, {
         title: 'Error al aplicar pago selectivo'
       });
@@ -204,7 +207,7 @@ export const usePayments = () => {
       await fetchPayments();
       return result;
     } catch (error) {
-      console.error('Error applying payment:', error);
+      logger.error('Error applying payment:', error);
       handleError(error, {
         customMessage: 'No se pudo aplicar el pago automáticamente',
         title: 'Error al Aplicar Pago',
@@ -228,7 +231,7 @@ export const usePayments = () => {
       });
 
       if (error) {
-        console.error('🚨 Supabase RPC Error:', error);
+        logger.error('🚨 Supabase RPC Error:', error);
         throw error;
       }
       
@@ -238,8 +241,8 @@ export const usePayments = () => {
       await fetchPayments();
       return result;
     } catch (error) {
-      console.error('🚨 Error applying payment manually:', error);
-      console.error('🚨 Error details:', JSON.stringify(error, null, 2));
+      logger.error('🚨 Error applying payment manually:', error);
+      logger.error('🚨 Error details:', JSON.stringify(error, null, 2));
       handleError(error, {
         title: 'Error en Aplicación Manual',
         context: 'usePayments - applyPaymentManual'
@@ -265,7 +268,7 @@ export const usePayments = () => {
       
       return data || [];
     } catch (error) {
-      console.error('Error fetching unpaid invoices:', error);
+      logger.error('Error fetching unpaid invoices:', error);
       return [];
     }
   };
@@ -302,7 +305,7 @@ export const usePayments = () => {
       await fetchPayments();
       return data;
     } catch (error) {
-      console.error('Error syncing paid invoices:', error);
+      logger.error('Error syncing paid invoices:', error);
       toast.error('Error al sincronizar facturas pagadas');
       throw error;
     }
@@ -315,20 +318,20 @@ export const usePayments = () => {
       });
 
       if (error) {
-        console.error('Error in getClientPaymentHistory RPC:', error);
+        logger.error('Error in getClientPaymentHistory RPC:', error);
         throw error;
       }
 
       // Handle SQL function errors returned in data
       if (data && typeof data === 'object' && 'error' in data && (data as any).error) {
-        console.error('SQL function error:', (data as any).message);
+        logger.error('SQL function error:', (data as any).message);
         toast.error(`Error del sistema: ${(data as any).message || 'Error desconocido'}`);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error fetching client payment history:', error);
+      logger.error('Error fetching client payment history:', error);
       toast.error('Error al obtener historial de pagos del cliente');
       throw error;
     }
@@ -346,7 +349,7 @@ export const usePayments = () => {
       await fetchPayments();
       return deletedCount;
     } catch (error) {
-      console.error('Error cleaning up duplicate payments:', error);
+      logger.error('Error cleaning up duplicate payments:', error);
       toast.error('Error al limpiar pagos duplicados');
       throw error;
     }
@@ -364,7 +367,7 @@ export const usePayments = () => {
       await fetchPayments();
       return syncedCount;
     } catch (error) {
-      console.error('Error syncing paid invoices:', error);
+      logger.error('Error syncing paid invoices:', error);
       toast.error('Error al sincronizar facturas pagadas');
       throw error;
     }
@@ -401,7 +404,7 @@ export const usePayments = () => {
       
       return stats;
     } catch (error) {
-      console.error('Error fetching reconciliation stats:', error);
+      logger.error('Error fetching reconciliation stats:', error);
       toast.error('Error al obtener estadísticas de reconciliación');
       throw error;
     }
@@ -419,7 +422,7 @@ export const usePayments = () => {
       await fetchPayments();
       return data;
     } catch (error) {
-      console.error('Error in full payment cleanup:', error);
+      logger.error('Error in full payment cleanup:', error);
       toast.error('Error en la limpieza completa de pagos');
       throw error;
     }
@@ -436,7 +439,7 @@ export const usePayments = () => {
       await fetchPayments();
       return result;
     } catch (error) {
-      console.error('Error cleaning up payment duplicates:', error);
+      logger.error('Error cleaning up payment duplicates:', error);
       toast.error('Error al limpiar duplicados de pagos');
       throw error;
     }
@@ -452,7 +455,7 @@ export const usePayments = () => {
         const { data, error } = await supabase.rpc('fix_invoice_payment_inconsistencies');
         
         if (error) {
-          console.warn('RPC function failed, using fallback:', error.message);
+          logger.warn('RPC function failed, using fallback:', error.message);
           return await silentFixInconsistencies();
         }
         
@@ -464,18 +467,18 @@ export const usePayments = () => {
         await fetchPayments();
         return data;
       } catch (rpcError) {
-        console.warn('RPC function not available, using fallback:', rpcError);
+        logger.warn('RPC function not available, using fallback:', rpcError);
         return await silentFixInconsistencies();
       }
     } catch (error) {
-      console.error('Error fixing payment inconsistencies:', error);
+      logger.error('Error fixing payment inconsistencies:', error);
       // Intentar corrección silenciosa como último recurso
       try {
         return await silentFixInconsistencies();
       } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
+        logger.error('Fallback also failed:', fallbackError);
         // No mostrar error al usuario, solo log interno
-        console.warn('Sistema de corrección automática temporalmente no disponible');
+        logger.warn('Sistema de corrección automática temporalmente no disponible');
         return { fixed_count: 0 };
       }
     } finally {
@@ -525,7 +528,7 @@ export const usePayments = () => {
       
       return { fixed_count: fixedCount };
     } catch (error) {
-      console.error('Error en corrección silenciosa:', error);
+      logger.error('Error en corrección silenciosa:', error);
       return { fixed_count: 0 };
     }
   };
@@ -538,7 +541,7 @@ export const usePayments = () => {
         const { data, error } = await supabase.rpc('validate_payment_system_integrity');
         
         if (error) {
-          console.warn('RPC validation failed, using manual validation:', error.message);
+          logger.warn('RPC validation failed, using manual validation:', error.message);
           return await silentSystemValidation();
         }
         
@@ -546,12 +549,12 @@ export const usePayments = () => {
         
         if (result.system_health === 'HEALTHY') {
           // No mostrar mensaje, sistema funcionando correctamente
-          console.info('Sistema de pagos funcionando correctamente');
+          logger.info('Sistema de pagos funcionando correctamente');
         } else {
           // Corregir automáticamente sin mostrar mensajes alarmantes
           const issues = result.issues?.inconsistent_invoices || 0;
           if (issues > 0) {
-            console.info(`Corrigiendo ${issues} registros automáticamente...`);
+            logger.info(`Corrigiendo ${issues} registros automáticamente...`);
             // Ejecutar corrección automática silenciosa
             await silentFixInconsistencies();
           }
@@ -559,11 +562,11 @@ export const usePayments = () => {
         
         return data;
       } catch (rpcError) {
-        console.warn('RPC function not available, using fallback:', rpcError);
+        logger.warn('RPC function not available, using fallback:', rpcError);
         return await silentSystemValidation();
       }
     } catch (error) {
-      console.error('Error validating system integrity:', error);
+      logger.error('Error validating system integrity:', error);
       // Usar validación silenciosa como fallback
       return await silentSystemValidation();
     }
@@ -602,7 +605,7 @@ export const usePayments = () => {
         ]
       };
     } catch (error) {
-      console.error('Error en validación silenciosa:', error);
+      logger.error('Error en validación silenciosa:', error);
       return { status: 'error', issues: [] };
     }
   };
@@ -623,7 +626,7 @@ export const usePayments = () => {
       
       return { success: false, error: 'No se pudo ejecutar la corrección' };
     } catch (error: any) {
-      console.error('Error corrigiendo inconsistencias:', error);
+      logger.error('Error corrigiendo inconsistencias:', error);
       toast.error(`Error: ${error.message}`);
       return { success: false, error: error.message };
     }
@@ -645,7 +648,7 @@ export const usePayments = () => {
       
       return { success: false, error: 'No se pudo eliminar duplicados' };
     } catch (error: any) {
-      console.error('Error eliminando duplicados:', error);
+      logger.error('Error eliminando duplicados:', error);
       toast.error(`Error: ${error.message}`);
       return { success: false, error: error.message };
     }
@@ -658,7 +661,7 @@ export const usePayments = () => {
       if (error) throw error;
       return data || { system_health: 'UNKNOWN', issues: {}, total_issues: 0 };
     } catch (error: any) {
-      console.error('Error en diagnóstico:', error);
+      logger.error('Error en diagnóstico:', error);
       return { 
         system_health: 'ERROR', 
         issues: { error: error.message }, 
@@ -675,7 +678,7 @@ export const usePayments = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error diagnosing payment conflicts:', error);
+      logger.error('Error diagnosing payment conflicts:', error);
       throw error;
     }
   };
@@ -696,7 +699,7 @@ export const usePayments = () => {
         throw new Error(result?.error || 'Error resolving conflicts');
       }
     } catch (error) {
-      console.error('Error resolving payment conflicts:', error);
+      logger.error('Error resolving payment conflicts:', error);
       toast.error('Error al resolver conflictos de pagos');
       throw error;
     }
@@ -711,7 +714,7 @@ export const usePayments = () => {
         await removeDuplicateApplications();
       }
     } catch (error) {
-      console.error('Error en mantenimiento automático:', error);
+      logger.error('Error en mantenimiento automático:', error);
     }
   };
 
@@ -722,7 +725,7 @@ export const usePayments = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error diagnosing mixed payment invoices:', error);
+      logger.error('Error diagnosing mixed payment invoices:', error);
       throw error;
     }
   };
@@ -736,7 +739,7 @@ export const usePayments = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting invoice payment status:', error);
+      logger.error('Error getting invoice payment status:', error);
       throw error;
     }
   };
@@ -760,7 +763,7 @@ export const usePayments = () => {
       toast.success(`Corregidos ${resolution.resolved_payments} conflictos de aplicación de pagos`);
       return { diagnosis, resolution };
     } catch (error) {
-      console.error('Error fixing payment application conflicts:', error);
+      logger.error('Error fixing payment application conflicts:', error);
       toast.error('Error al corregir conflictos de aplicación de pagos');
       throw error;
     } finally {
@@ -814,7 +817,7 @@ export const usePayments = () => {
       await fetchPayments();
       toast.success('Aplicaciones revertidas exitosamente');
     } catch (error) {
-      console.error('Error reverting payment applications:', error);
+      logger.error('Error reverting payment applications:', error);
       toast.error('Error al revertir aplicaciones de pago');
       throw error;
     } finally {
@@ -910,7 +913,7 @@ export const usePayments = () => {
 
       return { applications, remainingAmount };
     } catch (error) {
-      console.error('Error applying payment to specific invoices:', error);
+      logger.error('Error applying payment to specific invoices:', error);
       toast.error(error instanceof Error ? error.message : 'Error al aplicar pago a facturas específicas');
       throw error;
     } finally {
@@ -944,7 +947,7 @@ export const usePayments = () => {
 
       return applications || [];
     } catch (error) {
-      console.error('Error getting payment application details:', error);
+      logger.error('Error getting payment application details:', error);
       throw error;
     }
   };

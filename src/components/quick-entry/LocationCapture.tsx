@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { MapPin, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("LocationCapture");
 interface LocationData {
   latitude: number;
   longitude: number;
@@ -47,7 +50,7 @@ export function LocationCapture({ onLocationChange }: LocationCaptureProps) {
               locationData.address = data.display_name;
             }
           } catch (addressError) {
-            console.warn('Could not get address:', addressError);
+            logger.warn('Could not get address:', addressError);
             // Continue without address
           }
 
@@ -55,7 +58,7 @@ export function LocationCapture({ onLocationChange }: LocationCaptureProps) {
           onLocationChange(locationData);
           toast.success('Ubicación capturada correctamente');
         } catch (error) {
-          console.error('Error processing location:', error);
+          logger.error('Error processing location:', error);
           toast.error('Error al procesar la ubicación');
         } finally {
           setIsCapturing(false);

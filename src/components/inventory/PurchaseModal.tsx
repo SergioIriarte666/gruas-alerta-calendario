@@ -14,7 +14,10 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PurchaseModal");
 const purchaseSchema = z.object({
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   unit_cost: z.number().min(0.01, 'El costo unitario debe ser mayor a 0'),
@@ -98,7 +101,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
       onClose();
       onSuccess?.();
     } catch (error) {
-      console.error('Error registering purchase:', error);
+      logger.error('Error registering purchase:', error);
       toast.error('Error al registrar la compra');
     }
   };

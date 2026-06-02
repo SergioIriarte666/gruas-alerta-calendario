@@ -23,7 +23,10 @@ import { Trash2, Plus, Package, AlertTriangle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("DistributionAssistantDialog");
 interface Distribution {
   id: string;
   crane_id: string;
@@ -102,7 +105,7 @@ export const DistributionAssistantDialog = ({
         // Crear movimiento de entrada inicial
         // (esto se hará al confirmar la distribución)
       } catch (error) {
-        console.error('Error inicializando inventario:', error);
+        logger.error('Error inicializando inventario:', error);
         toast.error('Error al preparar el inventario');
       }
     };
@@ -206,7 +209,7 @@ export const DistributionAssistantDialog = ({
       onOpenChange(false);
       resetState();
     } catch (error) {
-      console.error('Error en distribución:', error);
+      logger.error('Error en distribución:', error);
       toast.error('Error al distribuir el inventario');
     } finally {
       setIsProcessing(false);

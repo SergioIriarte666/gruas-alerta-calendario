@@ -3,7 +3,10 @@ import { Camera, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("QuickPhotoCapture");
 interface QuickPhotoCaptureProps {
   onPhotosChange: (photos: Array<{ path: string; signedUrl: string; file?: File }>) => void;
   maxPhotos?: number;
@@ -82,7 +85,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
         try {
           file = await convertToJpegIfNeeded(originalFile);
         } catch (error) {
-          console.error('HEIC conversion error:', error);
+          logger.error('HEIC conversion error:', error);
           toast.error('No se pudo convertir la foto (HEIC)');
           file = originalFile;
         }
@@ -102,7 +105,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           .upload(fileName, file);
 
         if (error) {
-          console.error('Upload error:', error);
+          logger.error('Upload error:', error);
           toast.error('Error al subir la foto');
           continue;
         }
@@ -113,7 +116,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           .createSignedUrl(data.path, 31536000); // 1 year expiry
 
         if (signedUrlError || !signedUrlData?.signedUrl) {
-          console.error('Signed URL error:', signedUrlError);
+          logger.error('Signed URL error:', signedUrlError);
           toast.error('Error al obtener URL de la foto');
           continue;
         }
@@ -129,7 +132,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
         toast.success(`${newPhotos.length} foto(s) agregada(s)`);
       }
     } catch (error) {
-      console.error('Error processing photos:', error);
+      logger.error('Error processing photos:', error);
       toast.error('Error al procesar las fotos');
     } finally {
       setIsUploading(false);
@@ -145,7 +148,7 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           .from('quick-entry-photos')
           .remove([photoToRemove.path]);
       } catch (error) {
-        console.error('Error deleting photo from storage:', error);
+        logger.error('Error deleting photo from storage:', error);
       }
     }
     

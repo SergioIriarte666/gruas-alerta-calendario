@@ -3,7 +3,10 @@ import jsPDF from 'jspdf';
 import { compressImageForPDF } from './photos/photoProcessor';
 import { drawPhotoPlaceholder } from './photos/photoPlaceholder';
 import { getPhotoFromStorage } from './photos/photoStorage';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("pdfPhotos");
 export const addPhotographicSetSection = async (
   doc: jsPDF,
   photographicSet: Array<{
@@ -14,12 +17,12 @@ export const addPhotographicSetSection = async (
   yPosition: number
 ): Promise<number> => {
   if (!photographicSet || photographicSet.length === 0) {
-    console.log('No hay fotos en el set fotográfico');
+    logger.debug('No hay fotos en el set fotográfico');
     return yPosition;
   }
 
   const pageWidth = doc.internal.pageSize.width;
-  console.log(`Procesando Set Fotográfico con ${photographicSet.length} fotos`);
+  logger.debug(`Procesando Set Fotográfico con ${photographicSet.length} fotos`);
 
   try {
     // Verificar si necesitamos nueva página
@@ -104,17 +107,17 @@ export const addPhotographicSetSection = async (
               doc.text(new Date().toLocaleString('es-CL'), xPos + 4, yPosition + photoHeight);
               
               validPhotosAdded++;
-              console.log(`Foto agregada exitosamente: ${item.photo!.fileName} (${item.category})`);
+              logger.debug(`Foto agregada exitosamente: ${item.photo!.fileName} (${item.category})`);
             } catch (imageError) {
-              console.error(`Error al agregar imagen ${item.photo!.fileName}:`, imageError);
+              logger.error(`Error al agregar imagen ${item.photo!.fileName}:`, imageError);
               drawPhotoPlaceholder(doc, xPos, yPosition + 5, photoWidth, photoHeight, 'Error al cargar');
             }
           } else {
-            console.warn(`Foto no encontrada: ${item.photo!.fileName}`);
+            logger.warn(`Foto no encontrada: ${item.photo!.fileName}`);
             drawPhotoPlaceholder(doc, xPos, yPosition + 5, photoWidth, photoHeight, 'Foto no disponible');
           }
         } catch (error) {
-          console.error(`Error al procesar foto ${item.photo!.fileName}:`, error);
+          logger.error(`Error al procesar foto ${item.photo!.fileName}:`, error);
           drawPhotoPlaceholder(doc, xPos, yPosition + 5, photoWidth, photoHeight, 'Error de procesamiento');
         }
       }
@@ -129,10 +132,10 @@ export const addPhotographicSetSection = async (
     doc.text(`Set fotográfico: ${validPhotosAdded} de ${organizedPhotos.length} fotos procesadas`, 20, yPosition);
     yPosition += 10;
 
-    console.log(`Set fotográfico completado. Fotos procesadas: ${validPhotosAdded}/${organizedPhotos.length}`);
+    logger.debug(`Set fotográfico completado. Fotos procesadas: ${validPhotosAdded}/${organizedPhotos.length}`);
     return yPosition;
   } catch (error) {
-    console.error('Error crítico en addPhotographicSetSection:', error);
+    logger.error('Error crítico en addPhotographicSetSection:', error);
     return yPosition + 50;
   }
 };
@@ -144,7 +147,7 @@ export const addPhotosSection = async (
   photoNames: string[], 
   yPosition: number
 ): Promise<number> => {
-  console.warn('addPhotosSection está deprecated, usa addPhotographicSetSection');
+  logger.warn('addPhotosSection está deprecated, usa addPhotographicSetSection');
   return addPhotographicSetSection(doc, photoNames.map(fileName => ({
     fileName,
     category: 'frontal' // Categoría por defecto para compatibilidad

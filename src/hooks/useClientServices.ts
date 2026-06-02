@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientServices");
 const CLIENT_SERVICE_SELECT = `
   id,
   folio,
@@ -47,7 +50,7 @@ export const useClientServices = (clientId: string | null) => {
                 .order('service_date', { ascending: false });
 
             if (error) {
-                console.error('Supabase query error:', error);
+                logger.error('Supabase query error:', error);
                 throw new Error(`Error en consulta: ${error.message}`);
             }
 
@@ -64,7 +67,7 @@ export const useClientServices = (clientId: string | null) => {
                 .single();
 
             if (clientError) {
-                console.error('Client fetch error:', clientError);
+                logger.error('Client fetch error:', clientError);
                 // Continue without client data rather than failing completely
             }
             
@@ -161,7 +164,7 @@ export const useClientServices = (clientId: string | null) => {
 
             setServices(formattedServices);
         } catch (error: any) {
-            console.error('Error fetching client services:', error);
+            logger.error('Error fetching client services:', error);
             toast.error("Error", {
                 description: "No se pudieron cargar los servicios del cliente.",
             });

@@ -1,7 +1,10 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("serviceInfo");
 const C = {
   green:      [0, 130, 100]   as [number, number, number],
   greenLight: [230, 248, 244] as [number, number, number],
@@ -84,7 +87,7 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
     yPosition = (doc as any).lastAutoTable.finalY + 12;
     return yPosition;
   } catch (error) {
-    console.error('Error en addServiceInfo:', error);
+    logger.error('Error en addServiceInfo:', error);
     return yPosition + 50;
   }
 };

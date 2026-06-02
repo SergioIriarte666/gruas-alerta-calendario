@@ -9,7 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCreateDocumentAlert, useUpdateDocumentAlert, DocumentAlert } from '@/hooks/useDocumentAlerts';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("DocumentSettingsForm");
 const documentSettingsSchema = z.object({
   alertDays: z.number().min(1, 'Debe ser al menos 1 día').max(365, 'Máximo 365 días'),
   emailNotifications: z.boolean(),
@@ -98,7 +101,7 @@ export const DocumentSettingsForm = ({
       setSelectedDocument(null);
       reset();
     } catch (error) {
-      console.error('Error saving document alert:', error);
+      logger.error('Error saving document alert:', error);
     }
   };
 

@@ -5,7 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
 import { getCurrentMonthRange, isFutureDate, isCurrentMonth, parseFromDatabase, toLocalDateString } from '@/utils/timezoneUtils';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useDashboardData");
 const getPreviousMonthRange = () => {
   const now = new Date();
   const currentDayOfMonth = now.getDate(); // Día actual del mes (ej: 17)
@@ -160,7 +163,7 @@ export const useDashboardData = () => {
   }, [queryClient]);
 
   if (error) {
-    console.error('Error loading dashboard data:', error);
+    logger.error('Error loading dashboard data:', error);
   }
 
   return {

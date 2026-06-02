@@ -43,7 +43,10 @@ import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ExecutiveReports");
 interface ExecutiveReportsProps {
   services: Service[];
   clientId: string;
@@ -214,7 +217,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       
       toast.success(`Reporte ejecutivo exportado exitosamente como ${fileName}.${exportFormat}`);
     } catch (error) {
-      console.error('Error exportando reporte:', error);
+      logger.error('Error exportando reporte:', error);
       toast.error('Error al exportar el reporte. Intente nuevamente.');
     }
   };

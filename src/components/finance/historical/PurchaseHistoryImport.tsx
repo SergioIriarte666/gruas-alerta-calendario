@@ -32,7 +32,10 @@ import {
   UnmatchedSupplier,
 } from '@/utils/purchaseHistoryParser';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PurchaseHistoryImport");
 interface PurchaseHistoryImportProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -237,7 +240,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
           status,
         });
       } catch (logError) {
-        console.error('Error saving import history log:', logError);
+        logger.error('Error saving import history log:', logError);
       }
 
       if (imported <= 0) return;
@@ -266,7 +269,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             })
         );
       } catch (mappingError) {
-        console.error('Error saving import mappings:', mappingError);
+        logger.error('Error saving import mappings:', mappingError);
       }
     },
     [fileName, saveLog, saveMapping, suppliers]
@@ -555,7 +558,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
       const allInvSups: any[] = [];
       let supFrom = 0;
       while (true) {
-        const { data: chunk, error } = await (supabase as any)
+        const { data: chunk, error } = await supabase
           .from('inventory_suppliers')
           .select('id, rut')
           .range(supFrom, supFrom + PAGE_SIZE - 1);
@@ -613,7 +616,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         description: `${result.totalInvoices} documentos detectados: ${parts.join(', ')}.`,
       });
     } catch (error) {
-      console.error('Error parsing file:', error);
+      logger.error('Error parsing file:', error);
       toast.error('Error al leer el archivo', { description: 'Verifica el formato.' });
     }
   }, [getMappings, getOverlappingLogs, resolveSupplierFromMapping, suppliers]);
@@ -783,7 +786,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 // A. Handle inventory_suppliers (CRITICAL for FK constraint)
                 let inventorySupplierId: string | null = null;
                 
-                const { data: allInvSups } = await (supabase as any)
+                const { data: allInvSups } = await supabase
                     .from('inventory_suppliers')
                     .select('id, rut');
                 
@@ -793,7 +796,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     inventorySupplierId = existingInvSup.id;
                 } else {
                     // Create in inventory_suppliers
-                    const { data: newInvSup, error: invSupError } = await (supabase as any)
+                    const { data: newInvSup, error: invSupError } = await supabase
                         .from('inventory_suppliers')
                         .insert({
                             name: us.razonSocial,
@@ -804,7 +807,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         .single();
                     
                     if (invSupError) {
-                        console.error('Error creating inventory_supplier:', invSupError);
+                        logger.error('Error creating inventory_supplier:', invSupError);
                         // If this fails, we can't insert invoices for this supplier due to FK
                         errors++; 
                         continue;
@@ -842,12 +845,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                     is_active: true
                                  });
                              } else {
-                                 console.warn('Could not sync to suppliers table:', supError);
+                                 logger.warn('Could not sync to suppliers table:', supError);
                              }
                          }
                     }
                 } catch (e) {
-                    console.warn('Error syncing to suppliers table:', e);
+                    logger.warn('Error syncing to suppliers table:', e);
                 }
 
                 // Map the RUT to the INVENTORY_SUPPLIER ID because that's what the invoice table references
@@ -856,7 +859,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 }
 
             } catch (err) {
-                console.error(`Error processing supplier ${us.rut}:`, err);
+                logger.error(`Error processing supplier ${us.rut}:`, err);
                 errors++;
             }
         } else if (us.resolution === 'assign' && us.assignedSupplierId) {
@@ -866,7 +869,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const nRut = normalizeRut(us.rut); // The RUT from the file
             
             // Try to find in inventory_suppliers by normalized RUT
-            const { data: allInvSups } = await (supabase as any)
+            const { data: allInvSups } = await supabase
                 .from('inventory_suppliers')
                 .select('id, rut');
             
@@ -877,7 +880,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             } else {
                 // If not found in inventory_suppliers, we must create it there too!
                 try {
-                    const { data: newInvSup, error: invSupError } = await (supabase as any)
+                    const { data: newInvSup, error: invSupError } = await supabase
                         .from('inventory_suppliers')
                         .insert({
                             name: us.razonSocial,
@@ -890,7 +893,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     if (!invSupError && newInvSup) {
                         setSupplierRutToId(nRut, newInvSup.id);
                     } else {
-                        console.error('Failed to create missing inventory_supplier for assigned supplier:', invSupError);
+                        logger.error('Failed to create missing inventory_supplier for assigned supplier:', invSupError);
                         // Fallback: try using the assigned ID directly
                         setSupplierRutToId(nRut, us.assignedSupplierId);
                     }
@@ -917,7 +920,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         try {
             // Fetch ALL inventory_suppliers and match by normalized RUT
             // (DB may store formatted RUTs like "77.225.200-5")
-            const { data: allInvSups } = await (supabase as any)
+            const { data: allInvSups } = await supabase
                 .from('inventory_suppliers')
                 .select('id, rut, name');
             
@@ -931,7 +934,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
                 const originalRut = matchedInv?.rut || rut;
                 
-                const { data: newInvSup, error: invSupError } = await (supabase as any)
+                const { data: newInvSup, error: invSupError } = await supabase
                     .from('inventory_suppliers')
                     .insert({
                         name: supplierName,
@@ -944,11 +947,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 if (!invSupError && newInvSup) {
                     setSupplierRutToId(rut, newInvSup.id);
                 } else {
-                    console.error('Failed to create inventory_supplier for matched RUT:', rut, invSupError);
+                    logger.error('Failed to create inventory_supplier for matched RUT:', rut, invSupError);
                 }
             }
         } catch (e) {
-            console.error('Error resolving inventory_supplier for matched RUT:', rut, e);
+            logger.error('Error resolving inventory_supplier for matched RUT:', rut, e);
         }
     }
 
@@ -1011,7 +1014,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     product_service_description: psd,
                 }, inv.status));
             } else {
-                console.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
+                logger.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
                 errors++;
             }
         }
@@ -1047,7 +1050,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     if (invoicesToInsert.length > 0) {
         const [{ data: existingInvs }, { data: invSups }] = await Promise.all([
             supabase.from('supplier_invoices').select('invoice_number, supplier_id'),
-            (supabase as any).from('inventory_suppliers').select('id, rut'),
+            supabase.from('inventory_suppliers').select('id, rut'),
         ]);
         
         const sidToRut = new Map<string, string>();
@@ -1067,7 +1070,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const nRut = sidToRut.get(inv.supplier_id) || '';
             const key = `${nRut}-${inv.invoice_number}`;
             if (existingSet.has(key)) {
-                console.log(`Omitiendo factura existente: ${inv.invoice_number}`);
+                logger.debug(`Omitiendo factura existente: ${inv.invoice_number}`);
                 return false;
             }
             return true;
@@ -1075,7 +1078,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         
         const skipped = invoicesToInsert.length - filteredInvoices.length;
         if (skipped > 0) {
-            console.log(`${skipped} facturas omitidas por duplicado`);
+            logger.debug(`${skipped} facturas omitidas por duplicado`);
         }
 
         setProgressTotal(filteredInvoices.length);
@@ -1104,7 +1107,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 .insert(batch);
 
             if (error) {
-                console.error('Batch insert error, trying individually:', error);
+                logger.error('Batch insert error, trying individually:', error);
                 setLastError((prev) => prev ?? (error.message || 'Error desconocido al insertar facturas de compra'));
                 toast.error('Error al importar compras', {
                   description: error.message || 'Error desconocido al insertar facturas de compra',
@@ -1131,9 +1134,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     if (singleError) {
                         // Skip duplicate key errors silently
                         if (singleError.code === '23505') {
-                            console.log(`Omitiendo duplicado: ${item.invoice_number}`);
+                            logger.debug(`Omitiendo duplicado: ${item.invoice_number}`);
                         } else {
-                            console.error('Failed to insert:', item.invoice_number, singleError);
+                            logger.error('Failed to insert:', item.invoice_number, singleError);
                             setLastError((prev) => prev ?? (singleError.message || 'Error desconocido al insertar factura de compra'));
                             errors++;
                         }

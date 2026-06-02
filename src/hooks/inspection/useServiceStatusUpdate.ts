@@ -2,7 +2,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceStatusUpdate");
 export const useServiceStatusUpdate = (serviceId: string | undefined) => {
   const queryClient = useQueryClient();
   
@@ -12,7 +15,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
         throw new Error('ID del servicio requerido');
       }
       
-      console.log('🔄 [STATUS] Iniciando actualización para servicio:', id);
+      logger.debug('🔄 [STATUS] Iniciando actualización para servicio:', id);
       
       // Verificar servicio actual
       const { data: currentService, error: fetchError } = await supabase
@@ -22,16 +25,16 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
         .single();
 
       if (fetchError) {
-        console.error('❌ [STATUS] Error al obtener servicio:', fetchError);
+        logger.error('❌ [STATUS] Error al obtener servicio:', fetchError);
         throw new Error(`Error al obtener servicio: ${fetchError.message}`);
       }
 
       if (!currentService) {
-        console.error('❌ [STATUS] Servicio no encontrado:', id);
+        logger.error('❌ [STATUS] Servicio no encontrado:', id);
         throw new Error('Servicio no encontrado');
       }
 
-      console.log('🔍 [STATUS] Servicio encontrado:', {
+      logger.debug('🔍 [STATUS] Servicio encontrado:', {
         id: currentService.id,
         folio: currentService.folio,
         statusActual: currentService.status
@@ -39,12 +42,12 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
 
       // Verificar si ya está en el estado objetivo
       if (currentService.status === targetStatus) {
-        console.log(`⚠️ [STATUS] Servicio ya en estado ${targetStatus}`);
+        logger.debug(`⚠️ [STATUS] Servicio ya en estado ${targetStatus}`);
         return currentService;
       }
 
       // Actualizar estado
-      console.log(`🔄 [STATUS] Actualizando a ${targetStatus}...`);
+      logger.debug(`🔄 [STATUS] Actualizando a ${targetStatus}...`);
       const { data: updatedService, error: updateError } = await supabase
         .from('services')
         .update({ status: targetStatus })
@@ -53,7 +56,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
         .single();
 
       if (updateError) {
-        console.error('❌ [STATUS] Error en actualización:', updateError);
+        logger.error('❌ [STATUS] Error en actualización:', updateError);
         throw new Error(`Error al actualizar: ${updateError.message}`);
       }
 
@@ -61,7 +64,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
         throw new Error('No se pudo confirmar la actualización');
       }
       
-      console.log('✅ [STATUS] Actualización exitosa:', {
+      logger.debug('✅ [STATUS] Actualización exitosa:', {
         id: updatedService.id,
         folio: updatedService.folio,
         nuevoStatus: updatedService.status
@@ -70,7 +73,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
       return updatedService;
     },
     onSuccess: async (updatedService) => {
-      console.log('✅ [STATUS] Mutation exitosa:', updatedService);
+      logger.debug('✅ [STATUS] Mutation exitosa:', updatedService);
       
       // Invalidar múltiples queries para asegurar sincronización
       const invalidationPromises = [
@@ -98,7 +101,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
       }
     },
     onError: (error) => {
-      console.error('💥 [STATUS] Error en mutation:', error);
+      logger.error('💥 [STATUS] Error en mutation:', error);
       toast.error(`Error al actualizar servicio: ${error.message}`);
     },
   });

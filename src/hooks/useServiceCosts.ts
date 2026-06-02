@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Cost } from '@/types/costs';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceCosts");
 const fetchServiceCosts = async (serviceId: string): Promise<Cost[]> => {
-  console.log('🔍 [fetchServiceCosts] Fetching costs for serviceId:', serviceId);
+  logger.debug('🔍 [fetchServiceCosts] Fetching costs for serviceId:', serviceId);
   
   // Consulta simple sin JOINs para evitar duplicados
   const { data: costsData, error } = await supabase
@@ -13,12 +16,12 @@ const fetchServiceCosts = async (serviceId: string): Promise<Cost[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('❌ [fetchServiceCosts] Error fetching service costs:', error);
+    logger.error('❌ [fetchServiceCosts] Error fetching service costs:', error);
     throw new Error(error.message);
   }
 
-  console.log('✅ [fetchServiceCosts] Found unique costs:', costsData?.length || 0);
-  console.log('📝 [fetchServiceCosts] Unique IDs:', costsData?.map(c => c.id));
+  logger.debug('✅ [fetchServiceCosts] Found unique costs:', costsData?.length || 0);
+  logger.debug('📝 [fetchServiceCosts] Unique IDs:', costsData?.map(c => c.id));
 
   // Obtener datos relacionados por separado para evitar duplicados
   if (!costsData || costsData.length === 0) {

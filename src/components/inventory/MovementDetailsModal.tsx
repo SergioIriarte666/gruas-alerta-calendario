@@ -29,7 +29,10 @@ import { MovementEditModal } from './MovementEditModal';
 import { useInventoryMovementChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { Clock } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MovementDetailsModal");
 interface MovementDetailsModalProps {
   movement: InventoryMovement;
   onClose: () => void;
@@ -53,7 +56,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
       onRefresh?.();
       onClose();
     } catch (error) {
-      console.error('Error cancelling movement:', error);
+      logger.error('Error cancelling movement:', error);
     }
   };
 

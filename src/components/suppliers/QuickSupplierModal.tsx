@@ -8,7 +8,10 @@ import { SupplierFormData } from '@/types/suppliers';
 import { Plus, Loader2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatRut } from '@/utils/rutFormatter';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("QuickSupplierModal");
 interface QuickSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,7 +54,7 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
       } else {
         toast.error('Error al crear proveedor');
       }
-      console.error(error);
+      logger.error(error);
     }
   };
 

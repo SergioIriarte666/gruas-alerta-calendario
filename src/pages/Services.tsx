@@ -32,7 +32,10 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, CheckCircle2, Copy, ShieldAlert, Trash2 } from 'lucide-react';
 import { Service } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Services");
 type ViewMode = 'table' | 'pipeline';
 
 const Services = () => {
@@ -171,7 +174,7 @@ const Services = () => {
             successCount++;
           }
         } catch (err) {
-          console.error(`Error deleting service ${serviceId}:`, err);
+          logger.error(`Error deleting service ${serviceId}:`, err);
           errorCount++;
         }
       }

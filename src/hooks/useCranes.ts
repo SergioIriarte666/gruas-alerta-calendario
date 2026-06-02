@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Crane } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCranes");
 const CRANES_SELECT = `
   id,
   license_plate,
@@ -132,7 +135,7 @@ export const useCranes = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error creating crane:', error);
+      logger.error('Error creating crane:', error);
       
       // Check for duplicate errors
       if (error?.code === '23505' || error?.message?.includes('duplicate key value')) {
@@ -155,7 +158,7 @@ export const useCranes = () => {
       // Verificar autenticación
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error('❌ Error de autenticación:', authError);
+        logger.error('❌ Error de autenticación:', authError);
         throw new Error('Usuario no autenticado');
       }
 
@@ -181,7 +184,7 @@ export const useCranes = () => {
         .single();
 
       if (updateError) {
-        console.error('❌ Error en la actualización:', updateError);
+        logger.error('❌ Error en la actualización:', updateError);
         throw updateError;
       }
 
@@ -204,7 +207,7 @@ export const useCranes = () => {
       });
     },
     onError: (error: any) => {
-      console.error('💥 Error en updateCraneMutation:', error);
+      logger.error('💥 Error en updateCraneMutation:', error);
       
       let errorMessage = "No se pudo actualizar la grúa.";
       
@@ -235,7 +238,7 @@ export const useCranes = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error deleting crane:', error);
+      logger.error('Error deleting crane:', error);
       toast.error("Error", {
         description: "No se pudo eliminar la grúa.",
       });
@@ -267,7 +270,7 @@ export const useCranes = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Error toggling crane status:', error);
+      logger.error('Error toggling crane status:', error);
       toast.error("Error", {
         description: "No se pudo cambiar el estado de la grúa.",
       });

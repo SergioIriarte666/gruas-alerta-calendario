@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { ServiceRateWithRelations, ServiceRateFormData } from '@/types/serviceRates';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceRates");
 export const useServiceRates = () => {
   const [rates, setRates] = useState<ServiceRateWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +28,7 @@ export const useServiceRates = () => {
       if (error) throw error;
       setRates(data || []);
     } catch (error) {
-      console.error('Error fetching service rates:', error);
+      logger.error('Error fetching service rates:', error);
       toast.error('Error al cargar las tarifas');
     } finally {
       setLoading(false);
@@ -59,7 +62,7 @@ export const useServiceRates = () => {
       await fetchRates();
       return data;
     } catch (error: any) {
-      console.error('Error creating service rate:', error);
+      logger.error('Error creating service rate:', error);
       toast.error(error.message || 'Error al crear la tarifa');
       throw error;
     }
@@ -85,7 +88,7 @@ export const useServiceRates = () => {
       await fetchRates();
       return data;
     } catch (error: any) {
-      console.error('Error updating service rate:', error);
+      logger.error('Error updating service rate:', error);
       toast.error(error.message || 'Error al actualizar la tarifa');
       throw error;
     }
@@ -103,7 +106,7 @@ export const useServiceRates = () => {
       toast.success('Tarifa eliminada exitosamente');
       await fetchRates();
     } catch (error: any) {
-      console.error('Error deleting service rate:', error);
+      logger.error('Error deleting service rate:', error);
       toast.error(error.message || 'Error al eliminar la tarifa');
       throw error;
     }
@@ -121,7 +124,7 @@ export const useServiceRates = () => {
       toast.success(isActive ? 'Tarifa activada' : 'Tarifa desactivada');
       await fetchRates();
     } catch (error: any) {
-      console.error('Error toggling service rate:', error);
+      logger.error('Error toggling service rate:', error);
       toast.error(error.message || 'Error al cambiar el estado');
       throw error;
     }

@@ -12,6 +12,9 @@ import { Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import {
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("ServiceTypes");
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -64,7 +67,7 @@ const ServiceTypes = () => {
       await refetch();
       toast.success('Datos actualizados correctamente');
     } catch (error) {
-      console.error('Error refreshing:', error);
+      logger.error('Error refreshing:', error);
     } finally {
       setRefreshing(false);
     }
@@ -97,7 +100,7 @@ const ServiceTypes = () => {
         description: `"${serviceTypeToDelete.name}" fue eliminado correctamente.`,
       });
     } catch (error) {
-      console.error('Error deleting service type:', error);
+      logger.error('Error deleting service type:', error);
       toast.error('No se pudo eliminar el tipo de servicio');
     } finally {
       setServiceTypeToDelete(null);
@@ -114,7 +117,7 @@ const ServiceTypes = () => {
       setIsFormOpen(false);
       setEditingServiceType(null);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      logger.error('Error submitting form:', error);
     }
   };
 

@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { addDays } from 'date-fns';
 import { getBusinessTimezone, getTodayStringInTimezone, safeParseDateOnly } from '@/utils/timezoneUtils';
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUpcomingServicesCount");
 const ACTIVE_STATUSES = [
   'pending',
   'quoted',
@@ -31,7 +34,7 @@ export const useUpcomingServicesCount = () => {
         .in('status', ACTIVE_STATUSES);
 
       if (error) {
-        console.warn('[useUpcomingServicesCount] error:', error.message);
+        logger.warn('[useUpcomingServicesCount] error:', error.message);
         return 0;
       }
       return count ?? 0;

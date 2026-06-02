@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useVehicleFullHistory");
 export interface VehicleHistoryRecord {
   id: string;
   type: 'service' | 'invoice';
@@ -57,7 +60,7 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
   if (!licensePlate || licensePlate.trim().length < 4) return null;
 
   const normalizedPlate = normalizeLicensePlate(licensePlate);
-  console.log('📋 Fetching full vehicle history for:', licensePlate, '(normalized:', normalizedPlate, ')');
+  logger.debug('📋 Fetching full vehicle history for:', licensePlate, '(normalized:', normalizedPlate, ')');
 
   // Buscar servicios con patente coincidente (flexibilidad con guiones)
   const { data: servicesData, error: servicesError } = await supabase
@@ -91,7 +94,7 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
     .order('service_date', { ascending: false });
 
   if (servicesError) {
-    console.error('Error fetching services:', servicesError);
+    logger.error('Error fetching services:', servicesError);
     throw servicesError;
   }
 
@@ -101,9 +104,9 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
     return servicePlate === normalizedPlate;
   });
 
-  console.log(`📋 Total services in DB: ${servicesData?.length || 0}`);
-  console.log(`📋 Found ${matchingServices.length} services for plate ${licensePlate}`);
-  console.log('📋 Services by status:', matchingServices.reduce((acc: any, s: any) => {
+  logger.debug(`📋 Total services in DB: ${servicesData?.length || 0}`);
+  logger.debug(`📋 Found ${matchingServices.length} services for plate ${licensePlate}`);
+  logger.debug('📋 Services by status:', matchingServices.reduce((acc: any, s: any) => {
     acc[s.status] = (acc[s.status] || 0) + 1;
     return acc;
   }, {}));

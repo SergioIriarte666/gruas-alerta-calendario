@@ -19,7 +19,10 @@ import { InventoryMovementForm } from '@/components/inventory/InventoryMovementF
 import { XMLInventoryUpload } from '@/components/inventory/XMLInventoryUpload';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Inventory");
 const Inventory = () => {
   useInventorySyncWatcher();
 
@@ -67,14 +70,14 @@ const Inventory = () => {
                       .update({ receipt_photo_paths: receiptPhotoPaths } as any)
                       .eq('id', movement.id);
                   } catch (error) {
-                    console.error('Error saving receipt photos to inventory movement:', error);
+                    logger.error('Error saving receipt photos to inventory movement:', error);
                   }
                 }
                 if (prefill?.quickEntryId) {
                   try {
                     await deleteEntry(prefill.quickEntryId);
                   } catch (error) {
-                    console.error('Error deleting quick entry after inventory movement:', error);
+                    logger.error('Error deleting quick entry after inventory movement:', error);
                   }
                 }
                 setIntakeOpen(false);

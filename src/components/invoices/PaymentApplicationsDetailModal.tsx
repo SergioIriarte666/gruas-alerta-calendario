@@ -22,7 +22,10 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { PaymentWithDetails } from '@/types/payments';
 import { usePaymentApplications, PaymentApplicationDetail } from '@/hooks/usePaymentApplications';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentApplicationsDetailModal");
 interface PaymentApplicationsDetailModalProps {
   payment: PaymentWithDetails | null;
   isOpen: boolean;
@@ -52,7 +55,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
       const data = await getPaymentApplicationsDetail(payment.id);
       setApplications(data);
     } catch (error) {
-      console.error('Error loading applications:', error);
+      logger.error('Error loading applications:', error);
     } finally {
       setLoading(false);
     }

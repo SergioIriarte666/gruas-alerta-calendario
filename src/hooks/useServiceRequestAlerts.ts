@@ -3,7 +3,10 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useUser } from '@/contexts/UserContext';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServiceRequestAlerts");
 export const useServiceRequestAlerts = () => {
   const { addNotification } = useNotifications();
   const { user } = useUser();
@@ -23,7 +26,7 @@ export const useServiceRequestAlerts = () => {
           filter: 'status=eq.pending'
         },
         async (payload) => {
-          console.log('Nueva solicitud de servicio detectada:', payload);
+          logger.debug('Nueva solicitud de servicio detectada:', payload);
           
           try {
             // Obtener datos del cliente para la notificación
@@ -57,7 +60,7 @@ export const useServiceRequestAlerts = () => {
               });
             }
           } catch (error) {
-            console.error('Error procesando alerta de nueva solicitud:', error);
+            logger.error('Error procesando alerta de nueva solicitud:', error);
             
             // Notificación básica si falla la obtención de datos
             addNotification({

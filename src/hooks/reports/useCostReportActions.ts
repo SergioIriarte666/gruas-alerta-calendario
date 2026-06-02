@@ -8,7 +8,10 @@ import { useCosts } from '@/hooks/useCosts';
 import { exportCostReport } from '@/utils/reports/costReportExporter';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCostReportActions");
 interface CostReportFilters {
   dateRange: { from: string; to: string };
   categoryId: string;
@@ -177,7 +180,7 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
         description: `Se ha descargado el informe de costos en formato ${format.toUpperCase()}.`,
       });
     } catch (error) {
-      console.error('Error al generar informe de costos:', error);
+      logger.error('Error al generar informe de costos:', error);
       toast.error('Error al generar informe', {
         description: 'Hubo un problema al generar el informe de costos. Inténtalo de nuevo.',
       });

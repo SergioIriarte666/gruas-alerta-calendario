@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { usePWACapabilities } from '@/hooks/usePWACapabilities';
 import type { ServiceWorkerRegistrationWithSync } from '@/types/pwa';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SyncIndicator");
 export const SyncIndicator = () => {
   const { syncStatus, offlineActions } = usePWACapabilities();
   const [showDetails, setShowDetails] = useState(false);
@@ -33,12 +36,12 @@ export const SyncIndicator = () => {
         
         if ('sync' in syncRegistration && syncRegistration.sync) {
           await syncRegistration.sync.register('offline-action');
-          console.log('Manual sync triggered');
+          logger.debug('Manual sync triggered');
         } else {
-          console.warn('Background sync not supported');
+          logger.warn('Background sync not supported');
         }
       } catch (error) {
-        console.error('Manual sync failed:', error);
+        logger.error('Manual sync failed:', error);
       }
     }
   };

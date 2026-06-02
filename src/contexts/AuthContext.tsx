@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logActivity = async (params: { userId: string; eventType: string; path?: string }) => {
     try {
-      await (supabase as any)
+      await supabase
         .from('user_activity_log')
         .insert({
           user_id: params.userId,

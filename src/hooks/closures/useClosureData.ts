@@ -3,12 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClosureData");
 const MAX_CLOSURES = 200;
 const MAX_CLOSURES_WITH_SERVICE_LINKS = 50;
 
 const fetchClosures = async (): Promise<ServiceClosure[]> => {
-  console.log('Fetching closures...');
+  logger.debug('Fetching closures...');
   
   // Fetch all closures (open, closed, and invoiced) so users can see their full history
   const { data: allClosuresData, error: activeError } = await supabase
@@ -44,7 +47,7 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
       .in('closure_id', closureIdsForServiceLinks);
 
     if (servicesError) {
-      console.warn('Error fetching closure services batch:', servicesError);
+      logger.warn('Error fetching closure services batch:', servicesError);
     } else {
       servicesByClosureId = new Map<string, { service_id: string }[]>();
       (closureServicesSubset || []).forEach(cs => {

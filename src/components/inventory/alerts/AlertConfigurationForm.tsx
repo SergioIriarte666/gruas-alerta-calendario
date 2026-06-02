@@ -18,7 +18,10 @@ import {
   useInventoryAlerts 
 } from '@/hooks/useInventoryAlerts';
 import { Package, MapPin, AlertTriangle, Clock, TrendingDown, Bell } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("AlertConfigurationForm");
 const alertSchema = z.object({
   alert_type: z.string().min(1, 'Tipo de alerta es requerido'),
   item_id: z.string().optional(),
@@ -119,7 +122,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
 
   const onSubmit = async (data: AlertFormData) => {
     try {
-      console.log('Form data submitted:', data);
+      logger.debug('Form data submitted:', data);
       
       // Validate required fields
       if (!data.alert_type) {
@@ -134,7 +137,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
         is_active: data.is_active
       };
 
-      console.log('Processed alert data:', alertData);
+      logger.debug('Processed alert data:', alertData);
 
       if (alertId) {
         await updateAlert.mutateAsync({ id: alertId, config: alertData });
@@ -144,7 +147,7 @@ export const AlertConfigurationForm: React.FC<AlertConfigurationFormProps> = ({
 
       onSuccess();
     } catch (error) {
-      console.error('Error saving alert:', error);
+      logger.error('Error saving alert:', error);
       // The error will be handled by the mutation's onError callback
     }
   };

@@ -3,7 +3,10 @@ import { useMemo, useState, useEffect } from 'react';
 import { Invoice, InvoiceStatus } from '@/types';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceFormData");
 interface UseInvoiceFormDataProps {
   invoice?: Invoice | null;
   preselectedClosureId?: string | null;
@@ -16,7 +19,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
   
   // Memoized form data
   const formData = useMemo(() => {
-    // console.log('useInvoiceFormData - Creating form data for invoice:', invoice?.id);
+    // logger.debug('useInvoiceFormData - Creating form data for invoice:', invoice?.id);
     
     if (invoice) {
       return {

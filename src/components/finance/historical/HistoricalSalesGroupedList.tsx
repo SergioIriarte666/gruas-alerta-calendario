@@ -10,7 +10,10 @@ import { Search, User } from 'lucide-react';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { HistoricalSalesTable, SortConfig, SortKey } from './HistoricalSalesTable';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("HistoricalSalesGroupedList");
 interface HistoricalSalesGroupedListProps {
   invoices: Invoice[];
   sortConfig: SortConfig;
@@ -42,7 +45,7 @@ export const HistoricalSalesGroupedList = ({
       try {
         setExpandedGroups(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to parse expanded groups', e);
+        logger.error('Failed to parse expanded groups', e);
       }
     }
   }, []);

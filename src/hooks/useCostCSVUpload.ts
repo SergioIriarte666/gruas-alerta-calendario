@@ -5,7 +5,10 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCostCSVUpload");
 interface CostRow {
   rowIndex: number;
   fecha: string;
@@ -316,7 +319,7 @@ export const useCostCSVUpload = () => {
 
           const { error } = await supabase.from('costs').insert(insertData);
           if (error) {
-            console.error('Batch insert error:', error);
+            logger.error('Batch insert error:', error);
             errors += toInsert.length;
           } else {
             created += toInsert.length;
@@ -336,7 +339,7 @@ export const useCostCSVUpload = () => {
 
           const updateErrors = updates.filter((r) => r.error);
           if (updateErrors.length > 0) {
-            console.error('Batch update payment_date error:', updateErrors);
+            logger.error('Batch update payment_date error:', updateErrors);
             errors += updateErrors.length;
           }
 

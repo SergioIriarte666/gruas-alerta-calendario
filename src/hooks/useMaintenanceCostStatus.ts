@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useMaintenanceCostStatus");
 interface MaintenanceCostStatus {
   maintenanceId: string;
   hasCost: boolean;
@@ -27,7 +30,7 @@ export const useMaintenanceCostStatus = (maintenanceIds: string[]) => {
         .not('maintenance_id', 'is', null);
 
       if (error) {
-        console.error('Error fetching maintenance cost status:', error);
+        logger.error('Error fetching maintenance cost status:', error);
         throw error;
       }
 
@@ -67,7 +70,7 @@ export const useToggleMaintenanceCostPayment = () => {
       toast.success('Estado de pago actualizado');
     },
     onError: (error: any) => {
-      console.error('Error toggling payment:', error);
+      logger.error('Error toggling payment:', error);
       toast.error('Error al actualizar estado de pago');
     },
   });

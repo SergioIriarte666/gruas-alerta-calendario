@@ -3,7 +3,10 @@ import { RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { refreshAllServiceData } from '@/utils/globalDataRefresh';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("GlobalRefreshButton");
 export const GlobalRefreshButton = () => {
   const queryClient = useQueryClient();
 
@@ -19,7 +22,7 @@ export const GlobalRefreshButton = () => {
         description: "Todos los datos han sido actualizados exitosamente",
       });
     } catch (error) {
-      console.error('Error en refresh global:', error);
+      logger.error('Error en refresh global:', error);
       toast.error("Error", {
         description: "No se pudieron actualizar los datos",
       });

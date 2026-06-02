@@ -9,7 +9,10 @@ import { formatForDisplay, safeParseDateOnly, safeDaysSince, getBusinessToday } 
 import { useSettings } from '@/hooks/useSettings';
 import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PortalInvoices");
 interface PortalInvoiceRecord {
   id: string;
   folio: string;
@@ -80,7 +83,7 @@ const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Elem
       return <Badge className="bg-red-500 text-white">{days} días</Badge>;
     }
   } catch (error) {
-    console.error('Error calculating days until due:', error);
+    logger.error('Error calculating days until due:', error);
     return <Badge className="bg-gray-500 text-white">Error</Badge>;
   }
 };
@@ -131,7 +134,7 @@ const PortalInvoices = () => {
         },
       });
     } catch (downloadError) {
-      console.error('Error exporting portal invoice:', downloadError);
+      logger.error('Error exporting portal invoice:', downloadError);
       toast.error('No se pudo exportar la factura', {
         description: 'Intente nuevamente en unos segundos.',
       });

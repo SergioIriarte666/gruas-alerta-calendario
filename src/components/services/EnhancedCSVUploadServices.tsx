@@ -25,7 +25,10 @@ import { AnimatedProgress } from './AnimatedProgress';
 import { AnimatedStatCard } from './AnimatedStatCard';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("EnhancedCSVUploadServices");
 interface EnhancedCSVUploadServicesProps {
   onClose?: () => void;
   onSuccess?: (count: number) => void;
@@ -104,29 +107,29 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
   const handlePreview = async () => {
     if (isValidating) {
-      console.log('⏳ Preview already in progress, ignoring click');
+      logger.debug('⏳ Preview already in progress, ignoring click');
       return;
     }
     
     try {
-      console.log('🚀 Starting preview process...');
+      logger.debug('🚀 Starting preview process...');
       
       // Parse the file first and get the data directly
-      console.log('📁 Parsing file...');
+      logger.debug('📁 Parsing file...');
       const parsedData = await parseFile();
-      console.log('✅ File parsed successfully');
+      logger.debug('✅ File parsed successfully');
       
       // Then validate the parsed data using the returned value
       if (parsedData && parsedData.length > 0) {
-        console.log('🔍 Validating parsed data...');
+        logger.debug('🔍 Validating parsed data...');
         await validateData(parsedData);
-        console.log('✅ Validation completed successfully');
+        logger.debug('✅ Validation completed successfully');
       } else {
-        console.warn('⚠️ No data found in file');
+        logger.warn('⚠️ No data found in file');
         toast.error('No se encontraron datos válidos en el archivo');
       }
     } catch (error) {
-      console.error('❌ Error in preview process:', error);
+      logger.error('❌ Error in preview process:', error);
       toast.error(`Error al procesar el archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
@@ -152,7 +155,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     try {
       downloadExcelTemplate();
     } catch (error) {
-      console.error('Error downloading Excel template:', error);
+      logger.error('Error downloading Excel template:', error);
       toast.error('Error al descargar la plantilla de Excel');
     }
   };
@@ -161,7 +164,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     try {
       downloadTemplate();
     } catch (error) {
-      console.error('Error downloading CSV template:', error);
+      logger.error('Error downloading CSV template:', error);
       toast.error('Error al descargar la plantilla CSV');
     }
   };

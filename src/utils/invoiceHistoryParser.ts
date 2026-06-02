@@ -4,7 +4,10 @@ import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("invoiceHistoryParser");
 export type DocumentType = 'factura' | 'nota_credito' | 'nota_debito';
 
 export interface ParsedInvoiceRow {
@@ -388,14 +391,14 @@ export const parseXLSXFile = (file: File): Promise<ParsedInvoiceRow[]> => {
         
         // Auto-detect: Libro de Ventas format?
         if (isLibroDeVentas(rawRows)) {
-          console.log('Detected Libro de Ventas format');
+          logger.debug('Detected Libro de Ventas format');
           const parsed = parseLibroDeVentasXLSX(rawRows);
           resolve(parsed);
           return;
         }
 
         // Fallback: original columnar format
-        console.log('Using columnar format parser');
+        logger.debug('Using columnar format parser');
         const rows = XLSX.utils.sheet_to_json<any>(firstSheet);
         
         const findVal = (row: any, keys: string[]) => {

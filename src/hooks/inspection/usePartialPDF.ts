@@ -3,13 +3,16 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
 import { useInspectionPDF } from './useInspectionPDF';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePartialPDF");
 export const usePartialPDF = () => {
   const { generatePDF, isGeneratingPDF } = useInspectionPDF();
 
   const generatePartialPDFMutation = useMutation({
     mutationFn: async ({ service, values }: { service: Service; values: InspectionFormValues }) => {
-      console.log('📄 [PARTIAL] Generando PDF parcial para retiro...');
+      logger.debug('📄 [PARTIAL] Generando PDF parcial para retiro...');
       
       // Generar PDF parcial (sin firma de recepción)
       const { blob, filename } = await generatePDF(service, values, false);
@@ -27,11 +30,11 @@ export const usePartialPDF = () => {
       return { blob, filename };
     },
     onSuccess: (result) => {
-      console.log('✅ [PARTIAL] PDF parcial generado:', result.filename);
+      logger.debug('✅ [PARTIAL] PDF parcial generado:', result.filename);
       toast.success('PDF de retiro descargado exitosamente');
     },
     onError: (error: Error) => {
-      console.error('💥 [PARTIAL] Error en PDF parcial:', error);
+      logger.error('💥 [PARTIAL] Error en PDF parcial:', error);
       toast.error(`Error al generar PDF de retiro: ${error.message}`);
     }
   });

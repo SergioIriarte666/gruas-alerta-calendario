@@ -7,7 +7,10 @@ import { ArrowLeft, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TurnstileWidget } from './TurnstileWidget';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ForgotPasswordForm");
 interface ForgotPasswordFormProps {
   onBack: () => void;
 }
@@ -44,7 +47,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
       });
 
       if (error) {
-        console.error('Error calling send-password-reset:', error);
+        logger.error('Error calling send-password-reset:', error);
         toast.error(error.message || 'Error al enviar el correo de recuperación');
         setCaptchaToken(null);
         setCaptchaResetKey((current: number) => current + 1);
@@ -57,7 +60,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
         description: 'Revisa tu bandeja de entrada para restablecer tu contraseña.',
       });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error('Error de conexión');
       setCaptchaToken(null);
       setCaptchaResetKey((current: number) => current + 1);

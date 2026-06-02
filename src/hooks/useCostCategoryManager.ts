@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CostCategory } from "@/types/costs";
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCostCategoryManager");
 export interface CostCategoryFormData {
   name: string;
   description?: string;
@@ -48,7 +51,7 @@ export const useCostCategoryManager = () => {
       toast.success('Categoría creada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error creating cost category:', error);
+      logger.error('Error creating cost category:', error);
       toast.error('Error al crear la categoría');
     },
   });
@@ -72,7 +75,7 @@ export const useCostCategoryManager = () => {
       toast.success('Categoría actualizada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error updating cost category:', error);
+      logger.error('Error updating cost category:', error);
       toast.error('Error al actualizar la categoría');
     },
   });
@@ -93,7 +96,7 @@ export const useCostCategoryManager = () => {
       toast.success('Categoría eliminada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error deleting cost category:', error);
+      logger.error('Error deleting cost category:', error);
       toast.error('Error al eliminar la categoría');
     },
   });

@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_MODULES } from '@/constants/modules';
 import { useAuth } from '@/contexts/AuthContext';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUserModulePermissions");
 interface ModulePermission {
   module_key: string;
   is_enabled: boolean;
@@ -52,7 +55,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
 
       setPermissions(allPermissions);
     } catch (err) {
-      console.error('Error fetching permissions:', err);
+      logger.error('Error fetching permissions:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar permisos');
     } finally {
       setLoading(false);
@@ -85,7 +88,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
 
       setCurrentUserPermissions(allPermissions);
     } catch (err) {
-      console.error('Error fetching current user permissions:', err);
+      logger.error('Error fetching current user permissions:', err);
       // On error, default to all enabled
       setCurrentUserPermissions(APP_MODULES.map(m => ({ module_key: m.key, is_enabled: true })));
     } finally {
@@ -121,7 +124,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
 
       return true;
     } catch (err) {
-      console.error('Error updating permission:', err);
+      logger.error('Error updating permission:', err);
       setError(err instanceof Error ? err.message : 'Error al actualizar permiso');
       return false;
     }
@@ -155,7 +158,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
 
       return true;
     } catch (err) {
-      console.error('Error updating permissions:', err);
+      logger.error('Error updating permissions:', err);
       setError(err instanceof Error ? err.message : 'Error al actualizar permisos');
       return false;
     }

@@ -5,7 +5,10 @@ import { es } from 'date-fns/locale';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { Settings } from '@/types/settings';
 import { InventoryMovement } from '@/hooks/useInventory';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("inventoryMovementExporter");
 export interface InventoryMovementFilters {
   dateRange: {
     from: string;
@@ -131,19 +134,19 @@ export const exportInventoryMovementReport = async ({
     }
     
     // Implementación más robusta para descarga de PDF
-    console.log('Generating PDF with filename:', `${exportFileDefaultName}.pdf`);
+    logger.debug('Generating PDF with filename:', `${exportFileDefaultName}.pdf`);
     
     try {
       // Método 1: Usar el método estándar de jsPDF
       doc.save(`${exportFileDefaultName}.pdf`);
-      console.log('PDF saved successfully using doc.save()');
+      logger.debug('PDF saved successfully using doc.save()');
     } catch (error) {
-      console.error('doc.save() failed, trying alternative method:', error);
+      logger.error('doc.save() failed, trying alternative method:', error);
       
       try {
         // Método 2: Descarga manual usando blob
         const pdfOutput = doc.output('blob');
-        console.log('PDF blob created, size:', pdfOutput.size);
+        logger.debug('PDF blob created, size:', pdfOutput.size);
         
         const url = URL.createObjectURL(pdfOutput);
         const link = document.createElement('a');
@@ -164,9 +167,9 @@ export const exportInventoryMovementReport = async ({
           URL.revokeObjectURL(url);
         }, 100);
         
-        console.log('PDF download initiated using blob method');
+        logger.debug('PDF download initiated using blob method');
       } catch (blobError) {
-        console.error('Blob method also failed:', blobError);
+        logger.error('Blob method also failed:', blobError);
         throw new Error('No se pudo descargar el PDF. Inténtalo con otro navegador.');
       }
     }
@@ -240,14 +243,14 @@ export const exportInventoryMovementReport = async ({
     XLSX.utils.book_append_sheet(wb, typesWs, 'Por Tipo');
 
     // Implementación más robusta para descarga de Excel
-    console.log('Generating Excel with filename:', `${exportFileDefaultName}.xlsx`);
+    logger.debug('Generating Excel with filename:', `${exportFileDefaultName}.xlsx`);
     
     try {
       // Método 1: Usar XLSX.writeFile estándar
       XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
-      console.log('Excel saved successfully using XLSX.writeFile()');
+      logger.debug('Excel saved successfully using XLSX.writeFile()');
     } catch (error) {
-      console.error('XLSX.writeFile() failed, trying alternative method:', error);
+      logger.error('XLSX.writeFile() failed, trying alternative method:', error);
       
       try {
         // Método 2: Descarga manual usando blob
@@ -255,7 +258,7 @@ export const exportInventoryMovementReport = async ({
         const blob = new Blob([wbout], { 
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
         });
-        console.log('Excel blob created, size:', blob.size);
+        logger.debug('Excel blob created, size:', blob.size);
         
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -276,16 +279,16 @@ export const exportInventoryMovementReport = async ({
           URL.revokeObjectURL(url);
         }, 100);
         
-        console.log('Excel download initiated using blob method');
+        logger.debug('Excel download initiated using blob method');
       } catch (blobError) {
-        console.error('Blob method also failed:', blobError);
+        logger.error('Blob method also failed:', blobError);
         throw new Error('No se pudo descargar el Excel. Inténtalo con otro navegador.');
       }
     }
 
   } else if (format === 'csv') {
     // Implementación más robusta para descarga de CSV
-    console.log('Generating CSV with filename:', `${exportFileDefaultName}.csv`);
+    logger.debug('Generating CSV with filename:', `${exportFileDefaultName}.csv`);
     
     const headers = ['Fecha', 'Tipo', 'Producto', 'Ubicación', 'Cantidad', 'Costo Total', 'Documento', 'Motivo'];
     const csvData = [
@@ -308,7 +311,7 @@ export const exportInventoryMovementReport = async ({
       // Crear blob con BOM para mejor compatibilidad con Excel
       const csvContent = '\uFEFF' + csvData;
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-      console.log('CSV blob created, size:', blob.size);
+      logger.debug('CSV blob created, size:', blob.size);
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -323,7 +326,7 @@ export const exportInventoryMovementReport = async ({
       // Simular click del usuario con un pequeño delay
       setTimeout(() => {
         link.click();
-        console.log('CSV download initiated');
+        logger.debug('CSV download initiated');
         
         // Limpiar después de un delay
         setTimeout(() => {
@@ -335,7 +338,7 @@ export const exportInventoryMovementReport = async ({
       }, 10);
       
     } catch (error) {
-      console.error('Error saving CSV:', error);
+      logger.error('Error saving CSV:', error);
       throw new Error('No se pudo descargar el CSV. Inténtalo con otro navegador.');
     }
   }

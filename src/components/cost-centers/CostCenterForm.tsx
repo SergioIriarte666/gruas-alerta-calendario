@@ -29,7 +29,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useAddCostCenter, useUpdateCostCenter, useCostCenters } from '@/hooks/useCostCenters';
 import { CostCenter, BUDGET_PERIODS } from '@/types/costCenters';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CostCenterForm");
 const costCenterSchema = z.object({
   code: z.string().min(1, 'El código es requerido').max(10, 'Máximo 10 caracteres'),
   name: z.string().min(1, 'El nombre es requerido').max(100, 'Máximo 100 caracteres'),
@@ -113,7 +116,7 @@ export const CostCenterForm = ({ isOpen, onClose, costCenter }: CostCenterFormPr
       
       onClose();
     } catch (error) {
-      console.error('Error saving cost center:', error);
+      logger.error('Error saving cost center:', error);
     }
   };
 

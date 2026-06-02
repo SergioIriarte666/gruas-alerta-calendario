@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientClosures");
 export const useClientClosures = (clientId: string | null) => {
   const [closures, setClosures] = useState<ServiceClosure[]>([]);
   const [loading, setLoading] = useState(true);
@@ -10,7 +13,7 @@ export const useClientClosures = (clientId: string | null) => {
   const fetchClosuresByClient = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      console.log('Fetching closures for client ID:', id);
+      logger.debug('Fetching closures for client ID:', id);
       
       const { data, error } = await supabase
         .from('service_closures')
@@ -27,11 +30,11 @@ export const useClientClosures = (clientId: string | null) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error fetching client closures:', error);
+        logger.error('Supabase error fetching client closures:', error);
         throw new Error(`Error en consulta: ${error.message}`);
       }
 
-      console.log('Client closures fetched:', data?.length || 0, 'for client:', id);
+      logger.debug('Client closures fetched:', data?.length || 0, 'for client:', id);
       
       const formattedClosures: ServiceClosure[] = (data || []).map(closure => ({
         id: closure.id,
@@ -50,7 +53,7 @@ export const useClientClosures = (clientId: string | null) => {
       
       setClosures(formattedClosures);
     } catch (error: any) {
-      console.error('Error fetching client closures:', error);
+      logger.error('Error fetching client closures:', error);
       toast.error("Error", {
         description: "No se pudieron cargar los cierres del cliente.",
       });

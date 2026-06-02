@@ -4,7 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
 
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useServicesForClosures");
 interface UseServicesForClosuresOptions {
   dateFrom?: Date;
   dateTo?: Date;
@@ -138,12 +141,12 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       ]);
 
       if (billableResult.error) {
-        console.error('Error fetching billable services:', billableResult.error);
+        logger.error('Error fetching billable services:', billableResult.error);
         throw billableResult.error;
       }
 
       if (pendingResult.error) {
-        console.error('Error fetching pending services:', pendingResult.error);
+        logger.error('Error fetching pending services:', pendingResult.error);
         throw pendingResult.error;
       }
 
@@ -162,7 +165,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           .in('service_id', currentBillableIds);
 
         if (closureError) {
-          console.error('Error fetching closure services:', closureError);
+          logger.error('Error fetching closure services:', closureError);
         }
 
         usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
@@ -247,7 +250,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         totalCompleted: billableServices.length
       });
     } catch (error: any) {
-      console.error('Error fetching services data for closures:', error);
+      logger.error('Error fetching services data for closures:', error);
       toast({
         type: "error",
         title: "Error",
@@ -286,7 +289,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         description: "El servicio ha sido marcado como completado.",
       });
     } catch (error: any) {
-      console.error('Error completing service:', error);
+      logger.error('Error completing service:', error);
       toast({
         type: "error",
         title: "Error",
@@ -313,7 +316,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         description: `${serviceIds.length} servicio(s) han sido marcados como completados.`,
       });
     } catch (error: any) {
-      console.error('Error completing services:', error);
+      logger.error('Error completing services:', error);
       toast({
         type: "error",
         title: "Error",
@@ -382,7 +385,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .limit(10);
 
       if (error) {
-        console.error('❌ [Hook] Error searching processed services:', error);
+        logger.error('❌ [Hook] Error searching processed services:', error);
         setProcessedServices([]);
         return;
       }
@@ -413,7 +416,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       setProcessedServices(transformed);
     } catch (error) {
-      console.error('Error in searchProcessedServices:', error);
+      logger.error('Error in searchProcessedServices:', error);
       setProcessedServices([]);
     } finally {
       setSearchingProcessed(false);

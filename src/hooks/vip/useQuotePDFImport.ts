@@ -7,7 +7,10 @@ import { disableVipPdfAiForSession, invokeEdgeFunctionJson, isVipPdfAiDisabled }
 import { extractQuoteDataLocally } from '@/utils/localVipPdfParser';
 import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
 import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useQuotePDFImport");
 const extractPdfText = async (buffer: ArrayBuffer): Promise<string> => {
   const pdfJs = await loadPdfJsCompat();
   const pdf = await pdfJs.getDocument({ data: new Uint8Array(buffer) }).promise;
@@ -252,7 +255,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
         parsed = sanitizeParsedQuote(parsed);
         parsedQuotes.push({ ...parsed, fileName: file.name });
       } catch (err: any) {
-        console.error(`Error processing ${file.name}:`, err);
+        logger.error(`Error processing ${file.name}:`, err);
         lastErrorMessage = err?.message || 'No se pudo procesar el PDF';
         toast.error(`Error procesando ${file.name}`, {
           description: err?.message || 'No se pudo procesar el PDF',
@@ -355,7 +358,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
         updatedAt: service.updated_at,
       })) as Service[];
     } catch (err) {
-      console.error('Error fetching fresh services:', err);
+      logger.error('Error fetching fresh services:', err);
       clientServices = services.filter((service) => service.client?.id === clientId);
     }
 
@@ -511,7 +514,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           progress: { current: i + 1, total: validMatches.length, fileName: match.parsedItem.patente },
         }));
       } catch (err) {
-        console.error(`Error updating service ${match.service!.folio}:`, err);
+        logger.error(`Error updating service ${match.service!.folio}:`, err);
       }
     }
 

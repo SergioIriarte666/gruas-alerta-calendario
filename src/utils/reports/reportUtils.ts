@@ -1,6 +1,9 @@
 
 import { Settings } from '@/types/settings';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("reportUtils");
 export const createExportFileName = (prefix: string, dateFrom: string, dateTo: string): string => {
   return `${prefix}-${dateFrom}-a-${dateTo}`;
 };
@@ -13,7 +16,7 @@ export const addCompanyHeader = async (doc: any, company: Settings['company'], s
   if (logoUrl !== null) {
     try {
       const finalLogoUrl = logoUrl || company.logo || '/logo-gruas-5-norte.png';
-      console.log('📄 [REPORT-HEADER] Usando logo:', finalLogoUrl);
+      logger.debug('📄 [REPORT-HEADER] Usando logo:', finalLogoUrl);
       
       const img = new Image();
       img.crossOrigin = 'Anonymous';
@@ -26,12 +29,12 @@ export const addCompanyHeader = async (doc: any, company: Settings['company'], s
           resolve(true);
         };
         img.onerror = (e) => {
-          console.warn("Error loading logo for PDF, using text instead", e);
+          logger.warn("Error loading logo for PDF, using text instead", e);
           resolve(true);
         };
       });
     } catch (e) {
-      console.warn("Could not add logo to PDF, using text fallback.", e);
+      logger.warn("Could not add logo to PDF, using text fallback.", e);
     }
   }
   

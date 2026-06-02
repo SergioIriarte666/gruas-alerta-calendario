@@ -15,7 +15,10 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useInventoryLocations, useInventorySuppliers, useUpdateInventoryMovement, type InventoryMovement } from '@/hooks/useInventory';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("MovementEditModal");
 interface MovementEditModalProps {
   movement: InventoryMovement;
   onClose: () => void;
@@ -42,8 +45,8 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
     observations: movement.observations || '',
   });
 
-  console.log('Movement data:', movement);
-  console.log('Initial form data:', formData);
+  logger.debug('Movement data:', movement);
+  logger.debug('Initial form data:', formData);
 
   const { data: locations = [] } = useInventoryLocations();
   const { data: suppliers = [] } = useInventorySuppliers();
@@ -84,7 +87,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
   };
 
   const handleInputChange = (field: string, value: string) => {
-    console.log('Input change:', field, value);
+    logger.debug('Input change:', field, value);
     
     setFormData(prev => ({ ...prev, [field]: value }));
     
@@ -149,7 +152,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
         movement_date: movementDate.toISOString(),
       };
 
-      console.log('Updating movement with data:', updateData);
+      logger.debug('Updating movement with data:', updateData);
       
       await updateMovement.mutateAsync({ id: movement.id, updates: updateData });
       
@@ -157,7 +160,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error updating movement:', error);
+      logger.error('Error updating movement:', error);
       toast.error('Error al actualizar el movimiento');
     } finally {
       setIsSubmitting(false);

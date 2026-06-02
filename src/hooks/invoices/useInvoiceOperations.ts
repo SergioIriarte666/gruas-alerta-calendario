@@ -4,7 +4,10 @@ import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import { formatInvoiceData, generateInvoiceFolio } from '@/utils/invoiceUtils';
 import { useQueryClient } from '@tanstack/react-query';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useInvoiceOperations");
 const INVOICE_SELECT = `
   id,
   client_id,
@@ -48,7 +51,7 @@ export const useInvoiceOperations = () => {
         .eq('closure_id', invoiceData.closureId);
 
       if (closureError) {
-        console.error('❌ Error al obtener servicios del cierre:', closureError);
+        logger.error('❌ Error al obtener servicios del cierre:', closureError);
         throw new Error('Error al obtener servicios del cierre');
       }
 
@@ -86,7 +89,7 @@ export const useInvoiceOperations = () => {
         });
 
       if (transactionError) {
-        console.error('❌ Error en transacción de factura:', transactionError);
+        logger.error('❌ Error en transacción de factura:', transactionError);
         throw new Error(`Error al crear la factura: ${transactionError.message}`);
       }
 
@@ -120,7 +123,7 @@ export const useInvoiceOperations = () => {
         });
 
       if (closureRelationError) {
-        console.error('❌ Error al crear relación invoice_closures:', closureRelationError);
+        logger.error('❌ Error al crear relación invoice_closures:', closureRelationError);
         throw new Error('Error al relacionar factura con cierre');
       }
 
@@ -134,7 +137,7 @@ export const useInvoiceOperations = () => {
         .eq('id', invoiceData.closureId);
 
       if (closureUpdateError) {
-        console.error('❌ Error al actualizar estado del cierre:', closureUpdateError);
+        logger.error('❌ Error al actualizar estado del cierre:', closureUpdateError);
         toast.warning("Advertencia", {
           description: "La factura se creó correctamente, pero no se pudo actualizar el estado del cierre.",
         });
@@ -150,17 +153,17 @@ export const useInvoiceOperations = () => {
               p_numero_fiscal: invoiceData.numeroFiscal || null
             });
           if (error) {
-            console.error(`❌ Error actualizando servicio ${serviceId}:`, error);
+            logger.error(`❌ Error actualizando servicio ${serviceId}:`, error);
           }
           return { serviceId, error };
         });
         const results = await Promise.all(updatePromises);
         const failed = results.filter(r => r.error);
         if (failed.length > 0) {
-          console.warn(`⚠️ ${failed.length} servicios no se pudieron actualizar a invoiced`);
+          logger.warn(`⚠️ ${failed.length} servicios no se pudieron actualizar a invoiced`);
         }
       } catch (servicesError) {
-        console.error('❌ Error actualizando servicios a invoiced:', servicesError);
+        logger.error('❌ Error actualizando servicios a invoiced:', servicesError);
         toast.warning("Advertencia", {
           description: "La factura se creó, pero algunos servicios pueden no haberse actualizado correctamente.",
         });
@@ -188,7 +191,7 @@ export const useInvoiceOperations = () => {
       return formatInvoiceData({ ...newInvoice, invoice_closures: [{ closure_id: invoiceData.closureId }] });
 
     } catch (error: any) {
-      console.error('❌ Error general en createInvoice:', error);
+      logger.error('❌ Error general en createInvoice:', error);
       toast.error("Error al crear factura", {
         description: error.message || "No se pudo crear la factura.",
       });
@@ -455,7 +458,7 @@ export const useInvoiceOperations = () => {
           const results = await Promise.all(updatePromises);
         }
       } catch (servicesError) {
-        console.error('Error updating services, but invoice update succeeded:', servicesError);
+        logger.error('Error updating services, but invoice update succeeded:', servicesError);
         // Don't rollback invoice here, just log the service update error
         toast.error("Advertencia", {
           description: "Factura actualizada pero algunos servicios pueden necesitar sincronización manual.",
@@ -475,7 +478,7 @@ export const useInvoiceOperations = () => {
 
       return { ...invoiceData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
-      console.error('❌ Invoice update transaction failed:', error);
+      logger.error('❌ Invoice update transaction failed:', error);
       
       // Show specific error messages
       toast.error("Error al actualizar factura", {
@@ -627,7 +630,7 @@ export const useInvoiceOperations = () => {
         description: "La factura ha sido anulada y los servicios están disponibles para nueva facturación.",
       });
     } catch (error: any) {
-      console.error('Error al eliminar factura:', error);
+      logger.error('Error al eliminar factura:', error);
       
       if (error.code === 'PROTECTED_INVOICE') {
         toast.error("Factura protegida", {
@@ -652,7 +655,7 @@ export const useInvoiceOperations = () => {
       const { data, error } = await supabase.rpc('create_automatic_payment_for_invoice', rpcParams);
 
       if (error) {
-        console.error('Error en create_automatic_payment_for_invoice:', error);
+        logger.error('Error en create_automatic_payment_for_invoice:', error);
         throw error;
       }
 
@@ -668,7 +671,7 @@ export const useInvoiceOperations = () => {
 
       return { status: 'paid' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
-      console.error('Error marking invoice as paid:', error);
+      logger.error('Error marking invoice as paid:', error);
       toast.error("Error al marcar como pagada", {
         description: error.message || "No se pudo marcar la factura como pagada.",
       });

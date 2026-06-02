@@ -1,7 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatForDatabase } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePaymentBatches");
 interface CreatePaymentBatchData {
   operator_id: string;
   commission_ids: string[];
@@ -12,7 +15,7 @@ interface CreatePaymentBatchData {
 }
 
 const createPaymentBatch = async (data: CreatePaymentBatchData) => {
-  console.log('📦 [usePaymentBatches] Datos recibidos:', JSON.stringify(data, null, 2));
+  logger.debug('📦 [usePaymentBatches] Datos recibidos:', JSON.stringify(data, null, 2));
   
   // Generate batch number
   const batchNumber = `LOTE-${Date.now()}`;
@@ -24,7 +27,7 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
     .in('id', data.commission_ids);
     
   if (commissionsError) {
-    console.error('❌ [usePaymentBatches] Error fetching commissions:', commissionsError);
+    logger.error('❌ [usePaymentBatches] Error fetching commissions:', commissionsError);
     throw new Error(`Error al obtener comisiones: ${commissionsError.message}`);
   }
   
@@ -32,7 +35,7 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
     throw new Error(`No se encontraron comisiones con los IDs proporcionados (${data.commission_ids.length} IDs)`);
   }
   
-  console.log(`✅ [usePaymentBatches] Encontradas ${commissions.length} comisiones de ${data.commission_ids.length} solicitadas`);
+  logger.debug(`✅ [usePaymentBatches] Encontradas ${commissions.length} comisiones de ${data.commission_ids.length} solicitadas`);
   
   const totalAmount = commissions.reduce((sum, c) => sum + Number(c.amount), 0);
   
@@ -56,10 +59,10 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
       throw new Error(`Fecha inválida: "${paymentDateFormatted}"`);
     }
   } catch (dateError: any) {
-    console.error('❌ [usePaymentBatches] Error formateando fecha:', dateError);
+    logger.error('❌ [usePaymentBatches] Error formateando fecha:', dateError);
     throw new Error(`Fecha de pago inválida: ${dateError.message}`);
   }
-  console.log('📅 [usePaymentBatches] Fecha formateada:', paymentDateFormatted, 'desde:', data.payment_date);
+  logger.debug('📅 [usePaymentBatches] Fecha formateada:', paymentDateFormatted, 'desde:', data.payment_date);
   
   const { data: rpcResult, error: updateError } = await supabase.rpc('update_commission_payment_date', {
     p_commission_ids: data.commission_ids,
@@ -68,11 +71,11 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   });
     
   if (updateError) {
-    console.error('❌ [usePaymentBatches] Error RPC update_commission_payment_date:', updateError);
+    logger.error('❌ [usePaymentBatches] Error RPC update_commission_payment_date:', updateError);
     throw new Error(`Error al actualizar comisiones: ${updateError.message}`);
   }
   
-  console.log('✅ [usePaymentBatches] RPC result:', rpcResult);
+  logger.debug('✅ [usePaymentBatches] RPC result:', rpcResult);
   
   return batchData;
 };

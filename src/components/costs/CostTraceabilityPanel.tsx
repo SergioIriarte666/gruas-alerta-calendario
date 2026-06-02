@@ -63,7 +63,7 @@ export const CostTraceabilityPanel: React.FC<CostTraceabilityPanelProps> = ({ co
       // Fetch supplier name
       let supplierName = null;
       if (cost.supplier_id) {
-        const { data: s } = await (supabase as any)
+        const { data: s } = await supabase
           .from('inventory_suppliers')
           .select('name')
           .eq('id', cost.supplier_id)

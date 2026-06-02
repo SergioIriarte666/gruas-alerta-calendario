@@ -1,7 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
 import { showSyncToast, type SyncAction } from '@/utils/syncToast';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("UnifiedPurchaseService");
 export interface UnifiedPurchaseData {
   // Item information
   itemName: string;
@@ -86,22 +89,22 @@ export class UnifiedPurchaseService {
     };
 
     try {
-      console.log('[UnifiedPurchase] Starting purchase registration:', data.itemName);
+      logger.debug('[UnifiedPurchase] Starting purchase registration:', data.itemName);
       
       // Step 1: Find or create inventory item
       result.inventoryItemId = await this.findOrCreateInventoryItem(data);
-      console.log('[UnifiedPurchase] Inventory item ID:', result.inventoryItemId);
+      logger.debug('[UnifiedPurchase] Inventory item ID:', result.inventoryItemId);
       
       // Step 2: Get active warehouse location
       const locationId = data.locationId || await this.getDefaultLocation();
       if (!locationId) {
         throw new Error('No hay ubicación de inventario activa');
       }
-      console.log('[UnifiedPurchase] Location ID:', locationId);
+      logger.debug('[UnifiedPurchase] Location ID:', locationId);
       
       // Step 3: Create cost entry
       result.costId = await this.createCostEntry(data);
-      console.log('[UnifiedPurchase] Cost ID:', result.costId);
+      logger.debug('[UnifiedPurchase] Cost ID:', result.costId);
       
       // Step 4: Create entry movement with cost_id
       result.entryMovementId = await this.createEntryMovement({
@@ -110,7 +113,7 @@ export class UnifiedPurchaseService {
         locationId,
         costId: result.costId,
       });
-      console.log('[UnifiedPurchase] Entry movement ID:', result.entryMovementId);
+      logger.debug('[UnifiedPurchase] Entry movement ID:', result.entryMovementId);
       
       // Step 5: Update cost with inventory_movement_id (bidirectional link)
       await this.linkCostToMovement(result.costId, result.entryMovementId);
@@ -133,16 +136,16 @@ export class UnifiedPurchaseService {
           });
           result.exitMovementId = consumptionResult.exitMovementId;
           result.cranePartId = consumptionResult.cranePartId;
-          console.log('[UnifiedPurchase] Direct consumption completed');
+          logger.debug('[UnifiedPurchase] Direct consumption completed');
         } else {
           // Flag for multi-crane distribution dialog
           result.requiresDistribution = true;
-          console.log('[UnifiedPurchase] Requires multi-crane distribution');
+          logger.debug('[UnifiedPurchase] Requires multi-crane distribution');
         }
       }
       
       result.success = true;
-      console.log('[UnifiedPurchase] Purchase registration completed successfully');
+      logger.debug('[UnifiedPurchase] Purchase registration completed successfully');
       
       // Build sync actions for unified toast
       const syncActions: SyncAction[] = [
@@ -161,7 +164,7 @@ export class UnifiedPurchaseService {
       return result;
       
     } catch (error) {
-      console.error('[UnifiedPurchase] Error:', error);
+      logger.error('[UnifiedPurchase] Error:', error);
       result.error = error instanceof Error ? error.message : 'Error desconocido';
       
       // Attempt rollback if possible
@@ -410,7 +413,7 @@ export class UnifiedPurchaseService {
       .eq('id', costId);
     
     if (error) {
-      console.warn('[UnifiedPurchase] Warning: Could not link cost to movement:', error.message);
+      logger.warn('[UnifiedPurchase] Warning: Could not link cost to movement:', error.message);
       // Non-fatal, continue
     }
   }
@@ -479,7 +482,7 @@ export class UnifiedPurchaseService {
           .eq('id', existingCranePart.id);
 
         if (updateCranePartError) {
-          console.warn('[UnifiedPurchase] Warning: Could not update crane_part:', updateCranePartError.message);
+          logger.warn('[UnifiedPurchase] Warning: Could not update crane_part:', updateCranePartError.message);
           return null;
         }
 
@@ -493,7 +496,7 @@ export class UnifiedPurchaseService {
         .single();
 
       if (cranePartError) {
-        console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
+        logger.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
         return null;
       }
 
@@ -732,10 +735,10 @@ export class UnifiedPurchaseService {
       // Note: We don't delete cost because it might have other dependencies
       // Instead, we log for manual review
       if (result.costId) {
-        console.warn('[UnifiedPurchase] Rollback: Cost created but may need manual review:', result.costId);
+        logger.warn('[UnifiedPurchase] Rollback: Cost created but may need manual review:', result.costId);
       }
     } catch (rollbackError) {
-      console.error('[UnifiedPurchase] Rollback failed:', rollbackError);
+      logger.error('[UnifiedPurchase] Rollback failed:', rollbackError);
     }
   }
 
@@ -813,7 +816,7 @@ export class UnifiedPurchaseService {
       .single();
     
     if (cranePartError) {
-      console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
+      logger.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
     }
     
     return {
@@ -838,7 +841,7 @@ export class UnifiedPurchaseService {
     supplierName?: string | null;
   }): Promise<void> {
     try {
-      console.log('[UnifiedPurchase] registerForExistingCost - costId:', params.costId);
+      logger.debug('[UnifiedPurchase] registerForExistingCost - costId:', params.costId);
 
       // 1. Find or create inventory item
       const inventoryItemId = await this.findOrCreateInventoryItem({
@@ -885,7 +888,7 @@ export class UnifiedPurchaseService {
         supplierName: params.supplierName,
       });
 
-      console.log('[UnifiedPurchase] registerForExistingCost completed successfully');
+      logger.debug('[UnifiedPurchase] registerForExistingCost completed successfully');
 
       const { showSyncToast } = await import('@/utils/syncToast');
       showSyncToast('Inventario Sincronizado', [
@@ -893,7 +896,7 @@ export class UnifiedPurchaseService {
         { module: 'pieza', action: 'Pieza asignada a grúa', success: true },
       ]);
     } catch (error) {
-      console.error('[UnifiedPurchase] registerForExistingCost error:', error);
+      logger.error('[UnifiedPurchase] registerForExistingCost error:', error);
       const { toast } = await import('sonner');
       toast.error('Error de Inventario', {
         description: error instanceof Error ? error.message : 'No se pudieron crear los movimientos de inventario',

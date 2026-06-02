@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CostSubcategory } from "@/types/costs";
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useCostSubcategories");
 const COST_SUBCATEGORIES_SELECT = `
   id,
   category_id,
@@ -106,7 +109,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       toast.success('Subcategoría creada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error creating subcategory:', error);
+      logger.error('Error creating subcategory:', error);
       toast.error('Error al crear la subcategoría');
     },
   });
@@ -130,7 +133,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       toast.success('Subcategoría actualizada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error updating subcategory:', error);
+      logger.error('Error updating subcategory:', error);
       toast.error('Error al actualizar la subcategoría');
     },
   });
@@ -152,7 +155,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       toast.success('Subcategoría eliminada exitosamente');
     },
     onError: (error: any) => {
-      console.error('Error deleting subcategory:', error);
+      logger.error('Error deleting subcategory:', error);
       toast.error('Error al eliminar la subcategoría');
     },
   });
@@ -186,7 +189,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       toast.success('Estado actualizado');
     },
     onError: (error: any) => {
-      console.error('Error toggling subcategory status:', error);
+      logger.error('Error toggling subcategory status:', error);
       toast.error('Error al cambiar el estado');
     },
   });

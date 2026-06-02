@@ -13,7 +13,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProductFormModal } from './ProductFormModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
 import type { SimilarItem } from '@/utils/inventoryHelper';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ProductCatalogTable");
 export const ProductCatalogTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -56,7 +59,7 @@ export const ProductCatalogTable = () => {
     try {
       await deleteProduct.mutateAsync(product.id);
     } catch (error) {
-      console.error('Error deleting product:', error);
+      logger.error('Error deleting product:', error);
     }
   };
 

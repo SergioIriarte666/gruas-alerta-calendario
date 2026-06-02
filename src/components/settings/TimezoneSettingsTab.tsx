@@ -10,7 +10,10 @@ import { invalidateUserSettingsCache, invalidateBusinessTimezoneCache, formatFor
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("TimezoneSettingsTab");
 // Zonas horarias principales de Latinoamérica
 const TIMEZONES = [
   { value: 'America/Santiago', label: 'Santiago, Chile (GMT-3/-4)' },
@@ -53,7 +56,7 @@ export const TimezoneSettingsTab: React.FC = () => {
           setReportUseSystem(data.report_use_system_timezone ?? false);
         }
       } catch (e) {
-        console.warn('Error fetching global timezone:', e);
+        logger.warn('Error fetching global timezone:', e);
       } finally {
         setLoadingGlobal(false);
       }
@@ -82,7 +85,7 @@ export const TimezoneSettingsTab: React.FC = () => {
       window.dispatchEvent(new CustomEvent('timezone-changed'));
       toast.success('Zona horaria de negocio actualizada');
     } catch (e) {
-      console.error('Error saving report timezone:', e);
+      logger.error('Error saving report timezone:', e);
       toast.error('Error al guardar zona horaria');
     } finally {
       setSavingGlobal(false);
@@ -109,7 +112,7 @@ export const TimezoneSettingsTab: React.FC = () => {
       window.dispatchEvent(new CustomEvent('timezone-changed'));
       toast.success('Configuración de zona horaria actualizada');
     } catch (e) {
-      console.error('Error saving report use system:', e);
+      logger.error('Error saving report use system:', e);
       toast.error('Error al guardar configuración');
     } finally {
       setSavingGlobal(false);

@@ -1,11 +1,14 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("authCleanup");
 /**
  * Auth cleanup utility to prevent limbo states during authentication
  */
 export const cleanupAuthState = () => {
-  console.log("Cleaning up auth state from localStorage and sessionStorage...");
+  logger.debug("Cleaning up auth state from localStorage and sessionStorage...");
   
   // Remove all Supabase auth keys from localStorage
   Object.keys(localStorage).forEach((key) => {
@@ -26,11 +29,11 @@ export const cleanupAuthState = () => {
 
 export const performGlobalSignOut = async (supabase: SupabaseClient<any, "public", any>) => {
   try {
-    console.log("Performing global sign out...");
+    logger.debug("Performing global sign out...");
     await supabase.auth.signOut({ scope: 'global' });
   } catch (err) {
     // Continue even if this fails
-    console.warn('Global sign out failed:', err);
+    logger.warn('Global sign out failed:', err);
   }
 };
 
@@ -39,17 +42,17 @@ export const performGlobalSignOut = async (supabase: SupabaseClient<any, "public
  */
 export const verifySessionConsistency = async (supabase: SupabaseClient<any, "public", any>) => {
   try {
-    console.log("Verifying session consistency...");
+    logger.debug("Verifying session consistency...");
     
     // Check frontend session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) {
-      console.error("Error getting session:", sessionError);
+      logger.error("Error getting session:", sessionError);
       return { isValid: false, reason: 'session_error', error: sessionError };
     }
 
     if (!session || !session.user) {
-      console.log("No session found");
+      logger.debug("No session found");
       return { isValid: false, reason: 'no_session' };
     }
 
@@ -60,20 +63,20 @@ export const verifySessionConsistency = async (supabase: SupabaseClient<any, "pu
       .limit(1);
 
     if (error && error.message.includes('JWT')) {
-      console.error("JWT token invalid:", error);
+      logger.error("JWT token invalid:", error);
       return { isValid: false, reason: 'invalid_jwt', error };
     }
 
     if (error && error.code === 'PGRST116') {
-      console.error("RLS policy failed - likely auth.uid() is NULL:", error);
+      logger.error("RLS policy failed - likely auth.uid() is NULL:", error);
       return { isValid: false, reason: 'auth_uid_null', error };
     }
 
-    console.log("Session verification successful");
+    logger.debug("Session verification successful");
     return { isValid: true, session };
     
   } catch (error) {
-    console.error("Error verifying session consistency:", error);
+    logger.error("Error verifying session consistency:", error);
     return { isValid: false, reason: 'verification_error', error };
   }
 };
@@ -82,7 +85,7 @@ export const verifySessionConsistency = async (supabase: SupabaseClient<any, "pu
  * Forces a complete re-authentication by cleaning state and redirecting
  */
 export const forceReAuthentication = async (supabase: SupabaseClient<any, "public", any>) => {
-  console.log("Forcing re-authentication...");
+  logger.debug("Forcing re-authentication...");
   
   try {
     // Step 1: Complete cleanup
@@ -94,7 +97,7 @@ export const forceReAuthentication = async (supabase: SupabaseClient<any, "publi
     // Step 3: Force page reload to auth
     window.location.href = '/auth?forced=true';
   } catch (error) {
-    console.error("Error during forced re-authentication:", error);
+    logger.error("Error during forced re-authentication:", error);
     // Force reload anyway
     window.location.href = '/auth?forced=true';
   }

@@ -28,7 +28,10 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ServiceBatchUpdateModal");
 interface ServiceBatchUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -134,7 +137,7 @@ export const ServiceBatchUpdateModal = ({
       }, 1500);
     } catch (error) {
       batchProgress.close();
-      console.error('Error updating batch:', error);
+      logger.error('Error updating batch:', error);
     }
   };
 

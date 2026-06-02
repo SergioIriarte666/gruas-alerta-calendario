@@ -93,7 +93,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    let query = (supabase as any)
+    let query = supabase
       .from('whatsapp_message_log')
       .select('*')
       .order('created_at', { ascending: false })
@@ -114,7 +114,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
     // Counts independientes del filtro de estado (solo respetan visibilidad)
     const results = await Promise.all(
       COUNTER_STATUSES.map(async (s) => {
-        let q = (supabase as any)
+        let q = supabase
           .from('whatsapp_message_log')
           .select('id', { count: 'exact', head: true });
         const values = getStatusQueryValues(s);
@@ -148,7 +148,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
     const payload = hide
       ? { hidden_at: new Date().toISOString(), hidden_by: userRes.user?.id ?? null }
       : { hidden_at: null, hidden_by: null };
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('whatsapp_message_log')
       .update(payload)
       .in('id', ids);

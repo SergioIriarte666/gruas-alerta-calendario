@@ -5,7 +5,10 @@ import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { format as formatDate } from 'date-fns';
 import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("serviceReportGenerator");
 interface GenerateReportArgs {
   format: 'pdf' | 'excel';
   downloadWindow?: Window | null;
@@ -19,7 +22,7 @@ interface GenerateReportArgs {
 const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): Promise<Service[]> => {
   const { dateFrom, dateTo, clientId } = filters;
   
-  console.log('Filtering services by date range:', { dateFrom, dateTo });
+  logger.debug('Filtering services by date range:', { dateFrom, dateTo });
   
   const selectFields = `
       id,
@@ -97,11 +100,11 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
   ]);
 
   if (result1.error) {
-    console.error('Error fetching services for report:', result1.error);
+    logger.error('Error fetching services for report:', result1.error);
     throw new Error('Could not fetch services for the report.');
   }
   if (result2.error) {
-    console.error('Error fetching custody-overlap services:', result2.error);
+    logger.error('Error fetching custody-overlap services:', result2.error);
   }
 
   // Merge and deduplicate by id
@@ -113,7 +116,7 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
     return true;
   });
   
-  console.log(`Found ${data.length} services (${result1.data?.length || 0} by date + ${result2.data?.length || 0} by custody overlap)`);
+  logger.debug(`Found ${data.length} services (${result1.data?.length || 0} by date + ${result2.data?.length || 0} by custody overlap)`);
   
   const formattedServices: Service[] = (data || []).map((s: any) => ({
     ...s,
@@ -157,7 +160,7 @@ const fetchSettings = async (): Promise<Settings> => {
         .maybeSingle();
         
     if (error) {
-        console.error('Error fetching company settings:', error);
+        logger.error('Error fetching company settings:', error);
         throw new Error('Could not fetch company settings.');
     }
     if (!data) {
@@ -219,7 +222,7 @@ const fetchClientName = async (clientId: string): Promise<string> => {
         .single();
 
     if (error) {
-        console.error('Error fetching client name:', error);
+        logger.error('Error fetching client name:', error);
         return 'N/A';
     }
     return data.name;
@@ -234,7 +237,7 @@ const fetchReportColumnConfig = async (): Promise<ReportColumnsConfig> => {
       .maybeSingle();
 
     if (error) {
-      console.warn('Error fetching report column config:', error);
+      logger.warn('Error fetching report column config:', error);
       return defaultReportColumnConfig;
     }
 
@@ -244,7 +247,7 @@ const fetchReportColumnConfig = async (): Promise<ReportColumnsConfig> => {
     
     return defaultReportColumnConfig;
   } catch (e) {
-    console.warn('Error fetching report column config:', e);
+    logger.warn('Error fetching report column config:', e);
     return defaultReportColumnConfig;
   }
 };
@@ -260,8 +263,8 @@ export const generateServiceReport = async ({ format, filters, downloadWindow }:
         clientName = await fetchClientName(filters.clientId);
     }
 
-    console.log('📄 [SERVICE-REPORT] Logo URL de settings:', settings.company.logo);
-    console.log('📄 [SERVICE-REPORT] Report column config loaded');
+    logger.debug('📄 [SERVICE-REPORT] Logo URL de settings:', settings.company.logo);
+    logger.debug('📄 [SERVICE-REPORT] Report column config loaded');
 
     await exportServiceReport({
       format,
@@ -279,7 +282,7 @@ export const generateServiceReport = async ({ format, filters, downloadWindow }:
       },
     });
   } catch (error) {
-    console.error("Failed to generate service report:", error);
+    logger.error("Failed to generate service report:", error);
     throw error;
   }
 };

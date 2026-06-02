@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useGlobalSearch");
 export interface GlobalSearchResult {
   id: string;
   type: 'service' | 'client' | 'invoice' | 'operator' | 'crane';
@@ -145,7 +148,7 @@ export const useGlobalSearch = () => {
 
       setResults(allResults);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
       toast.error('Error al realizar la búsqueda');
     } finally {
       setIsLoading(false);

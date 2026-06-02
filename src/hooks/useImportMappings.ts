@@ -35,7 +35,7 @@ const mapImportRutMapping = (row: any): ImportRutMapping => ({
 });
 
 const fetchMappings = async (importType: ImportType): Promise<ImportRutMapping[]> => {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('import_rut_mappings')
     .select('*')
     .eq('import_type', importType)
@@ -107,7 +107,7 @@ export const useImportMappings = (importType?: ImportType) => {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('import_rut_mappings')
         .upsert(payload, {
           onConflict: 'organization_id,import_type,source_rut',

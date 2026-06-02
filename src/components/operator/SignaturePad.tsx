@@ -2,6 +2,9 @@ import React, { useRef, useImperativeHandle, forwardRef, useEffect } from 'react
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Check } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("SignaturePad");
 interface SignaturePadProps {
   label: string;
   personName?: string;
@@ -37,9 +40,9 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
         sigCanvasRef.current.clear();
         // Restaurar la firma
         sigCanvasRef.current.fromDataURL(signature);
-        console.log('✅ Signature restored for:', label);
+        logger.debug('✅ Signature restored for:', label);
       } catch (error) {
-        console.error('❌ Error restoring signature for', label, ':', error);
+        logger.error('❌ Error restoring signature for', label, ':', error);
       }
     } else if (!signature && sigCanvasRef.current) {
       // Si no hay firma, limpiar el canvas

@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePaymentApplications");
 export interface PaymentApplicationDetail {
   id: string;
   applied_amount: number;
@@ -45,13 +48,13 @@ export const usePaymentApplications = () => {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching payment applications:', error);
+        logger.error('Error fetching payment applications:', error);
         throw error;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getPaymentApplicationsDetail:', error);
+      logger.error('Error in getPaymentApplicationsDetail:', error);
       toast.error('Error al obtener detalles de aplicación de pago');
       throw error;
     }

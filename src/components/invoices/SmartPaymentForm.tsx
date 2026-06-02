@@ -20,7 +20,10 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SmartPaymentForm");
 interface SmartPaymentFormProps {
   onClose: () => void;
   preselectedClientId?: string;
@@ -117,7 +120,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
           warnings[invoiceId] = 'Esta factura fue marcada como pagada automáticamente';
         }
       } catch (error) {
-        console.error('Error checking invoice payment status:', error);
+        logger.error('Error checking invoice payment status:', error);
       }
     }
     setPaymentStatusWarnings(warnings);
@@ -143,7 +146,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       if (error) throw error;
       setClientInvoices(data || []);
     } catch (error) {
-      console.error('Error fetching client invoices:', error);
+      logger.error('Error fetching client invoices:', error);
     }
   };
   const checkForDuplicates = async () => {
@@ -163,7 +166,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         setDuplicateWarning('');
       }
     } catch (error) {
-      console.error('Error checking duplicates:', error);
+      logger.error('Error checking duplicates:', error);
     }
   };
   const handleInvoiceToggle = (invoiceId: string, checked: boolean) => {
@@ -291,7 +294,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         onClose();
       }
     } catch (error: any) {
-      console.error('Error creating payment:', error);
+      logger.error('Error creating payment:', error);
       if (selectedInvoiceIds.length > 0) {
         batchProgress.error('Error al registrar el pago');
       }

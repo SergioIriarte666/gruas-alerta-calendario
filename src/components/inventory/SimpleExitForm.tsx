@@ -19,7 +19,10 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SimpleExitForm");
 const exitSchema = z.object({
   item_id: z.string().min(1, 'Selecciona un producto'),
   location_id: z.string().min(1, 'Selecciona una ubicación'),
@@ -173,7 +176,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
       toast.success('Salida registrada exitosamente');
       onSuccess?.();
     } catch (error) {
-      console.error('Error creating exit:', error);
+      logger.error('Error creating exit:', error);
       toast.error('Error al registrar la salida');
     }
   };

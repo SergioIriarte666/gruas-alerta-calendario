@@ -1,6 +1,9 @@
 import { useToast } from '@/components/ui/custom-toast';
 import { translateDatabaseError, translateValidationError, isRequiredFieldError, extractRequiredField } from '@/utils/errorTranslation';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useErrorHandler");
 export interface ErrorHandlerOptions {
   /**
    * Mensaje personalizado para mostrar en lugar del error traducido
@@ -48,9 +51,9 @@ export const useErrorHandler = () => {
 
     // Log del error para debugging
     if (context) {
-      console.error(`[${context}] Error:`, error);
+      logger.error(`[${context}] Error:`, error);
     } else {
-      console.error('Error:', error);
+      logger.error('Error:', error);
     }
 
     // Determinar el mensaje a mostrar

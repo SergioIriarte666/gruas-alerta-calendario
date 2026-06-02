@@ -12,7 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PortalRequestService");
 const PortalRequestService = () => {
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<PortalRequestServiceSchema>({
     resolver: zodResolver(portalRequestServiceSchema),
@@ -34,7 +37,7 @@ const PortalRequestService = () => {
   }, [selectedServiceTypeId, serviceTypes]);
 
   const onSubmit = (data: PortalRequestServiceSchema) => {
-    console.log('Enviando solicitud con datos:', data);
+    logger.debug('Enviando solicitud con datos:', data);
     requestService(data);
   };
 

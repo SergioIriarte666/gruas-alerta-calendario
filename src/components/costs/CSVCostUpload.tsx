@@ -21,7 +21,10 @@ import { useCostCSVUpload } from '@/hooks/useCostCSVUpload';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { generateCostCsvTemplate, generateCostExcelTemplate } from '@/utils/costCsvTemplate';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("CSVCostUpload");
 interface CSVCostUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -82,7 +85,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
       }
     } catch (err) {
       toast.error('Error al procesar el archivo');
-      console.error(err);
+      logger.error(err);
     }
   }, [parseFile, validate, setFile]);
 
@@ -90,7 +93,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
     try {
       generateCostCsvTemplate();
     } catch (error) {
-      console.error('Error downloading cost CSV template:', error);
+      logger.error('Error downloading cost CSV template:', error);
       toast.error('Error al descargar la plantilla CSV');
     }
   }, []);
@@ -99,7 +102,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
     try {
       generateCostExcelTemplate();
     } catch (error) {
-      console.error('Error downloading cost Excel template:', error);
+      logger.error('Error downloading cost Excel template:', error);
       toast.error('Error al descargar la plantilla Excel');
     }
   }, []);

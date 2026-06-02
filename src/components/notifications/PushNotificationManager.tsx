@@ -8,7 +8,10 @@ import { Label } from '@/components/ui/label';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
 import { Bell, BellOff, Smartphone, AlertCircle, CheckCircle, RefreshCw, ShieldAlert } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PushNotificationManager");
 export const PushNotificationManager: React.FC = () => {
   const {
     isSupported,
@@ -60,12 +63,12 @@ export const PushNotificationManager: React.FC = () => {
 
   const handleSubscribe = async () => {
     if (isLoading) {
-      console.log('Already processing subscription...');
+      logger.debug('Already processing subscription...');
       return;
     }
 
     try {
-      console.log('Starting subscription process...');
+      logger.debug('Starting subscription process...');
       
       // Additional environment checks
       if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
@@ -86,7 +89,7 @@ export const PushNotificationManager: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Subscription error:', error);
+      logger.error('Subscription error:', error);
       toast.error('Error de configuración', {
         description: 'Error al configurar notificaciones. Revisa la consola para más detalles.'
       });
@@ -95,12 +98,12 @@ export const PushNotificationManager: React.FC = () => {
 
   const handleUnsubscribe = async () => {
     if (isLoading) {
-      console.log('Already processing unsubscription...');
+      logger.debug('Already processing unsubscription...');
       return;
     }
 
     try {
-      console.log('Starting unsubscription process...');
+      logger.debug('Starting unsubscription process...');
       
       const success = await unsubscribe();
       if (success) {
@@ -113,7 +116,7 @@ export const PushNotificationManager: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Unsubscription error:', error);
+      logger.error('Unsubscription error:', error);
       toast.error('Error', {
         description: 'Error al deshabilitar notificaciones. Intenta de nuevo.'
       });

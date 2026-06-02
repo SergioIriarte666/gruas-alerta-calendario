@@ -21,7 +21,10 @@ import { useState } from 'react';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PurchaseOrderDialog");
 interface PurchaseOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,7 +79,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
       setQuoteNumber('');
       setNotes('');
     } catch (error: any) {
-      console.error('Error updating purchase order:', error);
+      logger.error('Error updating purchase order:', error);
       toast.error('Error al registrar la información');
     } finally {
       setLoading(false);

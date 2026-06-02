@@ -12,7 +12,10 @@ import { es } from 'date-fns/locale';
 import { EnhancedServiceForm } from '@/components/services/EnhancedServiceForm';
 import { useNavigate } from 'react-router-dom';
 import { formatForInput } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PendingEntriesView");
 const TYPE_LABELS = {
   service: 'Servicio',
   cost: 'Costo/Gasto',
@@ -45,7 +48,7 @@ export function PendingEntriesView() {
       const data = await getPendingEntries();
       setEntries(data);
     } catch (error) {
-      console.error('Error loading entries:', error);
+      logger.error('Error loading entries:', error);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +148,7 @@ export function PendingEntriesView() {
           handleStatusUpdate(entry.id!, 'completed');
       }
     } catch (error) {
-      console.error('Error completing quick entry:', error);
+      logger.error('Error completing quick entry:', error);
     }
   };
 
@@ -160,7 +163,7 @@ export function PendingEntriesView() {
       try {
         await deleteEntry(selectedEntry.id!);
       } catch (error) {
-        console.error('Error deleting quick entry after service creation:', error);
+        logger.error('Error deleting quick entry after service creation:', error);
       }
       setSelectedEntry(null);
       setIsServiceFormOpen(false);

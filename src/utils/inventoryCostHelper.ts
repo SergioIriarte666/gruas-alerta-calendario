@@ -1,5 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("inventoryCostHelper");
 interface CreateInventoryCostData {
   amount: number;
   description: string;
@@ -97,7 +100,7 @@ export const createInventoryCost = async ({
       });
 
     if (linkError) {
-      console.error('Error creating cost_inventory_items link:', linkError);
+      logger.error('Error creating cost_inventory_items link:', linkError);
       // We don't throw here to avoid rolling back the cost creation, 
       // but we log it. In a transaction this would be better.
     }

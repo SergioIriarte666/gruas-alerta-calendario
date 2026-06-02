@@ -8,7 +8,10 @@ import { parseFromDatabase, formatForDatabase } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, MessageCircle } from 'lucide-react';
 import { ServiceClosure } from '@/types';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ClosureReportForm");
 interface ClosureReportFormProps {
   closures: ServiceClosure[];
   onClose: () => void;
@@ -51,7 +54,7 @@ const ClosureReportForm = ({ closures, onClose }: ClosureReportFormProps) => {
       });
       onClose();
     } catch (error) {
-      console.error('Error generating report:', error);
+      logger.error('Error generating report:', error);
       toast.error("Error al generar informe", {
         description: "No se pudo generar el informe. Inténtalo de nuevo.",
       });
@@ -106,14 +109,14 @@ const ClosureReportForm = ({ closures, onClose }: ClosureReportFormProps) => {
       });
 
       if (error) {
-        console.warn('WhatsApp admin no enviado:', error);
+        logger.warn('WhatsApp admin no enviado:', error);
         toast.error('No se pudo enviar el resumen');
         return;
       }
 
       toast.success('Resumen enviado a administradores por WhatsApp');
     } catch (error) {
-      console.warn('WhatsApp admin no enviado:', error);
+      logger.warn('WhatsApp admin no enviado:', error);
       toast.error('No se pudo enviar el resumen');
     } finally {
       setIsSendingWhatsApp(false);

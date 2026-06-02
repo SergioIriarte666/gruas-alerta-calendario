@@ -22,7 +22,10 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("SimpleEntryForm");
 const entrySchema = z.object({
   item_id: z.string().optional(),
   item_name: z.string().min(1, 'El nombre del producto es requerido'),
@@ -122,7 +125,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       
       toast.success('Producto creado exitosamente');
     } catch (error) {
-      console.error('Error creating product:', error);
+      logger.error('Error creating product:', error);
       toast.error('Error al crear el producto');
     }
   };
@@ -158,7 +161,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         onSuccess?.();
       }
     } catch (error) {
-      console.error('Error creating entry:', error);
+      logger.error('Error creating entry:', error);
       toast.error('Error al registrar la entrada');
     }
   };

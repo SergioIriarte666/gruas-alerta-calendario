@@ -14,7 +14,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("Profile");
 const profileSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   email: z.string().email('Email inválido'),
@@ -102,7 +105,7 @@ const Profile = () => {
       await forceRefreshProfile();
       toast.success('Foto de perfil actualizada');
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      logger.error('Error uploading avatar:', error);
       toast.error('Error al subir la foto');
     } finally {
       setUploadingAvatar(false);

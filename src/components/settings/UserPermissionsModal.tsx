@@ -15,7 +15,10 @@ import { Save, AlertTriangle, Shield } from 'lucide-react';
 import { APP_MODULES } from '@/constants/modules';
 import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("UserPermissionsModal");
 interface User {
   id: string;
   full_name: string | null;
@@ -95,7 +98,7 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
         toast.error('Error al guardar los permisos');
       }
     } catch (error) {
-      console.error('Error saving permissions:', error);
+      logger.error('Error saving permissions:', error);
       toast.error('Error al guardar los permisos');
     } finally {
       setSaving(false);

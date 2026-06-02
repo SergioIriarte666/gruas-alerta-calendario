@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("DebugFreeze");
 export default function DebugFreeze() {
   const [showForm, setShowForm] = useState(false);
   const [preselectedClosureId, setPreselectedClosureId] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export default function DebugFreeze() {
           <h2 className="mb-2 font-semibold">Invoice Form Container</h2>
           <InvoiceForm 
             preselectedClosureId={preselectedClosureId}
-            onSubmit={(data) => console.log('Submit:', data)}
+            onSubmit={(data) => logger.debug('Submit:', data)}
             onCancel={() => setShowForm(false)}
           />
         </div>

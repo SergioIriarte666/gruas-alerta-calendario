@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useMaintenanceReport");
 export interface MaintenanceReportFilters {
   dateFrom: string;
   dateTo: string;
@@ -82,7 +85,7 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
         setLoading(true);
         setError(null);
 
-        console.log('🔍 Fetching maintenance report with filters:', filters);
+        logger.debug('🔍 Fetching maintenance report with filters:', filters);
 
         // Build maintenance query
         let maintenanceQuery = supabase
@@ -115,7 +118,7 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
 
         if (maintenanceError) throw maintenanceError;
 
-        console.log('📊 Maintenance data found:', maintenanceData?.length || 0, 'records');
+        logger.debug('📊 Maintenance data found:', maintenanceData?.length || 0, 'records');
 
         // Build parts query (direct parts)
         let partsQuery = supabase
@@ -192,11 +195,11 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
         // Combine both parts sources
         const partsData = [...(directPartsData || []), ...transformedCostParts];
 
-        console.log('🔧 Direct parts found:', directPartsData?.length || 0, 'records');
-        console.log('🔧 Cost-derived parts found:', transformedCostParts.length, 'records');
-        console.log('🔧 Total parts data:', partsData.length, 'records');
+        logger.debug('🔧 Direct parts found:', directPartsData?.length || 0, 'records');
+        logger.debug('🔧 Cost-derived parts found:', transformedCostParts.length, 'records');
+        logger.debug('🔧 Total parts data:', partsData.length, 'records');
         if (partsData && partsData.length > 0) {
-          console.log('Parts sample:', partsData.slice(0, 3));
+          logger.debug('Parts sample:', partsData.slice(0, 3));
         }
 
         // Process data
@@ -382,7 +385,7 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
           },
         };
 
-        console.log('📈 Report summary:', {
+        logger.debug('📈 Report summary:', {
           maintenanceRecords: maintenanceData?.length || 0,
           partsRecords: partsData?.length || 0,
           totalMaintenanceCost,
@@ -393,7 +396,7 @@ export const useMaintenanceReport = (filters: MaintenanceReportFilters = default
 
         setData(reportData);
       } catch (err) {
-        console.error('Error fetching maintenance report:', err);
+        logger.error('Error fetching maintenance report:', err);
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
         setLoading(false);

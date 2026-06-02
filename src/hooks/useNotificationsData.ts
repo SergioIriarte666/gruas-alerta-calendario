@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Notification } from '@/types/notifications';
 import { addDays, startOfToday, isBefore, parseISO, format } from 'date-fns';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useNotificationsData");
 const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> => {
   const today = startOfToday();
   const tomorrow = addDays(today, 1);
@@ -344,7 +347,7 @@ export const useNotificationsData = () => {
   });
 
   if (error) {
-    console.error('Error loading notifications data:', error);
+    logger.error('Error loading notifications data:', error);
   }
 
   return {

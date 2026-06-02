@@ -139,7 +139,7 @@ function RouteActivityTracker() {
 
     (async () => {
       try {
-        await (supabase as any)
+        await supabase
           .from('user_activity_log')
           .insert({
             user_id: user.id,

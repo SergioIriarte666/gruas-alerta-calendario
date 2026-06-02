@@ -2,7 +2,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatForDatabase, formatForDisplay, getWeekStart, getCurrentChileDate } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useDailyReport");
 export interface DailyReportData {
   selectedDate: string;
   services: {
@@ -415,7 +418,7 @@ export const useDailyReport = (selectedDate: string) => {
 
   useEffect(() => {
     const handleChanges = (payload: any) => {
-      console.log('Daily report real-time change:', payload);
+      logger.debug('Daily report real-time change:', payload);
       queryClient.invalidateQueries({ queryKey: ['dailyReport', selectedDate] });
     };
 

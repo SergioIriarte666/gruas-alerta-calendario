@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useUserManagement");
 interface User {
   id: string;
   email: string;
@@ -70,7 +73,7 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await (supabase as any).rpc('get_all_users');
+      const { data, error } = await supabase.rpc('get_all_users');
       
       if (error) throw error;
       
@@ -104,7 +107,7 @@ export const useUserManagement = () => {
 
       setUsers(enrichedUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
     } finally {
       setLoading(false);
@@ -133,7 +136,7 @@ export const useUserManagement = () => {
       
       setInvitations(typedInvitations);
     } catch (error) {
-      console.error('Error fetching invitations:', error);
+      logger.error('Error fetching invitations:', error);
     }
   };
 
@@ -149,7 +152,7 @@ export const useUserManagement = () => {
       
       setClients(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      logger.error('Error fetching clients:', error);
     }
   };
 
@@ -166,7 +169,7 @@ export const useUserManagement = () => {
       
       setOperators(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching operators:', error);
+      logger.error('Error fetching operators:', error);
     }
   };
 
@@ -224,7 +227,7 @@ export const useUserManagement = () => {
       await fetchOperators();
       return { success: true };
     } catch (error: any) {
-      console.error('Error assigning operator to user:', error);
+      logger.error('Error assigning operator to user:', error);
       toast.error(error.message || 'Error al vincular el operador');
       return { success: false, error: error.message };
     } finally {
@@ -252,12 +255,12 @@ export const useUserManagement = () => {
       });
 
       if (invitationError) {
-        console.error('Error in invitation function:', invitationError);
+        logger.error('Error in invitation function:', invitationError);
         throw new Error(invitationError.message || 'Error al crear usuario');
       }
       
       if (invitationData?.error) {
-        console.error('Error from invitation function:', invitationData.error);
+        logger.error('Error from invitation function:', invitationData.error);
         throw new Error(invitationData.error);
       }
 
@@ -268,7 +271,7 @@ export const useUserManagement = () => {
       await fetchOperators();
       return { success: true };
     } catch (error: any) {
-      console.error('Error creating user:', error);
+      logger.error('Error creating user:', error);
       toast.error(error.message || 'Error al crear el usuario');
       return { success: false, error: error.message };
     } finally {
@@ -309,7 +312,7 @@ export const useUserManagement = () => {
 
       await fetchInvitations();
     } catch (error: any) {
-      console.error('Error resending invitation:', error);
+      logger.error('Error resending invitation:', error);
       toast.error('Error al reenviar la invitación');
     } finally {
       setSendingInvitation(null);
@@ -323,7 +326,7 @@ export const useUserManagement = () => {
   const updateUserRole = async (userId: string, newRole: 'admin' | 'operator' | 'viewer' | 'client') => {
     try {
       setUpdating(userId);
-      const { error } = await (supabase as any).rpc('update_user_role', {
+      const { error } = await supabase.rpc('update_user_role', {
         target_user_id: userId,
         new_role: newRole
       });
@@ -333,7 +336,7 @@ export const useUserManagement = () => {
       toast.success('Rol actualizado correctamente');
       await fetchUsers();
     } catch (error) {
-      console.error('Error updating user role:', error);
+      logger.error('Error updating user role:', error);
       toast.error('Error al actualizar el rol del usuario');
     } finally {
       setUpdating(null);
@@ -353,7 +356,7 @@ export const useUserManagement = () => {
       toast.success('Cliente asignado correctamente');
       await fetchUsers();
     } catch (error) {
-      console.error('Error assigning client to user:', error);
+      logger.error('Error assigning client to user:', error);
       toast.error('Error al asignar cliente al usuario');
     } finally {
       setUpdating(null);
@@ -363,7 +366,7 @@ export const useUserManagement = () => {
   const toggleUserStatus = async (userId: string, newStatus: boolean) => {
     try {
       setUpdating(userId);
-      const { error } = await (supabase as any).rpc('toggle_user_status', {
+      const { error } = await supabase.rpc('toggle_user_status', {
         user_id: userId,
         new_status: newStatus
       });
@@ -373,7 +376,7 @@ export const useUserManagement = () => {
       toast.success(`Usuario ${newStatus ? 'activado' : 'desactivado'} correctamente`);
       await fetchUsers();
     } catch (error) {
-      console.error('Error updating user status:', error);
+      logger.error('Error updating user status:', error);
       toast.error('Error al cambiar el estado del usuario');
     } finally {
       setUpdating(null);
@@ -385,7 +388,7 @@ export const useUserManagement = () => {
       setUpdating(userId);
       
       // Call RPC function to delete user (requires admin privileges)
-      const { error } = await (supabase as any).rpc('delete_user_admin', {
+      const { error } = await supabase.rpc('delete_user_admin', {
         target_user_id: userId
       });
 
@@ -395,7 +398,7 @@ export const useUserManagement = () => {
       await fetchUsers();
       await fetchInvitations();
     } catch (error: any) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user:', error);
       toast.error(error.message || 'Error al eliminar el usuario');
     } finally {
       setUpdating(null);

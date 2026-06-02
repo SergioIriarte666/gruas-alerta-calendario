@@ -13,7 +13,10 @@ import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { format, parse } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("EditHistoricalPurchaseModal");
 const invoiceSchema = z.object({
   invoice_number: z.string().min(1, 'El número de factura es requerido'),
   issue_date: z.date({ required_error: 'La fecha de emisión es requerida' }),
@@ -87,7 +90,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
       });
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating invoice:', error);
+      logger.error('Error updating invoice:', error);
     }
   };
 

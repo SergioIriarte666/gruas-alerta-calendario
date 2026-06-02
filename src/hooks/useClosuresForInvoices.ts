@@ -4,7 +4,10 @@ import { ServiceClosure } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClosuresForInvoices");
 interface UseClosuresForInvoicesProps {
   includeInvoiced?: boolean;
   enabled?: boolean;
@@ -24,7 +27,7 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     enabled,
     queryFn: async () => {
       try {
-        console.log('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
+        logger.debug('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
         
         // Strategy: Fetch distinct sets to ensure we get relevant data without scanning everything
         // 1. Fetch OPEN closures (Active work)
@@ -84,7 +87,7 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
         // Sort by creation date
         uniqueData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
-        console.log('Fetched closures count:', uniqueData.length);
+        logger.debug('Fetched closures count:', uniqueData.length);
 
         let formattedClosures: ClosureWithClient[] = uniqueData.map(data => ({
           ...formatClosureData(data),
@@ -104,19 +107,19 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
               .in('closure_id', closureIds);
               
             if (invoiceError) {
-              console.error('Error fetching invoice_closures:', invoiceError);
+              logger.error('Error fetching invoice_closures:', invoiceError);
             } else {
               const invoicedSet = new Set(invoicedIds?.map(i => i.closure_id) || []);
               const originalCount = formattedClosures.length;
               formattedClosures = formattedClosures.filter(c => !invoicedSet.has(c.id));
-              console.log('Filtered invoiced closures:', originalCount - formattedClosures.length, 'removed');
+              logger.debug('Filtered invoiced closures:', originalCount - formattedClosures.length, 'removed');
             }
           }
         }
 
         return formattedClosures;
       } catch (error: any) {
-        console.error('Error fetching closures:', error);
+        logger.error('Error fetching closures:', error);
         if (!error.message?.includes('permission denied')) {
           toast.error("Error al cargar cierres", {
             description: error.message || "No se pudieron cargar los cierres disponibles para facturación.",

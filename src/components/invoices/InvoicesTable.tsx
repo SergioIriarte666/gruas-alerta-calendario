@@ -9,8 +9,11 @@ import { es } from 'date-fns/locale';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
 import { toTitleCase } from '@/lib/utils';
+import { createLogger } from "@/lib/logger";
 
 
+
+const logger = createLogger("InvoicesTable");
 interface InvoicesTableProps {
   invoices: Invoice[];
   onEdit: (invoice: Invoice) => void;
@@ -35,13 +38,13 @@ const formatSafeDate = (dateValue: any): string => {
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
     
     if (!isValid(date)) {
-      console.warn('Invalid date provided to formatSafeDate:', dateValue);
+      logger.warn('Invalid date provided to formatSafeDate:', dateValue);
       return 'Fecha inválida';
     }
     
     return format(date, 'dd/MM/yyyy', { locale: es });
   } catch (error) {
-    console.error('Error formatting date:', error, 'Value:', dateValue);
+    logger.error('Error formatting date:', error, 'Value:', dateValue);
     return 'Error en fecha';
   }
 };
@@ -50,7 +53,7 @@ const formatSafeDate = (dateValue: any): string => {
 const formatSafeAmount = (amount: any): string => {
   const numAmount = Number(amount);
   if (isNaN(numAmount)) {
-    console.warn('Invalid amount provided to formatSafeAmount:', amount);
+    logger.warn('Invalid amount provided to formatSafeAmount:', amount);
     return '$0';
   }
   return `$${numAmount.toLocaleString('es-CL')}`;
@@ -92,7 +95,7 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
       return <Badge className="border-danger/30 bg-danger/10 text-danger">{days} días</Badge>;
     }
   } catch (error) {
-    console.error('Error calculating days until due:', error);
+    logger.error('Error calculating days until due:', error);
     return <Badge className="border-border/70 bg-muted/40 text-foreground">Error</Badge>;
   }
 };
@@ -146,7 +149,7 @@ const getStatusBadge = (status: string) => {
   
   // Validate status and provide fallback
   if (!status || typeof status !== 'string') {
-    console.warn('Invalid status provided to getStatusBadge:', status);
+    logger.warn('Invalid status provided to getStatusBadge:', status);
     return <Badge className="border-border/70 bg-muted/40 text-muted-foreground">Estado desconocido</Badge>;
   }
   
@@ -253,7 +256,7 @@ const InvoicesTable = ({
               {invoices.map((invoice) => {
                 // Validate invoice object
                 if (!invoice || !invoice.id) {
-                  console.warn('Invalid invoice object found:', invoice);
+                  logger.warn('Invalid invoice object found:', invoice);
                   return null;
                 }
 
@@ -339,10 +342,10 @@ const InvoicesTable = ({
                             size="sm"
                             onClick={() => {
                               if (!invoice.id) {
-                                console.error('Cannot edit invoice: missing ID');
+                                logger.error('Cannot edit invoice: missing ID');
                                 return;
                               }
-                              console.log('Editing invoice:', invoice.id, invoice);
+                              logger.debug('Editing invoice:', invoice.id, invoice);
                               onEdit(invoice);
                             }}
                             title="Editar factura"
@@ -356,10 +359,10 @@ const InvoicesTable = ({
                               size="sm"
                               onClick={() => {
                                 if (!invoice.id) {
-                                  console.error('Cannot mark as paid: missing invoice ID');
+                                  logger.error('Cannot mark as paid: missing invoice ID');
                                   return;
                                 }
-                                console.log('Marking as paid:', invoice.id);
+                                logger.debug('Marking as paid:', invoice.id);
                                 onMarkAsPaid(invoice.id);
                               }}
                               className="border-success/20 bg-success/10 text-success hover:bg-success/15"

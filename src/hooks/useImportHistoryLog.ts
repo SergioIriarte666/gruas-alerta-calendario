@@ -48,7 +48,7 @@ const fetchImportLogs = async (
   importType: ImportType,
   limit = 5
 ): Promise<ImportHistoryLogEntry[]> => {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('import_history_log')
     .select('*')
     .eq('import_type', importType)
@@ -83,7 +83,7 @@ export const useImportHistoryLog = (importType?: ImportType, limit = 5) => {
     async (requestedImportType: ImportType, startDate: string, endDate: string) => {
       if (!startDate || !endDate) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('import_history_log')
         .select('*')
         .eq('import_type', requestedImportType)
@@ -109,7 +109,7 @@ export const useImportHistoryLog = (importType?: ImportType, limit = 5) => {
         throw new Error('No se pudo obtener el usuario actual para guardar el log.');
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('import_history_log')
         .insert({
           organization_id: user.id,

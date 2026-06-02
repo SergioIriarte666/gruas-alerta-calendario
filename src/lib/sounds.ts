@@ -1,3 +1,6 @@
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("sounds");
 /**
  * Retro gaming sound utilities using Web Audio API
  */
@@ -34,7 +37,7 @@ const playNotes = (
       startTime += duration;
     });
   } catch (error) {
-    console.log('Audio playback not supported');
+    logger.debug('Audio playback not supported');
   }
 };
 

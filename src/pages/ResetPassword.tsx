@@ -9,7 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthBackground } from '@/components/auth/AuthBackground';
 import { validatePassword } from '@/utils/passwordValidation';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ResetPassword");
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,7 +58,7 @@ const ResetPassword = () => {
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        console.error('Error updating password:', error);
+        logger.error('Error updating password:', error);
         toast.error('Error al actualizar la contraseña');
         return;
       }
@@ -63,7 +66,7 @@ const ResetPassword = () => {
       toast.success('¡Contraseña actualizada exitosamente!');
       navigate('/auth', { replace: true });
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error('Error al actualizar la contraseña');
     } finally {
       setLoading(false);

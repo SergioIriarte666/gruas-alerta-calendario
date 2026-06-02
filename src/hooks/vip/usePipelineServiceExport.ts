@@ -6,7 +6,10 @@ import { format, differenceInDays } from 'date-fns';
 import { Service, ServiceStatus } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePipelineServiceExport");
 interface PipelineExportOptions {
   includeStatuses?: ServiceStatus[];
   includeAllStatuses?: boolean;
@@ -187,7 +190,7 @@ export const usePipelineServiceExport = (
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting pipeline to PDF:', error);
+      logger.error('Error exporting pipeline to PDF:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error al generar el PDF. Por favor intente nuevamente.",
@@ -261,7 +264,7 @@ export const usePipelineServiceExport = (
         type: "success",
       });
     } catch (error) {
-      console.error('Error exporting pipeline to Excel:', error);
+      logger.error('Error exporting pipeline to Excel:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error al generar el Excel. Por favor intente nuevamente.",

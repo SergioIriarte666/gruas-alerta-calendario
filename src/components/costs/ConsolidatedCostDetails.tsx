@@ -37,7 +37,10 @@ import { generateCostDetailPDF } from '@/utils/pdf/costDetailPdfGenerator';
 import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("ConsolidatedCostDetails");
 interface ConsolidatedCostDetailsProps {
   cost: Cost;
   isOpen: boolean;
@@ -81,7 +84,7 @@ export const ConsolidatedCostDetails = ({
       window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
       toast({ title: 'PDF generado', description: 'La descarga del detalle del costo ha comenzado.', type: 'success' });
     } catch (e) {
-      console.error('Error generating cost detail PDF', e);
+      logger.error('Error generating cost detail PDF', e);
       toast({ title: 'Error al generar PDF', description: 'No se pudo generar el detalle. Inténtalo nuevamente.', type: 'error' });
     } finally {
       setIsDownloadingPdf(false);

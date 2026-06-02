@@ -1,6 +1,9 @@
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from '../pdfTypes';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("observations");
 const C = {
   green:     [0, 130, 100]   as [number, number, number],
   grayLight: [248, 248, 248] as [number, number, number],
@@ -73,7 +76,7 @@ export const addObservationsAndSignatures = (
 
     return yPosition;
   } catch (error) {
-    console.error('Error en addObservationsAndSignatures:', error);
+    logger.error('Error en addObservationsAndSignatures:', error);
     return yPosition + 30;
   }
 };

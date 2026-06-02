@@ -7,7 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("BatchEditHistoricalPurchasesModal");
 interface BatchEditHistoricalPurchasesModalProps {
   selectedIds: string[];
   open: boolean;
@@ -65,7 +68,7 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Error en operación por lotes:', error);
+      logger.error('Error en operación por lotes:', error);
       toast.error('Ocurrió un error al procesar las facturas');
     } finally {
       setIsProcessing(false);

@@ -1,6 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePaymentDuplicateCheck");
 interface DuplicatePayment {
   id: string;
   supplier_id: string;
@@ -44,7 +47,7 @@ export const usePaymentDuplicateCheck = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error checking duplicate:', error);
+      logger.error('Error checking duplicate:', error);
       return null;
     }
 
@@ -68,7 +71,7 @@ export const usePaymentDuplicateCheck = () => {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error finding duplicates:', error);
+      logger.error('Error finding duplicates:', error);
       return [];
     }
 
@@ -113,7 +116,7 @@ export const usePaymentDuplicateCheck = () => {
       .eq('id', paymentId);
 
     if (error) {
-      console.error('Error deleting payment:', error);
+      logger.error('Error deleting payment:', error);
       return false;
     }
 
@@ -130,7 +133,7 @@ export const usePaymentDuplicateCheck = () => {
       .eq('id', paymentId);
 
     if (error) {
-      console.error('Error cancelling payment:', error);
+      logger.error('Error cancelling payment:', error);
       return false;
     }
 

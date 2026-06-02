@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentTerm } from '@/types';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("usePaymentTerms");
 const PAYMENT_TERMS_SELECT = `
   id,
   name,
@@ -30,7 +33,7 @@ export const usePaymentTerms = () => {
       if (error) throw error;
       setPaymentTerms(data || []);
     } catch (error) {
-      console.error('Error fetching payment terms:', error);
+      logger.error('Error fetching payment terms:', error);
     } finally {
       setLoading(false);
     }
@@ -53,7 +56,7 @@ export const usePaymentTerms = () => {
       toast.success('Condición de pago creada exitosamente');
       return data;
     } catch (error) {
-      console.error('Error creating payment term:', error);
+      logger.error('Error creating payment term:', error);
       toast.error('Error al crear condición de pago');
       throw error;
     }
@@ -73,7 +76,7 @@ export const usePaymentTerms = () => {
       toast.success('Condición de pago actualizada exitosamente');
       return data;
     } catch (error) {
-      console.error('Error updating payment term:', error);
+      logger.error('Error updating payment term:', error);
       toast.error('Error al actualizar condición de pago');
       throw error;
     }
@@ -90,7 +93,7 @@ export const usePaymentTerms = () => {
       await fetchPaymentTerms();
       toast.success('Condición de pago desactivada exitosamente');
     } catch (error) {
-      console.error('Error deleting payment term:', error);
+      logger.error('Error deleting payment term:', error);
       toast.error('Error al desactivar condición de pago');
       throw error;
     }

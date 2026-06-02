@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("useClientServices");
 export interface ClientService {
   id: string;
   folio: string;
@@ -21,12 +24,12 @@ export interface ClientService {
 
 const fetchClientServices = async (clientId: string | undefined): Promise<ClientService[]> => {
   if (!clientId) {
-    console.log('No client ID provided for client services fetch');
+    logger.debug('No client ID provided for client services fetch');
     return [];
   }
 
   try {
-    console.log('Fetching client services for client ID:', clientId);
+    logger.debug('Fetching client services for client ID:', clientId);
     
     const { data, error } = await supabase
       .from('services')
@@ -49,11 +52,11 @@ const fetchClientServices = async (clientId: string | undefined): Promise<Client
       .order('service_date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching client services:', error);
+      logger.error('Error fetching client services:', error);
       throw new Error(`Error al obtener servicios: ${error.message}`);
     }
 
-    console.log('Client services fetched successfully:', data?.length || 0, 'services');
+    logger.debug('Client services fetched successfully:', data?.length || 0, 'services');
 
     return (data || []).map((service: any) => ({
       id: service.id,
@@ -71,7 +74,7 @@ const fetchClientServices = async (clientId: string | undefined): Promise<Client
       service_type_name: service.service_types?.name || 'N/A',
     }));
   } catch (error: any) {
-    console.error('Unexpected error in fetchClientServices:', error);
+    logger.error('Unexpected error in fetchClientServices:', error);
     throw error;
   }
 };
@@ -84,7 +87,7 @@ export const useClientServices = () => {
     queryFn: () => fetchClientServices(user?.client_id),
     enabled: !!user?.client_id,
     retry: (failureCount, error) => {
-      console.log(`Client services query retry attempt ${failureCount}:`, error.message);
+      logger.debug(`Client services query retry attempt ${failureCount}:`, error.message);
       if (error.message.includes('permission')) {
         toast.error('Error de permisos', {
           description: 'No tienes acceso a esta información. Contacta al administrador.',
@@ -96,7 +99,7 @@ export const useClientServices = () => {
     retryDelay: 1000,
     meta: {
       onError: (error: Error) => {
-        console.error('Client services query error:', error);
+        logger.error('Client services query error:', error);
         toast.error('Error al cargar servicios', {
           description: 'No se pudieron cargar tus servicios. Por favor, intenta recargar la página.',
         });

@@ -23,7 +23,10 @@ import { Invoice } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ShieldAlert } from 'lucide-react';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("BatchEditHistoricalInvoicesModal");
 interface BatchEditHistoricalInvoicesModalProps {
   selectedInvoices: Invoice[];
   isOpen: boolean;
@@ -131,7 +134,7 @@ export const BatchEditHistoricalInvoicesModal = ({
           try {
             currentMetadata = JSON.parse(parts[1]);
           } catch (e) {
-            console.error('Error parsing metadata for invoice', invoice.folio, e);
+            logger.error('Error parsing metadata for invoice', invoice.folio, e);
           }
         }
 
@@ -203,7 +206,7 @@ export const BatchEditHistoricalInvoicesModal = ({
       toast.success(`${processed} facturas actualizadas correctamente`);
       handleClose();
     } catch (error) {
-      console.error('Error updating invoices:', error);
+      logger.error('Error updating invoices:', error);
       toast.error('Error al actualizar facturas');
     } finally {
       setIsSubmitting(false);

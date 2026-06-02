@@ -17,7 +17,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("PaymentForm");
 interface PaymentFormProps {
   onClose: () => void;
   onCancel: () => void;
@@ -67,7 +70,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
       const invoices = await getUnpaidInvoicesForClient(formData.client_id);
       setUnpaidInvoices(invoices);
     } catch (error) {
-      console.error('Error fetching unpaid invoices:', error);
+      logger.error('Error fetching unpaid invoices:', error);
     } finally {
       setLoadingInvoices(false);
     }
@@ -122,7 +125,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
 
     setLoading(true);
     try {
-      console.log('🔍 Starting payment process:', { paymentType, selectedInvoices, paymentAmount });
+      logger.debug('🔍 Starting payment process:', { paymentType, selectedInvoices, paymentAmount });
       
       // Create the payment first
       const payment = await createPayment({
@@ -135,17 +138,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
         status: 'pending' // Always start as pending, then apply if needed
       });
 
-      console.log('✅ Payment created:', payment);
+      logger.debug('✅ Payment created:', payment);
 
       // If specific payment, apply to selected invoices
       if (paymentType === 'specific' && selectedInvoices.length > 0) {
-        console.log('🔍 Applying payment to specific invoices:', selectedInvoices);
+        logger.debug('🔍 Applying payment to specific invoices:', selectedInvoices);
         await applyPaymentManual(payment.id, selectedInvoices);
       }
 
       onClose();
     } catch (error) {
-      console.error('🚨 Error in payment process:', error);
+      logger.error('🚨 Error in payment process:', error);
     } finally {
       setLoading(false);
     }

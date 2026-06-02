@@ -2,7 +2,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
+import { createLogger } from "@/lib/logger";
 
+
+const logger = createLogger("equipmentChecklist");
 const C = {
   green:     [0, 130, 100]   as [number, number, number],
   grayLight: [248, 252, 250] as [number, number, number],
@@ -124,7 +127,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     yPosition = barY + 18;
     return yPosition;
   } catch (error) {
-    console.error('Error en addEquipmentChecklist:', error);
+    logger.error('Error en addEquipmentChecklist:', error);
     return yPosition + 50;
   }
 };
