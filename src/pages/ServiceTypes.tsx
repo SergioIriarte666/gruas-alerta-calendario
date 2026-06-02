@@ -12,9 +12,6 @@ import { Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import {
-import { createLogger } from "@/lib/logger";
-
-const logger = createLogger("ServiceTypes");
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,6 +21,9 @@ const logger = createLogger("ServiceTypes");
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("ServiceTypes");
 
 const ServiceTypes = () => {
   const { user } = useUser();

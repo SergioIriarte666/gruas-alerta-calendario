@@ -35,9 +35,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { RecentImportLogsCard } from './historical/RecentImportLogsCard';
 import {
-import { createLogger } from "@/lib/logger";
-
-const logger = createLogger("HistoricalPurchases");
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -47,6 +44,9 @@ const logger = createLogger("HistoricalPurchases");
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("HistoricalPurchases");
 
 export const HistoricalPurchases = () => {
   const { invoices, isDeleting, deleteInvoice, updateInvoice, createInvoice } = usePurchaseInvoices();
