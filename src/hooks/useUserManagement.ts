@@ -347,18 +347,20 @@ export const useUserManagement = () => {
   const assignClientToUser = async (userId: string, clientId: string | null) => {
     try {
       setUpdating(userId);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ client_id: clientId, updated_at: new Date().toISOString() })
-        .eq('id', userId);
+      const { error } = await supabase.rpc('assign_user_client', {
+        target_user_id: userId,
+        target_client_id: clientId,
+      });
 
       if (error) throw error;
 
       toast.success('Cliente asignado correctamente');
       await fetchUsers();
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       logger.error('Error assigning client to user:', error);
-      toast.error('Error al asignar cliente al usuario');
+      toast.error(error.message || 'Error al asignar cliente al usuario');
+      return { success: false, error: error.message };
     } finally {
       setUpdating(null);
     }

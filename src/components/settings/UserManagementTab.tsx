@@ -93,17 +93,21 @@ export const UserManagementTab = () => {
 
   const handleAssignClient = async (clientId: string | null) => {
     if (selectedUser) {
-      await assignClientToUser(selectedUser.id, clientId);
-      setIsClientAssignOpen(false);
-      setSelectedUser(null);
+      const result = await assignClientToUser(selectedUser.id, clientId);
+      if (result?.success) {
+        setIsClientAssignOpen(false);
+        setSelectedUser(null);
+      }
     }
   };
 
   const handleAssignOperator = async (operatorId: string | null) => {
     if (selectedUser) {
-      await assignOperatorToUser(selectedUser.id, operatorId);
-      setIsOperatorAssignOpen(false);
-      setSelectedUser(null);
+      const result = await assignOperatorToUser(selectedUser.id, operatorId);
+      if (result?.success) {
+        setIsOperatorAssignOpen(false);
+        setSelectedUser(null);
+      }
     }
   };
 
