@@ -30,6 +30,14 @@ const invitationBadgeClassNames: Record<string, string> = {
   expired: 'border-danger/20 bg-danger/10 text-danger',
 };
 
+const formatClientOption = (client: { name: string; rut: string; department?: string | null }) => {
+  const branchLabel = client.department?.trim();
+  return {
+    title: toTitleCase(client.name),
+    subtitle: branchLabel ? `Sucursal: ${toTitleCase(branchLabel)} · ${client.rut}` : client.rut,
+  };
+};
+
 export const UserManagementTab = () => {
   const isMobile = useIsMobile();
   const { 
@@ -231,17 +239,20 @@ export const UserManagementTab = () => {
                               <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
-                            <DialogHeader>
+                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-hidden border-border/70 bg-card p-0">
+                            <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                              <Button variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignClient(null)}>
+                            <div className="space-y-2 overflow-y-auto px-6 py-4">
+                              <Button variant="outline" className="w-full justify-start text-sm whitespace-normal h-auto py-3" onClick={() => handleAssignClient(null)}>
                                 Sin cliente asignado
                               </Button>
                               {clients.map((client) => (
-                                <Button key={client.id} variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignClient(client.id)}>
-                                  {toTitleCase(client.name)} ({client.rut})
+                                <Button key={client.id} variant="outline" className="w-full justify-start text-sm whitespace-normal h-auto py-3 text-left" onClick={() => handleAssignClient(client.id)}>
+                                  <div className="flex flex-col items-start">
+                                    <span>{formatClientOption(client).title}</span>
+                                    <span className="text-xs text-muted-foreground">{formatClientOption(client).subtitle}</span>
+                                  </div>
                                 </Button>
                               ))}
                             </div>
@@ -258,20 +269,20 @@ export const UserManagementTab = () => {
                               <HardHat className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
-                            <DialogHeader>
+                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-hidden border-border/70 bg-card p-0">
+                            <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-3">
+                            <div className="space-y-3 overflow-y-auto px-6 py-4">
                               <div className="text-xs text-muted-foreground">
                                 Operador actual: <span className="text-foreground">{user.operator_name ? toTitleCase(user.operator_name) : 'Sin asignar'}</span>
                               </div>
-                              <div className="space-y-2 max-h-60 overflow-y-auto">
-                                <Button variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignOperator(null)}>
+                              <div className="space-y-2">
+                                <Button variant="outline" className="w-full justify-start text-sm whitespace-normal h-auto py-3" onClick={() => handleAssignOperator(null)}>
                                   Sin operador asignado
                                 </Button>
                                 {operators.map((op) => (
-                                  <Button key={op.id} variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignOperator(op.id)}>
+                                  <Button key={op.id} variant="outline" className="w-full justify-start text-sm whitespace-normal h-auto py-3 text-left" onClick={() => handleAssignOperator(op.id)}>
                                     {toTitleCase(op.name)} ({op.rut})
                                   </Button>
                                 ))}
@@ -336,20 +347,20 @@ export const UserManagementTab = () => {
                                   <HardHat className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="border-border/70 bg-card">
-                                <DialogHeader>
+                              <DialogContent className="max-h-[85vh] overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                                <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4">
+                                <div className="space-y-4 overflow-y-auto px-6 py-4">
                                   <p className="text-sm text-muted-foreground">
                                     Selecciona el operador que será vinculado a este usuario. Para acceder al portal de operadores, el usuario debe tener un operador asociado.
                                   </p>
                                   <div className="space-y-2">
-                                    <Button variant="outline" className="w-full justify-start" onClick={() => handleAssignOperator(null)}>
+                                    <Button variant="outline" className="w-full justify-start whitespace-normal h-auto py-3" onClick={() => handleAssignOperator(null)}>
                                       Sin operador asignado
                                     </Button>
                                     {operators.map((op) => (
-                                      <Button key={op.id} variant="outline" className="w-full justify-start" onClick={() => handleAssignOperator(op.id)}>
+                                      <Button key={op.id} variant="outline" className="w-full justify-start whitespace-normal h-auto py-3 text-left" onClick={() => handleAssignOperator(op.id)}>
                                         {toTitleCase(op.name)} ({op.rut})
                                       </Button>
                                     ))}
@@ -373,17 +384,20 @@ export const UserManagementTab = () => {
                                   <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="border-border/70 bg-card">
-                                <DialogHeader>
+                              <DialogContent className="max-h-[85vh] overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                                <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4">
+                                <div className="space-y-4 overflow-y-auto px-6 py-4">
                                   <p className="text-sm text-muted-foreground">Selecciona el cliente que será asociado a este usuario:</p>
                                   <div className="space-y-2">
-                                    <Button variant="outline" className="w-full justify-start" onClick={() => handleAssignClient(null)}>Sin cliente asignado</Button>
+                                    <Button variant="outline" className="w-full justify-start whitespace-normal h-auto py-3" onClick={() => handleAssignClient(null)}>Sin cliente asignado</Button>
                                     {clients.map((client) => (
-                                      <Button key={client.id} variant="outline" className="w-full justify-start" onClick={() => handleAssignClient(client.id)}>
-                                        {toTitleCase(client.name)} ({client.rut})
+                                      <Button key={client.id} variant="outline" className="w-full justify-start whitespace-normal h-auto py-3 text-left" onClick={() => handleAssignClient(client.id)}>
+                                        <div className="flex flex-col items-start">
+                                          <span>{formatClientOption(client).title}</span>
+                                          <span className="text-xs text-muted-foreground">{formatClientOption(client).subtitle}</span>
+                                        </div>
                                       </Button>
                                     ))}
                                   </div>

@@ -24,6 +24,7 @@ interface Client {
   name: string;
   rut: string;
   email: string | null;
+  department?: string | null;
 }
 
 interface Operator {
@@ -144,7 +145,7 @@ export const useUserManagement = () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, rut, email')
+        .select('id, name, rut, email, department')
         .eq('is_active', true)
         .order('name');
       
