@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useEnhancedCSVUpload } from '@/hooks/useEnhancedCSVUpload';
 import { ValidationError } from '@/utils/enhancedCsvUpload';
-import { shouldShowVehicleInfo } from '@/utils/statusHelpers';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { BatchUploadAnimations } from './BatchUploadAnimations';
 import { AnimatedProgress } from './AnimatedProgress';
 import { AnimatedStatCard } from './AnimatedStatCard';
@@ -536,13 +536,10 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                             <TableCell className="text-foreground">{row['Fecha Servicio'] || row.serviceDate}</TableCell>
                             <TableCell className="text-foreground">{row['Cliente Nombre'] || row.clientName}</TableCell>
                             <TableCell className="text-foreground">
-                              {shouldShowVehicleInfo(row) ? 
-                                `${(row['Vehículo Marca'] || row.vehicleBrand)} ${(row['Vehículo Modelo'] || row.vehicleModel)}` : 
-                                'No aplica'
-                              }
+                              {formatVehicleInfo(row)}
                             </TableCell>
                             <TableCell className="text-foreground">
-                              {shouldShowVehicleInfo(row) ? (row.Patente || row.licensePlate) : 'No aplica'}
+                              {shouldShowVehicleInfo(row) ? (row.Patente || row.licensePlate) : '-'}
                             </TableCell>
                             <TableCell className="text-foreground">${row.Valor || row.value}</TableCell>
                             <TableCell>

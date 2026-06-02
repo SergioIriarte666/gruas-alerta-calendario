@@ -6,7 +6,7 @@ import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSi
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
-import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { cn, toTitleCase } from '@/lib/utils';
 
@@ -98,12 +98,10 @@ export const ServicesMobileView = ({
                   <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                 </div>
 
-                {shouldShowVehicleInfo(service) && (
-                  <div className="flex items-center text-foreground text-sm">
-                    <Truck className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span>{formatVehicleInfo(service)}</span>
-                  </div>
-                )}
+                <div className="flex items-center text-foreground text-sm">
+                  <Truck className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
+                  <span>{formatVehicleInfo(service)}</span>
+                </div>
 
                 <div className="flex items-start text-foreground text-sm">
                   <MapPin className="size-4 mr-2 text-muted-foreground flex-shrink-0 mt-0.5" />

@@ -25,19 +25,19 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
   const hasFilters = dateFrom || dateTo;
 
   return (
-    <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+    <div className="mb-6 rounded-[10px] border border-[#e2e8f0] bg-white p-4">
       <div className="flex flex-wrap items-center gap-4">
-        <h3 className="text-sm font-medium text-gray-300">Filtros:</h3>
+        <h3 className="text-sm font-medium text-[#64748b]">Filtros:</h3>
         
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Desde:</span>
+          <span className="text-sm text-[#94a3b8]">Desde:</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-[140px] justify-start text-left font-normal",
-                  !dateFrom && "text-muted-foreground"
+                  'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  !dateFrom && 'text-[#94a3b8]'
                 )}
               >
                 <CalendarIcon className="mr-2 size-4" />
@@ -63,14 +63,14 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-400">Hasta:</span>
+          <span className="text-sm text-[#94a3b8]">Hasta:</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-[140px] justify-start text-left font-normal",
-                  !dateTo && "text-muted-foreground"
+                  'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  !dateTo && 'text-[#94a3b8]'
                 )}
               >
                 <CalendarIcon className="mr-2 size-4" />
@@ -100,7 +100,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-gray-400 hover:text-white"
+            className="text-[#94a3b8] hover:bg-slate-50 hover:text-[#334155]"
           >
             <X className="size-4 mr-1" />
             Limpiar filtros

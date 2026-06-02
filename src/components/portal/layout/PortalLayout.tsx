@@ -23,7 +23,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
   const companyLogo = settings?.company?.logo;
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex h-screen bg-[#f8fafc] text-foreground">
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div 
@@ -44,12 +44,12 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header with Menu Button */}
         {isMobile && (
-          <div className="flex items-center border-b border-border/70 bg-card/95 px-4 py-3 backdrop-blur">
-            <Button 
-              variant="ghost" 
+          <div className="flex items-center border-b border-[#e2e8f0] bg-white px-4 py-3">
+            <Button
+              variant="ghost"
               size="icon"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="hover:bg-muted"
+              className="hover:bg-slate-50"
             >
               <Menu className="size-6" />
             </Button>
@@ -58,15 +58,15 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
                 <img src={companyLogo} alt="Logo empresa" className="size-8 object-contain" />
               )}
               <div>
-                <div className="text-sm font-semibold text-foreground">{companyName}</div>
-                <div className="text-xs text-muted-foreground">Portal de Clientes</div>
+                <div className="text-sm font-semibold text-[#0f172a]">{companyName}</div>
+                <div className="text-xs text-[#94a3b8]">Portal de Clientes</div>
               </div>
             </div>
           </div>
         )}
         
         <PortalHeader />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/20 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-4 md:p-6 lg:p-8">
           <ErrorBoundary name="Portal Cliente">
             <Suspense fallback={null}>
               {children || <Outlet />}

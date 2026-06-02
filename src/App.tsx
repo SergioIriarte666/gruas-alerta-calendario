@@ -52,6 +52,7 @@ const routeImports = {
   PortalDashboard: () => import('@/pages/portal/PortalDashboard'),
   PortalServices: () => import('@/pages/portal/PortalServices'),
   PortalInvoices: () => import('@/pages/portal/PortalInvoices'),
+  PortalPurchaseOrders: () => import('@/pages/portal/PortalPurchaseOrders'),
   PortalRequestService: () => import('@/pages/portal/PortalRequestService'),
   Calendar: () => import('@/pages/Calendar'),
   QuickEntries: () => import('@/pages/QuickEntries'),
@@ -93,6 +94,7 @@ const ServiceInspection = lazy(routeImports.ServiceInspection);
 const PortalDashboard = lazy(routeImports.PortalDashboard);
 const PortalServices = lazy(routeImports.PortalServices);
 const PortalInvoices = lazy(routeImports.PortalInvoices);
+const PortalPurchaseOrders = lazy(routeImports.PortalPurchaseOrders);
 const PortalRequestService = lazy(routeImports.PortalRequestService);
 const Calendar = lazy(routeImports.Calendar);
 const QuickEntries = lazy(routeImports.QuickEntries);
@@ -234,6 +236,7 @@ function AppContent() {
           <Route index element={<PortalDashboard />} />
           <Route path="dashboard" element={<PortalDashboard />} />
           <Route path="services" element={<PortalServices />} />
+          <Route path="purchase-orders" element={<PortalPurchaseOrders />} />
           <Route path="request-service" element={<PortalRequestService />} />
           <Route path="invoices" element={<PortalInvoices />} />
         </Route>

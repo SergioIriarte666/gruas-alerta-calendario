@@ -150,7 +150,7 @@ const PortalInvoices = () => {
       return (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full bg-gray-700" />
+            <Skeleton key={i} className="h-12 w-full bg-[#e2e8f0]" />
           ))}
         </div>
       );
@@ -158,20 +158,20 @@ const PortalInvoices = () => {
 
     if (isError) {
       return (
-        <div className="flex flex-col items-center justify-center p-8 text-center bg-red-900/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center rounded-[10px] border border-red-200 bg-red-50 p-8 text-center">
           <AlertTriangle className="size-12 text-red-500 mb-4" />
-          <h3 className="text-lg font-semibold text-white">Error al cargar facturas</h3>
-          <p className="text-red-400">{error?.message || 'Ocurrió un error inesperado.'}</p>
+          <h3 className="text-lg font-semibold text-[#0f172a]">Error al cargar facturas</h3>
+          <p className="text-red-600">{error?.message || 'Ocurrió un error inesperado.'}</p>
         </div>
       );
     }
 
     if (!filteredInvoices || filteredInvoices.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-800/50 rounded-lg">
-          <FileText className="size-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-white">Sin facturas</h3>
-          <p className="text-gray-400">
+        <div className="flex flex-col items-center justify-center rounded-[10px] border border-[#e2e8f0] bg-white p-8 text-center">
+          <FileText className="mb-4 size-12 text-[#94a3b8]" />
+          <h3 className="text-lg font-semibold text-[#0f172a]">Sin facturas</h3>
+          <p className="text-[#94a3b8]">
             {hasFilters
               ? 'No encontramos facturas para los filtros seleccionados.'
               : 'No hemos encontrado facturas asociadas a su cuenta.'}
@@ -181,48 +181,46 @@ const PortalInvoices = () => {
     }
 
     return (
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-[10px] border border-[#e2e8f0] bg-white">
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-700 hover:bg-gray-800/50">
-              <TableHead className="text-gray-300">Folio</TableHead>
-              <TableHead className="text-gray-300">N° Fiscal</TableHead>
-              <TableHead className="text-gray-300">Fecha Emisión</TableHead>
-              <TableHead className="text-gray-300">Fecha Vencimiento</TableHead>
-              <TableHead className="text-gray-300 text-center">Días para Vencimiento</TableHead>
-              <TableHead className="text-gray-300 text-right">Total</TableHead>
-              <TableHead className="text-gray-300 text-right">Saldo pendiente</TableHead>
-              <TableHead className="text-gray-300 text-center">Estado</TableHead>
-              <TableHead className="text-gray-300 text-center">Acciones</TableHead>
+            <TableRow className="border-[#e2e8f0] hover:bg-transparent">
+              <TableHead className="text-[#64748b]">N° Fiscal</TableHead>
+              <TableHead className="text-[#64748b]">Fecha Emisión</TableHead>
+              <TableHead className="text-[#64748b]">Fecha Vencimiento</TableHead>
+              <TableHead className="text-center text-[#64748b]">Días para Vencimiento</TableHead>
+              <TableHead className="text-right text-[#64748b]">Total</TableHead>
+              <TableHead className="text-right text-[#64748b]">Saldo pendiente</TableHead>
+              <TableHead className="text-center text-[#64748b]">Estado</TableHead>
+              <TableHead className="text-center text-[#64748b]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredInvoices.map((invoice) => (
-              <TableRow key={invoice.id} className="border-gray-700 hover:bg-gray-800/50">
-                <TableCell className="font-medium text-tms-green">{invoice.folio}</TableCell>
-                <TableCell className="text-gray-300">
+              <TableRow key={invoice.id} className="border-[#f1f5f9] bg-[#f8fafc] hover:bg-[#f5f3ff]">
+                <TableCell className="text-[#64748b]">
                   {invoice.numero_fiscal ? (
-                    <span className="text-tms-green font-medium">{invoice.numero_fiscal}</span>
+                    <span className="font-medium text-violet-700">{invoice.numero_fiscal}</span>
                   ) : (
-                    <span className="text-gray-500 italic">Sin asignar</span>
+                    <span className="italic text-[#94a3b8]">Sin asignar</span>
                   )}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-[#64748b]">
                   {formatForDisplay(invoice.issue_date)}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-[#64748b]">
                   {formatForDisplay(invoice.due_date)}
                 </TableCell>
                 <TableCell className="text-center">
                   {calculateDaysUntilDue(invoice.due_date, invoice.status)}
                 </TableCell>
-                <TableCell className="text-gray-300 font-semibold text-right">
+                <TableCell className="text-right font-semibold text-[#0f172a]">
                   {formatCurrency(invoice.total)}
                 </TableCell>
-                <TableCell className="text-right text-yellow-400">
+                <TableCell className="text-right text-amber-600">
                   {Number(invoice.remaining_amount || 0) > 0
                     ? formatCurrency(invoice.remaining_amount || 0)
-                    : <span className="text-gray-500">-</span>}
+                    : <span className="text-[#94a3b8]">-</span>}
                 </TableCell>
                 <TableCell className="text-center">{getStatusBadge(invoice.status)}</TableCell>
                 <TableCell className="text-center">
@@ -230,7 +228,7 @@ const PortalInvoices = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDownloadInvoice(invoice)}
-                    className="text-tms-green hover:text-white"
+                    className="text-violet-700 hover:bg-violet-50 hover:text-violet-800"
                     title="Descargar PDF"
                   >
                     <Download className="size-4" />
@@ -250,9 +248,9 @@ const PortalInvoices = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white">Mis Facturas</h1>
+        <h1 className="text-2xl font-bold text-[#0f172a]">Mis Facturas</h1>
         {invoices && (
-          <Badge variant="outline" className="text-tms-green border-tms-green">
+          <Badge variant="outline" className="border-violet-200 text-violet-700">
             {filteredInvoices.length} factura{filteredInvoices.length !== 1 ? 's' : ''}
           </Badge>
         )}
@@ -261,29 +259,29 @@ const PortalInvoices = () => {
       {/* Resumen de facturas */}
       {invoices && invoices.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-400">Total por Pagar</h3>
-            <p className="text-xl font-bold text-yellow-500">{formatCurrency(totalPorPagar)}</p>
+          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
+            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total por pagar</h3>
+            <p className="text-[20px] font-medium text-amber-600">{formatCurrency(totalPorPagar)}</p>
           </div>
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-400">Total Vencido</h3>
-            <p className="text-xl font-bold text-red-500">{formatCurrency(totalVencido)}</p>
+          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
+            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total vencido</h3>
+            <p className="text-[20px] font-medium text-red-600">{formatCurrency(totalVencido)}</p>
           </div>
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-400">Total Facturas</h3>
-            <p className="text-xl font-bold text-white">{filteredInvoices.length}</p>
+          <div className="rounded-[10px] border border-[#e2e8f0] bg-white p-4">
+            <h3 className="mb-1 text-[11px] text-[#94a3b8]">Total facturas</h3>
+            <p className="text-[20px] font-medium text-[#0f172a]">{filteredInvoices.length}</p>
           </div>
         </div>
       )}
 
-      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+      <div className="mb-6 rounded-[10px] border border-[#e2e8f0] bg-white p-4">
         <div className="flex flex-wrap items-center gap-4">
-          <h3 className="text-sm font-medium text-gray-300">Filtros:</h3>
+          <h3 className="text-sm font-medium text-[#64748b]">Filtros:</h3>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Estado:</span>
+            <span className="text-sm text-[#94a3b8]">Estado:</span>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-background text-left text-white">
+              <SelectTrigger className="w-[180px] border-[#e2e8f0] bg-[#f8fafc] text-left text-[#0f172a]">
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
@@ -296,14 +294,14 @@ const PortalInvoices = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Desde:</span>
+            <span className="text-sm text-[#94a3b8]">Desde:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[140px] justify-start text-left font-normal",
-                    !dateFrom && "text-muted-foreground"
+                    'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                    !dateFrom && 'text-[#94a3b8]'
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
@@ -327,14 +325,14 @@ const PortalInvoices = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Hasta:</span>
+            <span className="text-sm text-[#94a3b8]">Hasta:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-[140px] justify-start text-left font-normal",
-                    !dateTo && "text-muted-foreground"
+                    'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                    !dateTo && 'text-[#94a3b8]'
                   )}
                 >
                   <CalendarIcon className="mr-2 size-4" />
@@ -362,7 +360,7 @@ const PortalInvoices = () => {
               variant="ghost"
               size="sm"
               onClick={handleClearFilters}
-              className="text-gray-400 hover:text-white"
+              className="text-[#94a3b8] hover:bg-slate-50 hover:text-[#334155]"
             >
               <X className="mr-1 size-4" />
               Limpiar filtros

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FileX, Clock, TrendingUp } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
-import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
+import { formatVehicleInfo } from '@/utils/statusHelpers';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -117,9 +117,7 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                       </div>
                       <div className="text-sm text-muted-foreground">
                         <div>Tipo: {request.serviceType.name}</div>
-                        {shouldShowVehicleInfo(request) && (
-                          <div>Vehículo: {formatVehicleInfo(request)}</div>
-                        )}
+                        <div>Vehículo: {formatVehicleInfo(request)}</div>
                         <div>Origen: {request.origin}</div>
                         <div>Destino: {request.destination}</div>
                         {request.purchaseOrder && (

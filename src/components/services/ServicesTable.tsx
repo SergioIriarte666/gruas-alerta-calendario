@@ -9,7 +9,7 @@ import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
-import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -235,11 +235,7 @@ export const ServicesTable = ({
                         <div className="text-sm text-muted-foreground">{service.client.department} • {service.client.rut}</div>
                       </TableCell>
                       <TableCell>
-                        {shouldShowVehicleInfo(service) ? (
-                          <span>{formatVehicleInfo(service)}</span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground italic">No aplica</span>
-                        )}
+                        <span>{formatVehicleInfo(service)}</span>
                       </TableCell>
                       <TableCell className="max-w-48">
                         <div className="truncate">{service.origin}</div>

@@ -30,7 +30,7 @@ import { VehicleHistory } from './VehicleHistory';
 import { ServiceChangeHistory } from './ServiceChangeHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
-import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
@@ -447,12 +447,15 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                         <DetailItem icon={Phone} label="Teléfono Persona en el Lugar" value={serviceData.contactPhone || (serviceData as any).contact_phone} />
                       )}
                   </DetailSection>
-                  {shouldShowVehicleInfo(serviceData) && (
-                      <DetailSection title="Vehículo" icon={Truck} color="cyan">
+                  <DetailSection title="Vehículo" icon={Truck} color="cyan">
+                      <DetailItem icon={Truck} label="Referencia visible" value={formatVehicleInfo(serviceData)} />
+                      {shouldShowVehicleInfo(serviceData) && (
+                        <>
                           <DetailItem icon={Wrench} label="Marca y Modelo" value={`${serviceData.vehicleBrand} ${serviceData.vehicleModel}`} />
                           <DetailItem icon={IdCard} label="Patente" value={serviceData.licensePlate} valueClass="text-lg" />
-                      </DetailSection>
-                  )}
+                        </>
+                      )}
+                  </DetailSection>
               </div>
             </TabsContent>
             

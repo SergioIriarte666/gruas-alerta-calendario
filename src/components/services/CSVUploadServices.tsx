@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useCSVUpload } from '@/hooks/useCSVUpload';
 import { ValidationError } from '@/utils/csvValidations';
-import { shouldShowVehicleInfo } from '@/utils/statusHelpers';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -290,10 +290,10 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
                           <TableCell className="text-foreground">{row.serviceDate}</TableCell>
                           <TableCell className="text-foreground">{toTitleCase(row.clientName)}</TableCell>
                           <TableCell className="text-foreground">
-                            {shouldShowVehicleInfo(row) ? `${row.vehicleBrand} ${row.vehicleModel}` : 'No aplica'}
+                            {formatVehicleInfo(row)}
                           </TableCell>
                           <TableCell className="text-foreground">
-                            {shouldShowVehicleInfo(row) ? row.licensePlate : 'No aplica'}
+                            {shouldShowVehicleInfo(row) ? row.licensePlate : '-'}
                           </TableCell>
                           <TableCell className="text-foreground">${row.value}</TableCell>
                         </TableRow>

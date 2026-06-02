@@ -8,7 +8,7 @@ interface StatusConfig {
   className: string;
 }
 
-const STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
+export const SERVICE_STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
   pending: { label: 'Pendiente', className: 'bg-yellow-500/80 text-white' },
   in_progress: { label: 'En Progreso', className: 'bg-blue-500/80 text-white' },
   inspection_completed: { label: 'Inspección Completada', className: 'bg-orange-500/80 text-white' },
@@ -22,12 +22,16 @@ const STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
 };
 
 export const getServiceStatusBadge = (status: string) => {
-  const config = STATUS_CONFIG[status as ServiceStatus] || { 
+  const config = SERVICE_STATUS_CONFIG[status as ServiceStatus] || { 
     label: 'Desconocido', 
     className: 'bg-gray-500/80 text-white' 
   };
   
   return React.createElement(Badge, { className: `${config.className} border-none` }, config.label);
+};
+
+export const getServiceStatusLabel = (status: string) => {
+  return SERVICE_STATUS_CONFIG[status as ServiceStatus]?.label || 'Desconocido';
 };
 
 export const formatCurrency = (amount: number | null | undefined) => {
@@ -53,24 +57,65 @@ export const formatCurrency = (amount: number | null | undefined) => {
 export const shouldShowVehicleInfo = (service: any) => {
   // Si el servicio tiene vehicle_info_optional o el tipo de servicio lo indica
   const isOptional = service.vehicleInfoOptional || service.service_type?.vehicle_info_optional;
+  const vehicleBrand = service.vehicleBrand || service.vehicle_brand;
+  const vehicleModel = service.vehicleModel || service.vehicle_model;
+  const licensePlate = service.licensePlate || service.license_plate;
   
   if (!isOptional) return true;
   
   // Si es opcional, verificar si tiene datos reales (no N/A)
-  const hasRealData = service.vehicleBrand && 
-                     service.vehicleModel && 
-                     service.licensePlate &&
-                     service.vehicleBrand !== 'N/A' &&
-                     service.vehicleModel !== 'N/A' &&
-                     service.licensePlate !== 'N/A';
+  const hasRealData = vehicleBrand &&
+                     vehicleModel &&
+                     licensePlate &&
+                     vehicleBrand !== 'N/A' &&
+                     vehicleModel !== 'N/A' &&
+                     licensePlate !== 'N/A';
   
   return hasRealData;
 };
 
-export const formatVehicleInfo = (service: any) => {
-  if (!shouldShowVehicleInfo(service)) {
-    return 'No aplica';
+const getNormalizedVehicleValue = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return '';
+
+  const upperCasedValue = normalizedValue.toUpperCase();
+  if (upperCasedValue === 'N/A' || upperCasedValue === 'NA') {
+    return '';
   }
-  
-  return `${service.vehicleBrand} ${service.vehicleModel} (${service.licensePlate})`;
+
+  return normalizedValue;
+};
+
+export const getServiceTypeDisplayName = (service: any) => {
+  const serviceTypeName =
+    service.service_type_name ||
+    service.serviceTypeName ||
+    service.serviceType?.name ||
+    service.service_type?.name ||
+    service.service_types?.name;
+
+  return getNormalizedVehicleValue(serviceTypeName) || 'Servicio';
+};
+
+export const formatVehicleInfo = (service: any) => {
+  const vehicleBrand = getNormalizedVehicleValue(service.vehicleBrand || service.vehicle_brand);
+  const vehicleModel = getNormalizedVehicleValue(service.vehicleModel || service.vehicle_model);
+  const licensePlate = getNormalizedVehicleValue(service.licensePlate || service.license_plate);
+  const serviceTypeName = getServiceTypeDisplayName(service);
+
+  if (vehicleBrand && vehicleModel && licensePlate) {
+    return `${vehicleBrand} ${vehicleModel} (${licensePlate})`;
+  }
+
+  if (licensePlate) {
+    return licensePlate;
+  }
+
+  if (vehicleBrand && vehicleModel) {
+    return `${vehicleBrand} ${vehicleModel}`;
+  }
+
+  return serviceTypeName;
 };

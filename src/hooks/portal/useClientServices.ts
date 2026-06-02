@@ -20,6 +20,11 @@ export interface ClientService {
   vehicle_brand?: string;
   vehicle_model?: string;
   license_plate?: string;
+  purchase_order: string | null;
+  purchase_order_number: string | null;
+  quote_number: string | null;
+  purchase_order_required: boolean;
+  needs_purchase_order: boolean;
   is_portal_request: boolean;
 }
 
@@ -45,9 +50,12 @@ const fetchClientServices = async (clientId: string | undefined): Promise<Client
         license_plate,
         vehicle_brand,
         vehicle_model,
+        purchase_order,
+        purchase_order_number,
+        quote_number,
         cranes ( license_plate ),
         operators ( name ),
-        service_types ( name )
+        service_types ( name, purchase_order_required )
       `)
       .eq('client_id', clientId)
       .order('service_date', { ascending: false });
@@ -70,6 +78,11 @@ const fetchClientServices = async (clientId: string | undefined): Promise<Client
       license_plate: service.license_plate || '',
       vehicle_brand: service.vehicle_brand || '',
       vehicle_model: service.vehicle_model || '',
+      purchase_order: service.purchase_order || null,
+      purchase_order_number: service.purchase_order_number || null,
+      quote_number: service.quote_number || null,
+      purchase_order_required: service.service_types?.purchase_order_required || false,
+      needs_purchase_order: service.status === 'quoted',
       crane_license_plate: service.cranes?.license_plate || 'N/A',
       operator_name: service.operators?.name || 'N/A',
       service_type_name: service.service_types?.name || 'N/A',

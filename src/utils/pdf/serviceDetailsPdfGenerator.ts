@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { addPDFHeader } from './pdfHeader';
 import { fetchCompanyData } from './companyDataFetcher';
-import { formatCurrency } from '@/utils/statusHelpers';
+import { formatCurrency, formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { 
   getDisplayServiceValue, 
   getServiceValueBreakdown, 
@@ -10,7 +10,6 @@ import {
   getCustodyInfo, 
   isEquipmentRentalService 
 } from '@/utils/serviceValueCalculations';
-import { shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ServiceDetailsPDFData {
@@ -48,11 +47,9 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
   // 4. Sección Cliente
   yPosition = addClientSection(doc, service, yPosition);
   
-  // 5. Sección Vehículo (si aplica)
-  if (shouldShowVehicleInfo(service)) {
-    yPosition = checkPageBreak(doc, yPosition, 40);
-    yPosition = addVehicleSection(doc, service, yPosition);
-  }
+  // 5. Sección Vehículo / referencia
+  yPosition = checkPageBreak(doc, yPosition, 40);
+  yPosition = addVehicleSection(doc, service, yPosition);
   
   // 6. Sección Información del Servicio
   yPosition = checkPageBreak(doc, yPosition, 60);
@@ -139,11 +136,15 @@ const addClientSection = (doc: jsPDF, service: any, yPosition: number): number =
 
 const addVehicleSection = (doc: jsPDF, service: any, yPosition: number): number => {
   yPosition = addSectionTitle(doc, 'VEHÍCULO', yPosition);
-  
-  const vehicleData = [
-    ['Marca y Modelo:', `${service.vehicleBrand} ${service.vehicleModel}`],
-    ['Patente:', service.licensePlate || 'N/A']
-  ];
+
+  const vehicleData = [['Referencia visible:', formatVehicleInfo(service)]];
+
+  if (shouldShowVehicleInfo(service)) {
+    vehicleData.push(
+      ['Marca y Modelo:', `${service.vehicleBrand} ${service.vehicleModel}`],
+      ['Patente:', service.licensePlate || 'N/A']
+    );
+  }
   
   autoTable(doc, {
     startY: yPosition,

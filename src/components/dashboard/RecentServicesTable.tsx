@@ -6,7 +6,7 @@ import { Service } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Eye, Truck, Calendar, User, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
@@ -110,14 +110,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                       <div className="font-medium">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</div>
                     </TableCell>
                     <TableCell className="py-4 text-foreground">
-                      {shouldShowVehicleInfo(service) ? (
-                        <div className="space-y-1">
-                          <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
-                          <div className="font-mono text-sm text-muted-foreground">{service.licensePlate}</div>
-                        </div>
-                      ) : (
-                        <div className="text-sm italic text-muted-foreground">No aplica</div>
-                      )}
+                      <div className="font-medium">{formatVehicleInfo(service)}</div>
                     </TableCell>
                     <TableCell className="py-4 text-foreground">
                       <span className="font-semibold">{formatCurrency(getDisplayServiceValue(service))}</span>
