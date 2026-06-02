@@ -36,6 +36,9 @@ const createServiceRequest = async ({
     license_plate: formData.license_plate || '',
     vehicle_brand: formData.vehicle_brand || '',
     vehicle_model: formData.vehicle_model || '',
+    contact_phone: formData.contact_phone || null,
+    preferred_time: formData.preferred_time || null,
+    urgency: formData.urgency || 'normal',
     observations: formData.observations || '',
     status: 'pending' as const,
     value: 0,
@@ -105,7 +108,10 @@ export const useServiceRequest = () => {
               destination: formData.destination,
               serviceDate: formData.service_date,
               serviceTypeName: serviceTypeData?.name || 'Servicio de Grúa',
-              clientName: clientData.name
+              clientName: clientData.name,
+              urgency: formData.urgency,
+              preferredTime: formData.preferred_time,
+              contactPhone: formData.contact_phone,
             }
           });
           logger.debug('✅ Email de confirmación enviado exitosamente');

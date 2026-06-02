@@ -5,15 +5,16 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PortalHeader from './PortalHeader';
 import PortalSidebar from './PortalSidebar';
-import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { useClientNotifications } from '@/hooks/portal/useClientNotifications';
 
 interface PortalLayoutProps {
   children?: React.ReactNode;
 }
 
 export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
+  useClientNotifications();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -61,7 +62,6 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
           </ErrorBoundary>
         </main>
       </div>
-      <QuickEntryFAB />
     </div>
   );
 };

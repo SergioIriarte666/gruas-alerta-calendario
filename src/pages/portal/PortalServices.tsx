@@ -29,6 +29,14 @@ const PortalServices = () => {
       return true;
     });
   }, [services, dateFrom, dateTo]);
+
+  const sortedServices = useMemo(() => {
+    return [...filteredServices].sort((a, b) => {
+      if (a.is_portal_request && !b.is_portal_request) return -1;
+      if (!a.is_portal_request && b.is_portal_request) return 1;
+      return new Date(b.service_date).getTime() - new Date(a.service_date).getTime();
+    });
+  }, [filteredServices]);
   
   const { exportToPDF, exportToExcel, servicesCount, isLoadingServices } = useClientServiceExport(filteredServices, dateFrom, dateTo);
 
@@ -76,7 +84,7 @@ const PortalServices = () => {
     if (viewMode === 'grid') {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredServices.map((service) => (
+          {sortedServices.map((service) => (
             <PortalServiceCard key={service.id} service={service} />
           ))}
         </div>
@@ -99,7 +107,7 @@ const PortalServices = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredServices.map((service) => (
+            {sortedServices.map((service) => (
               <TableRow key={service.id} className="border-gray-700 hover:bg-gray-800/50">
                 <TableCell className="font-medium text-tms-green">{service.folio}</TableCell>
                 <TableCell className="text-gray-300">
@@ -112,7 +120,16 @@ const PortalServices = () => {
                 <TableCell className="text-gray-300">{service.crane_license_plate}</TableCell>
                 <TableCell className="text-gray-300">{service.operator_name}</TableCell>
                 <TableCell className="text-gray-300 font-semibold text-right">{formatCurrency(service.value)}</TableCell>
-                <TableCell className="text-center">{getServiceStatusBadge(service.status)}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {getServiceStatusBadge(service.status)}
+                    {service.is_portal_request && (
+                      <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                        Solicitud pendiente de asignacion
+                      </Badge>
+                    )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -1,11 +1,13 @@
 
 import React from 'react';
+import { ClientService } from '@/hooks/portal/useClientServices';
+import { Badge } from '@/components/ui/badge';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface PortalServiceCardProps {
-  service: any;
+  service: ClientService;
 }
 
 
@@ -14,7 +16,14 @@ export const PortalServiceCard: React.FC<PortalServiceCardProps> = ({ service })
     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-semibold text-tms-green">{service.folio}</h3>
-        {getServiceStatusBadge(service.status)}
+        <div className="flex items-center gap-2">
+          {getServiceStatusBadge(service.status)}
+          {service.is_portal_request && (
+            <Badge className="border-yellow-500/30 bg-yellow-500/20 text-xs text-yellow-400">
+              Solicitud pendiente de asignacion
+            </Badge>
+          )}
+        </div>
       </div>
       
       <div className="space-y-2 text-sm">

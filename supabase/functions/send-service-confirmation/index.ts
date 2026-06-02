@@ -15,6 +15,9 @@ interface ServiceConfirmationRequest {
   serviceDate: string;
   serviceTypeName: string;
   clientName: string;
+  urgency?: string;
+  preferredTime?: string;
+  contactPhone?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -55,7 +58,10 @@ const handler = async (req: Request): Promise<Response> => {
       destination, 
       serviceDate, 
       serviceTypeName,
-      clientName 
+      clientName,
+      urgency,
+      preferredTime,
+      contactPhone,
     }: ServiceConfirmationRequest = await req.json();
 
     // ── Derive recipient email server-side from the service's client (do NOT trust body input) ──
@@ -119,6 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
             .label { font-weight: bold; color: #333; }
             .value { color: #666; }
             .folio { font-size: 24px; font-weight: bold; color: #22c55e; text-align: center; margin: 20px 0; }
+            .urgent-badge { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 12px; color: #b91c1c; font-weight: bold; }
             .contact-info { background: #22c55e; color: white; padding: 20px; border-radius: 8px; margin-top: 30px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
@@ -148,6 +155,9 @@ const handler = async (req: Request): Promise<Response> => {
                 <span class="label">Fecha Solicitada:</span>
                 <span class="value">${formattedDate}</span>
               </div>
+              ${urgency === 'urgent' ? `<div class="info-row urgent-badge"><span>⚠️ SERVICIO URGENTE</span></div>` : ''}
+              ${preferredTime ? `<div class="info-row"><span class="label">Hora preferida:</span><span class="value">${preferredTime}</span></div>` : ''}
+              ${contactPhone ? `<div class="info-row"><span class="label">Telefono de contacto:</span><span class="value">${contactPhone}</span></div>` : ''}
               <div class="info-row">
                 <span class="label">Origen:</span>
                 <span class="value">${origin}</span>

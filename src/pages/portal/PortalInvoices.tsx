@@ -1,47 +1,26 @@
 
-import { useClientInvoices } from '@/hooks/portal/useClientInvoices';
+import { useMemo, useState } from 'react';
+import { useClientInvoices, type ClientInvoice } from '@/hooks/portal/useClientInvoices';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, FileText, Download } from 'lucide-react';
+import { AlertTriangle, FileText, Download, CalendarIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatForDisplay, safeParseDateOnly, safeDaysSince, getBusinessToday } from '@/utils/timezoneUtils';
 import { useSettings } from '@/hooks/useSettings';
 import { exportInvoiceReport } from '@/utils/reports/invoiceReportExporter';
+import { formatCurrency } from '@/utils/statusHelpers';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("PortalInvoices");
-interface PortalInvoiceRecord {
-  id: string;
-  folio: string;
-  issue_date: string;
-  due_date: string;
-  total: number;
-  subtotal: number;
-  vat: number;
-  status: string;
-  numero_fiscal?: string;
-  payment_date?: string | null;
-  remaining_amount?: number | null;
-  notes?: string | null;
-  product_service_description?: string | null;
-  client?: {
-    id: string;
-    name: string;
-    rut?: string | null;
-    email?: string | null;
-  } | null;
-}
-
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
-  }).format(amount);
-};
 
 const getStatusBadge = (status: string) => {
   const statusConfig: { [key: string]: { label: string; className: string } } = {
@@ -91,8 +70,33 @@ const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Elem
 const PortalInvoices = () => {
   const { settings } = useSettings();
   const { data: invoices, isLoading, isError, error } = useClientInvoices();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
-  const handleDownloadInvoice = async (invoice: PortalInvoiceRecord) => {
+  const filteredInvoices = useMemo(() => {
+    if (!invoices) return [];
+
+    return invoices.filter((invoice) => {
+      if (statusFilter !== 'all' && invoice.status !== statusFilter) return false;
+
+      const issueDate = safeParseDateOnly(invoice.issue_date);
+      if (dateFrom && issueDate < dateFrom) return false;
+      if (dateTo && issueDate > dateTo) return false;
+
+      return true;
+    });
+  }, [invoices, statusFilter, dateFrom, dateTo]);
+
+  const hasFilters = statusFilter !== 'all' || dateFrom || dateTo;
+
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const handleDownloadInvoice = async (invoice: ClientInvoice) => {
     if (!settings) {
       toast.error('No se pudo exportar la factura', {
         description: 'La configuración de la empresa todavía no está disponible.',
@@ -162,12 +166,16 @@ const PortalInvoices = () => {
       );
     }
 
-    if (!invoices || invoices.length === 0) {
+    if (!filteredInvoices || filteredInvoices.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-800/50 rounded-lg">
           <FileText className="size-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-white">Sin facturas</h3>
-          <p className="text-gray-400">No hemos encontrado facturas asociadas a su cuenta.</p>
+          <p className="text-gray-400">
+            {hasFilters
+              ? 'No encontramos facturas para los filtros seleccionados.'
+              : 'No hemos encontrado facturas asociadas a su cuenta.'}
+          </p>
         </div>
       );
     }
@@ -183,12 +191,13 @@ const PortalInvoices = () => {
               <TableHead className="text-gray-300">Fecha Vencimiento</TableHead>
               <TableHead className="text-gray-300 text-center">Días para Vencimiento</TableHead>
               <TableHead className="text-gray-300 text-right">Total</TableHead>
+              <TableHead className="text-gray-300 text-right">Saldo pendiente</TableHead>
               <TableHead className="text-gray-300 text-center">Estado</TableHead>
               <TableHead className="text-gray-300 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.map((invoice) => (
+            {filteredInvoices.map((invoice) => (
               <TableRow key={invoice.id} className="border-gray-700 hover:bg-gray-800/50">
                 <TableCell className="font-medium text-tms-green">{invoice.folio}</TableCell>
                 <TableCell className="text-gray-300">
@@ -210,12 +219,17 @@ const PortalInvoices = () => {
                 <TableCell className="text-gray-300 font-semibold text-right">
                   {formatCurrency(invoice.total)}
                 </TableCell>
+                <TableCell className="text-right text-yellow-400">
+                  {Number(invoice.remaining_amount || 0) > 0
+                    ? formatCurrency(invoice.remaining_amount || 0)
+                    : <span className="text-gray-500">-</span>}
+                </TableCell>
                 <TableCell className="text-center">{getStatusBadge(invoice.status)}</TableCell>
                 <TableCell className="text-center">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDownloadInvoice(invoice as PortalInvoiceRecord)}
+                    onClick={() => handleDownloadInvoice(invoice)}
                     className="text-tms-green hover:text-white"
                     title="Descargar PDF"
                   >
@@ -230,8 +244,8 @@ const PortalInvoices = () => {
     );
   };
 
-  const totalPorPagar = invoices?.filter(inv => inv.status === 'sent').reduce((sum, inv) => sum + inv.total, 0) || 0;
-  const totalVencido = invoices?.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.total, 0) || 0;
+  const totalPorPagar = filteredInvoices.filter((invoice) => invoice.status === 'sent').reduce((sum, invoice) => sum + invoice.total, 0);
+  const totalVencido = filteredInvoices.filter((invoice) => invoice.status === 'overdue').reduce((sum, invoice) => sum + invoice.total, 0);
 
   return (
     <div>
@@ -239,7 +253,7 @@ const PortalInvoices = () => {
         <h1 className="text-2xl font-bold text-white">Mis Facturas</h1>
         {invoices && (
           <Badge variant="outline" className="text-tms-green border-tms-green">
-            {invoices.length} factura{invoices.length !== 1 ? 's' : ''}
+            {filteredInvoices.length} factura{filteredInvoices.length !== 1 ? 's' : ''}
           </Badge>
         )}
       </div>
@@ -257,10 +271,105 @@ const PortalInvoices = () => {
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-gray-400">Total Facturas</h3>
-            <p className="text-xl font-bold text-white">{invoices.length}</p>
+            <p className="text-xl font-bold text-white">{filteredInvoices.length}</p>
           </div>
         </div>
       )}
+
+      <div className="mb-6 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <h3 className="text-sm font-medium text-gray-300">Filtros:</h3>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Estado:</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-background text-left text-white">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="sent">Pendientes</SelectItem>
+                <SelectItem value="paid">Pagadas</SelectItem>
+                <SelectItem value="overdue">Vencidas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Desde:</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[140px] justify-start text-left font-normal",
+                    !dateFrom && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {dateFrom ? (
+                    format(dateFrom, 'dd/MM/yyyy', { locale: es })
+                  ) : (
+                    <span>Seleccionar</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  disabled={(date) => date > new Date() || (dateTo && date > dateTo)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Hasta:</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[140px] justify-start text-left font-normal",
+                    !dateTo && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 size-4" />
+                  {dateTo ? (
+                    format(dateTo, 'dd/MM/yyyy', { locale: es })
+                  ) : (
+                    <span>Seleccionar</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  disabled={(date) => date > new Date() || (dateFrom && date < dateFrom)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="text-gray-400 hover:text-white"
+            >
+              <X className="mr-1 size-4" />
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
+      </div>
 
       {renderContent()}
     </div>

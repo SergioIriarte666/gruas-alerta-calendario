@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 
-interface ClientInvoice {
+export interface ClientInvoice {
   id: string;
   folio: string;
   issue_date: string;

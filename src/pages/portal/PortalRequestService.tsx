@@ -19,6 +19,9 @@ const logger = createLogger("PortalRequestService");
 const PortalRequestService = () => {
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<PortalRequestServiceSchema>({
     resolver: zodResolver(portalRequestServiceSchema),
+    defaultValues: {
+      urgency: 'normal',
+    },
   });
   const { mutate: requestService, isPending } = useServiceRequest();
   const { serviceTypes, loading: loadingServiceTypes } = useServiceTypesForPortal();
@@ -111,6 +114,42 @@ const PortalRequestService = () => {
                 <div>
                   <Label htmlFor="observations" className="text-gray-300">Observaciones</Label>
                   <Textarea id="observations" {...register('observations')} className="bg-gray-700 border-gray-600 text-white" />
+                </div>
+                <div>
+                  <Label className="text-gray-300">Urgencia</Label>
+                  <div className="mt-1 flex gap-3">
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input type="radio" value="normal" {...register('urgency')} defaultChecked />
+                      <span className="text-sm text-gray-300">Normal</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input type="radio" value="urgent" {...register('urgency')} />
+                      <span className="text-sm text-red-400">Urgente</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="preferred_time" className="text-gray-300">
+                    Hora preferida <span className="text-muted-foreground text-sm">(Opcional)</span>
+                  </Label>
+                  <Input
+                    id="preferred_time"
+                    type="time"
+                    {...register('preferred_time')}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contact_phone" className="text-gray-300">
+                    Telefono de contacto <span className="text-muted-foreground text-sm">(Opcional)</span>
+                  </Label>
+                  <Input
+                    id="contact_phone"
+                    {...register('contact_phone')}
+                    placeholder="Ej: +56 9 1234 5678"
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                  {errors.contact_phone && <p className="text-red-500 text-sm mt-1">{errors.contact_phone.message}</p>}
                 </div>
               </div>
 

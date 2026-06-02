@@ -20,6 +20,7 @@ export interface ClientService {
   vehicle_brand?: string;
   vehicle_model?: string;
   license_plate?: string;
+  is_portal_request: boolean;
 }
 
 const fetchClientServices = async (clientId: string | undefined): Promise<ClientService[]> => {
@@ -72,6 +73,7 @@ const fetchClientServices = async (clientId: string | undefined): Promise<Client
       crane_license_plate: service.cranes?.license_plate || 'N/A',
       operator_name: service.operators?.name || 'N/A',
       service_type_name: service.service_types?.name || 'N/A',
+      is_portal_request: service.status === 'pending' && !service.cranes?.license_plate,
     }));
   } catch (error: any) {
     logger.error('Unexpected error in fetchClientServices:', error);

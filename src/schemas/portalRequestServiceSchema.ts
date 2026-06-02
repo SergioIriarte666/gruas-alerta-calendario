@@ -19,7 +19,12 @@ export const portalRequestServiceSchema = z.object({
   license_plate: z.string().optional(),
   vehicle_brand: z.string().optional(),
   vehicle_model: z.string().optional(),
-  
+
+  contact_phone: z.string()
+    .optional()
+    .refine((value) => !value || value.length >= 8, { message: 'Telefono debe tener al menos 8 digitos' }),
+  preferred_time: z.string().optional(),
+  urgency: z.enum(['normal', 'urgent']).default('normal'),
   observations: z.string().optional(),
 });
 
