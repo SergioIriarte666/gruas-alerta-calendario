@@ -25,22 +25,11 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-// Module-level cache to survive remounts
-let cachedProfile: UserProfile | null = null;
-let cachedForUserId: string | null = null;
-
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: authUser, loading: authLoading, signOut } = useAuth();
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    // Initialize from cache if available for the same user
-    if (authUser && cachedForUserId === authUser.id) return cachedProfile;
-    return null;
-  });
-  const [loading, setLoading] = useState(() => {
-    // If we have a cached profile for this user, skip loading
-    if (authUser && cachedForUserId === authUser.id && cachedProfile) return false;
-    return true;
-  });
+  const profileCacheRef = useRef<{ profile: UserProfile; userId: string } | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
 
   const fetchUserProfile = async (retryCount = 0) => {
@@ -50,14 +39,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Use cached profile if available
-    if (cachedForUserId === authUser.id && cachedProfile) {
-      setUser(cachedProfile);
+    if (profileCacheRef.current?.userId === authUser.id && profileCacheRef.current?.profile) {
+      setUser(profileCacheRef.current.profile);
       setLoading(false);
       return;
     }
 
     fetchingRef.current = true;
-    
+
     try {
       const { data: profileData, error } = await supabase
         .from('profiles')
@@ -67,7 +56,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('UserContext - Error fetching profile:', error);
-        
+
         if (error.code === 'PGRST116') {
           // Profile doesn't exist, create one
           const { data: newProfile, error: createError } = await supabase
@@ -99,8 +88,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               operator_id: null,
               operator_name: null,
             };
-            cachedProfile = userProfile;
-            cachedForUserId = authUser.id;
+            profileCacheRef.current = { profile: userProfile, userId: authUser.id };
             setUser(userProfile);
           }
         } else if (retryCount < 2) {
@@ -137,8 +125,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           operator_id,
           operator_name,
         };
-        cachedProfile = userProfile;
-        cachedForUserId = authUser.id;
+        profileCacheRef.current = { profile: userProfile, userId: authUser.id };
         setUser(userProfile);
       }
     } catch (error) {
@@ -158,7 +145,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const forceRefreshProfile = async () => {
     fetchingRef.current = false;
     // Don't set loading to true if we have cached data
-    if (!cachedProfile || cachedForUserId !== authUser?.id) {
+    if (!profileCacheRef.current?.profile || profileCacheRef.current?.userId !== authUser?.id) {
       setLoading(true);
     }
     await fetchUserProfile();
@@ -179,15 +166,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!error) {
       const updatedUser = { ...user, ...updates };
-      cachedProfile = updatedUser;
+      profileCacheRef.current = { profile: updatedUser, userId: user.id };
       setUser(updatedUser);
     }
   };
 
   const logout = async () => {
     try {
-      cachedProfile = null;
-      cachedForUserId = null;
+      profileCacheRef.current = null;
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -204,10 +190,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!authUser) {
-      cachedProfile = null;
-      cachedForUserId = null;
+      profileCacheRef.current = null;
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -215,22 +200,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // If we already have a cached profile for this user, use it immediately
-    if (cachedForUserId === authUser.id && cachedProfile) {
-      setUser(cachedProfile);
+    if (profileCacheRef.current?.userId === authUser.id && profileCacheRef.current?.profile) {
+      setUser(profileCacheRef.current.profile);
       setLoading(false);
       return;
     }
-    
+
     fetchUserProfile();
   }, [authUser, authLoading]);
 
   return (
-    <UserContext.Provider value={{ 
-      user, 
-      loading, 
-      logout, 
-      updateUser, 
-      forceRefreshProfile 
+    <UserContext.Provider value={{
+      user,
+      loading,
+      logout,
+      updateUser,
+      forceRefreshProfile
     }}>
       {children}
     </UserContext.Provider>

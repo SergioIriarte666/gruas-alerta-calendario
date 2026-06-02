@@ -19,13 +19,13 @@ export const runAuthDiagnostic = async () => {
   try {
     // 1. Check Supabase configuration
     console.log('1. Checking Supabase configuration...');
-    const supabaseUrl = 'https://jqszxljtfuknhuvuheko.supabase.co';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
     const currentUrl = window.location.origin;
     
     results.supabaseConfig = {
       url: supabaseUrl,
       currentOrigin: currentUrl,
-      urlMatch: supabaseUrl.includes('jqszxljtfuknhuvuheko')
+      urlMatch: supabaseUrl?.includes('supabase.co')
     };
 
     // 2. Check session status

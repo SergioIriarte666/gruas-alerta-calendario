@@ -4,12 +4,9 @@ import {
   sendWhatsAppTemplateBulk,
   normalizeChileanPhone,
 } from "../_shared/whatsapp.ts";
+import { corsHeaders as _cors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const corsHeaders = { ..._cors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 type AdminWhatsAppRequest = {
   event: string;

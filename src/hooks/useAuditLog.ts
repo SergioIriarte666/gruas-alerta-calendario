@@ -142,7 +142,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
   const { data: usersData } = useQuery({
     queryKey: ['audit-users'],
     queryFn: async (): Promise<AuditUser[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
         .order('full_name', { ascending: true })
@@ -169,7 +169,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
       const to = from + pageSize - 1;
 
       const [auditResult, serviceHistResult, backupResult, notifResult, activityResult] = await Promise.all([
-        (supabase as any)
+        supabase
           .from('audit_log')
           .select(
             'id, table_name, operation, timestamp, user_id, old_data, new_data, profiles:user_id (id, full_name, email)',
@@ -177,7 +177,7 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
           .order('timestamp', { ascending: false })
           .range(from, to),
 
-        (supabase as any)
+        supabase
           .from('service_change_history')
           .select(
             'id, service_id, service_folio, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)',
@@ -185,19 +185,19 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
           .order('changed_at', { ascending: false })
           .limit(200),
 
-        (supabase as any)
+        supabase
           .from('backup_logs')
           .select('id, created_at, backup_type, status, file_size_bytes')
           .order('created_at', { ascending: false })
           .limit(200),
 
-        (supabase as any)
+        supabase
           .from('notification_logs')
-          .select('id, created_at, type, status, recipient')
+          .select('id, created_at, type, status, user_id')
           .order('created_at', { ascending: false })
           .limit(200),
 
-        (supabase as any)
+        supabase
           .from('user_activity_log')
           .select('id, created_at, user_id, event_type, path, profiles:user_id (id, full_name, email)')
           .order('created_at', { ascending: false })
@@ -273,8 +273,8 @@ export function useAuditLog(filters: AuditFilters, page: number): UseAuditLogRes
         userEmail: null,
         userName: 'Sistema',
         oldData: null,
-        newData: { type: r.type, status: r.status, recipient: r.recipient },
-        changeSummary: `${r.type || 'Notificación'} → ${r.recipient || ''}`,
+        newData: { type: r.type, status: r.status, recipient: r.user_id },
+        changeSummary: `${r.type || 'Notificación'} → ${r.user_id || ''}`,
         source: 'notification_logs' as const,
       }));
 

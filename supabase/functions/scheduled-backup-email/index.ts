@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const DEFAULT_TZ = "America/Santiago";
 const BUCKET = "backups-auto";
@@ -148,6 +144,7 @@ function buildEmailHtml(opts: {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req, "authorization, x-client-info, apikey, content-type, x-cron-secret");
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const supabase = createClient(

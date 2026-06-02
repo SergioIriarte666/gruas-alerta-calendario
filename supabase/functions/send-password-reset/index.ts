@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 import { Resend } from "npm:resend@6";
+import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const PASSWORD_RESET_WINDOW_MINUTES = 15;
@@ -9,11 +10,6 @@ const PASSWORD_RESET_MAX_ATTEMPTS = 3;
 const PASSWORD_RESET_BLOCK_MINUTES = 30;
 const GENERIC_RESET_MESSAGE = "Si el email está registrado, recibirás un correo de recuperación.";
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {

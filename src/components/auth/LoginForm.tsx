@@ -3,19 +3,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldAlert } from 'lucide-react';
+
 interface LoginFormProps {
   email: string;
   password: string;
   loading: boolean;
+  isBlocked: boolean;
+  remainingSeconds: number;
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onForgotPassword?: () => void;
 }
+
 export const LoginForm: React.FC<LoginFormProps> = ({
   email,
   password,
   loading,
+  isBlocked,
+  remainingSeconds,
   setEmail,
   setPassword,
   onSubmit,
@@ -47,9 +54,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               </button>
             </div>
           )}
-          <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-            {loading ? 'Ingresando...' : 'Ingresar'}
+          <Button type="submit" disabled={loading || isBlocked} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+            {isBlocked ? `Espera ${remainingSeconds}s...` : loading ? 'Ingresando...' : 'Ingresar'}
           </Button>
+          {isBlocked && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5">
+              <ShieldAlert className="mt-0.5 size-4 shrink-0 text-red-400" />
+              <p className="text-sm text-red-300">
+                Demasiados intentos fallidos. Podrás intentarlo de nuevo en{' '}
+                <span className="font-semibold">{remainingSeconds} segundos</span>.
+              </p>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>;

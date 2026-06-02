@@ -12,6 +12,7 @@ import { RegisterForm } from '@/components/auth/RegisterForm';
 import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { validatePassword } from '@/utils/passwordValidation';
+import { useLoginRateLimit } from '@/hooks/useLoginRateLimit';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles } from 'lucide-react';
 
@@ -34,6 +35,7 @@ const Auth = () => {
   
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
+  const { isBlocked, remainingSeconds, recordFailedAttempt, resetAttempts } = useLoginRateLimit();
   const navigate = useNavigate();
 
   // Check if user needs to set password (invited user who just clicked the link)
@@ -107,47 +109,56 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    
+
+    if (isBlocked) {
+      toast.error(`Demasiados intentos fallidos. Espera ${remainingSeconds} segundos para intentarlo de nuevo.`);
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
       console.log('🔑 Auth: Starting login for:', email);
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password
       });
-      
+
       console.log('🔑 Auth: Login response:', { data: !!data, error: !!error });
-      
+
       if (error) {
         console.error('🚨 Auth: Login error:', error);
-        
+
+        recordFailedAttempt();
+
         // Generic error messages to prevent account enumeration
         let errorMessage = 'Credenciales inválidas';
-        
+
         if (error.message.includes('Too many requests')) {
           errorMessage = 'Demasiados intentos. Espera unos minutos.';
         } else if (error.message.includes('fetch') || error.message.includes('network')) {
           errorMessage = 'Error de conexión. Verifica tu internet.';
         }
-        
+
         toast.error(errorMessage);
       } else if (data?.user) {
         console.log('✅ Auth: Login successful for user:', data.user.email);
+        resetAttempts();
         toast.success('¡Inicio de sesión exitoso!');
         // La redirección se maneja en el useEffect
       }
     } catch (error: any) {
       console.error('🚨 Auth: Critical login error:', error);
-      
+
+      // Network/CORS errors are not credential failures — don't penalize the counter
       let errorMessage = 'Error de conexión';
       if (error.message?.includes('fetch') || error.message?.includes('network')) {
         errorMessage = 'No se puede conectar al servidor. Verifica tu internet.';
       } else if (error.message?.includes('CORS')) {
         errorMessage = 'Error de configuración del servidor.';
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -279,6 +290,8 @@ const Auth = () => {
             email={email}
             password={password}
             loading={loading}
+            isBlocked={isBlocked}
+            remainingSeconds={remainingSeconds}
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleLogin}

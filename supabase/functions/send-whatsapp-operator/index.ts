@@ -1,11 +1,8 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
 import { normalizeChileanPhone, sendWhatsAppTemplate } from "../_shared/whatsapp.ts";
+import { corsHeaders as _cors } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const corsHeaders = { ..._cors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 const MONTHS_ES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",

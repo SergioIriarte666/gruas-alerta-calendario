@@ -1,9 +1,5 @@
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from "../_shared/cors.ts";
 const allowedRoles = ['admin', 'viewer'] as const;
 
 const SRE_API_URL = "https://sre.cl/api/company_info";

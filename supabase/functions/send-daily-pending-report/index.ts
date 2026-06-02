@@ -4,16 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import jsPDFModule from "jspdf";
 import autoTableModule from "jspdf-autotable";
+import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
 
 // Handle both ESM default export and CJS module.exports
 const jsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default?.jsPDF || jsPDFModule;
 const autoTable = (typeof autoTableModule === 'function' ? autoTableModule : (autoTableModule as any).default) as any;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 // ──── SAFE DATE-ONLY HELPERS (same logic as frontend timezoneUtils) ────
 

@@ -42,7 +42,15 @@ export type Database = {
           timestamp?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       backup_email_config: {
         Row: {
@@ -5220,6 +5228,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
+      user_activity_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          path?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
