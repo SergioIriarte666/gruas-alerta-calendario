@@ -1,6 +1,3 @@
-import { createLogger } from "@/lib/logger";
-
-const logger = createLogger("logger");
 /**
  * Smart logging system that only works in development
  * Replaces all console.logs for better performance in production
@@ -41,14 +38,14 @@ class Logger {
   }
 
   private formatMessage(level: LogLevel, message: string, ...args: any[]): [string, ...any[]] {
-    const timestamp = new Date().toISOString().substr(11, 12);
+    const timestamp = new Date().toISOString().slice(11, 23);
     const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.moduleName}]`;
     return [`${prefix} ${message}`, ...args];
   }
 
   debug(message: string, ...args: any[]): void {
     if (this.shouldLog('debug')) {
-      logger.debug(...this.formatMessage('debug', message, ...args));
+      console.debug(...this.formatMessage('debug', message, ...args));
     }
   }
 
@@ -60,13 +57,13 @@ class Logger {
 
   warn(message: string, ...args: any[]): void {
     if (this.shouldLog('warn')) {
-      logger.warn(...this.formatMessage('warn', message, ...args));
+      console.warn(...this.formatMessage('warn', message, ...args));
     }
   }
 
   error(message: string, ...args: any[]): void {
     if (this.shouldLog('error')) {
-      logger.error(...this.formatMessage('error', message, ...args));
+      console.error(...this.formatMessage('error', message, ...args));
     }
   }
 
