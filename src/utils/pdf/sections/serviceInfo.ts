@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { createLogger } from "@/lib/logger";
 
 
@@ -30,9 +31,8 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
       '3/4': '3/4 (75%)', 'full': 'Lleno (100%)',
     };
 
-    const vehiculo = [data.service.vehicleBrand, data.service.vehicleModel]
-      .filter(Boolean).join(' ') || 'N/A';
-    const patente = data.service.licensePlate || 'S/P';
+    const vehiculo = formatVehicleInfo(data.service);
+    const patente = shouldShowVehicleInfo(data.service) ? data.service.licensePlate || 'S/P' : 'S/P';
 
     const leftData = [
       ['Cliente', data.service.client?.name || 'N/A'],

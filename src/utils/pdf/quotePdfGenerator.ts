@@ -4,6 +4,7 @@ import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
 import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
 
 const VIOLET: [number, number, number] = [139, 92, 246];
@@ -107,8 +108,8 @@ export const generateQuotePDF = async (
   // Detalle del servicio
   const serviceRows: [string, string][] = [
     ['Tipo de Servicio', service.serviceType?.name || '—'],
-    ['Vehículo', `${service.vehicleBrand || ''} ${service.vehicleModel || ''}`.trim() || '—'],
-    ['Patente', service.licensePlate || '—'],
+    ['Vehículo', formatVehicleInfo(service)],
+    ['Patente', shouldShowVehicleInfo(service) ? service.licensePlate || '—' : '—'],
     ['Origen', service.origin || '—'],
     ['Destino', service.destination || '—'],
     ['Fecha estimada', service.serviceDate ? formatForDisplay(service.serviceDate) : '—'],

@@ -4,6 +4,7 @@ import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
 
 const VIOLET: [number, number, number] = [139, 92, 246];
@@ -83,8 +84,8 @@ export const generateWorkOrderPDF = async (
     startY: y,
     head: [['Vehículo a Asistir', '']],
     body: [
-      ['Marca / Modelo', `${service.vehicleBrand || ''} ${service.vehicleModel || ''}`.trim() || '—'],
-      ['Patente', service.licensePlate || '—'],
+      ['Vehículo', formatVehicleInfo(service)],
+      ['Patente', shouldShowVehicleInfo(service) ? service.licensePlate || '—' : '—'],
     ],
     theme: 'grid',
     headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },

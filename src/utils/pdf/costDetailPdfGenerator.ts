@@ -6,6 +6,7 @@ import { Cost } from '@/types/costs';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { getCreatorDisplayName } from '@/types/common';
 
 const formatCLP = (n: number) =>
@@ -105,9 +106,10 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
     if ((cost.services as any).clients?.name) assocRows.push(['Cliente', (cost.services as any).clients.name]);
     if ((cost.services as any).request_date) assocRows.push(['Fecha Solicitud', fmtDate((cost.services as any).request_date)]);
     if ((cost.services as any).service_date) assocRows.push(['Fecha Servicio', fmtDate((cost.services as any).service_date)]);
-    if ((cost.services as any).vehicle_brand || (cost.services as any).vehicle_model)
-      assocRows.push(['Vehículo', `${(cost.services as any).vehicle_brand || ''} ${(cost.services as any).vehicle_model || ''}`.trim()]);
-    if ((cost.services as any).license_plate) assocRows.push(['Patente', (cost.services as any).license_plate]);
+    assocRows.push(['Vehículo', formatVehicleInfo(cost.services as any)]);
+    if (shouldShowVehicleInfo(cost.services as any) && (cost.services as any).license_plate) {
+      assocRows.push(['Patente', (cost.services as any).license_plate]);
+    }
     if ((cost.services as any).origin) assocRows.push(['Origen', (cost.services as any).origin]);
     if ((cost.services as any).destination) assocRows.push(['Destino', (cost.services as any).destination]);
     if ((cost.services as any).purchase_order) assocRows.push(['Orden de Compra', (cost.services as any).purchase_order]);
