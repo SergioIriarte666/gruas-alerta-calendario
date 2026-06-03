@@ -14,6 +14,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { costSchema, CostFormValues } from '@/schemas/costSchema';
 import { ServiceExpenseModals } from './ServiceExpenseModals';
+import { ManualCostXmlImportDialog } from './ManualCostXmlImportDialog';
 import { CostFormStepNavigation, getCostFormSteps, CostFormStep } from './form/CostFormStepNavigation';
 import { CostSummaryPanel } from './form/CostSummaryPanel';
 import { CostFormStep1 } from './form/CostFormStep1';
@@ -23,7 +24,7 @@ import { CostFormStep4 } from './form/CostFormStep4';
 import { toast } from 'sonner';
 import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Loader2, FileUp } from 'lucide-react';
 import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
@@ -53,6 +54,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     
     const [currentStep, setCurrentStep] = useState(1);
     const [showServiceExpenseModals, setShowServiceExpenseModals] = useState(false);
+    const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [calculatedServiceTotal, setCalculatedServiceTotal] = useState(0);
     const [receiptUrls, setReceiptUrls] = useState<string[]>([]);
     
@@ -694,18 +696,40 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                     <div className="flex flex-col h-full max-h-[90vh]">
                         {/* Header */}
                         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
-                            <DialogTitle className="text-2xl font-bold text-foreground">
-                                {cost ? 'Editar Costo' : isQuickEntryPrefill ? 'Completar Registro Rápido' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
-                            </DialogTitle>
-                            <p className="text-muted-foreground">
-                                {cost
-                                    ? 'Modifica los datos del costo existente'
-                                    : isQuickEntryPrefill
-                                    ? 'Se ha pre-cargado la información del registro rápido.'
-                                    : prefilledData
-                                    ? 'Se ha pre-cargado la información del costo original.'
-                                    : 'Completa la información del nuevo costo'}
-                            </p>
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                                <div>
+                                    <DialogTitle className="text-2xl font-bold text-foreground">
+                                        {cost ? 'Editar Costo' : isQuickEntryPrefill ? 'Completar Registro Rápido' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
+                                    </DialogTitle>
+                                    <p className="text-muted-foreground">
+                                        {cost
+                                            ? 'Modifica los datos del costo existente'
+                                            : isQuickEntryPrefill
+                                            ? 'Se ha pre-cargado la información del registro rápido.'
+                                            : prefilledData
+                                            ? 'Se ha pre-cargado la información del costo original.'
+                                            : 'Completa la información del nuevo costo'}
+                                    </p>
+                                    {cost && form.formState.isDirty ? (
+                                        <p className="mt-1 text-xs text-warning">
+                                            Guarda o descarta los cambios del formulario antes de importar un XML manualmente.
+                                        </p>
+                                    ) : null}
+                                </div>
+
+                                {cost ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={() => setIsManualXmlImportOpen(true)}
+                                        disabled={form.formState.isDirty}
+                                    >
+                                        <FileUp className="size-4" />
+                                        Importar XML manual
+                                    </Button>
+                                ) : null}
+                            </div>
                         </DialogHeader>
 
                         {/* Main Content - 2 Column Layout */}
@@ -828,6 +852,18 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {cost ? (
+                <ManualCostXmlImportDialog
+                    open={isManualXmlImportOpen}
+                    onOpenChange={setIsManualXmlImportOpen}
+                    cost={cost}
+                    onImported={() => {
+                        setIsManualXmlImportOpen(false);
+                        onClose();
+                    }}
+                />
+            ) : null}
 
             <ServiceExpenseModals
                 isOpen={showServiceExpenseModals}

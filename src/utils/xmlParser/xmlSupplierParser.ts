@@ -654,24 +654,29 @@ export class XMLSupplierParser {
 
   private formatDate(dateString: string): string {
     if (!dateString) return '';
+
+    const trimmed = dateString.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
     
     // Intentar parsear diferentes formatos de fecha
     let date: Date;
     
-    if (dateString.includes('-')) {
-      date = new Date(dateString);
-    } else if (dateString.length === 8) {
+    if (trimmed.includes('-')) {
+      date = new Date(trimmed);
+    } else if (trimmed.length === 8) {
       // Formato YYYYMMDD
-      const year = dateString.substring(0, 4);
-      const month = dateString.substring(4, 6);
-      const day = dateString.substring(6, 8);
+      const year = trimmed.substring(0, 4);
+      const month = trimmed.substring(4, 6);
+      const day = trimmed.substring(6, 8);
       date = new Date(`${year}-${month}-${day}`);
     } else {
-      date = new Date(dateString);
+      date = new Date(trimmed);
     }
     
     if (isNaN(date.getTime())) {
-      return dateString; // Retornar el original si no se puede parsear
+      return trimmed; // Retornar el original si no se puede parsear
     }
     
     return toLocalDateString(date); // Formato YYYY-MM-DD
