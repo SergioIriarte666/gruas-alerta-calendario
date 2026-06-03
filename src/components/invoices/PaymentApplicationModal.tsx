@@ -148,7 +148,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-auto border-border/70 bg-card p-0">
+        <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-auto border-border/70 bg-card p-0">
           <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
             <div className="flex items-start justify-between gap-4">
               <div>

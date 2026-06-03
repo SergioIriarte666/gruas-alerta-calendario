@@ -538,7 +538,7 @@ const ReportsPage = () => {
         className="border-border/70 bg-card/80 shadow-sm"
         contentClassName="space-y-4 p-4"
       >
-      <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 overflow-x-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

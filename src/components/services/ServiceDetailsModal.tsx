@@ -338,7 +338,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex h-[90vh] max-w-4xl flex-col border-border/70 bg-card p-0">
+      <DialogContent className="flex h-[90vh] max-w-4xl w-[95vw] flex-col border-border/70 bg-card p-0">
         <DialogHeader className="flex flex-shrink-0 flex-col gap-3 border-b border-border/70 px-6 pb-4 pt-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -420,7 +420,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
         <ScrollArea className="flex-1 px-6">
           <Tabs defaultValue="general" className="w-full py-6">
-            <TabsList className="mb-6 grid w-full grid-cols-5 border border-border/70 bg-muted/30">
+            <TabsList className="mb-6 grid w-full grid-cols-3 sm:grid-cols-5 border border-border/70 bg-muted/30">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               <TabsTrigger value="costs">Costos</TabsTrigger>

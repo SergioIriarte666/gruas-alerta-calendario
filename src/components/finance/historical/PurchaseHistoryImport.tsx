@@ -1175,7 +1175,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={`max-w-4xl overflow-hidden flex flex-col ${step === 'preview' ? 'h-[85vh]' : 'max-h-[90vh]'}`}>
+      <DialogContent className={`max-w-4xl w-[95vw] overflow-hidden flex flex-col ${step === 'preview' ? 'h-[85vh]' : 'max-h-[90vh]'}`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5" />
@@ -1826,7 +1826,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     {/* Bulk Assign Dialog */}
     <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[min(95vw,28rem)]">
         <DialogHeader>
           <DialogTitle>Asignar Proveedor Existente</DialogTitle>
         </DialogHeader>

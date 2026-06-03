@@ -46,6 +46,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
         <>
         <Card className="border-border/70 bg-card/80 shadow-sm">
             <CardContent className="p-0">
+                <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow className="border-border/70 hover:bg-transparent">
@@ -131,6 +132,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                         )}
                     </TableBody>
                 </Table>
+                </div>
             </CardContent>
         </Card>
         <AlertDialog open={!!costToDelete} onOpenChange={(open) => !open && setCostToDelete(null)}>

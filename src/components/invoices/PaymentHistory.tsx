@@ -231,6 +231,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                   <CardTitle className="text-foreground">Historial de Facturas</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -261,6 +262,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -271,6 +273,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                   <CardTitle className="text-foreground">Historial de Pagos</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -318,6 +321,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

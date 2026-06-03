@@ -314,29 +314,110 @@ export const useAddCost = () => {
 
 const updateCost = async ({ id, ...costData }: { id: string } & any) => {
   logger.debug('[useCosts - updateCost] Attempting to update cost:', id, costData);
-  
+
   // Separar campos de costs y campos de crane_parts
   const { part_name, supplier, supplier_phone, quantity, unit_price, kilometraje, ...validCostData } = costData;
-  
+
   // Actualizar el costo
   const { data, error } = await supabase
     .from('costs')
     .update(validCostData)
     .eq('id', id)
-    .select();
+    .select()
+    .single();
 
   if (error) {
     logger.error(`[useCosts - updateCost] Supabase error for ID ${id}:`, error);
     throw new Error(error.message);
   }
-  
-  if (!data || data.length === 0) {
+
+  if (!data) {
     logger.error('[useCosts - updateCost] No data returned from update');
     throw new Error('No se pudo actualizar el costo - sin datos devueltos');
   }
 
+  // Propagar descripción y monto a supplier_invoice si está vinculada
+  if (data.supplier_invoice_id && (validCostData.description !== undefined || validCostData.amount !== undefined)) {
+    const invoiceUpdate: Record<string, any> = {};
+    if (validCostData.description !== undefined) {
+      invoiceUpdate.description = validCostData.description;
+      invoiceUpdate.product_service_description = validCostData.description;
+    }
+    if (validCostData.amount !== undefined) {
+      invoiceUpdate.amount = validCostData.amount;
+    }
+    const { error: invoiceError } = await supabase
+      .from('supplier_invoices')
+      .update(invoiceUpdate)
+      .eq('id', data.supplier_invoice_id);
+    if (invoiceError) {
+      logger.warn('[useCosts - updateCost] Could not sync supplier_invoice:', invoiceError.message);
+    } else {
+      logger.debug('[useCosts - updateCost] supplier_invoice synced:', data.supplier_invoice_id);
+    }
+  }
+
+  // Propagar descripción a supplier_payment si está vinculado
+  if (data.supplier_payment_id && validCostData.description !== undefined) {
+    const { error: paymentError } = await supabase
+      .from('supplier_payments')
+      .update({ description: validCostData.description })
+      .eq('id', data.supplier_payment_id);
+    if (paymentError) {
+      logger.warn('[useCosts - updateCost] Could not sync supplier_payment description:', paymentError.message);
+    }
+  }
+
+  // Propagar descripción a inventory_movement si está vinculado
+  if (data.inventory_movement_id && validCostData.description !== undefined) {
+    const { error: movementError } = await supabase
+      .from('inventory_movements')
+      .update({ notes: validCostData.description })
+      .eq('id', data.inventory_movement_id);
+    if (movementError) {
+      logger.warn('[useCosts - updateCost] Could not sync inventory_movement notes:', movementError.message);
+    }
+  }
+
+  // Propagar cambios a crane_parts si el costo tiene registros vinculados
+  const cranePartsUpdate: Record<string, any> = {};
+  if (validCostData.description !== undefined) {
+    cranePartsUpdate.part_name = validCostData.description;
+  }
+  if (validCostData.amount !== undefined && validCostData.purchase_quantity) {
+    cranePartsUpdate.unit_price = validCostData.amount / validCostData.purchase_quantity;
+  }
+  if (validCostData.date !== undefined) {
+    cranePartsUpdate.date = validCostData.date;
+  }
+  if (validCostData.supplier_id !== undefined) {
+    cranePartsUpdate.supplier_id = validCostData.supplier_id;
+  }
+
+  if (Object.keys(cranePartsUpdate).length > 0) {
+    const { error: cranePartsError } = await supabase
+      .from('crane_parts')
+      .update(cranePartsUpdate)
+      .eq('cost_id', id);
+    if (cranePartsError) {
+      logger.warn('[useCosts - updateCost] Could not sync crane_parts by cost_id:', cranePartsError.message);
+    } else {
+      logger.debug('[useCosts - updateCost] crane_parts synced for cost_id:', id);
+    }
+
+    if (data.inventory_movement_id) {
+      const { error: cranePartsByMovementError } = await supabase
+        .from('crane_parts')
+        .update(cranePartsUpdate)
+        .eq('inventory_movement_id', data.inventory_movement_id);
+      if (cranePartsByMovementError) {
+        logger.warn('[useCosts - updateCost] Could not sync crane_parts by movement_id:', cranePartsByMovementError.message);
+      }
+    }
+  }
+
   logger.debug('[useCosts - updateCost] Cost updated successfully:', data);
-  return data;
+  return [data];
 };
 
 export const useUpdateCost = () => {
@@ -348,12 +429,30 @@ export const useUpdateCost = () => {
     mutationFn: updateCost,
     onSuccess: (data) => {
       logger.debug('[useUpdateCost] Mutation success with data:', data);
-      
+
       // FASE 5: Invalidar todas las queries relacionadas
       invalidateAll();
-      
-      if (data?.[0]?.service_id) {
-        queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
+
+      const updatedRecord = Array.isArray(data) ? data[0] : data;
+      if (updatedRecord?.service_id) {
+        queryClient.invalidateQueries({ queryKey: ['service-costs', updatedRecord.service_id] });
+      }
+
+      const hasLinkedRecords =
+        updatedRecord?.supplier_invoice_id ||
+        updatedRecord?.supplier_payment_id ||
+        updatedRecord?.inventory_movement_id;
+
+      if (hasLinkedRecords) {
+        const linked: string[] = [];
+        if (updatedRecord?.supplier_invoice_id) linked.push('factura de proveedor');
+        if (updatedRecord?.supplier_payment_id) linked.push('pago');
+        if (updatedRecord?.inventory_movement_id) linked.push('bodega');
+        if (updatedRecord?.crane_id || updatedRecord?.inventory_movement_id) linked.push('grúa');
+
+        toast.info('Costo actualizado', {
+          description: `Cambios propagados a: ${linked.join(', ')}.`,
+        });
       }
     },
     onError: createMutationErrorHandler({

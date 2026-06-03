@@ -95,7 +95,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
+      <DialogContent className="max-w-2xl w-[95vw] bg-gray-900 border-gray-700">
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="size-5 text-blue-400" />

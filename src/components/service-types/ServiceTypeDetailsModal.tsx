@@ -57,7 +57,7 @@ export function ServiceTypeDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-3xl w-[95vw] h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-2 border-b border-border flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             {serviceType.name}

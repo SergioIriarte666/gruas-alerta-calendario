@@ -22,6 +22,7 @@ interface CostFormStep2Props {
   form: UseFormReturn<CostFormValues>;
   categories: CostCategory[];
   isNewCost?: boolean;
+  isInventorySynced?: boolean;
   onServiceExpenseSelect?: () => void;
   calculatedServiceTotal?: number;
 }
@@ -30,6 +31,7 @@ export const CostFormStep2 = ({
   form,
   categories,
   isNewCost = false,
+  isInventorySynced = false,
   onServiceExpenseSelect,
   calculatedServiceTotal = 0,
 }: CostFormStep2Props) => {
@@ -136,7 +138,14 @@ export const CostFormStep2 = ({
 
       {/* Campos de Inventario */}
       {isInventario && (
-        <InventoryPurchaseFields form={form} />
+        <InventoryPurchaseFields
+          form={form}
+          disabled={isInventorySynced}
+          disabledReason={isInventorySynced
+            ? 'Este costo ya tiene un movimiento de bodega registrado. Para modificar la cantidad o precio, edita directamente el movimiento en el módulo de Inventario.'
+            : undefined
+          }
+        />
       )}
 
       {/* Subcategorías */}

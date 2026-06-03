@@ -6,7 +6,6 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
-import { openDownloadWindow } from '@/utils/reports/downloadWindow';
 import { toast } from 'sonner';
 import { ReportFilters, ReportMetrics } from '@/hooks/useReports';
 
@@ -66,15 +65,12 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
   };
 
   const handleExportServiceReport = async (format: 'pdf' | 'excel') => {
-    const downloadWindow = openDownloadWindow();
-
     toast.info('Generando informe...', {
       description: 'Tu informe de servicios se está procesando y la descarga comenzará en breve.',
     });
     try {
       await generateServiceReport({
         format,
-        downloadWindow,
         filters: {
           dateFrom: serviceReportFilters.dateRange.from,
           dateTo: serviceReportFilters.dateRange.to,
@@ -82,7 +78,6 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
         }
       });
     } catch (error) {
-      downloadWindow?.close();
       toast.error('Error al generar informe', {
         description: 'Hubo un problema al generar el informe. Inténtalo de nuevo.',
       });

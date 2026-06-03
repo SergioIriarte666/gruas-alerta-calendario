@@ -4,7 +4,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2 } from 'lucide-react';
+import { AlertCircle, Building2 } from 'lucide-react';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Crane, Operator, Service } from '@/types';
 import { ServiceSelector } from './ServiceSelector';
@@ -20,6 +20,7 @@ interface CostFormStep3Props {
   isLoadingOperators: boolean;
   services: Service[];
   isLoadingServices: boolean;
+  hasCraneParts?: boolean;
 }
 
 export const CostFormStep3 = ({
@@ -30,6 +31,7 @@ export const CostFormStep3 = ({
   isLoadingOperators,
   services,
   isLoadingServices,
+  hasCraneParts = false,
 }: CostFormStep3Props) => {
   const { data: costCenters = [] } = useCostCenters();
 
@@ -51,7 +53,7 @@ export const CostFormStep3 = ({
                 <Select
                   onValueChange={field.onChange}
                   value={field.value ?? 'none'}
-                  disabled={isLoadingCranes}
+                  disabled={isLoadingCranes || hasCraneParts}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -65,6 +67,12 @@ export const CostFormStep3 = ({
                     ))}
                   </SelectContent>
                 </Select>
+                {hasCraneParts && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <AlertCircle className="size-3" />
+                    La grúa no puede cambiarse porque este costo tiene piezas registradas. Para reasignar, edita directamente en el módulo de Grúas.
+                  </p>
+                )}
               </FormItem>
             )} />
 

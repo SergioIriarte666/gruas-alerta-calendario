@@ -711,6 +711,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               No hay pagos registrados
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -788,6 +789,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -852,7 +854,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       )}
 
       <Dialog open={showHistoricalBackfill} onOpenChange={setShowHistoricalBackfill}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Backfill histórico (cierre → factura → conciliación)</DialogTitle>
           </DialogHeader>

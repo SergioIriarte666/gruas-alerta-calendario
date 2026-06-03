@@ -55,7 +55,7 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Filtros Avanzados</DialogTitle>
         </DialogHeader>

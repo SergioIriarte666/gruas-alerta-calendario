@@ -18,9 +18,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface InventoryPurchaseFieldsProps {
   form: UseFormReturn<CostFormValues>;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
-export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) => {
+export const InventoryPurchaseFields = ({ form, disabled = false, disabledReason }: InventoryPurchaseFieldsProps) => {
   const quantity = form.watch('purchase_quantity') as number | undefined;
   const unitCost = form.watch('purchase_unit_cost') as number | undefined;
   const immediateConsumption = form.watch('immediate_consumption');
@@ -43,6 +45,12 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {disabled && disabledReason && (
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription className="text-xs">{disabledReason}</AlertDescription>
+          </Alert>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField 
             name="purchase_quantity" 
@@ -54,15 +62,16 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
                   Cantidad *
                 </Label>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    min="1" 
+                  <Input
+                    type="number"
+                    min="1"
                     step="1"
-                    {...field} 
-                    value={field.value || ''} 
+                    {...field}
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                     placeholder="1"
                     className="bg-background"
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage />
@@ -80,15 +89,16 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
                   Precio Unitario *
                 </Label>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    min="0" 
-                    {...field} 
-                    value={field.value || ''} 
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    {...field}
+                    value={field.value || ''}
                     onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
                     placeholder="0.00"
                     className="bg-background"
+                    disabled={disabled}
                   />
                 </FormControl>
                 <FormMessage />

@@ -184,7 +184,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card">
+      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-y-auto border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
@@ -221,7 +221,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 border border-border/70 bg-muted/30">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 border border-border/70 bg-muted/30">
             <TabsTrigger value="general">Información General</TabsTrigger>
             <TabsTrigger value="details">Detalles</TabsTrigger>
             <TabsTrigger value="associations">Asociaciones</TabsTrigger>

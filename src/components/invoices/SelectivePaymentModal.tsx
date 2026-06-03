@@ -130,7 +130,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden border-border/70 bg-card p-0">
+        <DialogContent className="flex max-h-[90vh] max-w-4xl w-[95vw] flex-col overflow-hidden border-border/70 bg-card p-0">
           <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <DollarSign className="size-5 text-primary" />

@@ -252,7 +252,7 @@ export const ManualCostXmlImportDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+        <DialogContent className="max-h-[92vh] max-w-5xl w-[95vw] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileUp className="size-5 text-primary" />
@@ -273,14 +273,14 @@ export const ManualCostXmlImportDialog = ({
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Costo seleccionado</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-3">
+              <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoLine label="Descripción" value={cost.description} />
                 <InfoLine label="Fecha costo" value={format(new Date(`${cost.date}T00:00:00`), 'dd MMM yyyy', { locale: es })} />
                 <InfoLine label="Monto actual" value={formatCurrency(Number(cost.amount || 0))} />
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-[1.15fr_0.85fr]">
               <div className="space-y-4">
                 <XMLDropzoneArea
                   selectedFile={selectedFile}

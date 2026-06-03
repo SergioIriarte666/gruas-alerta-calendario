@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SimpleExitForm } from '@/components/inventory/SimpleExitForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,12 +11,12 @@ import { es } from 'date-fns/locale';
 import { Crane } from '@/types';
 import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import {
   useCranePartChangeHistory,
   useInventoryMovementChangeHistory,
 } from '@/hooks/useChangeHistory';
+import { cn } from '@/lib/utils';
 
 interface CranePartsProps {
   crane: Crane;
@@ -26,6 +25,7 @@ interface CranePartsProps {
 export const CraneParts = ({ crane }: CranePartsProps) => {
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [historyTarget, setHistoryTarget] = useState<{ movementId: string; cranePartId: string | null; itemName: string } | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'month' | '3months'>('all');
   const queryClient = useQueryClient();
 
   const getFirstRelationRow = (value: any) => {
@@ -137,6 +137,33 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const recentCount = consumptions.filter((m: any) => m.movement_date && new Date(m.movement_date) >= thirtyDaysAgo).length;
 
+  const filteredConsumptions = consumptions.filter((m: any) => {
+    if (activeFilter === 'all') return true;
+    if (!m.movement_date) return false;
+    const date = new Date(m.movement_date);
+    const now = new Date();
+    if (activeFilter === 'month') {
+      return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+    }
+    if (activeFilter === '3months') {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      return date >= threeMonthsAgo;
+    }
+    return true;
+  });
+
+  const groupedByMonth = filteredConsumptions.reduce((acc: Record<string, any[]>, m: any) => {
+    const key = m.movement_date
+      ? format(new Date(m.movement_date), 'MMMM yyyy', { locale: es })
+      : 'Sin fecha';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(m);
+    return acc;
+  }, {});
+
+  const monthGroups = Object.entries(groupedByMonth);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -146,21 +173,9 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
         <MetricCard title="Últimos 30 días" value={recentCount} icon={Clock} tone="warning" />
       </div>
 
-      {/* Header with Add Button */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">Consumos de Inventario</h3>
-          <p className="text-muted-foreground">Registro de consumos para la grúa {crane.licensePlate}</p>
-        </div>
-        <Button onClick={() => setIsExitOpen(true)}>
-          <Plus className="size-4 mr-2" />
-          Registrar Consumo
-        </Button>
-      </div>
-
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Cargando consumos...</div>
+        <div className="flex items-center justify-center py-8 text-muted-foreground">
+          Cargando consumos...
         </div>
       ) : consumptions.length === 0 ? (
         <SectionCard className="border-border" contentClassName="py-12">
@@ -177,52 +192,139 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           </div>
         </SectionCard>
       ) : (
-        <div className="space-y-4">
-          {consumptions.map((m: any) => (
-            <Card key={m.id} className="group cursor-pointer border-border bg-card transition-all hover:border-primary/30 hover:shadow-md" onClick={() => setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' })}>
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1 gap-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-foreground">{(m.inventory_items as any)?.name || 'Producto'}</h4>
-                        <div className="flex items-center gap-4 mt-2">
-                          <StatusBadge tone="overdue">
-                            -{m.quantity} {(m.inventory_items as any)?.unit_of_measure || 'unidad'}
-                          </StatusBadge>
-                          <span className="text-sm text-muted-foreground">
-                            Unitario: ${formatInt(getDisplayUnitCost(m))}
-                          </span>
-                          <span className="text-sm font-medium text-danger">
-                            -{formatInt(getDisplayTotalCost(m))}
-                          </span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); setHistoryTarget({ movementId: m.id, cranePartId: getFirstRelationRow(m.crane_part)?.id || null, itemName: (m.inventory_items as any)?.name || 'Producto' }); }}>
-                        <History className="size-4 mr-1" />
-                        Historial
-                      </Button>
+        <>
+          {/* Controles: filtros + botón */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {(['all', 'month', '3months'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActiveFilter(f)}
+                  className={cn(
+                    'rounded-full border px-3 py-1 text-xs transition-colors',
+                    activeFilter === f
+                      ? 'border-primary/40 bg-primary/10 text-primary font-medium'
+                      : 'border-border bg-card text-muted-foreground hover:border-primary/20 hover:text-foreground'
+                  )}
+                >
+                  {f === 'all' ? 'Todo' : f === 'month' ? 'Este mes' : '3 meses'}
+                </button>
+              ))}
+            </div>
+            <Button onClick={() => setIsExitOpen(true)} size="sm">
+              <Plus className="size-4 mr-1.5" />
+              Registrar Consumo
+            </Button>
+          </div>
+
+          {/* Timeline */}
+          {filteredConsumptions.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No hay consumos para el período seleccionado.
+            </div>
+          ) : (
+            <div className="relative pl-6">
+              {/* Línea vertical del timeline */}
+              <div className="absolute left-[7px] top-0 bottom-0 w-px bg-border" />
+
+              {monthGroups.map(([month, items]) => {
+                const monthTotal = items.reduce((sum: number, m: any) => sum + getDisplayTotalCost(m), 0);
+                const monthCount = items.length;
+
+                return (
+                  <div key={month} className="mb-6">
+                    {/* Separador de mes */}
+                    <div className="relative mb-3 flex items-center gap-3">
+                      <div className="absolute -left-6 flex size-3.5 items-center justify-center rounded-full border-2 border-border bg-background" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {month}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {monthCount} consumo{monthCount !== 1 ? 's' : ''}
+                      </span>
+                      <span className="ml-auto text-[10px] font-medium text-danger">
+                        -${formatInt(monthTotal)}
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="size-4" />
-                        <span>{m.movement_date ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es }) : '-'}</span>
-                      </div>
+
+                    {/* Items del mes */}
+                    <div className="space-y-1.5">
+                      {items.map((m: any) => {
+                        const itemName = (m.inventory_items as any)?.name || 'Producto';
+                        const unitMeasure = (m.inventory_items as any)?.unit_of_measure || 'unidad';
+                        const unitCost = getDisplayUnitCost(m);
+                        const totalCost = getDisplayTotalCost(m);
+                        const cranePart = getFirstRelationRow(m.crane_part);
+
+                        return (
+                          <div
+                            key={m.id}
+                            onClick={() => setHistoryTarget({
+                              movementId: m.id,
+                              cranePartId: cranePart?.id || null,
+                              itemName,
+                            })}
+                            className="group relative flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition-all hover:border-primary/30 hover:shadow-sm"
+                          >
+                            {/* Dot del timeline */}
+                            <div className="absolute -left-[1.35rem] size-2 rounded-full bg-primary/60 ring-2 ring-background" />
+
+                            {/* Ícono */}
+                            <div className="flex size-7 flex-shrink-0 items-center justify-center rounded-md bg-primary/10">
+                              <Package className="size-3.5 text-primary" />
+                            </div>
+
+                            {/* Nombre y fecha */}
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-foreground">{itemName}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {m.movement_date
+                                  ? format(new Date(m.movement_date), 'dd MMM yyyy', { locale: es })
+                                  : '-'}
+                                {m.reason ? ` · ${m.reason}` : ''}
+                              </p>
+                            </div>
+
+                            {/* Cantidad */}
+                            <span className="flex-shrink-0 rounded-full bg-danger/10 px-2 py-0.5 text-[10px] font-medium text-danger">
+                              -{m.quantity} {unitMeasure}
+                            </span>
+
+                            {/* Precios */}
+                            <div className="flex-shrink-0 text-right">
+                              <p className="text-xs font-semibold text-danger">-${formatInt(totalCost)}</p>
+                              <p className="text-[10px] text-muted-foreground">${formatInt(unitCost)} c/u</p>
+                            </div>
+
+                            {/* Botón historial (hover) */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setHistoryTarget({
+                                  movementId: m.id,
+                                  cranePartId: cranePart?.id || null,
+                                  itemName,
+                                });
+                              }}
+                              className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                              title="Ver historial"
+                            >
+                              <History className="size-3.5 text-muted-foreground hover:text-primary" />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
-                    {m.reason && (
-                      <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-                        {m.reason}
-                      </p>
-                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
+
       <Dialog open={isExitOpen} onOpenChange={setIsExitOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-3xl w-[95vw] overflow-y-auto border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Registrar Consumo - {crane.licensePlate}</DialogTitle>
           </DialogHeader>
@@ -258,7 +360,7 @@ const PartHistoryModal = ({ target, onClose }: PartHistoryModalProps) => {
 
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+      <DialogContent className="max-h-[85vh] max-w-3xl w-[95vw] overflow-y-auto border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="size-5 text-primary" />

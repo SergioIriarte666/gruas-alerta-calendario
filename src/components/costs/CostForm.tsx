@@ -768,6 +768,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         form={form}
                                                         categories={categories}
                                                         isNewCost={!cost}
+                                                        isInventorySynced={Boolean(cost?.inventory_movement_id)}
                                                         onServiceExpenseSelect={!cost ? handleServiceExpenseSelect : undefined}
                                                         calculatedServiceTotal={calculatedServiceTotal}
                                                     />
@@ -781,6 +782,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         isLoadingOperators={isLoadingOperators}
                                                         services={servicesForCosts}
                                                         isLoadingServices={isLoadingServices}
+                                                        hasCraneParts={Boolean(cost?.crane_parts && (cost.crane_parts as any[]).length > 0)}
                                                     />
                                                 )}
                                                 {currentStep === 4 && (
