@@ -23,7 +23,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
   const companyLogo = settings?.company?.logo;
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] text-foreground">
+    <div className="flex h-screen bg-[linear-gradient(135deg,#f0f0ee_0%,#f9f6e8_55%,#fef9c3_100%)] text-foreground">
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div 
@@ -66,7 +66,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({ children }) => {
         )}
         
         <PortalHeader />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-[#f8fafc] p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 md:p-6 lg:p-8">
           <ErrorBoundary name="Portal Cliente">
             <Suspense fallback={null}>
               {children || <Outlet />}
