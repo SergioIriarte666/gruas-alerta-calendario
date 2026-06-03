@@ -249,11 +249,13 @@ export type Database = {
           contact_name: string | null
           created_at: string | null
           created_by: string | null
+          display_name: string | null
           default_payment_term_id: string | null
           department: string
           email: string | null
           id: string
           is_active: boolean | null
+          logo_url: string | null
           name: string
           phone: string | null
           rut: string
@@ -266,11 +268,13 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          display_name?: string | null
           default_payment_term_id?: string | null
           department: string
           email?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name: string
           phone?: string | null
           rut: string
@@ -283,11 +287,13 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          display_name?: string | null
           default_payment_term_id?: string | null
           department?: string
           email?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name?: string
           phone?: string | null
           rut?: string

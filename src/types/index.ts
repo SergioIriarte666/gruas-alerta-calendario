@@ -126,12 +126,14 @@ export interface ServiceFormData {
 export interface Client {
   id: string;
   name: string;
+  displayName?: string | null;
   rut: string;
   phone: string;
   email: string;
   address: string;
   department: string;
   contactName?: string;
+  logoUrl?: string | null;
   billingType?: 'standard' | 'monthly';
   isActive: boolean;
   createdAt: string;

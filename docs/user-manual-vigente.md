@@ -2,27 +2,28 @@
 
 ## Objetivo
 
-Este manual resume el uso actual de TMS Gruas a nivel funcional. Esta enfocado en la operacion vigente de la app y evita historicos, prompts o detalles tecnicos que no aportan al uso diario.
+Este manual resume el uso funcional vigente de TMS Gruas. Esta orientado a la operacion diaria del sistema y refleja el estado actual de rutas, modulos y flujos visibles para usuarios administrativos, operadores y clientes.
 
 ## Que es TMS Gruas
 
 TMS Gruas es una plataforma web para administrar la operacion y las finanzas de una empresa de gruas. El sistema centraliza:
 
-- servicios y calendario
-- clientes, gruas y operadores
+- servicios y calendario operacional
+- clientes, gruas, operadores y vehiculos
 - inspeccion en terreno por operador
 - cierres, facturas y seguimiento de cobros
-- costos, inventario y proveedores
+- costos, inventario, proveedores y cuentas por pagar
 - reportes, proyecciones y configuracion administrativa
-- portal cliente y mensajeria operativa segun configuracion
+- portal cliente con branding por empresa, solicitudes, O.C. y facturas
+- notificaciones operativas segun configuracion del entorno
 
 ## Superficies del sistema
 
 | Superficie | Acceso | Objetivo |
 |---|---|---|
-| Backoffice administrativo | rutas como `/dashboard`, `/services`, `/invoices`, `/inventory`, `/settings` | Operacion, finanzas, activos y administracion |
+| Backoffice administrativo | rutas como `/dashboard`, `/services`, `/clients`, `/invoices`, `/settings` | Operacion, finanzas, activos y administracion |
 | App de operador | `/operator` | Gestion de servicios asignados e inspecciones en terreno |
-| Portal cliente | `/portal` | Consulta de servicios, facturas y solicitud de nuevos servicios |
+| Portal cliente | `/portal` | Consulta de servicios, envio de ordenes de compra, facturas y solicitud de nuevos servicios |
 
 ## Acceso al sistema
 
@@ -39,14 +40,21 @@ TMS Gruas es una plataforma web para administrar la operacion y las finanzas de 
 - El sistema envia un correo de recuperacion.
 - En algunos entornos puede existir validacion adicional con captcha o rate limiting.
 
+### Consideraciones de acceso por rol
+
+- `admin` y `viewer` ingresan al backoffice administrativo.
+- `operator` ingresa a la app de operador.
+- `client` ingresa al portal cliente.
+- Un usuario `client` debe estar vinculado a una empresa cliente. Si no lo esta, el portal no se habilita y se muestra un mensaje de acceso pendiente de vinculacion.
+
 ## Roles vigentes
 
 | Rol | Alcance |
 |---|---|
 | `admin` | Control total del backoffice, configuracion, modulos criticos y acciones administrativas |
-| `viewer` | Acceso administrativo de lectura a modulos operativos y financieros |
+| `viewer` | Acceso administrativo a modulos operativos y financieros segun permisos visibles |
 | `operator` | Acceso a la app de operador para servicios asignados e inspeccion |
-| `client` | Acceso restringido al portal cliente |
+| `client` | Acceso restringido al portal cliente de su empresa |
 
 Notas:
 
@@ -64,11 +72,11 @@ Notas:
 | Servicios | `/services` | Gestion integral de servicios |
 | Calendario | `/calendar` | Vista temporal de servicios y eventos |
 | Cierres | `/closures` | Agrupacion y control previo a facturacion |
-| Clientes | `/clients` | Ficha de clientes e historial |
-| Gruas | `/cranes` | Flota, mantenimiento, piezas e inventario |
+| Clientes | `/clients` | Ficha de clientes, historial y branding del portal |
+| Gruas | `/cranes` | Flota, mantenimiento, piezas e inventario relacionado |
 | Facturas | `/invoices` | Facturacion, pagos y seguimiento de cobros |
 | Historico financiero | `/historical` | Consulta financiera historica |
-| Proyecciones | `/income-projections` | Cashflow, aging y proyeccion |
+| Proyecciones | `/income-projections` | Aging, flujo esperado y proyeccion |
 | Costos | `/costs` | Registro y analisis de costos |
 | Cuentas por pagar | `/accounts-payable` | Deudas, cuotas, creditos y seguimiento |
 | Calculadora de viajes | `/trip-calculator` | Calculo de ruta, peajes y estimacion |
@@ -87,7 +95,7 @@ Notas:
 | Vehiculos | `/vehicles` | Catalogos relacionados a vehiculos |
 | Comisiones | `/commissions` | Seguimiento y pago de comisiones |
 | Centros de costo | `/cost-centers` | Catalogo para costos y reportes |
-| Configuracion | `/settings` | Usuarios, permisos, alertas y parametros |
+| Configuracion | `/settings` | Empresa, zona horaria, sistema, alertas, usuarios e integraciones |
 | Entradas rapidas | `/quick-entries` | Captura rapida con apoyo movil y OCR |
 | Backup | `/backup` | Herramientas de respaldo |
 
@@ -97,7 +105,8 @@ Notas:
 |---|---|
 | App operador | `/operator` |
 | Inspeccion operador | `/operator/service/:id/inspection` |
-| Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/request-service`, `/portal/invoices` |
+| Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/purchase-orders`, `/portal/request-service`, `/portal/invoices` |
+| Pipeline VIP por cliente | `/clients/:clientId/pipeline` |
 | Diagnostico interno | `/performance-test`, `/debug-freeze`, `/connection-test` |
 
 ## Dashboard
@@ -124,7 +133,7 @@ Uso recomendado:
 - crear y editar servicios
 - asignar cliente, grua y operador
 - registrar origen, destino, fecha y observaciones
-- gestionar estados operativos
+- gestionar estados operativos y comerciales
 - duplicar servicios
 - descargar documentos asociados
 - revisar historial y cambios del servicio
@@ -142,6 +151,7 @@ Uso recomendado:
 ### Consideraciones practicas
 
 - Si el operador esta asignado y la integracion esta habilitada, pueden dispararse notificaciones operativas.
+- La referencia visible del vehiculo prioriza el vehiculo trasladado. Si no hay datos validos, el sistema puede mostrar el tipo de servicio para evitar informacion ambigua.
 - El historial del servicio es util para auditoria y seguimiento de cambios.
 
 ## Calendario
@@ -177,9 +187,28 @@ Uso tipico:
 Permite:
 
 - crear y editar clientes
-- revisar historial de servicios
+- revisar historial de servicios, facturas, cierres y solicitudes
 - consultar relacion con facturas
 - navegar al pipeline VIP en clientes que lo utilizan
+- administrar branding del portal cliente desde el modal de detalle
+
+### Modal de detalle del cliente
+
+El modal de detalle del cliente incluye:
+
+- header con nombre del cliente y logo si existe
+- avatar con iniciales como fallback si el cliente aun no tiene logo
+- pestañas de `Resumen`, `Info`, `Servicios`, `Facturas`, `Cierres` y `Solicitudes`
+
+### Branding del portal cliente
+
+En la pestana `Info` del modal de cliente se puede cargar el `Logo del portal cliente`.
+
+Comportamiento esperado:
+
+- si existe logo, se muestra en el header del modal y en el sidebar del portal cliente
+- si no existe logo, el modal muestra iniciales y el portal usa el branding general o su fallback visual
+- el nombre visible del portal puede usar nombre comercial si esta definido; si no, usa el nombre base del cliente
 
 Ruta relacionada:
 
@@ -344,20 +373,38 @@ Uso tipico:
 
 `/settings` concentra la administracion del sistema.
 
+### Secciones visibles
+
+Segun el rol, configuracion incluye:
+
+- `Empresa`
+- `Zona horaria`
+- `Sistema`
+- `Cond. pago`
+- `Alertas`
+- `Categorias`
+- `Usuarios` solo admin
+- `Auditoria` solo admin
+- `Integridad` solo admin
+- `Liberacion` solo admin
+
 ### Que se gestiona aqui
 
+- branding general de la empresa
+- zona horaria operacional
+- parametros del sistema
+- condiciones de pago
+- alertas y preferencias visibles para modulos administrativos
 - usuarios y permisos
-- parametros generales
-- configuracion de alertas
-- preferencias visibles para modulos administrativos
+- auditoria e integridad operacional
 - integracion WhatsApp si esta habilitada en el entorno
 
 ### WhatsApp
 
 Si la integracion esta configurada, desde configuracion se puede:
 
-- definir numeros administrativos
-- activar o desactivar tipos de notificacion
+- definir telefonos administrativos
+- activar o desactivar tipos de notificacion disponibles
 - probar la integracion
 - revisar historial o estado segun la implementacion disponible
 
@@ -386,18 +433,116 @@ Uso recomendado:
 
 ## Portal cliente
 
-Rutas principales:
+### Rutas principales
 
 - `/portal/dashboard`
 - `/portal/services`
+- `/portal/purchase-orders`
 - `/portal/request-service`
 - `/portal/invoices`
 
-El portal cliente permite:
+### Que permite hacer
 
 - revisar servicios propios
+- revisar estados y fechas del servicio
+- identificar el vehiculo trasladado o, si no existe informacion valida, una referencia util del servicio
+- enviar ordenes de compra pendientes
 - solicitar nuevos servicios
-- consultar facturas y documentos asociados
+- consultar facturas y descargar sus documentos
+
+### Sidebar y branding
+
+El sidebar del portal muestra:
+
+- logo del cliente si fue cargado en la ficha del cliente
+- nombre comercial del cliente si existe
+- fallback al branding general o a un icono generico cuando no existe logo
+
+### Dashboard del portal
+
+El dashboard del portal muestra:
+
+- total de servicios
+- servicios sin orden de compra
+- facturas pendientes
+- facturas vencidas
+- accesos rapidos a `Mis Servicios`, `Sin orden de compra`, `Solicitar Servicio` y `Mis Facturas`
+
+Si existen servicios sin O.C., el dashboard destaca esa alerta para acelerar el envio.
+
+### Mis Servicios
+
+`/portal/services` concentra la consulta de servicios del cliente.
+
+Funciones vigentes:
+
+- vista por defecto en `Listado`
+- cambio de vista entre `Calendario`, `Listado` y `Tarjetas`
+- navegacion por mes
+- filtros por estado dentro del mes visible
+- ordenamiento por columnas en la vista de tabla
+- exportacion de servicios segun las opciones disponibles en pantalla
+
+En la experiencia cliente, se prioriza mostrar:
+
+- vehiculo trasladado
+- fecha del servicio
+- ruta
+- valor
+- estado del servicio
+
+### Sin orden de compra
+
+`/portal/purchase-orders` lista servicios cotizados que requieren O.C. para continuar el flujo administrativo.
+
+Funciones vigentes:
+
+- tabla con columnas ordenables
+- semaforo por antiguedad de dias sin O.C.
+- modal para registrar numero de O.C.
+- campo opcional de cotizacion
+- confirmacion visual de que la O.C. fue enviada
+
+Cuando el cliente envia una O.C. desde el portal:
+
+- el servicio se actualiza en el sistema
+- el equipo administrativo puede recibir notificacion por WhatsApp si la integracion esta disponible
+- si la notificacion falla, la O.C. igual queda registrada
+
+### Solicitar Servicio
+
+`/portal/request-service` permite ingresar nuevas solicitudes para la empresa cliente.
+
+Campos relevantes:
+
+- tipo de servicio
+- origen y destino
+- fecha del servicio
+- observaciones
+- urgencia
+- hora preferida
+- telefono de contacto
+- datos del vehiculo segun lo que requiera el tipo de servicio
+
+El formulario adapta la exigencia de datos de vehiculo segun el tipo de servicio seleccionado.
+
+### Mis Facturas
+
+`/portal/invoices` permite:
+
+- filtrar por estado
+- filtrar por rango de fechas
+- revisar total por pagar y total vencido
+- ver numero fiscal, fechas, saldo pendiente y estado
+- descargar PDF de la factura
+
+### Notificaciones y busqueda rapida
+
+El portal incorpora:
+
+- campana de notificaciones para O.C. pendientes y acceso rapido a servicios
+- buscador rapido con atajo `Cmd+K` o `Ctrl+K`
+- notificaciones en tiempo real cuando cambia el estado de un servicio del cliente
 
 ## Funcionalidad movil y PWA
 
@@ -407,6 +552,7 @@ Capacidades relevantes:
 
 - interfaz responsiva
 - experiencia de operador en terreno
+- portal cliente usable en movil
 - soporte PWA segun configuracion del entorno
 - indicadores de conectividad y actualizacion segun implementacion activa
 
@@ -422,6 +568,7 @@ Aspectos visibles para el usuario:
 - permisos por rol y, en algunos casos, por modulo
 - trazabilidad de cambios en areas sensibles
 - uso de formularios y estados controlados para evitar inconsistencias
+- registro de actividad de navegacion en areas relevantes del sistema
 
 ## Buenas practicas de uso
 
@@ -432,6 +579,7 @@ Aspectos visibles para el usuario:
 - registrar costos con la categoria correcta
 - usar inventario y proveedores como flujos integrados, no aislados
 - mantener configuracion y permisos bajo control administrativo
+- en portal cliente, registrar la O.C. apenas el servicio este cotizado para evitar atrasos administrativos
 
 ## Solucion de problemas
 
@@ -451,16 +599,30 @@ Aspectos visibles para el usuario:
 - algunas pantallas son solo lectura para `viewer`
 - ciertos catalogos y configuraciones son exclusivos de `admin`
 
+### Un usuario cliente no puede entrar al portal
+
+- revisar que el usuario tenga rol `client`
+- confirmar que el usuario este vinculado a una empresa cliente
+- validar que el cliente este activo y que el acceso no este restringido por datos incompletos
+
 ### Un operador no ve sus servicios
 
 - revisar que el servicio tenga operador asignado
 - verificar el estado del servicio y los filtros aplicados
 - confirmar que el usuario tenga rol `operator`
 
+### No puedo subir el logo del cliente
+
+- validar que el archivo sea una imagen valida
+- usar un archivo liviano, idealmente PNG, JPG, SVG o WebP
+- intentar nuevamente desde la pestana `Info` del cliente
+- si persiste, revisar permisos del usuario admin y configuracion de almacenamiento
+
 ### Una notificacion no se envia
 
 - revisar configuracion del modulo correspondiente
 - en el caso de WhatsApp, validar que la integracion este operativa y el destinatario tenga telefono correcto
+- si falla una notificacion no critica, verificar igualmente si la accion principal quedo registrada
 
 Referencia adicional:
 

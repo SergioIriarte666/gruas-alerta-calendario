@@ -1,7 +1,6 @@
 import { Client } from '@/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { ClientServiceHistory } from './ClientServiceHistory';
 import { ClientInvoicing } from './ClientInvoicing';
 import { ClientClosureHistory } from './ClientClosureHistory';
@@ -12,12 +11,15 @@ import { useClientInvoices } from '@/hooks/useClientInvoices';
 import { useClientClosures } from '@/hooks/useClientClosures';
 import { useClientRequests } from '@/hooks/useClientRequests';
 import { toTitleCase } from '@/lib/utils';
+import { ClientLogoUpload } from './ClientLogoUpload';
 
 interface ClientTabsWithCountersProps {
   client: Client;
+  logoUrl?: string | null;
+  onLogoChange?: (url: string | null) => void;
 }
 
-export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) => {
+export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: ClientTabsWithCountersProps) => {
   const { services, loading: servicesLoading } = useClientServices(client.id);
   const { invoices, loading: invoicesLoading } = useClientInvoices(client.id);
   const { closures, loading: closuresLoading } = useClientClosures(client.id);
@@ -162,6 +164,18 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                           <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.createdAt ? new Date(client.createdAt).toLocaleDateString('es-CL') : 'No disponible'}
                           </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-muted-foreground mb-2">
+                            Logo del portal cliente
+                          </label>
+                          <ClientLogoUpload
+                            clientId={client.id}
+                            currentLogoUrl={logoUrl}
+                            clientName={client.name}
+                            onLogoChange={onLogoChange || (() => {})}
+                          />
                         </div>
                       </div>
                     </div>

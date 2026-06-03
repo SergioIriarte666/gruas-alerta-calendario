@@ -1,5 +1,4 @@
 
-import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,12 +10,14 @@ const logger = createLogger("useClients");
 const mapClient = (client: any): any => ({
   id: client.id,
   name: client.name,
+  displayName: client.display_name || null,
   rut: client.rut,
   phone: client.phone || '',
   email: client.email || '',
   address: client.address || '',
   department: client.department || '',
   contactName: client.contact_name || '',
+  logoUrl: client.logo_url || null,
   billingType: client.billing_type || 'standard',
   isActive: client.is_active ?? false,
   createdAt: client.created_at,
@@ -159,12 +160,14 @@ export const useClients = () => {
         const newClient: Client = {
           id: data.id,
           name: data.name,
+          displayName: data.display_name || null,
           rut: data.rut,
           phone: data.phone || '',
           email: data.email || '',
           address: data.address || '',
           department: data.department || '',
           contactName: data.contact_name || '',
+          logoUrl: data.logo_url || null,
           isActive: data.is_active || false,
           createdAt: data.created_at,
           updatedAt: data.updated_at
@@ -222,6 +225,8 @@ export const useClients = () => {
       if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
       if (clientData.billingType !== undefined) updateData.billing_type = clientData.billingType;
       if (clientData.defaultPaymentTermId !== undefined) updateData.default_payment_term_id = clientData.defaultPaymentTermId;
+      if (clientData.logoUrl !== undefined) updateData.logo_url = clientData.logoUrl;
+      if (clientData.displayName !== undefined) updateData.display_name = clientData.displayName;
 
       const { error } = await supabase
         .from('clients')

@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Building2, FileText, FileWarning as FileAlert, History, LayoutDashboard, Plus, X } from 'lucide-react';
+import { FileText, FileWarning as FileAlert, History, LayoutDashboard, Plus, Truck, X } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useUser } from '@/contexts/UserContext';
 import { usePortalOCCount } from '@/hooks/portal/usePortalOCCount';
+import { useClientBranding } from '@/hooks/portal/useClientBranding';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -16,9 +17,12 @@ interface PortalSidebarProps {
 const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton = false }) => {
   const { settings } = useSettings();
   const { user } = useUser();
+  const { data: branding } = useClientBranding();
   const location = useLocation();
   const ocCount = usePortalOCCount();
   const companyName = settings?.company?.name || 'Grúas Alerta';
+  const displayLogo = branding?.logoUrl || settings?.company?.logo;
+  const displayName = branding?.companyName || companyName;
   const userName = user?.name || user?.email || 'Cliente';
   const userInitials = userName.slice(0, 2).toUpperCase();
 
@@ -60,22 +64,20 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-[#e2e8f0] bg-white p-4">
-      <div className="mb-6 border-b border-[#f1f5f9] pb-4">
+      <div className="mb-6 pb-4 border-b border-[#f1f5f9]">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            {settings?.company?.logo ? (
-              <img
-                src={settings.company.logo}
-                alt="Logo empresa"
-                className="size-8 rounded-[8px] object-contain"
-              />
+            {displayLogo ? (
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-[#f1f5f9] bg-[#f8fafc] p-1">
+                <img src={displayLogo} alt={displayName} className="max-h-full max-w-full object-contain" />
+              </div>
             ) : (
-              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-gradient-to-br from-violet-600 to-indigo-600">
-                <Building2 className="size-4 text-white" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[8px] bg-gradient-to-br from-violet-600 to-indigo-600">
+                <Truck className="size-4 text-white" />
               </div>
             )}
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium text-[#0f172a]">{companyName}</p>
+              <p className="truncate text-[13px] font-medium text-[#0f172a]">{displayName}</p>
               <p className="text-[10px] text-[#94a3b8]">Portal de clientes</p>
             </div>
           </div>
@@ -127,7 +129,7 @@ const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton 
           </div>
           <div className="min-w-0">
             <p className="truncate text-[11px] font-medium text-[#0f172a]">{userName}</p>
-            <p className="text-[10px] text-[#94a3b8]">Cliente</p>
+            <p className="truncate text-[10px] text-[#94a3b8]">{branding?.companyName || 'Cliente'}</p>
           </div>
           <div className="ml-auto size-2 flex-shrink-0 rounded-full bg-green-400" title="Conectado" />
         </div>

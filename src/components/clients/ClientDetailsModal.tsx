@@ -14,29 +14,57 @@ interface ClientDetailsModalProps {
 }
 
 export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps) => {
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(client.logoUrl || null);
+
+  React.useEffect(() => {
+    setLogoUrl(client.logoUrl || null);
+  }, [client.id, client.logoUrl]);
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-foreground mb-2">{toTitleCase(client.name)}</DialogTitle>
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span>RUT: {client.rut}</span>
-            <span>•</span>
-            <span>Departamento: {client.department}</span>
-            <span>•</span>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              client.isActive 
-                ? 'bg-primary/10 text-primary' 
-                : 'bg-destructive/10 text-destructive'
-            }`}>
-              {client.isActive ? 'Activo' : 'Inactivo'}
-            </span>
+          <div className="mb-2 flex items-center gap-4">
+            {logoUrl ? (
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 p-1.5">
+                <img src={logoUrl} alt={`Logo ${client.name}`} className="max-h-full max-w-full object-contain" />
+              </div>
+            ) : (
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                <span className="text-lg font-bold text-primary">{getInitials(client.name)}</span>
+              </div>
+            )}
+            <div>
+              <DialogTitle className="text-2xl font-bold text-foreground">{toTitleCase(client.name)}</DialogTitle>
+              <div className="mt-1 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <span>RUT: {client.rut}</span>
+                <span>•</span>
+                <span>Departamento: {client.department}</span>
+                <span>•</span>
+                <span className={`rounded px-2 py-0.5 text-xs font-medium ${
+                  client.isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-destructive/10 text-destructive'
+                }`}>
+                  {client.isActive ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+            </div>
           </div>
         </DialogHeader>
         
         {/* Contenido con Scroll */}
         <div className="flex-1 min-h-0">
-          <ClientTabsWithCounters client={client} />
+          <ClientTabsWithCounters client={client} logoUrl={logoUrl} onLogoChange={setLogoUrl} />
         </div>
         
         {/* Footer con información de creación */}

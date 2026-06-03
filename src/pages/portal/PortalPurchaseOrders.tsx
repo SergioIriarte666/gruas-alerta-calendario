@@ -2,20 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, CheckCircle, FileWarning as FileAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useClientServices, type ClientService } from '@/hooks/portal/useClientServices';
-import { useSubmitPurchaseOrder } from '@/hooks/portal/useSubmitPurchaseOrder';
+import { useClientServices } from '@/hooks/portal/useClientServices';
 import { formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
-import { toast } from 'sonner';
 import { getPurchaseOrderPendingServices } from './portalServices.utils';
 
 const daysPending = (serviceDate: string): number => {
@@ -37,11 +31,6 @@ type SortDirection = 'asc' | 'desc';
 
 const PortalPurchaseOrders: React.FC = () => {
   const { data: services, isLoading, isError, error } = useClientServices();
-  const submitPurchaseOrder = useSubmitPurchaseOrder();
-  const [selectedService, setSelectedService] = useState<ClientService | null>(null);
-  const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
-  const [quoteNumber, setQuoteNumber] = useState('');
-  const [notes, setNotes] = useState('');
   const [tableSortField, setTableSortField] = useState<PurchaseOrderSortField>('service_date');
   const [tableSortDirection, setTableSortDirection] = useState<SortDirection>('asc');
 
@@ -90,20 +79,6 @@ const PortalPurchaseOrders: React.FC = () => {
     });
   }, [pendingPurchaseOrders, tableSortField, tableSortDirection]);
 
-  const handleOpenModal = (service: ClientService) => {
-    setSelectedService(service);
-    setPurchaseOrderNumber(service.purchase_order_number || '');
-    setQuoteNumber(service.quote_number || '');
-    setNotes('');
-  };
-
-  const handleCloseModal = () => {
-    setSelectedService(null);
-    setPurchaseOrderNumber('');
-    setQuoteNumber('');
-    setNotes('');
-  };
-
   const handleTableSort = (field: PurchaseOrderSortField) => {
     if (tableSortField === field) {
       setTableSortDirection((currentDirection) => (currentDirection === 'asc' ? 'desc' : 'asc'));
@@ -150,24 +125,6 @@ const PortalPurchaseOrders: React.FC = () => {
         </Button>
       </TableHead>
     );
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedService) return;
-
-    if (!purchaseOrderNumber.trim()) {
-      toast.error('Ingresa el numero de orden de compra');
-      return;
-    }
-
-    await submitPurchaseOrder.mutateAsync({
-      serviceId: selectedService.id,
-      purchaseOrderNumber,
-      quoteNumber,
-      notes,
-    });
-
-    handleCloseModal();
   };
 
   if (isLoading) {
@@ -242,7 +199,6 @@ const PortalPurchaseOrders: React.FC = () => {
                     {renderSortableTableHead('Valor', 'value', 'right')}
                     {renderSortableTableHead('Dias sin OC', 'days_pending', 'center')}
                     <TableHead className="text-[#64748b]">Seguimiento</TableHead>
-                    <TableHead className="text-right text-[#64748b]">Accion</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -271,17 +227,9 @@ const PortalPurchaseOrders: React.FC = () => {
                               Falta orden de compra
                             </Badge>
                             <span className="text-xs text-[#94a3b8]">
-                              Debes registrar la O.C. para continuar con el proceso
+                              Coordina el envio de la O.C. con nuestro equipo para continuar con el proceso
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            onClick={() => handleOpenModal(service)}
-                            className="bg-amber-500 text-white hover:bg-amber-600"
-                          >
-                            Enviar OC
-                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -292,79 +240,6 @@ const PortalPurchaseOrders: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      <Dialog open={!!selectedService} onOpenChange={(open) => !open && handleCloseModal()}>
-        <DialogContent className="border-[#e2e8f0] bg-white sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-[#0f172a]">
-              Enviar OC {selectedService ? `para ${selectedService.folio}` : ''}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {selectedService && (
-              <div className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-[#94a3b8]">Vehiculo del servicio</p>
-                <p className="mt-1 text-sm font-medium text-[#0f172a]">{formatVehicleInfo(selectedService)}</p>
-                <p className="mt-1 text-xs text-[#64748b]">
-                  {selectedService.origin} → {selectedService.destination}
-                </p>
-              </div>
-            )}
-            <div>
-              <Label htmlFor="purchase-order-number" className="text-[#374151] text-[13px]">
-                Numero de OC
-              </Label>
-              <Input
-                id="purchase-order-number"
-                value={purchaseOrderNumber}
-                onChange={(event) => setPurchaseOrderNumber(event.target.value)}
-                placeholder="Ej: OC-2024-001"
-                className="mt-1 bg-[#f8fafc] border-[#e2e8f0] text-[#0f172a] focus:border-violet-400"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="quote-number" className="text-[#374151] text-[13px]">
-                Numero de cotizacion <span className="text-[#94a3b8]">(Opcional)</span>
-              </Label>
-              <Input
-                id="quote-number"
-                value={quoteNumber}
-                onChange={(event) => setQuoteNumber(event.target.value)}
-                placeholder="Ej: COT-24-001"
-                className="mt-1 bg-[#f8fafc] border-[#e2e8f0] text-[#0f172a] focus:border-violet-400"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="notes" className="text-[#374151] text-[13px]">
-                Observaciones <span className="text-[#94a3b8]">(Opcional)</span>
-              </Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Notas adicionales sobre la orden de compra..."
-                className="mt-1 min-h-[90px] bg-[#f8fafc] border-[#e2e8f0] text-[#0f172a] focus:border-violet-400"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal} disabled={submitPurchaseOrder.isPending}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitPurchaseOrder.isPending}
-              className="bg-violet-700 text-white hover:bg-violet-800"
-            >
-              {submitPurchaseOrder.isPending ? 'Enviando...' : 'Enviar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

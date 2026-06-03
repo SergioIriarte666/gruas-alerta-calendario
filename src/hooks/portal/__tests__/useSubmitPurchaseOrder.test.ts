@@ -7,18 +7,22 @@ const mocks = vi.hoisted(() => {
   const mockToastSuccess = vi.fn();
   const mockToastError = vi.fn();
   const mockUseUser = vi.fn();
+  const mockUseClientBranding = vi.fn();
   const mockEq = vi.fn();
   const mockUpdate = vi.fn();
   const mockFrom = vi.fn();
+  const mockInvoke = vi.fn();
 
   return {
     mockInvalidateQueries,
     mockToastSuccess,
     mockToastError,
     mockUseUser,
+    mockUseClientBranding,
     mockEq,
     mockUpdate,
     mockFrom,
+    mockInvoke,
   };
 });
 
@@ -43,11 +47,18 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: mocks.mockFrom,
+    functions: {
+      invoke: mocks.mockInvoke,
+    },
   },
 }));
 
 vi.mock('@/contexts/UserContext', () => ({
   useUser: () => mocks.mockUseUser(),
+}));
+
+vi.mock('@/hooks/portal/useClientBranding', () => ({
+  useClientBranding: () => mocks.mockUseClientBranding(),
 }));
 
 vi.mock('sonner', () => ({
@@ -64,6 +75,9 @@ describe('useSubmitPurchaseOrder', () => {
     mocks.mockUseUser.mockReturnValue({
       user: { client_id: 'client-123' },
     });
+    mocks.mockUseClientBranding.mockReturnValue({
+      data: { companyName: 'Cliente Branding' },
+    });
 
     mocks.mockEq.mockResolvedValue({ error: null });
     mocks.mockUpdate.mockReturnValue({
@@ -72,6 +86,7 @@ describe('useSubmitPurchaseOrder', () => {
     mocks.mockFrom.mockReturnValue({
       update: mocks.mockUpdate,
     });
+    mocks.mockInvoke.mockResolvedValue({ data: null, error: null });
   });
 
   it('escribe purchase_order_number y cambia status a pending', async () => {
@@ -81,6 +96,9 @@ describe('useSubmitPurchaseOrder', () => {
       await result.current.mutateAsync({
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       });
     });
 
@@ -101,6 +119,9 @@ describe('useSubmitPurchaseOrder', () => {
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
         quoteNumber: 'COT-24-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       });
     });
 
@@ -120,6 +141,9 @@ describe('useSubmitPurchaseOrder', () => {
       await result.current.mutateAsync({
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       });
     });
 
@@ -134,6 +158,9 @@ describe('useSubmitPurchaseOrder', () => {
       await result.current.mutateAsync({
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       });
     });
 
@@ -149,6 +176,9 @@ describe('useSubmitPurchaseOrder', () => {
       await result.current.mutateAsync({
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       });
     });
 
@@ -166,10 +196,61 @@ describe('useSubmitPurchaseOrder', () => {
       result.current.mutateAsync({
         serviceId: 'svc-1',
         purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
       })
     ).rejects.toEqual({ message: 'Database error' });
 
     expect(mocks.mockToastError).toHaveBeenCalled();
     expect(mocks.mockInvalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it('envia notificacion de WhatsApp al admin con el payload esperado', async () => {
+    const { result } = renderHook(() => useSubmitPurchaseOrder());
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        serviceId: 'svc-1',
+        purchaseOrderNumber: 'OC-2024-001',
+        quoteNumber: 'COT-24-001',
+        serviceFolio: 'SRV-6412',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
+      });
+    });
+
+    expect(mocks.mockInvoke).toHaveBeenCalledWith('send-whatsapp-admin', {
+      body: {
+        event: 'admin_orden_compra',
+        data: {
+          proveedor: 'Arrendadora S.A.',
+          monto: '$600.000',
+          descripcion: 'OC OC-2024-001 · Cotizacion COT-24-001 · Servicio SRV-6412',
+        },
+      },
+    });
+  });
+
+  it('no bloquea el exito si falla la notificacion de WhatsApp', async () => {
+    mocks.mockInvoke.mockRejectedValueOnce(new Error('WhatsApp failed'));
+
+    const { result } = renderHook(() => useSubmitPurchaseOrder());
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        serviceId: 'svc-1',
+        purchaseOrderNumber: 'OC-2024-001',
+        serviceFolio: 'SRV-001',
+        serviceValue: 600000,
+        clientCompanyName: 'Arrendadora S.A.',
+      });
+    });
+
+    expect(mocks.mockUpdate).toHaveBeenCalled();
+    expect(mocks.mockToastSuccess).toHaveBeenCalled();
+    expect(mocks.mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['clientServices', 'client-123'],
+    });
   });
 });
