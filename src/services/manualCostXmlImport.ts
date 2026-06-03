@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { Cost } from '@/types/costs';
-import { Supplier, XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
+import { Supplier, XMLCompleteParseResult, XMLDocumentData, XMLDocumentItem, XMLSupplierData } from '@/types/suppliers';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { findSupplierByIdentity, normalizeSupplierRut } from '@/utils/supplierIdentity';
 import { createLogger } from '@/lib/logger';
@@ -330,6 +330,11 @@ export const applyManualCostXmlImport = async (params: {
     };
 
     updatedCostSnapshot = await updateCostRecord(currentCost.id, patchWithInvoice);
+    await syncSupplierInvoiceItems({
+      invoiceId: invoiceAfter.id,
+      document: preview.document,
+      userId: user.id,
+    });
     paymentAfter = await syncRelatedSupplierPayment({
       currentCost,
       currentPayment: paymentBefore,
@@ -620,27 +625,31 @@ const buildImportedNotes = (
   document: XMLDocumentData,
   supplier: XMLSupplierData | null
 ) => {
-  const itemSummary = (document.items || [])
-    .map((item) => {
-      const total = Number(item.total || 0);
-      const totalText = total > 0 ? ` $${Math.round(total).toLocaleString('es-CL')}` : '';
-      return `- ${item.description}${totalText}`;
-    })
-    .join('\n');
+  const cleanedCurrentNotes = removeLegacyImportedNotes(currentNotes);
+  const primaryLineDescription =
+    (document.items || []).map((item) => item.description?.trim()).find(Boolean) ||
+    document.description ||
+    'N/A';
 
-  const xmlBlock = [
-    '[XML IMPORTADO MANUALMENTE]',
-    `Factura: ${document.folio}`,
-    `Tipo: ${document.document_type}`,
-    `Fecha emisión: ${document.issue_date}`,
+  const xmlSummary = [
     supplier?.name ? `Proveedor: ${supplier.name}` : null,
-    itemSummary ? 'Conceptos:' : null,
-    itemSummary || null,
+    `Factura: ${document.folio}`,
+    `Glosa principal: ${primaryLineDescription}`,
+    `Archivo XML: ${document.folio}.xml`,
   ]
     .filter(Boolean)
-    .join('\n');
+    .join(' | ');
 
-  return [currentNotes?.trim(), xmlBlock].filter(Boolean).join('\n\n');
+  return [cleanedCurrentNotes, xmlSummary].filter(Boolean).join('\n\n');
+};
+
+const removeLegacyImportedNotes = (notes: string | null | undefined) => {
+  if (!notes) return '';
+
+  return notes
+    .replace(/\[XML IMPORTADO MANUALMENTE\][\s\S]*?(?=\n{2,}|$)/g, '')
+    .replace(/\s*\n{3,}\s*/g, '\n\n')
+    .trim();
 };
 
 const resolveFieldAction = (
@@ -1070,6 +1079,134 @@ const syncRelatedSupplierPayment = async (params: {
 
   return mapPaymentSnapshot(data);
 };
+
+const syncSupplierInvoiceItems = async (params: {
+  invoiceId: string;
+  document: XMLDocumentData;
+  userId: string;
+}) => {
+  const { invoiceId, document, userId } = params;
+  const documentItems = document.items || [];
+
+  const { error: deleteError } = await supabase
+    .from('supplier_invoice_items')
+    .delete()
+    .eq('supplier_invoice_id', invoiceId);
+
+  if (deleteError) {
+    throw new Error(`No se pudo limpiar el detalle previo de la factura: ${deleteError.message}`);
+  }
+
+  if (documentItems.length === 0) {
+    return;
+  }
+
+  const rows = [];
+
+  for (const [index, item] of documentItems.entries()) {
+    const inventoryItemId = await findOrCreateInventoryItemForInvoiceLine(item);
+    rows.push({
+      supplier_invoice_id: invoiceId,
+      inventory_item_id: inventoryItemId,
+      line_number: index + 1,
+      product_code: item.product_code || null,
+      product_name: item.product_name || item.description,
+      description: item.description,
+      quantity: normalizeInvoiceQuantity(item.quantity),
+      unit_price: Number(item.unit_price || 0),
+      subtotal: Number(item.subtotal ?? inferLineSubtotal(item)),
+      tax_rate: item.tax_rate ?? null,
+      tax_amount: Number(item.tax_amount || 0),
+      total_amount: Number(item.total || 0),
+      movement_id: null,
+      created_by: userId,
+    });
+  }
+
+  const { error: insertError } = await supabase.from('supplier_invoice_items').insert(rows);
+
+  if (insertError) {
+    throw new Error(`No se pudo guardar el detalle de líneas de la factura: ${insertError.message}`);
+  }
+};
+
+const findOrCreateInventoryItemForInvoiceLine = async (item: XMLDocumentItem): Promise<string> => {
+  const candidateNames = [
+    item.product_name?.trim(),
+    item.description.trim(),
+  ].filter(Boolean) as string[];
+
+  const productCode = item.product_code?.trim();
+
+  if (productCode) {
+    const { data: bySku, error: skuError } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .or(`sku.ilike.%${escapeIlikeValue(productCode)}%,barcode.ilike.%${escapeIlikeValue(productCode)}%`)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (skuError) {
+      throw new Error(`No se pudo buscar un ítem de inventario por código: ${skuError.message}`);
+    }
+
+    if (bySku?.id) {
+      return bySku.id;
+    }
+  }
+
+  for (const name of candidateNames) {
+    const { data: byName, error: nameError } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .ilike('name', name)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (nameError) {
+      throw new Error(`No se pudo buscar un ítem de inventario por nombre: ${nameError.message}`);
+    }
+
+    if (byName?.id) {
+      return byName.id;
+    }
+  }
+
+  const fallbackName = candidateNames[0] || 'Item XML manual';
+  const { data: createdItem, error: createItemError } = await supabase
+    .from('inventory_items')
+    .insert({
+      name: fallbackName,
+      sku: productCode || null,
+      barcode: productCode || null,
+      unit_of_measure: 'unidad',
+      unit_cost: Number(item.unit_price || 0),
+      is_active: true,
+    })
+    .select('id')
+    .single();
+
+  if (createItemError || !createdItem?.id) {
+    throw new Error(createItemError?.message || 'No se pudo crear el ítem de inventario para la línea del XML');
+  }
+
+  return createdItem.id;
+};
+
+const normalizeInvoiceQuantity = (quantity: number | undefined) => {
+  const normalized = Number(quantity || 0);
+  if (!Number.isFinite(normalized) || normalized <= 0) return 1;
+  return Math.max(1, Math.round(normalized));
+};
+
+const inferLineSubtotal = (item: XMLDocumentItem) => {
+  const quantity = normalizeInvoiceQuantity(item.quantity);
+  return Number(item.unit_price || 0) * quantity;
+};
+
+const escapeIlikeValue = (value: string) => value.replace(/[%_,]/g, '');
 
 const countOtherInvoiceLinks = async (invoiceId: string, costId: string, paymentId: string | null) => {
   const [costsResult, paymentsResult] = await Promise.all([

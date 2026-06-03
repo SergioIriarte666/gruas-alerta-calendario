@@ -14,7 +14,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -231,6 +230,23 @@ export const ManualCostXmlImportDialog = ({
       }
       return current.filter((item) => item !== code);
     });
+  };
+
+  const handleConfirmImport = async () => {
+    try {
+      await applyMutation.mutateAsync();
+      setConfirmImportOpen(false);
+    } catch {
+      // El error ya es manejado por onError de la mutación.
+    }
+  };
+
+  const handleConfirmRevert = async () => {
+    try {
+      await revertMutation.mutateAsync();
+    } catch {
+      // El error ya es manejado por onError de la mutación.
+    }
   };
 
   return (
@@ -525,14 +541,14 @@ export const ManualCostXmlImportDialog = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                void applyMutation.mutateAsync().then(() => setConfirmImportOpen(false));
-              }}
+            <Button
+              type="button"
+              onClick={() => void handleConfirmImport()}
+              disabled={applyMutation.isPending}
             >
+              {applyMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
               Confirmar importación
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -548,14 +564,14 @@ export const ManualCostXmlImportDialog = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                void revertMutation.mutateAsync();
-              }}
+            <Button
+              type="button"
+              onClick={() => void handleConfirmRevert()}
+              disabled={revertMutation.isPending}
             >
+              {revertMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
               Revertir importación
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
