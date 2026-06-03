@@ -6304,6 +6304,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_cost_snapshot_entry: {
+        Args: {
+          p_change_context?: string
+          p_change_summary?: string
+          p_cost_id: string
+          p_field_name: string
+          p_new_value?: string
+          p_old_value?: string
+        }
+        Returns: string
+      }
       log_security_event: {
         Args: {
           additional_data?: Json

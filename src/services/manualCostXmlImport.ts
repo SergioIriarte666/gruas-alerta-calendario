@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { Cost } from '@/types/costs';
 import { Supplier, XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
@@ -1175,15 +1176,13 @@ const insertManualSnapshot = async (params: {
   newValue: unknown;
   context: JsonRecord;
 }) => {
-  const { error } = await supabase.from('cost_change_history').insert({
-    cost_id: params.costId,
-    changed_by: params.userId,
-    change_type: 'SNAPSHOT',
-    field_name: params.fieldName,
-    old_value: JSON.stringify(params.oldValue ?? null),
-    new_value: JSON.stringify(params.newValue ?? null),
-    change_summary: params.summary,
-    change_context: JSON.stringify(params.context),
+  const { error } = await supabase.rpc('log_cost_snapshot_entry', {
+    p_cost_id: params.costId,
+    p_field_name: params.fieldName,
+    p_old_value: JSON.stringify(params.oldValue ?? null),
+    p_new_value: JSON.stringify(params.newValue ?? null),
+    p_change_summary: params.summary,
+    p_change_context: JSON.stringify(params.context),
   });
 
   if (error) {
@@ -1198,12 +1197,11 @@ const insertAuditLog = async (params: {
   oldData: JsonRecord;
   newData: JsonRecord;
 }) => {
-  const { error } = await supabase.from('audit_log').insert({
-    user_id: params.userId,
-    operation: params.operation,
-    table_name: params.tableName,
-    old_data: params.oldData,
-    new_data: params.newData,
+  const { error } = await supabase.rpc('log_audit_entry', {
+    p_table_name: params.tableName,
+    p_operation: params.operation,
+    p_old_data: params.oldData as Json,
+    p_new_data: params.newData as Json,
   });
 
   if (error) {

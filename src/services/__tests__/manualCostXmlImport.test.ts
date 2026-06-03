@@ -15,6 +15,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       getUser: vi.fn(),
     },
     from: vi.fn(),
+    rpc: vi.fn(),
   },
 }));
 
@@ -206,7 +207,6 @@ describe('manualCostXmlImport', () => {
 
     const profilesSingle = vi.fn().mockResolvedValue({ data: { role: 'admin' }, error: null });
     const costsSingle = vi.fn().mockResolvedValue({ data: currentCost, error: null });
-    const costsUpdateSingle = vi.fn().mockResolvedValue({ data: updatedCost, error: null });
     const supplierInvoicesMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
     const supplierInvoicesInsertSingle = vi.fn().mockResolvedValue({
       data: {
@@ -228,10 +228,32 @@ describe('manualCostXmlImport', () => {
       error: null,
     });
     const paymentsMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const historyInsert = vi.fn().mockResolvedValue({ error: null });
-    const auditInsert = vi.fn().mockResolvedValue({ error: null });
+    const rpcMock = vi.fn().mockImplementation((fnName: string, args?: Record<string, unknown>) => {
+      if (fnName === 'log_cost_snapshot_entry') {
+        expect(args).toEqual(
+          expect.objectContaining({
+            p_cost_id: 'cost-1',
+            p_field_name: expect.stringContaining('manual_xml_import_snapshot:'),
+          })
+        );
+        return Promise.resolve({ error: null });
+      }
+
+      if (fnName === 'log_audit_entry') {
+        expect(args).toEqual(
+          expect.objectContaining({
+            p_operation: 'MANUAL_XML_IMPORT',
+            p_table_name: 'costs',
+          })
+        );
+        return Promise.resolve({ error: null });
+      }
+
+      return Promise.resolve({ error: null });
+    });
 
     (supabase.auth.getUser as any).mockResolvedValue({ data: { user: { id: 'user-1' } } });
+    (supabase.rpc as any).mockImplementation(rpcMock);
     (supabase.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
@@ -289,15 +311,6 @@ describe('manualCostXmlImport', () => {
           }),
         };
       }
-
-      if (table === 'cost_change_history') {
-        return { insert: historyInsert };
-      }
-
-      if (table === 'audit_log') {
-        return { insert: auditInsert };
-      }
-
       return {};
     });
 
@@ -340,17 +353,18 @@ describe('manualCostXmlImport', () => {
     });
 
     expect(result.updatedCost.supplier_invoice_id).toBe('inv-1');
-    expect(historyInsert).toHaveBeenCalledWith(
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_cost_snapshot_entry',
       expect.objectContaining({
-        cost_id: 'cost-1',
-        change_type: 'SNAPSHOT',
-        field_name: expect.stringContaining('manual_xml_import_snapshot:'),
+        p_cost_id: 'cost-1',
+        p_field_name: expect.stringContaining('manual_xml_import_snapshot:'),
       })
     );
-    expect(auditInsert).toHaveBeenCalledWith(
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_audit_entry',
       expect.objectContaining({
-        operation: 'MANUAL_XML_IMPORT',
-        table_name: 'costs',
+        p_operation: 'MANUAL_XML_IMPORT',
+        p_table_name: 'costs',
       })
     );
   });
@@ -362,11 +376,33 @@ describe('manualCostXmlImport', () => {
       supplier_invoice_id: 'inv-1',
     });
     const restoredCost = createBaseCost();
-    const historyInsert = vi.fn().mockResolvedValue({ error: null });
-    const auditInsert = vi.fn().mockResolvedValue({ error: null });
     const supplierInvoiceDeleteEq = vi.fn().mockResolvedValue({ error: null });
+    const rpcMock = vi.fn().mockImplementation((fnName: string, args?: Record<string, unknown>) => {
+      if (fnName === 'log_cost_snapshot_entry') {
+        expect(args).toEqual(
+          expect.objectContaining({
+            p_cost_id: 'cost-1',
+            p_field_name: expect.stringContaining('manual_xml_import_revert:'),
+          })
+        );
+        return Promise.resolve({ error: null });
+      }
+
+      if (fnName === 'log_audit_entry') {
+        expect(args).toEqual(
+          expect.objectContaining({
+            p_operation: 'MANUAL_XML_IMPORT_REVERT',
+            p_table_name: 'costs',
+          })
+        );
+        return Promise.resolve({ error: null });
+      }
+
+      return Promise.resolve({ error: null });
+    });
 
     (supabase.auth.getUser as any).mockResolvedValue({ data: { user: { id: 'user-1' } } });
+    (supabase.rpc as any).mockImplementation(rpcMock);
     (supabase.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
@@ -409,7 +445,6 @@ describe('manualCostXmlImport', () => {
               }),
             }),
           }),
-          insert: historyInsert,
         };
       }
 
@@ -454,10 +489,6 @@ describe('manualCostXmlImport', () => {
         };
       }
 
-      if (table === 'audit_log') {
-        return { insert: auditInsert };
-      }
-
       return {};
     });
 
@@ -468,14 +499,16 @@ describe('manualCostXmlImport', () => {
 
     expect(result.amount).toBe(100000);
     expect(supplierInvoiceDeleteEq).toHaveBeenCalledWith('id', 'inv-1');
-    expect(historyInsert).toHaveBeenCalledWith(
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_cost_snapshot_entry',
       expect.objectContaining({
-        field_name: expect.stringContaining('manual_xml_import_revert:'),
+        p_field_name: expect.stringContaining('manual_xml_import_revert:'),
       })
     );
-    expect(auditInsert).toHaveBeenCalledWith(
+    expect(rpcMock).toHaveBeenCalledWith(
+      'log_audit_entry',
       expect.objectContaining({
-        operation: 'MANUAL_XML_IMPORT_REVERT',
+        p_operation: 'MANUAL_XML_IMPORT_REVERT',
       })
     );
   });
