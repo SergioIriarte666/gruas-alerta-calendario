@@ -73,7 +73,11 @@ export const CostCombobox = ({
           <ChevronDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] p-0 bg-popover border-border" align="start">
+      <PopoverContent
+            className="p-0 bg-popover border-border"
+            align="start"
+            style={{ width: 'var(--radix-popover-trigger-width)', maxWidth: '400px' }}
+          >
         <Command className="bg-popover">
           <CommandInput 
             placeholder={`Buscar o escribir nuevo...`}

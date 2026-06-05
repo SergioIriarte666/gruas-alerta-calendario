@@ -94,7 +94,11 @@ export const SupplierCombobox: React.FC<SupplierComboboxProps> = ({
             <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent
+              className="p-0"
+              align="start"
+              style={{ width: 'var(--radix-popover-trigger-width)' }}
+            >
           <Command>
             <CommandInput
               placeholder="Buscar proveedor por nombre o RUT..."
