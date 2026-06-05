@@ -1089,7 +1089,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </TabsList>
               </div>
 
-              <div className="h-[45vh] md:h-[50vh] overflow-hidden border rounded-md bg-muted/10">
+              <div className="h-[45vh] md:h-[50vh] overflow-clip border rounded-md bg-muted/10">
                 <TabsContent value="matched" className="h-full mt-0">
                   <ScrollArea className="h-full">
                     <div className="p-4">

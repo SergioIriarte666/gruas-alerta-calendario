@@ -733,7 +733,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         </DialogHeader>
 
                         {/* Main Content - 2 Column Layout */}
-                        <div className="flex-1 overflow-hidden">
+                        <div className="flex-1 overflow-clip">
                             <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
                                 {/* Left Sidebar - Navigation & Summary */}
                                 <div className="space-y-4 overflow-y-auto border-r border-border/70 bg-muted/30 p-4 lg:col-span-1">
@@ -749,7 +749,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                 </div>
 
                                 {/* Right Content - Form Steps */}
-                                <div className="lg:col-span-3 flex flex-col overflow-hidden">
+                                <div className="lg:col-span-3 flex flex-col overflow-clip">
                                     <Form {...form}>
                                         <div className="flex flex-col h-full">
                                             {/* Step Content */}

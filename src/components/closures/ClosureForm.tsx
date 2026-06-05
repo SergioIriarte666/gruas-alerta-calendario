@@ -234,7 +234,7 @@ const ClosureForm = ({
           </DialogHeader>
 
           {/* Main Content - 2 Column Layout */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-clip">
             <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
               {/* Left Sidebar */}
               <div className="lg:col-span-1 border-r bg-muted/30 p-4 overflow-y-auto space-y-4">
@@ -258,7 +258,7 @@ const ClosureForm = ({
               </div>
 
               {/* Right Content */}
-              <div className="lg:col-span-3 flex flex-col overflow-hidden">
+              <div className="lg:col-span-3 flex flex-col overflow-clip">
                 <div className="flex flex-col h-full">
                   <div className="flex-1 overflow-y-auto p-6">
                     {/* Step 1: Cliente y Servicios */}

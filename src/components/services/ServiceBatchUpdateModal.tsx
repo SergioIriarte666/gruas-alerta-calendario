@@ -213,7 +213,7 @@ export const ServiceBatchUpdateModal = ({
         </DialogHeader>
 
         {/* Two-column layout */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-clip">
           {/* Left panel - Services list */}
           <div className="flex w-[340px] flex-col border-r border-border/70 bg-muted/20">
             <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
