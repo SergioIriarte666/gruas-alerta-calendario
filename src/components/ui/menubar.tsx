@@ -3,12 +3,18 @@ import * as MenubarPrimitive from "@radix-ui/react-menubar"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { getPortalContainer } from "@/lib/portal-container"
 
 const MenubarMenu = MenubarPrimitive.Menu
 
 const MenubarGroup = MenubarPrimitive.Group
 
-const MenubarPortal = MenubarPrimitive.Portal
+const MenubarPortal = ({
+  ...props
+}: React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Portal>) => (
+  <MenubarPrimitive.Portal container={getPortalContainer()} {...props} />
+)
+MenubarPortal.displayName = MenubarPrimitive.Portal.displayName
 
 const MenubarSub = MenubarPrimitive.Sub
 
@@ -88,7 +94,7 @@ const MenubarContent = React.forwardRef<
     { className, align = "start", alignOffset = -4, sideOffset = 8, ...props },
     ref
   ) => (
-    <MenubarPrimitive.Portal>
+    <MenubarPrimitive.Portal container={getPortalContainer()}>
       <MenubarPrimitive.Content
         ref={ref}
         align={align}

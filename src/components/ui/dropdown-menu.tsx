@@ -13,7 +13,12 @@ const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+const DropdownMenuPortal = ({
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Portal>) => (
+  <DropdownMenuPrimitive.Portal container={getPortalContainer()} {...props} />
+)
+DropdownMenuPortal.displayName = DropdownMenuPrimitive.Portal.displayName
 
 const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
