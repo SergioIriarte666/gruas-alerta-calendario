@@ -10,6 +10,7 @@ export interface AdvancedFilters {
   numeroFiscal?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  operatorId?: string;
 }
 
 export const useAdvancedFilters = () => {
@@ -57,6 +58,7 @@ export const useAdvancedFilters = () => {
       if (filters.quoteNumber && !normalizeSearchTerm(service.quoteNumber || '').includes(normalizeSearchTerm(filters.quoteNumber))) return false;
       if (filters.purchaseOrderNumber && !normalizeSearchTerm(service.purchaseOrderNumber || service.purchaseOrder || '').includes(normalizeSearchTerm(filters.purchaseOrderNumber))) return false;
       if (filters.numeroFiscal && !normalizeSearchTerm(service.invoiceNumeroFiscal || '').includes(normalizeSearchTerm(filters.numeroFiscal))) return false;
+      if (filters.operatorId && service.operator?.id !== filters.operatorId) return false;
 
       // Apply date filters
       if (filters.dateFrom || filters.dateTo) {

@@ -8,7 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
-import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import {
+  Autocomplete,
+  AutocompleteInput,
+  AutocompletePortal,
+  AutocompletePositioner,
+  AutocompleteContent,
+  AutocompleteList,
+  AutocompleteItem,
+  AutocompleteEmpty,
+} from '@/components/reui/autocomplete';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
@@ -183,13 +192,30 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Descripción</Label>
-              <AutocompleteInput
-                id="description"
+              <Autocomplete
                 value={formData.description}
                 onValueChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-                suggestions={quickEntrySuggestions}
-                placeholder="Describe brevemente..."
-              />
+                items={quickEntrySuggestions.map(s => s.value)}
+              >
+                <AutocompleteInput
+                  id="description"
+                  placeholder="Describe brevemente..."
+                />
+                <AutocompletePortal>
+                  <AutocompletePositioner sideOffset={4}>
+                    <AutocompleteContent>
+                      <AutocompleteList>
+                        <AutocompleteEmpty>Sin resultados</AutocompleteEmpty>
+                        {quickEntrySuggestions.map(s => (
+                          <AutocompleteItem key={s.value} value={s.value}>
+                            {s.value}
+                          </AutocompleteItem>
+                        ))}
+                      </AutocompleteList>
+                    </AutocompleteContent>
+                  </AutocompletePositioner>
+                </AutocompletePortal>
+              </Autocomplete>
             </div>
 
             {/* Amount (conditional) */}
