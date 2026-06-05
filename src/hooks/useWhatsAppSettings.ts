@@ -17,6 +17,7 @@ export interface WhatsAppSettings {
   notifyServiceNoOperator: boolean;
   notifyInvoiceOverdue: boolean;
   notifyDailyReminder: boolean;
+  notifyVehiclePickup: boolean;
 }
 
 const defaultSettings: WhatsAppSettings = {
@@ -30,6 +31,7 @@ const defaultSettings: WhatsAppSettings = {
   notifyServiceNoOperator: false,
   notifyInvoiceOverdue: false,
   notifyDailyReminder: false,
+  notifyVehiclePickup: true,
 };
 
 export const useWhatsAppSettings = () => {
@@ -64,6 +66,7 @@ export const useWhatsAppSettings = () => {
           notifyServiceNoOperator: data.notify_service_no_operator ?? false,
           notifyInvoiceOverdue: data.notify_invoice_overdue ?? false,
           notifyDailyReminder: data.notify_daily_reminder ?? false,
+          notifyVehiclePickup: data.notify_vehicle_pickup ?? true,
         });
       }
     } catch (error) {
@@ -91,6 +94,7 @@ export const useWhatsAppSettings = () => {
         notify_service_no_operator: settings.notifyServiceNoOperator,
         notify_invoice_overdue: settings.notifyInvoiceOverdue,
         notify_daily_reminder: settings.notifyDailyReminder,
+        notify_vehicle_pickup: settings.notifyVehiclePickup,
       };
 
       let error;

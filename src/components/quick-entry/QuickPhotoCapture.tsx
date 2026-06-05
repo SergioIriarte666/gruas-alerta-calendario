@@ -95,9 +95,10 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           continue;
         }
 
-        // Generate unique filename
+        // Generate unique filename under user's folder (required by RLS policy)
+        const { data: { user } } = await supabase.auth.getUser();
         const fileExt = file.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop() || 'jpg');
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileName = `${user?.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage

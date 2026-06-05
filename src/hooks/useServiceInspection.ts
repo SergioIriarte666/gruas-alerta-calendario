@@ -87,6 +87,41 @@ export const useServiceInspection = () => {
           toast.success('PDF de retiro generado exitosamente');
         }
 
+        // ── Subir PDF de retiro a Storage y notificar por WhatsApp ────────
+        try {
+          const uploadResult = await uploadInspectionPdf(
+            result.blob,
+            serviceId,
+            `${service.folio}-retiro`,
+          );
+
+          if (uploadResult) {
+            await savePdfUrlToInspection(serviceId, uploadResult.signedUrl, 'initial');
+
+            const clientPhone = service.client?.phone || '';
+            const contactPhone = (service as any).contactPhone || '';
+
+            if (clientPhone || contactPhone) {
+              await supabase.functions.invoke('send-whatsapp-retiro', {
+                body: {
+                  folio: service.folio,
+                  serviceId,
+                  clientName: service.client?.name || '',
+                  clientPhone,
+                  contactPhone,
+                  contactPerson: (service as any).contactPerson || '',
+                  pdfUrl: uploadResult.signedUrl,
+                  serviceDate: service.serviceDate,
+                  operatorName: service.operator?.name || '',
+                },
+              });
+            }
+          }
+        } catch (uploadErr) {
+          logger.error('Error subiendo PDF de retiro o enviando WhatsApp:', uploadErr);
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         if (serviceId) {
           logger.debug('Actualizando estado a inspection_completed...');
           try {

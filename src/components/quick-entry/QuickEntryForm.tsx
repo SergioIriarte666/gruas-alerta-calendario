@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Truck, Receipt, Package, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
@@ -13,6 +12,7 @@ import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
@@ -25,10 +25,10 @@ interface QuickEntryFormProps {
 }
 
 const ENTRY_TYPES = [
-  { value: 'service', label: 'Servicio' },
-  { value: 'cost', label: 'Costo/Gasto' },
-  { value: 'inventory', label: 'Bodega' },
-  { value: 'maintenance', label: 'Mantenimiento' },
+  { value: 'service', label: 'Servicio', Icon: Truck, color: '#378ADD' },
+  { value: 'cost', label: 'Costo/Gasto', Icon: Receipt, color: '#E24B4A' },
+  { value: 'inventory', label: 'Bodega', Icon: Package, color: '#639922' },
+  { value: 'maintenance', label: 'Mantenimiento', Icon: Wrench, color: '#BA7517' },
 ] as const;
 
 export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
@@ -46,6 +46,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   });
   const [photos, setPhotos] = useState<Array<{ path: string; signedUrl: string; file?: File }>>([]);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
 
   const extractReceiptData = async (imageUrl: string) => {
     try {
@@ -101,20 +102,25 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
         },
       });
       triggerRefresh();
-      onClose();
-      setFormData({
-        type: 'service',
-        description: '',
-        amount: undefined,
-        date: getTodayLocal(),
-        notes: '',
-      });
-      setPhotos([]);
+      handleClose();
     } catch (error) {
       // Error handled in hook
     }
   };
 
+
+  const handleClose = () => {
+    onClose();
+    setStep(1);
+    setFormData({
+      type: 'service',
+      description: '',
+      amount: undefined,
+      date: getTodayLocal(),
+      notes: '',
+    });
+    setPhotos([]);
+  };
 
   if (!isOpen) return null;
 
@@ -127,119 +133,138 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background">
-          <h2 className="text-lg font-semibold">Registro Rápido</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold">Registro Rápido · Paso {step} de 2</h2>
+            <div className="w-full h-1 bg-muted rounded-full mt-2">
+              <div
+                className="h-1 bg-primary rounded-full transition-all duration-300"
+                style={{ width: step === 1 ? '50%' : '100%' }}
+              />
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleClose} className="ml-2 shrink-0">
             <X className="size-4" />
           </Button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Type Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="type">Tipo de Registro</Label>
-            <Select 
-              value={formData.type} 
-              onValueChange={(value: any) => setFormData(prev => ({ ...prev, type: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {ENTRY_TYPES.map(type => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Step 1 — Type selection */}
+        {step === 1 && (
+          <div className="p-4 space-y-4">
+            <p className="text-sm text-muted-foreground">Selecciona el tipo de registro</p>
+            <div className="grid grid-cols-2 gap-3">
+              {ENTRY_TYPES.map(({ value, label, Icon, color }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, type: value }))}
+                  className={cn(
+                    'flex flex-col items-center gap-2 rounded-lg border p-4 text-sm font-medium transition-all',
+                    formData.type === value
+                      ? 'ring-2 ring-primary bg-primary/10'
+                      : 'hover:bg-muted/50'
+                  )}
+                >
+                  <Icon size={24} style={{ color }} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button type="button" onClick={() => setStep(2)}>
+                Siguiente →
+              </Button>
+            </div>
           </div>
+        )}
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
-            <AutocompleteInput
-              id="description"
-              value={formData.description}
-              onValueChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-              suggestions={quickEntrySuggestions}
-              placeholder="Describe brevemente..."
-            />
-          </div>
-
-          {/* Amount (conditional) */}
-          {(formData.type === 'service' || formData.type === 'cost') && (
+        {/* Step 2 — Fields */}
+        {step === 2 && (
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Monto</Label>
-              <Input
-                id="amount"
-                type="number"
-                value={formData.amount || ''}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  amount: e.target.value ? parseFloat(e.target.value) : undefined 
-                }))}
-                placeholder="0"
+              <Label htmlFor="description">Descripción</Label>
+              <AutocompleteInput
+                id="description"
+                value={formData.description}
+                onValueChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
+                suggestions={quickEntrySuggestions}
+                placeholder="Describe brevemente..."
               />
             </div>
-          )}
 
-          {/* Date */}
-          <div className="space-y-2">
-            <Label htmlFor="date">Fecha</Label>
-            <DatePickerInput
-              id="date"
-              value={formData.date}
-              onChange={(value) => setFormData(prev => ({ ...prev, date: value }))}
-              placeholder="Seleccionar fecha"
-            />
-          </div>
+            {/* Amount (conditional) */}
+            {(formData.type === 'service' || formData.type === 'cost') && (
+              <div className="space-y-2">
+                <Label htmlFor="amount">Monto</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  value={formData.amount || ''}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    amount: e.target.value ? parseFloat(e.target.value) : undefined,
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+            )}
 
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notas Adicionales</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notas opcionales..."
-              rows={3}
-            />
-          </div>
-
-          {/* Photo capture for cost entries */}
-          {formData.type === 'cost' && (
+            {/* Date */}
             <div className="space-y-2">
-              <Label>Evidencia (Fotos)</Label>
-              <QuickPhotoCapture onPhotosChange={setPhotos} maxPhotos={3} />
+              <Label htmlFor="date">Fecha</Label>
+              <DatePickerInput
+                id="date"
+                value={formData.date}
+                onChange={(value) => setFormData(prev => ({ ...prev, date: value }))}
+                placeholder="Seleccionar fecha"
+              />
             </div>
-          )}
 
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas Adicionales</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notas opcionales..."
+                rows={3}
+              />
+            </div>
 
-          {/* Submit Button */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || isExtracting || !formData.description}
-              className="flex-1"
-            >
-              {isExtracting ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Extrayendo datos...
-                </>
-              ) : isLoading ? 'Guardando...' : 'Guardar'}
-            </Button>
-          </div>
-        </form>
+            {/* Photo capture for cost entries */}
+            {formData.type === 'cost' && (
+              <div className="space-y-2">
+                <Label>Evidencia (Fotos)</Label>
+                <QuickPhotoCapture onPhotosChange={setPhotos} maxPhotos={3} />
+              </div>
+            )}
+
+            {/* Navigation buttons */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="flex-1"
+              >
+                ← Atrás
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || isExtracting || !formData.description}
+                className="flex-1"
+              >
+                {isExtracting ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Extrayendo datos...
+                  </>
+                ) : isLoading ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

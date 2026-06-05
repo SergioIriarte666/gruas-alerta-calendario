@@ -48,11 +48,16 @@ export const uploadInspectionPdf = async (
 export const savePdfUrlToInspection = async (
   serviceId: string,
   pdfUrl: string,
+  phase: 'initial' | 'final' = 'final',
 ): Promise<void> => {
+  const updatePayload = phase === 'initial'
+    ? { pdf_retiro_url: pdfUrl, pdf_retiro_uploaded_at: new Date().toISOString() }
+    : { pdf_url: pdfUrl, pdf_uploaded_at: new Date().toISOString() };
+
   const { error } = await supabase
     .from('inspections')
-    .update({ pdf_url: pdfUrl, pdf_uploaded_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq('service_id', serviceId);
 
-  if (error) logger.warn('No se pudo guardar pdf_url en inspections:', error.message);
+  if (error) logger.warn(`No se pudo guardar pdf_url (${phase}) en inspections:`, error.message);
 };

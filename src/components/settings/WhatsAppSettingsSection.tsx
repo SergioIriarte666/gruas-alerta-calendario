@@ -17,6 +17,7 @@ type NotificationKey = Exclude<keyof WhatsAppSettings, 'id' | 'adminPhone1' | 'a
 const notifications: { key: NotificationKey; label: string; desc: string }[] = [
   { key: 'notifyOperatorAssigned', label: 'Operador asignado a servicio', desc: 'WhatsApp al operador cuando se le asigna un servicio' },
   { key: 'notifyServiceCompleted', label: 'Servicio completado', desc: 'WhatsApp a admins cuando un servicio cambia a completado' },
+  { key: 'notifyVehiclePickup', label: 'Retiro de vehículo', desc: 'WhatsApp al cliente cuando el operador completa la inspección de retiro' },
   { key: 'notifyDocumentExpiry', label: 'Documento próximo a vencer', desc: 'WhatsApp a admins sobre licencias, seguros y revisiones' },
   { key: 'notifyPaymentPending', label: 'Pago pendiente de cliente', desc: 'WhatsApp a admins cuando hay pagos vencidos' },
   { key: 'notifyServiceNoQuote', label: 'Servicio creado sin cotización', desc: 'WhatsApp a admins cuando se crea un servicio sin precio' },
