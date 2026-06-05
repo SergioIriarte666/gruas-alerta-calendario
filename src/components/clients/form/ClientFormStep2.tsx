@@ -2,7 +2,8 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
-import { Phone, Mail, MapPin, User } from 'lucide-react';
+import { Mail, MapPin, User, Phone } from 'lucide-react';
+import { PhoneInput } from '@/components/reui/phone-input';
 import { toTitleCase } from '@/lib/utils';
 
 interface ClientFormStep2Props {
@@ -33,12 +34,11 @@ export const ClientFormStep2 = ({
               <Phone className="size-4" />
               Teléfono
             </Label>
-            <Input
-              id="phone"
+            <PhoneInput
+              defaultCountry="CL"
               value={phone}
-              onChange={(e) => onChange('phone', e.target.value)}
-              placeholder="+56 9 1234 5678"
-              className="bg-background"
+              onChange={(value) => onChange('phone', value ?? '')}
+              placeholder="Teléfono"
             />
           </div>
           
