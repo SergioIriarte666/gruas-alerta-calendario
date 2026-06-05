@@ -285,10 +285,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const resolveCategoryId = (rawCategory?: string | null) => {
     const normalized = rawCategory?.trim();
     if (!normalized) return '';
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized);
+    if (isUuid) return normalized;
     const directMatch = activeCategories.find(category => category.id === normalized);
     if (directMatch) return directMatch.id;
-    const nameMatch = activeCategories.find(category => category.name === normalized || category.label === normalized);
-    return nameMatch?.id || normalized;
+    const normalizedLower = normalized.toLowerCase();
+    const nameMatch = activeCategories.find(category => {
+      const name = (category.name || '').toLowerCase();
+      const label = (category.label || '').toLowerCase();
+      return name === normalizedLower || label === normalizedLower;
+    });
+    return nameMatch?.id || '';
   };
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
@@ -757,6 +764,10 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   const handleUploadCosts = async () => {
     if (!parseResult) return;
+    if (costCategoriesData.length === 0) {
+      toast.error('No hay categorías de costo cargadas. Reintenta en unos segundos o configura categorías.');
+      return;
+    }
 
     const docsToImport = parseResult.documents.filter(d =>
       selectedDocuments.has(getDocumentStateKey(d)) && selectedSuppliers.has(d.supplier_rut)
@@ -832,7 +843,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           .insert([{
             name: name || 'Proveedor',
             rut: rut || null,
-            category: supplierCategory,
+            category: supplierCategory || null,
             subcategory: supplierSubcategory,
             is_active: true,
             created_by: userId,
@@ -850,7 +861,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       const updateSupplierDefaults = async (supplierId: string, supplierRut: string) => {
         const condition = getSelectedCondition(supplierRut);
         const updateData: Record<string, any> = {
-          category: resolveCategoryId(supplierCategoryMapping[supplierRut] || 'otros'),
+          category: resolveCategoryId(supplierCategoryMapping[supplierRut] || 'otros') || null,
           subcategory: (supplierSubcategoryMapping[supplierRut] || '').trim() || null,
           updated_by: userId,
         };

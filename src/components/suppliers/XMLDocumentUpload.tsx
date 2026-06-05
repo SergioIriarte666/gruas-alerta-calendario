@@ -291,10 +291,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const resolveCategoryId = (rawCategory?: string | null) => {
     const normalized = rawCategory?.trim();
     if (!normalized) return '';
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized);
+    if (isUuid) return normalized;
     const directMatch = activeCategories.find(category => category.id === normalized);
     if (directMatch) return directMatch.id;
-    const nameMatch = activeCategories.find(category => category.name === normalized || category.label === normalized);
-    return nameMatch?.id || normalized;
+    const normalizedLower = normalized.toLowerCase();
+    const nameMatch = activeCategories.find(category => {
+      const name = (category.name || '').toLowerCase();
+      const label = (category.label || '').toLowerCase();
+      return name === normalizedLower || label === normalizedLower;
+    });
+    return nameMatch?.id || '';
   };
 
   const {
