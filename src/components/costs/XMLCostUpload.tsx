@@ -1361,7 +1361,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="space-y-3">
                       {parseResult.suppliers.map((supplier, index) => (
                         <div key={index} className="flex items-center justify-between rounded-lg border border-border/70 border-l-4 border-l-primary bg-muted/30 p-3 shadow-sm">
                           <div className="flex items-center gap-x-3">

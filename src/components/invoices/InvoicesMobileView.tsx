@@ -3,8 +3,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Edit, CheckCircle, Ban, FileText, Calendar, User, DollarSign } from 'lucide-react';
-import { format, isValid, parseISO, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { isValid, parseISO, differenceInDays } from 'date-fns';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useState, useEffect } from 'react';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
@@ -24,7 +24,7 @@ const formatSafeDate = (dateValue: any): string => {
   try {
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
     if (!isValid(date)) return 'Fecha inválida';
-    return format(date, 'dd/MM/yyyy', { locale: es });
+    return formatForDisplay(date);
   } catch {
     return 'Error';
   }

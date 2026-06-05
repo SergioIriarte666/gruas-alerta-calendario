@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
-import { format, isValid, parseISO, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { isValid, parseISO, differenceInDays } from 'date-fns';
+import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import {
   FileText,
   Calendar,
@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface InvoiceDetailsModalProps {
@@ -91,7 +90,7 @@ const formatSafeDate = (dateValue: any): string => {
   try {
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
     if (!isValid(date)) return 'Fecha inválida';
-    return format(date, 'dd/MM/yyyy', { locale: es });
+    return formatForDisplay(date);
   } catch {
     return 'Error';
   }

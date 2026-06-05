@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye, Ban } from 'lucide-react';
 import { Invoice } from '@/types';
-import { format, isValid, parseISO, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { isValid, parseISO, differenceInDays } from 'date-fns';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
 import { toTitleCase } from '@/lib/utils';
@@ -32,17 +32,14 @@ interface InvoicesTableProps {
 // Safe date formatting with validation and fallbacks
 const formatSafeDate = (dateValue: any): string => {
   if (!dateValue) return 'Fecha no disponible';
-  
+
   try {
-    // Handle both string and Date objects
     const date = typeof dateValue === 'string' ? parseISO(dateValue) : new Date(dateValue);
-    
     if (!isValid(date)) {
       logger.warn('Invalid date provided to formatSafeDate:', dateValue);
       return 'Fecha inválida';
     }
-    
-    return format(date, 'dd/MM/yyyy', { locale: es });
+    return formatForDisplay(date);
   } catch (error) {
     logger.error('Error formatting date:', error, 'Value:', dateValue);
     return 'Error en fecha';

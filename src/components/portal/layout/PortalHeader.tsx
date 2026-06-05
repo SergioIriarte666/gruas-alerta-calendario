@@ -2,8 +2,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bell, FileText, FileWarning as FileAlert, History, LayoutDashboard, LogOut, Plus, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { usePortalOCCount } from '@/hooks/portal/usePortalOCCount';
@@ -98,7 +99,7 @@ const PortalHeader: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const dateLabel = format(new Date(), "EEEE d 'de' MMMM, yyyy", { locale: es });
+  const dateLabel = formatInTimeZone(new Date(), businessClock.timezone(), "EEEE d 'de' MMMM, yyyy", { locale: es });
 
   return (
     <>

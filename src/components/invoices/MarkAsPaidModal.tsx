@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Invoice } from '@/types';
-import { format } from 'date-fns';
+import { getTodayString } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 
 
@@ -25,7 +25,7 @@ interface MarkAsPaidModalProps {
 }
 
 export const MarkAsPaidModal = ({ invoice, isOpen, onClose, onConfirm }: MarkAsPaidModalProps) => {
-  const [paymentDate, setPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [paymentDate, setPaymentDate] = useState(getTodayString());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleConfirm = async () => {
@@ -49,7 +49,7 @@ export const MarkAsPaidModal = ({ invoice, isOpen, onClose, onConfirm }: MarkAsP
 
   // Reset date when modal opens with new invoice
   const handleOpen = () => {
-    setPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setPaymentDate(getTodayString());
   };
 
   return (

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,7 @@ import { toast } from 'sonner';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import { getTodayLocal } from '@/utils/timezoneUtils';
+import { getTodayLocal, formatForDisplay } from '@/utils/timezoneUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { createLogger } from "@/lib/logger";
@@ -387,7 +386,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                                      const isOverdue = new Date(invoice.due_date + 'T12:00:00') < new Date();
                                      return (
                                        <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                                         Vence: {format(new Date(invoice.due_date + 'T12:00:00'), 'dd/MM/yyyy')}
+                                         Vence: {formatForDisplay(invoice.due_date)}
                                        </span>
                                      );
                                    })()}

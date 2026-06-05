@@ -337,22 +337,18 @@ const convertUserFormatToDateFns = (userFormat: string): string => {
 // Format date for display using user's configured format
 export const formatForDisplay = (date: Date | string): string => {
   if (!date) return 'N/A';
-  
+
   const userFormat = getUserDateFormat();
   const dateFnsFormat = convertUserFormatToDateFns(userFormat);
-  
-  // Si es string en formato yyyy-MM-dd, convertir directamente
+
   if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    const [year, month, day] = date.split('-');
-    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return format(dateObj, dateFnsFormat);
+    return businessClock.format(new Date(`${date}T12:00:00Z`), dateFnsFormat);
   }
-  
-  // Si es Date object, formatear según configuración del usuario
+
   if (date instanceof Date) {
-    return format(date, dateFnsFormat);
+    return businessClock.format(date, dateFnsFormat);
   }
-  
+
   return 'N/A';
 };
 
@@ -368,25 +364,21 @@ export const formatForDisplayLong = (date: Date | string): string => {
 // Format date for display short using user's format but short year
 export const formatForDisplayShort = (date: Date | string): string => {
   if (!date) return 'N/A';
-  
+
   const userFormat = getUserDateFormat();
-  const dateObj = typeof date === 'string' ? parseFromDatabase(date) : date;
-  
+  const dateObj = typeof date === 'string'
+    ? (date.match(/^\d{4}-\d{2}-\d{2}$/) ? new Date(`${date}T12:00:00Z`) : parseFromDatabase(date))
+    : date;
+
   let shortFormat: string;
   switch (userFormat) {
-    case 'MM/DD/YYYY':
-      shortFormat = 'MM/dd/yy';
-      break;
-    case 'YYYY-MM-DD':
-      shortFormat = 'yy-MM-dd';
-      break;
+    case 'MM/DD/YYYY': shortFormat = 'MM/dd/yy'; break;
+    case 'YYYY-MM-DD': shortFormat = 'yy-MM-dd'; break;
     case 'DD/MM/YYYY':
-    default:
-      shortFormat = 'dd/MM/yy';
-      break;
+    default: shortFormat = 'dd/MM/yy';
   }
-  
-  return format(dateObj, shortFormat, { locale: es });
+
+  return businessClock.format(dateObj, shortFormat);
 };
 
 // Format date for alerts and notifications (dd MMM, respects user timezone)
@@ -401,26 +393,21 @@ export const formatForAlert = (date: Date | string): string => {
 // Format date and time for display (respects user's timezone and format)
 export const formatForDisplayWithTime = (date: Date | string): string => {
   if (!date) return 'N/A';
-  
+
   const userFormat = getUserDateFormat();
-  const dateObj = typeof date === 'string' ? parseFromDatabase(date) : date;
-  const userTimezone = getUserTimezoneSync();
-  
+  const dateObj = typeof date === 'string'
+    ? (date.match(/^\d{4}-\d{2}-\d{2}$/) ? new Date(`${date}T12:00:00Z`) : new Date(date))
+    : date;
+
   let displayFormat: string;
   switch (userFormat) {
-    case 'MM/DD/YYYY':
-      displayFormat = 'MM/dd/yyyy HH:mm';
-      break;
-    case 'YYYY-MM-DD':
-      displayFormat = 'yyyy-MM-dd HH:mm';
-      break;
+    case 'MM/DD/YYYY': displayFormat = 'MM/dd/yyyy HH:mm'; break;
+    case 'YYYY-MM-DD': displayFormat = 'yyyy-MM-dd HH:mm'; break;
     case 'DD/MM/YYYY':
-    default:
-      displayFormat = 'dd/MM/yyyy HH:mm';
-      break;
+    default: displayFormat = 'dd/MM/yyyy HH:mm';
   }
-  
-  return formatInTimeZone(dateObj, userTimezone, displayFormat, { locale: es });
+
+  return businessClock.format(dateObj, displayFormat);
 };
 
 // ===================== BUSINESS TIMEZONE (SINGLE SOURCE OF TRUTH) =====================
@@ -570,3 +557,16 @@ export const getBusinessToday = (): string => businessClock.today();
  * Date a las 12:00 del día comercial actual. Seguro para comparaciones.
  */
 export const getBusinessTodayDate = (): Date => businessClock.todayDate();
+
+/**
+ * Fecha de hoy en TZ del negocio como string yyyy-MM-dd.
+ * Usar para valores iniciales de formularios y claves internas.
+ */
+export const getTodayString = (): string => businessClock.today();
+
+// Invalidar userSettingsCache cuando el usuario cambia el formato de fecha
+if (typeof window !== 'undefined') {
+  window.addEventListener('date-format-changed', () => {
+    userSettingsCache = null;
+  });
+}

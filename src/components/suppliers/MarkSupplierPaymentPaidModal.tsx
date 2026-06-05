@@ -13,7 +13,7 @@ import { CheckCircle } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { SupplierPayment } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
+import { getTodayString } from '@/utils/timezoneUtils';
 
 interface MarkSupplierPaymentPaidModalProps {
   payment: SupplierPayment | null;
@@ -28,7 +28,7 @@ export const MarkSupplierPaymentPaidModal = ({
   onClose,
   onConfirm,
 }: MarkSupplierPaymentPaidModalProps) => {
-  const [paymentDate, setPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [paymentDate, setPaymentDate] = useState(getTodayString());
 
   const handleOpenChange = (open: boolean) => {
     if (!open) onClose();
@@ -42,7 +42,7 @@ export const MarkSupplierPaymentPaidModal = ({
 
   // Reset date when modal opens
   const handleOpen = () => {
-    setPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setPaymentDate(getTodayString());
   };
 
   return (
