@@ -258,7 +258,7 @@ export const UserManagementTab = () => {
                               <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-hidden border-border/70 bg-card p-0">
+                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-clip border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                             </DialogHeader>
@@ -288,7 +288,7 @@ export const UserManagementTab = () => {
                               <HardHat className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-hidden border-border/70 bg-card p-0">
+                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-clip border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                             </DialogHeader>
@@ -366,7 +366,7 @@ export const UserManagementTab = () => {
                                   <HardHat className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[85vh] overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="max-h-[85vh] overflow-clip border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                                 </DialogHeader>
@@ -403,7 +403,7 @@ export const UserManagementTab = () => {
                                   <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[85vh] overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="max-h-[85vh] overflow-clip border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                                 </DialogHeader>

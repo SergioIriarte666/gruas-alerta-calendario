@@ -692,7 +692,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden border-border/70 bg-card p-0">
+                <DialogContent className="max-h-[90vh] max-w-6xl overflow-clip border-border/70 bg-card p-0">
                     <div className="flex flex-col h-full max-h-[90vh]">
                         {/* Header */}
                         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">

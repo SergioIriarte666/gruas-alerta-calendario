@@ -1337,7 +1337,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-hidden border-border/70 bg-card p-0 shadow-2xl">
+        <DialogContent className="h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
         <XMLImportDialogHeader
           icon={Receipt}
           title="Importar XML a Bodega"

@@ -90,7 +90,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-clip flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="size-5 text-primary" />

@@ -1175,7 +1175,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={`max-w-4xl w-[95vw] overflow-hidden flex flex-col ${step === 'preview' ? 'h-[85vh]' : 'max-h-[90vh]'}`}>
+      <DialogContent className={`max-w-4xl w-[95vw] overflow-clip flex flex-col ${step === 'preview' ? 'h-[85vh]' : 'max-h-[90vh]'}`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5" />

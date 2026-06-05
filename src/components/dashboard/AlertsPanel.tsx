@@ -137,7 +137,7 @@ export const AlertsPanel = () => {
 
       {/* Modal para mostrar todas las alertas */}
       <Dialog open={showAllModal} onOpenChange={setShowAllModal}>
-        <DialogContent className="max-h-[80vh] max-w-4xl overflow-hidden border-border/70 bg-popover/95">
+        <DialogContent className="max-h-[80vh] max-w-4xl overflow-clip border-border/70 bg-popover/95">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-x-3">
