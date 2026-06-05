@@ -58,6 +58,39 @@ const fetchCommissionCategoryIds = async (): Promise<string[]> => {
     .filter(Boolean);
 };
 
+const fetchExpectedCommissionCostIds = async (): Promise<string[]> => {
+  const commissionCategoryIds = await fetchCommissionCategoryIds();
+  const categoryIdsToUse = [...new Set([COMMISSION_CATEGORY_ID, ...commissionCategoryIds])];
+
+  const { data, error } = await supabase
+    .from('costs')
+    .select('id, category_id')
+    .in('category_id', categoryIdsToUse);
+
+  if (error) {
+    throw new Error(`Error fetching expected commission cost ids: ${error.message}`);
+  }
+
+  return (data || []).map((row: any) => row.id).filter(Boolean);
+};
+
+export const validateCommissionsAgainstCosts = async (commissions: Commission[]) => {
+  const expectedIds = await fetchExpectedCommissionCostIds();
+  const expectedSet = new Set(expectedIds);
+  const actualSet = new Set((commissions || []).map(c => c.id));
+
+  const missingIds: string[] = [];
+  for (const id of expectedSet) {
+    if (!actualSet.has(id)) missingIds.push(id);
+  }
+
+  return {
+    expectedTotal: expectedIds.length,
+    actualTotal: actualSet.size,
+    missingIds,
+  };
+};
+
 /**
  * Fuente de verdad ÚNICA: tabla costs.
  * Se usa como fallback cuando el RPC falla.
@@ -236,7 +269,32 @@ const fetchCommissions = async (): Promise<Commission[]> => {
   try {
     const { data: rpcData, error: rpcError } = await supabase.rpc('get_commissions_with_details');
     
-    if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+    const hasPaymentFields =
+      Array.isArray(rpcData) &&
+      rpcData.length > 0 &&
+      Object.prototype.hasOwnProperty.call(rpcData[0], 'payment_date') &&
+      Object.prototype.hasOwnProperty.call(rpcData[0], 'payment_batch_id');
+
+    if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0 && hasPaymentFields) {
+      const expectedIds = await fetchExpectedCommissionCostIds();
+      const expectedSet = new Set(expectedIds);
+      const rpcIdSet = new Set((rpcData || []).map((r: any) => r.id).filter(Boolean));
+      let missingFromRpc = 0;
+      for (const id of expectedSet) {
+        if (!rpcIdSet.has(id)) missingFromRpc++;
+      }
+
+      if (missingFromRpc > 0) {
+        logger.warn('⚠️ RPC commissions incomplete vs costs, falling back to costs', {
+          rpcCount: rpcIdSet.size,
+          expectedCount: expectedSet.size,
+          missingFromRpc,
+        });
+        const costsData = await fetchCommissionsFromCosts();
+        logger.debug('✅ Commissions from costs fallback:', costsData.length);
+        return costsData;
+      }
+
       const mapped = rpcData.map(mapRawCommissionToCommission);
       logger.debug('✅ Commissions from RPC:', mapped.length);
       return mapped;
@@ -245,7 +303,7 @@ const fetchCommissions = async (): Promise<Commission[]> => {
     if (rpcError) {
       logger.warn('⚠️ RPC error:', rpcError.message, rpcError.code, rpcError.details);
     } else {
-      logger.warn('⚠️ RPC returned empty/invalid data, trying costs fallback');
+      logger.warn('⚠️ RPC returned empty/invalid data (or missing payment fields), trying costs fallback');
     }
   } catch (e) {
     logger.error('❌ RPC exception:', e);

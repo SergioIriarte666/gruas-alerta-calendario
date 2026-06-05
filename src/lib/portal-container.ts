@@ -17,15 +17,12 @@ export function getPortalContainer(): HTMLElement {
     const existing = document.getElementById('radix-portal-root');
     if (existing instanceof HTMLElement) {
       _container = existing;
-      if (!_container.style.cssText) {
-        _container.style.cssText = 'position:relative;z-index:0;';
-      }
     } else {
       _container = document.createElement('div');
       _container.id = 'radix-portal-root';
-      _container.style.cssText = 'position:relative;z-index:0;';
       document.body.appendChild(_container);
     }
   }
+  _container.removeAttribute('style');
   return _container;
 }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { Users, DollarSign, TrendingUp, Clock, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useCommissions } from '@/hooks/commissions/useCommissions';
+import { useCommissions, validateCommissionsAgainstCosts } from '@/hooks/commissions/useCommissions';
 import { useCreatePaymentBatch } from '@/hooks/commissions/usePaymentBatches';
 import { CreatePaymentBatchDialog } from '@/components/commissions/CreatePaymentBatchDialog';
 import { CommissionExportButton } from '@/components/commissions/CommissionExportButton';
@@ -62,7 +62,35 @@ const Commissions = () => {
   const handleRefreshData = async () => {
     queryClient.invalidateQueries({ queryKey: ['commissions'] });
     queryClient.invalidateQueries({ queryKey: ['costs'] });
-    await refetch();
+    const result = await refetch();
+
+    if (result.data) {
+      try {
+        const validation = await validateCommissionsAgainstCosts(result.data);
+        if (validation.missingIds.length > 0) {
+          toast({
+            type: 'warning',
+            title: 'Validación de comisiones',
+            description: `Faltan ${validation.missingIds.length} comisiones por mostrar (esperadas: ${validation.expectedTotal}, visibles: ${validation.actualTotal}).`,
+            priority: 'high',
+          });
+        } else {
+          toast({
+            type: 'success',
+            title: 'Validación de comisiones',
+            description: `Todas las comisiones aparecen correctamente (total: ${validation.actualTotal}).`,
+            priority: 'low',
+          });
+        }
+      } catch (e: any) {
+        toast({
+          type: 'error',
+          title: 'Validación de comisiones',
+          description: e?.message || 'Error validando consistencia de comisiones',
+          priority: 'high',
+        });
+      }
+    }
   };
 
   // Sorting logic
