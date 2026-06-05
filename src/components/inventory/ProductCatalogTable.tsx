@@ -144,7 +144,7 @@ export const ProductCatalogTable = () => {
               Nuevo Producto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Producto</DialogTitle>
             </DialogHeader>
@@ -279,7 +279,7 @@ export const ProductCatalogTable = () => {
 
       {/* Product Details Modal */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Detalles del Producto</DialogTitle>
           </DialogHeader>
@@ -295,7 +295,7 @@ export const ProductCatalogTable = () => {
 
       {/* Edit Product Modal */}
       <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
           </DialogHeader>

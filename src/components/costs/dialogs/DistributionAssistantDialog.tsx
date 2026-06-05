@@ -229,7 +229,7 @@ export const DistributionAssistantDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card">
+      <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="size-5 text-primary" />

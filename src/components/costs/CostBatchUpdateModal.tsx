@@ -320,7 +320,7 @@ export const CostBatchUpdateModal = ({
         else onOpenChange(true);
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+      <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
         <DialogHeader className="-mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-2">
             {isMarkPaidMode ? (

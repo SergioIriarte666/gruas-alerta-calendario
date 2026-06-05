@@ -31,7 +31,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] p-3 sm:p-6">
         <DialogHeader>
           <div className="mb-2 flex items-center gap-4">
             {logoUrl ? (

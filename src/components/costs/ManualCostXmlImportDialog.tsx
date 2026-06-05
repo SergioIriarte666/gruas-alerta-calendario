@@ -252,7 +252,7 @@ export const ManualCostXmlImportDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[92vh] max-w-5xl w-[95vw] overflow-y-auto">
+        <DialogContent className="max-h-[92vh] max-w-5xl w-[95vw]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileUp className="size-5 text-primary" />

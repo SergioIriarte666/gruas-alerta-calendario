@@ -246,7 +246,7 @@ export const InventoryStockView = () => {
                   <Plus className="size-4" />
                   Nuevo Producto
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card">
+                <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
                   <DialogHeader>
                     <DialogTitle>Agregar Nuevo Producto</DialogTitle>
                   </DialogHeader>
@@ -259,7 +259,7 @@ export const InventoryStockView = () => {
                   <Plus className="size-4" />
                   Nueva Entrada
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
                   <DialogHeader>
                     <DialogTitle>Registrar Entrada de Inventario</DialogTitle>
                   </DialogHeader>
@@ -272,7 +272,7 @@ export const InventoryStockView = () => {
                   <Minus className="size-4" />
                   Nueva Salida
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto border-border/70 bg-card">
+                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
                   <DialogHeader>
                     <DialogTitle>Registrar Salida de Inventario</DialogTitle>
                   </DialogHeader>
@@ -576,7 +576,7 @@ export const InventoryStockView = () => {
       <ProductDrawer productId={selectedProductId} open={!!selectedProductId} onClose={() => setSelectedProductId(null)} />
 
       <Dialog open={showEditProductForm} onOpenChange={setShowEditProductForm}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
           </DialogHeader>
@@ -633,7 +633,7 @@ export const InventoryStockView = () => {
       </Dialog>
 
       <Dialog open={showDuplicateMerge} onOpenChange={setShowDuplicateMerge}>
-        <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-6xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Administrar Productos Duplicados</DialogTitle>
           </DialogHeader>

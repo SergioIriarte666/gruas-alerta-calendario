@@ -156,7 +156,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl w-[95vw] overflow-y-auto border-border/70 bg-card p-0">
+      <DialogContent className="max-h-[90vh] max-w-2xl w-[95vw] border-border/70 bg-card p-0">
         <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle>Registrar Nuevo Pago</DialogTitle>

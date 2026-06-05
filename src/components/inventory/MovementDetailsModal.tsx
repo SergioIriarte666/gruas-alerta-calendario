@@ -346,7 +346,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
 
       {/* Edit Movement Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Editar Movimiento</DialogTitle>
           </DialogHeader>

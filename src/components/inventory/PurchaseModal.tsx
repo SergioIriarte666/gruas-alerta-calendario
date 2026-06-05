@@ -115,7 +115,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Registrar Compra de Inventario</DialogTitle>
           <div className="text-sm text-muted-foreground">

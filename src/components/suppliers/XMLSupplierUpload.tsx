@@ -250,7 +250,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto border-border/70 bg-card p-0">
+      <DialogContent className="max-h-[90vh] max-w-6xl border-border/70 bg-card p-0">
         <XMLImportDialogHeader
           icon={Code}
           title="Importar Proveedores desde XML"

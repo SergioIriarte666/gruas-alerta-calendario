@@ -44,7 +44,7 @@ export const ClientsHeader = ({
       />
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open ? handleCloseModal() : setIsDialogOpen(true)}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-popover/95 p-0">
+        <DialogContent className="max-h-[90vh] max-w-4xl border-border/70 bg-popover/95 p-0">
             <ClientForm
               client={selectedClient}
               onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}

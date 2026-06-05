@@ -157,7 +157,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="size-5 text-green-600" />

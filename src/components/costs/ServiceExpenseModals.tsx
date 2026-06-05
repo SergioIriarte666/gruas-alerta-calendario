@@ -133,7 +133,7 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="bg-card border max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border max-w-6xl w-[95vw] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-foreground">Desglosar Gastos de Servicios</DialogTitle>
           <p className="text-muted-foreground">

@@ -324,7 +324,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
       )}
 
       <Dialog open={isExitOpen} onOpenChange={setIsExitOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl w-[95vw] overflow-y-auto border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-3xl w-[95vw] border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Registrar Consumo - {crane.licensePlate}</DialogTitle>
           </DialogHeader>
@@ -360,7 +360,7 @@ const PartHistoryModal = ({ target, onClose }: PartHistoryModalProps) => {
 
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-3xl w-[95vw] overflow-y-auto border-border/70 bg-card">
+      <DialogContent className="max-h-[85vh] max-w-3xl w-[95vw] border-border/70 bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="size-5 text-primary" />

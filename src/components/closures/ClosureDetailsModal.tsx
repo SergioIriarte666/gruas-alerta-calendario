@@ -184,7 +184,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">

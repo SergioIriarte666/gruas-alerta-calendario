@@ -109,7 +109,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-y-auto border-border/70 bg-card p-0">
+      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] border-border/70 bg-card p-0">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Receipt className="size-5 text-primary" />

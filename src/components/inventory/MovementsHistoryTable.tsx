@@ -430,7 +430,7 @@ export const MovementsHistoryTable = () => {
       </Dialog>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-4xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Detalles del Movimiento</DialogTitle>
           </DialogHeader>
