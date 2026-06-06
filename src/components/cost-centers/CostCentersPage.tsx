@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, Eye, Edit, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Eye, Edit, ChevronDown, ChevronRight, AlertTriangle, BookOpen, Loader2 } from 'lucide-react';
+import { usePDFGeneration } from '@/hooks/usePDFGeneration';
+import { generateCostManualPDF } from '@/utils/pdf/costManualPdfGenerator';
 import { cn } from '@/lib/utils';
 import { createLogger } from '@/lib/logger';
 
@@ -199,6 +201,9 @@ export const CostCentersPage = () => {
   const [search, setSearch] = useState('');
 
   const { data: costCenters = [], isLoading } = useCostCentersWithStats();
+  const { isGenerating, generateAndDownload } = usePDFGeneration();
+
+  const handleDownloadManual = () => generateAndDownload(generateCostManualPDF, 'Manual de Costos');
 
   // Realtime subscription
   useEffect(() => {
@@ -268,10 +273,23 @@ export const CostCentersPage = () => {
             Control presupuestal por área — período activo
           </p>
         </div>
-        <Button onClick={() => { setSelectedCenter(null); setIsFormOpen(true); }} className="gap-2">
-          <Plus className="size-4" />
-          Nuevo centro
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleDownloadManual}
+            disabled={isGenerating}
+            className="gap-2"
+          >
+            {isGenerating
+              ? <Loader2 className="size-4 animate-spin" />
+              : <BookOpen className="size-4" />}
+            Manual PDF
+          </Button>
+          <Button onClick={() => { setSelectedCenter(null); setIsFormOpen(true); }} className="gap-2">
+            <Plus className="size-4" />
+            Nuevo centro
+          </Button>
+        </div>
       </div>
 
       {/* Métricas */}
