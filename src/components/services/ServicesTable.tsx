@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,6 @@ import {
   flexRender,
   ColumnDef,
   getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
   useReactTable,
   RowSelectionState,
 } from '@tanstack/react-table';
@@ -61,8 +59,6 @@ export const ServicesTable = ({
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-
   // Convert Set<string> → RowSelectionState for TanStack
   const rowSelection: RowSelectionState = useMemo(() => {
     const state: RowSelectionState = {};
@@ -103,10 +99,10 @@ export const ServicesTable = ({
         enableSorting: true,
         size: 100,
         meta: { headerTitle: 'Folio' },
-        header: ({ column }) => (
-          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        header: () => (
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => onSort?.('folio')}>
             Folio
-            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+            {sortField === 'folio' && sortDirection === 'asc' ? <ArrowUp className="size-3" /> : sortField === 'folio' && sortDirection === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
           </button>
         ),
         cell: ({ row }) => (
@@ -125,10 +121,10 @@ export const ServicesTable = ({
         enableSorting: true,
         size: 130,
         meta: { headerTitle: 'Fecha Servicio' },
-        header: ({ column }) => (
-          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        header: () => (
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => onSort?.('date')}>
             Fecha Servicio
-            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+            {sortField === 'date' && sortDirection === 'asc' ? <ArrowUp className="size-3" /> : sortField === 'date' && sortDirection === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
           </button>
         ),
         cell: ({ row }) =>
@@ -207,12 +203,10 @@ export const ServicesTable = ({
         enableSorting: true,
         size: 110,
         meta: { headerTitle: 'Valor' },
-        sortingFn: (a, b) =>
-          getDisplayServiceValue(a.original) - getDisplayServiceValue(b.original),
-        header: ({ column }) => (
-          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        header: () => (
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => onSort?.('value')}>
             Valor
-            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+            {sortField === 'value' && sortDirection === 'asc' ? <ArrowUp className="size-3" /> : sortField === 'value' && sortDirection === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
           </button>
         ),
         cell: ({ row }) => (
@@ -227,10 +221,10 @@ export const ServicesTable = ({
         enableSorting: true,
         size: 120,
         meta: { headerTitle: 'Estado' },
-        header: ({ column }) => (
-          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+        header: () => (
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => onSort?.('status')}>
             Estado
-            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+            {sortField === 'status' && sortDirection === 'asc' ? <ArrowUp className="size-3" /> : sortField === 'status' && sortDirection === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
           </button>
         ),
         cell: ({ row }) => getServiceStatusBadge(row.original.status),
@@ -255,7 +249,7 @@ export const ServicesTable = ({
                   variant="outline"
                   size="sm"
                   className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
-                  onClick={() => onCloseService(service)}
+                  onClick={(e) => { e.stopPropagation(); onCloseService(service); }}
                   title="Cerrar Servicio"
                 >
                   <Check className="size-4" />
@@ -266,7 +260,7 @@ export const ServicesTable = ({
                 variant="outline"
                 size="sm"
                 className="action-button border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 hover:border-primary/40"
-                onClick={() => onViewDetails(service)}
+                onClick={(e) => { e.stopPropagation(); onViewDetails(service); }}
                 title="Ver detalles del servicio"
               >
                 <Eye className="size-4" />
@@ -277,7 +271,7 @@ export const ServicesTable = ({
                   variant="outline"
                   size="sm"
                   className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
-                  onClick={async () => {
+                  onClick={async (e) => { e.stopPropagation();
                     const oc = service.purchaseOrderNumber || service.purchaseOrder;
                     const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
                       body: {
@@ -309,7 +303,7 @@ export const ServicesTable = ({
                   className={isInvoiced && !isAdmin
                     ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground"
                     : "action-button border-info/30 bg-info/10 text-info hover:bg-info/15 hover:border-info/40"}
-                  onClick={() => onEdit(service)}
+                  onClick={(e) => { e.stopPropagation(); onEdit(service); }}
                   title={isInvoiced && !isAdmin
                     ? "No se puede editar un servicio facturado"
                     : isInvoiced && isAdmin
@@ -328,7 +322,7 @@ export const ServicesTable = ({
                   className={isInvoiced
                     ? "action-button cursor-not-allowed border-border bg-muted text-muted-foreground"
                     : "action-button border-danger/30 bg-danger/10 text-danger hover:bg-danger/15 hover:border-danger/40"}
-                  onClick={isInvoiced ? undefined : () => onDelete(service)}
+                  onClick={isInvoiced ? undefined : (e) => { e.stopPropagation(); onDelete(service); }}
                   title={isInvoiced
                     ? "No se puede eliminar un servicio facturado"
                     : "Eliminar servicio"}
@@ -344,12 +338,12 @@ export const ServicesTable = ({
     );
 
     return cols;
-  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, isAdmin]);
+  }, [onSelectionChange, onCloseService, onViewDetails, onEdit, onDelete, isAdmin, sortField, sortDirection, onSort]);
 
   const table = useReactTable({
     data: services,
     columns,
-    state: { sorting, rowSelection },
+    state: { rowSelection },
     getRowId: (row) => row.id,
     enableRowSelection: !!onSelectionChange,
     onRowSelectionChange: (updater) => {
@@ -357,9 +351,7 @@ export const ServicesTable = ({
       const next = typeof updater === 'function' ? updater(rowSelection) : updater;
       onSelectionChange(new Set(Object.keys(next).filter(k => next[k])));
     },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   if (isMobile) {
@@ -442,7 +434,8 @@ export const ServicesTable = ({
                 {table.getRowModel().rows.map(row => (
                   <tr
                     key={row.id}
-                    className="border-b border-border/40 hover:bg-muted/30 transition-colors"
+                    className="border-b border-border/40 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => onViewDetails(row.original)}
                   >
                     {row.getVisibleCells().map(cell => (
                       <td key={cell.id} className="px-3 py-2.5">
