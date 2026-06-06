@@ -10,7 +10,6 @@ import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { LogoUpload } from './LogoUpload';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRut } from '@/utils/rutFormatter';
@@ -254,11 +253,13 @@ export const CompanySettingsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="phone">Teléfono</Label>
-              <PhoneInput
-                defaultCountry="CL"
+              <Input
+                id="phone"
+                type="tel"
                 value={localSettings.phone ?? ''}
-                onChange={(value) => handleInputChange('phone', value ?? '')}
-                placeholder="Teléfono empresa"
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="+56 9 XXXX XXXX"
+                className={inputClassName}
               />
             </div>
             <div>
@@ -381,11 +382,12 @@ export const CompanySettingsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Teléfono</Label>
-              <PhoneInput
-                defaultCountry="CL"
+              <Input
+                type="tel"
                 value={profileForm.phone}
-                onChange={(value) => setProfileForm(prev => ({ ...prev, phone: value ?? '' }))}
-                placeholder="Teléfono"
+                onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+56 9 XXXX XXXX"
+                className={inputClassName}
               />
             </div>
             <div>

@@ -9,7 +9,6 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, MessageCircle, Send, CheckCircle, XCircle, AlertCircle, Settings as SettingsIcon, History } from 'lucide-react';
 import { useWhatsAppSettings, type WhatsAppSettings } from '@/hooks/useWhatsAppSettings';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { toast } from 'sonner';
 import { WhatsAppMessageHistory } from './WhatsAppMessageHistory';
 
@@ -129,20 +128,22 @@ export const WhatsAppSettingsSection = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="wa-admin-1">Administrador 1</Label>
-              <PhoneInput
-                defaultCountry="CL"
+              <Input
+                id="wa-admin-1"
+                type="tel"
                 value={settings.adminPhone1}
-                onChange={(value) => updateSettings({ adminPhone1: value ?? '' })}
+                onChange={(e) => updateSettings({ adminPhone1: e.target.value })}
                 placeholder="+56 9 1234 5678"
               />
               <PhoneHint value={settings.adminPhone1} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="wa-admin-2">Administrador 2</Label>
-              <PhoneInput
-                defaultCountry="CL"
+              <Input
+                id="wa-admin-2"
+                type="tel"
                 value={settings.adminPhone2}
-                onChange={(value) => updateSettings({ adminPhone2: value ?? '' })}
+                onChange={(e) => updateSettings({ adminPhone2: e.target.value })}
                 placeholder="+56 9 8765 4321"
               />
               <PhoneHint value={settings.adminPhone2} />

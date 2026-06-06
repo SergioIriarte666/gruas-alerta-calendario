@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, User, Lock, Save, Camera, Loader2, ShieldCheck, Mail } from 'lucide-react';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -242,11 +241,11 @@ const Profile = () => {
                       <FormItem>
                         <FormLabel>Teléfono</FormLabel>
                         <FormControl>
-                          <PhoneInput
-                            defaultCountry="CL"
+                          <Input
+                            type="tel"
                             value={field.value ?? ''}
-                            onChange={(value) => field.onChange(value ?? '')}
-                            placeholder="Teléfono"
+                            onChange={(e) => field.onChange(e.target.value)}
+                            placeholder="+56 9 XXXX XXXX"
                           />
                         </FormControl>
                         <FormMessage />

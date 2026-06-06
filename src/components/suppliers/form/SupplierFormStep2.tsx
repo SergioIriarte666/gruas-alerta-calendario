@@ -3,7 +3,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Phone, Mail, MapPin, User } from 'lucide-react';
-import { PhoneInput } from '@/components/reui/phone-input';
 
 interface SupplierFormStep2Props {
   email: string;
@@ -47,11 +46,13 @@ export const SupplierFormStep2 = ({
               <Phone className="size-4" />
               Teléfono *
             </Label>
-            <PhoneInput
-              defaultCountry="CL"
-              value={phone}
-              onChange={(value) => onPhoneChange(value ?? '')}
-              placeholder="Teléfono"
+            <Input
+              id="phone"
+              type="tel"
+              value={phone ?? ''}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              placeholder="+56 9 XXXX XXXX"
+              className="bg-background"
             />
             {errors.phone && (
               <p className="text-destructive text-sm">{errors.phone}</p>

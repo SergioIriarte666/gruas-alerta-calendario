@@ -1,5 +1,4 @@
 import { Input } from '@/components/ui/input';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client, ServiceType } from '@/types';
@@ -127,11 +126,12 @@ export const ClientServiceSection = ({
       {/* Teléfono Persona en el Lugar */}
       <div className="space-y-2">
         <Label htmlFor="contactPhone">Teléfono Persona en el Lugar <span className="text-muted-foreground text-xs">(Opcional)</span></Label>
-        <PhoneInput
-          defaultCountry="CL"
-          value={contactPhone}
-          onChange={(value) => onContactPhoneChange?.(value ?? '')}
-          placeholder="Teléfono de contacto"
+        <Input
+          id="contactPhone"
+          type="tel"
+          value={contactPhone ?? ''}
+          onChange={(e) => onContactPhoneChange?.(e.target.value)}
+          placeholder="+56 9 XXXX XXXX"
           disabled={disabled}
         />
       </div>

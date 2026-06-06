@@ -8,16 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
-import {
-  Autocomplete,
-  AutocompleteInput,
-  AutocompletePortal,
-  AutocompletePositioner,
-  AutocompleteContent,
-  AutocompleteList,
-  AutocompleteItem,
-  AutocompleteEmpty,
-} from '@/components/reui/autocomplete';
 import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 import { QuickPhotoCapture } from './QuickPhotoCapture';
 import { supabase } from '@/integrations/supabase/client';
@@ -192,30 +182,20 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Descripción</Label>
-              <Autocomplete
-                value={formData.description}
-                onValueChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-                items={quickEntrySuggestions.map(s => s.value)}
-              >
-                <AutocompleteInput
+              <div className="relative">
+                <Input
                   id="description"
+                  list="quick-entry-suggestions"
                   placeholder="Describe brevemente..."
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
-                <AutocompletePortal>
-                  <AutocompletePositioner sideOffset={4}>
-                    <AutocompleteContent>
-                      <AutocompleteList>
-                        <AutocompleteEmpty>Sin resultados</AutocompleteEmpty>
-                        {quickEntrySuggestions.map(s => (
-                          <AutocompleteItem key={s.value} value={s.value}>
-                            {s.value}
-                          </AutocompleteItem>
-                        ))}
-                      </AutocompleteList>
-                    </AutocompleteContent>
-                  </AutocompletePositioner>
-                </AutocompletePortal>
-              </Autocomplete>
+                <datalist id="quick-entry-suggestions">
+                  {quickEntrySuggestions.map(s => (
+                    <option key={s.value} value={s.value} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             {/* Amount (conditional) */}

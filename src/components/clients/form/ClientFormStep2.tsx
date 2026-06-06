@@ -3,7 +3,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Mail, MapPin, User, Phone } from 'lucide-react';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { toTitleCase } from '@/lib/utils';
 
 interface ClientFormStep2Props {
@@ -34,11 +33,13 @@ export const ClientFormStep2 = ({
               <Phone className="size-4" />
               Teléfono
             </Label>
-            <PhoneInput
-              defaultCountry="CL"
-              value={phone}
-              onChange={(value) => onChange('phone', value ?? '')}
-              placeholder="Teléfono"
+            <Input
+              id="phone"
+              type="tel"
+              value={phone ?? ''}
+              onChange={(e) => onChange('phone', e.target.value)}
+              placeholder="+56 9 XXXX XXXX"
+              className="bg-background"
             />
           </div>
           

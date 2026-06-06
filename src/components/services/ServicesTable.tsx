@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
 import {
+  flexRender,
   ColumnDef,
   getCoreRowModel,
   getSortedRowModel,
@@ -22,13 +23,8 @@ import {
   useReactTable,
   RowSelectionState,
 } from '@tanstack/react-table';
-import {
-  DataGrid,
-  DataGridContainer,
-} from '@/components/reui/data-grid/data-grid';
-import { DataGridTable } from '@/components/reui/data-grid/data-grid-table';
-import { DataGridColumnHeader } from '@/components/reui/data-grid/data-grid-column-header';
-import { DataGridTableRowSelect, DataGridTableRowSelectAll } from '@/components/reui/data-grid/data-grid-table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 const logger = createLogger("ServicesTable");
 
@@ -82,8 +78,21 @@ export const ServicesTable = ({
         id: 'select',
         size: 48,
         enableSorting: false,
-        header: () => <DataGridTableRowSelectAll />,
-        cell: ({ row }) => <DataGridTableRowSelect row={row} />,
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Seleccionar todo"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Seleccionar fila"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ),
       });
     }
 
@@ -95,7 +104,10 @@ export const ServicesTable = ({
         size: 100,
         meta: { headerTitle: 'Folio' },
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Folio" />
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Folio
+            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+          </button>
         ),
         cell: ({ row }) => (
           <Badge
@@ -114,7 +126,10 @@ export const ServicesTable = ({
         size: 130,
         meta: { headerTitle: 'Fecha Servicio' },
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Fecha Servicio" />
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Fecha Servicio
+            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+          </button>
         ),
         cell: ({ row }) =>
           formatForDisplay(parseFromDatabase(row.original.serviceDate)),
@@ -124,8 +139,8 @@ export const ServicesTable = ({
         enableSorting: false,
         size: 180,
         meta: { headerTitle: 'Cliente' },
-        header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Cliente" />
+        header: () => (
+          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Cliente</span>
         ),
         cell: ({ row }) => (
           <div>
@@ -141,8 +156,8 @@ export const ServicesTable = ({
         enableSorting: false,
         size: 140,
         meta: { headerTitle: 'Vehículo' },
-        header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Vehículo" />
+        header: () => (
+          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Vehículo</span>
         ),
         cell: ({ row }) => <span>{formatVehicleInfo(row.original)}</span>,
       },
@@ -170,8 +185,8 @@ export const ServicesTable = ({
         enableSorting: false,
         size: 110,
         meta: { headerTitle: 'Grúa' },
-        header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Grúa" />
+        header: () => (
+          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Grúa</span>
         ),
         cell: ({ row }) =>
           row.original.crane?.licensePlate || 'Sin asignar',
@@ -181,8 +196,8 @@ export const ServicesTable = ({
         enableSorting: false,
         size: 130,
         meta: { headerTitle: 'Operador' },
-        header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Operador" />
+        header: () => (
+          <span className="text-secondary-foreground/80 text-[0.8125rem] font-normal">Operador</span>
         ),
         cell: ({ row }) =>
           row.original.operator?.name || 'Sin asignar',
@@ -195,7 +210,10 @@ export const ServicesTable = ({
         sortingFn: (a, b) =>
           getDisplayServiceValue(a.original) - getDisplayServiceValue(b.original),
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Valor" />
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Valor
+            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+          </button>
         ),
         cell: ({ row }) => (
           <span className="font-medium">
@@ -210,7 +228,10 @@ export const ServicesTable = ({
         size: 120,
         meta: { headerTitle: 'Estado' },
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Estado" />
+          <button className="flex items-center gap-1 hover:text-foreground transition-colors" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+            Estado
+            {column.getIsSorted() === 'asc' ? <ArrowUp className="size-3" /> : column.getIsSorted() === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUpDown className="size-3 opacity-50" />}
+          </button>
         ),
         cell: ({ row }) => getServiceStatusBadge(row.original.status),
       },
@@ -398,21 +419,41 @@ export const ServicesTable = ({
             )}
           </div>
         ) : (
-          <DataGridContainer border={false}>
-            <DataGrid
-              table={table}
-              recordCount={services.length}
-              tableLayout={{
-                rowBorder: true,
-                headerBackground: true,
-                headerBorder: true,
-                width: 'auto',
-              }}
-              emptyMessage="No hay servicios"
-            >
-              <DataGridTable />
-            </DataGrid>
-          </DataGridContainer>
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border/60 bg-muted/40">
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th
+                        key={header.id}
+                        className="px-3 py-2.5 text-left font-medium text-muted-foreground whitespace-nowrap"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())
+                        }
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map(row => (
+                  <tr
+                    key={row.id}
+                    className="border-b border-border/40 hover:bg-muted/30 transition-colors"
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="px-3 py-2.5">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </CardContent>
     </Card>

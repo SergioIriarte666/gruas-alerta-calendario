@@ -8,7 +8,6 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save } from 'lucide-react';
-import { PhoneInput } from '@/components/reui/phone-input';
 import { formatRut } from '@/utils/rutFormatter';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
@@ -163,11 +162,12 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono</Label>
-            <PhoneInput
-              defaultCountry="CL"
+            <Input
+              id="phone"
+              type="tel"
               value={formData.phone}
-              onChange={(value) => handleChange('phone', value ?? '')}
-              placeholder="Teléfono"
+              onChange={(e) => handleChange('phone', e.target.value)}
+              placeholder="+56 9 XXXX XXXX"
             />
           </div>
 
