@@ -171,6 +171,11 @@ export const useServicesPage = () => {
           return false;
         }
         
+        // Operator filter
+        if (advancedFilters.operatorId && service.operator?.id !== advancedFilters.operatorId) {
+          return false;
+        }
+
         // Date range filters
         if (advancedFilters.dateFrom || advancedFilters.dateTo) {
           const serviceDate = service.serviceDate ? parseFromDatabase(service.serviceDate) : null;
