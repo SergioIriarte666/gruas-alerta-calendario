@@ -1125,7 +1125,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </TabsContent>
 
                 <TabsContent value="unmatched" className="h-full mt-0">
-                  <ScrollArea className="h-full">
+                  <div className="h-full overflow-y-auto">
                     <div className="p-4">
                       {unmatchedClients.length > 0 ? (
                         <div>
@@ -1367,7 +1367,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         </div>
                       )}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="duplicates" className="h-full mt-0">

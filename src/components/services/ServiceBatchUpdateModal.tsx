@@ -292,14 +292,14 @@ export const ServiceBatchUpdateModal = ({
           </div>
 
           {/* Right panel - Edit fields */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-clip">
             <div className="px-4 py-3 border-b">
               <span className="text-sm font-medium">Campos a modificar</span>
               <p className="text-xs text-muted-foreground mt-0.5">Activa los campos que deseas actualizar</p>
             </div>
 
-            <ScrollArea className="flex-1 px-4 py-4">
-              <div className="space-y-3">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              <div className="space-y-3 pb-1">
                 {/* Status card */}
                 <div className={cn(
                   "rounded-xl border-2 transition-all overflow-hidden",
@@ -490,7 +490,7 @@ export const ServiceBatchUpdateModal = ({
                   )}
                 </div>
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
 

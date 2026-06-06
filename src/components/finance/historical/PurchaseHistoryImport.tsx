@@ -1383,7 +1383,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 </TabsContent>
 
                 <TabsContent value="unmatched" className="absolute inset-0 m-0">
-                   <ScrollArea className="h-full">
+                   <div className="h-full overflow-y-auto">
                     <div className="p-4 space-y-6">
                         {/* Unmatched Suppliers List */}
                         {unmatchedSuppliers.length > 0 && (
@@ -1676,7 +1676,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             </TableBody>
                         </Table>
                     </div>
-                   </ScrollArea>
+                   </div>
                 </TabsContent>
                 
                 <TabsContent value="duplicates" className="absolute inset-0 m-0">
