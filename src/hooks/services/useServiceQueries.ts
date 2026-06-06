@@ -310,7 +310,7 @@ export const useServiceQueries = () => {
 
         return data?.map(transformToService) || [];
       },
-      staleTime: 30000, // 30 segundos
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     });
   };
@@ -391,7 +391,7 @@ export const useServiceQueries = () => {
         return { services, total };
       },
       enabled: page > 0 && pageSize > 0,
-      staleTime: 30000,
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     });
   };
