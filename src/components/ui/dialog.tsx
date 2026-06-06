@@ -48,7 +48,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-[1001] grid w-[calc(100%-2rem)] max-w-lg",
+          "fixed left-[50%] top-[50%] z-[1001] flex flex-col w-[calc(100%-2rem)] max-w-lg",
           "translate-x-[-50%] translate-y-[-50%] gap-4",
           !hasOverflowOverride && "max-h-[calc(100vh-2rem)] overflow-clip",
           "border bg-background text-foreground p-6 tms-shadow-lg rounded-lg",
