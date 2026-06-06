@@ -1802,7 +1802,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     
     {/* Simple Create Supplier Dialog */}
     <Dialog open={isCreatingSupplier} onOpenChange={setIsCreatingSupplier}>
-        <DialogContent>
+        <DialogContent className="overflow-clip">
             <DialogHeader>
                 <DialogTitle>Crear Proveedor</DialogTitle>
             </DialogHeader>
@@ -1826,7 +1826,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     {/* Bulk Assign Dialog */}
     <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
-      <DialogContent className="w-[min(95vw,28rem)]">
+      <DialogContent className="w-[min(95vw,28rem)] overflow-clip">
         <DialogHeader>
           <DialogTitle>Asignar Proveedor Existente</DialogTitle>
         </DialogHeader>

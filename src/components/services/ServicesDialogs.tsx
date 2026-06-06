@@ -41,7 +41,7 @@ export const ServicesDialogs = ({
   return (
     <>
       <Dialog open={isCSVUploadOpen} onOpenChange={onCSVUploadClose}>
-        <DialogContent className="max-h-[90vh] max-w-6xl w-[95vw] border-border/70 bg-card">
+        <DialogContent className="max-h-[90vh] max-w-6xl w-[95vw] overflow-clip border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Carga Masiva de Servicios</DialogTitle>
           </DialogHeader>

@@ -110,7 +110,7 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-clip">
         <DialogHeader>
           <DialogTitle className="text-foreground">Nueva Deuda</DialogTitle>
         </DialogHeader>

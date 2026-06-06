@@ -175,7 +175,7 @@ export const EditHistoricalInvoiceModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw]">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] overflow-clip">
         <DialogHeader>
           <DialogTitle>Editar Factura Histórica {invoice?.folio}</DialogTitle>
           <DialogDescription>

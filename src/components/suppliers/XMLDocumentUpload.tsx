@@ -1131,7 +1131,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   };
 
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] border-border/70 bg-card p-0 shadow-2xl">
+      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
         <XMLImportDialogHeader
           icon={FileSpreadsheet}
           title="Importar Documentos XML"

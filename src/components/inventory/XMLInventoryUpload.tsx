@@ -2120,7 +2120,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
           if (!open) setPendingProductSuggestion(null);
         }}
       >
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl overflow-clip">
           <DialogHeader>
             <DialogTitle>
               Validación de producto antes de crear

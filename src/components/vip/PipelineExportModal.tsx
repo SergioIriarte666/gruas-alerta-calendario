@@ -99,7 +99,7 @@ export const PipelineExportModal: React.FC<PipelineExportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] overflow-clip">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="size-5" />

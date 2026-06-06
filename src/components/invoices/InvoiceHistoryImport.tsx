@@ -1503,7 +1503,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
     {/* Bulk Assign Dialog */}
     <Dialog open={bulkAssignDialogOpen} onOpenChange={setBulkAssignDialogOpen}>
-      <DialogContent className="w-[min(95vw,28rem)]">
+      <DialogContent className="w-[min(95vw,28rem)] overflow-clip">
         <DialogHeader>
           <DialogTitle>Asignar Clientes en Lote</DialogTitle>
         </DialogHeader>
@@ -1539,7 +1539,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
     {/* Quick Edit Dialog */}
     <Dialog open={editingClientIndex !== null} onOpenChange={(open) => !open && setEditingClientIndex(null)}>
-      <DialogContent className="w-[min(95vw,28rem)]">
+      <DialogContent className="w-[min(95vw,28rem)] overflow-clip">
         <DialogHeader>
           <DialogTitle>Editar Cliente</DialogTitle>
         </DialogHeader>

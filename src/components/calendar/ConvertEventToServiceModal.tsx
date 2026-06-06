@@ -98,7 +98,7 @@ export const ConvertEventToServiceModal = ({
   if (showServiceForm) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh]">
+        <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh] overflow-clip">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-x-2">
               <Calendar className="size-5 text-primary" />
@@ -123,7 +123,7 @@ export const ConvertEventToServiceModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh]">
+      <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh] overflow-clip">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-x-2">
             <Calendar className="size-5 text-primary" />
