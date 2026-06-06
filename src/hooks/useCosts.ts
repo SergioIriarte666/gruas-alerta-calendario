@@ -9,7 +9,6 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useCosts");
-const COSTS_PAGE_SIZE = 500;
 const COSTS_SELECT_CLAUSE = `
       *,
       cost_categories (*),
@@ -44,72 +43,53 @@ const COSTS_SELECT_CLAUSE = `
       )
     `;
 
-const buildCostsQuery = () =>
-  supabase
+const COSTS_LIST_SELECT_CLAUSE = `
+  id,
+  date,
+  description,
+  amount,
+  subcategory,
+  category_id,
+  operator_id,
+  crane_id,
+  service_id,
+  service_folio,
+  payment_date,
+  notes,
+  supplier_id,
+  supplier_invoice_id,
+  supplier_payment_id,
+  inventory_movement_id,
+  cost_categories (id, name),
+  cranes (id, brand, model, license_plate),
+  operators (id, name),
+  services (id, folio)
+`;
+
+const fetchCosts = async (): Promise<Cost[]> => {
+  const { data, error } = await supabase
     .from('costs')
-    .select(COSTS_SELECT_CLAUSE)
+    .select(COSTS_LIST_SELECT_CLAUSE)
     .order('payment_date', { ascending: false, nullsFirst: false })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .order('id', { ascending: false });
 
-const fetchCostsCount = async () => {
-  const { count, error } = await supabase
-    .from('costs')
-    .select('*', { count: 'exact', head: true });
-
   if (error) {
-    logger.error('Error fetching costs count:', error);
-    throw new Error(error.message);
-  }
-
-  return count ?? 0;
-};
-
-const fetchCostsChunk = async (from: number, to: number): Promise<Cost[]> => {
-  const { data, error } = await buildCostsQuery().range(from, to);
-
-  if (error) {
-    logger.error('Error fetching costs chunk:', error);
+    logger.error('Error fetching costs:', error);
     throw new Error(error.message);
   }
 
   return ((data as any[]) || []) as Cost[];
 };
 
-const fetchCosts = async (): Promise<Cost[]> => {
-  const totalCosts = await fetchCostsCount();
-
-  if (totalCosts === 0) {
-    return [];
-  }
-
-  const allCosts: Cost[] = [];
-  let from = 0;
-
-  while (allCosts.length < totalCosts) {
-    const chunk = await fetchCostsChunk(from, from + COSTS_PAGE_SIZE - 1);
-
-    if (chunk.length === 0) {
-      break;
-    }
-
-    allCosts.push(...chunk);
-    from += COSTS_PAGE_SIZE;
-
-    if (chunk.length < COSTS_PAGE_SIZE) {
-      break;
-    }
-  }
-
-  return allCosts;
-};
-
 export const useCosts = () => {
   return useQuery({
     queryKey: ['costs'],
     queryFn: fetchCosts,
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 };
 
@@ -122,7 +102,7 @@ export const usePagedCosts = (page: number, pageSize: number) => {
 
       const { data, error, count } = await supabase
         .from('costs')
-        .select(COSTS_SELECT_CLAUSE, { count: 'exact' })
+        .select(COSTS_LIST_SELECT_CLAUSE, { count: 'exact' })
         .order('payment_date', { ascending: false, nullsFirst: false })
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
@@ -290,7 +270,13 @@ export const useAddCost = () => {
     mutationFn: addCost,
     onSuccess: (data, variables) => {
       logger.debug('[useAddCost] Mutation success with data:', data);
-      invalidateAll();
+      if (variables.purchase_quantity) {
+        invalidateAll('with-inventory');
+      } else if (variables.supplier_id) {
+        invalidateAll('with-suppliers');
+      } else {
+        invalidateAll('costs-only');
+      }
       toast.success('Costo registrado correctamente');
       
       if (data?.[0]?.service_id) {
@@ -430,10 +416,15 @@ export const useUpdateCost = () => {
     onSuccess: (data) => {
       logger.debug('[useUpdateCost] Mutation success with data:', data);
 
-      // FASE 5: Invalidar todas las queries relacionadas
-      invalidateAll();
-
       const updatedRecord = Array.isArray(data) ? data[0] : data;
+
+      if (updatedRecord?.inventory_movement_id) {
+        invalidateAll('with-inventory');
+      } else if (updatedRecord?.supplier_invoice_id || updatedRecord?.supplier_payment_id) {
+        invalidateAll('with-suppliers');
+      } else {
+        invalidateAll('costs-only');
+      }
       if (updatedRecord?.service_id) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', updatedRecord.service_id] });
       }
@@ -759,7 +750,7 @@ export const useLinkInvoiceToCost = () => {
       return { invoiceId: invoice.id, costId };
     },
     onSuccess: () => {
-      invalidateAll();
+      invalidateAll('with-suppliers');
       toast.success('Factura vinculada al costo existente');
     },
     onError: (error: Error) => {
@@ -778,7 +769,7 @@ export const useDeleteCost = () => {
     mutationFn: deleteCost,
     onSuccess: (serviceId) => {
       logger.debug('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
-      invalidateAll();
+      invalidateAll('full');
       queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
       queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
       queryClient.refetchQueries({ queryKey: ['reports'] });

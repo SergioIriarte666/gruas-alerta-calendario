@@ -13,44 +13,45 @@ export const useUniversalSync = () => {
   const queryClient = useQueryClient();
 
   /**
-   * Invalida TODAS las queries relacionadas con el sistema de compras/inventario
+   * Invalida queries relacionadas según el tipo de cambio.
+   * mode: 'costs-only' | 'with-inventory' | 'with-suppliers' | 'full'
    */
-  const invalidateAll = () => {
-    
-    // ========== COSTOS ==========
+  const invalidateAll = (mode: 'costs-only' | 'with-inventory' | 'with-suppliers' | 'full' = 'costs-only') => {
+
+    // Siempre invalidar costos
     queryClient.invalidateQueries({ queryKey: ['costs'] });
     queryClient.invalidateQueries({ queryKey: ['service-costs'] });
     queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
     queryClient.invalidateQueries({ queryKey: ['commissions'] });
-    
-    // ========== INVENTARIO ==========
-    queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
-    
-    // ========== PIEZAS DE GRÚAS ==========
-    queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-    queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
-    queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
-    queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
-    queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
-    
-    // ========== PROVEEDORES ==========
-    queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-    queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
-    queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
-    queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
-    queryClient.invalidateQueries({ queryKey: ['purchase-invoice-items'] });
-    queryClient.invalidateQueries({ queryKey: ['supplier-invoice-details'] });
-    
-    // ========== SERVICIOS (por si hay comisiones o costos de servicio) ==========
-    queryClient.invalidateQueries({ queryKey: ['services'] });
-    queryClient.invalidateQueries({ queryKey: ['commissions'] });
+
+    if (mode === 'with-inventory' || mode === 'full') {
+      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-consumptions'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
+    }
+
+    if (mode === 'with-suppliers' || mode === 'full') {
+      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-invoice-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoice-details'] });
+    }
+
+    if (mode === 'full') {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    }
   };
 
   /**
