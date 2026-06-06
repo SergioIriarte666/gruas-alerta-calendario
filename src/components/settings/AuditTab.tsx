@@ -6,9 +6,10 @@ import { AuditTimeline } from './audit/AuditTimeline';
 import { AuditEntityDrawer } from './audit/AuditEntityDrawer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield } from 'lucide-react';
+import { getBusinessToday } from '@/utils/timezoneUtils';
 
 const defaultFilters: AuditFilters = {
-  dateFrom: new Date().toISOString().slice(0, 10),
+  dateFrom: getBusinessToday(),
   dateTo: null,
   modules: [],
   operations: [],

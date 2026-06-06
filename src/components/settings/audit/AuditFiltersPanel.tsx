@@ -2,6 +2,8 @@ import { AuditFilters, AuditModule, AuditOperation, AuditUser } from '@/hooks/us
 import { moduleLabel } from './auditHelpers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DatePickerInput from '@/components/common/DatePickerInput';
+import { getBusinessToday } from '@/utils/timezoneUtils';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -68,14 +70,10 @@ const OPERATION_LABELS: Record<AuditOperation, string> = {
 
 const ALL_OPERATIONS: AuditOperation[] = ['INSERT', 'UPDATE', 'DELETE'];
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function daysAgo(n: number) {
+function daysAgo(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 interface AuditFiltersPanelProps {
@@ -109,7 +107,7 @@ export const AuditFiltersPanel = ({
 
   const handleClear = () => {
     onFiltersChange({
-      dateFrom: today(),
+      dateFrom: getBusinessToday(),
       dateTo: null,
       modules: [],
       operations: [],
@@ -122,7 +120,7 @@ export const AuditFiltersPanel = ({
     const csv = buildCsvContent(entries);
     downloadTextFile({
       content: csv,
-      fileName: `auditoria-${today()}.csv`,
+      fileName: `auditoria-${getBusinessToday()}.csv`,
       contentType: 'text/csv;charset=utf-8;',
     });
   };
@@ -137,7 +135,7 @@ export const AuditFiltersPanel = ({
             size="sm"
             variant="outline"
             className="h-7 flex-1 px-2 text-xs"
-            onClick={() => set({ dateFrom: today(), dateTo: null })}
+            onClick={() => set({ dateFrom: getBusinessToday(), dateTo: null })}
           >
             Hoy
           </Button>
@@ -145,26 +143,26 @@ export const AuditFiltersPanel = ({
             size="sm"
             variant="outline"
             className="h-7 flex-1 px-2 text-xs"
-            onClick={() => set({ dateFrom: daysAgo(7), dateTo: today() })}
+            onClick={() => set({ dateFrom: daysAgo(7), dateTo: getBusinessToday() })}
           >
             7 días
           </Button>
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Desde</Label>
-          <Input
-            type="date"
+          <DatePickerInput
             value={filters.dateFrom ?? ''}
-            onChange={(e) => set({ dateFrom: e.target.value || null })}
+            onChange={(v) => set({ dateFrom: v || null })}
+            placeholder="Seleccionar fecha"
             className="h-8 text-xs"
           />
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Hasta</Label>
-          <Input
-            type="date"
+          <DatePickerInput
             value={filters.dateTo ?? ''}
-            onChange={(e) => set({ dateTo: e.target.value || null })}
+            onChange={(v) => set({ dateTo: v || null })}
+            placeholder="Sin límite"
             className="h-8 text-xs"
           />
         </div>
