@@ -70,7 +70,8 @@ const CostsPage = () => {
         craneId: 'all',
         serviceId: '',
         minAmount: '',
-        maxAmount: ''
+        maxAmount: '',
+        costCenterId: 'all',
     });
     
     const { data: costs = [], isLoading } = useCosts();
@@ -91,12 +92,18 @@ const CostsPage = () => {
         navigate(location.pathname, { replace: true });
     }, [location?.state, location.pathname, navigate]);
 
-    // Efecto para manejar el parámetro costId de la URL
+    // Efecto para manejar parámetros de URL
     useEffect(() => {
         const costId = searchParams.get('costId');
+        const costCenter = searchParams.get('costCenter');
+
         if (costId) {
             setHighlightedCostId(costId);
             setSearchTerm(`id:${costId}`);
+        }
+
+        if (costCenter) {
+            setFilters(prev => ({ ...prev, costCenterId: costCenter }));
         }
     }, [searchParams]);
 
@@ -176,7 +183,8 @@ const CostsPage = () => {
             craneId: 'all',
             serviceId: '',
             minAmount: '',
-            maxAmount: ''
+            maxAmount: '',
+            costCenterId: 'all',
         });
     }, []);
 
@@ -280,6 +288,10 @@ const CostsPage = () => {
 
         if (filters.maxAmount) {
             filtered = filtered.filter(cost => Number(cost.amount) <= Number(filters.maxAmount));
+        }
+
+        if (filters.costCenterId && filters.costCenterId !== 'all') {
+            filtered = filtered.filter(cost => cost.cost_center_id === filters.costCenterId);
         }
 
         return filtered;

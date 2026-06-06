@@ -24,52 +24,56 @@ const fetchCostCenters = async (): Promise<CostCenter[]> => {
 };
 
 const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
-  // First get cost centers
   const { data: centers, error: centersError } = await supabase
     .from('cost_centers')
-    .select(`
-      *,
-      parent:parent_id(*)
-    `)
+    .select('*, parent:parent_id(*)')
     .order('code');
 
-  if (centersError) {
-    logger.error('Error fetching cost centers:', centersError);
-    throw new Error(centersError.message);
-  }
+  if (centersError) throw new Error(centersError.message);
 
-  // Then get aggregated cost stats efficiently
+  const now = new Date();
+
+  const periodStart = (period: string | null): string => {
+    switch (period) {
+      case 'monthly':
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      case 'quarterly': {
+        const q = Math.floor(now.getMonth() / 3);
+        return new Date(now.getFullYear(), q * 3, 1).toISOString().slice(0, 10);
+      }
+      case 'yearly':
+        return new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+      default:
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    }
+  };
+
+  // Traer costos del año en curso para cubrir todos los períodos posibles
+  const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+
   const { data: costStats, error: statsError } = await supabase
     .from('costs')
-    .select('cost_center_id, amount')
-    .not('cost_center_id', 'is', null);
+    .select('cost_center_id, amount, date')
+    .not('cost_center_id', 'is', null)
+    .gte('date', yearStart);
 
-  if (statsError) {
-    logger.error('Error fetching cost stats:', statsError);
-    throw new Error(statsError.message);
-  }
-
-  // Aggregate costs by cost center
-  const costsByCenter = (costStats || []).reduce((acc, cost) => {
-    const centerId = cost.cost_center_id;
-    if (!acc[centerId]) {
-      acc[centerId] = { total: 0, count: 0 };
-    }
-    acc[centerId].total += Number(cost.amount || 0);
-    acc[centerId].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; count: number }>);
+  if (statsError) throw new Error(statsError.message);
 
   return (centers || []).map(center => {
-    const stats = costsByCenter[center.id] || { total: 0, count: 0 };
-    const budget_used_percentage = center.budget_amount ? (stats.total / Number(center.budget_amount)) * 100 : 0;
+    const start = periodStart(center.budget_period);
 
-    return {
-      ...center,
-      total_costs: stats.total,
-      cost_count: stats.count,
-      budget_used_percentage
-    };
+    const periodCosts = (costStats || []).filter(cost =>
+      cost.cost_center_id === center.id &&
+      (cost.date || '') >= start
+    );
+
+    const total_costs = periodCosts.reduce((sum, c) => sum + Number(c.amount || 0), 0);
+    const cost_count = periodCosts.length;
+    const budget_used_percentage = center.budget_amount
+      ? (total_costs / Number(center.budget_amount)) * 100
+      : 0;
+
+    return { ...center, total_costs, cost_count, budget_used_percentage };
   });
 };
 

@@ -22,6 +22,7 @@ export interface CostFilters {
   serviceId: string;
   minAmount: string;
   maxAmount: string;
+  costCenterId: string;
 }
 
 interface CostFiltersProps {
