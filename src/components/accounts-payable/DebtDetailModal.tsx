@@ -61,13 +61,14 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/70">
             <DialogTitle className="text-foreground">
               {debt.description} — {debt.creditors?.name}
             </DialogTitle>
           </DialogHeader>
 
+          <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="flex justify-end mb-3">
             <Button variant="outline" size="sm" onClick={() => setEditing((v) => !v)}>
               <Pencil className="size-3.5 mr-1" />
@@ -223,6 +224,7 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
               ))}
             </TableBody>
           </Table>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -692,8 +692,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="max-h-[90vh] max-w-6xl overflow-clip border-border/70 bg-card p-0">
-                    <div className="flex flex-col h-full max-h-[90vh]">
+                <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
+                    <div className="flex flex-col flex-1 min-h-0">
                         {/* Header */}
                         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
                             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -733,7 +733,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         </DialogHeader>
 
                         {/* Main Content - 2 Column Layout */}
-                        <div className="flex-1 overflow-clip">
+                        <div className="flex-1 overflow-hidden min-h-0">
                             <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
                                 {/* Left Sidebar - Navigation & Summary */}
                                 <div className="space-y-4 overflow-y-auto border-r border-border/70 bg-muted/30 p-4 lg:col-span-1">
@@ -749,9 +749,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                 </div>
 
                                 {/* Right Content - Form Steps */}
-                                <div className="lg:col-span-3 flex flex-col overflow-clip">
+                                <div className="lg:col-span-3 flex flex-col overflow-hidden min-h-0">
                                     <Form {...form}>
-                                        <div className="flex flex-col h-full">
+                                        <div className="flex flex-col flex-1 min-h-0">
                                             {/* Step Content */}
                                             <div className="flex-1 overflow-y-auto p-6">
                                                 {currentStep === 1 && (

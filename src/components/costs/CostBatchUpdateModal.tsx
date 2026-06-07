@@ -320,8 +320,8 @@ export const CostBatchUpdateModal = ({
         else onOpenChange(true);
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
-        <DialogHeader className="-mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
+        <DialogHeader className="rounded-t-lg border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-2">
             {isMarkPaidMode ? (
               <CheckCircle className="size-5 text-success" />
@@ -337,6 +337,7 @@ export const CostBatchUpdateModal = ({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto px-6 py-4">
         {/* Resumen */}
         <Card className={isMarkPaidMode ? 'border-success/20 bg-success/5' : 'border-primary/20 bg-primary/5'}>
           <CardContent className="pt-6">
@@ -783,7 +784,8 @@ export const CostBatchUpdateModal = ({
           </>
         )}
 
-        <DialogFooter className="mt-4 border-t border-border/70 pt-4">
+        </div>
+        <DialogFooter className="border-t border-border/70 px-6 py-4">
           <Button
             variant="outline"
             className="border-border/70 bg-background/60"

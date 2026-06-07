@@ -55,11 +55,12 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-clip">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-foreground">Filtros Avanzados</DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto">
         {/* Date Range Filter */}
         <div className="mb-6 pb-4 border-b">
           <Label className="text-foreground mb-3 block">Rango de Fechas</Label>
@@ -134,6 +135,7 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
           </div>
         </div>
 
+        </div>
         <div className="flex justify-end gap-x-4 mt-6 pt-6 border-t">
           <Button
             variant="outline"

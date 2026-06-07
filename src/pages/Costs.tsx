@@ -200,27 +200,32 @@ const CostsPage = () => {
         setHighlightedCostId('');
     }, []);
 
+    const isCommission = (cost: Cost) =>
+        cost.cost_categories?.name?.toLowerCase().includes('comisi') ||
+        cost.subcategory?.toLowerCase().includes('comisi');
+
     // Filtrar costos por fecha y término de búsqueda
+    // Las comisiones siempre pasan el filtro de fecha (su fecha es la del servicio, no la de creación)
     const filteredCostsByDate = useMemo(() => {
         let filtered = baseCosts;
         const todayStr = getBusinessToday(); // YYYY-MM-DD en TZ negocio
         switch (dateFilter) {
             case 'today':
                 filtered = baseCosts.filter(cost => {
-                    return (cost.date || '').slice(0, 10) === todayStr;
+                    return isCommission(cost) || (cost.date || '').slice(0, 10) === todayStr;
                 });
                 break;
             case 'week': {
                 const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
                 filtered = baseCosts.filter(cost => {
                     const costDate = safeParseDateOnly(cost.date);
-                    return costDate >= weekStart && costDate <= weekEnd;
+                    return isCommission(cost) || (costDate >= weekStart && costDate <= weekEnd);
                 });
                 break;
             }
             case 'month':
                 filtered = baseCosts.filter(cost => {
-                    return (cost.date || '').slice(0, 7) === todayStr.slice(0, 7);
+                    return isCommission(cost) || (cost.date || '').slice(0, 7) === todayStr.slice(0, 7);
                 });
                 break;
             case 'all':

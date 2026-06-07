@@ -98,7 +98,7 @@ export const ConvertEventToServiceModal = ({
   if (showServiceForm) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh] overflow-clip">
+        <DialogContent className="sm:max-w-[1200px] bg-background border max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-x-2">
               <Calendar className="size-5 text-primary" />
@@ -108,7 +108,7 @@ export const ConvertEventToServiceModal = ({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="mt-4">
+          <div className="flex-1 overflow-y-auto mt-4">
             <EnhancedServiceForm
               prefilledData={prefilledData}
               onSubmit={handleServiceSubmit}
@@ -123,7 +123,7 @@ export const ConvertEventToServiceModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh] overflow-clip">
+      <DialogContent className="sm:max-w-[700px] bg-background border max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-x-2">
             <Calendar className="size-5 text-primary" />
@@ -133,7 +133,7 @@ export const ConvertEventToServiceModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           {/* Event Preview */}
           <div className="p-4 bg-muted rounded-lg border">
             <h3 className="font-medium mb-3 flex items-center">

@@ -280,8 +280,8 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-3 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-3 sm:p-6 pb-4 border-b border-border/70">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <FileText className="size-5" />
@@ -294,6 +294,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">General</TabsTrigger>
@@ -736,6 +737,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
             {invoice.creatorName && ` por ${invoice.creatorName}`}
           </span>
           <span className="truncate">Actualizado: {formatForDisplayWithTime(invoice.updatedAt)}</span>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

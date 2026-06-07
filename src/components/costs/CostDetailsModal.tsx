@@ -184,8 +184,8 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] border-border/70 bg-card">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-hidden flex flex-col border-border/70 bg-card p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/70">
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
             <div className="flex items-center gap-2">
@@ -220,6 +220,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto p-6">
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 border border-border/70 bg-muted/30">
             <TabsTrigger value="general">Información General</TabsTrigger>
@@ -452,6 +453,7 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
             {cost.creator && ` por ${getCreatorDisplayName(cost.creator)}`}
           </span>
           <span>Actualizado: {formatForDisplayWithTime(cost.updated_at)}</span>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

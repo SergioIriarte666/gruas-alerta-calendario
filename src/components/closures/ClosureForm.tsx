@@ -221,8 +221,8 @@ const ClosureForm = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border max-w-5xl max-h-[90vh] overflow-clip p-0">
-        <div className="flex flex-col h-full max-h-[90vh]">
+      <DialogContent className="bg-card border max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <div className="flex flex-col h-full">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
             <DialogTitle className="text-2xl font-bold text-foreground">

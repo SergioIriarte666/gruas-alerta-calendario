@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Commission } from '@/types/commissions';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import { EditPaymentDateDialog } from './EditPaymentDateDialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
+import { useNavigate } from 'react-router-dom';
 
 export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at' | 'payment_date';
 export type SortDirection = 'asc' | 'desc' | null;
@@ -80,6 +81,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   sortField, sortDirection, onSort, onPaymentDateUpdated
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
 
@@ -159,9 +161,21 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
               {commission.payment_date && (
                 <div className="flex items-center justify-between pt-1 border-t text-xs">
                   <span className="text-green-700 font-medium">Pagado: {formatDate(commission.payment_date)}</span>
-                  {commission.status === 'paid' && (
-                    <EditPaymentDateDialog commissions={[commission]} onSuccess={onPaymentDateUpdated} />
-                  )}
+                  <div className="flex items-center gap-1">
+                    {commission.status === 'paid' && (
+                      <EditPaymentDateDialog commissions={[commission]} onSuccess={onPaymentDateUpdated} />
+                    )}
+                    {commission.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Ver en módulo de Costos"
+                        onClick={() => navigate(`/costs?costId=${commission.id}`)}
+                      >
+                        <ExternalLink className="size-4 text-muted-foreground" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -222,9 +236,19 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                 )}
               </TableCell>
               <TableCell>
-                {commission.status === 'paid' && (
-                  <EditPaymentDateDialog commissions={[commission]} onSuccess={onPaymentDateUpdated} />
-                )}
+                <div className="flex items-center gap-1">
+                  {commission.status === 'paid' && (
+                    <EditPaymentDateDialog commissions={[commission]} onSuccess={onPaymentDateUpdated} />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Ver en módulo de Costos"
+                    onClick={() => navigate(`/costs?costId=${commission.id}`)}
+                  >
+                    <ExternalLink className="size-4 text-muted-foreground" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

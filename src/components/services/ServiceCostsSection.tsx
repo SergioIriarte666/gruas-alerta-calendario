@@ -3,7 +3,7 @@ import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
-import { FileText, AlertTriangle, Calculator, TrendingDown } from 'lucide-react';
+import { FileText, AlertTriangle, Calculator, TrendingDown, Info } from 'lucide-react';
 
 interface ServiceCostsSectionProps {
   serviceId: string;
@@ -151,6 +151,11 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
             Comisión Operador ({operatorsData.length} costo{operatorsData.length !== 1 ? 's' : ''})
           </h4>
           
+          <div className="flex items-start gap-2 rounded-lg bg-violet-500/5 border border-violet-500/20 px-3 py-2 text-xs text-violet-700 dark:text-violet-400">
+            <Info className="size-3.5 mt-0.5 shrink-0" />
+            <span>Esta comisión también aparece en el módulo de <strong>Costos</strong> como categoría "Comisión Operador".</span>
+          </div>
+
           {operatorsData.map((operatorData) => (
             <div key={operatorData.id} className={`rounded-lg p-4 border border-border border-l-4 ${COMMISSION_COLOR.border} ${COMMISSION_COLOR.bg}`}>
               <div className="flex items-start justify-between">

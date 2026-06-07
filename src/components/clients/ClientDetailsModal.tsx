@@ -31,8 +31,8 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] p-3 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-3 sm:p-6 border-b border-border/70">
           <div className="mb-2 flex items-center gap-4">
             {logoUrl ? (
               <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-muted/30 p-1.5">
@@ -63,12 +63,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
         </DialogHeader>
         
         {/* Contenido con Scroll */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <ClientTabsWithCounters client={client} logoUrl={logoUrl} onLogoChange={setLogoUrl} />
         </div>
         
         {/* Footer con información de creación */}
-        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm text-muted-foreground pt-4 mt-4 border-t">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm text-muted-foreground border-t px-3 sm:px-6 pt-3 pb-0">
           <span className="truncate">
             Creado: {formatForDisplayWithTime(client.createdAt)}
             {client.creatorName && ` por ${client.creatorName}`}
@@ -77,7 +77,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
         </div>
         
         {/* Footer con botón */}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end px-3 sm:px-6 py-3">
           <Button 
             onClick={onClose}
             variant="outline"

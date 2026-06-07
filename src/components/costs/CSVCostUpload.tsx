@@ -157,14 +157,15 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/70">
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="size-5 text-green-600" />
               Carga Masiva de Costos
             </DialogTitle>
           </DialogHeader>
 
+          <div className="flex-1 overflow-y-auto px-6 py-4">
           {step === 'upload' && (
             <div className="space-y-4">
               {/* Drop zone */}
@@ -398,6 +399,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               <Button onClick={handleClose}>Cerrar</Button>
             </div>
           )}
+          </div>
         </DialogContent>
       </Dialog>
 

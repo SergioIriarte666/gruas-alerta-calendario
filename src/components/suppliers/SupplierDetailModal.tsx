@@ -64,7 +64,7 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-5xl border-border/70 bg-card p-0">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Building2 className="size-6 text-primary" />
@@ -72,7 +72,7 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-6 py-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <StatCard

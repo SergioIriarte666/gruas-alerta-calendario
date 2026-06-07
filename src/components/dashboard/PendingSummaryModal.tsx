@@ -56,8 +56,8 @@ export const PendingSummaryModal: React.FC = () => {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-clip p-0">
-        <div className="flex flex-col h-full max-h-[85vh]">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <div className="flex flex-col h-full">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold text-foreground">

@@ -67,20 +67,35 @@ const COSTS_LIST_SELECT_CLAUSE = `
 `;
 
 const fetchCosts = async (): Promise<Cost[]> => {
-  const { data, error } = await supabase
-    .from('costs')
-    .select(COSTS_LIST_SELECT_CLAUSE)
-    .order('payment_date', { ascending: false, nullsFirst: false })
-    .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .order('id', { ascending: false });
+  const PAGE_SIZE = 1000;
+  const allCosts: Cost[] = [];
+  let page = 0;
 
-  if (error) {
-    logger.error('Error fetching costs:', error);
-    throw new Error(error.message);
+  while (true) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from('costs')
+      .select(COSTS_LIST_SELECT_CLAUSE)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      logger.error('Error fetching costs (page ' + page + '):', error);
+      throw new Error(error.message);
+    }
+
+    const rows = (data as any[]) || [];
+    allCosts.push(...(rows as Cost[]));
+
+    if (rows.length < PAGE_SIZE) break;
+    page++;
   }
 
-  return ((data as any[]) || []) as Cost[];
+  return allCosts;
 };
 
 export const useCosts = () => {
