@@ -252,15 +252,16 @@ export const ManualCostXmlImportDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[92vh] max-w-5xl w-[95vw]">
-          <DialogHeader>
+        <DialogContent className="flex h-[min(92dvh,56rem)] w-[95vw] max-w-5xl flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <FileUp className="size-5 text-primary" />
               Importar XML en costo existente
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+            <div className="space-y-4">
             <Alert>
               <ShieldCheck className="size-4" />
               <AlertDescription>
@@ -513,7 +514,11 @@ export const ManualCostXmlImportDialog = ({
               </div>
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t px-6 py-4">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>

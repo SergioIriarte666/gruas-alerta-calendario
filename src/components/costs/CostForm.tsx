@@ -692,7 +692,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
+                <DialogContent className="flex h-[min(92vh,56rem)] w-[min(96vw,72rem)] max-w-6xl flex-col overflow-hidden border-border/70 bg-card p-0">
                     <div className="flex flex-col flex-1 min-h-0">
                         {/* Header */}
                         <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
@@ -734,7 +734,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
 
                         {/* Main Content - 2 Column Layout */}
                         <div className="flex-1 overflow-hidden min-h-0">
-                            <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
+                            <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-4">
                                 {/* Left Sidebar - Navigation & Summary */}
                                 <div className="space-y-4 overflow-y-auto border-r border-border/70 bg-muted/30 p-4 lg:col-span-1">
                                     <CostFormStepNavigation
@@ -791,7 +791,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                             </div>
 
                                             {/* Footer - Navigation Buttons */}
-                                            <div className="flex items-center justify-between border-t border-border/70 bg-muted/30 px-6 py-4">
+                                            <div className="shrink-0 flex items-center justify-between border-t border-border/70 bg-muted/30 px-6 py-4">
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -842,7 +842,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                 </div>
                                             </div>
                                             {!cost && currentStep === 4 && (
-                                                <div className="border-t border-border/70 bg-primary/5 px-6 py-2 text-[11px] text-primary/80">
+                                                <div className="shrink-0 border-t border-border/70 bg-primary/5 px-6 py-2 text-[11px] text-primary/80">
                                                     💡 Si el proveedor enviará factura electrónica después, podrás vincularla automáticamente al subir el XML — solo asegúrate de asignar el proveedor.
                                                 </div>
                                             )}
