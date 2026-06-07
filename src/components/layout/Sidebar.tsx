@@ -11,10 +11,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Separator } from '@/components/ui/separator';
 import { useUpcomingServicesCount } from '@/hooks/useUpcomingServicesCount';
 import { 
-  LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
-  FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
+  LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
+  FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, BookOpen
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -162,6 +162,7 @@ export const Sidebar = ({
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
         { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
+        { name: 'Manual de Usuario', href: '/user-manual', icon: BookOpen, adminOnly: false },
       ]
     }
   ];

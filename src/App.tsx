@@ -66,6 +66,7 @@ const routeImports = {
   ResetPassword: () => import('@/pages/ResetPassword'),
   TripCalculator: () => import('@/pages/TripCalculator'),
   PerformanceTest: () => import('@/pages/PerformanceTest'),
+  UserManual: () => import('@/pages/UserManual'),
 };
 
 // Lazy components using the same import functions
@@ -108,6 +109,7 @@ const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
 const TripCalculator = lazy(routeImports.TripCalculator);
 const PerformanceTest = lazy(routeImports.PerformanceTest);
+const UserManual = lazy(routeImports.UserManual);
 
 // Preload all route chunks after initial render
 const preloadAllRoutes = () => {
@@ -199,6 +201,7 @@ function AppContent() {
           <Route path="/accounts-payable" element={<AccountsPayable />} />
           
           <Route path="/trip-calculator" element={<TripCalculator />} />
+          <Route path="/user-manual" element={<UserManual />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/suppliers" element={<Suppliers />} />
           <Route path="/daily-report" element={<DailyReport />} />
