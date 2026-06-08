@@ -3502,34 +3502,46 @@ export type Database = {
         Row: {
           avatar_url: string | null
           client_id: string | null
+          company: string | null
           created_at: string | null
           email: string
           full_name: string | null
           id: string
           is_active: boolean | null
+          phone: string | null
           role: Database["public"]["Enums"]["app_role"] | null
+          rut: string | null
+          status: string
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           client_id?: string | null
+          company?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
           id: string
           is_active?: boolean | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
+          rut?: string | null
+          status?: string
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           client_id?: string | null
+          company?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
+          rut?: string | null
+          status?: string
           updated_at?: string | null
         }
         Relationships: []

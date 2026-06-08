@@ -53,7 +53,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, client_id, avatar_url')
+        .select('id, email, full_name, role, client_id, avatar_url, status')
         .eq('id', authUser.id)
         .single();
 
@@ -116,6 +116,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (operatorException) {
           logger.error('UserContext - Error fetching operator profile:', operatorException);
+        }
+
+        const status = profileData.status
+        if (status && status !== 'approved') {
+          logger.warn('UserContext - Profile status not approved:', status)
+          await signOut()
+          setUser(null)
+          setLoading(false)
+          fetchingRef.current = false
+          window.location.href = status === 'rejected' ? '/auth?error=rejected' : '/auth?error=not_approved'
+          return
         }
 
         const userProfile: UserProfile = {

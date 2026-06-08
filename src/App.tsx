@@ -68,6 +68,9 @@ const routeImports = {
   PerformanceTest: () => import('@/pages/PerformanceTest'),
   UserManual: () => import('@/pages/UserManual'),
   AuthCallback: () => import('@/pages/AuthCallback'),
+  Register: () => import('@/pages/Register'),
+  PendingApproval: () => import('@/pages/PendingApproval'),
+  PendingUsers: () => import('@/pages/PendingUsers'),
 };
 
 // Lazy components using the same import functions
@@ -112,6 +115,9 @@ const TripCalculator = lazy(routeImports.TripCalculator);
 const PerformanceTest = lazy(routeImports.PerformanceTest);
 const UserManual = lazy(routeImports.UserManual);
 const AuthCallback = lazy(routeImports.AuthCallback);
+const Register = lazy(routeImports.Register);
+const PendingApproval = lazy(routeImports.PendingApproval);
+const PendingUsers = lazy(routeImports.PendingUsers);
 
 // Preload all route chunks after initial render
 const preloadAllRoutes = () => {
@@ -178,6 +184,8 @@ function AppContent() {
         <Routes>
         <Route path="/auth" element={<ErrorBoundary name="Auth"><Suspense fallback={null}><Auth /></Suspense></ErrorBoundary>} />
         <Route path="/auth/callback" element={<Suspense fallback={null}><AuthCallback /></Suspense>} />
+        <Route path="/register" element={<Suspense fallback={null}><Register /></Suspense>} />
+        <Route path="/pending" element={<Suspense fallback={null}><PendingApproval /></Suspense>} />
         <Route path="/reset-password" element={<ErrorBoundary name="ResetPassword"><Suspense fallback={null}><ResetPassword /></Suspense></ErrorBoundary>} />
         <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
         <Route path="/debug-freeze" element={<DebugFreeze />} />
@@ -221,6 +229,7 @@ function AppContent() {
           <Route path="/settings" element={<AdminOnlyRoute><Settings /></AdminOnlyRoute>} />
           <Route path="/quick-entries" element={<AdminOnlyRoute><QuickEntries /></AdminOnlyRoute>} />
           <Route path="/backup" element={<AdminOnlyRoute><BackupPage /></AdminOnlyRoute>} />
+          <Route path="/admin/usuarios-pendientes" element={<AdminOnlyRoute><PendingUsers /></AdminOnlyRoute>} />
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}

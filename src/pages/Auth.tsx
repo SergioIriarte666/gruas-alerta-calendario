@@ -32,6 +32,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showSetPassword, setShowSetPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const errorParam = searchParams.get('error');
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -48,6 +49,15 @@ const Auth = () => {
       setShowSetPassword(true);
     }
   }, [authUser, needsPasswordSetup, profileLoading]);
+
+  // Mostrar mensajes de error OAuth
+  useEffect(() => {
+    if (errorParam === 'rejected') {
+      toast.error('Tu cuenta ha sido rechazada. Contacta al administrador.')
+    } else if (errorParam === 'not_approved') {
+      toast.error('Tu cuenta aún no ha sido aprobada.')
+    }
+  }, [errorParam])
 
   // Mostrar mensajes de invitación o registro
   useEffect(() => {

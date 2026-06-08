@@ -9,15 +9,40 @@ export default function AuthCallback() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         logger.error('OAuth callback error', error)
         navigate('/auth')
-      } else if (session) {
-        logger.info('OAuth session OK, uid:', session.user.id)
-        navigate('/')
-      } else {
+        return
+      }
+
+      if (!session) {
         navigate('/auth')
+        return
+      }
+
+      logger.info('OAuth session OK, uid:', session.user.id)
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, status')
+        .eq('id', session.user.id)
+        .single()
+
+      if (profileError || !profile) {
+        logger.info('No profile found, redirecting to /register')
+        navigate('/register')
+        return
+      }
+
+      if (profile.status === 'pending') {
+        logger.info('Profile pending approval')
+        navigate('/pending')
+      } else if (profile.status === 'rejected') {
+        logger.warn('Profile rejected')
+        navigate('/auth?error=rejected')
+      } else {
+        navigate('/')
       }
     })
   }, [navigate])
