@@ -389,20 +389,30 @@ export const useUserManagement = () => {
   const deleteUser = async (userId: string) => {
     try {
       setUpdating(userId);
-      
-      // Call RPC function to delete user (requires admin privileges)
-      const { error } = await supabase.rpc('delete_user_admin', {
-        target_user_id: userId
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sesión no válida');
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/delete-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId }),
       });
 
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar usuario');
 
       toast.success('Usuario eliminado correctamente');
       await fetchUsers();
       await fetchInvitations();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error al eliminar el usuario';
       logger.error('Error deleting user:', error);
-      toast.error(error.message || 'Error al eliminar el usuario');
+      toast.error(message);
     } finally {
       setUpdating(null);
     }

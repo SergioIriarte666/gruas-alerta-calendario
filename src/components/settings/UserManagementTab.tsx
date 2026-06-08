@@ -16,6 +16,7 @@ import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toTitleCase } from '@/lib/utils';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { useUser } from '@/contexts/UserContext';
 
 const roleBadgeClassNames: Record<string, string> = {
   admin: 'border-danger/20 bg-danger/10 text-danger',
@@ -42,6 +43,7 @@ const formatClientOption = (client: { name: string; rut: string; department?: st
 export const UserManagementTab = () => {
   const isMobile = useIsMobile();
   const { isAdmin } = useUserPermissions();
+  const { user: currentUser } = useUser();
   const { 
     users, 
     clients, 
@@ -313,9 +315,11 @@ export const UserManagementTab = () => {
                       <Button variant="ghost" size="icon" className="size-8 text-primary hover:bg-primary/10 hover:text-primary" onClick={() => setUserForPermissions(user)}>
                         <Shield className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-8 text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)}>
-                        <Trash2 className="size-4" />
-                      </Button>
+                      {user.id !== currentUser?.id && (
+                        <Button variant="ghost" size="icon" className="size-8 text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -463,9 +467,11 @@ export const UserManagementTab = () => {
                           <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 hover:text-primary" onClick={() => setUserForPermissions(user)} disabled={updating === user.id} title="Configurar permisos de módulos">
                             <Shield className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)} disabled={updating === user.id}>
-                            <Trash2 className="size-4" />
-                          </Button>
+                          {user.id !== currentUser?.id && (
+                            <Button variant="ghost" size="icon" className="text-danger hover:bg-danger/10 hover:text-danger" onClick={() => setUserToDelete(user)} disabled={updating === user.id}>
+                              <Trash2 className="size-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
