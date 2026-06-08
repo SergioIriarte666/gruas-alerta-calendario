@@ -156,7 +156,7 @@ const Inventory = () => {
       )}
 
       <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="space-y-4">
-        <div className="flex flex-wrap gap-2 px-6 pt-6">
+        <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
           <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
             <Package className="size-3.5" />
             Stock operativo
@@ -171,7 +171,7 @@ const Inventory = () => {
           </Badge>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-6 pb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="overflow-x-auto">
             <TabsList className="grid w-full min-w-[420px] grid-cols-3 rounded-xl bg-transparent p-0">
               <TabsTrigger

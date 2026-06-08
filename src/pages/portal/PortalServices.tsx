@@ -453,7 +453,7 @@ const PortalServices = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f172a]">Mis Servicios</h1>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Mis Servicios</h1>
           <p className="mt-1 text-sm text-[#94a3b8]">
             Vista de listado por defecto con navegación mensual y filtros por estado.
           </p>

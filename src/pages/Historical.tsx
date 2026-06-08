@@ -9,7 +9,7 @@ const Historical = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Históricos</h1>
+        <h1 className="text-xl font-bold tracking-tight sm:text-3xl">Históricos</h1>
         <p className="text-muted-foreground">
           Gestión de registros históricos de ventas y compras.
         </p>

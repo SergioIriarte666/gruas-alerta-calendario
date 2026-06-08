@@ -41,7 +41,7 @@ const Vehicles: React.FC = () => {
         className="border-border/70 bg-card/80 shadow-sm"
         contentClassName="space-y-4"
       >
-        <div className="flex flex-wrap gap-2 px-6 pt-6">
+        <div className="flex flex-wrap gap-2 px-3 pt-4 sm:px-6 sm:pt-6">
           <Badge className="gap-1 border-primary/20 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
             <Database className="size-3.5" />
             Catálogo base

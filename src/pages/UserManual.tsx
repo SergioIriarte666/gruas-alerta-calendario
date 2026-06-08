@@ -58,9 +58,9 @@ const UserManual: React.FC = () => {
         }
       />
 
-      <div className="flex gap-6 h-[calc(100vh-220px)]">
+      <div className="flex flex-col gap-4 h-auto sm:flex-row sm:gap-6 sm:h-[calc(100vh-220px)]">
         {/* Sidebar de navegación */}
-        <div className="w-64 shrink-0">
+        <div className="hidden sm:block w-64 shrink-0">
           <ScrollArea className="h-full rounded-xl border border-border/70 bg-card/80">
             <div className="p-3">
               {manualChapters.map((chapter) => (
@@ -107,7 +107,7 @@ const UserManual: React.FC = () => {
 
         {/* Contenido */}
         <div className="flex-1 min-w-0">
-          <ScrollArea className="h-full rounded-xl border border-border/70 bg-card/80">
+          <ScrollArea className="h-[60vh] sm:h-full rounded-xl border border-border/70 bg-card/80">
             <div className="p-8 max-w-3xl">
               <div
                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4"

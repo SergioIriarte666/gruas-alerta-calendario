@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,18 +14,19 @@ import { DebtWithProgress } from '@/hooks/useDebts';
 import { CreditorList } from '@/components/accounts-payable/CreditorList';
 
 const AccountsPayable = () => {
+  const isMobile = useIsMobile();
   const [isDebtFormOpen, setIsDebtFormOpen] = useState(false);
   const [isCreditorFormOpen, setIsCreditorFormOpen] = useState(false);
   const [selectedDebt, setSelectedDebt] = useState<DebtWithProgress | null>(null);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-3 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Cuentas por Pagar</h1>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Cuentas por Pagar</h1>
           <p className="text-sm text-muted-foreground">Gestión de deudas, cuotas y obligaciones financieras</p>
         </div>
-        <Button onClick={() => setIsDebtFormOpen(true)}>
+        <Button onClick={() => setIsDebtFormOpen(true)} size={isMobile ? 'sm' : 'default'}>
           <Plus className="size-4 mr-1" /> Nueva Deuda
         </Button>
       </div>

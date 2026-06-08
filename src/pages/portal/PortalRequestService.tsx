@@ -51,7 +51,7 @@ const PortalRequestService = () => {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-[#0f172a]">Solicitar Nuevo Servicio</h1>
+      <h1 className="mb-6 text-xl font-bold text-foreground sm:text-2xl">Solicitar Nuevo Servicio</h1>
       <Card className="bg-white border-[#e2e8f0]">
         <CardHeader>
           <CardTitle className="text-[#0f172a]">Detalles de la Solicitud</CardTitle>

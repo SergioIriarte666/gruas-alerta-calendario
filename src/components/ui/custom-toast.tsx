@@ -75,7 +75,7 @@ const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[99999] space-y-2 max-w-sm">
+    <div className="fixed top-4 right-2 sm:right-4 z-[99999] space-y-2 w-[calc(100vw-1rem)] sm:max-w-sm sm:w-auto">
       {toasts.map((toast) => (
         <ToastComponent key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -126,15 +126,15 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
   return (
     <div 
       className={cn(
-        "border-l-4 rounded-lg shadow-lg p-4 min-w-[300px] animate-in slide-in-from-right-full fade-in border transition-all duration-300",
+        "border-l-4 rounded-lg shadow-lg p-4 w-[calc(100vw-2rem)] max-w-[360px] sm:min-w-[300px] animate-in slide-in-from-right-full fade-in border transition-all duration-300",
         getBorderColor(),
         getBackgroundColor()
       )}
       style={{
-        background: '#000000',
-        borderColor: toast.type === 'success' ? '#9cfa24' : 
-                   toast.type === 'error' ? '#ef4444' : 
-                   toast.type === 'warning' ? '#f59e0b' : '#3b82f6'
+        background: 'hsl(var(--card))',
+        borderColor: toast.type === 'success' ? 'hsl(var(--success))' :
+                   toast.type === 'error' ? 'hsl(var(--danger))' :
+                   toast.type === 'warning' ? 'hsl(var(--warning))' : 'hsl(var(--primary))'
       }}
     >
       <div className="flex items-start justify-between">
@@ -142,12 +142,12 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
           {getIcon()}
           <div className="flex-1">
             {toast.title && (
-              <h4 className="font-semibold text-white text-sm" style={{ color: '#ffffff !important' }}>
+              <h4 className="font-semibold text-card-foreground text-sm">
                 {toast.title}
               </h4>
             )}
             {toast.description && (
-              <p className="text-white/90 text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.9) !important' }}>
+              <p className="text-muted-foreground text-sm mt-1">
                 {toast.description}
               </p>
             )}
@@ -155,8 +155,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className="text-white/70 hover:text-white ml-2 transition-colors"
-          style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+          className="text-muted-foreground hover:text-foreground ml-2 transition-colors"
         >
           <X className="size-4" />
         </button>

@@ -248,7 +248,7 @@ const PortalInvoices = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[#0f172a]">Mis Facturas</h1>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Mis Facturas</h1>
         {invoices && (
           <Badge variant="outline" className="border-violet-200 text-violet-700">
             {filteredInvoices.length} factura{filteredInvoices.length !== 1 ? 's' : ''}
