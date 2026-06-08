@@ -88,6 +88,15 @@ Deno.serve(async (req: Request) => {
       .limit(1)
       .maybeSingle();
 
+    // Master switch
+    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+      console.log("[send-whatsapp-admin] Master switch OFF — mensaje omitido");
+      return withHeaders(
+        jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
+        corsHeaders,
+      );
+    }
+
     // Map event -> setting flag (manual buttons like orden_compra / cierre_mensual always send)
     const eventToSettingKey: Record<string, string> = {
       servicio_completado: "notify_service_completed",

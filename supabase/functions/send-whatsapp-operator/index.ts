@@ -69,12 +69,20 @@ Deno.serve(async (req: Request) => {
       return withHeaders(authContext.response, corsHeaders);
     }
 
-    // Respect notify_operator_assigned flag
+    // Leer configuración WhatsApp (master switch + flag individual)
     const { data: waSettings } = await authContext.supabaseAdmin
       .from("whatsapp_settings")
-      .select("notify_operator_assigned")
+      .select("whatsapp_enabled, notify_operator_assigned")
       .limit(1)
       .maybeSingle();
+
+    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+      console.log("[send-whatsapp-operator] Master switch OFF — mensaje omitido");
+      return withHeaders(
+        jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
+        corsHeaders,
+      );
+    }
 
     if (waSettings && (waSettings as any).notify_operator_assigned === false) {
       return withHeaders(

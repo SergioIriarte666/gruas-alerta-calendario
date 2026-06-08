@@ -97,6 +97,13 @@ Deno.serve(async (req: Request) => {
   const { data: settings } = await supabase
     .from("whatsapp_settings").select("*").limit(1).maybeSingle();
 
+  if (settings && (settings as any).whatsapp_enabled === false) {
+    console.log("[whatsapp-daily-alerts] Master switch OFF — alertas omitidas");
+    return new Response(JSON.stringify({ ok: true, skipped: true, reason: "whatsapp_disabled" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const phones = await getAdminPhones(supabase, settings);
   if (phones.length === 0) {
     return new Response(JSON.stringify({ ok: false, reason: "No hay teléfonos admin configurados" }), {

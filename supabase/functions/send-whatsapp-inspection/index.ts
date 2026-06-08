@@ -32,12 +32,20 @@ Deno.serve(async (req: Request) => {
     const authContext = await requireUserRoles(req, ['admin', 'operator']);
     if ('response' in authContext) return withHeaders(authContext.response, corsHeaders);
 
-    // Verificar flag de configuración
+    // Verificar master switch + flag individual
     const { data: waSettings } = await authContext.supabaseAdmin
       .from('whatsapp_settings')
-      .select('notify_inspection_completed')
+      .select('whatsapp_enabled, notify_inspection_completed')
       .limit(1)
       .maybeSingle();
+
+    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+      console.log('[send-whatsapp-inspection] Master switch OFF — mensaje omitido');
+      return withHeaders(
+        jsonResponse({ success: true, skipped: true, reason: 'whatsapp_disabled' }),
+        corsHeaders,
+      );
+    }
 
     if (waSettings && (waSettings as any).notify_inspection_completed === false) {
       return withHeaders(

@@ -29,9 +29,17 @@ Deno.serve(async (req: Request) => {
 
     const { data: waSettings } = await authContext.supabaseAdmin
       .from('whatsapp_settings')
-      .select('notify_vehicle_pickup')
+      .select('whatsapp_enabled, notify_vehicle_pickup')
       .limit(1)
       .maybeSingle();
+
+    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+      console.log('[send-whatsapp-retiro] Master switch OFF — mensaje omitido');
+      return withHeaders(
+        jsonResponse({ success: true, skipped: true, reason: 'whatsapp_disabled' }),
+        corsHeaders,
+      );
+    }
 
     if (waSettings && (waSettings as any).notify_vehicle_pickup === false) {
       return withHeaders(

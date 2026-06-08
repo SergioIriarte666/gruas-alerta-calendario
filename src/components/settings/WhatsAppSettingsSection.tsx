@@ -9,10 +9,11 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, MessageCircle, Send, CheckCircle, XCircle, AlertCircle, Settings as SettingsIcon, History } from 'lucide-react';
 import { useWhatsAppSettings, type WhatsAppSettings } from '@/hooks/useWhatsAppSettings';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { WhatsAppMessageHistory } from './WhatsAppMessageHistory';
 
-type NotificationKey = Exclude<keyof WhatsAppSettings, 'id' | 'adminPhone1' | 'adminPhone2'>;
+type NotificationKey = Exclude<keyof WhatsAppSettings, 'id' | 'whatsappEnabled' | 'adminPhone1' | 'adminPhone2'>;
 
 const notifications: { key: NotificationKey; label: string; desc: string }[] = [
   { key: 'notifyOperatorAssigned', label: 'Operador asignado a servicio', desc: 'WhatsApp al operador cuando se le asigna un servicio' },
@@ -120,6 +121,38 @@ export const WhatsAppSettingsSection = () => {
           </TabsList>
 
           <TabsContent value="config" className="space-y-6">
+
+        {/* Master switch */}
+        <div className={cn(
+          'flex items-center justify-between p-4 rounded-lg border',
+          settings.whatsappEnabled
+            ? 'border-green-500/30 bg-green-500/5'
+            : 'border-destructive/30 bg-destructive/5'
+        )}>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              'w-2 h-2 rounded-full',
+              settings.whatsappEnabled ? 'bg-green-500' : 'bg-destructive'
+            )} />
+            <div>
+              <p className="text-sm font-medium">
+                {settings.whatsappEnabled
+                  ? 'Notificaciones WhatsApp activas'
+                  : 'Notificaciones WhatsApp desactivadas'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {settings.whatsappEnabled
+                  ? 'El sistema enviará mensajes según los toggles configurados abajo'
+                  : 'Ningún mensaje será enviado hasta reactivar este switch'}
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={settings.whatsappEnabled ?? true}
+            onCheckedChange={(value) => updateSettings({ whatsappEnabled: value })}
+          />
+        </div>
+
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Números de administradores</h3>
           <p className="text-sm text-muted-foreground">
@@ -155,7 +188,7 @@ export const WhatsAppSettingsSection = () => {
 
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Notificaciones activas</h3>
-          <div className="space-y-3">
+          <div className={cn('space-y-3', !settings.whatsappEnabled && 'opacity-50 pointer-events-none')}>
             {notifications.map(({ key, label, desc }) => (
               <div
                 key={key}

@@ -7,6 +7,7 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("useWhatsAppSettings");
 export interface WhatsAppSettings {
   id?: string;
+  whatsappEnabled: boolean;
   adminPhone1: string;
   adminPhone2: string;
   notifyOperatorAssigned: boolean;
@@ -21,6 +22,7 @@ export interface WhatsAppSettings {
 }
 
 const defaultSettings: WhatsAppSettings = {
+  whatsappEnabled: true,
   adminPhone1: '',
   adminPhone2: '',
   notifyOperatorAssigned: true,
@@ -56,6 +58,7 @@ export const useWhatsAppSettings = () => {
       if (data) {
         setSettings({
           id: data.id,
+          whatsappEnabled: data.whatsapp_enabled ?? true,
           adminPhone1: data.admin_phone_1 || '',
           adminPhone2: data.admin_phone_2 || '',
           notifyOperatorAssigned: data.notify_operator_assigned ?? true,
@@ -84,6 +87,7 @@ export const useWhatsAppSettings = () => {
     setSaving(true);
     try {
       const payload = {
+        whatsapp_enabled: settings.whatsappEnabled,
         admin_phone_1: settings.adminPhone1 || null,
         admin_phone_2: settings.adminPhone2 || null,
         notify_operator_assigned: settings.notifyOperatorAssigned,
