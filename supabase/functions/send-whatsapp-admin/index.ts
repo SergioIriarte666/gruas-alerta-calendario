@@ -37,7 +37,7 @@ const templates: Record<string, { name: string; params: (d: any) => string[] }> 
     params: (d) => [d.proveedor, d.monto, d.descripcion].map(String),
   },
   cierre_mensual: {
-    name: "admin_cierre_mensua",
+    name: "admin_cierre_mensual",
     params: (d) => [d.mes, d.anio, String(d.totalServicios), d.totalIngresos].map(String),
   },
   servicio_sin_operador: {

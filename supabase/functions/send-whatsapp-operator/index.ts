@@ -112,26 +112,36 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // ── Idempotencia: si el mismo operador ya fue notificado para este servicio, no reenviar
-    if (serviceId && !force) {
+    // ── Idempotencia: evita doble envío dentro de ventana de 30 minutos,
+    //    incluso cuando force=true (protege contra doble-clic en modal + save del form)
+    if (serviceId) {
       const { data: existing } = await authContext.supabaseAdmin
         .from("services")
         .select("operator_notified_at, operator_notified_for")
         .eq("id", serviceId)
         .maybeSingle();
-      if (
-        existing?.operator_notified_at &&
-        existing?.operator_notified_for === operatorId
-      ) {
-        return withHeaders(
-          jsonResponse({
-            success: true,
-            skipped: true,
-            reason: "Operador ya notificado para este servicio",
-            notifiedAt: existing.operator_notified_at,
-          }),
-          corsHeaders,
-        );
+
+      if (existing?.operator_notified_at && existing?.operator_notified_for === operatorId) {
+        const notifiedAt = new Date(existing.operator_notified_at).getTime();
+        const minutesAgo = (Date.now() - notifiedAt) / 60_000;
+
+        if (!force || minutesAgo < 30) {
+          console.log(
+            `[send-whatsapp-operator] DEDUP skip: ya notificado hace ${minutesAgo.toFixed(1)} min` +
+            ` (service=${serviceId}, operator=${operatorId}, force=${force})`,
+          );
+          return withHeaders(
+            jsonResponse({
+              success: true,
+              skipped: true,
+              reason: force
+                ? `Reenvío bloqueado: operador ya notificado hace ${Math.round(minutesAgo)} min (ventana 30 min)`
+                : "Operador ya notificado para este servicio",
+              notifiedAt: existing.operator_notified_at,
+            }),
+            corsHeaders,
+          );
+        }
       }
     }
 
@@ -173,21 +183,33 @@ Deno.serve(async (req: Request) => {
 
     const formattedDate = formatServiceDate(serviceDate);
 
+    // WhatsApp API (131008): parámetros vacíos "" se tratan como ausentes — usar fallbacks
+    const safe = (v: string | undefined | null, fb: string) =>
+      v && v.trim() !== "" ? v.trim() : fb;
+
+    const params = [
+      safe(operatorName, "Operador"),                            // {{1}} nombre operador
+      safe(String(folio), "-"),                                  // {{2}} folio
+      safe(formattedDate, "Fecha por confirmar"),                // {{3}} fecha
+      safe(vehicleBrand, "Sin marca"),                          // {{4}} marca
+      safe(vehicleModel, "Sin modelo"),                         // {{5}} modelo
+      safe(licensePlate, "Sin patente"),                        // {{6}} patente
+      safe(origin, "Origen por confirmar"),                     // {{7}} origen
+      safe(destination, "Destino por confirmar"),               // {{8}} destino
+      safe(contactPerson || clientName, "Sin contacto"),        // {{9}} persona en el lugar
+      safe(contactPhone || clientPhone, "Sin teléfono"),        // {{10}} teléfono persona en el lugar
+    ];
+
+    console.log("[send-whatsapp-operator] params:", {
+      phone: normalized.phone, operatorName, folio, formattedDate,
+      vehicleBrand, vehicleModel, licensePlate, origin, destination,
+      contactPerson, contactPhone, clientName, clientPhone,
+    });
+
     const result = await sendWhatsAppTemplate(
       normalized.phone,
       "servicio_asignado_v3",
-      [
-        operatorName,                                    // {{1}} nombre operador
-        String(folio),                                   // {{2}} folio
-        formattedDate,                                   // {{3}} fecha
-        vehicleBrand || "",                              // {{4}} marca
-        vehicleModel || "",                              // {{5}} modelo
-        licensePlate || "",                              // {{6}} patente
-        origin || "",                                    // {{7}} origen
-        destination || "",                               // {{8}} destino
-        contactPerson || clientName || "",               // {{9}} persona en el lugar
-        contactPhone || clientPhone || "",               // {{10}} teléfono persona en el lugar
-      ],
+      params,
       {
         event: "servicio_asignado",
         triggeredBy: authContext.user?.id ?? null,
