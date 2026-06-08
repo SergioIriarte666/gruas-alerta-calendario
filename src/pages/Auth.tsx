@@ -109,6 +109,14 @@ const Auth = () => {
     window.location.reload();
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: 'https://app.gruas5norte.cl/auth/callback' }
+    })
+    if (error) toast.error('Error al iniciar con Google: ' + error.message)
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -299,6 +307,7 @@ const Auth = () => {
             setPassword={setPassword}
             onSubmit={handleLogin}
             onForgotPassword={() => setShowForgotPassword(true)}
+            onGoogleLogin={handleGoogleLogin}
           />
         )}
 

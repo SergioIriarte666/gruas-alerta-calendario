@@ -67,6 +67,7 @@ const routeImports = {
   TripCalculator: () => import('@/pages/TripCalculator'),
   PerformanceTest: () => import('@/pages/PerformanceTest'),
   UserManual: () => import('@/pages/UserManual'),
+  AuthCallback: () => import('@/pages/AuthCallback'),
 };
 
 // Lazy components using the same import functions
@@ -110,6 +111,7 @@ const ResetPassword = lazy(routeImports.ResetPassword);
 const TripCalculator = lazy(routeImports.TripCalculator);
 const PerformanceTest = lazy(routeImports.PerformanceTest);
 const UserManual = lazy(routeImports.UserManual);
+const AuthCallback = lazy(routeImports.AuthCallback);
 
 // Preload all route chunks after initial render
 const preloadAllRoutes = () => {
@@ -175,6 +177,7 @@ function AppContent() {
         <RouteActivityTracker />
         <Routes>
         <Route path="/auth" element={<ErrorBoundary name="Auth"><Suspense fallback={null}><Auth /></Suspense></ErrorBoundary>} />
+        <Route path="/auth/callback" element={<Suspense fallback={null}><AuthCallback /></Suspense>} />
         <Route path="/reset-password" element={<ErrorBoundary name="ResetPassword"><Suspense fallback={null}><ResetPassword /></Suspense></ErrorBoundary>} />
         <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
         <Route path="/debug-freeze" element={<DebugFreeze />} />
