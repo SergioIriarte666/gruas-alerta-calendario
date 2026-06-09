@@ -284,6 +284,77 @@ Deno.serve(async (req: Request) => {
     };
   }
 
+  // ── 5. Documentos de grúas por vencer / vencidos (notify_operator_document_expiry)
+  if ((settings as any)?.notify_operator_document_expiry !== false) {
+    const in30ISO = addDaysISO(todayISO, 30);
+
+    const CRANE_DOC_LABELS: Record<string, string> = {
+      technical_review: "Revisión Técnica",
+      insurance: "Seguro",
+      circulation_permit: "Permiso Circulación",
+    };
+
+    const { data: craneExpiring } = await supabase
+      .from("crane_documents")
+      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate)")
+      .gte("expiry_date", todayISO)
+      .lte("expiry_date", in30ISO)
+      .order("expiry_date", { ascending: true });
+
+    const { data: craneExpired } = await supabase
+      .from("crane_documents")
+      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate)")
+      .lt("expiry_date", todayISO)
+      .order("expiry_date", { ascending: false })
+      .limit(20);
+
+    const craneExpiringList = (craneExpiring ?? []) as any[];
+    const craneExpiredList = (craneExpired ?? []) as any[];
+    const sentCraneExpiring: any[] = [];
+    const sentCraneExpired: any[] = [];
+
+    for (const doc of craneExpiringList) {
+      const dedupeKey = `crane_doc_expiry:${doc.id}`;
+      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
+      if (!ok) continue;
+
+      const days = daysBetween(todayISO, doc.expiry_date);
+      const docLabel = CRANE_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const craneName = (doc.crane as any)?.license_plate ?? "Equipo";
+
+      const outcome = await sendWhatsAppTemplateBulk(
+        phones,
+        "admin_doc_grua_vencimiento",
+        [craneName, docLabel, fmtDateDisplay(doc.expiry_date), String(days)],
+        { event: "grua_doc_vencimiento", context: { docId: doc.id, craneId: doc.crane_id } },
+      );
+      sentCraneExpiring.push({ craneName, docLabel, days, notified: outcome.notified });
+    }
+
+    for (const doc of craneExpiredList) {
+      const dedupeKey = `crane_doc_vencido:${doc.id}`;
+      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
+      if (!ok) continue;
+
+      const daysExpired = daysBetween(doc.expiry_date, todayISO);
+      const docLabel = CRANE_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const craneName = (doc.crane as any)?.license_plate ?? "Equipo";
+
+      const outcome = await sendWhatsAppTemplateBulk(
+        phones,
+        "admin_doc_grua_vencido",
+        [craneName, docLabel, fmtDateDisplay(doc.expiry_date), String(daysExpired)],
+        { event: "grua_doc_vencido", context: { docId: doc.id, craneId: doc.crane_id } },
+      );
+      sentCraneExpired.push({ craneName, docLabel, daysExpired, notified: outcome.notified });
+    }
+
+    results.crane_doc_expiry = {
+      expiring: { total: craneExpiringList.length, dispatched: sentCraneExpiring.length, detail: sentCraneExpiring },
+      expired: { total: craneExpiredList.length, dispatched: sentCraneExpired.length, detail: sentCraneExpired },
+    };
+  }
+
   return new Response(JSON.stringify({ ok: true, date: todayISO, ...results }), {
     status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
