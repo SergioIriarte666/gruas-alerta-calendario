@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
@@ -420,7 +420,11 @@ export const EnhancedServiceForm = ({
       const subtotal = formData.custodyDays * effectiveDailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
-      setFormData(prev => ({ ...prev, custodyTotalAmount: total }));
+      setFormData(prev =>
+        prev.custodyTotalAmount === total
+          ? prev
+          : { ...prev, custodyTotalAmount: total }
+      );
     }
   }, [formData.custodyDays, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
 
@@ -444,11 +448,11 @@ export const EnhancedServiceForm = ({
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       
-      setFormData(prev => ({ 
-        ...prev, 
-        custodyDays: diffDays,
-        custodyTotalAmount: total 
-      }));
+      setFormData(prev =>
+        prev.custodyDays === diffDays && prev.custodyTotalAmount === total
+          ? prev
+          : { ...prev, custodyDays: diffDays, custodyTotalAmount: total }
+      );
     }
   }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
 
@@ -456,10 +460,11 @@ export const EnhancedServiceForm = ({
   useEffect(() => {
     if (selectedServiceType?.name === 'Venta de Productos' && formData.salesItems?.length > 0) {
       const totalSales = formData.salesItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
-      setFormData(prev => ({ 
-        ...prev, 
-        value: totalSales 
-      }));
+      setFormData(prev =>
+        prev.value === totalSales
+          ? prev
+          : { ...prev, value: totalSales }
+      );
     }
   }, [formData.salesItems, selectedServiceType?.name]);
 
@@ -520,10 +525,32 @@ export const EnhancedServiceForm = ({
   };
 
   const formContentRef = useRef<HTMLDivElement>(null);
+  const scrollPositionRef = useRef<number>(0);
+  const isScrollingToTopRef = useRef(false);
+
+  // Guardar posición de scroll antes de cada render
+  const handleScroll = useCallback(() => {
+    if (formContentRef.current) {
+      scrollPositionRef.current = formContentRef.current.scrollTop;
+    }
+  }, []);
 
   const scrollFormToTop = () => {
+    isScrollingToTopRef.current = true;
+    scrollPositionRef.current = 0;
     formContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    setTimeout(() => { isScrollingToTopRef.current = false; }, 100);
   };
+
+  // Restaurar posición después de re-render (excepto cuando
+  // scrollFormToTop fue llamado explícitamente)
+  useEffect(() => {
+    const el = formContentRef.current;
+    if (!el) return;
+    if (!isScrollingToTopRef.current && scrollPositionRef.current > 0) {
+      el.scrollTop = scrollPositionRef.current;
+    }
+  });
 
   const handleNext = () => {
     if (currentStep < totalSteps && canGoNext()) {
@@ -834,7 +861,11 @@ export const EnhancedServiceForm = ({
         </div>
 
         {/* Right Panel - Form Content */}
-        <div ref={formContentRef} className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0">
+        <div
+          ref={formContentRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0"
+        >
           {/* Alertas de Validación */}
           {selectedServiceType && validationErrors.length > 0 && (
             <ServiceValidationAlerts errors={validationErrors} />
