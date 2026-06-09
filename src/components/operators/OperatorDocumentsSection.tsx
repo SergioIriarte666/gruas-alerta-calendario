@@ -162,18 +162,18 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
   return (
     <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h4 className="text-lg font-medium text-foreground">Gestión de Documentos</h4>
           <p className="text-sm text-muted-foreground">
             Documentos legales y laborales del operador
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <StatusBadge tone="info">
             {documents.length} / {ALL_DOCUMENT_TYPES.length} subidos
           </StatusBadge>
-          <Button size="sm" onClick={() => setIsUploadOpen(true)}>
+          <Button size="sm" className="flex-1 sm:flex-none" onClick={() => setIsUploadOpen(true)}>
             <Plus className="size-4 mr-2" />
             Subir documento
           </Button>
@@ -210,7 +210,7 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
       )}
 
       {/* Grid de documentos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {ALL_DOCUMENT_TYPES.map((type) => {
           const doc = documents.find((d) => d.documentType === type);
           const status = getDocumentStatus(doc?.expiryDate);
@@ -227,7 +227,7 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                   {doc && StatusIcon(status)}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 p-3 sm:p-4">
                 {doc ? (
                   <>
                     <div className="space-y-1 text-sm">
@@ -262,33 +262,36 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                         <p className="text-muted-foreground italic text-xs pt-1">{doc.notes}</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => downloadDocument(doc)}
-                      >
-                        <Download className="size-3 mr-1" />
-                        Descargar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => window.open(doc.fileUrl, '_blank')}
-                      >
-                        <Eye className="size-3 mr-1" />
-                        Ver
-                      </Button>
+                    <div className="space-y-2 pt-1">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => downloadDocument(doc)}
+                        >
+                          <Download className="size-3 mr-1" />
+                          Descargar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => window.open(doc.fileUrl, '_blank')}
+                        >
+                          <Eye className="size-3 mr-1" />
+                          Ver
+                        </Button>
+                      </div>
                       {isAdmin && (
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="text-danger hover:text-danger hover:bg-danger/10 border border-danger/30"
+                          variant="outline"
+                          className="w-full text-danger border-danger/30 hover:bg-danger/10 hover:text-danger"
                           onClick={() => setDeletingDocId(doc.id)}
                         >
-                          <Trash2 className="size-3" />
+                          <Trash2 className="size-3 mr-1" />
+                          Eliminar
                         </Button>
                       )}
                     </div>
@@ -321,7 +324,7 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
         setIsUploadOpen(open);
         if (!open) setForm(EMPTY_FORM);
       }}>
-        <DialogContent className="max-w-md border-border/70 bg-card">
+        <DialogContent className="w-full max-w-md border-border/70 bg-card h-[100dvh] sm:h-auto overflow-y-auto sm:rounded-lg rounded-none p-4 sm:p-6">
           <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
             <DialogTitle className="flex items-center gap-2">
               <Upload className="size-5 text-primary" />

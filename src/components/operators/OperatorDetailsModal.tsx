@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Operator } from '@/types';
+import { Operator, DOCUMENT_TYPE_LABELS, DocumentType } from '@/types';
 import {
   User,
   Phone,
@@ -12,6 +12,19 @@ import {
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { OperatorDocumentsSection } from './OperatorDocumentsSection';
+import {
+  useOperatorDocuments,
+  getDocumentStatus,
+  getDaysUntilExpiry,
+} from '@/hooks/operators/useOperatorDocuments';
+
+const DOCUMENT_TYPES_DISPLAY: DocumentType[] = [
+  'cedula_identidad',
+  'licencia_conducir',
+  'examen_psicosensotecnico',
+  'examen_altura',
+  'seguro_vida',
+];
 
 interface OperatorDetailsModalProps {
   operator: (Operator & { services?: any[] }) | null;
@@ -23,8 +36,81 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
   if (!operator) return null;
 
   return (
+    <OperatorDetailsModalInner operator={operator} isOpen={isOpen} onClose={onClose} />
+  );
+};
+
+// Inner component to allow hook calls (hooks can't be conditional at top level)
+const OperatorDetailsModalInner = ({
+  operator,
+  isOpen,
+  onClose,
+}: {
+  operator: Operator & { services?: any[] };
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  const { documents, isLoading: docsLoading } = useOperatorDocuments(operator.id);
+  const getDoc = (type: DocumentType) => documents.find((d) => d.documentType === type);
+
+  const docBadge = (type: DocumentType) => {
+    const doc = getDoc(type);
+    if (!doc) {
+      return <Badge variant="secondary">Sin documento</Badge>;
+    }
+    const status = getDocumentStatus(doc.expiryDate);
+    switch (status) {
+      case 'vigente':
+        return (
+          <Badge variant="outline" className="text-green-600 border-green-600">
+            Vigente
+          </Badge>
+        );
+      case 'por_vencer':
+        return (
+          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+            Por vencer
+          </Badge>
+        );
+      case 'vencido':
+        return <Badge variant="destructive">Vencido</Badge>;
+      default:
+        return <Badge variant="secondary">Sin fecha</Badge>;
+    }
+  };
+
+  const docExtraText = (type: DocumentType) => {
+    const doc = getDoc(type);
+    if (!doc) return null;
+    const status = getDocumentStatus(doc.expiryDate);
+    const days = getDaysUntilExpiry(doc.expiryDate);
+    if (status === 'por_vencer' && days !== null) {
+      return (
+        <span className="text-xs text-yellow-600">
+          {days === 0 ? 'Vence hoy' : `Vence en ${days} días`}
+        </span>
+      );
+    }
+    if (status === 'vencido' && days !== null) {
+      return (
+        <span className="text-xs text-destructive">
+          Vencido hace {Math.abs(days)} días
+        </span>
+      );
+    }
+    return null;
+  };
+
+  const formatExpiry = (type: DocumentType) => {
+    const doc = getDoc(type);
+    if (!doc?.expiryDate) return '—';
+    const [y, m, d] = doc.expiryDate.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl border-border/70 bg-card max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-3xl border-border/70 bg-card h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto sm:rounded-lg rounded-none p-4 sm:p-6">
         <DialogHeader className="-mx-6 -mt-6 border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2">
             <User className="size-5 text-primary" />
@@ -33,9 +119,9 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-2">
-          <TabsList className="mb-4">
-            <TabsTrigger value="info">Información</TabsTrigger>
-            <TabsTrigger value="documents">Documentos</TabsTrigger>
+          <TabsList className="mb-4 w-full sm:w-auto">
+            <TabsTrigger value="info" className="flex-1 sm:flex-none">Información</TabsTrigger>
+            <TabsTrigger value="documents" className="flex-1 sm:flex-none">Documentos</TabsTrigger>
           </TabsList>
 
           {/* ── Tab Información ── */}
@@ -109,34 +195,54 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
               )}
             </div>
 
-            {/* Licencias y Exámenes */}
-            {(operator.licenseNumber || operator.examExpiry) && (
-              <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
-                <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
-                  <div className="rounded bg-warning/10 p-1 text-warning">
-                    <FileText className="size-4" />
-                  </div>
-                  Licencias y Exámenes
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {operator.licenseNumber && (
-                    <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">Número de Licencia</span>
-                      <p className="text-sm font-medium">{operator.licenseNumber}</p>
-                    </div>
-                  )}
-                  {operator.examExpiry && (
-                    <div className="space-y-1">
-                      <span className="text-sm text-muted-foreground">Vencimiento Examen</span>
-                      <p className="text-sm font-medium">{operator.examExpiry}</p>
-                    </div>
-                  )}
+            {/* Licencias y Documentos */}
+            <div className="rounded-lg border border-border border-l-4 border-l-warning bg-warning/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                <div className="rounded bg-warning/10 p-1 text-warning">
+                  <FileText className="size-4" />
                 </div>
-              </div>
-            )}
+                Licencias y Exámenes
+              </h3>
+
+              {docsLoading ? (
+                <div className="space-y-3">
+                  {DOCUMENT_TYPES_DISPLAY.map((type) => (
+                    <div key={type} className="h-4 animate-pulse rounded bg-muted" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {DOCUMENT_TYPES_DISPLAY.map((type) => (
+                    <div
+                      key={type}
+                      className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-background/60 transition-colors"
+                    >
+                      <FileText className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="flex-1 text-sm text-foreground">
+                        {DOCUMENT_TYPE_LABELS[type]}
+                      </span>
+                      {docBadge(type)}
+                      <span className="w-24 shrink-0 text-right text-xs text-muted-foreground">
+                        {formatExpiry(type)}
+                      </span>
+                      <span className="w-32 shrink-0 text-right">
+                        {docExtraText(type)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {operator.licenseNumber && (
+                <p className="mt-3 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                  Número de licencia:{' '}
+                  <span className="font-medium text-foreground">{operator.licenseNumber}</span>
+                </p>
+              )}
+            </div>
 
             {/* Footer */}
-            <div className="flex justify-between border-t border-border/70 pt-4 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 border-t border-border/70 pt-4 text-sm text-muted-foreground">
               <span>
                 Creado: {formatForDisplayWithTime(operator.createdAt)}
                 {operator.creatorName && ` por ${operator.creatorName}`}
