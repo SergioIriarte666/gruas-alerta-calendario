@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Crane } from '@/types';
+import { Crane, CraneStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
@@ -19,6 +19,7 @@ const CRANES_SELECT = `
   insurance_expiry,
   technical_review_expiry,
   is_active,
+  status,
   created_at,
   updated_at,
   created_by,
@@ -42,16 +43,23 @@ const CRANES_ROW_SELECT = `
   insurance_expiry,
   technical_review_expiry,
   is_active,
+  status,
   created_at,
   updated_at,
   created_by
 `;
 
-const fetchCranes = async (): Promise<Crane[]> => {
-  const { data, error } = await supabase
+const fetchCranes = async (activeOnly = false): Promise<Crane[]> => {
+  let query = supabase
     .from('cranes')
     .select(CRANES_SELECT)
     .order('license_plate', { ascending: true });
+
+  if (activeOnly) {
+    query = query.eq('status', 'active');
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
 
@@ -68,6 +76,7 @@ const fetchCranes = async (): Promise<Crane[]> => {
     insuranceExpiry: crane.insurance_expiry,
     technicalReviewExpiry: crane.technical_review_expiry,
     isActive: crane.is_active ?? false,
+    status: (crane.status ?? 'active') as CraneStatus,
     createdAt: crane.created_at,
     updatedAt: crane.updated_at,
     createdBy: crane.created_by,
@@ -77,12 +86,12 @@ const fetchCranes = async (): Promise<Crane[]> => {
   return formattedCranes;
 };
 
-export const useCranes = () => {
+export const useCranes = (activeOnly = false) => {
   const queryClient = useQueryClient();
 
   const { data: cranes = [], isLoading: loading, refetch } = useQuery<Crane[]>({
-    queryKey: ['cranes'],
-    queryFn: fetchCranes,
+    queryKey: ['cranes', activeOnly],
+    queryFn: () => fetchCranes(activeOnly),
   });
 
   const createCraneMutation = useMutation({
@@ -104,6 +113,7 @@ export const useCranes = () => {
           insurance_expiry: craneData.insuranceExpiry,
           technical_review_expiry: craneData.technicalReviewExpiry,
           is_active: craneData.isActive,
+          status: craneData.status ?? (craneData.isActive ? 'active' : 'inactive'),
           created_by: user?.id || null
         })
         .select(CRANES_ROW_SELECT)
@@ -122,6 +132,7 @@ export const useCranes = () => {
         insuranceExpiry: data.insurance_expiry,
         technicalReviewExpiry: data.technical_review_expiry,
         isActive: data.is_active || false,
+        status: (data.status ?? 'active') as CraneStatus,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
@@ -173,6 +184,10 @@ export const useCranes = () => {
       if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = craneData.insuranceExpiry;
       if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = craneData.technicalReviewExpiry;
       if (craneData.isActive !== undefined) updateData.is_active = craneData.isActive;
+      if (craneData.status !== undefined) {
+        updateData.status = craneData.status;
+        updateData.is_active = craneData.status === 'active';
+      }
       if (craneData.tollVehicleCategory !== undefined) updateData.toll_vehicle_category = craneData.tollVehicleCategory;
 
       // Realizar la actualización

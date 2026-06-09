@@ -367,18 +367,49 @@ export const useServiceQueries = () => {
     });
   };
 
-  const usePagedServices = (page: number, pageSize: number) => {
+  const usePagedServices = (
+    page: number,
+    pageSize: number,
+    filters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      status?: string;
+      search?: string;
+    }
+  ) => {
     return useQuery({
-      queryKey: ['services', 'paged', page, pageSize],
+      queryKey: [
+        'services', 'paged', page, pageSize,
+        filters?.dateFrom, filters?.dateTo, filters?.status, filters?.search,
+      ],
       queryFn: async (): Promise<{ services: Service[]; total: number }> => {
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
 
-        const { data, error, count } = await supabase
+        let query = supabase
           .from('services')
           .select(SERVICE_WITH_RELATIONS_SELECT, { count: 'exact' })
-          .order('created_at', { ascending: false })
+          .order('service_date', { ascending: false })
           .range(from, to);
+
+        if (filters?.dateFrom) query = query.gte('service_date', filters.dateFrom);
+        if (filters?.dateTo)   query = query.lte('service_date', filters.dateTo);
+
+        if (filters?.status && filters.status !== 'all' && filters.status !== 'with_purchase_order') {
+          const statuses = filters.status.split(',');
+          if (statuses.length === 1) {
+            query = query.eq('status', statuses[0]);
+          } else {
+            query = query.in('status', statuses);
+          }
+        }
+
+        if (filters?.search) {
+          const term = filters.search.replace(/[-\s_]/g, '');
+          query = query.or(`folio.ilike.%${term}%,license_plate.ilike.%${term}%`);
+        }
+
+        const { data, error, count } = await query;
 
         if (error) {
           logger.error('❌ [QUERY] Error al obtener servicios paginados:', error);

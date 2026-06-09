@@ -23,6 +23,8 @@ export interface VehicleHistoryEntry {
   value: number;
   origin: string;
   destination: string;
+  vehicleBrand: string | null;
+  vehicleModel: string | null;
 }
 
 const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistoryEntry[]> => {
@@ -42,6 +44,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       value,
       origin,
       destination,
+      vehicle_brand,
+      vehicle_model,
       custody_total_amount,
       has_excess,
       client_covered_amount,
@@ -72,6 +76,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
     value: Number(item.value || 0),
     origin: item.origin || '',
     destination: item.destination || '',
+    vehicleBrand: item.vehicle_brand || null,
+    vehicleModel: item.vehicle_model || null,
     // Agregar campos necesarios para getServiceValueForClosure
     custody_total_amount: item.custody_total_amount,
     has_excess: item.has_excess,

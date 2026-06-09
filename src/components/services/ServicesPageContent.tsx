@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { Service } from '@/types';
 import { useServices } from '@/hooks/useServices';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
@@ -56,6 +57,8 @@ export const ServicesPageContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [listDateFrom, setListDateFrom] = useState(() => format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [listDateTo, setListDateTo] = useState(() => format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
   const isAdmin = user?.role === 'admin';
 
@@ -296,6 +299,10 @@ export const ServicesPageContent = () => {
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
         onAdvancedFiltersChange={() => {}}
+        listDateFrom={listDateFrom}
+        listDateTo={listDateTo}
+        onListDateFromChange={setListDateFrom}
+        onListDateToChange={setListDateTo}
       />
 
       {isMobile ? (

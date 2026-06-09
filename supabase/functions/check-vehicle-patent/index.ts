@@ -80,13 +80,20 @@ serve(async (req: Request) => {
       );
     }
 
-    // Extract basic vehicle information from the correct structure
+    // Extract vehicle information (basic + Pro Light fields)
     const vehicleInfo = data.data;
-    const vehicleData: { marca: string; modelo: string; año: number | null; color: string | null } = {
+    const vehicleData = {
       marca: vehicleInfo.model?.brand?.name || 'No disponible',
       modelo: vehicleInfo.model?.name || 'No disponible',
       año: vehicleInfo.year || null,
       color: vehicleInfo.color || null,
+      vin: vehicleInfo.vinNumber || null,
+      combustible: vehicleInfo.fuel || null,
+      transmision: vehicleInfo.transmission || null,
+      motor: vehicleInfo.engine || null,
+      rtFecha: vehicleInfo.rtDate || null,
+      rtResultado: vehicleInfo.rtResult || null,
+      mesRT: vehicleInfo.monthRT || null,
     };
 
     return new Response(

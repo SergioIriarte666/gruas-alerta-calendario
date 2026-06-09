@@ -244,8 +244,8 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             <div className="flex items-center gap-x-2">
               <Switch
                 id="commissionExempt"
-                checked={formData.commissionExempt}
-                onCheckedChange={(checked) => handleChange('commissionExempt', checked)}
+                checked={!formData.commissionExempt}
+                onCheckedChange={(checked) => handleChange('commissionExempt', !checked)}
               />
               <span className="text-sm text-muted-foreground">
                 {formData.commissionExempt ? 'Exento de comisiones' : 'Recibe comisiones'}

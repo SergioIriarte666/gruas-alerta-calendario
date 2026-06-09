@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import {
@@ -13,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Crane, CraneType } from '@/types';
+import { Crane, CraneType, CraneStatus } from '@/types';
 import { formatRut } from '@/utils/rutFormatter';
 
 interface CraneFormProps {
@@ -34,7 +33,8 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     circulationPermitExpiry: '',
     insuranceExpiry: '',
     technicalReviewExpiry: '',
-    isActive: true
+    isActive: true,
+    status: 'active' as CraneStatus,
   });
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         insuranceExpiry: crane.insuranceExpiry || '',
         technicalReviewExpiry: crane.technicalReviewExpiry || '',
         isActive: crane.isActive ?? true,
+        status: (crane.status ?? 'active') as CraneStatus,
       });
     } else {
       setFormData({
@@ -65,6 +66,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         insuranceExpiry: '',
         technicalReviewExpiry: '',
         isActive: true,
+        status: 'active' as CraneStatus,
       });
     }
   }, [crane]);
@@ -74,7 +76,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     onSubmit(formData);
   };
 
-  const handleChange = (field: string, value: string | boolean | CraneType) => {
+  const handleChange = (field: string, value: string | boolean | CraneType | CraneStatus) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -222,15 +224,32 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-x-2">
-          <Switch
-            id="isActive"
-            checked={formData.isActive}
-            onCheckedChange={(checked) => handleChange('isActive', checked)}
-          />
-          <Label htmlFor="isActive" className="text-foreground">
-            Grúa Activa
-          </Label>
+        <div className="space-y-2">
+          <Label htmlFor="status" className="text-foreground">Estado del equipo</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => handleChange('status', value as CraneStatus)}
+          >
+            <SelectTrigger id="status" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">🟢 Activa — en servicio</SelectItem>
+              <SelectItem value="inactive">🟡 Inactiva — fuera de servicio temporal</SelectItem>
+              <SelectItem value="sold">🔴 Vendida</SelectItem>
+              <SelectItem value="written_off">⚫ Dada de baja</SelectItem>
+            </SelectContent>
+          </Select>
+          {formData.status === 'inactive' && (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Este equipo no aparecerá en nuevos servicios.
+            </p>
+          )}
+          {(formData.status === 'sold' || formData.status === 'written_off') && (
+            <p className="text-sm text-destructive">
+              Este equipo no generará alertas de documentos.
+            </p>
+          )}
         </div>
 
         <DialogFooter className="cranes-modal__footer">

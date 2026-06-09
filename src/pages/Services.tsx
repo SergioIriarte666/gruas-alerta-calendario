@@ -1,4 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import {
+  getCurrentChileDateString,
+  getCurrentWeekRange,
+  getCurrentMonthRange,
+  formatForInput,
+} from '@/utils/timezoneUtils';
 import { useServicesPage } from '@/hooks/services/useServicesPage';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
 import { ServicesHeader } from '@/components/services/ServicesHeader';
@@ -38,8 +44,31 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("Services");
 type ViewMode = 'table' | 'pipeline';
 
+import { DateFilter } from '@/components/services/ServicesDateFilter';
+
+const getDateRange = (filter: DateFilter) => {
+  switch (filter) {
+    case 'today': {
+      const today = getCurrentChileDateString();
+      return { from: today, to: today };
+    }
+    case 'week': {
+      const { start, end } = getCurrentWeekRange();
+      return { from: formatForInput(start), to: formatForInput(end) };
+    }
+    case 'month': {
+      const { start, end } = getCurrentMonthRange();
+      return { from: formatForInput(start), to: formatForInput(end) };
+    }
+    case 'all':
+    default:
+      return { from: '', to: '' };
+  }
+};
+
 const Services = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [dateFilter, setDateFilter] = useState<DateFilter | 'custom'>('month');
   const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [isBatchDuplicating, setIsBatchDuplicating] = useState(false);
@@ -110,12 +139,48 @@ const Services = () => {
     handleCSVSuccess,
     handleSort,
     handleDuplicateService,
+    setListDateFrom,
+    setListDateTo,
   } = useServicesPage();
 
-  const { 
-    handleExportPendingServices, 
-    isExporting: isExportingPending, 
-    pendingServicesCount 
+  // Separate visual state (button highlight) from actual date values
+  // listDateFrom/listDateTo are the real filter values shown in the inputs
+  const [localDateFrom, setLocalDateFrom] = useState(() => { const { start } = getCurrentMonthRange(); return formatForInput(start); });
+  const [localDateTo,   setLocalDateTo]   = useState(() => { const { end }   = getCurrentMonthRange(); return formatForInput(end);   });
+
+  // When a filter button is clicked: update button state + inputs + hook state
+  const handleDateFilterChange = useCallback((filter: DateFilter) => {
+    setDateFilter(filter);
+    const { from, to } = getDateRange(filter);
+    setLocalDateFrom(from);
+    setLocalDateTo(to);
+    setListDateFrom(from);
+    setListDateTo(to);
+    setCurrentPage(1);
+  }, [setListDateFrom, setListDateTo, setCurrentPage]);
+
+  // When user edits an input manually: deactivate button, keep typed value
+  const handleManualDateFrom = useCallback((v: string) => {
+    setDateFilter('custom');
+    setLocalDateFrom(v);
+    setListDateFrom(v);
+    setCurrentPage(1);
+  }, [setListDateFrom, setCurrentPage]);
+
+  const handleManualDateTo = useCallback((v: string) => {
+    setDateFilter('custom');
+    setLocalDateTo(v);
+    setListDateTo(v);
+    setCurrentPage(1);
+  }, [setListDateTo, setCurrentPage]);
+
+  const listDateFrom = localDateFrom;
+  const listDateTo   = localDateTo;
+
+  const {
+    handleExportPendingServices,
+    isExporting: isExportingPending,
+    pendingServicesCount
   } = useServicesPendingExport(services);
 
   const isMobile = useIsMobile();
@@ -360,7 +425,7 @@ const Services = () => {
         />
       )}
 
-      <ServicesHeader 
+      <ServicesHeader
         isAdmin={isAdmin}
         refreshing={refreshing}
         onRefresh={handleRefresh}
@@ -371,16 +436,22 @@ const Services = () => {
         pendingServicesCount={pendingServicesCount}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        dateFilter={dateFilter}
+        onDateFilterChange={handleDateFilterChange}
       />
 
       {viewMode === 'table' && (
         <>
           <ServiceFilters
             searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(1); }}
             statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
+            onStatusChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}
             onAdvancedFiltersChange={handleAdvancedFiltersChange}
+            listDateFrom={listDateFrom}
+            listDateTo={listDateTo}
+            onListDateFromChange={handleManualDateFrom}
+            onListDateToChange={handleManualDateTo}
           />
 
           {isMobile ? (

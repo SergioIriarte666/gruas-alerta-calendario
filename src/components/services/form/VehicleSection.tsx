@@ -20,14 +20,14 @@ import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { useVehicleHistory } from '@/hooks/useVehicleHistory';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
-import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb, CheckCircle2, ShieldAlert, Info } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { parseFromDatabase, getBusinessTodayDate } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { isChileanPlate } from '@/utils/vehicleIdentifiers';
+import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
 import { createLogger } from "@/lib/logger";
 
 
@@ -76,6 +76,7 @@ interface VehicleSectionProps {
   vehicleModelError?: boolean;
   licensePlateError?: boolean;
   isEditing?: boolean;
+  skipLookup?: boolean;
 }
 
 export const VehicleSection = ({
@@ -92,7 +93,8 @@ export const VehicleSection = ({
   vehicleBrandError = false,
   vehicleModelError = false,
   licensePlateError = false,
-  isEditing = false
+  isEditing = false,
+  skipLookup = false,
 }: VehicleSectionProps) => {
   const { brands, loading: brandsLoading, createBrandAsync, isCreating: isCreatingBrand } = useVehicleBrands();
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
@@ -111,7 +113,7 @@ export const VehicleSection = ({
   const confirmedPlatesRef = useRef<Set<string>>(new Set());
 
   // Patent lookup suggestion states
-  const { data: patentData, dataPlate, loading: patentLoading, lookupPatent, reset: resetPatent } = usePatentLookup();
+  const { data: patentData, dataPlate, loading: patentLoading, lookupPatent, lookupVin, vinData, stolenAlerts, reset: resetPatent } = usePatentLookup();
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const [suggestionStep, setSuggestionStep] = useState<'preview' | 'confirm'>('preview');
@@ -151,24 +153,57 @@ export const VehicleSection = ({
     return () => clearTimeout(timer);
   }, [licensePlate]);
 
-  // Patent lookup when plate changes (debounced, 800ms) - now fires regardless of brand
+  // Patent / VIN lookup when plate changes (debounced, 800ms)
+  // Priority: 1) skipLookup → nothing  2) VIN → decode  3) local history → autocomplete  4) API cache  5) API call
   useEffect(() => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
-    
-    if (
-      isChileanPlate(cleanPlate) &&
-      !searchedPlatesRef.current.has(cleanPlate) &&
-      !appliedPlatesRef.current.has(cleanPlate) &&
-      !isEditing &&
-      !patentLoading
-    ) {
+
+    if (skipLookup || cleanPlate.length < 6) return;
+
+    // VIN path: decode only, no brand/model lookup
+    if (isVIN(cleanPlate)) {
+      if (searchedPlatesRef.current.has(cleanPlate) || isEditing) return;
       const timer = setTimeout(() => {
         searchedPlatesRef.current.add(cleanPlate);
-        lookupPatent(cleanPlate);
+        lookupVin(cleanPlate);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [licensePlate, isEditing, patentLoading]);
+
+    // Chilean plate path
+    if (
+      !isChileanPlate(cleanPlate) ||
+      searchedPlatesRef.current.has(cleanPlate) ||
+      appliedPlatesRef.current.has(cleanPlate) ||
+      isEditing ||
+      patentLoading
+    ) return;
+
+    const timer = setTimeout(() => {
+      // 1. Search local service history first (free, instant)
+      const localMatch = history?.[0]; // already filtered by license_plate in query
+
+      if (localMatch?.vehicleBrand) {
+        logger.debug(`[PatentLookup] Local data for ${cleanPlate}: ${localMatch.vehicleBrand}`);
+        searchedPlatesRef.current.add(cleanPlate);
+        if (!vehicleBrand) {
+          onVehicleBrandChange(localMatch.vehicleBrand);
+          if (localMatch.vehicleModel) {
+            onVehicleModelChange(localMatch.vehicleModel);
+          }
+          appliedPlatesRef.current.add(cleanPlate);
+          toast.success('Datos del vehículo completados desde historial');
+        }
+      } else {
+        // 2. No local data → call API (handles its own 24h cache via patent_search_history)
+        logger.debug(`[PatentLookup] No local data for ${cleanPlate}, calling API`);
+        searchedPlatesRef.current.add(cleanPlate);
+        lookupPatent(cleanPlate);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [licensePlate, isEditing, patentLoading, skipLookup, history]);
 
   // Show suggestion dialog when patent data arrives and NO brand selected
   useEffect(() => {
@@ -594,6 +629,14 @@ export const VehicleSection = ({
               </div>
             )}
           </div>
+          {vinData && (
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <Info className="size-3 flex-shrink-0" />
+              VIN: {vinData.manufacturer?.name}
+              {vinData.year ? ` · ${vinData.year}` : ''}
+              {vinData.manufacturer?.country ? ` · ${vinData.manufacturer.country}` : ''}
+            </p>
+          )}
         </div>
       </div>
 
@@ -669,6 +712,29 @@ export const VehicleSection = ({
           <p className="text-sm font-medium text-success">
             Patente verificada: los datos coinciden con el registro oficial
           </p>
+        </div>
+      )}
+
+      {/* Banner de alerta de robo — informativo, no bloquea el formulario */}
+      {stolenAlerts && stolenAlerts.length > 0 && (
+        <div className="mt-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="mt-0.5 size-5 text-destructive flex-shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="font-semibold text-destructive text-sm">
+                ⚠️ Vehículo con reporte de robo activo
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {stolenAlerts[0].marca} {stolenAlerts[0].modelo}
+                {stolenAlerts[0].color ? ` · Color: ${stolenAlerts[0].color}` : ''}
+                {stolenAlerts[0].roboLugar ? ` · Robado en ${stolenAlerts[0].roboLugar}` : ''}
+                {stolenAlerts[0].fechaRobo ? `, ${stolenAlerts[0].fechaRobo}` : ''}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fuente: Registro de vehículos robados GetAPI Chile. Verifica con Carabineros antes de proceder.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -888,7 +954,33 @@ export const VehicleSection = ({
                       <p className="font-medium">{patentData.color}</p>
                     </div>
                   )}
+                  {patentData?.combustible && (
+                    <div>
+                      <span className="text-muted-foreground">Combustible:</span>
+                      <p className="font-medium">{patentData.combustible}</p>
+                    </div>
+                  )}
+                  {patentData?.transmision && (
+                    <div>
+                      <span className="text-muted-foreground">Transmisión:</span>
+                      <p className="font-medium">{patentData.transmision}</p>
+                    </div>
+                  )}
                 </div>
+                {patentData?.rtResultado && (() => {
+                  const today = getBusinessTodayDate();
+                  const rtDate = patentData.rtFecha ? parseFromDatabase(patentData.rtFecha) : null;
+                  const isRTValid = rtDate ? rtDate >= today : false;
+                  return (
+                    <div className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                      isRTValid ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                    )}>
+                      {isRTValid ? '✓ RT Aprobada' : '✗ RT Vencida'}
+                      {patentData.mesRT && ` · ${isRTValid ? 'Vence' : 'Venció'} ${patentData.mesRT}`}
+                    </div>
+                  );
+                })()}
               </div>
               
               <p className="text-sm text-muted-foreground">

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 
-type DateFilter = 'today' | 'week' | 'month' | 'all';
+export type DateFilter = 'today' | 'week' | 'month' | 'all';
 
 interface ServicesDateFilterProps {
-  selected: DateFilter;
+  selected: DateFilter | 'custom';
   onChange: (filter: DateFilter) => void;
 }
 

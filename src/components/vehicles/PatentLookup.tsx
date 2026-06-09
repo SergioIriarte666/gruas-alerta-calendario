@@ -5,17 +5,35 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, Car, History, Trash2, Clock } from 'lucide-react';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
+import { isVIN, isChileanPlate } from '@/utils/vehicleIdentifiers';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const PatentLookup: React.FC = () => {
   const [licensePlate, setLicensePlate] = useState('');
-  const { data, loading, error, history, lookupPatent, loadFromHistory, clearHistory, reset } = usePatentLookup();
+  const {
+    data,
+    loading,
+    error,
+    history,
+    lookupPatent,
+    lookupVin,
+    vinData,
+    vinLoading,
+    loadFromHistory,
+    clearHistory,
+    reset,
+  } = usePatentLookup();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (licensePlate.trim()) {
-      lookupPatent(licensePlate);
+    const clean = licensePlate.trim().replace(/[-\s]/g, '').toUpperCase();
+    if (!clean) return;
+
+    if (isVIN(clean)) {
+      lookupVin(clean);
+    } else {
+      lookupPatent(clean);
     }
   };
 
@@ -23,6 +41,9 @@ export const PatentLookup: React.FC = () => {
     setLicensePlate('');
     reset();
   };
+
+  const isLoading = loading || vinLoading;
+  const hasResult = !!(data || vinData || error);
 
   return (
     <div className="space-y-6">
@@ -35,22 +56,22 @@ export const PatentLookup: React.FC = () => {
             Consulta de Patentes
           </CardTitle>
           <CardDescription>
-            Verifica la información de marca y modelo de un vehículo mediante su patente chilena
+            Verifica la información de un vehículo mediante su patente chilena o VIN
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-2 md:flex-row">
               <Input
-                placeholder="Ingresa patente (ej: LGKF-63 o LGKF63)"
+                placeholder="Ingresa patente (ej: LGKF63) o VIN (17 caracteres)"
                 value={licensePlate}
                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
-                disabled={loading}
+                disabled={isLoading}
                 className="h-11 flex-1 rounded-xl border-border/70 bg-background/70 shadow-sm"
                 maxLength={20}
               />
-              <Button type="submit" disabled={loading || !licensePlate.trim()} className="h-11 shadow-sm">
-                {loading ? (
+              <Button type="submit" disabled={isLoading || !licensePlate.trim()} className="h-11 shadow-sm">
+                {isLoading ? (
                   <>
                     <Loader2 className="mr-2 size-4 animate-spin" />
                     Consultando...
@@ -62,7 +83,7 @@ export const PatentLookup: React.FC = () => {
                   </>
                 )}
               </Button>
-              {(data || error) && (
+              {hasResult && (
                 <Button type="button" variant="outline" onClick={handleReset} className="h-11 border-border/70 bg-card/70">
                   Limpiar
                 </Button>
@@ -72,6 +93,7 @@ export const PatentLookup: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Resultado de patente chilena */}
       {data && (
         <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-cyan-50/70 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/15 dark:to-cyan-950/10">
           <CardHeader>
@@ -80,46 +102,138 @@ export const PatentLookup: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="text-sm text-muted-foreground">Marca</div>
                 <div className="text-lg font-semibold">{data.marca}</div>
               </div>
-              
-              <div className="space-y-2">
+
+              <div className="space-y-1">
                 <div className="text-sm text-muted-foreground">Modelo</div>
                 <div className="text-lg font-semibold">{data.modelo}</div>
               </div>
-              
+
               {data.año && (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Año</div>
                   <div className="text-lg font-semibold">{data.año}</div>
                 </div>
               )}
-              
+
               {data.color && (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Color</div>
                   <div className="text-lg font-semibold">{data.color}</div>
                 </div>
               )}
+
+              {data.combustible && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Combustible</div>
+                  <div className="font-semibold">{data.combustible}</div>
+                </div>
+              )}
+
+              {data.transmision && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Transmisión</div>
+                  <div className="font-semibold">{data.transmision}</div>
+                </div>
+              )}
+
+              {data.motor && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Motor</div>
+                  <div className="font-semibold">{data.motor} cc</div>
+                </div>
+              )}
+
+              {data.mesRT && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Revisión Técnica</div>
+                  <div className="font-semibold flex items-center gap-2">
+                    {data.rtResultado === 'A' ? (
+                      <Badge className="bg-green-100 text-green-800 border-0 text-xs hover:bg-green-100 dark:bg-green-500/20 dark:text-green-200">
+                        ✓ Aprobada · Vence {data.mesRT}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-red-100 text-red-800 border-0 text-xs hover:bg-red-100 dark:bg-red-500/20 dark:text-red-200">
+                        ✗ Vencida · {data.mesRT}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            
+
             <div className="mt-4 pt-4 border-t">
               <Badge className="border-0 bg-emerald-100 text-xs text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-200">
-                Plan gratuito: 5 consultas/día
+                Pro Light · 100 consultas/día
               </Badge>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {!data && !error && !loading && (
+      {/* Resultado de VIN decode */}
+      {vinData && (
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50/70 shadow-sm dark:border-blue-900/30 dark:from-blue-950/15 dark:to-cyan-950/10">
+          <CardHeader>
+            <CardTitle className="text-lg">Información VIN</CardTitle>
+            <CardDescription>
+              Datos del fabricante según número de chasis
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="text-sm text-muted-foreground">VIN</div>
+                <div className="font-mono font-semibold">{licensePlate}</div>
+              </div>
+
+              {vinData.manufacturer?.name && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Fabricante</div>
+                  <div className="font-semibold">{vinData.manufacturer.name}</div>
+                </div>
+              )}
+
+              {vinData.year && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Año</div>
+                  <div className="font-semibold">{vinData.year}</div>
+                </div>
+              )}
+
+              {vinData.manufacturer?.country && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">País de origen</div>
+                  <div className="font-semibold">{vinData.manufacturer.country}</div>
+                </div>
+              )}
+
+              {vinData.manufacturer?.region && (
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">Región</div>
+                  <div className="font-semibold">{vinData.manufacturer.region}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t">
+              <Badge className="border-0 bg-blue-100 text-xs text-blue-800 hover:bg-blue-100 dark:bg-blue-500/20 dark:text-blue-200">
+                Pro Light · VIN Decode
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!data && !vinData && !error && !isLoading && (
         <Card className="border-dashed border-emerald-200 bg-gradient-to-br from-emerald-50/40 to-cyan-50/30 shadow-sm dark:border-emerald-900/30 dark:from-emerald-950/10 dark:to-cyan-950/10">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Car className="size-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              Ingresa una patente chilena para consultar la información del vehículo
+              Ingresa una patente chilena o VIN para consultar la información del vehículo
             </p>
           </CardContent>
         </Card>

@@ -296,14 +296,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: craneExpiring } = await supabase
       .from("crane_documents")
-      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate)")
+      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate, status)")
       .gte("expiry_date", todayISO)
       .lte("expiry_date", in30ISO)
       .order("expiry_date", { ascending: true });
 
     const { data: craneExpired } = await supabase
       .from("crane_documents")
-      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate)")
+      .select("id, crane_id, document_type, expiry_date, crane:cranes(license_plate, status)")
       .lt("expiry_date", todayISO)
       .order("expiry_date", { ascending: false })
       .limit(20);
@@ -314,6 +314,7 @@ Deno.serve(async (req: Request) => {
     const sentCraneExpired: any[] = [];
 
     for (const doc of craneExpiringList) {
+      if ((doc.crane as any)?.status !== 'active') continue;
       const dedupeKey = `crane_doc_expiry:${doc.id}`;
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;
@@ -332,6 +333,7 @@ Deno.serve(async (req: Request) => {
     }
 
     for (const doc of craneExpiredList) {
+      if ((doc.crane as any)?.status !== 'active') continue;
       const dedupeKey = `crane_doc_vencido:${doc.id}`;
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;

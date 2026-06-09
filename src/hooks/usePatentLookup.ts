@@ -2,15 +2,38 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
-import { createLogger } from "@/lib/logger";
+import { createLogger } from '@/lib/logger';
 
+const logger = createLogger('usePatentLookup');
 
-const logger = createLogger("usePatentLookup");
-interface VehicleData {
+// ── Tipos ──────────────────────────────────────────────────────────
+export interface VehicleData {
   marca: string;
   modelo: string;
   año: number | null;
   color: string | null;
+  // Campos Pro Light
+  vin?: string | null;
+  combustible?: string | null;
+  transmision?: string | null;
+  motor?: string | null;
+  rtFecha?: string | null;
+  rtResultado?: string | null;
+  mesRT?: string | null;
+}
+
+export interface VinData {
+  year: number | null;
+  manufacturer: { name: string; region: string; country: string };
+}
+
+export interface StolenAlert {
+  marca: string;
+  modelo: string;
+  color: string;
+  patente: string;
+  roboLugar: string;
+  fechaRobo: string;
 }
 
 interface SearchHistory extends VehicleData {
@@ -24,121 +47,194 @@ interface UsePatentLookupReturn {
   dataPlate: string | null;
   loading: boolean;
   error: string | null;
+  vinData: VinData | null;
+  vinLoading: boolean;
+  stolenAlerts: StolenAlert[] | null;
+  stolenLoading: boolean;
   history: SearchHistory[];
   lookupPatent: (licensePlate: string) => Promise<void>;
-  loadFromHistory: (historyItem: SearchHistory) => void;
+  lookupVin: (vin: string) => Promise<void>;
+  lookupStolen: (plate: string) => Promise<void>;
+  loadFromHistory: (item: SearchHistory) => void;
   clearHistory: () => void;
   reset: () => void;
 }
 
-export const usePatentLookup = (): UsePatentLookupReturn => {
-  const [data, setData] = useState<VehicleData | null>(null);
-  const [dataPlate, setDataPlate] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<SearchHistory[]>([]);
+// ── Helpers ────────────────────────────────────────────────────────
+const getAuthHeaders = async (): Promise<Record<string, string>> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Sin sesión activa');
+  return { Authorization: `Bearer ${session.access_token}` };
+};
 
-  // Load history from database on mount
-  useEffect(() => {
-    loadHistory();
-  }, []);
+// Intenta vehicle-api primero; si falla cae a check-vehicle-patent (solo endpoint plate)
+const invokeVehicleApi = async (
+  endpoint: string,
+  value: string,
+  headers: Record<string, string>
+) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('vehicle-api', {
+      body: { endpoint, value },
+      headers,
+    });
+    if (!error) return data;
+  } catch {
+    // vehicle-api no disponible — fallback solo para plate
+  }
+
+  if (endpoint === 'plate') {
+    const { data, error } = await supabase.functions.invoke('check-vehicle-patent', {
+      body: { licensePlate: value },
+      headers,
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  return null;
+};
+
+// ── Hook ───────────────────────────────────────────────────────────
+export const usePatentLookup = (): UsePatentLookupReturn => {
+  const [data, setData]                     = useState<VehicleData | null>(null);
+  const [dataPlate, setDataPlate]           = useState<string | null>(null);
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [vinData, setVinData]               = useState<VinData | null>(null);
+  const [vinLoading, setVinLoading]         = useState(false);
+  const [stolenAlerts, setStolenAlerts]     = useState<StolenAlert[] | null>(null);
+  const [stolenLoading, setStolenLoading]   = useState(false);
+  const [history, setHistory]               = useState<SearchHistory[]>([]);
+
+  useEffect(() => { loadHistory(); }, []);
 
   const loadHistory = async () => {
     try {
-      const { data: historyData, error: historyError } = await supabase
+      const { data: h } = await supabase
         .from('patent_search_history')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-
-      if (historyError) throw historyError;
-
-      if (historyData) {
-        setHistory(historyData);
-      }
+      if (h) setHistory(h);
     } catch (err) {
       logger.error('Error loading history:', err);
     }
   };
 
-  // Save search to database
-  const saveToHistory = async (licensePlate: string, vehicleData: VehicleData) => {
+  const saveToHistory = async (plate: string, vehicleData: VehicleData) => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
-      const { error: insertError } = await supabase
-        .from('patent_search_history')
-        .insert({
-          user_id: userData.user.id,
-          patente: licensePlate,
-          marca: vehicleData.marca,
-          modelo: vehicleData.modelo,
-          año: vehicleData.año,
-          color: vehicleData.color,
-        });
-
-      if (insertError) throw insertError;
-
-      // Reload history after insert
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('patent_search_history').insert({
+        user_id: user.id,
+        patente: plate,
+        marca: vehicleData.marca,
+        modelo: vehicleData.modelo,
+        año: vehicleData.año,
+        color: vehicleData.color,
+      });
       await loadHistory();
     } catch (err) {
       logger.error('Error saving to history:', err);
     }
   };
 
-  const lookupPatent = async (licensePlate: string) => {
-    if (!licensePlate || licensePlate.trim() === '') {
-      toast.error('Por favor ingresa una patente válida');
-      return;
+  // ── lookupStolen ──────────────────────────────────────────────────
+  const lookupStolen = async (plate: string): Promise<void> => {
+    setStolenLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const result = await invokeVehicleApi('stolen', plate, headers);
+      if (result?.success && Array.isArray(result.data) && result.data.length > 0) {
+        setStolenAlerts(result.data as StolenAlert[]);
+        logger.warn(`[Stolen] Alerta robo para ${plate}:`, result.data);
+      } else {
+        setStolenAlerts(null);
+      }
+    } catch (err) {
+      logger.error('Error lookup stolen:', err);
+      setStolenAlerts(null);
+    } finally {
+      setStolenLoading(false);
     }
+  };
+
+  // ── lookupPatent ──────────────────────────────────────────────────
+  const lookupPatent = async (licensePlate: string): Promise<void> => {
+    if (!licensePlate?.trim()) return;
 
     const cleanValue = licensePlate.trim().replace(/[-\s]/g, '').toUpperCase();
 
     if (isVIN(cleanValue)) {
-      toast.info('Los VINs no pueden consultarse en la API de patentes. Ingresa los datos del vehículo manualmente.');
+      await lookupVin(cleanValue);
       return;
     }
 
     if (!isChileanPlate(cleanValue)) {
-      toast.error('Formato no reconocido. Ingresa una patente chilena (6 caracteres) o un VIN (17 caracteres).');
+      toast.error('Formato no reconocido. Ingresa una patente chilena válida.');
       return;
     }
 
     setLoading(true);
     setError(null);
     setData(null);
+    setStolenAlerts(null);
 
     try {
-      const { data: result, error: invokeError } = await supabase.functions.invoke(
-        'check-vehicle-patent',
-        {
-          body: { licensePlate: licensePlate.trim() },
-        }
-      );
+      const headers = await getAuthHeaders();
 
-      if (invokeError) {
-        logger.error('Error invoking function:', invokeError);
-        setError('Error al consultar la patente');
-        toast.error('Error al consultar la patente');
+      // Consultar patente y robo en paralelo
+      const [plateResult] = await Promise.all([
+        invokeVehicleApi('plate', cleanValue, headers),
+        lookupStolen(cleanValue),
+      ]);
+
+      if (!plateResult) {
+        setError('No se encontró información para esta patente');
+        toast.error('No se encontró información para esta patente');
         return;
       }
 
-      if (result.error) {
-        setError(result.error);
-        toast.error(result.error);
+      // Manejar errores de la función (tanto vehicle-api como check-vehicle-patent)
+      const errMsg = plateResult.error ?? plateResult.message;
+      if (errMsg) {
+        setError(errMsg);
+        toast.error(errMsg);
         return;
       }
 
-      if (result.data) {
-        const normalizedPlate = licensePlate.trim().replace(/[-\s]/g, '').toUpperCase();
-        setData(result.data);
-        setDataPlate(normalizedPlate);
-        await saveToHistory(licensePlate.trim(), result.data);
-        toast.success('Patente consultada exitosamente');
+      // vehicle-api devuelve { success, data } — check-vehicle-patent devuelve { data }
+      const raw = plateResult.success !== undefined
+        ? (plateResult.success ? plateResult.data : null)
+        : plateResult.data;
+
+      if (!raw) {
+        setError('No se encontró información para esta patente');
+        toast.error('No se encontró información para esta patente');
+        return;
       }
+
+      const vehicleData: VehicleData = {
+        marca:       raw.marca        ?? raw.model?.brand?.name ?? 'No disponible',
+        modelo:      raw.modelo       ?? raw.model?.name        ?? 'No disponible',
+        año:         raw.año          ?? raw.year               ?? null,
+        color:       raw.color                                  ?? null,
+        vin:         raw.vin          ?? raw.vinNumber          ?? null,
+        combustible: raw.combustible  ?? raw.fuel               ?? null,
+        transmision: raw.transmision  ?? raw.transmission       ?? null,
+        motor:       raw.motor        ?? raw.engine             ?? null,
+        rtFecha:     raw.rtFecha      ?? raw.rtDate             ?? null,
+        rtResultado: raw.rtResultado  ?? raw.rtResult           ?? null,
+        mesRT:       raw.mesRT        ?? raw.monthRT            ?? null,
+      };
+
+      setData(vehicleData);
+      setDataPlate(cleanValue);
+      await saveToHistory(cleanValue, vehicleData);
+      toast.success('Patente consultada exitosamente');
     } catch (err) {
-      logger.error('Unexpected error:', err);
+      logger.error('Error lookup patent:', err);
       setError('Error inesperado al consultar la patente');
       toast.error('Error inesperado al consultar la patente');
     } finally {
@@ -146,34 +242,63 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
     }
   };
 
+  // ── lookupVin ─────────────────────────────────────────────────────
+  const lookupVin = async (vin: string): Promise<void> => {
+    const cleanVin = vin.trim().replace(/[-\s]/g, '').toUpperCase();
+    if (!isVIN(cleanVin)) return;
+
+    setVinLoading(true);
+    setVinData(null);
+    setData(null);
+
+    try {
+      const headers = await getAuthHeaders();
+      const result = await invokeVehicleApi('vin', cleanVin, headers);
+
+      if (result?.data) {
+        setVinData({
+          year: result.data.year ?? null,
+          manufacturer: {
+            name:    result.data.manufacturer?.name    ?? 'Desconocido',
+            region:  result.data.manufacturer?.region  ?? '',
+            country: result.data.manufacturer?.country ?? '',
+          },
+        });
+      } else {
+        toast.info('No se encontró información para este VIN');
+      }
+    } catch (err) {
+      logger.error('Error lookup VIN:', err);
+      toast.error('Error al consultar el VIN');
+    } finally {
+      setVinLoading(false);
+    }
+  };
+
+  // ── reset ─────────────────────────────────────────────────────────
   const reset = () => {
     setData(null);
     setDataPlate(null);
     setError(null);
+    setVinData(null);
+    setStolenAlerts(null);
   };
 
-  const loadFromHistory = (historyItem: SearchHistory) => {
+  const loadFromHistory = (item: SearchHistory) => {
     setData({
-      marca: historyItem.marca,
-      modelo: historyItem.modelo,
-      año: historyItem.año,
-      color: historyItem.color,
+      marca: item.marca,
+      modelo: item.modelo,
+      año: item.año,
+      color: item.color,
     });
     setError(null);
   };
 
   const clearHistory = async () => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
-      const { error: deleteError } = await supabase
-        .from('patent_search_history')
-        .delete()
-        .eq('user_id', userData.user.id);
-
-      if (deleteError) throw deleteError;
-
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('patent_search_history').delete().eq('user_id', user.id);
       setHistory([]);
       toast.success('Historial eliminado');
     } catch (err) {
@@ -183,14 +308,11 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
   };
 
   return {
-    data,
-    dataPlate,
-    loading,
-    error,
+    data, dataPlate, loading, error,
+    vinData, vinLoading,
+    stolenAlerts, stolenLoading,
     history,
-    lookupPatent,
-    loadFromHistory,
-    clearHistory,
-    reset,
+    lookupPatent, lookupVin, lookupStolen,
+    loadFromHistory, clearHistory, reset,
   };
 };

@@ -3,13 +3,11 @@ import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
 import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
 import { ServicesMetrics } from './ServicesMetrics';
-import { ServicesDateFilter } from './ServicesDateFilter';
+import { ServicesDateFilter, DateFilter } from './ServicesDateFilter';
 import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-
-type DateFilter = 'today' | 'week' | 'month' | 'all';
 
 type ViewMode = 'table' | 'pipeline';
 
@@ -24,22 +22,30 @@ interface ServicesHeaderProps {
   pendingServicesCount: number;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  dateFilter: DateFilter | 'custom';
+  onDateFilterChange: (filter: DateFilter) => void;
 }
 
-export const ServicesHeader = ({ 
-  isAdmin, 
-  refreshing, 
-  onRefresh, 
-  onCSVUpload, 
+export const ServicesHeader = ({
+  isAdmin,
+  refreshing,
+  onRefresh,
+  onCSVUpload,
   onNewService,
   onExportPending,
   isExportingPending,
   pendingServicesCount,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  dateFilter,
+  onDateFilterChange,
 }: ServicesHeaderProps) => {
-  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
-  const { metrics, loading } = useServicesMetrics(dateFilter);
+  // Metrics use the last explicitly-selected button (not affected by manual input edits)
+  const [metricsFilter, setMetricsFilter] = useState<DateFilter>('month');
+  useEffect(() => {
+    if (dateFilter !== 'custom') setMetricsFilter(dateFilter);
+  }, [dateFilter]);
+  const { metrics, loading } = useServicesMetrics(metricsFilter);
   const isMobile = useIsMobile();
   
   // Estado para visibilidad de datos sensibles
@@ -149,9 +155,9 @@ export const ServicesHeader = ({
               )}
             </Button>
           </div>
-          <ServicesDateFilter 
-            selected={dateFilter} 
-            onChange={setDateFilter} 
+          <ServicesDateFilter
+            selected={dateFilter}
+            onChange={onDateFilterChange}
           />
         </div>
         

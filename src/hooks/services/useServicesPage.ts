@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
+import { getCurrentMonthRange, formatForInput } from '@/utils/timezoneUtils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useServices } from '@/hooks/useServices';
 import { useServiceManager } from './useServiceManager';
@@ -40,6 +41,12 @@ export const useServicesPage = () => {
   const [sortField, setSortField] = useState<'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
+  const defaultListFrom = formatForInput(monthStart);
+  const defaultListTo   = formatForInput(monthEnd);
+  const [listDateFrom, setListDateFrom] = useState<string>(defaultListFrom);
+  const [listDateTo,   setListDateTo]   = useState<string>(defaultListTo);
+
   // Batch selection state
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [isBatchClosing, setIsBatchClosing] = useState(false);
@@ -52,8 +59,6 @@ export const useServicesPage = () => {
   const ITEMS_PER_PAGE = 10;
 
   const isBasicView =
-    searchTerm === '' &&
-    (statusFilter === 'all' || !statusFilter) &&
     !advancedFilters &&
     futureParam !== 'true' &&
     !sortField;
@@ -62,7 +67,12 @@ export const useServicesPage = () => {
     data: pagedData,
     isLoading: loadingPaged,
     refetch: refetchPaged,
-  } = usePagedServices(currentPage, ITEMS_PER_PAGE);
+  } = usePagedServices(currentPage, ITEMS_PER_PAGE, {
+    dateFrom: listDateFrom || undefined,
+    dateTo:   listDateTo   || undefined,
+    status:   (statusFilter !== 'all' && statusFilter !== 'with_purchase_order') ? statusFilter : undefined,
+    search:   searchTerm   || undefined,
+  });
 
   const baseServices = isBasicView && pagedData?.services ? pagedData.services : services;
 
@@ -144,6 +154,22 @@ export const useServicesPage = () => {
       const matchesFuture = futureParam !== 'true' || isFutureDate(service.serviceDate);
       if (!matchesFuture) return false;
 
+      // 3b. List date range filter (always active, defaults to current month)
+      if (listDateFrom || listDateTo) {
+        const serviceDate = service.serviceDate ? parseFromDatabase(service.serviceDate) : null;
+        if (!serviceDate) return false;
+        if (listDateFrom) {
+          const from = parseFromDatabase(listDateFrom);
+          from.setHours(0, 0, 0, 0);
+          if (serviceDate < from) return false;
+        }
+        if (listDateTo) {
+          const to = parseFromDatabase(listDateTo);
+          to.setHours(23, 59, 59, 999);
+          if (serviceDate > to) return false;
+        }
+      }
+
       // 4. Advanced filters (only if active)
       if (advancedFilters) {
         // Service type filter
@@ -182,14 +208,12 @@ export const useServicesPage = () => {
           if (!serviceDate) return false;
           
           if (advancedFilters.dateFrom) {
-            const fromDate = new Date(advancedFilters.dateFrom);
-            fromDate.setHours(0, 0, 0, 0);
+            const fromDate = new Date(advancedFilters.dateFrom.getFullYear(), advancedFilters.dateFrom.getMonth(), advancedFilters.dateFrom.getDate(), 0, 0, 0, 0);
             if (serviceDate < fromDate) return false;
           }
-          
+
           if (advancedFilters.dateTo) {
-            const toDate = new Date(advancedFilters.dateTo);
-            toDate.setHours(23, 59, 59, 999);
+            const toDate = new Date(advancedFilters.dateTo.getFullYear(), advancedFilters.dateTo.getMonth(), advancedFilters.dateTo.getDate(), 23, 59, 59, 999);
             if (serviceDate > toDate) return false;
           }
         }
@@ -560,6 +584,14 @@ export const useServicesPage = () => {
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     
+    // List date range
+    listDateFrom,
+    listDateTo,
+    defaultListFrom,
+    defaultListTo,
+    setListDateFrom,
+    setListDateTo,
+
     // Setters
     setSelectedService,
     setIsFormOpen,

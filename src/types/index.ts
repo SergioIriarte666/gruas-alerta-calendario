@@ -156,6 +156,7 @@ export interface Crane {
   insuranceExpiry: string;
   technicalReviewExpiry: string;
   isActive: boolean;
+  status?: CraneStatus;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -341,6 +342,8 @@ export interface ServiceClosure {
 export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla';
+
+export type CraneStatus = 'active' | 'inactive' | 'sold' | 'written_off';
 
 export interface CalendarEvent {
   id: string;

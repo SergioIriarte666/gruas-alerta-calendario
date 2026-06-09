@@ -88,6 +88,12 @@ export const EnhancedServiceForm = ({
   // Detectar si está duplicando
   const isDuplicating = prefilledData?._isDuplicating;
   const originalFolio = prefilledData?._originalFolio;
+
+  // Skip patent lookup when duplicating or when calendar prefilled a plate
+  const skipPatentLookup = !!(
+    isDuplicating ||
+    (fromCalendarEvent && prefilledData?.licensePlate)
+  );
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
@@ -940,6 +946,7 @@ export const EnhancedServiceForm = ({
                     vehicleModelError={isFieldInvalid('vehicleModel')}
                     licensePlateError={isFieldInvalid('licensePlate')}
                     isEditing={!!service}
+                    skipLookup={skipPatentLookup}
                   />
                 </ColoredSectionCard>
 
