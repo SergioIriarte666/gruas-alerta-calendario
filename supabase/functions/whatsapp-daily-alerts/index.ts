@@ -208,6 +208,82 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  // ── 4. Documentos de operadores por vencer / vencidos (notify_operator_document_expiry)
+  if ((settings as any)?.notify_operator_document_expiry !== false) {
+    const in30ISO = addDaysISO(todayISO, 30);
+
+    const OPERATOR_DOC_LABELS: Record<string, string> = {
+      cedula_identidad: "Cédula de Identidad",
+      licencia_conducir: "Licencia de Conducir",
+      examen_psicosensotecnico: "Examen Psicosensotécnico",
+      examen_altura: "Examen de Altura",
+      seguro_vida: "Seguro de Vida",
+      contrato_trabajo: "Contrato de Trabajo",
+    };
+
+    // Documentos por vencer (hoy…+30 días)
+    const { data: expiring } = await supabase
+      .from("operator_documents")
+      .select("id, operator_id, document_type, expiry_date, operator:operators(name)")
+      .gte("expiry_date", todayISO)
+      .lte("expiry_date", in30ISO)
+      .order("expiry_date", { ascending: true });
+
+    // Documentos ya vencidos
+    const { data: expired } = await supabase
+      .from("operator_documents")
+      .select("id, operator_id, document_type, expiry_date, operator:operators(name)")
+      .lt("expiry_date", todayISO)
+      .order("expiry_date", { ascending: false })
+      .limit(20);
+
+    const expiringList = (expiring ?? []) as any[];
+    const expiredList = (expired ?? []) as any[];
+    const sentExpiring: any[] = [];
+    const sentExpired: any[] = [];
+
+    for (const doc of expiringList) {
+      const dedupeKey = `operator_doc_expiry:${doc.id}`;
+      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
+      if (!ok) continue;
+
+      const days = daysBetween(todayISO, doc.expiry_date);
+      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const operatorName = (doc.operator as any)?.name ?? "Operador";
+
+      const outcome = await sendWhatsAppTemplateBulk(
+        phones,
+        "admin_doc_op_vencimiento",
+        [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(days)],
+        { event: "operador_doc_vencimiento", context: { docId: doc.id, operatorId: doc.operator_id } },
+      );
+      sentExpiring.push({ operatorName, docLabel, days, notified: outcome.notified });
+    }
+
+    for (const doc of expiredList) {
+      const dedupeKey = `operator_doc_vencido:${doc.id}`;
+      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
+      if (!ok) continue;
+
+      const daysExpired = daysBetween(doc.expiry_date, todayISO);
+      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const operatorName = (doc.operator as any)?.name ?? "Operador";
+
+      const outcome = await sendWhatsAppTemplateBulk(
+        phones,
+        "admin_doc_op_vencido",
+        [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(daysExpired)],
+        { event: "operador_doc_vencido", context: { docId: doc.id, operatorId: doc.operator_id } },
+      );
+      sentExpired.push({ operatorName, docLabel, daysExpired, notified: outcome.notified });
+    }
+
+    results.operator_doc_expiry = {
+      expiring: { total: expiringList.length, dispatched: sentExpiring.length, detail: sentExpiring },
+      expired: { total: expiredList.length, dispatched: sentExpired.length, detail: sentExpired },
+    };
+  }
+
   return new Response(JSON.stringify({ ok: true, date: todayISO, ...results }), {
     status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });

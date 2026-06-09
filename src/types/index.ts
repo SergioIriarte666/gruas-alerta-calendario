@@ -180,6 +180,59 @@ export interface Operator {
   creatorName?: string;
 }
 
+// ── Documentos de Operadores ──────────────────────────────────────────────────
+
+export type DocumentType =
+  | 'cedula_identidad'
+  | 'licencia_conducir'
+  | 'examen_psicosensotecnico'
+  | 'examen_altura'
+  | 'seguro_vida'
+  | 'contrato_trabajo';
+
+export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  cedula_identidad: 'Cédula de Identidad',
+  licencia_conducir: 'Licencia de Conducir',
+  examen_psicosensotecnico: 'Examen Psicosensotécnico',
+  examen_altura: 'Examen de Altura',
+  seguro_vida: 'Seguro de Vida',
+  contrato_trabajo: 'Contrato de Trabajo',
+};
+
+export const DOCUMENT_TYPES_WITH_EXPIRY: DocumentType[] = [
+  'licencia_conducir',
+  'examen_psicosensotecnico',
+  'examen_altura',
+  'seguro_vida',
+];
+
+export type DocumentStatus = 'vigente' | 'por_vencer' | 'vencido' | 'sin_fecha';
+
+export interface OperatorDocument {
+  id: string;
+  operatorId: string;
+  documentType: DocumentType;
+  fileUrl: string;
+  fileName: string;
+  fileSize?: number;
+  contentType?: string;
+  expiryDate?: string;
+  issuedDate?: string;
+  notes?: string;
+  uploadedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OperatorDocumentInsert {
+  operatorId: string;
+  documentType: DocumentType;
+  file: File;
+  expiryDate?: string;
+  issuedDate?: string;
+  notes?: string;
+}
+
 export interface ServiceType {
   id: string;
   name: string;

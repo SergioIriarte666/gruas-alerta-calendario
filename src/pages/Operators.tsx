@@ -5,6 +5,7 @@ import { OperatorForm } from '@/components/operators/OperatorForm';
 import { OperatorDetailsModal } from '@/components/operators/OperatorDetailsModal';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useOperatorMutations } from '@/hooks/operators/useOperatorMutations';
+import { useOperatorDocumentAlerts } from '@/hooks/operators/useOperatorDocuments';
 import { Operator } from '@/types';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { OperatorsHeader } from '@/components/operators/OperatorsHeader';
@@ -28,6 +29,7 @@ import { Briefcase, IdCard, ShieldCheck, Users } from 'lucide-react';
 const Operators = () => {
   const { data: operatorsData, isLoading: loading } = useOperatorsData();
   const { createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperatorMutations();
+  const { data: operatorsWithDocumentAlerts } = useOperatorDocumentAlerts();
   
   const operators = operatorsData || [];
   
@@ -196,6 +198,7 @@ const Operators = () => {
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
+        operatorsWithDocumentAlerts={operatorsWithDocumentAlerts}
       />
 
       <OperatorDetailsModal

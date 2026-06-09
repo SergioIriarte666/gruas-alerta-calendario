@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, Area } from "recharts";
@@ -15,6 +15,9 @@ interface CashFlowChartProps {
 
 export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   const [zoomDays, setZoomDays] = useState(dateRange);
+  useEffect(() => {
+    setZoomDays(dateRange);
+  }, [dateRange]);
   const today = startOfDay(new Date());
 
   // Separar facturas vencidas y próximas

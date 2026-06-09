@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown, Eye, AlertTriangle } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -22,6 +22,7 @@ interface OperatorsTableProps {
   sortField?: OperatorSortField;
   sortDirection?: SortDirection;
   onSort?: (field: OperatorSortField) => void;
+  operatorsWithDocumentAlerts?: Set<string>;
 }
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -49,6 +50,7 @@ export const OperatorsTable = ({
   sortField,
   sortDirection,
   onSort,
+  operatorsWithDocumentAlerts,
 }: OperatorsTableProps) => {
   const { isMobile } = useDeviceType();
 
@@ -63,6 +65,7 @@ export const OperatorsTable = ({
         onViewDetails={onViewDetails}
         onNewOperator={onNewOperator}
         searchTerm={searchTerm}
+        operatorsWithDocumentAlerts={operatorsWithDocumentAlerts}
       />
     );
   }
@@ -192,7 +195,17 @@ export const OperatorsTable = ({
                       {operator.operatorType === 'crane_operator' ? 'Operador' : 'Administrativo'}
                     </Badge>
                   </td>
-                  <td className="py-3 px-4 text-foreground font-medium">{operator.name}</td>
+                  <td className="py-3 px-4 text-foreground font-medium">
+                    <span className="flex items-center gap-2">
+                      {operator.name}
+                      {operatorsWithDocumentAlerts?.has(operator.id) && (
+                        <AlertTriangle
+                          className="size-4 text-warning flex-shrink-0"
+                          title="Documentos por vencer o vencidos"
+                        />
+                      )}
+                    </span>
+                  </td>
                   <td className="py-3 px-4 text-foreground">{operator.rut}</td>
                   <td className="py-3 px-4 text-foreground">{operator.phone}</td>
                   <td className="py-3 px-4 text-foreground">

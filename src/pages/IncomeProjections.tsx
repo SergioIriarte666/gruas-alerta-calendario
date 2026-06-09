@@ -32,7 +32,7 @@ export default function IncomeProjections() {
     totalProjectedInRange: 0,
     totalOverdue: 0,
     totalInCollection: 0,
-    collectionRate: 0,
+    paidRateOpenPortfolio: 0,
   };
 
   return (

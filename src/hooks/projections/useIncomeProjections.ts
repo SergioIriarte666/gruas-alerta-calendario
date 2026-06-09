@@ -24,7 +24,7 @@ export interface ProjectionMetrics {
   totalProjectedInRange: number;
   totalOverdue: number;
   totalInCollection: number;
-  collectionRate: number;
+  paidRateOpenPortfolio: number;
 }
 
 interface UseIncomeProjectionsParams {
@@ -38,6 +38,7 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
 
   return useQuery({
     queryKey: ['income-projections', dateRange, clientId, status],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const today = new Date();
 
@@ -114,7 +115,7 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
         (sum, inv) => sum + Math.max(inv.total - inv.remaining_amount, 0),
         0
       );
-      const collectionRate = totalOpenPortfolio > 0
+      const paidRateOpenPortfolio = totalOpenPortfolio > 0
         ? (totalRecoveredInOpenPortfolio / totalOpenPortfolio) * 100
         : 100;
 
@@ -122,7 +123,7 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
         totalProjectedInRange,
         totalOverdue,
         totalInCollection,
-        collectionRate,
+        paidRateOpenPortfolio,
       };
 
       return {

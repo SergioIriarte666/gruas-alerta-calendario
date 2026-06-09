@@ -43,9 +43,9 @@ export const ProjectionHeader = ({ metrics, dateRange, isLoading }: ProjectionHe
       bgClass: "bg-yellow-500/10",
     },
     {
-      title: "Tasa de Cobro",
-      subtitle: "Recuperado en cartera abierta",
-      value: `${metrics.collectionRate.toFixed(1)}%`,
+      title: "Cobrado en Cartera Actual",
+      subtitle: "% ya pagado sobre facturas abiertas",
+      value: `${metrics.paidRateOpenPortfolio.toFixed(1)}%`,
       icon: Percent,
       colorClass: "text-blue-400",
       bgClass: "bg-blue-500/10",

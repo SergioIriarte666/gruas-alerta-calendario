@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, IdCard, Briefcase } from 'lucide-react';
+import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, IdCard, Briefcase, AlertTriangle } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ interface OperatorsMobileViewProps {
   onViewDetails: (operator: Operator) => void;
   onNewOperator: () => void;
   searchTerm: string;
+  operatorsWithDocumentAlerts?: Set<string>;
 }
 
 export const OperatorsMobileView = ({
@@ -27,6 +28,7 @@ export const OperatorsMobileView = ({
   onViewDetails,
   onNewOperator,
   searchTerm,
+  operatorsWithDocumentAlerts,
 }: OperatorsMobileViewProps) => {
   const { isMobile } = useDeviceType();
 
@@ -85,7 +87,12 @@ export const OperatorsMobileView = ({
                     {operator.operatorType === 'crane_operator' ? '🏗️ Operador' : '📋 Admin'}
                   </Badge>
                 </div>
-                <h4 className="font-semibold text-foreground text-lg">{operator.name}</h4>
+                <h4 className="font-semibold text-foreground text-lg flex items-center gap-2">
+                  {operator.name}
+                  {operatorsWithDocumentAlerts?.has(operator.id) && (
+                    <AlertTriangle className="size-4 text-warning flex-shrink-0" title="Documentos por vencer o vencidos" />
+                  )}
+                </h4>
               </div>
               <Badge 
                 variant={operator.isActive ? "default" : "secondary"}

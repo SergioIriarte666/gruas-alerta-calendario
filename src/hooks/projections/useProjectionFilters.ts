@@ -20,7 +20,7 @@ const defaultFilters: ProjectionFilters = {
 export const useProjectionFilters = () => {
   const [filters, setFilters] = useState<ProjectionFilters>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = sessionStorage.getItem(STORAGE_KEY);
       if (saved) {
         return JSON.parse(saved);
       }
@@ -32,7 +32,7 @@ export const useProjectionFilters = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
     } catch (error) {
       logger.error('Error saving filters:', error);
     }
