@@ -7,11 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Users, Clock, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle, XCircle, Users, Clock, RefreshCw, UserCheck, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toTitleCase } from '@/lib/utils';
+import type { PendingUser } from '@/types/pendingUsers';
 
 const logger = createLogger('PendingUsers');
 logger.info('PendingUsers page mounted');
@@ -23,6 +34,29 @@ const ROLE_OPTIONS: { value: PendingApprovalRole; label: string }[] = [
   { value: 'admin', label: 'Administrador' },
 ];
 
+const AVATAR_COLORS = [
+  'bg-emerald-600',
+  'bg-sky-600',
+  'bg-violet-600',
+  'bg-amber-600',
+  'bg-rose-600',
+  'bg-teal-600',
+  'bg-indigo-600',
+  'bg-orange-600',
+];
+
+function getAvatarColor(email: string) {
+  let hash = 0;
+  for (let i = 0; i < email.length; i++) {
+    hash = (hash * 31 + email.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getInitials(email: string) {
+  return email.slice(0, 2).toUpperCase();
+}
+
 export default function PendingUsers() {
   const { data: users = [], isLoading, isFetching, refetch } = usePendingUsersFetcher();
   const { clients, loading: clientsLoading } = useClients();
@@ -30,6 +64,7 @@ export default function PendingUsers() {
   const isMobile = useIsMobile();
   const [selectedRoles, setSelectedRoles] = useState<Record<string, PendingApprovalRole | ''>>({});
   const [selectedClients, setSelectedClients] = useState<Record<string, string>>({});
+  const [userToReject, setUserToReject] = useState<PendingUser | null>(null);
   const activeClients = clients.filter((client) => client.isActive);
 
   useEffect(() => {
@@ -55,6 +90,13 @@ export default function PendingUsers() {
       role,
       clientId: role === 'client' ? clientId || null : null,
     });
+  };
+
+  const handleConfirmReject = () => {
+    if (userToReject) {
+      rejectUser.mutate(userToReject.id);
+    }
+    setUserToReject(null);
   };
 
   if (isLoading) {
@@ -99,8 +141,11 @@ export default function PendingUsers() {
       {users.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-3">
-            <CheckCircle className="size-12 text-emerald-500 opacity-60" />
-            <p className="text-muted-foreground">No hay usuarios pendientes de aprobación</p>
+            <UserCheck className="size-12 text-emerald-500 opacity-60" />
+            <p className="font-medium text-foreground">No hay solicitudes pendientes</p>
+            <p className="text-sm text-muted-foreground">
+              Los nuevos usuarios aparecerán aquí cuando se registren
+            </p>
           </CardContent>
         </Card>
       )}
@@ -111,6 +156,10 @@ export default function PendingUsers() {
             const selectedRole = selectedRoles[user.id] || '';
             const selectedClient = selectedClients[user.id] || '';
             const requiresClient = selectedRole === 'client';
+            const isApprovingThisUser =
+              approveUser.isPending && approveUser.variables?.userId === user.id;
+            const isRejectingThisUser =
+              rejectUser.isPending && rejectUser.variables === user.id;
             const canApprove =
               !!selectedRole &&
               (!requiresClient || !!selectedClient) &&
@@ -120,96 +169,107 @@ export default function PendingUsers() {
             return (
               <Card key={user.id}>
                 <CardContent className="p-4">
-                  <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-start justify-between gap-4'}`}>
-                    <div className="space-y-3 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-foreground">
-                          {user.full_name || 'Sin nombre'}
-                        </p>
-                        <Badge variant="outline" className="text-xs flex items-center gap-1">
-                          <Clock className="size-3" />
-                          Pendiente
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        {user.company && <span>🏢 {user.company}</span>}
-                        {user.rut && <span>🪪 {user.rut}</span>}
-                        {user.phone && <span>📞 {user.phone}</span>}
-                        <span>
-                          Solicitó:{' '}
-                          {format(new Date(user.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
-                        </span>
+                  <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-start gap-4'}`}>
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div
+                        className={`size-10 shrink-0 rounded-full flex items-center justify-center text-sm font-semibold text-white ${getAvatarColor(user.email)}`}
+                        aria-hidden="true"
+                      >
+                        {getInitials(user.email)}
                       </div>
 
-                      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Rol a asignar
-                          </p>
-                          <Select
-                            value={selectedRole}
-                            onValueChange={(value: PendingApprovalRole) => {
-                              setSelectedRoles((current) => ({ ...current, [user.id]: value }));
-                              if (value !== 'client') {
-                                setSelectedClients((current) => ({ ...current, [user.id]: '' }));
-                              }
-                            }}
-                            disabled={approveUser.isPending}
-                          >
-                            <SelectTrigger className="border-border/70 bg-background/60">
-                              <SelectValue placeholder="Seleccionar rol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ROLE_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                      <div className="space-y-3 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-foreground truncate">{user.email}</p>
+                          <Badge variant="warning" className="flex items-center gap-1">
+                            <Clock className="size-3" />
+                            Pendiente
+                          </Badge>
                         </div>
+                        {user.full_name && (
+                          <p className="text-sm text-foreground/80">{user.full_name}</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          Solicitó acceso el{' '}
+                          {format(new Date(user.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                        </p>
+                        {(user.company || user.rut || user.phone) && (
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            {user.company && <span>🏢 {user.company}</span>}
+                            {user.rut && <span>🪪 {user.rut}</span>}
+                            {user.phone && <span>📞 {user.phone}</span>}
+                          </div>
+                        )}
 
-                        {requiresClient && (
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Cliente asociado
-                            </p>
+                        <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'flex-wrap items-end'}`}>
+                          <div className="space-y-1.5">
+                            <p className="text-xs text-muted-foreground">Rol a asignar</p>
                             <Select
-                              value={selectedClient}
-                              onValueChange={(value) => {
-                                setSelectedClients((current) => ({ ...current, [user.id]: value }));
+                              value={selectedRole}
+                              onValueChange={(value: PendingApprovalRole) => {
+                                setSelectedRoles((current) => ({ ...current, [user.id]: value }));
+                                if (value !== 'client') {
+                                  setSelectedClients((current) => ({ ...current, [user.id]: '' }));
+                                }
                               }}
-                              disabled={approveUser.isPending || clientsLoading || activeClients.length === 0}
+                              disabled={approveUser.isPending}
                             >
-                              <SelectTrigger className="border-border/70 bg-background/60">
-                                <SelectValue
-                                  placeholder={
-                                    clientsLoading
-                                      ? 'Cargando clientes...'
-                                      : activeClients.length === 0
-                                        ? 'No hay clientes activos'
-                                        : 'Seleccionar cliente'
-                                  }
-                                />
+                              <SelectTrigger
+                                className={`border-border/70 bg-background/60 ${isMobile ? 'w-full' : 'w-52'}`}
+                              >
+                                <SelectValue placeholder="Seleccionar rol" />
                               </SelectTrigger>
                               <SelectContent>
-                                {activeClients.map((client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    {toTitleCase(client.name)} - {client.rut}
+                                {ROLE_OPTIONS.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
+
+                          {requiresClient && (
+                            <div className="space-y-1.5">
+                              <p className="text-xs text-muted-foreground">Cliente asociado</p>
+                              <Select
+                                value={selectedClient}
+                                onValueChange={(value) => {
+                                  setSelectedClients((current) => ({ ...current, [user.id]: value }));
+                                }}
+                                disabled={approveUser.isPending || clientsLoading || activeClients.length === 0}
+                              >
+                                <SelectTrigger
+                                  className={`border-border/70 bg-background/60 ${isMobile ? 'w-full' : 'w-64'}`}
+                                >
+                                  <SelectValue
+                                    placeholder={
+                                      clientsLoading
+                                        ? 'Cargando clientes...'
+                                        : activeClients.length === 0
+                                          ? 'No hay clientes activos'
+                                          : 'Seleccionar cliente'
+                                    }
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {activeClients.map((client) => (
+                                    <SelectItem key={client.id} value={client.id}>
+                                      {toTitleCase(client.name)} - {client.rut}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+
+                        {requiresClient && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            Para aprobar como cliente debes vincular un cliente activo.
+                          </p>
                         )}
                       </div>
-
-                      {requiresClient && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          Para aprobar como cliente debes vincular un cliente activo.
-                        </p>
-                      )}
                     </div>
 
                     <div className={`flex gap-2 ${isMobile ? 'w-full' : 'shrink-0'}`}>
@@ -218,9 +278,13 @@ export default function PendingUsers() {
                         variant="outline"
                         className={`border-red-500/40 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 ${isMobile ? 'flex-1' : ''}`}
                         disabled={rejectUser.isPending}
-                        onClick={() => rejectUser.mutate(user.id)}
+                        onClick={() => setUserToReject(user)}
                       >
-                        <XCircle className="size-4 mr-1" />
+                        {isRejectingThisUser ? (
+                          <Loader2 className="size-4 mr-1 animate-spin" />
+                        ) : (
+                          <XCircle className="size-4 mr-1" />
+                        )}
                         Rechazar
                       </Button>
                       <Button
@@ -229,7 +293,11 @@ export default function PendingUsers() {
                         disabled={!canApprove}
                         onClick={() => handleApprove(user.id)}
                       >
-                        <CheckCircle className="size-4 mr-1" />
+                        {isApprovingThisUser ? (
+                          <Loader2 className="size-4 mr-1 animate-spin" />
+                        ) : (
+                          <CheckCircle className="size-4 mr-1" />
+                        )}
                         Aprobar
                       </Button>
                     </div>
@@ -240,6 +308,27 @@ export default function PendingUsers() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!userToReject} onOpenChange={(open) => !open && setUserToReject(null)}>
+        <AlertDialogContent className="w-[90vw] max-w-md border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">¿Rechazar solicitud?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              ¿Estás seguro? Esta acción eliminará la solicitud de acceso de{' '}
+              <span className="font-medium text-foreground">{userToReject?.email}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleConfirmReject}
+            >
+              Rechazar solicitud
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
