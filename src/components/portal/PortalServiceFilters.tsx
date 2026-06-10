@@ -23,6 +23,8 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
   onClearFilters,
 }) => {
   const hasFilters = dateFrom || dateTo;
+  const pickerBaseClassName =
+    'h-11 w-[176px] justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors hover:bg-[#f4f7fb]';
 
   return (
     <div className="mb-6 rounded-[10px] border border-[#e2e8f0] bg-white p-4">
@@ -36,7 +38,10 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
               <Button
                 variant="outline"
                 className={cn(
-                  'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  pickerBaseClassName,
+                  dateFrom
+                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                    : 'bg-[#f8fafc] text-[#0f172a]',
                   !dateFrom && 'text-[#94a3b8]'
                 )}
               >
@@ -69,7 +74,10 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
               <Button
                 variant="outline"
                 className={cn(
-                  'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  pickerBaseClassName,
+                  dateTo
+                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                    : 'bg-[#f8fafc] text-[#0f172a]',
                   !dateTo && 'text-[#94a3b8]'
                 )}
               >
@@ -100,7 +108,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-[#94a3b8] hover:bg-slate-50 hover:text-[#334155]"
+            className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
           >
             <X className="size-4 mr-1" />
             Limpiar filtros

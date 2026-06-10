@@ -154,6 +154,45 @@ toast.error('Error al guardar');
 
 ---
 
+## Calendarios y fechas UI
+
+**Regla obligatoria de consistencia visual:**
+- Todo nuevo selector de fecha o calendario debe usar los componentes compartidos de la app.
+- **Nunca** insertar `input type="date"` en interfaces nuevas o refactors, salvo requerimiento explícito del usuario o una limitación técnica documentada.
+- Si existe un calendario inconsistente en un módulo, el prompt debe pedir unificarlo con el patrón estándar antes de agregar otro selector.
+
+**Componentes aprobados:**
+- `@/components/common/DatePickerInput` para campos de fecha simples en formularios y filtros.
+- `@/components/ui/calendar` junto con `@/components/ui/popover` para casos avanzados, rangos, restricciones o layouts custom.
+
+**Patrón visual por defecto:**
+- Trigger con `Button variant="outline"` + `CalendarIcon`.
+- Fecha visible en formato `dd/MM/yyyy`.
+- Popover con `Popover`, `PopoverTrigger`, `PopoverContent`.
+- Selector interno con `Calendar` desde `@/components/ui/calendar`.
+- Locale `es` desde `date-fns/locale`.
+
+**Formato de datos obligatorio:**
+- En formularios y filtros usar string `yyyy-MM-dd`.
+- Convertir a `Date` solo dentro del componente visual.
+- Mantener fechas locales sin desfases de zona horaria.
+
+**Archivo de referencia principal:**
+- `src/components/common/DatePickerInput.tsx`
+- `src/components/ui/calendar.tsx`
+
+**Antipatrón conocido a corregir cuando aparezca:**
+- `src/components/services/ServiceFilters.tsx` usa `Input type="date"` y debe migrarse al patrón compartido.
+
+**Instrucción obligatoria para prompts que toquen fechas:**
+- Si la tarea crea o modifica filtros, formularios o diálogos con fechas, incluir en `ARCHIVOS A LEER PRIMERO`:
+  - `src/components/common/DatePickerInput.tsx`
+  - `src/components/ui/calendar.tsx`
+- Y en `NOTAS` indicar:
+  - "No usar `input type=\"date\"`; reutilizar `DatePickerInput` o `Calendar` + `Popover` para mantener coherencia visual con el resto de la app."
+
+---
+
 ## Migraciones SQL
 
 - Carpeta: `supabase/migrations/`

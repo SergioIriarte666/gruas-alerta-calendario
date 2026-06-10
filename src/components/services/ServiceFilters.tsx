@@ -3,8 +3,10 @@ import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { useOperators } from '@/hooks/useOperators';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
+import { cn } from '@/lib/utils';
 
 interface ServiceFiltersProps {
   searchTerm: string;
@@ -43,6 +45,8 @@ export const ServiceFilters = ({
   onListDateToChange,
 }: ServiceFiltersProps) => {
   const { operators } = useOperators();
+  const controlClassName =
+    'h-11 rounded-xl border-[#d9dde7] bg-[#f8fafc] text-[#0f172a] shadow-sm transition-colors hover:bg-[#f4f7fb]';
 
   const applyAdvanced = useCallback((opId: string) => {
     const advanced: AdvancedFilters = {};
@@ -54,9 +58,16 @@ export const ServiceFilters = ({
     onSearchChange('');
     onStatusChange('all');
     onAdvancedFiltersChange(null);
+    onListDateFromChange?.('');
+    onListDateToChange?.('');
   };
 
-  const hasFilters = searchTerm || (statusFilter && statusFilter !== 'all');
+  const hasFilters = Boolean(
+    searchTerm ||
+    (statusFilter && statusFilter !== 'all') ||
+    listDateFrom ||
+    listDateTo
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -66,12 +77,12 @@ export const ServiceFilters = ({
           placeholder="Folio, cliente, patente..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 w-56"
+          className={cn('w-56 pl-8', controlClassName)}
         />
       </div>
 
       <Select value={statusFilter || 'all'} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-44">
+        <SelectTrigger className={cn('w-44', controlClassName)}>
           <SelectValue placeholder="Estado" />
         </SelectTrigger>
         <SelectContent>
@@ -82,7 +93,7 @@ export const ServiceFilters = ({
       </Select>
 
       <Select defaultValue="all" onValueChange={(val) => applyAdvanced(val)}>
-        <SelectTrigger className="w-44">
+        <SelectTrigger className={cn('w-44', controlClassName)}>
           <SelectValue placeholder="Operador" />
         </SelectTrigger>
         <SelectContent>
@@ -93,24 +104,39 @@ export const ServiceFilters = ({
         </SelectContent>
       </Select>
 
-      <Input
-        type="date"
+      <DatePickerInput
         value={listDateFrom}
-        onChange={(e) => onListDateFromChange?.(e.target.value)}
-        className="w-36"
-        title="Fecha desde"
+        onChange={(value) => onListDateFromChange?.(value)}
+        placeholder="Desde"
+        className={cn(
+          'h-11 w-[176px] rounded-xl border-[#d9dde7] px-3 shadow-sm hover:bg-[#f4f7fb]',
+          listDateFrom
+            ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+            : 'bg-[#f8fafc] text-[#0f172a]'
+        )}
+        id="services-date-from"
       />
       <span className="text-muted-foreground text-sm">–</span>
-      <Input
-        type="date"
+      <DatePickerInput
         value={listDateTo}
-        onChange={(e) => onListDateToChange?.(e.target.value)}
-        className="w-36"
-        title="Fecha hasta"
+        onChange={(value) => onListDateToChange?.(value)}
+        placeholder="Hasta"
+        className={cn(
+          'h-11 w-[176px] rounded-xl border-[#d9dde7] px-3 shadow-sm hover:bg-[#f4f7fb]',
+          listDateTo
+            ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+            : 'bg-[#f8fafc] text-[#0f172a]'
+        )}
+        id="services-date-to"
       />
 
       {hasFilters && (
-        <Button variant="ghost" size="sm" onClick={handleClear} className="gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClear}
+          className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
+        >
           <X className="size-3" />
           Limpiar
         </Button>

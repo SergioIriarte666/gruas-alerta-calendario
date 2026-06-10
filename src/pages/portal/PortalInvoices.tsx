@@ -89,6 +89,8 @@ const PortalInvoices = () => {
   }, [invoices, statusFilter, dateFrom, dateTo]);
 
   const hasFilters = statusFilter !== 'all' || dateFrom || dateTo;
+  const pickerBaseClassName =
+    'h-11 w-[176px] justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors hover:bg-[#f4f7fb]';
 
   const handleClearFilters = () => {
     setStatusFilter('all');
@@ -300,7 +302,10 @@ const PortalInvoices = () => {
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  pickerBaseClassName,
+                  dateFrom
+                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                    : 'bg-[#f8fafc] text-[#0f172a]',
                     !dateFrom && 'text-[#94a3b8]'
                   )}
                 >
@@ -331,7 +336,10 @@ const PortalInvoices = () => {
                 <Button
                   variant="outline"
                   className={cn(
-                    'w-[140px] justify-start border-[#e2e8f0] bg-[#f8fafc] text-left font-normal text-[#0f172a]',
+                  pickerBaseClassName,
+                  dateTo
+                    ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                    : 'bg-[#f8fafc] text-[#0f172a]',
                     !dateTo && 'text-[#94a3b8]'
                   )}
                 >
@@ -360,7 +368,7 @@ const PortalInvoices = () => {
               variant="ghost"
               size="sm"
               onClick={handleClearFilters}
-              className="text-[#94a3b8] hover:bg-slate-50 hover:text-[#334155]"
+            className="h-11 rounded-xl px-3 text-[#64748b] hover:bg-slate-50 hover:text-[#334155]"
             >
               <X className="mr-1 size-4" />
               Limpiar filtros
