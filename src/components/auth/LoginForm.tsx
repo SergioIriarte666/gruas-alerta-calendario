@@ -50,11 +50,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-login" style={{ color: 'rgba(255,255,255,0.9)' }}>Email</Label>
-            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 placeholder:text-white/45 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
+            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password-login" style={{ color: 'rgba(255,255,255,0.9)' }}>Contraseña</Label>
-            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
+            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400" />
           </div>
           {onForgotPassword && (
             <div className="text-right">

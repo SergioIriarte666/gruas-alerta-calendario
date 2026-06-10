@@ -109,7 +109,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
                 required
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40"
+                className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400"
               />
             </div>
             {isTurnstileEnabled ? (

@@ -41,11 +41,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-register" style={{ color: 'rgba(255,255,255,0.9)' }}>Email</Label>
-            <Input id="email-register" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 placeholder:text-white/45 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
+            <Input id="email-register" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password-register" style={{ color: 'rgba(255,255,255,0.9)' }}>Contraseña</Label>
-            <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
+            <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-gray-400" />
             <PasswordStrengthIndicator password={password} />
           </div>
           <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">

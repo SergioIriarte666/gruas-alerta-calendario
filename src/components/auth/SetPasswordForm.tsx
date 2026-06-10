@@ -79,13 +79,13 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 8 caracteres"
-              className="h-11 rounded-xl border-white/15 bg-white/8 pr-10 text-white placeholder:text-white/45"
+              className="h-11 rounded-xl border-gray-300 bg-white pr-10 text-gray-900 placeholder:text-gray-400"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -100,7 +100,7 @@ export const SetPasswordForm = ({ onSuccess }: SetPasswordFormProps) => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Repite tu contraseña"
-            className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45"
+            className="h-11 rounded-xl border-gray-300 bg-white text-gray-900 placeholder:text-gray-400"
             required
           />
         </div>
