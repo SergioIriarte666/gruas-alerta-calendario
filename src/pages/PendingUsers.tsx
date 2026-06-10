@@ -65,7 +65,20 @@ export default function PendingUsers() {
   const [selectedRoles, setSelectedRoles] = useState<Record<string, PendingApprovalRole | ''>>({});
   const [selectedClients, setSelectedClients] = useState<Record<string, string>>({});
   const [userToReject, setUserToReject] = useState<PendingUser | null>(null);
-  const activeClients = clients.filter((client) => client.isActive);
+  const activeClients = (() => {
+    const seen = new Set<string>();
+    return clients
+      .filter((client) => client.isActive)
+      .filter((client) => {
+        const key = `${client.name}|${client.rut}|${client.department || ''}`.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) =>
+        `${a.name} ${a.department || ''}`.localeCompare(`${b.name} ${b.department || ''}`, 'es')
+      );
+  })();
 
   useEffect(() => {
     setSelectedRoles((current) => {
@@ -256,6 +269,7 @@ export default function PendingUsers() {
                                   {activeClients.map((client) => (
                                     <SelectItem key={client.id} value={client.id}>
                                       {toTitleCase(client.name)} - {client.rut}
+                                      {client.department ? ` - ${client.department}` : ''}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
