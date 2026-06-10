@@ -34,6 +34,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
+  const attemptedPendingRepairRef = useRef<string | null>(null);
+
+  const tryRepairPendingInvitedProfile = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('repair-invited-user-profile');
+      if (error) {
+        logger.warn('UserContext - Pending profile repair failed:', error);
+        return false;
+      }
+
+      return Boolean(data?.repaired);
+    } catch (repairError) {
+      logger.warn('UserContext - Pending profile repair exception:', repairError);
+      return false;
+    }
+  };
 
   const fetchUserProfile = async (retryCount = 0) => {
     if (!authUser || fetchingRef.current) {
@@ -51,7 +67,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchingRef.current = true;
 
     try {
-      const { data: profileData, error } = await supabase
+      let { data: profileData, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, role, client_id, avatar_url, status')
         .eq('id', authUser.id)
@@ -76,6 +92,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } else {
+        if (profileData.status === 'pending' && attemptedPendingRepairRef.current !== authUser.id) {
+          attemptedPendingRepairRef.current = authUser.id;
+          const repaired = await tryRepairPendingInvitedProfile();
+          if (repaired) {
+            const refreshedProfile = await supabase
+              .from('profiles')
+              .select('id, email, full_name, role, client_id, avatar_url, status')
+              .eq('id', authUser.id)
+              .single();
+
+            if (!refreshedProfile.error && refreshedProfile.data) {
+              profileData = refreshedProfile.data;
+            }
+          }
+        }
+
         let operator_id: string | null = null;
         let operator_name: string | null = null;
         try {
@@ -180,6 +212,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!authUser) {
       profileCacheRef.current = null;
+      attemptedPendingRepairRef.current = null;
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;

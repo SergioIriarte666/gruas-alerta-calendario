@@ -265,8 +265,8 @@ export const CreateUserDialog = ({
 
         <div className="mt-4 rounded-xl border border-info/20 bg-info/10 p-3">
           <p className="text-sm text-foreground">
-            <strong>Nota:</strong> El usuario deberá registrarse normalmente en la aplicación usando el email especificado. 
-            Una vez registrado, ya tendrá asignado el rol seleccionado.
+            <strong>Nota:</strong> El usuario recibirá una invitación por email para definir su contraseña
+            y podrá ingresar directamente con el rol seleccionado.
           </p>
         </div>
       </DialogContent>

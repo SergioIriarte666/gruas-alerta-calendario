@@ -39,6 +39,18 @@ export default function Register() {
       return
     }
 
+    const { data: existingProfile, error: existingProfileError } = await supabase
+      .from('profiles')
+      .select('role, status')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (existingProfileError) {
+      logger.error('Register existing profile lookup error', existingProfileError)
+      toast.error('Error al validar el estado de tu cuenta: ' + existingProfileError.message)
+      return
+    }
+
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       email: user.email!,
@@ -46,8 +58,8 @@ export default function Register() {
       phone: values.phone,
       company: values.company,
       rut: values.rut,
-      status: 'pending',
-      role: 'viewer',
+      status: existingProfile?.status ?? 'pending',
+      role: existingProfile?.role ?? 'viewer',
     })
 
     if (error) {

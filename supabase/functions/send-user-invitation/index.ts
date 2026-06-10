@@ -118,6 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: email,
         full_name: fullName,
         role: role,
+        status: 'approved',
         client_id: clientId || null,
         is_active: true,
         created_at: new Date().toISOString(),
