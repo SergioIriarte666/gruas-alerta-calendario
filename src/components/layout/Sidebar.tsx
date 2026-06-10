@@ -47,11 +47,9 @@ export const Sidebar = ({
     refetchOnReconnect: true,
     enabled: user?.role === 'admin',
     queryFn: async () => {
-      const { count } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending');
-      return count ?? 0;
+      const { data, error } = await supabase.rpc('get_pending_users_count');
+      if (error) return 0;
+      return data ?? 0;
     },
   });
 

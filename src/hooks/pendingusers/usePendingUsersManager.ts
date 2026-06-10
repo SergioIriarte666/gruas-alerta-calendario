@@ -24,31 +24,13 @@ export function usePendingUsersManager() {
         throw new Error('Debes asignar un cliente antes de aprobar a un usuario cliente');
       }
 
-      const { error: roleError } = await supabase.rpc('update_user_role', {
+      const { error } = await supabase.rpc('approve_pending_user', {
         target_user_id: userId,
         new_role: role,
-      });
-
-      if (roleError) throw roleError;
-
-      const { error: clientError } = await supabase.rpc('assign_user_client', {
-        target_user_id: userId,
         target_client_id: role === 'client' ? clientId ?? null : null,
       });
 
-      if (clientError) throw clientError;
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          status: 'approved',
-          role,
-          client_id: role === 'client' ? clientId ?? null : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
+      if (error) throw error;
     },
     onSuccess: (_, variables) => {
       toast.success('Usuario aprobado', {
@@ -73,10 +55,9 @@ export function usePendingUsersManager() {
   const rejectUser = useMutation({
     mutationFn: async (userId: string) => {
       logger.info('Rejecting user', userId);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'rejected' })
-        .eq('id', userId);
+      const { error } = await supabase.rpc('reject_pending_user', {
+        target_user_id: userId,
+      });
       if (error) throw error;
     },
     onSuccess: () => {

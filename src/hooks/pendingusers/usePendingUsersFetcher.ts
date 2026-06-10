@@ -14,11 +14,7 @@ export function usePendingUsersFetcher() {
     refetchOnReconnect: true,
     queryFn: async () => {
       logger.info('Fetching pending users');
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, phone, company, rut, created_at, status')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true });
+      const { data, error } = await supabase.rpc('get_pending_users');
       if (error) throw error;
       return (data ?? []) as PendingUser[];
     },

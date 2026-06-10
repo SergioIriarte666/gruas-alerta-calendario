@@ -5748,6 +5748,14 @@ export type Database = {
             Returns: Json
           }
       apply_pending_payments_to_invoices: { Args: never; Returns: Json }
+      approve_pending_user: {
+        Args: {
+          new_role?: Database["public"]["Enums"]["app_role"]
+          target_client_id?: string | null
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       audit_commission_system: { Args: never; Returns: Json }
       backfill_maintenance_costs: { Args: never; Returns: Json }
       backfill_supplier_payments_from_costs: { Args: never; Returns: number }
@@ -6207,6 +6215,11 @@ export type Database = {
           total_purchased: number
         }[]
       }
+      get_pending_users: {
+        Args: never
+        Returns: Database["public"]["Tables"]["profiles"]["Row"][]
+      }
+      get_pending_users_count: { Args: never; Returns: number }
       get_purchase_void_impact: { Args: { p_cost_id: string }; Returns: Json }
       get_supplier_payment_stats: {
         Args: { p_supplier_id: string }
@@ -6382,6 +6395,10 @@ export type Database = {
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
       reconcile_orphan_records: { Args: never; Returns: Json }
+      reject_pending_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       remove_duplicate_payment_applications: { Args: never; Returns: Json }
       repair_commission_system: { Args: never; Returns: Json }
       repair_payment_application: {
