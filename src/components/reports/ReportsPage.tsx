@@ -119,6 +119,8 @@ const ReportsPage = () => {
     }
     return getPeriodDates(selectedPeriod);
   }, [selectedPeriod, customFrom, customTo]);
+  const customDateTriggerClassName =
+    'h-11 text-sm justify-start rounded-xl border-[#d9dde7] px-3 text-left font-normal shadow-sm transition-colors w-full sm:w-[176px]';
 
   const { appliedFilters } = useReportFilters();
 
@@ -581,7 +583,17 @@ const ReportsPage = () => {
           <>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-background/70 border-border/70 justify-start font-normal w-full sm:w-[150px]", !customFrom && "text-muted-foreground")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    customDateTriggerClassName,
+                    customFrom
+                      ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                      : 'bg-background/70 text-foreground hover:bg-[#f4f7fb]',
+                    !customFrom && 'text-muted-foreground'
+                  )}
+                >
                   <Calendar className="size-3.5 mr-1.5" />
                   {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                 </Button>
@@ -599,7 +611,17 @@ const ReportsPage = () => {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-background/70 border-border/70 justify-start font-normal w-full sm:w-[150px]", !customTo && "text-muted-foreground")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    customDateTriggerClassName,
+                    customTo
+                      ? 'border-[#d8c8f6] bg-[#f3ecff] text-[#2f3f56]'
+                      : 'bg-background/70 text-foreground hover:bg-[#f4f7fb]',
+                    !customTo && 'text-muted-foreground'
+                  )}
+                >
                   <Calendar className="size-3.5 mr-1.5" />
                   {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                 </Button>
