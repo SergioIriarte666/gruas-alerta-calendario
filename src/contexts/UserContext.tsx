@@ -61,39 +61,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logger.error('UserContext - Error fetching profile:', error);
 
         if (error.code === 'PGRST116') {
-          // Profile doesn't exist, create one
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: authUser.id,
-              email: authUser.email,
-              full_name: authUser.email,
-              role: 'client'
-            })
-            .select('id, email, full_name, role, client_id, avatar_url')
-            .single();
-
-          if (createError) {
-            if (retryCount < 2) {
-              fetchingRef.current = false;
-              setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
-              return;
-            }
-            setUser(null);
-          } else {
-            const userProfile: UserProfile = {
-              id: newProfile.id,
-              email: newProfile.email,
-              name: newProfile.full_name || newProfile.email,
-              role: newProfile.role,
-              client_id: newProfile.client_id,
-              avatar_url: newProfile.avatar_url,
-              operator_id: null,
-              operator_name: null,
-            };
-            profileCacheRef.current = { profile: userProfile, userId: authUser.id };
-            setUser(userProfile);
+          if (retryCount < 2) {
+            fetchingRef.current = false;
+            setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
+            return;
           }
+          logger.warn('UserContext - Profile missing after retries, keeping user without profile');
+          setUser(null);
         } else if (retryCount < 2) {
           fetchingRef.current = false;
           setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
@@ -125,7 +99,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null)
           setLoading(false)
           fetchingRef.current = false
-          window.location.href = status === 'rejected' ? '/auth?error=rejected' : '/auth?error=not_approved'
+          window.location.href = status === 'rejected' ? '/auth?error=rejected' : '/pending'
           return
         }
 

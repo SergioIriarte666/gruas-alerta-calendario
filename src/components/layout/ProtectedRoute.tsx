@@ -76,21 +76,11 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   if (!profileUser && giveUp) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/register" replace />;
   }
 
   if (authUser && !profileUser) {
-    if (requireRole) {
-      return <Navigate to="/auth" replace />;
-    }
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-yellow-600 text-white px-4 py-2 text-center text-sm">
-          ⚠️ Perfil de usuario no disponible. Funcionalidad limitada.
-        </div>
-        {children}
-      </div>
-    );
+    return <Navigate to="/register" replace />;
   }
 
   const effectiveAllowedRoles = allowedRoles || (requireRole ? [requireRole] : []);

@@ -1,21 +1,61 @@
+import { useEffect, useState } from 'react';
 import { createLogger } from '@/lib/logger';
 import { usePendingUsersFetcher } from '@/hooks/pendingusers/usePendingUsersFetcher';
-import { usePendingUsersManager } from '@/hooks/pendingusers/usePendingUsersManager';
+import { PendingApprovalRole, usePendingUsersManager } from '@/hooks/pendingusers/usePendingUsersManager';
+import { useClients } from '@/hooks/useClients';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, XCircle, Users, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toTitleCase } from '@/lib/utils';
 
 const logger = createLogger('PendingUsers');
 logger.info('PendingUsers page mounted');
 
+const ROLE_OPTIONS: { value: PendingApprovalRole; label: string }[] = [
+  { value: 'viewer', label: 'Visualizador' },
+  { value: 'client', label: 'Cliente' },
+  { value: 'operator', label: 'Operador' },
+  { value: 'admin', label: 'Administrador' },
+];
+
 export default function PendingUsers() {
   const { data: users = [], isLoading } = usePendingUsersFetcher();
+  const { clients, loading: clientsLoading } = useClients();
   const { approveUser, rejectUser } = usePendingUsersManager();
   const isMobile = useIsMobile();
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, PendingApprovalRole | ''>>({});
+  const [selectedClients, setSelectedClients] = useState<Record<string, string>>({});
+  const activeClients = clients.filter((client) => client.isActive);
+
+  useEffect(() => {
+    setSelectedRoles((current) => {
+      const next = { ...current };
+      for (const user of users) {
+        if (!next[user.id]) {
+          next[user.id] = '';
+        }
+      }
+      return next;
+    });
+  }, [users]);
+
+  const handleApprove = (userId: string) => {
+    const role = selectedRoles[userId];
+    const clientId = selectedClients[userId];
+
+    if (!role) return;
+
+    approveUser.mutate({
+      userId,
+      role,
+      clientId: role === 'client' ? clientId || null : null,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -33,6 +73,9 @@ export default function PendingUsers() {
           <h1 className="text-2xl font-bold text-foreground">Usuarios Pendientes</h1>
           <p className="text-sm text-muted-foreground">
             Solicitudes de acceso que requieren aprobación
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Una vez aprobado el usuario, los permisos por módulos se ajustan desde Configuración de Usuario.
           </p>
         </div>
         {users.length > 0 && (
@@ -53,57 +96,137 @@ export default function PendingUsers() {
 
       {users.length > 0 && (
         <div className="space-y-3">
-          {users.map((user) => (
-            <Card key={user.id}>
-              <CardContent className="p-4">
-                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground">
-                        {user.full_name || 'Sin nombre'}
-                      </p>
-                      <Badge variant="outline" className="text-xs flex items-center gap-1">
-                        <Clock className="size-3" />
-                        Pendiente
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      {user.company && <span>🏢 {user.company}</span>}
-                      {user.rut && <span>🪪 {user.rut}</span>}
-                      {user.phone && <span>📞 {user.phone}</span>}
-                      <span>
-                        Solicitó:{' '}
-                        {format(new Date(user.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
-                      </span>
-                    </div>
-                  </div>
+          {users.map((user) => {
+            const selectedRole = selectedRoles[user.id] || '';
+            const selectedClient = selectedClients[user.id] || '';
+            const requiresClient = selectedRole === 'client';
+            const canApprove =
+              !!selectedRole &&
+              (!requiresClient || !!selectedClient) &&
+              !approveUser.isPending &&
+              !(requiresClient && activeClients.length === 0);
 
-                  <div className={`flex gap-2 ${isMobile ? 'w-full' : ''}`}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={`border-red-500/40 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 ${isMobile ? 'flex-1' : ''}`}
-                      disabled={rejectUser.isPending}
-                      onClick={() => rejectUser.mutate(user.id)}
-                    >
-                      <XCircle className="size-4 mr-1" />
-                      Rechazar
-                    </Button>
-                    <Button
-                      size="sm"
-                      className={`bg-emerald-600 hover:bg-emerald-700 text-white ${isMobile ? 'flex-1' : ''}`}
-                      disabled={approveUser.isPending}
-                      onClick={() => approveUser.mutate(user.id)}
-                    >
-                      <CheckCircle className="size-4 mr-1" />
-                      Aprobar
-                    </Button>
+            return (
+              <Card key={user.id}>
+                <CardContent className="p-4">
+                  <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-start justify-between gap-4'}`}>
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground">
+                          {user.full_name || 'Sin nombre'}
+                        </p>
+                        <Badge variant="outline" className="text-xs flex items-center gap-1">
+                          <Clock className="size-3" />
+                          Pendiente
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        {user.company && <span>🏢 {user.company}</span>}
+                        {user.rut && <span>🪪 {user.rut}</span>}
+                        {user.phone && <span>📞 {user.phone}</span>}
+                        <span>
+                          Solicitó:{' '}
+                          {format(new Date(user.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
+                        </span>
+                      </div>
+
+                      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Rol a asignar
+                          </p>
+                          <Select
+                            value={selectedRole}
+                            onValueChange={(value: PendingApprovalRole) => {
+                              setSelectedRoles((current) => ({ ...current, [user.id]: value }));
+                              if (value !== 'client') {
+                                setSelectedClients((current) => ({ ...current, [user.id]: '' }));
+                              }
+                            }}
+                            disabled={approveUser.isPending}
+                          >
+                            <SelectTrigger className="border-border/70 bg-background/60">
+                              <SelectValue placeholder="Seleccionar rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ROLE_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {requiresClient && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              Cliente asociado
+                            </p>
+                            <Select
+                              value={selectedClient}
+                              onValueChange={(value) => {
+                                setSelectedClients((current) => ({ ...current, [user.id]: value }));
+                              }}
+                              disabled={approveUser.isPending || clientsLoading || activeClients.length === 0}
+                            >
+                              <SelectTrigger className="border-border/70 bg-background/60">
+                                <SelectValue
+                                  placeholder={
+                                    clientsLoading
+                                      ? 'Cargando clientes...'
+                                      : activeClients.length === 0
+                                        ? 'No hay clientes activos'
+                                        : 'Seleccionar cliente'
+                                  }
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {activeClients.map((client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    {toTitleCase(client.name)} - {client.rut}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+
+                      {requiresClient && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          Para aprobar como cliente debes vincular un cliente activo.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className={`flex gap-2 ${isMobile ? 'w-full' : 'shrink-0'}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`border-red-500/40 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 ${isMobile ? 'flex-1' : ''}`}
+                        disabled={rejectUser.isPending}
+                        onClick={() => rejectUser.mutate(user.id)}
+                      >
+                        <XCircle className="size-4 mr-1" />
+                        Rechazar
+                      </Button>
+                      <Button
+                        size="sm"
+                        className={`bg-emerald-600 hover:bg-emerald-700 text-white ${isMobile ? 'flex-1' : ''}`}
+                        disabled={!canApprove}
+                        onClick={() => handleApprove(user.id)}
+                      >
+                        <CheckCircle className="size-4 mr-1" />
+                        Aprobar
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

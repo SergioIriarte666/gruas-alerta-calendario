@@ -5,26 +5,68 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('PendingUsersManager');
 
+export type PendingApprovalRole = 'admin' | 'operator' | 'viewer' | 'client';
+
+interface ApprovePendingUserPayload {
+  userId: string;
+  role: PendingApprovalRole;
+  clientId?: string | null;
+}
+
 export function usePendingUsersManager() {
   const queryClient = useQueryClient();
 
   const approveUser = useMutation({
-    mutationFn: async (userId: string) => {
-      logger.info('Approving user', userId);
-      const { error } = await supabase
+    mutationFn: async ({ userId, role, clientId }: ApprovePendingUserPayload) => {
+      logger.info('Approving user', { userId, role, clientId });
+
+      if (role === 'client' && !clientId) {
+        throw new Error('Debes asignar un cliente antes de aprobar a un usuario cliente');
+      }
+
+      const { error: roleError } = await supabase.rpc('update_user_role', {
+        target_user_id: userId,
+        new_role: role,
+      });
+
+      if (roleError) throw roleError;
+
+      const { error: clientError } = await supabase.rpc('assign_user_client', {
+        target_user_id: userId,
+        target_client_id: role === 'client' ? clientId ?? null : null,
+      });
+
+      if (clientError) throw clientError;
+
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({ status: 'approved', role: 'viewer' })
+        .update({
+          status: 'approved',
+          role,
+          client_id: role === 'client' ? clientId ?? null : null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', userId);
-      if (error) throw error;
+
+      if (profileError) throw profileError;
     },
-    onSuccess: () => {
-      toast.success('Usuario aprobado');
+    onSuccess: (_, variables) => {
+      toast.success('Usuario aprobado', {
+        description:
+          variables.role === 'client'
+            ? 'El usuario ya puede ingresar con su cliente asociado.'
+            : 'El usuario ya puede ingresar con el rol asignado.',
+      });
       queryClient.invalidateQueries({ queryKey: ['pending-users'] });
       queryClient.invalidateQueries({ queryKey: ['pending-users-count'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
     onError: (err: Error) => {
       logger.error('Error approving user', err);
-      toast.error('Error al aprobar usuario');
+      toast.error('Error al aprobar usuario', {
+        description: err.message || 'No se pudo completar la aprobación.',
+      });
     },
   });
 

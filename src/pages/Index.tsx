@@ -46,10 +46,10 @@ const Index: React.FC = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // If auth user but no profile, still allow redirect based on a fallback
+  // If auth user but no profile, force the safe onboarding path
   if (authUser && !profileUser) {
-    logger.debug('Index - Auth user exists but no profile, redirecting to dashboard (fallback)');
-    return <Navigate to="/dashboard" replace />;
+    logger.debug('Index - Auth user exists but no profile, redirecting to /register');
+    return <Navigate to="/register" replace />;
   }
 
   if (profileUser.role === 'admin' && profileUser.operator_id) {
@@ -199,8 +199,8 @@ const Index: React.FC = () => {
       return <Navigate to="/dashboard" replace />;
       
     default:
-      logger.error('Index - Unknown role, redirecting to /dashboard');
-      return <Navigate to="/dashboard" replace />;
+      logger.error('Index - Unknown role, redirecting to /auth');
+      return <Navigate to="/auth" replace />;
   }
 };
 
