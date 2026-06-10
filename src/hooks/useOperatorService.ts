@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
+import { operatorServiceKeys } from './operatorServicesQueryKeys';
 import { createLogger } from "@/lib/logger";
 
 
@@ -54,7 +55,7 @@ export const useOperatorService = (serviceId: string) => {
   const { transformRawServiceData } = useServiceTransformer();
 
   return useQuery({
-    queryKey: ['operatorService', serviceId],
+    queryKey: operatorServiceKeys.detail(serviceId),
     queryFn: async () => {
       logger.debug('🚀 Starting service fetch for:', serviceId);
       
