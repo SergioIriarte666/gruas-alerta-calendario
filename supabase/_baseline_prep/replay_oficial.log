@@ -1,0 +1,211 @@
+### Entorno del contenedor
+pg: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+schemas: extensions,realtime,vault,storage,auth
+roles api: 3
+pub realtime: 1
+auth.uid(): 1
+storage.buckets: 1
+### Prep entorno
+### APLICANDO: baseline_official_pgdump.sql
+ set_config 
+------------
+ 
+(1 row)
+
+psql:<stdin>:21413: WARNING:  no privileges were granted for "gtrgm_in"
+psql:<stdin>:21414: WARNING:  no privileges were granted for "gtrgm_in"
+psql:<stdin>:21415: WARNING:  no privileges were granted for "gtrgm_in"
+psql:<stdin>:21416: WARNING:  no privileges were granted for "gtrgm_in"
+psql:<stdin>:21420: WARNING:  no privileges were granted for "gtrgm_out"
+psql:<stdin>:21421: WARNING:  no privileges were granted for "gtrgm_out"
+psql:<stdin>:21422: WARNING:  no privileges were granted for "gtrgm_out"
+psql:<stdin>:21423: WARNING:  no privileges were granted for "gtrgm_out"
+psql:<stdin>:22435: WARNING:  no privileges were granted for "gin_extract_query_trgm"
+psql:<stdin>:22436: WARNING:  no privileges were granted for "gin_extract_query_trgm"
+psql:<stdin>:22437: WARNING:  no privileges were granted for "gin_extract_query_trgm"
+psql:<stdin>:22438: WARNING:  no privileges were granted for "gin_extract_query_trgm"
+psql:<stdin>:22442: WARNING:  no privileges were granted for "gin_extract_value_trgm"
+psql:<stdin>:22443: WARNING:  no privileges were granted for "gin_extract_value_trgm"
+psql:<stdin>:22444: WARNING:  no privileges were granted for "gin_extract_value_trgm"
+psql:<stdin>:22445: WARNING:  no privileges were granted for "gin_extract_value_trgm"
+psql:<stdin>:22449: WARNING:  no privileges were granted for "gin_trgm_consistent"
+psql:<stdin>:22450: WARNING:  no privileges were granted for "gin_trgm_consistent"
+psql:<stdin>:22451: WARNING:  no privileges were granted for "gin_trgm_consistent"
+psql:<stdin>:22452: WARNING:  no privileges were granted for "gin_trgm_consistent"
+psql:<stdin>:22456: WARNING:  no privileges were granted for "gin_trgm_triconsistent"
+psql:<stdin>:22457: WARNING:  no privileges were granted for "gin_trgm_triconsistent"
+psql:<stdin>:22458: WARNING:  no privileges were granted for "gin_trgm_triconsistent"
+psql:<stdin>:22459: WARNING:  no privileges were granted for "gin_trgm_triconsistent"
+psql:<stdin>:22469: WARNING:  no privileges were granted for "gtrgm_compress"
+psql:<stdin>:22470: WARNING:  no privileges were granted for "gtrgm_compress"
+psql:<stdin>:22471: WARNING:  no privileges were granted for "gtrgm_compress"
+psql:<stdin>:22472: WARNING:  no privileges were granted for "gtrgm_compress"
+psql:<stdin>:22476: WARNING:  no privileges were granted for "gtrgm_consistent"
+psql:<stdin>:22477: WARNING:  no privileges were granted for "gtrgm_consistent"
+psql:<stdin>:22478: WARNING:  no privileges were granted for "gtrgm_consistent"
+psql:<stdin>:22479: WARNING:  no privileges were granted for "gtrgm_consistent"
+psql:<stdin>:22483: WARNING:  no privileges were granted for "gtrgm_decompress"
+psql:<stdin>:22484: WARNING:  no privileges were granted for "gtrgm_decompress"
+psql:<stdin>:22485: WARNING:  no privileges were granted for "gtrgm_decompress"
+psql:<stdin>:22486: WARNING:  no privileges were granted for "gtrgm_decompress"
+psql:<stdin>:22490: WARNING:  no privileges were granted for "gtrgm_distance"
+psql:<stdin>:22491: WARNING:  no privileges were granted for "gtrgm_distance"
+psql:<stdin>:22492: WARNING:  no privileges were granted for "gtrgm_distance"
+psql:<stdin>:22493: WARNING:  no privileges were granted for "gtrgm_distance"
+psql:<stdin>:22497: WARNING:  no privileges were granted for "gtrgm_options"
+psql:<stdin>:22498: WARNING:  no privileges were granted for "gtrgm_options"
+psql:<stdin>:22499: WARNING:  no privileges were granted for "gtrgm_options"
+psql:<stdin>:22500: WARNING:  no privileges were granted for "gtrgm_options"
+psql:<stdin>:22504: WARNING:  no privileges were granted for "gtrgm_penalty"
+psql:<stdin>:22505: WARNING:  no privileges were granted for "gtrgm_penalty"
+psql:<stdin>:22506: WARNING:  no privileges were granted for "gtrgm_penalty"
+psql:<stdin>:22507: WARNING:  no privileges were granted for "gtrgm_penalty"
+psql:<stdin>:22511: WARNING:  no privileges were granted for "gtrgm_picksplit"
+psql:<stdin>:22512: WARNING:  no privileges were granted for "gtrgm_picksplit"
+psql:<stdin>:22513: WARNING:  no privileges were granted for "gtrgm_picksplit"
+psql:<stdin>:22514: WARNING:  no privileges were granted for "gtrgm_picksplit"
+psql:<stdin>:22518: WARNING:  no privileges were granted for "gtrgm_same"
+psql:<stdin>:22519: WARNING:  no privileges were granted for "gtrgm_same"
+psql:<stdin>:22520: WARNING:  no privileges were granted for "gtrgm_same"
+psql:<stdin>:22521: WARNING:  no privileges were granted for "gtrgm_same"
+psql:<stdin>:22525: WARNING:  no privileges were granted for "gtrgm_union"
+psql:<stdin>:22526: WARNING:  no privileges were granted for "gtrgm_union"
+psql:<stdin>:22527: WARNING:  no privileges were granted for "gtrgm_union"
+psql:<stdin>:22528: WARNING:  no privileges were granted for "gtrgm_union"
+psql:<stdin>:22924: WARNING:  no privileges were granted for "set_limit"
+psql:<stdin>:22925: WARNING:  no privileges were granted for "set_limit"
+psql:<stdin>:22926: WARNING:  no privileges were granted for "set_limit"
+psql:<stdin>:22927: WARNING:  no privileges were granted for "set_limit"
+psql:<stdin>:22931: WARNING:  no privileges were granted for "show_limit"
+psql:<stdin>:22932: WARNING:  no privileges were granted for "show_limit"
+psql:<stdin>:22933: WARNING:  no privileges were granted for "show_limit"
+psql:<stdin>:22934: WARNING:  no privileges were granted for "show_limit"
+psql:<stdin>:22938: WARNING:  no privileges were granted for "show_trgm"
+psql:<stdin>:22939: WARNING:  no privileges were granted for "show_trgm"
+psql:<stdin>:22940: WARNING:  no privileges were granted for "show_trgm"
+psql:<stdin>:22941: WARNING:  no privileges were granted for "show_trgm"
+psql:<stdin>:22945: WARNING:  no privileges were granted for "similarity"
+psql:<stdin>:22946: WARNING:  no privileges were granted for "similarity"
+psql:<stdin>:22947: WARNING:  no privileges were granted for "similarity"
+psql:<stdin>:22948: WARNING:  no privileges were granted for "similarity"
+psql:<stdin>:22952: WARNING:  no privileges were granted for "similarity_dist"
+psql:<stdin>:22953: WARNING:  no privileges were granted for "similarity_dist"
+psql:<stdin>:22954: WARNING:  no privileges were granted for "similarity_dist"
+psql:<stdin>:22955: WARNING:  no privileges were granted for "similarity_dist"
+psql:<stdin>:22959: WARNING:  no privileges were granted for "similarity_op"
+psql:<stdin>:22960: WARNING:  no privileges were granted for "similarity_op"
+psql:<stdin>:22961: WARNING:  no privileges were granted for "similarity_op"
+psql:<stdin>:22962: WARNING:  no privileges were granted for "similarity_op"
+psql:<stdin>:22990: WARNING:  no privileges were granted for "strict_word_similarity"
+psql:<stdin>:22991: WARNING:  no privileges were granted for "strict_word_similarity"
+psql:<stdin>:22992: WARNING:  no privileges were granted for "strict_word_similarity"
+psql:<stdin>:22993: WARNING:  no privileges were granted for "strict_word_similarity"
+psql:<stdin>:22997: WARNING:  no privileges were granted for "strict_word_similarity_commutator_op"
+psql:<stdin>:22998: WARNING:  no privileges were granted for "strict_word_similarity_commutator_op"
+psql:<stdin>:22999: WARNING:  no privileges were granted for "strict_word_similarity_commutator_op"
+psql:<stdin>:23000: WARNING:  no privileges were granted for "strict_word_similarity_commutator_op"
+psql:<stdin>:23004: WARNING:  no privileges were granted for "strict_word_similarity_dist_commutator_op"
+psql:<stdin>:23005: WARNING:  no privileges were granted for "strict_word_similarity_dist_commutator_op"
+psql:<stdin>:23006: WARNING:  no privileges were granted for "strict_word_similarity_dist_commutator_op"
+psql:<stdin>:23007: WARNING:  no privileges were granted for "strict_word_similarity_dist_commutator_op"
+psql:<stdin>:23011: WARNING:  no privileges were granted for "strict_word_similarity_dist_op"
+psql:<stdin>:23012: WARNING:  no privileges were granted for "strict_word_similarity_dist_op"
+psql:<stdin>:23013: WARNING:  no privileges were granted for "strict_word_similarity_dist_op"
+psql:<stdin>:23014: WARNING:  no privileges were granted for "strict_word_similarity_dist_op"
+psql:<stdin>:23018: WARNING:  no privileges were granted for "strict_word_similarity_op"
+psql:<stdin>:23019: WARNING:  no privileges were granted for "strict_word_similarity_op"
+psql:<stdin>:23020: WARNING:  no privileges were granted for "strict_word_similarity_op"
+psql:<stdin>:23021: WARNING:  no privileges were granted for "strict_word_similarity_op"
+psql:<stdin>:23217: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23218: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23219: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23220: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23224: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23225: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23226: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23227: WARNING:  no privileges were granted for "unaccent"
+psql:<stdin>:23231: WARNING:  no privileges were granted for "unaccent_init"
+psql:<stdin>:23232: WARNING:  no privileges were granted for "unaccent_init"
+psql:<stdin>:23233: WARNING:  no privileges were granted for "unaccent_init"
+psql:<stdin>:23234: WARNING:  no privileges were granted for "unaccent_init"
+psql:<stdin>:23238: WARNING:  no privileges were granted for "unaccent_lexize"
+psql:<stdin>:23239: WARNING:  no privileges were granted for "unaccent_lexize"
+psql:<stdin>:23240: WARNING:  no privileges were granted for "unaccent_lexize"
+psql:<stdin>:23241: WARNING:  no privileges were granted for "unaccent_lexize"
+psql:<stdin>:23438: WARNING:  no privileges were granted for "word_similarity"
+psql:<stdin>:23439: WARNING:  no privileges were granted for "word_similarity"
+psql:<stdin>:23440: WARNING:  no privileges were granted for "word_similarity"
+psql:<stdin>:23441: WARNING:  no privileges were granted for "word_similarity"
+psql:<stdin>:23445: WARNING:  no privileges were granted for "word_similarity_commutator_op"
+psql:<stdin>:23446: WARNING:  no privileges were granted for "word_similarity_commutator_op"
+psql:<stdin>:23447: WARNING:  no privileges were granted for "word_similarity_commutator_op"
+psql:<stdin>:23448: WARNING:  no privileges were granted for "word_similarity_commutator_op"
+psql:<stdin>:23452: WARNING:  no privileges were granted for "word_similarity_dist_commutator_op"
+psql:<stdin>:23453: WARNING:  no privileges were granted for "word_similarity_dist_commutator_op"
+psql:<stdin>:23454: WARNING:  no privileges were granted for "word_similarity_dist_commutator_op"
+psql:<stdin>:23455: WARNING:  no privileges were granted for "word_similarity_dist_commutator_op"
+psql:<stdin>:23459: WARNING:  no privileges were granted for "word_similarity_dist_op"
+psql:<stdin>:23460: WARNING:  no privileges were granted for "word_similarity_dist_op"
+psql:<stdin>:23461: WARNING:  no privileges were granted for "word_similarity_dist_op"
+psql:<stdin>:23462: WARNING:  no privileges were granted for "word_similarity_dist_op"
+psql:<stdin>:23466: WARNING:  no privileges were granted for "word_similarity_op"
+psql:<stdin>:23467: WARNING:  no privileges were granted for "word_similarity_op"
+psql:<stdin>:23468: WARNING:  no privileges were granted for "word_similarity_op"
+psql:<stdin>:23469: WARNING:  no privileges were granted for "word_similarity_op"
+    -> OK
+### APLICANDO: baseline_cron_jobs.sql
+ schedule 
+----------
+        1
+(1 row)
+
+ schedule 
+----------
+        2
+(1 row)
+
+ schedule 
+----------
+        3
+(1 row)
+
+ schedule 
+----------
+        4
+(1 row)
+
+ schedule 
+----------
+        5
+(1 row)
+
+ schedule 
+----------
+        6
+(1 row)
+
+ schedule 
+----------
+        7
+(1 row)
+
+    -> OK
+### APLICANDO: baseline_storage.sql (como supabase_admin; en proyecto real postgres tiene el grant)
+    -> OK
+### APLICANDO: baseline_seed_cost_taxonomy.sql
+    -> OK
+### Inventario final (replay oficial)
+tablas: 98
+funciones: 273
+policies: 268
+triggers: 123
+indices: 320
+enums: 10
+rls tablas: 98
+cron jobs: 7
+buckets: 8
+cost_categories: 31
+cost_subcategories: 90
+categorias bloqueadas: 4
+### Errores en el log:
+0

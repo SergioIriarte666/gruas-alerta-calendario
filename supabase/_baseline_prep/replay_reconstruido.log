@@ -1,0 +1,34 @@
+### Entorno del contenedor
+pg: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit
+schemas: extensions,realtime,vault,storage,auth
+roles api: 3
+pub realtime: 1
+auth.uid(): 1
+storage.buckets: 1
+### Prep entorno
+### APLICANDO: baseline_candidate_schema.sql
+psql:<stdin>:17: NOTICE:  extension "pg_stat_statements" already exists, skipping
+psql:<stdin>:21: NOTICE:  extension "pgcrypto" already exists, skipping
+psql:<stdin>:23: NOTICE:  extension "supabase_vault" already exists, skipping
+psql:<stdin>:27: NOTICE:  extension "uuid-ossp" already exists, skipping
+psql:<stdin>:1087: ERROR:  function generate_service_cash_receipt_folio() does not exist
+LINE 4:   folio text DEFAULT generate_service_cash_receipt_folio() N...
+                             ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+    -> ERROR (ver log)
+### APLICANDO: baseline_storage.sql (como supabase_admin; en proyecto real postgres tiene el grant)
+### Inventario final (replay reconstruido)
+tablas: 69
+funciones: 0
+policies: 0
+triggers: 0
+indices: 0
+enums: 10
+rls tablas: 0
+cron jobs: 0
+buckets: 0
+cost_categories: 0
+cost_subcategories: 0
+categorias bloqueadas: 0
+### Errores en el log:
+1
