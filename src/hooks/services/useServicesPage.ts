@@ -1,25 +1,25 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { getCurrentMonthRange, formatForInput } from '@/utils/timezoneUtils';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useServices } from '@/hooks/useServices';
-import { useServiceManager } from './useServiceManager';
 import { useUser } from '@/contexts/UserContext';
-import { Service, ServiceStatus } from '@/types';
+import { Service } from '@/types';
 import { toast } from 'sonner';
 import { isFutureDate, parseFromDatabase } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
-import { useServiceQueries } from './useServiceQueries';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('ServicesPage');
 
+const normalizeSearchTerm = (text: string): string => {
+  return text.toLowerCase().replace(/[-\s_]/g, '').trim();
+};
+
 export const useServicesPage = () => {
   const { services, loading: loadingAll, deleteService: legacyDeleteService, refetch } = useServices();
-  const { usePagedServices } = useServiceQueries();
-  const { createService, updateService, deleteService } = useServiceManager();
   const { user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,23 +58,7 @@ export const useServicesPage = () => {
   const isAdmin = user?.role === 'admin';
   const ITEMS_PER_PAGE = 10;
 
-  const isBasicView =
-    !advancedFilters &&
-    futureParam !== 'true' &&
-    !sortField;
-
-  const {
-    data: pagedData,
-    isLoading: loadingPaged,
-    refetch: refetchPaged,
-  } = usePagedServices(currentPage, ITEMS_PER_PAGE, {
-    dateFrom: listDateFrom || undefined,
-    dateTo:   listDateTo   || undefined,
-    status:   (statusFilter !== 'all' && statusFilter !== 'with_purchase_order') ? statusFilter : undefined,
-  });
-
-  const shouldUsePagedData = isBasicView && !searchTerm;
-  const baseServices = shouldUsePagedData && pagedData?.services ? pagedData.services : services;
+  const baseServices = services;
 
   // Handle pre-filled data from calendar events
   useEffect(() => {
@@ -109,12 +93,7 @@ export const useServicesPage = () => {
 
   const hasAdvancedFilters = advancedFilters !== null;
 
-  const filteredAndSortedServices = (() => {
-    // Función de normalización para búsqueda flexible
-    const normalizeSearchTerm = (text: string): string => {
-      return text.toLowerCase().replace(/[-\s_]/g, '').trim();
-    };
-
+  const filteredAndSortedServices = useMemo(() => {
     const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
     
     const filtered = baseServices.filter(service => {
@@ -290,22 +269,24 @@ export const useServicesPage = () => {
     }
 
     return filtered;
-  })();
+  }, [advancedFilters, baseServices, futureParam, listDateFrom, listDateTo, searchTerm, sortDirection, sortField, statusFilter]);
 
-  const totalPages = shouldUsePagedData && pagedData
-    ? Math.max(1, Math.ceil(pagedData.total / ITEMS_PER_PAGE))
-    : Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
+  const totalPages = Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
 
-  const paginatedServices = shouldUsePagedData
-    ? filteredAndSortedServices
-    : filteredAndSortedServices.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-      );
+  const paginatedServices = filteredAndSortedServices.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Calculate selected services data for batch action bar
-  const selectedServicesData = services.filter(s => selectedServiceIds.has(s.id));
-  const selectedServicesTotal = selectedServicesData.reduce((sum, s) => sum + (s.value || 0), 0);
+  const selectedServicesData = useMemo(
+    () => services.filter(s => selectedServiceIds.has(s.id)),
+    [services, selectedServiceIds]
+  );
+  const selectedServicesTotal = useMemo(
+    () => selectedServicesData.reduce((sum, s) => sum + (s.value || 0), 0),
+    [selectedServicesData]
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -406,8 +387,6 @@ export const useServicesPage = () => {
     // Only pending / in_progress are closeable
     const selectedData = services.filter(s => selectedServiceIds.has(s.id));
     const closeable = selectedData.filter(s => s.status === 'pending' || s.status === 'in_progress');
-    const notCloseableCount = selectedCount - closeable.length;
-
     if (closeable.length === 0) {
       toast.error('No hay servicios pendientes o en progreso para cerrar');
       return;
@@ -482,7 +461,7 @@ export const useServicesPage = () => {
     }
 
     try {
-      await deleteService(service.id);
+      await legacyDeleteService(service.id);
     } catch (error) {
       logger.error('Error deleting service:', error);
       throw error;
@@ -555,7 +534,7 @@ export const useServicesPage = () => {
   return {
     // State
     services,
-    loading: (loadingAll && services.length === 0) || (loadingPaged && !pagedData && services.length === 0),
+    loading: loadingAll && services.length === 0,
     selectedService,
     isFormOpen,
     isDetailsOpen,

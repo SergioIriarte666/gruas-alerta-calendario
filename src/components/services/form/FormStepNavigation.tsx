@@ -17,7 +17,7 @@ interface FormStepNavigationProps {
   onStepClick: (stepId: number) => void;
 }
 
-export const FormStepNavigation = ({
+const FormStepNavigationComponent = ({
   steps,
   currentStep,
   onStepClick,
@@ -92,6 +92,8 @@ export const FormStepNavigation = ({
     </div>
   );
 };
+
+export const FormStepNavigation = React.memo(FormStepNavigationComponent);
 
 export const getDefaultSteps = (): Omit<FormStep, 'isCompleted' | 'hasError'>[] => [
   {

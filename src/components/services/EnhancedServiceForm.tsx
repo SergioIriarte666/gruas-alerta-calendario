@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
@@ -382,8 +382,7 @@ export const EnhancedServiceForm = ({
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
 
   // Hook de validación del formulario
-  const { validationErrors, hasErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
-    formData: {
+  const validationFormData = useMemo(() => ({
       serviceType: formData.serviceType,
       crane: formData.crane,
       operators: formData.operators,
@@ -393,18 +392,33 @@ export const EnhancedServiceForm = ({
       vehicleModel: formData.vehicleModel,
       licensePlate: formData.licensePlate,
       purchaseOrder: formData.purchaseOrder
-    },
+    }), [
+      formData.serviceType,
+      formData.crane,
+      formData.operators,
+      formData.origin,
+      formData.destination,
+      formData.vehicleBrand,
+      formData.vehicleModel,
+      formData.licensePlate,
+      formData.purchaseOrder
+    ]);
+
+  const { validationErrors, hasErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
+    formData: validationFormData,
     selectedServiceType
   });
 
   // Calculadores de totales
-  const getTotalCommissions = () => {
-    return formData.operators?.reduce((total, op) => total + (op.commission || 0), 0) || 0;
-  };
+  const totalCommissions = useMemo(
+    () => formData.operators?.reduce((total, op) => total + (op.commission || 0), 0) || 0,
+    [formData.operators]
+  );
 
-  const getTotalCosts = () => {
-    return formData.costDetails?.reduce((total, cost) => total + (cost.amount || 0), 0) || 0;
-  };
+  const totalCosts = useMemo(
+    () => formData.costDetails?.reduce((total, cost) => total + (cost.amount || 0), 0) || 0,
+    [formData.costDetails]
+  );
 
   // Custody calculations - Manual mode
   useEffect(() => {
@@ -489,8 +503,14 @@ export const EnhancedServiceForm = ({
   }, [selectedServiceType?.name, service, formData.custodyMode]);
 
   // Get summary data for panel
-  const selectedClient = clients.find(c => c.id === formData.client);
-  const selectedCrane = cranes.find(c => c.id === formData.crane);
+  const selectedClient = useMemo(
+    () => clients.find(c => c.id === formData.client),
+    [clients, formData.client]
+  );
+  const selectedCrane = useMemo(
+    () => cranes.find(c => c.id === formData.crane),
+    [cranes, formData.crane]
+  );
 
   // Step validation - check if current step has required fields filled
   const getStepValidation = useMemo(() => {
@@ -525,46 +545,22 @@ export const EnhancedServiceForm = ({
   };
 
   const formContentRef = useRef<HTMLDivElement>(null);
-  const scrollPositionRef = useRef<number>(0);
-  const isScrollingToTopRef = useRef(false);
 
-  // Guardar posición de scroll antes de cada render
-  const handleScroll = useCallback(() => {
-    if (formContentRef.current) {
-      scrollPositionRef.current = formContentRef.current.scrollTop;
-    }
-  }, []);
-
-  const scrollFormToTop = () => {
-    isScrollingToTopRef.current = true;
-    scrollPositionRef.current = 0;
-    formContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
-    setTimeout(() => { isScrollingToTopRef.current = false; }, 100);
-  };
-
-  // Restaurar posición después de re-render (excepto cuando
-  // scrollFormToTop fue llamado explícitamente)
   useEffect(() => {
-    const el = formContentRef.current;
-    if (!el) return;
-    if (!isScrollingToTopRef.current && scrollPositionRef.current > 0) {
-      el.scrollTop = scrollPositionRef.current;
-    }
-  });
+    formContentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [currentStep]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentStep < totalSteps && canGoNext()) {
       setCurrentStep(prev => prev + 1);
-      scrollFormToTop();
     }
-  };
+  }, [currentStep, totalSteps, canGoNext]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
-      scrollFormToTop();
     }
-  };
+  }, [currentStep]);
 
   // Fase en la que vive cada campo validable, para navegar al primer error
   const FIELD_STEP_MAP: Record<string, number> = {
@@ -585,6 +581,34 @@ export const EnhancedServiceForm = ({
     return errorSteps.length > 0 ? Math.min(...errorSteps) : null;
   };
 
+  const summaryPanelProps = useMemo(() => ({
+    folio,
+    clientName: selectedClient?.name || '',
+    serviceTypeName: selectedServiceType?.name || '',
+    value: formData.value,
+    totalCommissions,
+    totalCosts,
+    operatorsCount: formData.operators?.length || 0,
+    craneName: selectedCrane?.licensePlate || '',
+    origin: formData.origin,
+    destination: formData.destination,
+    status: formData.status,
+    isEditing: !!service,
+  }), [
+    folio,
+    selectedClient?.name,
+    selectedServiceType?.name,
+    formData.value,
+    totalCommissions,
+    totalCosts,
+    formData.operators?.length,
+    selectedCrane?.licensePlate,
+    formData.origin,
+    formData.destination,
+    formData.status,
+    service,
+  ]);
+
   // Handler único de guardado: usado por el submit del form (fase 4)
   // y por el botón "Guardar" persistente disponible en todas las fases
   const performSave = async () => {
@@ -602,7 +626,6 @@ export const EnhancedServiceForm = ({
         const errorStep = getFirstErrorStep();
         if (errorStep && errorStep !== currentStep) {
           setCurrentStep(errorStep);
-          scrollFormToTop();
         }
         return;
       }
@@ -876,29 +899,17 @@ export const EnhancedServiceForm = ({
           <FormStepNavigation
             steps={steps}
             currentStep={currentStep}
-            onStepClick={(step) => { setCurrentStep(step); scrollFormToTop(); }}
+            onStepClick={setCurrentStep}
           />
           
           <FormSummaryPanel
-            folio={folio}
-            clientName={selectedClient?.name || ''}
-            serviceTypeName={selectedServiceType?.name || ''}
-            value={formData.value}
-            totalCommissions={getTotalCommissions()}
-            totalCosts={getTotalCosts()}
-            operatorsCount={formData.operators?.length || 0}
-            craneName={selectedCrane?.licensePlate || ''}
-            origin={formData.origin}
-            destination={formData.destination}
-            status={formData.status}
-            isEditing={!!service}
+            {...summaryPanelProps}
           />
         </div>
 
         {/* Right Panel - Form Content */}
         <div
           ref={formContentRef}
-          onScroll={handleScroll}
           className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0"
         >
           {/* Alertas de Validación */}
@@ -933,7 +944,6 @@ export const EnhancedServiceForm = ({
                     serviceId={service?.id}
                     isLoading={false}
                     disabled={false}
-                    onValidationChange={() => {}}
                   />
                 </ColoredSectionCard>
 
@@ -1191,8 +1201,8 @@ export const EnhancedServiceForm = ({
                       setFormData(prev => ({ ...prev, value }));
                       setValueFromRate(false);
                     }}
-                    totalCommissions={getTotalCommissions()}
-                    totalCosts={getTotalCosts()}
+                    totalCommissions={totalCommissions}
+                    totalCosts={totalCosts}
                     hasExcess={formData.hasExcess}
                     onHasExcessChange={(value) => setFormData(prev => ({ ...prev, hasExcess: value }))}
                     clientCoveredAmount={formData.clientCoveredAmount}

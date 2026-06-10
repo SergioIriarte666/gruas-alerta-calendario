@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +20,7 @@ interface FormSummaryPanelProps {
   isEditing: boolean;
 }
 
-export const FormSummaryPanel = ({
+const FormSummaryPanelComponent = ({
   folio,
   clientName,
   serviceTypeName,
@@ -191,3 +192,5 @@ export const FormSummaryPanel = ({
     </Card>
   );
 };
+
+export const FormSummaryPanel = React.memo(FormSummaryPanelComponent);

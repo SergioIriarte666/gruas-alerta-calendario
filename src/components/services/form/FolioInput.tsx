@@ -1,10 +1,9 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useFolioValidation } from '@/hooks/services/useFolioValidation';
-import { useDebounce } from '@/hooks/useDebounce';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 
@@ -27,37 +26,62 @@ export const FolioInput: React.FC<FolioInputProps> = ({
   onValidationChange,
   isManualFolio = false
 }) => {
-  const { validateFolio, getValidationResult, hasValidationResult, clearValidation } = useFolioValidation();
+  const { validateFolio, getValidationResult, clearValidation } = useFolioValidation();
   const [hasValidated, setHasValidated] = useState(false);
-  
-  // Debounce del folio para evitar múltiples validaciones
-  const debouncedFolio = useDebounce(folio, 500);
-  
-  const validation = getValidationResult(debouncedFolio);
+  const [lastValidatedFolio, setLastValidatedFolio] = useState('');
+  const normalizedFolio = folio.trim();
+  const shouldShowValidation = hasValidated && lastValidatedFolio === normalizedFolio;
+  const validation = useMemo(
+    () =>
+      shouldShowValidation
+        ? getValidationResult(lastValidatedFolio)
+        : {
+            isValid: true,
+            isValidating: false,
+            error: null,
+          },
+    [getValidationResult, lastValidatedFolio, shouldShowValidation]
+  );
 
-  // Validar el folio cuando cambie el valor debounced
   useEffect(() => {
-    if (debouncedFolio.trim() && !disabled) {
-      setHasValidated(true);
-      validateFolio(debouncedFolio, isEditing ? serviceId : undefined);
-    } else if (!debouncedFolio.trim()) {
-      clearValidation(debouncedFolio);
+    if (!normalizedFolio) {
+      if (lastValidatedFolio) {
+        clearValidation(lastValidatedFolio);
+      }
+      setHasValidated(false);
+      setLastValidatedFolio('');
+      return;
+    }
+
+    if (hasValidated && normalizedFolio !== lastValidatedFolio) {
       setHasValidated(false);
     }
-  }, [debouncedFolio, validateFolio, clearValidation, isEditing, serviceId, disabled]);
+  }, [clearValidation, hasValidated, lastValidatedFolio, normalizedFolio]);
 
   // Notificar cambios de validación al componente padre
   useEffect(() => {
     if (onValidationChange) {
-      // Si no se ha validado aún, permitir continuar (true)
-      // Si se está validando o ya se validó, usar el resultado real
-      const isValid = hasValidated ? validation.isValid : true;
+      const isValid = shouldShowValidation ? validation.isValid : true;
       onValidationChange(isValid);
     }
-  }, [validation.isValid, hasValidated, onValidationChange]);
+  }, [onValidationChange, shouldShowValidation, validation.isValid]);
+
+  const handleBlur = async () => {
+    if (disabled) return;
+
+    if (!normalizedFolio) {
+      setHasValidated(false);
+      setLastValidatedFolio('');
+      return;
+    }
+
+    setLastValidatedFolio(normalizedFolio);
+    setHasValidated(true);
+    await validateFolio(normalizedFolio, isEditing ? serviceId : undefined);
+  };
 
   const getValidationIcon = () => {
-    if (!hasValidated || !folio.trim()) return null;
+    if (!shouldShowValidation || !normalizedFolio) return null;
     
     if (validation.isValidating) {
       return <Loader2 className="size-4 animate-spin text-yellow-500" />;
@@ -76,11 +100,13 @@ export const FolioInput: React.FC<FolioInputProps> = ({
 
   const getValidationMessage = () => {
     // Mostrar mensaje de generación automática si no hay folio y no es manual
-    if (!folio.trim() && !isManualFolio && !isEditing) {
+    if (!normalizedFolio && !isManualFolio && !isEditing) {
       return <span className="text-sm text-blue-600">ℹ️ El folio se generará automáticamente al guardar</span>;
     }
     
-    if (!hasValidated || !folio.trim()) return null;
+    if (!shouldShowValidation || !normalizedFolio) {
+      return <span className="text-sm text-muted-foreground">Valida el folio al salir del campo.</span>;
+    }
     
     if (validation.isValidating) {
       return <span className="text-sm text-yellow-600">Validando folio...</span>;
@@ -120,10 +146,13 @@ export const FolioInput: React.FC<FolioInputProps> = ({
           type="text"
           value={folio}
           onChange={(e) => onFolioChange(e.target.value)}
+          onBlur={() => {
+            void handleBlur();
+          }}
           placeholder={!isManualFolio && !isEditing ? "(Se generará automáticamente)" : "Ej: SRV-1001"}
           disabled={disabled}
           className={`pr-10 ${
-            hasValidated && folio.trim()
+            shouldShowValidation && normalizedFolio
               ? validation.isValid
                 ? 'border-green-500 focus:border-green-500'
                 : 'border-red-500 focus:border-red-500'
@@ -134,7 +163,9 @@ export const FolioInput: React.FC<FolioInputProps> = ({
           {getValidationIcon()}
         </div>
       </div>
-      {getValidationMessage()}
+      <div className="min-h-14">
+        {getValidationMessage()}
+      </div>
     </div>
   );
 };
