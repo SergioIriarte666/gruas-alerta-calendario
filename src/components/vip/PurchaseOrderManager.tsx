@@ -20,6 +20,9 @@ import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('PurchaseOrderManager');
 
 interface PurchaseOrderManagerProps {
   services: Service[];
@@ -322,12 +325,14 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                               },
                             });
                             if (error) {
+                              logger.warn('WhatsApp admin no enviado:', error);
                               toast.error('No se pudo enviar la notificación');
                               return;
                             }
 
                             if ((data as { skipped?: boolean; reason?: string } | null)?.skipped) {
                               const reason = data?.reason;
+                              logger.info('WhatsApp admin omitido:', reason);
                               if (reason === 'whatsapp_disabled') {
                                 toast.warning('Envío de WhatsApp deshabilitado en Configuración');
                               } else {

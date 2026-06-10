@@ -76,7 +76,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
   return (
     <div className="h-full max-h-[80vh] flex flex-col">
       <ScrollArea className="flex-1 pr-4">
-        <form onSubmit={handleSubmit} className="space-y-6 pb-4">
+        <form id="service-type-form" onSubmit={handleSubmit} className="space-y-6 pb-4">
           <Card className="bg-card border">
             <CardHeader className="pb-4">
               <CardTitle className="text-foreground text-lg">Información Básica</CardTitle>
@@ -272,8 +272,8 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
       
       <div className="flex gap-4 pt-4 border-t bg-card">
         <Button
-          type="button"
-          onClick={handleSubmit}
+          type="submit"
+          form="service-type-form"
           disabled={isSubmitting}
           className="flex-1 bg-primary hover:bg-primary/80 text-primary-foreground font-medium"
         >
