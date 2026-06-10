@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
+import { GoogleAuthButton } from './GoogleAuthButton';
 interface RegisterFormProps {
   email: string;
   password: string;
@@ -11,6 +12,7 @@ interface RegisterFormProps {
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onGoogleLogin?: () => void;
 }
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   email,
@@ -18,7 +20,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   loading,
   setEmail,
   setPassword,
-  onSubmit
+  onSubmit,
+  onGoogleLogin
 }) => {
   return <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
       <CardHeader>
@@ -49,6 +52,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             {loading ? 'Registrando...' : 'Registrar'}
           </Button>
         </form>
+
+        {onGoogleLogin && (
+          <GoogleAuthButton
+            label="Registrarse con Google"
+            onClick={onGoogleLogin}
+            disabled={loading}
+          />
+        )}
       </CardContent>
     </Card>;
 };

@@ -122,9 +122,13 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://app.gruas5norte.cl/auth/callback' }
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
-    if (error) toast.error('Error al iniciar con Google: ' + error.message)
+    if (error) {
+      // Visible incluso con el logger silenciado en prod, p. ej. provider no habilitado en Supabase
+      console.error('Google OAuth error:', error.message)
+      toast.error('Error al iniciar sesión con Google')
+    }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -343,6 +347,7 @@ const Auth = () => {
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleSignUp}
+            onGoogleLogin={handleGoogleLogin}
           />
         )}
       </div>
