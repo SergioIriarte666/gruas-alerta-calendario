@@ -36,7 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2 } from 'lucide-react';
+import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
@@ -566,15 +566,47 @@ export const EnhancedServiceForm = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Fase en la que vive cada campo validable, para navegar al primer error
+  const FIELD_STEP_MAP: Record<string, number> = {
+    purchaseOrder: 1,
+    vehicleBrand: 2,
+    vehicleModel: 2,
+    licensePlate: 2,
+    origin: 2,
+    destination: 2,
+    crane: 3,
+    operators: 3,
+  };
 
+  const getFirstErrorStep = (): number | null => {
+    const errorSteps = validationErrors
+      .filter(err => err.severity === 'error')
+      .map(err => FIELD_STEP_MAP[err.field] ?? 1);
+    return errorSteps.length > 0 ? Math.min(...errorSteps) : null;
+  };
+
+  // Handler único de guardado: usado por el submit del form (fase 4)
+  // y por el botón "Guardar" persistente disponible en todas las fases
+  const performSave = async () => {
     if (isCreating || isUpdating || isSubmitting) {
       return;
     }
     setIsSubmitting(true);
 
     try {
+      // Validación completa del formulario antes de cualquier persistencia:
+      // no se permite guardado parcial desde ninguna fase
+      if (hasErrors) {
+        playRetroErrorSound();
+        toast.error('Faltan campos obligatorios. Revisa los campos marcados antes de guardar.');
+        const errorStep = getFirstErrorStep();
+        if (errorStep && errorStep !== currentStep) {
+          setCurrentStep(errorStep);
+          scrollFormToTop();
+        }
+        return;
+      }
+
       let finalFolio = folio;
       
       if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
@@ -594,12 +626,6 @@ export const EnhancedServiceForm = ({
       if (!finalFolio || finalFolio.trim() === '') {
         playRetroErrorSound();
         toast.error('Error: El folio no puede estar vacío');
-        return;
-      }
-
-      if (hasErrors) {
-        playRetroErrorSound();
-        toast.error('Por favor complete todos los campos requeridos para este tipo de servicio');
         return;
       }
 
@@ -725,8 +751,12 @@ export const EnhancedServiceForm = ({
             }
 
             if ((data as any)?.skipped) {
-              const reason = (data as any)?.reason || 'Envio omitido por configuracion';
-              toast.info('WhatsApp al operador omitido', { description: reason });
+              const reason = (data as any)?.reason;
+              if (reason === 'whatsapp_disabled') {
+                toast.warning('Envío de WhatsApp deshabilitado en Configuración');
+              } else {
+                toast.info('WhatsApp al operador omitido', { description: reason || 'Envio omitido por configuracion' });
+              }
               return;
             }
 
@@ -793,6 +823,11 @@ export const EnhancedServiceForm = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performSave();
   };
 
   return (
@@ -1281,13 +1316,30 @@ export const EnhancedServiceForm = ({
             )}
           </div>
 
-          {/* Right button */}
-          <div className="flex-shrink-0">
+          {/* Right buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Guardar persistente en edición: type="button" (no submit) para
+                evitar doble guardado; valida el formulario completo desde cualquier fase */}
+            {service && (
+              <Button
+                key="save"
+                type="button"
+                size="sm"
+                onClick={performSave}
+                disabled={isCreating || isUpdating || isSubmitting}
+                className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
+              >
+                <Save className="size-4 mr-0.5 sm:mr-1" />
+                {isUpdating || isSubmitting ? 'Guardando...' : 'Guardar'}
+              </Button>
+            )}
+
             {currentStep < totalSteps ? (
               <Button
                 key="next"
                 type="button"
                 size="sm"
+                variant={service ? 'outline' : 'default'}
                 onClick={(e) => {
                   e.preventDefault();
                   handleNext();
@@ -1298,7 +1350,7 @@ export const EnhancedServiceForm = ({
                 Siguiente
                 <ChevronRight className="size-4 ml-0.5 sm:ml-1" />
               </Button>
-            ) : (
+            ) : !service ? (
               <Button
                 key="submit"
                 type="submit"
@@ -1307,15 +1359,9 @@ export const EnhancedServiceForm = ({
                 disabled={hasErrors || isCreating || isUpdating || isSubmitting}
                 className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
               >
-                {isCreating || isUpdating ? (
-                  'Guardando...'
-                ) : service ? (
-                  'Actualizar'
-                ) : (
-                  'Crear Servicio'
-                )}
+                {isCreating || isUpdating ? 'Guardando...' : 'Crear Servicio'}
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
