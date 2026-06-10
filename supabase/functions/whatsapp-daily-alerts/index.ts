@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendWhatsAppTemplateBulk, normalizeChileanPhone } from "../_shared/whatsapp.ts";
+import { getWhatsAppGate, sendWhatsAppTemplateBulk, normalizeChileanPhone } from "../_shared/whatsapp.ts";
 import { corsHeaders as _cors } from "../_shared/cors.ts";
 
 const corsHeaders = {
@@ -9,6 +9,11 @@ const corsHeaders = {
 };
 
 const TZ = "America/Santiago";
+
+// Kill switch de las alertas de documentos (admin_doc_op_* / admin_doc_grua_*).
+// Las 4 plantillas fueron aprobadas por Meta el 2026-06-10 (es_CL, Utilidad,
+// "calidad pendiente"). Poner en false y redesplegar si Meta degrada alguna.
+const DOC_ALERTS_ENABLED = true;
 
 function today(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
@@ -94,10 +99,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const { data: settings } = await supabase
-    .from("whatsapp_settings").select("*").limit(1).maybeSingle();
+  // Master switch (helper compartido: única fuente de verdad)
+  const gate = await getWhatsAppGate(supabase);
+  const settings = gate.settings;
 
-  if (settings && (settings as any).whatsapp_enabled === false) {
+  if (!gate.enabled) {
     console.log("[whatsapp-daily-alerts] Master switch OFF — alertas omitidas");
     return new Response(JSON.stringify({ ok: true, skipped: true, reason: "whatsapp_disabled" }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -209,7 +215,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 4. Documentos de operadores por vencer / vencidos (notify_operator_document_expiry)
-  if ((settings as any)?.notify_operator_document_expiry !== false) {
+  if (DOC_ALERTS_ENABLED && (settings as any)?.notify_operator_document_expiry !== false) {
     const in30ISO = addDaysISO(todayISO, 30);
 
     const OPERATOR_DOC_LABELS: Record<string, string> = {
@@ -285,7 +291,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── 5. Documentos de grúas por vencer / vencidos (notify_operator_document_expiry)
-  if ((settings as any)?.notify_operator_document_expiry !== false) {
+  if (DOC_ALERTS_ENABLED && (settings as any)?.notify_operator_document_expiry !== false) {
     const in30ISO = addDaysISO(todayISO, 30);
 
     const CRANE_DOC_LABELS: Record<string, string> = {

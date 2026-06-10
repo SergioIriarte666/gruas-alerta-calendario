@@ -107,3 +107,39 @@ verify_jwt = false
 
 [functions.log-frontend-error]
 verify_jwt = false
+
+[functions.send-whatsapp-operator]
+verify_jwt = false
+
+[functions.send-whatsapp-admin]
+verify_jwt = true
+
+[functions.send-whatsapp-retiro]
+verify_jwt = true
+
+[functions.send-whatsapp-inspection]
+verify_jwt = false
+
+# Blindaje 2026-06-10: estas funciones están desplegadas con verify_jwt = false.
+# Sin entrada explícita, un deploy futuro las cambiaría al default true del CLI
+# y rompería a sus callers (crons, webhooks, llamadas sin JWT).
+[functions.generate-sql-dump]
+verify_jwt = false
+
+[functions.remove-push-subscription]
+verify_jwt = false
+
+[functions.save-push-subscription]
+verify_jwt = false
+
+[functions.scheduled-backup-email]
+verify_jwt = false
+
+[functions.send-document-alerts]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.vehicle-api]
+verify_jwt = false
