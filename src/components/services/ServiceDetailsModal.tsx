@@ -277,7 +277,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     const oc = serviceData.purchaseOrderNumber || serviceData.purchaseOrder;
     if (!oc) return;
 
-    const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+    const { data, error } = await supabase.functions.invoke('send-whatsapp-admin', {
       body: {
         event: 'orden_compra',
         data: {
@@ -294,6 +294,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       return;
     }
 
+    if ((data as any)?.skipped) {
+      const reason = (data as any)?.reason;
+      logger.info('WhatsApp admin omitido:', reason);
+      if (reason === 'whatsapp_disabled') {
+        toast.warning('Envío de WhatsApp deshabilitado en Configuración');
+      } else {
+        toast.info('WhatsApp no enviado', { description: reason || 'Envío omitido por configuración' });
+      }
+      return;
+    }
+
     toast.success('Administradores notificados por WhatsApp');
   };
 
@@ -305,7 +316,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
     setIsSendingOperatorWhatsApp(true);
     try {
-      const { error } = await supabase.functions.invoke('send-whatsapp-operator', {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-operator', {
         body: {
           operatorId: primaryOperator.id,
           serviceId: serviceData.id,
@@ -327,6 +338,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       if (error) {
         logger.warn('WhatsApp operador no enviado:', error);
         toast.error('No se pudo enviar la notificacion al operador');
+        return;
+      }
+
+      if ((data as any)?.skipped) {
+        const reason = (data as any)?.reason;
+        logger.info('WhatsApp operador omitido:', reason);
+        if (reason === 'whatsapp_disabled') {
+          toast.warning('Envío de WhatsApp deshabilitado en Configuración');
+        } else {
+          toast.info('WhatsApp al operador omitido', { description: reason || 'Envío omitido por configuración' });
+        }
         return;
       }
 

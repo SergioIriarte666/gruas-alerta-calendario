@@ -65,6 +65,39 @@ export function normalizeChileanPhoneStrict(phone: string): string {
   return r.phone;
 }
 
+export interface WhatsAppGateResult {
+  /** false solo cuando whatsapp_settings.whatsapp_enabled === false (master switch) */
+  enabled: boolean;
+  settings: Record<string, unknown> | null;
+}
+
+/**
+ * Lee `whatsapp_settings` y resuelve el master switch `whatsapp_enabled`.
+ * Única fuente de verdad para TODAS las rutas de envío: si retorna
+ * `enabled: false`, la función NO debe llamar a la Meta Cloud API.
+ * Usa `select("*")` para que una columna faltante no rompa la query
+ * (un error aquí dejaría `data` en null y saltaría el chequeo en silencio).
+ */
+export async function getWhatsAppGate(
+  admin: { from: (table: string) => any },
+): Promise<WhatsAppGateResult> {
+  const { data, error } = await admin
+    .from("whatsapp_settings")
+    .select("*")
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("[whatsapp] No se pudo leer whatsapp_settings:", error.message);
+  }
+
+  const settings = (data as Record<string, unknown> | null) ?? null;
+  return {
+    enabled: !(settings && settings.whatsapp_enabled === false),
+    settings,
+  };
+}
+
 function getAdminClient() {
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
-import { normalizeChileanPhone, sendWhatsAppTemplate } from "../_shared/whatsapp.ts";
+import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from "../_shared/whatsapp.ts";
 import { corsHeaders as _cors } from "../_shared/cors.ts";
 
 const corsHeaders = { ..._cors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -69,14 +69,10 @@ Deno.serve(async (req: Request) => {
       return withHeaders(authContext.response, corsHeaders);
     }
 
-    // Leer configuración WhatsApp (master switch + flag individual)
-    const { data: waSettings } = await authContext.supabaseAdmin
-      .from("whatsapp_settings")
-      .select("whatsapp_enabled, notify_operator_assigned")
-      .limit(1)
-      .maybeSingle();
+    // Master switch + flag individual (helper compartido: única fuente de verdad)
+    const gate = await getWhatsAppGate(authContext.supabaseAdmin);
 
-    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+    if (!gate.enabled) {
       console.log("[send-whatsapp-operator] Master switch OFF — mensaje omitido");
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
@@ -84,7 +80,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (waSettings && (waSettings as any).notify_operator_assigned === false) {
+    if (gate.settings?.notify_operator_assigned === false) {
       return withHeaders(
         jsonResponse({
           success: true,

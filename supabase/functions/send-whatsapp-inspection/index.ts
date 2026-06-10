@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
-import { normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
+import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
 import { corsHeaders as _cors } from '../_shared/cors.ts';
 
 const corsHeaders = { ..._cors, 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
@@ -32,14 +32,10 @@ Deno.serve(async (req: Request) => {
     const authContext = await requireUserRoles(req, ['admin', 'operator']);
     if ('response' in authContext) return withHeaders(authContext.response, corsHeaders);
 
-    // Verificar master switch + flag individual
-    const { data: waSettings } = await authContext.supabaseAdmin
-      .from('whatsapp_settings')
-      .select('whatsapp_enabled, notify_inspection_completed')
-      .limit(1)
-      .maybeSingle();
+    // Verificar master switch + flag individual (helper compartido)
+    const gate = await getWhatsAppGate(authContext.supabaseAdmin);
 
-    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+    if (!gate.enabled) {
       console.log('[send-whatsapp-inspection] Master switch OFF — mensaje omitido');
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'whatsapp_disabled' }),
@@ -47,7 +43,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (waSettings && (waSettings as any).notify_inspection_completed === false) {
+    if (gate.settings?.notify_inspection_completed === false) {
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'Notificación de inspección desactivada' }),
         corsHeaders,

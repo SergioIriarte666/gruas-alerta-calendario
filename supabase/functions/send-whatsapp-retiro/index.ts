@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
-import { normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
+import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
 import { corsHeaders as _cors } from '../_shared/cors.ts';
 
 const corsHeaders = { ..._cors, 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
@@ -27,13 +27,9 @@ Deno.serve(async (req: Request) => {
     const authContext = await requireUserRoles(req, ['admin', 'operator']);
     if ('response' in authContext) return withHeaders(authContext.response, corsHeaders);
 
-    const { data: waSettings } = await authContext.supabaseAdmin
-      .from('whatsapp_settings')
-      .select('whatsapp_enabled, notify_vehicle_pickup')
-      .limit(1)
-      .maybeSingle();
+    const gate = await getWhatsAppGate(authContext.supabaseAdmin);
 
-    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+    if (!gate.enabled) {
       console.log('[send-whatsapp-retiro] Master switch OFF — mensaje omitido');
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'whatsapp_disabled' }),
@@ -41,7 +37,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (waSettings && (waSettings as any).notify_vehicle_pickup === false) {
+    if (gate.settings?.notify_vehicle_pickup === false) {
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'Notificación de retiro desactivada' }),
         corsHeaders,

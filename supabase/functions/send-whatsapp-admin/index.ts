@@ -1,5 +1,6 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
 import {
+  getWhatsAppGate,
   sendWhatsAppTemplate,
   sendWhatsAppTemplateBulk,
   normalizeChileanPhone,
@@ -81,15 +82,11 @@ Deno.serve(async (req: Request) => {
 
     const parameters = template.params(data);
 
-    // Read WhatsApp settings from DB
-    const { data: waSettings } = await authContext.supabaseAdmin
-      .from("whatsapp_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
+    // Master switch (helper compartido: única fuente de verdad)
+    const gate = await getWhatsAppGate(authContext.supabaseAdmin);
+    const waSettings = gate.settings;
 
-    // Master switch
-    if (waSettings && (waSettings as any).whatsapp_enabled === false) {
+    if (!gate.enabled) {
       console.log("[send-whatsapp-admin] Master switch OFF — mensaje omitido");
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
