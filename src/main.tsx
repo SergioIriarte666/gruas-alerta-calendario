@@ -3,19 +3,6 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// Suppress debug logs in production — errors and warnings are preserved
-if (import.meta.env.PROD) {
-  const noop = () => {};
-  console.log = noop;
-  console.debug = noop;
-  console.info = noop;
-  console.group = noop;
-  console.groupEnd = noop;
-  console.groupCollapsed = noop;
-  console.time = noop;
-  console.timeEnd = noop;
-}
-
 // ── Chunk-load error recovery ──────────────────────────────────
 // After a deploy, browsers may still hold a cached index.html that
 // references JS chunks that no longer exist (hash changed).

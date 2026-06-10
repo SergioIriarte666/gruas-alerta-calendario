@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { createLogger } from "@/lib/logger";
+import { operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 
 
 const logger = createLogger("globalDataRefresh");
@@ -14,7 +15,7 @@ export const refreshAllServiceData = async (queryClient: QueryClient) => {
     await Promise.all([
       // Servicios principales
       queryClient.invalidateQueries({ queryKey: ['services'] }),
-      queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
+      queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
       queryClient.invalidateQueries({ queryKey: ['crane-services'] }),
       
       // Costos y comisiones

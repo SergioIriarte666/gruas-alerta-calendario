@@ -272,7 +272,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
       
       <div className="flex gap-4 pt-4 border-t bg-card">
         <Button
-          type="submit"
+          type="button"
           onClick={handleSubmit}
           disabled={isSubmitting}
           className="flex-1 bg-primary hover:bg-primary/80 text-primary-foreground font-medium"

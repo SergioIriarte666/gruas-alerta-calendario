@@ -1153,7 +1153,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[min(99vw,1600px)] max-w-[1600px] max-h-[95vh] overflow-clip border-border/70 bg-card p-0 shadow-2xl">
+      <DialogContent className="flex max-h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl">
         <XMLImportDialogHeader
           icon={Code}
           title="Cargar Gastos desde XML"
@@ -1162,7 +1162,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           documentCount={parseResult?.totalDocuments}
         />
 
-        <div className="space-y-6 px-6 pb-6 pt-4">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-6 pt-4">
           <XMLDropzoneArea
             selectedFile={selectedFile}
             parseResult={parseResult}

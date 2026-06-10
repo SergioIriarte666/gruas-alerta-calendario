@@ -6,6 +6,7 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useInspectionPDF } from '@/hooks/inspection/useInspectionPDF';
 import { useInspectionEmail } from '@/hooks/inspection/useInspectionEmail';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
+import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 import { uploadInspectionPdf, savePdfUrlToInspection } from '@/utils/inspectionPdfUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
@@ -132,9 +133,8 @@ export const useServiceInspection = () => {
             logger.debug('Estado actualizado a inspection_completed');
 
             await Promise.all([
-              queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] }),
-              queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-              queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
+              queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) }),
+              queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
               refetch()
             ]);
 
@@ -205,9 +205,8 @@ export const useServiceInspection = () => {
             logger.debug('Estado actualizado a completed');
 
             await Promise.all([
-              queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-              queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
-              queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] })
+              queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+              queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) })
             ]);
 
             setTimeout(() => {
@@ -236,8 +235,7 @@ export const useServiceInspection = () => {
   const handleRetry = async () => {
     logger.debug('Retrying service fetch...');
     await refetch();
-    await queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
-    await queryClient.invalidateQueries({ queryKey: ['operator-services'] });
+    await queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all });
   };
 
   return {

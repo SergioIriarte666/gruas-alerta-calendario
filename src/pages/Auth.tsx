@@ -125,8 +125,7 @@ const Auth = () => {
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
     if (error) {
-      // Visible incluso con el logger silenciado en prod, p. ej. provider no habilitado en Supabase
-      console.error('Google OAuth error:', error.message)
+      logger.error('Google OAuth error:', error.message)
       toast.error('Error al iniciar sesión con Google')
     }
   }

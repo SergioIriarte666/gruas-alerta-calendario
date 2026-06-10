@@ -5,6 +5,7 @@ import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import { operatorServicesKeys } from './operatorServicesQueryKeys';
 
 const logger = createLogger('useOperatorServices');
 
@@ -175,7 +176,7 @@ export const useOperatorServices = (userId?: string) => {
 
   return useQuery<Service[], Error>({
     // NOTE: include a minor version tag to avoid stale selected-cache issues when the transformer changes.
-    queryKey: ['operator-services', userId, 'v3'],
+    queryKey: operatorServicesKeys.byUser(userId),
     queryFn: () => fetchOperatorServices(userId!),
     enabled: !!userId,
     select: (data) => {

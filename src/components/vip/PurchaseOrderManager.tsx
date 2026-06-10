@@ -14,7 +14,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Building2,
-  Filter,
   MessageCircle
 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
@@ -312,7 +311,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                           size="sm"
                           onClick={async (e) => {
                             e.stopPropagation();
-                            const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+                            const { data, error } = await supabase.functions.invoke('send-whatsapp-admin', {
                               body: {
                                 event: 'orden_compra',
                                 data: {
@@ -324,9 +323,22 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                             });
                             if (error) {
                               toast.error('No se pudo enviar la notificación');
-                            } else {
-                              toast.success('Administradores notificados por WhatsApp');
+                              return;
                             }
+
+                            if ((data as { skipped?: boolean; reason?: string } | null)?.skipped) {
+                              const reason = data?.reason;
+                              if (reason === 'whatsapp_disabled') {
+                                toast.warning('Envío de WhatsApp deshabilitado en Configuración');
+                              } else {
+                                toast.info('WhatsApp no enviado', {
+                                  description: reason || 'Envío omitido por configuración',
+                                });
+                              }
+                              return;
+                            }
+
+                            toast.success('Administradores notificados por WhatsApp');
                           }}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />

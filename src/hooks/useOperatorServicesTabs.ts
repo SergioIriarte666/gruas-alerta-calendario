@@ -5,6 +5,7 @@ import { Service } from '@/types';
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { createLogger } from "@/lib/logger";
+import { operatorServiceKeys, operatorServicesKeys } from './operatorServicesQueryKeys';
 
 
 const logger = createLogger("useOperatorServicesTabs");
@@ -34,9 +35,8 @@ export const useOperatorServicesTabs = () => {
   const refreshAllData = async () => {
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-        queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
-        queryClient.invalidateQueries({ queryKey: ['operatorService'] }),
+        queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+        queryClient.invalidateQueries({ queryKey: operatorServiceKeys.all }),
         refetch()
       ]);
     } catch (error) {

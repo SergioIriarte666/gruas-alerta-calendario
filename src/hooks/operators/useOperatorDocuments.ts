@@ -11,6 +11,8 @@ import {
 } from '@/types';
 
 const logger = createLogger('useOperatorDocuments');
+const OPERATOR_DOCUMENTS_BUCKET = 'operator-documents';
+const SIGNED_URL_EXPIRY_SECONDS = 300;
 
 const OPERATOR_DOCUMENTS_SELECT = `
   id,
@@ -52,7 +54,7 @@ function mapRow(row: any): OperatorDocument {
     id: row.id,
     operatorId: row.operator_id,
     documentType: row.document_type as DocumentType,
-    fileUrl: row.file_url,
+    filePath: extractStoragePath(row.file_url),
     fileName: row.file_name,
     fileSize: row.file_size,
     contentType: row.content_type,
@@ -65,20 +67,50 @@ function mapRow(row: any): OperatorDocument {
   };
 }
 
+function extractStoragePath(rawValue: string): string {
+  if (!rawValue) return rawValue;
+
+  try {
+    const url = new URL(rawValue);
+    const decodedPath = decodeURIComponent(url.pathname);
+    const bucketMatch = decodedPath.match(/\/operator-documents\/(.+)$/);
+    return bucketMatch?.[1] ?? rawValue;
+  } catch {
+    return rawValue.replace(/^\/?operator-documents\//, '');
+  }
+}
+
+function operatorDocumentsTable() {
+  return (supabase.from as any)('operator_documents');
+}
+
 export const useOperatorDocuments = (operatorId: string) => {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [activeDocumentAction, setActiveDocumentAction] = useState<'view' | 'download' | null>(null);
 
-  const { data: documents = [], isLoading } = useQuery({
+  const createDocumentSignedUrl = async (doc: OperatorDocument, options?: { download?: string }) => {
+    const { data, error } = await supabase.storage
+      .from(OPERATOR_DOCUMENTS_BUCKET)
+      .createSignedUrl(doc.filePath, SIGNED_URL_EXPIRY_SECONDS, options);
+
+    if (error || !data?.signedUrl) {
+      throw error ?? new Error('No se pudo generar la URL firmada del documento');
+    }
+
+    return data.signedUrl;
+  };
+
+  const { data: documents = [], isLoading } = useQuery<OperatorDocument[]>({
     queryKey: ['operator-documents', operatorId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('operator_documents')
+      const { data, error } = await operatorDocumentsTable()
         .select(OPERATOR_DOCUMENTS_SELECT)
         .eq('operator_id', operatorId)
         .order('document_type');
       if (error) throw error;
-      return data.map(mapRow);
+      return (data ?? []).map(mapRow);
     },
     enabled: !!operatorId,
   });
@@ -91,26 +123,18 @@ export const useOperatorDocuments = (operatorId: string) => {
         const storagePath = `${operatorId}/${documentType}_${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('operator-documents')
+          .from(OPERATOR_DOCUMENTS_BUCKET)
           .upload(storagePath, file, { cacheControl: '3600', upsert: true });
         if (uploadError) throw uploadError;
 
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-          .from('operator-documents')
-          .createSignedUrl(storagePath, 31536000);
-        if (signedUrlError || !signedUrlData?.signedUrl) {
-          throw signedUrlError ?? new Error('No se pudo crear la URL firmada');
-        }
-
         const { data: { user } } = await supabase.auth.getUser();
 
-        const { data, error } = await supabase
-          .from('operator_documents')
+        const { data, error } = await operatorDocumentsTable()
           .upsert(
             {
               operator_id: operatorId,
               document_type: documentType,
-              file_url: signedUrlData.signedUrl,
+              file_url: storagePath,
               file_name: file.name,
               file_size: file.size,
               content_type: file.type,
@@ -145,20 +169,14 @@ export const useOperatorDocuments = (operatorId: string) => {
     mutationFn: async (documentId: string) => {
       const doc = documents.find((d) => d.id === documentId);
 
-      const { error } = await supabase
-        .from('operator_documents')
+      const { error } = await operatorDocumentsTable()
         .delete()
         .eq('id', documentId);
       if (error) throw error;
 
       if (doc) {
-        // Extraer path relativo de la URL firmada para eliminar del Storage
         try {
-          const url = new URL(doc.fileUrl);
-          const pathMatch = url.pathname.match(/operator-documents\/(.+)$/);
-          if (pathMatch?.[1]) {
-            await supabase.storage.from('operator-documents').remove([pathMatch[1]]);
-          }
+          await supabase.storage.from(OPERATOR_DOCUMENTS_BUCKET).remove([doc.filePath]);
         } catch {
           // Si falla la eliminación del storage no bloqueamos
         }
@@ -176,9 +194,13 @@ export const useOperatorDocuments = (operatorId: string) => {
   });
 
   const downloadDocument = async (doc: OperatorDocument) => {
+    setActiveDocumentId(doc.id);
+    setActiveDocumentAction('download');
+
     try {
+      const signedUrl = await createDocumentSignedUrl(doc, { download: doc.fileName });
       const link = window.document.createElement('a');
-      link.href = doc.fileUrl;
+      link.href = signedUrl;
       link.download = doc.fileName;
       link.target = '_blank';
       window.document.body.appendChild(link);
@@ -188,6 +210,33 @@ export const useOperatorDocuments = (operatorId: string) => {
     } catch (error) {
       logger.error('Error al descargar documento:', error);
       toast.error('No se pudo descargar el documento');
+    } finally {
+      setActiveDocumentId(null);
+      setActiveDocumentAction(null);
+    }
+  };
+
+  const openDocument = async (doc: OperatorDocument) => {
+    setActiveDocumentId(doc.id);
+    setActiveDocumentAction('view');
+
+    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+
+    try {
+      const signedUrl = await createDocumentSignedUrl(doc);
+
+      if (previewWindow) {
+        previewWindow.location.href = signedUrl;
+      } else {
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (error) {
+      previewWindow?.close();
+      logger.error('Error al abrir documento:', error);
+      toast.error('No se pudo abrir el documento');
+    } finally {
+      setActiveDocumentId(null);
+      setActiveDocumentAction(null);
     }
   };
 
@@ -202,6 +251,9 @@ export const useOperatorDocuments = (operatorId: string) => {
     deleteDocument: deleteMutation.mutate,
     isDeleting: deleteMutation.isPending,
     downloadDocument,
+    openDocument,
+    activeDocumentId,
+    activeDocumentAction,
     getDocumentByType,
   };
 };
@@ -216,11 +268,9 @@ export const useOperatorDocumentAlerts = () => {
       const in30 = new Date(today);
       in30.setDate(in30.getDate() + 30);
 
-      const todayISO = today.toISOString().slice(0, 10);
       const in30ISO = in30.toISOString().slice(0, 10);
 
-      const { data, error } = await supabase
-        .from('operator_documents')
+      const { data, error } = await operatorDocumentsTable()
         .select('operator_id, expiry_date')
         .not('expiry_date', 'is', null)
         .lte('expiry_date', in30ISO);

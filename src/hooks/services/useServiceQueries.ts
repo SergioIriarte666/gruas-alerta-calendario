@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { createLogger } from '@/lib/logger';
+import { operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 
 const logger = createLogger('ServiceQueries');
 
@@ -344,7 +345,7 @@ export const useServiceQueries = () => {
   // Fetch servicios por operador
   const useServicesByOperator = (operatorId: string) => {
     return useQuery({
-      queryKey: ['operatorServices', operatorId],
+      queryKey: operatorServicesKeys.byOperator(operatorId),
       queryFn: async (): Promise<Service[]> => {
         if (!operatorId) return [];
         

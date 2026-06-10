@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { createLogger } from "@/lib/logger";
+import { operatorServicesKeys } from './operatorServicesQueryKeys';
 
 
 const logger = createLogger("useNotificationTriggers");
@@ -36,7 +37,7 @@ export const useNotificationTriggers = () => {
           (payload) => {
             
             // Invalidar cache de servicios del operador
-            queryClient.invalidateQueries({ queryKey: ['operator-services'] });
+            queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all });
             
             // Enviar notificación push si es relevante
             if (payload.new.status !== payload.old.status) {
@@ -59,7 +60,7 @@ export const useNotificationTriggers = () => {
           },
           (payload) => {
             
-            queryClient.invalidateQueries({ queryKey: ['operator-services'] });
+            queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all });
             
             sendPushNotification({
               type: 'service_assigned',

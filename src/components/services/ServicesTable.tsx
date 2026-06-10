@@ -273,7 +273,7 @@ export const ServicesTable = ({
                   className="action-button border-success/30 bg-success/10 text-success hover:bg-success/15 hover:border-success/40"
                   onClick={async (e) => { e.stopPropagation();
                     const oc = service.purchaseOrderNumber || service.purchaseOrder;
-                    const { error } = await supabase.functions.invoke('send-whatsapp-admin', {
+                    const { data, error } = await supabase.functions.invoke('send-whatsapp-admin', {
                       body: {
                         event: 'orden_compra',
                         data: {
@@ -286,9 +286,21 @@ export const ServicesTable = ({
                     if (error) {
                       logger.warn('WhatsApp admin no enviado:', error);
                       toast.error('No se pudo enviar la notificación');
-                    } else {
-                      toast.success('Administradores notificados por WhatsApp');
+                      return;
                     }
+
+                    if ((data as { skipped?: boolean; reason?: string } | null)?.skipped) {
+                      const reason = data?.reason;
+                      logger.info('WhatsApp admin omitido:', reason);
+                      if (reason === 'whatsapp_disabled') {
+                        toast.warning('Envío de WhatsApp deshabilitado en Configuración');
+                      } else {
+                        toast.info('WhatsApp no enviado', { description: reason || 'Envío omitido por configuración' });
+                      }
+                      return;
+                    }
+
+                    toast.success('Administradores notificados por WhatsApp');
                   }}
                   title="Notificar O.C. por WhatsApp"
                 >

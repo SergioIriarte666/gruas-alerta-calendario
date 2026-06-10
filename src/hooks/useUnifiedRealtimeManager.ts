@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { operatorServicesKeys } from './operatorServicesQueryKeys';
 
 const logger = createLogger('UnifiedRealtimeManager');
 
@@ -37,7 +38,7 @@ export const useUnifiedRealtimeManager = () => {
     // Invalidaciones específicas por tabla
     if (tables.includes('services')) {
       queryClient.invalidateQueries({ queryKey: ['services'] });
-      queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
+      queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all });
       queryClient.invalidateQueries({ queryKey: ['crane-services'] });
     }
     

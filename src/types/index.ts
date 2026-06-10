@@ -213,7 +213,7 @@ export interface OperatorDocument {
   id: string;
   operatorId: string;
   documentType: DocumentType;
-  fileUrl: string;
+  filePath: string;
   fileName: string;
   fileSize?: number;
   contentType?: string;

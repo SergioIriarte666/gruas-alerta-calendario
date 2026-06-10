@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
+import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 
 
 const logger = createLogger("useServiceStatusUpdate");
@@ -77,15 +78,14 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
       
       // Invalidar múltiples queries para asegurar sincronización
       const invalidationPromises = [
-        queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-        queryClient.invalidateQueries({ queryKey: ['operator-services'] }),
-        queryClient.invalidateQueries({ queryKey: ['operatorService'] }),
+        queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+        queryClient.invalidateQueries({ queryKey: operatorServiceKeys.all }),
       ];
       
       // Si tenemos serviceId específico, también invalidar esa query
       if (serviceId) {
         invalidationPromises.push(
-          queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] })
+          queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) })
         );
       }
       

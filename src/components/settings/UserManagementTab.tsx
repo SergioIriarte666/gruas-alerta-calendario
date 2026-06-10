@@ -260,11 +260,11 @@ export const UserManagementTab = () => {
                               <Settings className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-clip border-border/70 bg-card p-0">
+                          <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-2 overflow-y-auto px-6 py-4">
+                            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-6 py-4">
                               <Button variant="outline" className="w-full justify-start text-sm whitespace-normal h-auto py-3" onClick={() => handleAssignClient(null)}>
                                 Sin cliente asignado
                               </Button>
@@ -290,11 +290,11 @@ export const UserManagementTab = () => {
                               <HardHat className="size-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="w-[90vw] max-w-md max-h-[85vh] overflow-clip border-border/70 bg-card p-0">
+                          <DialogContent className="flex max-h-[85vh] w-[90vw] max-w-md flex-col overflow-hidden border-border/70 bg-card p-0">
                             <DialogHeader className="border-b border-border/70 px-6 py-4">
                               <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                             </DialogHeader>
-                            <div className="space-y-3 overflow-y-auto px-6 py-4">
+                            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4">
                               <div className="text-xs text-muted-foreground">
                                 Operador actual: <span className="text-foreground">{user.operator_name ? toTitleCase(user.operator_name) : 'Sin asignar'}</span>
                               </div>
@@ -370,11 +370,11 @@ export const UserManagementTab = () => {
                                   <HardHat className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[85vh] overflow-clip border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Operador</DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4 overflow-y-auto px-6 py-4">
+                                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
                                   <p className="text-sm text-muted-foreground">
                                     Selecciona el operador que será vinculado a este usuario. Para acceder al portal de operadores, el usuario debe tener un operador asociado.
                                   </p>
@@ -407,11 +407,11 @@ export const UserManagementTab = () => {
                                   <Settings className="size-3" />
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[85vh] overflow-clip border-border/70 bg-card p-0 sm:max-w-lg">
+                              <DialogContent className="flex max-h-[85vh] flex-col overflow-hidden border-border/70 bg-card p-0 sm:max-w-lg">
                                 <DialogHeader className="border-b border-border/70 px-6 py-4">
                                   <DialogTitle className="text-foreground">Asignar Cliente</DialogTitle>
                                 </DialogHeader>
-                                <div className="space-y-4 overflow-y-auto px-6 py-4">
+                                <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
                                   <p className="text-sm text-muted-foreground">Selecciona el cliente que será asociado a este usuario:</p>
                                   <div className="space-y-2">
                                     <Button variant="outline" className="w-full justify-start whitespace-normal h-auto py-3" onClick={() => handleAssignClient(null)}>Sin cliente asignado</Button>

@@ -919,7 +919,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   return (
     <>
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-clip flex flex-col">
+      <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-4xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5" />
@@ -928,7 +928,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         </DialogHeader>
 
         {step === 'upload' && (
-          <div className="space-y-4">
+          <div className="min-h-0 overflow-y-auto space-y-4 pr-1">
             <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
               <Card className="border-violet-200/70 bg-violet-50/40">
                 <CardHeader className="pb-3">

@@ -74,7 +74,18 @@ interface Props {
 }
 
 export const OperatorDocumentsSection = ({ operator }: Props) => {
-  const { documents, isLoading, uploading, uploadDocument, deleteDocument, isDeleting, downloadDocument } =
+  const {
+    documents,
+    isLoading,
+    uploading,
+    uploadDocument,
+    deleteDocument,
+    isDeleting,
+    downloadDocument,
+    openDocument,
+    activeDocumentId,
+    activeDocumentAction,
+  } =
     useOperatorDocuments(operator.id);
   const { isAdmin } = useUserPermissions();
 
@@ -268,19 +279,25 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                           size="sm"
                           variant="outline"
                           className="flex-1"
+                          disabled={activeDocumentId === doc.id}
                           onClick={() => downloadDocument(doc)}
                         >
                           <Download className="size-3 mr-1" />
-                          Descargar
+                          {activeDocumentId === doc.id && activeDocumentAction === 'download'
+                            ? 'Firmando...'
+                            : 'Descargar'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           className="flex-1"
-                          onClick={() => window.open(doc.fileUrl, '_blank')}
+                          disabled={activeDocumentId === doc.id}
+                          onClick={() => openDocument(doc)}
                         >
                           <Eye className="size-3 mr-1" />
-                          Ver
+                          {activeDocumentId === doc.id && activeDocumentAction === 'view'
+                            ? 'Abriendo...'
+                            : 'Ver'}
                         </Button>
                       </div>
                       {isAdmin && (
