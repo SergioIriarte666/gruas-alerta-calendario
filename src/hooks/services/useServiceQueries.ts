@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Service } from '@/types';
+import { Service, ServiceStatus } from '@/types';
 import { createLogger } from '@/lib/logger';
 import { operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 
@@ -397,7 +397,7 @@ export const useServiceQueries = () => {
         if (filters?.dateTo)   query = query.lte('service_date', filters.dateTo);
 
         if (filters?.status && filters.status !== 'all' && filters.status !== 'with_purchase_order') {
-          const statuses = filters.status.split(',');
+          const statuses = filters.status.split(',') as ServiceStatus[];
           if (statuses.length === 1) {
             query = query.eq('status', statuses[0]);
           } else {
@@ -423,6 +423,7 @@ export const useServiceQueries = () => {
         return { services, total };
       },
       enabled: page > 0 && pageSize > 0,
+      placeholderData: (previousData) => previousData,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     });

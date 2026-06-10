@@ -71,10 +71,10 @@ export const useServicesPage = () => {
     dateFrom: listDateFrom || undefined,
     dateTo:   listDateTo   || undefined,
     status:   (statusFilter !== 'all' && statusFilter !== 'with_purchase_order') ? statusFilter : undefined,
-    search:   searchTerm   || undefined,
   });
 
-  const baseServices = isBasicView && pagedData?.services ? pagedData.services : services;
+  const shouldUsePagedData = isBasicView && !searchTerm;
+  const baseServices = shouldUsePagedData && pagedData?.services ? pagedData.services : services;
 
   // Handle pre-filled data from calendar events
   useEffect(() => {
@@ -292,11 +292,11 @@ export const useServicesPage = () => {
     return filtered;
   })();
 
-  const totalPages = isBasicView && pagedData
+  const totalPages = shouldUsePagedData && pagedData
     ? Math.max(1, Math.ceil(pagedData.total / ITEMS_PER_PAGE))
     : Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
 
-  const paginatedServices = isBasicView
+  const paginatedServices = shouldUsePagedData
     ? filteredAndSortedServices
     : filteredAndSortedServices.slice(
         (currentPage - 1) * ITEMS_PER_PAGE,
@@ -555,7 +555,7 @@ export const useServicesPage = () => {
   return {
     // State
     services,
-    loading: (loadingAll && services.length === 0) || (loadingPaged && !pagedData),
+    loading: (loadingAll && services.length === 0) || (loadingPaged && !pagedData && services.length === 0),
     selectedService,
     isFormOpen,
     isDetailsOpen,
