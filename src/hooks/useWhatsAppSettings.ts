@@ -36,6 +36,34 @@ const defaultSettings: WhatsAppSettings = {
   notifyVehiclePickup: true,
 };
 
+const isMissingWhatsappEnabledColumn = (error: unknown): boolean => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message ?? '')
+        : '';
+
+  return (
+    message.includes('whatsapp_enabled') &&
+    (message.includes('schema cache') || message.includes('Could not find'))
+  );
+};
+
+const buildNotificationPayload = (currentSettings: WhatsAppSettings, forceDisableAll = false) => ({
+  admin_phone_1: currentSettings.adminPhone1 || null,
+  admin_phone_2: currentSettings.adminPhone2 || null,
+  notify_operator_assigned: forceDisableAll ? false : currentSettings.notifyOperatorAssigned,
+  notify_service_completed: forceDisableAll ? false : currentSettings.notifyServiceCompleted,
+  notify_document_expiry: forceDisableAll ? false : currentSettings.notifyDocumentExpiry,
+  notify_payment_pending: forceDisableAll ? false : currentSettings.notifyPaymentPending,
+  notify_service_no_quote: forceDisableAll ? false : currentSettings.notifyServiceNoQuote,
+  notify_service_no_operator: forceDisableAll ? false : currentSettings.notifyServiceNoOperator,
+  notify_invoice_overdue: forceDisableAll ? false : currentSettings.notifyInvoiceOverdue,
+  notify_daily_reminder: forceDisableAll ? false : currentSettings.notifyDailyReminder,
+  notify_vehicle_pickup: forceDisableAll ? false : currentSettings.notifyVehiclePickup,
+});
+
 export const useWhatsAppSettings = () => {
   const [settings, setSettings] = useState<WhatsAppSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
@@ -56,9 +84,25 @@ export const useWhatsAppSettings = () => {
       if (error) throw error;
 
       if (data) {
+        const derivedWhatsappEnabled =
+          typeof data.whatsapp_enabled === 'boolean'
+            ? data.whatsapp_enabled
+            : Boolean(
+                data.notify_operator_assigned ??
+                  data.notify_service_completed ??
+                  data.notify_document_expiry ??
+                  data.notify_payment_pending ??
+                  data.notify_service_no_quote ??
+                  data.notify_service_no_operator ??
+                  data.notify_invoice_overdue ??
+                  data.notify_daily_reminder ??
+                  data.notify_vehicle_pickup ??
+                  true
+              );
+
         setSettings({
           id: data.id,
-          whatsappEnabled: data.whatsapp_enabled ?? true,
+          whatsappEnabled: derivedWhatsappEnabled,
           adminPhone1: data.admin_phone_1 || '',
           adminPhone2: data.admin_phone_2 || '',
           notifyOperatorAssigned: data.notify_operator_assigned ?? true,
@@ -83,25 +127,16 @@ export const useWhatsAppSettings = () => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const saveSettings = async (): Promise<{ success: boolean; error?: string }> => {
+  const saveSettings = async (): Promise<{ success: boolean; error?: string; compatibilityMode?: boolean }> => {
     setSaving(true);
     try {
+      const basePayload = buildNotificationPayload(settings);
       const payload = {
+        ...basePayload,
         whatsapp_enabled: settings.whatsappEnabled,
-        admin_phone_1: settings.adminPhone1 || null,
-        admin_phone_2: settings.adminPhone2 || null,
-        notify_operator_assigned: settings.notifyOperatorAssigned,
-        notify_service_completed: settings.notifyServiceCompleted,
-        notify_document_expiry: settings.notifyDocumentExpiry,
-        notify_payment_pending: settings.notifyPaymentPending,
-        notify_service_no_quote: settings.notifyServiceNoQuote,
-        notify_service_no_operator: settings.notifyServiceNoOperator,
-        notify_invoice_overdue: settings.notifyInvoiceOverdue,
-        notify_daily_reminder: settings.notifyDailyReminder,
-        notify_vehicle_pickup: settings.notifyVehiclePickup,
       };
 
-      let error;
+      let error = null;
       if (settings.id) {
         ({ error } = await supabase
           .from('whatsapp_settings')
@@ -111,6 +146,29 @@ export const useWhatsAppSettings = () => {
         ({ error } = await supabase
           .from('whatsapp_settings')
           .insert(payload));
+      }
+
+      if (error && isMissingWhatsappEnabledColumn(error)) {
+        const compatibilityPayload = buildNotificationPayload(
+          settings,
+          !settings.whatsappEnabled
+        );
+
+        if (settings.id) {
+          ({ error } = await supabase
+            .from('whatsapp_settings')
+            .update(compatibilityPayload)
+            .eq('id', settings.id));
+        } else {
+          ({ error } = await supabase
+            .from('whatsapp_settings')
+            .insert(compatibilityPayload));
+        }
+
+        if (!error) {
+          await fetchSettings();
+          return { success: true, compatibilityMode: true };
+        }
       }
 
       if (error) throw error;

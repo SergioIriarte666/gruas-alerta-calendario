@@ -277,19 +277,33 @@ const Auth = () => {
     <AuthBackground>
       <div className="space-y-4">
         <div className="space-y-2 text-center">
-          <Badge variant="outline" className="border-white/15 bg-white/10 px-3 py-1 text-white/80">
+          <Badge
+            variant="outline"
+            className="border-white/15 bg-white/10 px-3 py-1"
+            style={{ color: 'rgba(255,255,255,0.9)' }}
+          >
             <Sparkles className="mr-1 size-3.5" />
             Acceso seguro
           </Badge>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Towing Manager Software</h1>
-          <p className="text-sm text-white/65">Accede a la operación, clientes y facturación desde una interfaz unificada.</p>
+          <h1
+            className="text-3xl font-semibold tracking-tight drop-shadow-[0_1px_10px_rgba(15,23,42,0.35)]"
+            style={{ color: 'rgba(255,255,255,0.98)' }}
+          >
+            Towing Manager Software
+          </h1>
+          <p
+            className="text-sm drop-shadow-[0_1px_8px_rgba(15,23,42,0.28)]"
+            style={{ color: 'rgba(255,255,255,0.88)' }}
+          >
+            Accede a la operación, clientes y facturación desde una interfaz unificada.
+          </p>
         </div>
 
       <div className="w-full max-w-[400px] mx-auto">
         {isInvited && !needsPasswordSetup && (
           <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 p-4">
             <h3 className="mb-2 font-semibold text-primary">¡Has sido invitado!</h3>
-            <p className="text-sm text-white">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.94)' }}>
               Completa tu registro con el email <strong>{emailParam}</strong> para acceder al sistema.
             </p>
           </div>
@@ -298,7 +312,7 @@ const Auth = () => {
         {isRegistered && (
           <div className="mb-6 rounded-2xl border border-success/20 bg-success/10 p-4">
             <h3 className="mb-2 font-semibold text-success">¡Cuenta confirmada!</h3>
-            <p className="text-sm text-white">
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.94)' }}>
               Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.
             </p>
           </div>

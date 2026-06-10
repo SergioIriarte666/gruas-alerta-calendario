@@ -12,9 +12,10 @@ export const AuthTabs: React.FC<AuthTabsProps> = ({ activeTab, setActiveTab }) =
         onClick={() => setActiveTab('login')}
         className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
           activeTab === 'login'
-            ? 'bg-white/18 text-white shadow-sm backdrop-blur-sm'
-            : 'text-white/70 hover:bg-white/10 hover:text-white'
+            ? 'bg-white/18 shadow-sm backdrop-blur-sm'
+            : 'hover:bg-white/10'
         }`}
+        style={{ color: activeTab === 'login' ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.76)' }}
       >
         Iniciar Sesión
       </button>
@@ -22,9 +23,10 @@ export const AuthTabs: React.FC<AuthTabsProps> = ({ activeTab, setActiveTab }) =
         onClick={() => setActiveTab('register')}
         className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
           activeTab === 'register'
-            ? 'bg-white/18 text-white shadow-sm backdrop-blur-sm'
-            : 'text-white/70 hover:bg-white/10 hover:text-white'
+            ? 'bg-white/18 shadow-sm backdrop-blur-sm'
+            : 'hover:bg-white/10'
         }`}
+        style={{ color: activeTab === 'register' ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.76)' }}
       >
         Registrarse
       </button>

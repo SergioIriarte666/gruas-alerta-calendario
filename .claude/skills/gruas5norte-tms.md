@@ -1,7 +1,7 @@
 ---
 name: gruas5norte-tms
 description: >
-  Skill especializado para el TMS (Transport Management System) de Grúas 5 Norte SpA
+  Skill especializado para el TMS (Towing Management System) de Grúas 5 Norte SpA
   (repositorio SergioIriarte666/gruas-alerta-calendario, deploy en app.gruas5norte.cl).
   Usar SIEMPRE que el usuario pida instrucciones para Claude Code, un prompt para Code,
   agregar un módulo, corregir un bug, crear una migración SQL, modificar un componente,

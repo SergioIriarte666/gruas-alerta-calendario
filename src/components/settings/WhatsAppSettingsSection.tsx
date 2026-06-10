@@ -66,7 +66,9 @@ export const WhatsAppSettingsSection = () => {
   const handleSave = async () => {
     const result = await saveSettings();
     if (result.success) {
-      toast.success('Configuración de WhatsApp guardada');
+      toast.success('Configuración de WhatsApp guardada', result.compatibilityMode ? {
+        description: 'Se guardó en modo compatible porque tu base aún no tiene la columna whatsapp_enabled.'
+      } : undefined);
     } else {
       toast.error('Error al guardar', { description: result.error });
     }
@@ -106,8 +108,9 @@ export const WhatsAppSettingsSection = () => {
 
       <CardContent>
         {connectionStatus === 'error' && lastError && (
-          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            <strong>Último error de Meta:</strong> {lastError}
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-foreground shadow-sm">
+            <p className="font-semibold text-destructive">Ultimo error de Meta</p>
+            <p className="mt-1 leading-6 text-foreground/90">{lastError}</p>
           </div>
         )}
         <Tabs defaultValue="config">

@@ -32,25 +32,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   return <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
       <CardHeader>
-        <CardTitle className="text-center text-2xl text-white">Iniciar Sesión</CardTitle>
-        <CardDescription className="text-center text-white/70">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
+        <CardTitle
+          className="text-center text-2xl"
+          style={{ color: 'rgba(255,255,255,0.98)' }}
+        >
+          Iniciar Sesión
+        </CardTitle>
+        <CardDescription
+          className="text-center"
+          style={{ color: 'rgba(255,255,255,0.82)' }}
+        >
+          Ingresa tus credenciales para acceder a tu cuenta.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email-login" className="text-white/85">Email</Label>
-            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40" />
+            <Label htmlFor="email-login" style={{ color: 'rgba(255,255,255,0.9)' }}>Email</Label>
+            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 placeholder:text-white/45 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-login" className="text-white/85">Contraseña</Label>
-            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 text-white focus:border-white/40" />
+            <Label htmlFor="password-login" style={{ color: 'rgba(255,255,255,0.9)' }}>Contraseña</Label>
+            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="h-11 rounded-xl border-white/15 bg-white/8 focus:border-white/40" style={{ color: 'rgba(255,255,255,0.98)' }} />
           </div>
           {onForgotPassword && (
             <div className="text-right">
               <button
                 type="button"
                 onClick={onForgotPassword}
-                className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors"
+                className="text-sm underline underline-offset-2 transition-colors"
+                style={{ color: 'rgba(255,255,255,0.82)' }}
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -77,13 +88,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 <span className="w-full border-t border-white/15" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-transparent px-2 text-white/45">o</span>
+                <span className="bg-transparent px-2" style={{ color: 'rgba(255,255,255,0.58)' }}>o</span>
               </div>
             </div>
-            <Button
+            <button
               type="button"
-              variant="outline"
-              className="h-11 w-full rounded-xl border-white/15 bg-white/8 text-white hover:bg-white/15 flex items-center gap-2"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/8 transition-colors hover:bg-white/15"
+              style={{ color: 'rgba(255,255,255,0.94)' }}
               onClick={onGoogleLogin}
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
@@ -92,8 +103,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Continuar con Google
-            </Button>
+              <span style={{ color: 'rgba(255,255,255,0.94)' }}>Continuar con Google</span>
+            </button>
           </>
         )}
       </CardContent>

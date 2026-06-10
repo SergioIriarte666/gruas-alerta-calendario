@@ -12,25 +12,37 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            "group toast group-[.toaster]:w-[380px] group-[.toaster]:rounded-2xl " +
+            "group-[.toaster]:border group-[.toaster]:border-border/70 group-[.toaster]:bg-card/95 " +
+            "group-[.toaster]:text-foreground group-[.toaster]:shadow-[0_12px_32px_rgba(15,23,42,0.14)] " +
+            "group-[.toaster]:backdrop-blur-md",
+          title:
+            "group-[.toast]:font-semibold group-[.toast]:tracking-tight group-[.toast]:text-[hsl(var(--text-strong))] " +
+            "group-[.toast.sonner-toast--success]:!text-[hsl(var(--success))] " +
+            "group-[.toast.sonner-toast--error]:!text-[hsl(var(--danger))] " +
+            "group-[.toast.sonner-toast--warning]:!text-[hsl(var(--warning))] " +
+            "group-[.toast.sonner-toast--info]:!text-[hsl(var(--primary))]",
           description:
-            "group-[.toast]:text-muted-foreground group-[.toast]:text-sm " +
-            "group-[.toast.sonner-toast--success]:!text-white/90 " +
-            "group-[.toast.sonner-toast--error]:!text-white/90 " +
-            "group-[.toast.sonner-toast--warning]:!text-black/80 " +
-            "group-[.toast.sonner-toast--info]:!text-white/90",
+            "group-[.toast]:text-sm group-[.toast]:leading-6 group-[.toast]:text-[hsl(var(--text))]",
           actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:font-medium",
+            "group-[.toast]:rounded-lg group-[.toast]:bg-primary group-[.toast]:px-3 group-[.toast]:text-primary-foreground group-[.toast]:font-medium",
           cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group-[.toast]:rounded-lg group-[.toast]:bg-muted/80 group-[.toast]:text-muted-foreground",
+          closeButton:
+            "group-[.toast]:border-border/70 group-[.toast]:bg-background/70 group-[.toast]:text-muted-foreground " +
+            "group-[.toast]:transition-colors group-[.toast]:hover:bg-background group-[.toast]:hover:text-foreground",
           success:
-            "group-[.toaster]:!bg-[hsl(var(--success))] group-[.toaster]:!text-[hsl(var(--success-foreground))] group-[.toaster]:!border-[hsl(var(--success))]",
+            "group-[.toaster]:!border-[hsl(var(--success)/0.25)] group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-[hsl(var(--success))] " +
+            "group-[.toaster]:!bg-[hsl(var(--success-soft))] group-[.toaster]:shadow-[0_14px_34px_hsl(var(--success)/0.12)]",
           error:
-            "group-[.toaster]:!bg-[hsl(var(--danger))] group-[.toaster]:!text-[hsl(var(--danger-foreground))] group-[.toaster]:!border-[hsl(var(--danger))]",
+            "group-[.toaster]:!border-[hsl(var(--danger)/0.25)] group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-[hsl(var(--danger))] " +
+            "group-[.toaster]:!bg-[hsl(var(--danger-soft))] group-[.toaster]:shadow-[0_14px_34px_hsl(var(--danger)/0.12)]",
           warning:
-            "group-[.toaster]:!bg-[hsl(var(--warning))] group-[.toaster]:!text-[hsl(var(--warning-foreground))] group-[.toaster]:!border-[hsl(var(--warning))]",
+            "group-[.toaster]:!border-[hsl(var(--warning)/0.28)] group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-[hsl(var(--warning))] " +
+            "group-[.toaster]:!bg-[hsl(var(--warning-soft))] group-[.toaster]:shadow-[0_14px_34px_hsl(var(--warning)/0.12)]",
           info:
-            "group-[.toaster]:!bg-[hsl(var(--primary))] group-[.toaster]:!text-[hsl(var(--primary-foreground))] group-[.toaster]:!border-[hsl(var(--primary))]",
+            "group-[.toaster]:!border-[hsl(var(--primary)/0.20)] group-[.toaster]:!border-l-4 group-[.toaster]:!border-l-[hsl(var(--primary))] " +
+            "group-[.toaster]:!bg-[hsl(var(--primary-soft))] group-[.toaster]:shadow-[0_14px_34px_hsl(var(--primary)/0.12)]",
         },
       }}
       {...props}
