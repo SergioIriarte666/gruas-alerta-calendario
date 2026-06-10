@@ -41,7 +41,10 @@ export const Sidebar = ({
   const { data: upcomingCount = 0 } = useUpcomingServicesCount();
   const { data: pendingUsersCount = 0 } = useQuery({
     queryKey: ['pending-users-count'],
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     enabled: user?.role === 'admin',
     queryFn: async () => {
       const { count } = await supabase

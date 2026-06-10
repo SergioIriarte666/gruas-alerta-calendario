@@ -8,7 +8,10 @@ const logger = createLogger('PendingUsersFetcher');
 export function usePendingUsersFetcher() {
   return useQuery<PendingUser[]>({
     queryKey: ['pending-users'],
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     queryFn: async () => {
       logger.info('Fetching pending users');
       const { data, error } = await supabase

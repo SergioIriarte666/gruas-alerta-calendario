@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Users, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Users, Clock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -24,7 +24,7 @@ const ROLE_OPTIONS: { value: PendingApprovalRole; label: string }[] = [
 ];
 
 export default function PendingUsers() {
-  const { data: users = [], isLoading } = usePendingUsersFetcher();
+  const { data: users = [], isLoading, isFetching, refetch } = usePendingUsersFetcher();
   const { clients, loading: clientsLoading } = useClients();
   const { approveUser, rejectUser } = usePendingUsersManager();
   const isMobile = useIsMobile();
@@ -78,8 +78,19 @@ export default function PendingUsers() {
             Una vez aprobado el usuario, los permisos por módulos se ajustan desde Configuración de Usuario.
           </p>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          onClick={() => void refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw className={`mr-2 size-4 ${isFetching ? 'animate-spin' : ''}`} />
+          Actualizar
+        </Button>
         {users.length > 0 && (
-          <Badge variant="destructive" className="ml-auto">
+          <Badge variant="destructive">
             {users.length} pendiente{users.length !== 1 ? 's' : ''}
           </Badge>
         )}

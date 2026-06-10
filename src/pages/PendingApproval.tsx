@@ -16,13 +16,22 @@ export default function PendingApproval() {
         <Card className="border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <Clock className="mx-auto size-12 text-amber-400" />
-            <h2 className="text-xl font-semibold text-white">Cuenta pendiente de aprobación</h2>
-            <p className="text-sm text-white/65">
+            <h2
+              className="text-xl font-semibold drop-shadow-[0_1px_10px_rgba(15,23,42,0.35)]"
+              style={{ color: 'rgba(255,255,255,0.98)' }}
+            >
+              Cuenta pendiente de aprobación
+            </h2>
+            <p
+              className="text-sm leading-6"
+              style={{ color: 'rgba(255,255,255,0.88)' }}
+            >
               Tu solicitud está siendo revisada por el administrador. Te notificaremos cuando tu acceso sea activado.
             </p>
             <Button
-              variant="outline"
-              className="w-full rounded-xl border-white/15 bg-white/8 text-white hover:bg-white/15 mt-2"
+              type="button"
+              className="mt-2 w-full rounded-xl border border-white/15 bg-white/8 hover:bg-white/15"
+              style={{ color: 'rgba(255,255,255,0.96)' }}
               onClick={handleSignOut}
             >
               Cerrar sesión

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { formatRut } from '@/utils/rutFormatter'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 
 const logger = createLogger('Register')
@@ -20,7 +21,7 @@ const schema = z.object({
   full_name: z.string().min(3, 'Nombre completo requerido'),
   phone: z.string().regex(/^\+56\d{9}$/, 'Formato requerido: +56XXXXXXXXX'),
   company: z.string().min(2, 'Empresa requerida'),
-  rut: z.string().regex(rutRegex, 'Formato requerido: XX.XXX.XXX-X'),
+  rut: z.string().regex(rutRegex, 'Formato requerido: X.XXX.XXX-X o XX.XXX.XXX-X'),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -134,8 +135,12 @@ export default function Register() {
               <div className="space-y-2">
                 <Label className="text-white/85">RUT</Label>
                 <Input
-                  {...register('rut')}
-                  placeholder="12.345.678-9"
+                  {...register('rut', {
+                    onChange: (event) => {
+                      event.target.value = formatRut(event.target.value)
+                    },
+                  })}
+                  placeholder="9.999.999-9 o 12.345.678-9"
                   className="h-11 rounded-xl border-white/15 bg-white/8 text-white placeholder:text-white/45 focus:border-white/40"
                 />
                 {errors.rut && <p className="text-xs text-red-400">{errors.rut.message}</p>}
