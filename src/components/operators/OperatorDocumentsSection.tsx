@@ -276,11 +276,15 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                     <div className="space-y-2 pt-1">
                       <div className="flex gap-2">
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           className="flex-1"
                           disabled={activeDocumentId === doc.id}
-                          onClick={() => downloadDocument(doc)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadDocument(doc);
+                          }}
                         >
                           <Download className="size-3 mr-1" />
                           {activeDocumentId === doc.id && activeDocumentAction === 'download'
@@ -288,11 +292,15 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                             : 'Descargar'}
                         </Button>
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
                           className="flex-1"
                           disabled={activeDocumentId === doc.id}
-                          onClick={() => openDocument(doc)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDocument(doc);
+                          }}
                         >
                           <Eye className="size-3 mr-1" />
                           {activeDocumentId === doc.id && activeDocumentAction === 'view'
