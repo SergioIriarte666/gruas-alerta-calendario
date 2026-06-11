@@ -176,65 +176,18 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const custodyInfo = isCustody && serviceData ? getCustodyInfo(serviceData) : null;
   const isEquipmentRental = serviceData ? isEquipmentRentalService(serviceData) : false;
   
-  // FASE 4: VERIFICACIÓN SILENCIOSA DE INTEGRIDAD DE COMISIONES
+  // Refrescar datos al abrir. La antigua "sincronización silenciosa" de comisiones
+  // (rpc force_commission_sync_for_service) se eliminó: era un write-path oculto
+  // que creaba comisiones al abrir el modal. La generación de comisiones es
+  // responsabilidad del trigger de BD y de la herramienta de reparación admin.
   useEffect(() => {
-    const verifyAndSyncCommissions = async () => {
-      if (!isOpen || !serviceData?.id) return;
-
-      try {
-        // Solo verificar servicios con comisiones configuradas (operator_commission > 0)
-        if (((serviceData as any)?.operatorCommission || 0) <= 0) {
-          return;
-        }
-
-        // Verificar si las comisiones están sincronizadas
-        const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
-        
-        const { data: existingCommissions, error } = await supabase
-          .from('costs')
-          .select('id, amount')
-          .eq('service_id', serviceData.id)
-          .eq('category_id', commissionCategoryId);
-
-        if (error) {
-          logger.error('[MODAL_VERIFY] ❌ Error verificando comisiones:', error);
-          return;
-        }
-
-        if (!existingCommissions || existingCommissions.length === 0) {
-          // Sincronización silenciosa usando la función de la base de datos
-          const { data: syncResult, error: syncError } = await supabase.rpc(
-            'force_commission_sync_for_service', 
-            { p_service_id: serviceData.id }
-          );
-
-          if (syncError) {
-            logger.error('[MODAL_VERIFY] ❌ Error en sincronización silenciosa:', syncError);
-          } else if (syncResult && typeof syncResult === 'object' && 'success' in syncResult) {
-            // Invalidar queries después de la sincronización
-            queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData.id] });
-            queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceData.id] });
-            queryClient.invalidateQueries({ queryKey: ['costs'] });
-            queryClient.invalidateQueries({ queryKey: ['commissions'] });
-          }
-        }
-      } catch (error) {
-        logger.error('[MODAL_VERIFY] ❌ Error en verificación silenciosa:', error);
-      }
-    };
-
     if (isOpen && serviceData?.id) {
-      // Invalidación estándar
       queryClient.invalidateQueries({ queryKey: ['service-costs', serviceData?.id] });
       queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceData?.id] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
-      
-      // Verificación silenciosa después de un pequeño delay
-      const verifyTimeoutId = setTimeout(verifyAndSyncCommissions, 100);
-      return () => clearTimeout(verifyTimeoutId);
     }
-  }, [isOpen, serviceData?.id, serviceData?.folio, serviceData?.operatorCommission, queryClient]);
+  }, [isOpen, serviceData?.id, queryClient]);
 
   // Hooks que deben ejecutarse SIEMPRE antes de cualquier early-return
   const { settings } = useSettings();

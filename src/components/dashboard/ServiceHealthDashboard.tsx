@@ -4,6 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useIntegrityValidator } from '@/hooks/services/useIntegrityValidator';
 import { 
   Shield, 
@@ -32,9 +42,23 @@ const logger = createLogger("ServiceHealthDashboard");
  * ✅ Alertas y notificaciones
  * ✅ Histórico de operaciones
  */
+const REPAIR_ACTION_LABELS: Record<string, string> = {
+  missing_commission: 'Crear comisión pendiente desde service_resources',
+  amount_mismatch: 'Recrear comisión no pagada con el monto correcto',
+  legacy_mismatch: 'Sincronizar campos legacy del servicio',
+  orphan_commission: 'Revisión manual requerida',
+};
+
+interface ManualRepairRun {
+  executedAt: Date;
+  repaired: number;
+  failed: number;
+}
+
 export const ServiceHealthDashboard = () => {
   const {
     validating,
+    issues,
     metrics,
     runFullAudit,
     autoRepairAllIssues,
@@ -45,9 +69,12 @@ export const ServiceHealthDashboard = () => {
 
   const [isRepairing, setIsRepairing] = useState(false);
   const [lastRepairResult, setLastRepairResult] = useState<any>(null);
+  const [repairPreviewOpen, setRepairPreviewOpen] = useState(false);
+  const [repairHistory, setRepairHistory] = useState<ManualRepairRun[]>([]);
 
   const alerts = checkForAlerts();
   const criticalIssues = getCriticalIssues();
+  const repairableIssues = issues.filter(issue => issue.canAutoRepair);
 
   // Función para obtener color del health score
   const getHealthColor = (score: number) => {
@@ -68,12 +95,17 @@ export const ServiceHealthDashboard = () => {
     }
   };
 
-  // Función para manejar reparación automática
-  const handleAutoRepair = async () => {
+  // Ejecuta la reparación tras la confirmación explícita del preview
+  const handleConfirmedRepair = async () => {
+    setRepairPreviewOpen(false);
     setIsRepairing(true);
     try {
       const result = await autoRepairAllIssues();
       setLastRepairResult(result);
+      setRepairHistory(prev => [
+        { executedAt: new Date(), repaired: result.repaired, failed: result.failed },
+        ...prev,
+      ]);
     } catch (error) {
       logger.error('Error en reparación automática:', error);
     } finally {
@@ -206,9 +238,9 @@ export const ServiceHealthDashboard = () => {
               Ejecutar Auditoría
             </Button>
 
-            <Button 
-              onClick={handleAutoRepair} 
-              disabled={isRepairing || metrics.autoRepairableIssues === 0}
+            <Button
+              onClick={() => setRepairPreviewOpen(true)}
+              disabled={isRepairing || repairableIssues.length === 0}
               variant="default"
             >
               {isRepairing ? (
@@ -216,7 +248,7 @@ export const ServiceHealthDashboard = () => {
               ) : (
                 <Zap className="mr-2 size-4" />
               )}
-              Auto-Reparar ({metrics.autoRepairableIssues})
+              Auto-Reparar ({repairableIssues.length})
             </Button>
 
           </div>
@@ -377,11 +409,67 @@ export const ServiceHealthDashboard = () => {
                       : 'Sin ejecuciones manuales'}
                   </span>
                 </div>
+
+                {repairHistory.length > 0 && (
+                  <div className="border-t border-border/60 pt-3 space-y-2">
+                    <p className="text-sm font-medium text-foreground">Ejecuciones manuales</p>
+                    {repairHistory.map((run, index) => (
+                      <div key={index} className="flex justify-between gap-4 text-sm">
+                        <span className="text-muted-foreground">
+                          Ejecución manual — {formatForDisplayWithTime(run.executedAt)}
+                        </span>
+                        <span className="font-medium">
+                          {run.repaired} reparados / {run.failed} fallidos
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Preview + confirmación de Auto-Reparar */}
+      <AlertDialog open={repairPreviewOpen} onOpenChange={setRepairPreviewOpen}>
+        <AlertDialogContent className="max-w-lg border-border/70 bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="size-5 text-warning" />
+              Confirmar reparación automática
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se ejecutarán las siguientes {repairableIssues.length} reparaciones.
+              Los issues no auto-reparables (históricos, con pagos) no se tocan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-muted/30 p-3">
+            {repairableIssues.map((issue) => (
+              <div key={issue.id} className="flex items-start justify-between gap-3 text-sm">
+                <div className="min-w-0">
+                  <span className="font-medium text-foreground">{issue.serviceFolio}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {REPAIR_ACTION_LABELS[issue.issueType] ?? 'Sincronización de comisiones'}
+                  </p>
+                </div>
+                <Badge variant="outline" className="shrink-0">{issue.issueType}</Badge>
+              </div>
+            ))}
+            {repairableIssues.length === 0 && (
+              <p className="text-sm text-muted-foreground">No hay reparaciones pendientes.</p>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmedRepair} disabled={repairableIssues.length === 0}>
+              Ejecutar {repairableIssues.length} reparaciones
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

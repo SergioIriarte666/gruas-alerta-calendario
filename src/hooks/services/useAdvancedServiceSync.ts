@@ -38,7 +38,15 @@ export const useAdvancedServiceSync = () => {
 
     try {
       const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
-      
+
+      // PASO 0: Un servicio cancelado no debe tener comisiones activas
+      const serviceStatus = serviceData.status ?? serviceData.serviceStatus;
+      if (serviceStatus === 'cancelled') {
+        logger.info('🚫 [ROBUST_SYNC] Servicio cancelado - sync no aplica');
+        setLastSyncStatus('cancelled_service');
+        return { success: true, details: { reason: 'cancelled_service' } };
+      }
+
       // PASO 1: Verificar si hay comisiones que sincronizar
       const hasCommissions = operators?.some(op => op.commission > 0) || serviceData.operatorCommission > 0;
       
@@ -68,19 +76,30 @@ export const useAdvancedServiceSync = () => {
 
       logger.info('✅ [ROBUST_SYNC] Campos legacy actualizados', legacyUpdate);
 
-      // PASO 3: Limpiar comisiones existentes para evitar duplicados
+      // PASO 3: Limpiar solo comisiones NO pagadas (las pagadas son registro
+      // contable: borrarlas destruye payment_date/payment_batch_id)
       const { error: deleteError } = await supabase
         .from('costs')
         .delete()
-        .match({ 
-          service_id: serviceId, 
-          category_id: commissionCategoryId 
-        });
+        .match({
+          service_id: serviceId,
+          category_id: commissionCategoryId
+        })
+        .is('payment_date', null)
+        .is('payment_batch_id', null);
 
       if (deleteError) {
         logger.error('❌ [ROBUST_SYNC] Error limpiando comisiones existentes:', deleteError);
         throw deleteError;
       }
+
+      // Operadores que conservan comisión (pagada) — no se les recrea
+      const { data: remainingCommissions } = await supabase
+        .from('costs')
+        .select('operator_id')
+        .eq('service_id', serviceId)
+        .eq('category_id', commissionCategoryId);
+      const operatorsWithCommission = new Set((remainingCommissions ?? []).map(c => c.operator_id));
 
       // PASO 4: Crear nuevas comisiones desde service_resources
       const { data: serviceResources, error: resourcesError } = await supabase
@@ -95,8 +114,21 @@ export const useAdvancedServiceSync = () => {
         throw resourcesError;
       }
 
-      if (serviceResources && serviceResources.length > 0) {
-        const commissionsToCreate = serviceResources.map(resource => ({
+      // No crear comisiones para operadores exentos
+      const syncOperatorIds = [...new Set((serviceResources ?? []).map(r => r.operator_id))];
+      const { data: syncOperatorFlags } = syncOperatorIds.length > 0
+        ? await supabase.from('operators').select('id, commission_exempt').in('id', syncOperatorIds)
+        : { data: [] };
+      const exemptIds = new Set(
+        (syncOperatorFlags ?? []).filter(o => o.commission_exempt).map(o => o.id)
+      );
+
+      const resourcesToSync = (serviceResources ?? []).filter(
+        resource => !operatorsWithCommission.has(resource.operator_id) && !exemptIds.has(resource.operator_id)
+      );
+
+      if (resourcesToSync.length > 0) {
+        const commissionsToCreate = resourcesToSync.map(resource => ({
           service_id: serviceId,
           category_id: commissionCategoryId,
           operator_id: resource.operator_id,
@@ -124,16 +156,16 @@ export const useAdvancedServiceSync = () => {
       const consistencyCheck = await verifyConsistency(serviceId);
       
       setLastSyncStatus('success');
-      logger.info('✅ [ROBUST_SYNC] Sincronización robusta completada', { 
-        serviceId, 
-        commissionsCreated: serviceResources?.length || 0,
-        consistencyStatus: consistencyCheck.consistent 
+      logger.info('✅ [ROBUST_SYNC] Sincronización robusta completada', {
+        serviceId,
+        commissionsCreated: resourcesToSync.length,
+        consistencyStatus: consistencyCheck.consistent
       });
 
-      return { 
-        success: true, 
-        details: { 
-          commissionsCreated: serviceResources?.length || 0,
+      return {
+        success: true,
+        details: {
+          commissionsCreated: resourcesToSync.length,
           legacyFieldsUpdated: true,
           consistencyVerified: consistencyCheck.consistent
         }
@@ -178,14 +210,24 @@ export const useAdvancedServiceSync = () => {
 
       if (resourcesError) throw resourcesError;
 
-      // Obtener costs (comisiones)
+      // Obtener costs (comisiones), incluyendo datos de pago para que el
+      // clasificador sepa qué es auto-reparable sin riesgo
       const { data: costs, error: costsError } = await supabase
         .from('costs')
-        .select('operator_id, amount')
+        .select('operator_id, amount, payment_date, payment_batch_id')
         .eq('service_id', serviceId)
         .eq('category_id', '440296d4-09c2-4f3a-b02b-835f861df4c4');
 
       if (costsError) throw costsError;
+
+      // Operadores exentos de comisión: no se les exige fila en costs
+      const operatorIds = [...new Set((resources ?? []).map(r => r.operator_id))];
+      const { data: operatorFlags } = operatorIds.length > 0
+        ? await supabase.from('operators').select('id, commission_exempt').in('id', operatorIds)
+        : { data: [] };
+      const exemptOperatorIds = new Set(
+        (operatorFlags ?? []).filter(o => o.commission_exempt).map(o => o.id)
+      );
 
       const issues: string[] = [];
 
@@ -200,11 +242,13 @@ export const useAdvancedServiceSync = () => {
         }
       }
 
-      // VERIFICACIÓN 2: service_resources vs costs
+      // VERIFICACIÓN 2: service_resources vs costs (excluye operadores exentos:
+      // para ellos es correcto que no exista fila en costs)
       const resourcesWithCommissions = resources?.filter(r => r.commission_amount > 0) || [];
       const costsOperators = costs?.map(c => c.operator_id) || [];
-      
+
       for (const resource of resourcesWithCommissions) {
+        if (exemptOperatorIds.has(resource.operator_id)) continue;
         if (!costsOperators.includes(resource.operator_id)) {
           issues.push(`Operador ${resource.operator_id} tiene comisión en service_resources pero no en costs`);
         }
@@ -235,7 +279,9 @@ export const useAdvancedServiceSync = () => {
           service: service,
           resourcesCount: resources?.length || 0,
           costsCount: costs?.length || 0,
-          resourcesWithCommissions: resourcesWithCommissions.length
+          resourcesWithCommissions: resourcesWithCommissions.length,
+          hasPaidCommission: (costs ?? []).some(c => c.payment_date || c.payment_batch_id),
+          exemptOperatorIds: [...exemptOperatorIds]
         }
       };
 

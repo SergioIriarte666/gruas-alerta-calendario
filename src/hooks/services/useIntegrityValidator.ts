@@ -91,7 +91,8 @@ export const useIntegrityValidator = () => {
           id, folio, operator_id, operator_commission,
           service_resources!inner(operator_id, commission_amount, is_primary)
         `)
-        .gt('operator_commission', 0); // Solo servicios con comisiones configuradas
+        .gt('operator_commission', 0) // Solo servicios con comisiones configuradas
+        .neq('status', 'cancelled'); // Un cancelado sin comisión en costs no es un issue
 
       if (servicesError) {
         logger.error('❌ [INTEGRITY_AUDIT] Error obteniendo servicios:', servicesError);
@@ -129,6 +130,17 @@ export const useIntegrityValidator = () => {
                 severity = 'high';
               }
 
+              // Clasificación real de auto-reparabilidad (la auditoría ya
+              // excluye servicios cancelados):
+              // - missing/amount: solo si el servicio no tiene comisiones pagadas
+              // - orphan: nunca (puede ser comisión pagada históricamente; revisión manual)
+              // - legacy_mismatch: nunca (reasignaciones históricas; revisión manual)
+              const hasPaidCommission = !!consistencyCheck.details?.hasPaidCommission;
+              let canAutoRepair = false;
+              if (issueType === 'missing_commission' || issueType === 'amount_mismatch') {
+                canAutoRepair = !hasPaidCommission;
+              }
+
               const integrityIssue: IntegrityIssue = {
                 id: `${service.id}_${issueType}_${Date.now()}`,
                 serviceId: service.id,
@@ -137,7 +149,7 @@ export const useIntegrityValidator = () => {
                 severity,
                 description: issue,
                 details: consistencyCheck.details,
-                canAutoRepair: true, // La mayoría de issues pueden auto-repararse
+                canAutoRepair,
                 detectedAt: new Date()
               };
 
@@ -203,19 +215,13 @@ export const useIntegrityValidator = () => {
 
     const autoRepairableIssues = detectedIssues.filter(issue => issue.canAutoRepair).length;
 
-    // Calcular health score (0-100)
+    // Health score = ratio puro de servicios consistentes (0-100).
+    // No restar penalizaciones por severidad: eso contaba el mismo estado dos
+    // veces y colapsaba el score a 0% aunque el 90%+ estuviera sano. La
+    // severidad se muestra como métricas separadas (issuesBySeverity).
     let healthScore = 100;
     if (totalServices > 0) {
-      const consistencyRatio = consistentServices / totalServices;
-      healthScore = Math.round(consistencyRatio * 100);
-      
-      // Penalizar por severidad de issues
-      const severityPenalty = (issuesBySeverity.critical * 10) + 
-                             (issuesBySeverity.high * 5) + 
-                             (issuesBySeverity.medium * 2) + 
-                             (issuesBySeverity.low * 1);
-      
-      healthScore = Math.max(0, healthScore - severityPenalty);
+      healthScore = Math.round((consistentServices / totalServices) * 100);
     }
 
     return {
