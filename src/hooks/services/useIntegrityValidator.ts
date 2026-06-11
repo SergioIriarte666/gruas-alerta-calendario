@@ -1,36 +1,40 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
-import { useAdvancedServiceSync } from './useAdvancedServiceSync';
 
 const logger = createLogger('IntegrityValidator');
 
 /**
- * FASE 4: VALIDACIÓN DE INTEGRIDAD
- * 
- * Sistema de auditoría automática que detecta inconsistencias:
- * - Servicios con comisiones desincronizadas
- * - Campos legacy inconsistentes
- * - Comisiones huérfanas en costs table
- * - Service_resources sin costs correspondientes
- * 
- * Características:
- * ✅ Auditoría automática en intervalos regulares
- * ✅ Alertas cuando se detecten desincronizaciones
- * ✅ Herramientas de reparación automática
- * ✅ Dashboard de salud del sistema
- * ✅ Métricas de integridad en tiempo real
+ * VALIDACIÓN DE INTEGRIDAD DE COMISIONES
+ *
+ * El trigger de BD (sync_service_commissions) es la única fuente de verdad
+ * para crear/anular comisiones. Este validador NO repara nada: solo reporta
+ * los únicos problemas que el trigger no puede resolver solo y que requieren
+ * revisión humana:
+ *
+ * - stale_pending_commission: comisión pendiente de pago para un servicio
+ *   completado hace más de STALE_DAYS días (alerta de cobranza).
+ * - duplicate_commission: dos o más filas pendientes para el mismo
+ *   servicio + operador.
+ * - orphan_commission: fila de comisión cuyo servicio ya no existe.
+ *
+ * Estados válidos del negocio (cancelados, operadores exentos, reasignaciones
+ * históricas) NO son issues.
  */
+
+const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+const COMMISSION_ELIGIBLE_STATUSES = ['completed', 'with_purchase_order', 'invoiced'];
+const STALE_DAYS = 30;
 
 interface IntegrityIssue {
   id: string;
-  serviceId: string;
+  serviceId: string | null;
   serviceFolio: string;
-  issueType: 'legacy_mismatch' | 'missing_commission' | 'orphan_commission' | 'amount_mismatch';
+  issueType: 'stale_pending_commission' | 'duplicate_commission' | 'orphan_commission';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   details: any;
-  canAutoRepair: boolean;
+  canAutoRepair: false;
   detectedAt: Date;
 }
 
@@ -46,258 +50,197 @@ interface IntegrityMetrics {
     critical: number;
   };
   issuesByType: {
-    legacy_mismatch: number;
-    missing_commission: number;
+    stale_pending_commission: number;
+    duplicate_commission: number;
     orphan_commission: number;
-    amount_mismatch: number;
   };
   autoRepairableIssues: number;
   lastAuditTime: Date | null;
-  systemHealthScore: number; // 0-100
+  systemHealthScore: number; // 0-100, ratio puro de servicios sin issues
+}
+
+const EMPTY_METRICS: IntegrityMetrics = {
+  totalServices: 0,
+  consistentServices: 0,
+  inconsistentServices: 0,
+  totalIssues: 0,
+  issuesBySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
+  issuesByType: { stale_pending_commission: 0, duplicate_commission: 0, orphan_commission: 0 },
+  autoRepairableIssues: 0,
+  lastAuditTime: null,
+  systemHealthScore: 100,
+};
+
+interface CommissionRow {
+  id: string;
+  service_id: string | null;
+  service_folio: string | null;
+  operator_id: string | null;
+  amount: number;
+  date: string;
+  payment_date: string | null;
+  payment_batch_id: string | null;
+  services: { id: string; status: string; folio: string } | null;
 }
 
 export const useIntegrityValidator = () => {
   const [validating, setValidating] = useState(false);
   const [issues, setIssues] = useState<IntegrityIssue[]>([]);
-  const [metrics, setMetrics] = useState<IntegrityMetrics>({
-    totalServices: 0,
-    consistentServices: 0,
-    inconsistentServices: 0,
-    totalIssues: 0,
-    issuesBySeverity: { low: 0, medium: 0, high: 0, critical: 0 },
-    issuesByType: { legacy_mismatch: 0, missing_commission: 0, orphan_commission: 0, amount_mismatch: 0 },
-    autoRepairableIssues: 0,
-    lastAuditTime: null,
-    systemHealthScore: 100
-  });
-  
-  const { verifyConsistency, autoRepair } = useAdvancedServiceSync();
+  const [metrics, setMetrics] = useState<IntegrityMetrics>(EMPTY_METRICS);
 
   /**
-   * AUDITORÍA COMPLETA DEL SISTEMA
-   * Analiza todos los servicios y detecta inconsistencias
+   * AUDITORÍA COMPLETA
+   * Una sola pasada sobre las filas de comisión; clasificación en cliente.
    */
   const runFullAudit = useCallback(async (): Promise<IntegrityIssue[]> => {
     setValidating(true);
-    logger.info('🔍 [INTEGRITY_AUDIT] Iniciando auditoría completa del sistema');
+    logger.info('🔍 [INTEGRITY_AUDIT] Iniciando auditoría de comisiones');
 
     try {
-      const detectedIssues: IntegrityIssue[] = [];
-
-      // Obtener todos los servicios con operadores/comisiones
-      const { data: services, error: servicesError } = await supabase
-        .from('services')
+      const { data, error } = await supabase
+        .from('costs')
         .select(`
-          id, folio, operator_id, operator_commission,
-          service_resources!inner(operator_id, commission_amount, is_primary)
+          id, service_id, service_folio, operator_id, amount, date,
+          payment_date, payment_batch_id,
+          services(id, status, folio)
         `)
-        .gt('operator_commission', 0) // Solo servicios con comisiones configuradas
-        .neq('status', 'cancelled'); // Un cancelado sin comisión en costs no es un issue
+        .eq('category_id', COMMISSION_CATEGORY_ID)
+        .limit(10000);
 
-      if (servicesError) {
-        logger.error('❌ [INTEGRITY_AUDIT] Error obteniendo servicios:', servicesError);
-        throw servicesError;
+      if (error) {
+        logger.error('❌ [INTEGRITY_AUDIT] Error obteniendo comisiones:', error);
+        throw error;
       }
 
-      logger.info(`🔍 [INTEGRITY_AUDIT] Analizando ${services?.length || 0} servicios con comisiones`);
+      const rows = (data ?? []) as unknown as CommissionRow[];
+      const detectedIssues: IntegrityIssue[] = [];
+      const now = new Date();
+      const staleCutoff = new Date(now);
+      staleCutoff.setDate(staleCutoff.getDate() - STALE_DAYS);
 
-      // Analizar cada servicio
-      for (const service of services || []) {
-        try {
-          const consistencyCheck = await verifyConsistency(service.id);
-          
-          if (!consistencyCheck.consistent) {
-            // Analizar cada issue detectado
-            for (const issue of consistencyCheck.issues) {
-              let issueType: IntegrityIssue['issueType'] = 'legacy_mismatch';
-              let severity: IntegrityIssue['severity'] = 'medium';
-              
-              // Clasificar tipo de issue
-              if (issue.includes('operator_id no coincide')) {
-                issueType = 'legacy_mismatch';
-                severity = 'high';
-              } else if (issue.includes('operator_commission no coincide')) {
-                issueType = 'legacy_mismatch';
-                severity = 'high';
-              } else if (issue.includes('tiene comisión en service_resources pero no en costs')) {
-                issueType = 'missing_commission';
-                severity = 'critical';
-              } else if (issue.includes('tiene comisión en costs pero no en service_resources')) {
-                issueType = 'orphan_commission';
-                severity = 'medium';
-              } else if (issue.includes('Monto de comisión no coincide')) {
-                issueType = 'amount_mismatch';
-                severity = 'high';
-              }
+      const isPaid = (row: CommissionRow) => !!row.payment_date || !!row.payment_batch_id;
 
-              // Clasificación real de auto-reparabilidad (la auditoría ya
-              // excluye servicios cancelados):
-              // - missing/amount: solo si el servicio no tiene comisiones pagadas
-              // - orphan: nunca (puede ser comisión pagada históricamente; revisión manual)
-              // - legacy_mismatch: nunca (reasignaciones históricas; revisión manual)
-              const hasPaidCommission = !!consistencyCheck.details?.hasPaidCommission;
-              let canAutoRepair = false;
-              if (issueType === 'missing_commission' || issueType === 'amount_mismatch') {
-                canAutoRepair = !hasPaidCommission;
-              }
-
-              const integrityIssue: IntegrityIssue = {
-                id: `${service.id}_${issueType}_${Date.now()}`,
-                serviceId: service.id,
-                serviceFolio: service.folio,
-                issueType,
-                severity,
-                description: issue,
-                details: consistencyCheck.details,
-                canAutoRepair,
-                detectedAt: new Date()
-              };
-
-              detectedIssues.push(integrityIssue);
-            }
-          }
-        } catch (error) {
-          logger.error(`❌ [INTEGRITY_AUDIT] Error analizando servicio ${service.folio}:`, error);
-          
-          // Crear issue para error de análisis
+      // 1) Huérfanas: el servicio ya no existe
+      for (const row of rows) {
+        if (!row.service_id || !row.services) {
           detectedIssues.push({
-            id: `${service.id}_analysis_error_${Date.now()}`,
-            serviceId: service.id,
-            serviceFolio: service.folio,
-            issueType: 'legacy_mismatch',
-            severity: 'medium',
-            description: `Error al analizar servicio: ${(error as Error).message}`,
-            details: { error: (error as Error).message },
+            id: `${row.id}_orphan`,
+            serviceId: row.service_id,
+            serviceFolio: row.service_folio ?? 'Sin folio',
+            issueType: 'orphan_commission',
+            severity: 'high',
+            description: `Comisión de $${row.amount} sin servicio asociado (servicio eliminado)`,
+            details: { costId: row.id, amount: row.amount, date: row.date },
             canAutoRepair: false,
-            detectedAt: new Date()
+            detectedAt: now,
           });
         }
       }
 
-      // Calcular métricas
-      const newMetrics = calculateMetrics(services?.length || 0, detectedIssues);
+      // 2) Duplicadas: dos o más filas PENDIENTES para mismo servicio + operador
+      const pendingByKey = new Map<string, CommissionRow[]>();
+      for (const row of rows) {
+        if (isPaid(row) || !row.service_id || !row.operator_id) continue;
+        const key = `${row.service_id}_${row.operator_id}`;
+        pendingByKey.set(key, [...(pendingByKey.get(key) ?? []), row]);
+      }
+      for (const [key, group] of pendingByKey) {
+        if (group.length > 1) {
+          const first = group[0];
+          detectedIssues.push({
+            id: `${key}_duplicate`,
+            serviceId: first.service_id,
+            serviceFolio: first.services?.folio ?? first.service_folio ?? 'Sin folio',
+            issueType: 'duplicate_commission',
+            severity: 'high',
+            description: `${group.length} comisiones pendientes para el mismo operador en el servicio`,
+            details: { costIds: group.map((r) => r.id), amounts: group.map((r) => r.amount) },
+            canAutoRepair: false,
+            detectedAt: now,
+          });
+        }
+      }
+
+      // 3) Pendientes antiguas: alerta de cobranza, no de integridad
+      for (const row of rows) {
+        if (isPaid(row) || !row.services) continue;
+        if (!COMMISSION_ELIGIBLE_STATUSES.includes(row.services.status)) continue;
+        if (new Date(row.date + 'T00:00:00') < staleCutoff) {
+          detectedIssues.push({
+            id: `${row.id}_stale`,
+            serviceId: row.service_id,
+            serviceFolio: row.services.folio,
+            issueType: 'stale_pending_commission',
+            severity: 'medium',
+            description: `Comisión de $${row.amount} pendiente de pago desde ${row.date} (más de ${STALE_DAYS} días)`,
+            details: { costId: row.id, amount: row.amount, date: row.date },
+            canAutoRepair: false,
+            detectedAt: now,
+          });
+        }
+      }
+
+      // Métricas: ratio puro de servicios con comisiones sin issues
+      const auditedServices = new Set(rows.map((r) => r.service_id).filter(Boolean));
+      const servicesWithIssues = new Set(
+        detectedIssues.map((i) => i.serviceId).filter(Boolean)
+      );
+      const orphanIssues = detectedIssues.filter((i) => !i.serviceId).length;
+      const totalServices = auditedServices.size;
+      const inconsistentServices = servicesWithIssues.size;
+      const consistentServices = totalServices - inconsistentServices;
+
+      const issuesBySeverity = detectedIssues.reduce(
+        (acc, issue) => {
+          acc[issue.severity]++;
+          return acc;
+        },
+        { low: 0, medium: 0, high: 0, critical: 0 },
+      );
+
+      const issuesByType = detectedIssues.reduce(
+        (acc, issue) => {
+          acc[issue.issueType]++;
+          return acc;
+        },
+        { stale_pending_commission: 0, duplicate_commission: 0, orphan_commission: 0 },
+      );
+
+      const newMetrics: IntegrityMetrics = {
+        totalServices,
+        consistentServices,
+        inconsistentServices,
+        totalIssues: detectedIssues.length,
+        issuesBySeverity,
+        issuesByType,
+        autoRepairableIssues: 0, // los issues reales requieren revisión humana
+        lastAuditTime: new Date(),
+        systemHealthScore:
+          totalServices > 0 ? Math.round((consistentServices / totalServices) * 100) : 100,
+      };
+
       setMetrics(newMetrics);
       setIssues(detectedIssues);
 
-      logger.info(`🔍 [INTEGRITY_AUDIT] Auditoría completada`, {
-        servicesAnalyzed: services?.length || 0,
+      logger.info('🔍 [INTEGRITY_AUDIT] Auditoría completada', {
+        commissionRows: rows.length,
+        servicesAudited: totalServices,
         issuesFound: detectedIssues.length,
-        healthScore: newMetrics.systemHealthScore
+        orphanIssues,
+        healthScore: newMetrics.systemHealthScore,
       });
 
       return detectedIssues;
-
     } catch (error) {
-      logger.error('❌ [INTEGRITY_AUDIT] Error en auditoría completa:', error);
+      logger.error('❌ [INTEGRITY_AUDIT] Error en auditoría:', error);
       throw error;
     } finally {
       setValidating(false);
     }
-  }, [verifyConsistency]);
+  }, []);
 
   /**
-   * CALCULAR MÉTRICAS DE INTEGRIDAD
-   */
-  const calculateMetrics = (totalServices: number, detectedIssues: IntegrityIssue[]): IntegrityMetrics => {
-    const uniqueServices = new Set(detectedIssues.map(issue => issue.serviceId));
-    const inconsistentServices = uniqueServices.size;
-    const consistentServices = totalServices - inconsistentServices;
-
-    const issuesBySeverity = detectedIssues.reduce((acc, issue) => {
-      acc[issue.severity]++;
-      return acc;
-    }, { low: 0, medium: 0, high: 0, critical: 0 });
-
-    const issuesByType = detectedIssues.reduce((acc, issue) => {
-      acc[issue.issueType]++;
-      return acc;
-    }, { legacy_mismatch: 0, missing_commission: 0, orphan_commission: 0, amount_mismatch: 0 });
-
-    const autoRepairableIssues = detectedIssues.filter(issue => issue.canAutoRepair).length;
-
-    // Health score = ratio puro de servicios consistentes (0-100).
-    // No restar penalizaciones por severidad: eso contaba el mismo estado dos
-    // veces y colapsaba el score a 0% aunque el 90%+ estuviera sano. La
-    // severidad se muestra como métricas separadas (issuesBySeverity).
-    let healthScore = 100;
-    if (totalServices > 0) {
-      healthScore = Math.round((consistentServices / totalServices) * 100);
-    }
-
-    return {
-      totalServices,
-      consistentServices,
-      inconsistentServices,
-      totalIssues: detectedIssues.length,
-      issuesBySeverity,
-      issuesByType,
-      autoRepairableIssues,
-      lastAuditTime: new Date(),
-      systemHealthScore: healthScore
-    };
-  };
-
-  /**
-   * REPARACIÓN AUTOMÁTICA DE TODOS LOS ISSUES
-   */
-  const autoRepairAllIssues = useCallback(async (): Promise<{
-    repaired: number;
-    failed: number;
-    details: any[];
-  }> => {
-    logger.info('🔧 [INTEGRITY_REPAIR] Iniciando reparación automática de todos los issues');
-
-    const repairableIssues = issues.filter(issue => issue.canAutoRepair);
-    const uniqueServices = new Set(repairableIssues.map(issue => issue.serviceId));
-
-    let repaired = 0;
-    let failed = 0;
-    const details: any[] = [];
-
-    for (const serviceId of uniqueServices) {
-      try {
-        const repairResult = await autoRepair(serviceId);
-        
-        if (repairResult.repaired) {
-          repaired++;
-          details.push({
-            serviceId,
-            status: 'success',
-            actions: repairResult.actions
-          });
-        } else {
-          failed++;
-          details.push({
-            serviceId,
-            status: 'failed',
-            actions: repairResult.actions
-          });
-        }
-      } catch (error) {
-        failed++;
-        details.push({
-          serviceId,
-          status: 'error',
-          error: (error as Error).message
-        });
-      }
-    }
-
-    // Re-ejecutar auditoría después de reparaciones
-    await runFullAudit();
-
-    logger.info('🔧 [INTEGRITY_REPAIR] Reparación automática completada', {
-      repaired,
-      failed,
-      totalProcessed: uniqueServices.size
-    });
-
-    return { repaired, failed, details };
-  }, [issues, autoRepair, runFullAudit]);
-
-  /**
-   * ALERTAS AUTOMÁTICAS
-   * Detecta cuando la salud del sistema está comprometida
+   * ALERTAS
    */
   const checkForAlerts = useCallback(() => {
     const alerts = [];
@@ -306,23 +249,23 @@ export const useIntegrityValidator = () => {
       alerts.push({
         type: 'health_degraded',
         severity: 'high',
-        message: `Salud del sistema degradada: ${metrics.systemHealthScore}%`
+        message: `Salud del sistema degradada: ${metrics.systemHealthScore}%`,
       });
     }
 
-    if (metrics.issuesBySeverity.critical > 0) {
+    if (metrics.issuesByType.duplicate_commission > 0) {
       alerts.push({
-        type: 'critical_issues',
-        severity: 'critical',
-        message: `${metrics.issuesBySeverity.critical} issues críticos detectados`
+        type: 'duplicate_commissions',
+        severity: 'high',
+        message: `${metrics.issuesByType.duplicate_commission} comisiones duplicadas requieren revisión`,
       });
     }
 
-    if (metrics.inconsistentServices > metrics.totalServices * 0.1) { // >10% inconsistente
+    if (metrics.issuesByType.orphan_commission > 0) {
       alerts.push({
-        type: 'high_inconsistency',
-        severity: 'medium',
-        message: `Alto nivel de inconsistencia: ${metrics.inconsistentServices}/${metrics.totalServices} servicios`
+        type: 'orphan_commissions',
+        severity: 'high',
+        message: `${metrics.issuesByType.orphan_commission} comisiones huérfanas requieren revisión`,
       });
     }
 
@@ -330,13 +273,11 @@ export const useIntegrityValidator = () => {
   }, [metrics]);
 
   /**
-   * AUDITORÍA AUTOMÁTICA PERIÓDICA
+   * AUDITORÍA AUTOMÁTICA PERIÓDICA (solo lectura)
    */
   useEffect(() => {
-    // Ejecutar auditoría inicial
     runFullAudit();
 
-    // Configurar auditoría periódica cada 30 minutos
     const interval = setInterval(() => {
       logger.info('⏰ [INTEGRITY_AUDIT] Ejecutando auditoría periódica automática');
       runFullAudit();
@@ -350,16 +291,17 @@ export const useIntegrityValidator = () => {
     validating,
     issues,
     metrics,
-    
-    // Acciones
+
+    // Acciones (solo lectura — la reparación de comisiones es del trigger de BD)
     runFullAudit,
-    autoRepairAllIssues,
     checkForAlerts,
-    
+
     // Utilidades
-    getIssuesByService: (serviceId: string) => issues.filter(issue => issue.serviceId === serviceId),
-    getIssuesBySeverity: (severity: IntegrityIssue['severity']) => issues.filter(issue => issue.severity === severity),
-    getCriticalIssues: () => issues.filter(issue => issue.severity === 'critical'),
-    isHealthy: () => metrics.systemHealthScore >= 90
+    getIssuesByService: (serviceId: string) => issues.filter((issue) => issue.serviceId === serviceId),
+    getIssuesBySeverity: (severity: IntegrityIssue['severity']) =>
+      issues.filter((issue) => issue.severity === severity),
+    getCriticalIssues: () =>
+      issues.filter((issue) => issue.severity === 'critical' || issue.severity === 'high'),
+    isHealthy: () => metrics.systemHealthScore >= 90,
   };
 };

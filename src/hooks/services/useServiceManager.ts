@@ -39,70 +39,6 @@ const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') =>
 };
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
-const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
-  const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
-  
-  // Obtener comisiones existentes
-  const { data: existingCommissions, error } = await supabase
-    .from('costs')
-    .select('id, operator_id, amount, description')
-    .eq('service_id', serviceId)
-    .eq('category_id', commissionCategoryId);
-
-  if (error) {
-    logger.error('Error fetching existing commissions:', error);
-    return { toCreate: [], toUpdate: [], toDelete: [], existingCommissions: [] };
-  }
-
-  
-  
-  const desiredOperators = (newOperators || [])
-    .filter(op => op?.operatorId && String(op.operatorId).trim() !== '')
-    .map(op => ({
-      operator_id: String(op.operatorId),
-      amount: Number(op.commission || 0),
-      hours: op.hours,
-    }))
-    .filter(op => op.amount > 0);
-
-  const toCreate = [];
-  const toUpdate = [];
-  const toDelete = [...existingCommissions]; // Start with all existing, remove those that still exist
-
-  for (const operator of desiredOperators) {
-    const existingCommission = existingCommissions.find(
-      comm => comm.operator_id === operator.operator_id
-    );
-
-    if (existingCommission) {
-      // Verificar si el monto cambió
-      if (Number(existingCommission.amount) !== operator.amount) {
-        toUpdate.push({
-          id: existingCommission.id,
-          operator_id: operator.operator_id,
-          amount: operator.amount,
-          hours: operator.hours
-        });
-      }
-      // Remover de la lista de eliminación ya que aún existe
-      const deleteIndex = toDelete.findIndex(comm => comm.id === existingCommission.id);
-      if (deleteIndex > -1) {
-        toDelete.splice(deleteIndex, 1);
-      }
-    } else {
-      // Nueva comisión a crear
-      toCreate.push({
-        operator_id: operator.operator_id,
-        amount: operator.amount,
-        hours: operator.hours
-      });
-    }
-  }
-
-
-  return { toCreate, toUpdate, toDelete, existingCommissions };
-};
-
 // Función para transformar datos de Supabase a Service con manejo robusto de campos opcionales
 const transformToService = (data: any): Service => {
   
@@ -857,12 +793,11 @@ export const useServiceManager = () => {
       }
       }
 
-      // ✅ NEW: Handle operators update
+      // ✅ Handle operators update. Las COMISIONES las maneja exclusivamente el
+      // trigger de BD (sync_service_commissions) al detectar cambios en
+      // services/service_resources — aquí NO se escribe en costs.
       if (serviceData.operators && Array.isArray(serviceData.operators)) {
-        
-        
-        const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
-        
+
         // 1. Actualizar operador principal en la tabla services
         const mainOperator = serviceData.operators.find(op => op.role === 'Principal') || serviceData.operators[0];
         if (mainOperator && mainOperator.operatorId && mainOperator.operatorId.trim() !== '') {
@@ -872,100 +807,8 @@ export const useServiceManager = () => {
           (transformedData as any).operator_id = null;
           (transformedData as any).operator_commission = 0;
         }
-        
-        // 2. DETECCIÓN INTELIGENTE DE COMISIONES - Evitar eliminación/creación innecesaria
-        
-        
-        const { toCreate, toUpdate, toDelete } = await detectExistingCommissions(id, serviceData.operators);
-        
-        // Get current service data for foreign keys
-        const { data: currentService } = await supabase
-          .from('services')
-          .select('folio, service_date, crane_id')
-          .eq('id', id)
-          .single();
 
-        // 3. ELIMINAR solo las comisiones que ya no existen
-        if (toDelete.length > 0) {
-          
-          
-          const { error: deleteCommissionsError } = await supabase
-            .from('costs')
-            .delete()
-            .in('id', toDelete.map(c => c.id));
-
-          if (deleteCommissionsError) {
-            logger.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
-          }
-        }
-
-        // 4. ACTUALIZAR comisiones existentes que cambiaron
-        if (toUpdate.length > 0) {
-          
-          
-          for (const updateData of toUpdate) {
-            const { error: updateError } = await supabase
-              .from('costs')
-              .update({
-                amount: updateData.amount,
-                notes: updateData.hours ? `${updateData.hours} horas trabajadas` : null,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', updateData.id);
-
-            if (updateError) {
-              logger.error('[SMART SYNC] Error updating commission:', updateError);
-            }
-          }
-          
-        }
-
-        // 5. CREAR solo las nuevas comisiones
-        if (toCreate.length > 0) {
-          
-          
-          const newCommissionCosts = toCreate.map(operator => ({
-            amount: operator.amount,
-            category_id: commissionCategoryId,
-            service_id: id,
-            service_folio: currentService?.folio || 'Unknown',
-            date: currentService?.service_date || serviceData.serviceDate || getTodayLocal(),
-            description: `Comisión operador - Servicio ${currentService?.folio || id}`,
-            subcategory: 'comisiones',
-            notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
-            operator_id: operator.operator_id,
-            crane_id: currentService?.crane_id,
-            created_by: null
-          }));
-
-          // Insertar nuevas comisiones con manejo seguro de duplicados
-          const { error: insertCommissionsError } = await supabase
-            .from('costs')
-            .insert(newCommissionCosts);
-
-          if (insertCommissionsError) {
-            logger.error('[SMART SYNC] Error inserting new commission costs:', insertCommissionsError);
-            
-            // Fallback: Intentar inserción individual con manejo de errores de duplicados
-            for (const cost of newCommissionCosts) {
-              const { error: individualError } = await supabase
-                .from('costs')
-                .insert(cost);
-                
-              if (individualError) {
-                // Solo reportar errores que no sean de duplicados
-                if (!individualError.message.includes('duplicate') && 
-                    !individualError.message.includes('violates unique constraint')) {
-                  logger.error('[SMART SYNC] Individual insert error:', individualError);
-                }
-              }
-            }
-          }
-        }
-        
-        
-        
-        // 6. SINCRONIZAR service_resources - Actualizar/crear/eliminar registros de operadores
+        // 2. SINCRONIZAR service_resources - Actualizar/crear/eliminar registros de operadores
         
         
         // Obtener registros actuales de service_resources para este servicio
@@ -1039,8 +882,26 @@ export const useServiceManager = () => {
             }
           }
         }
-        
-        
+
+        // 3. Toast informativo si cambió el operador (la comisión la ajusta el trigger)
+        const previousOperatorIds = new Set((currentResources ?? []).map(r => r.operator_id));
+        const operatorChanged =
+          previousOperatorIds.size !== newOperatorIds.size ||
+          [...newOperatorIds].some(opId => !previousOperatorIds.has(opId));
+
+        if (operatorChanged && mainOperator?.operatorId) {
+          const { data: mainOperatorRow } = await supabase
+            .from('operators')
+            .select('commission_exempt')
+            .eq('id', mainOperator.operatorId)
+            .single();
+
+          if (mainOperatorRow?.commission_exempt) {
+            toast.info('Operador actualizado. Sin comisión (operador exento).');
+          } else {
+            toast.info('Operador actualizado. Comisión ajustada automáticamente.');
+          }
+        }
       }
 
       // Remove costDetails and operators after processing
