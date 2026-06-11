@@ -772,3 +772,17 @@ body {
     --invert-foreground: var(--color-zinc-50);
   }
 }
+
+/* Toasts (sonner): siempre por encima de Dialog/Modal de Radix (z-50)
+   y totalmente opacos para ser legibles sobre cualquier contenido */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+}
+[data-sonner-toast] {
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+/* Oculta la barra de scroll horizontal en las tabs (móvil) */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

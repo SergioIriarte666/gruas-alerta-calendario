@@ -442,7 +442,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
         <ScrollArea className="flex-1 px-6">
           <Tabs defaultValue="general" className="w-full py-6">
-            <TabsList className="mb-6 grid w-full grid-cols-3 sm:grid-cols-5 border border-border/70 bg-muted/30">
+            <TabsList className="mb-6 w-full border border-border/70 bg-muted/30 sm:grid sm:grid-cols-5">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               <TabsTrigger value="costs">Costos</TabsTrigger>

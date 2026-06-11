@@ -113,7 +113,7 @@ export const InvoicesPageContent = ({
         className="w-full"
       >
         <SectionCard flush className="border-border/70 bg-card/80 shadow-sm" contentClassName="p-2">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 bg-transparent">
+          <TabsList className="w-full gap-1 bg-transparent lg:grid lg:grid-cols-5">
             <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <span className="hidden sm:inline">Facturas</span>
               <span className="sm:hidden">Fact.</span>

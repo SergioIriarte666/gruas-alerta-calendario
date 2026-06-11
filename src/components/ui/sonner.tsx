@@ -7,15 +7,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
-      position="bottom-right"
+      position="top-center"
       duration={2500}
+      richColors
+      containerAriaLabel="Notificaciones"
       toastOptions={{
         classNames: {
           toast:
             "group toast group-[.toaster]:w-[380px] group-[.toaster]:rounded-2xl " +
-            "group-[.toaster]:border group-[.toaster]:border-border/70 group-[.toaster]:bg-card/95 " +
-            "group-[.toaster]:text-foreground group-[.toaster]:shadow-[0_12px_32px_rgba(15,23,42,0.14)] " +
-            "group-[.toaster]:backdrop-blur-md",
+            "group-[.toaster]:border group-[.toaster]:border-border/70 group-[.toaster]:!bg-card " +
+            "group-[.toaster]:text-foreground group-[.toaster]:shadow-[0_12px_32px_rgba(15,23,42,0.14)]",
           title:
             "group-[.toast]:font-semibold group-[.toast]:tracking-tight group-[.toast]:text-[hsl(var(--text-strong))] " +
             "group-[.toast.sonner-toast--success]:!text-[hsl(var(--success))] " +

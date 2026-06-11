@@ -220,7 +220,12 @@ export const useOperatorDocuments = (operatorId: string) => {
     setActiveDocumentId(doc.id);
     setActiveDocumentAction('view');
 
-    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+    // No pasar 'noopener' aquí: haría que window.open retorne null y la pestaña
+    // placeholder quedaría huérfana en about:blank. Se anula opener manualmente.
+    const previewWindow = window.open('about:blank', '_blank');
+    if (previewWindow) {
+      previewWindow.opener = null;
+    }
 
     try {
       const signedUrl = await createDocumentSignedUrl(doc);

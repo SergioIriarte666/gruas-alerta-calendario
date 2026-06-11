@@ -27,8 +27,11 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
 
   useEffect(() => {
     if (!crane?.id) return;
+    // Topic único por montaje: con un topic fijo, supabase-js reutiliza la
+    // instancia del canal si el modal se reabre antes de que removeChannel
+    // termine, y el segundo .subscribe() lanza "tried to subscribe multiple times"
     const channel = supabase
-      .channel(`crane-counters-${crane.id}`)
+      .channel(`crane-counters-${crane.id}-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'services', filter: `crane_id=eq.${crane.id}` }, () => {
         queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
       })

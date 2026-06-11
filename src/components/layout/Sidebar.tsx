@@ -520,7 +520,7 @@ export const Sidebar = ({
 
       {/* Mobile Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 lg:hidden h-screen",
+        "fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 lg:hidden h-[100dvh]",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <MobileSidebarContent />
