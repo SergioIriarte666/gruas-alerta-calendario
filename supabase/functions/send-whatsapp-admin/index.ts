@@ -38,7 +38,8 @@ const templates: Record<string, { name: string; params: (d: any) => string[] }> 
     params: (d) => [d.proveedor, d.monto, d.descripcion].map(String),
   },
   cierre_mensual: {
-    name: "admin_cierre_mensual",
+    // Nombre exacto aprobado en Meta (sin 'l' final)
+    name: "admin_cierre_mensua",
     params: (d) => [d.mes, d.anio, String(d.totalServicios), d.totalIngresos].map(String),
   },
   servicio_sin_operador: {
