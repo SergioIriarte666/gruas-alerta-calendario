@@ -564,6 +564,38 @@ export const getBusinessTodayDate = (): Date => businessClock.todayDate();
  */
 export const getTodayString = (): string => businessClock.today();
 
+// ===================== PERÍODOS PARA FILTROS DE COSTOS =====================
+
+export type CostPeriod = 'today' | 'week' | 'month' | 'all';
+
+/**
+ * Rango de fechas YYYY-MM-DD para un período rápido, en TZ del negocio.
+ * Devuelve null para 'all' (sin filtro). Pensado para filtros server-side
+ * (.gte/.lte) sobre columnas date-only.
+ */
+export const getPeriodRange = (period: CostPeriod): { from: string; to: string } | null => {
+  switch (period) {
+    case 'today': {
+      const today = getBusinessToday();
+      return { from: today, to: today };
+    }
+    case 'week': {
+      const { start, end } = getCurrentWeekRange();
+      return { from: toLocalDateString(start), to: toLocalDateString(end) };
+    }
+    case 'month': {
+      const todayDate = getBusinessTodayDate();
+      return {
+        from: toLocalDateString(startOfMonth(todayDate)),
+        to: toLocalDateString(endOfMonth(todayDate)),
+      };
+    }
+    case 'all':
+    default:
+      return null;
+  }
+};
+
 // Invalidar userSettingsCache cuando el usuario cambia el formato de fecha
 if (typeof window !== 'undefined') {
   window.addEventListener('date-format-changed', () => {

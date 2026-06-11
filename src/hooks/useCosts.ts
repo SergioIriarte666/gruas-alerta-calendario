@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
@@ -73,7 +73,12 @@ const COSTS_LIST_SELECT_CLAUSE = `
   services (id, folio)
 `;
 
-const fetchCosts = async (): Promise<Cost[]> => {
+export interface CostDateFilters {
+  dateFrom?: string; // 'YYYY-MM-DD'
+  dateTo?: string;   // 'YYYY-MM-DD'
+}
+
+const fetchCosts = async (filters: CostDateFilters = {}): Promise<Cost[]> => {
   const PAGE_SIZE = 1000;
   const allCosts: Cost[] = [];
   let page = 0;
@@ -82,13 +87,18 @@ const fetchCosts = async (): Promise<Cost[]> => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('costs')
       .select(COSTS_LIST_SELECT_CLAUSE)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(from, to);
+
+    if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+    if (filters.dateTo) query = query.lte('date', filters.dateTo);
+
+    const { data, error } = await query;
 
     if (error) {
       logger.error('Error fetching costs (page ' + page + '):', error);
@@ -105,10 +115,17 @@ const fetchCosts = async (): Promise<Cost[]> => {
   return allCosts;
 };
 
-export const useCosts = () => {
+export const useCosts = (filters: CostDateFilters = {}) => {
+  // Normalizar '' a undefined para que todos los consumidores sin filtro compartan cache
+  const dateFrom = filters.dateFrom || undefined;
+  const dateTo = filters.dateTo || undefined;
+
   return useQuery({
-    queryKey: ['costs'],
-    queryFn: fetchCosts,
+    // Las fechas DEBEN ir en la queryKey: sin esto TanStack Query reutiliza
+    // el cache de la query sin filtros y el filtro nunca re-fetcha
+    queryKey: ['costs', { dateFrom, dateTo }],
+    queryFn: () => fetchCosts({ dateFrom, dateTo }),
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

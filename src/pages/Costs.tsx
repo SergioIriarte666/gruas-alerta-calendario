@@ -29,7 +29,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
-import { getCurrentWeekRange, getTodayLocal, safeParseDateOnly, getBusinessToday } from '@/utils/timezoneUtils';
+import { getTodayLocal, safeParseDateOnly, getPeriodRange, CostPeriod } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
     useInventorySyncWatcher();
@@ -52,7 +52,7 @@ const CostsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [highlightedCostId, setHighlightedCostId] = useState<string>('');
-    const [dateFilter, setDateFilter] = useState<string>('all');
+    const [dateFilter, setDateFilter] = useState<CostPeriod>('all');
     const [selectedCostIds, setSelectedCostIds] = useState<Set<string>>(new Set());
     const [distributionData, setDistributionData] = useState<{
         costId: string;
@@ -64,8 +64,8 @@ const CostsPage = () => {
     const [filters, setFilters] = useState<CostFilters>({
         category: 'all',
         subcategory: 'all',
-        dateFrom: null,
-        dateTo: null,
+        dateFrom: '',
+        dateTo: '',
         operatorId: 'all',
         craneId: 'all',
         serviceId: '',
@@ -73,8 +73,23 @@ const CostsPage = () => {
         maxAmount: '',
         costCenterId: 'all',
     });
-    
-    const { data: costs = [], isLoading } = useCosts();
+
+    // Rango inválido (desde > hasta): no enviar la query, solo marcar visualmente
+    const isDateRangeInvalid = Boolean(
+        filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo
+    );
+
+    // Filtro de fechas server-side: período rápido (Hoy/Semana/Mes) y rango
+    // avanzado se intersectan en un solo rango que viaja al hook y a la queryKey
+    const periodRange = getPeriodRange(dateFilter);
+    const advancedFrom = isDateRangeInvalid ? '' : filters.dateFrom;
+    const advancedTo = isDateRangeInvalid ? '' : filters.dateTo;
+    const fromCandidates = [periodRange?.from, advancedFrom].filter(Boolean) as string[];
+    const toCandidates = [periodRange?.to, advancedTo].filter(Boolean) as string[];
+    const { data: costs = [], isLoading } = useCosts({
+        dateFrom: fromCandidates.length ? fromCandidates.reduce((a, b) => (a > b ? a : b)) : '',
+        dateTo: toCandidates.length ? toCandidates.reduce((a, b) => (a < b ? a : b)) : '',
+    });
     const { mutate: deleteCost } = useDeleteCost();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
@@ -195,8 +210,8 @@ const CostsPage = () => {
         setFilters({
             category: 'all',
             subcategory: 'all',
-            dateFrom: null,
-            dateTo: null,
+            dateFrom: '',
+            dateTo: '',
             operatorId: 'all',
             craneId: 'all',
             serviceId: '',
@@ -218,46 +233,10 @@ const CostsPage = () => {
         setHighlightedCostId('');
     }, []);
 
-    const isCommission = (cost: Cost) =>
-        cost.cost_categories?.name?.toLowerCase().includes('comisi') ||
-        cost.subcategory?.toLowerCase().includes('comisi');
-
-    // Filtrar costos por fecha y término de búsqueda
-    // Las comisiones siempre pasan el filtro de fecha (su fecha es la del servicio, no la de creación)
-    const filteredCostsByDate = useMemo(() => {
-        let filtered = baseCosts;
-        const todayStr = getBusinessToday(); // YYYY-MM-DD en TZ negocio
-        switch (dateFilter) {
-            case 'today':
-                filtered = baseCosts.filter(cost => {
-                    return isCommission(cost) || (cost.date || '').slice(0, 10) === todayStr;
-                });
-                break;
-            case 'week': {
-                const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
-                filtered = baseCosts.filter(cost => {
-                    const costDate = safeParseDateOnly(cost.date);
-                    return isCommission(cost) || (costDate >= weekStart && costDate <= weekEnd);
-                });
-                break;
-            }
-            case 'month':
-                filtered = baseCosts.filter(cost => {
-                    return isCommission(cost) || (cost.date || '').slice(0, 7) === todayStr.slice(0, 7);
-                });
-                break;
-            case 'all':
-            default:
-                filtered = baseCosts;
-                break;
-        }
-
-        return filtered;
-    }, [costs, dateFilter]);
-
-    // Aplicar filtros adicionales
+    // El período (Hoy/Semana/Mes) y el rango avanzado ya vienen filtrados
+    // server-side desde useCosts — aquí solo filtros de texto y atributos
     const finalFilteredCosts = useMemo(() => {
-        let filtered = filteredCostsByDate;
+        let filtered = baseCosts;
 
         if (searchTerm.startsWith('id:')) {
             const costId = searchTerm.substring(3);
@@ -290,13 +269,7 @@ const CostsPage = () => {
             filtered = filtered.filter(cost => cost.subcategory === filters.subcategory);
         }
 
-        if (filters.dateFrom) {
-            filtered = filtered.filter(cost => safeParseDateOnly(cost.date) >= filters.dateFrom!);
-        }
-
-        if (filters.dateTo) {
-            filtered = filtered.filter(cost => safeParseDateOnly(cost.date) <= filters.dateTo!);
-        }
+        // dateFrom/dateTo se filtran server-side en useCosts — no duplicar aquí
 
         if (filters.operatorId && filters.operatorId !== 'all') {
             filtered = filtered.filter(cost => cost.operator_id === filters.operatorId);
@@ -319,7 +292,7 @@ const CostsPage = () => {
         }
 
         return filtered;
-    }, [filteredCostsByDate, searchTerm, filters]);
+    }, [baseCosts, searchTerm, filters]);
 
     const handleExportToExcel = useCallback(() => {
         if (finalFilteredCosts.length === 0) {

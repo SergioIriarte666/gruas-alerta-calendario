@@ -14,14 +14,14 @@ import { useCostCenters } from '@/hooks/useCostCenters';
 import { CostFilters } from './CostFilters';
 import { cn } from '@/lib/utils';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
+import { safeDateToDisplay, CostPeriod } from '@/utils/timezoneUtils';
 
 interface UnifiedCostFiltersProps {
   filters: CostFilters;
   onFiltersChange: (filters: CostFilters) => void;
   onClearFilters: () => void;
-  dateFilter: string;
-  onDateFilterChange: (filter: string) => void;
+  dateFilter: CostPeriod;
+  onDateFilterChange: (filter: CostPeriod) => void;
   totalResults: number;
   totalCosts: number;
   todayCount?: number;
@@ -33,7 +33,7 @@ interface UnifiedCostFiltersProps {
   isMobile?: boolean;
 }
 
-const dateFilterOptions = [
+const dateFilterOptions: { key: CostPeriod; label: string; icon: typeof Clock }[] = [
   { key: 'today', label: 'Hoy', icon: Clock },
   { key: 'week', label: 'Semana', icon: CalendarDays },
   { key: 'month', label: 'Mes', icon: Calendar },
@@ -65,6 +65,11 @@ export const UnifiedCostFilters = ({
   // Subcategorías dinámicas basadas en la categoría seleccionada
   const { subcategories } = useCostSubcategories(
     filters.category !== 'all' ? filters.category : undefined
+  );
+
+  // Las fechas son strings 'YYYY-MM-DD': la comparación lexicográfica es válida
+  const isDateRangeInvalid = Boolean(
+    filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo
   );
 
   const updateFilter = (key: keyof CostFilters, value: any) => {
@@ -106,10 +111,10 @@ export const UnifiedCostFilters = ({
       chips.push(`Subcategoría: ${filters.subcategory}`);
     }
     if (filters.dateFrom) {
-      chips.push(`Desde: ${toLocalDateString(filters.dateFrom)}`);
+      chips.push(`Desde: ${safeDateToDisplay(filters.dateFrom)}`);
     }
     if (filters.dateTo) {
-      chips.push(`Hasta: ${toLocalDateString(filters.dateTo)}`);
+      chips.push(`Hasta: ${safeDateToDisplay(filters.dateTo)}`);
     }
     if (filters.craneId && filters.craneId !== 'all') {
       const craneLabel = cranes.find(crane => crane.id === filters.craneId);
@@ -341,18 +346,25 @@ export const UnifiedCostFilters = ({
                   <div className="min-w-0 space-y-2">
                     <Label className="text-xs text-muted-foreground">Desde</Label>
                     <DatePickerInput
-                      value={filters.dateFrom ? toLocalDateString(filters.dateFrom) : ''}
-                      onChange={(date) => updateFilter('dateFrom', date ? new Date(date) : null)}
+                      value={filters.dateFrom}
+                      onChange={(date) => updateFilter('dateFrom', date)}
+                      className={cn(isDateRangeInvalid && 'border-destructive')}
                     />
                   </div>
                   <div className="min-w-0 space-y-2">
                     <Label className="text-xs text-muted-foreground">Hasta</Label>
                     <DatePickerInput
-                      value={filters.dateTo ? toLocalDateString(filters.dateTo) : ''}
-                      onChange={(date) => updateFilter('dateTo', date ? new Date(date) : null)}
+                      value={filters.dateTo}
+                      onChange={(date) => updateFilter('dateTo', date)}
+                      className={cn(isDateRangeInvalid && 'border-destructive')}
                     />
                   </div>
                 </div>
+                {isDateRangeInvalid && (
+                  <p className="text-xs text-destructive">
+                    "Desde" no puede ser posterior a "Hasta" — el filtro no se aplicará.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-3 rounded-xl border border-border/60 bg-background/80 p-4">

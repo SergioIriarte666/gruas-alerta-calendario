@@ -11,12 +11,13 @@ import { es } from 'date-fns/locale';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useOperators } from '@/hooks/useOperators';
 import { useCranes } from '@/hooks/useCranes';
+import { safeParseDateOnly, toLocalDateString } from '@/utils/timezoneUtils';
 
 export interface CostFilters {
   category: string;
   subcategory: string;
-  dateFrom: Date | null;
-  dateTo: Date | null;
+  dateFrom: string; // 'YYYY-MM-DD' o '' (sin filtro)
+  dateTo: string;   // 'YYYY-MM-DD' o '' (sin filtro)
   operatorId: string;
   craneId: string;
   serviceId: string;
@@ -116,14 +117,14 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 size-4" />
-                    {filters.dateFrom ? format(filters.dateFrom, 'dd/MM/yyyy', { locale: es }) : 'Desde'}
+                    {filters.dateFrom ? format(safeParseDateOnly(filters.dateFrom), 'dd/MM/yyyy', { locale: es }) : 'Desde'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <CalendarComponent
                     mode="single"
-                    selected={filters.dateFrom || undefined}
-                    onSelect={(date) => updateFilter('dateFrom', date || null)}
+                    selected={filters.dateFrom ? safeParseDateOnly(filters.dateFrom) : undefined}
+                    onSelect={(date) => updateFilter('dateFrom', date ? toLocalDateString(date) : '')}
                     locale={es}
                   />
                 </PopoverContent>
@@ -133,14 +134,14 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 size-4" />
-                    {filters.dateTo ? format(filters.dateTo, 'dd/MM/yyyy', { locale: es }) : 'Hasta'}
+                    {filters.dateTo ? format(safeParseDateOnly(filters.dateTo), 'dd/MM/yyyy', { locale: es }) : 'Hasta'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <CalendarComponent
                     mode="single"
-                    selected={filters.dateTo || undefined}
-                    onSelect={(date) => updateFilter('dateTo', date || null)}
+                    selected={filters.dateTo ? safeParseDateOnly(filters.dateTo) : undefined}
+                    onSelect={(date) => updateFilter('dateTo', date ? toLocalDateString(date) : '')}
                     locale={es}
                   />
                 </PopoverContent>
