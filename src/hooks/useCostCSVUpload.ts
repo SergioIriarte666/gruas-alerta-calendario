@@ -299,6 +299,8 @@ export const useCostCSVUpload = () => {
     const BATCH_SIZE = 50;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         const batch = rows.slice(i, i + BATCH_SIZE);
 
@@ -315,6 +317,7 @@ export const useCostCSVUpload = () => {
             subcategory: row.subcategoria || null,
             notes: row.notas || null,
             payment_date: row.pagado ? (row.fechaPago || row.fecha) : null,
+            created_by: user?.id || null,
           }));
 
           const { error } = await supabase.from('costs').insert(insertData);

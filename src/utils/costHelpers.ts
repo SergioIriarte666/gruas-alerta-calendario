@@ -1,5 +1,68 @@
 import { Cost } from '@/types/costs';
+import { CreatorInfo, getCreatorDisplayName } from '@/types/common';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
+
+export const getCostShortId = (costId?: string | null): string => {
+  if (!costId) return 'CST-SIN-ID';
+  return `CST-${String(costId).replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+};
+
+type AuditHistoryActor = {
+  changerName?: string | null;
+  changerEmail?: string | null;
+} | null | undefined;
+
+const getHistoryActorDisplayName = (entry?: AuditHistoryActor): string | null => {
+  if (!entry) return null;
+  return entry.changerName || entry.changerEmail || null;
+};
+
+export const getCostAuditDisplay = ({
+  creator,
+  createdHistoryEntry,
+  latestUpdateEntry,
+  hasCreatedInfo,
+  hasUpdatedInfo,
+  wasUpdatedAfterCreation,
+}: {
+  creator?: CreatorInfo | null;
+  createdHistoryEntry?: AuditHistoryActor;
+  latestUpdateEntry?: AuditHistoryActor;
+  hasCreatedInfo: boolean;
+  hasUpdatedInfo: boolean;
+  wasUpdatedAfterCreation: boolean;
+}) => {
+  const creatorDisplayName =
+    creator
+      ? getCreatorDisplayName(creator)
+      : getHistoryActorDisplayName(createdHistoryEntry) || (hasCreatedInfo ? 'Sistema o historial no disponible' : null);
+
+  const updaterDisplayName =
+    getHistoryActorDisplayName(latestUpdateEntry) ||
+    (hasUpdatedInfo && wasUpdatedAfterCreation ? 'Sistema o historial no disponible' : null);
+
+  return {
+    creatorDisplayName,
+    updaterDisplayName,
+  };
+};
+
+export const matchesCostIdentifier = (costId: string | null | undefined, searchTerm: string): boolean => {
+  if (!costId || !searchTerm.trim()) return false;
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const normalizedRawId = String(costId).toLowerCase();
+  const normalizedCompactId = normalizedRawId.replace(/-/g, '');
+  const normalizedShortId = getCostShortId(costId).toLowerCase();
+  const normalizedShortBody = normalizedShortId.replace(/^cst-/, '');
+
+  return (
+    normalizedRawId.includes(normalizedSearch) ||
+    normalizedCompactId.includes(normalizedSearch.replace(/-/g, '')) ||
+    normalizedShortId.includes(normalizedSearch) ||
+    normalizedShortBody.includes(normalizedSearch.replace(/^cst-/, '').replace(/-/g, ''))
+  );
+};
 
 /**
  * Prepara los datos de un costo para ser duplicado.

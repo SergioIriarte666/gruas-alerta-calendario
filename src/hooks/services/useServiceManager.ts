@@ -459,6 +459,8 @@ export const useServiceManager = () => {
       
 
       let transformedData: any = {};
+      const { data: { user } } = await supabase.auth.getUser();
+      const createdBy = user?.id || null;
 
       // Obtener estado real actual para auto-transiciones de flujo VIP
       let currentStatus: Service['status'] | undefined;
@@ -777,7 +779,7 @@ export const useServiceManager = () => {
           purchase_quantity: (cost as any).purchase_quantity || null,
           purchase_unit_cost: (cost as any).purchase_unit_cost || null,
           immediate_consumption: !!(cost as any).immediate_consumption,
-            created_by: null
+            created_by: createdBy
           }));
       
           

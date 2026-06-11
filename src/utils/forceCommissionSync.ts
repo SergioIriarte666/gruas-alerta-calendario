@@ -14,6 +14,8 @@ export const forceCommissionSyncForService = async (serviceId: string): Promise<
     logger.info('🚨 [FORCE_SYNC] Emergency commission sync for service:', serviceId);
     
     const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+    const { data: { user } } = await supabase.auth.getUser();
+    const createdBy = user?.id || null;
     
     // PRIMERO: Verificar que el servicio tiene operator_commission > 0
     const { data: service, error: serviceError } = await supabase
@@ -96,7 +98,7 @@ export const forceCommissionSyncForService = async (serviceId: string): Promise<
       subcategory: 'comisiones',
       notes: 'Comisión sincronizada manualmente - corrección de emergencia',
       crane_id: service.crane_id,
-      created_by: null
+      created_by: createdBy
     }));
 
     // Step 4: Insert new commissions

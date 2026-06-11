@@ -1,9 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
-import { SectionCard } from '@/components/ui/section-card';
 import { CostList } from '@/components/costs/CostList';
 import { EnhancedCostsTable } from '@/components/costs/EnhancedCostsTable';
 import { CostForm } from '@/components/costs/CostForm';
@@ -11,6 +9,7 @@ import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
 import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
+import { ManualCostXmlImportDialog } from '@/components/costs/ManualCostXmlImportDialog';
 
 import { CostFilters } from '@/components/costs/CostFilters';
 import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
@@ -23,9 +22,9 @@ import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
-import { prepareCostForDuplication } from '@/utils/costHelpers';
+import { matchesCostIdentifier, prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit, FileSpreadsheet, Search, LayoutGrid, Table2, Download } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { useUser } from '@/contexts/UserContext';
@@ -43,6 +42,7 @@ const CostsPage = () => {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
     const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
+    const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isBatchMarkPaidOpen, setIsBatchMarkPaidOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
@@ -156,6 +156,24 @@ const CostsPage = () => {
         setIsDetailsOpen(false);
     }, []);
 
+    const handleOpenManualXmlImport = useCallback((cost: Cost) => {
+        if (cost.payment_date && user?.role !== 'admin') {
+            toast.error('Este costo está marcado como pagado y no puede ser modificado sin autorización especial');
+            return;
+        }
+
+        setSelectedCostForDetails(cost);
+        setIsDetailsOpen(false);
+        setIsManualXmlImportOpen(true);
+    }, [user]);
+
+    const handleManualXmlImportOpenChange = useCallback((open: boolean) => {
+        setIsManualXmlImportOpen(open);
+        if (!open && selectedCostForDetails) {
+            setIsDetailsOpen(true);
+        }
+    }, [selectedCostForDetails]);
+
     const [costToDelete, setCostToDelete] = useState<Cost | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -243,11 +261,12 @@ const CostsPage = () => {
 
         if (searchTerm.startsWith('id:')) {
             const costId = searchTerm.substring(3);
-            filtered = filtered.filter(cost => cost.id === costId);
+            filtered = filtered.filter(cost => matchesCostIdentifier(cost.id, costId));
         } else if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             filtered = filtered.filter(cost => {
-                const matchesCost = cost.description.toLowerCase().includes(searchLower) ||
+                const matchesCost = matchesCostIdentifier(cost.id, searchLower) ||
+                    cost.description.toLowerCase().includes(searchLower) ||
                     cost.notes?.toLowerCase().includes(searchLower) ||
                     cost.cost_categories?.name.toLowerCase().includes(searchLower) ||
                     cost.subcategory?.toLowerCase().includes(searchLower) ||
@@ -420,55 +439,6 @@ const CostsPage = () => {
                 allCosts={costs}
             />
 
-            <SectionCard
-                className="border-border/70 bg-card/80 shadow-sm"
-                contentClassName="space-y-4"
-                title="Búsqueda y Vista"
-                description="Refina resultados, cambia el formato visual y exporta el subconjunto filtrado."
-            >
-                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center gap-3'}`}>
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder="Buscar por descripción, categoría, folio o notas..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="h-11 rounded-xl border-border/70 bg-background/70 pl-10"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {!isMobile && (
-                            <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/70 p-1">
-                                <Button
-                                    variant={viewMode === 'table' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => setViewMode('table')}
-                                    className="rounded-lg"
-                                >
-                                    <Table2 className="size-4" />
-                                </Button>
-                                <Button
-                                    variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                                    size="sm"
-                                    onClick={() => setViewMode('cards')}
-                                    className="rounded-lg"
-                                >
-                                    <LayoutGrid className="size-4" />
-                                </Button>
-                            </div>
-                        )}
-
-                        <Button variant="outline" onClick={handleExportToExcel} size={isMobile ? 'sm' : 'default'} className="h-11 rounded-xl border-border/70 bg-background/70">
-                            <Download className="mr-2 size-4" />
-                            <span className="hidden sm:inline">Exportar</span>
-                        </Button>
-                    </div>
-                </div>
-            </SectionCard>
-
-            {/* Filtros unificados */}
             <UnifiedCostFilters
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -478,6 +448,12 @@ const CostsPage = () => {
                 totalResults={totalCosts}
                 totalCosts={costs.length}
                 todayCount={dateMetrics.today.count}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onExport={handleExportToExcel}
+                isMobile={isMobile}
             />
             
             {viewMode === 'table' ? (
@@ -532,6 +508,19 @@ const CostsPage = () => {
                     onClose={handleCloseDetails}
                     onEdit={handleOpenForm}
                     onDuplicate={handleDuplicateCost}
+                    onImportXml={handleOpenManualXmlImport}
+                />
+            )}
+
+            {selectedCostForDetails && (
+                <ManualCostXmlImportDialog
+                    open={isManualXmlImportOpen}
+                    onOpenChange={handleManualXmlImportOpenChange}
+                    cost={selectedCostForDetails}
+                    onImported={(updatedCost) => {
+                        setSelectedCostForDetails(updatedCost);
+                        handleManualXmlImportOpenChange(false);
+                    }}
                 />
             )}
             

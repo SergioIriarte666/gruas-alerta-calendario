@@ -14,6 +14,8 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
     logger.info('🔄 [SYNC_SINGLE] Starting commission sync for service:', serviceId);
     
     const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+    const { data: { user } } = await supabase.auth.getUser();
+    const createdBy = user?.id || null;
     
     // PRIMERO: Verificar que el servicio tiene operator_commission > 0
     const { data: service, error: serviceError } = await supabase
@@ -85,7 +87,7 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
       subcategory: 'comisiones',
       notes: 'Comisión sincronizada automáticamente',
       crane_id: service.crane_id,
-      created_by: null
+      created_by: createdBy
     }));
 
     const { data: insertedCosts, error: insertError } = await supabase

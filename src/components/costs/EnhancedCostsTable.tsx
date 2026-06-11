@@ -24,6 +24,7 @@ import { CostBatchActionBar } from './CostBatchActionBar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getCostShortId } from '@/utils/costHelpers';
 
 interface EnhancedCostsTableProps {
   costs: Cost[];
@@ -284,19 +285,24 @@ export const EnhancedCostsTable = ({
         {format(new Date(cost.date + 'T00:00:00'), 'dd/MM/yyyy')}
       </TableCell>
       <TableCell className="max-w-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate" title={cost.description}>
-            {cost.description}
-          </span>
-          {(() => {
-            const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
-            return itemsCount > 1 ? (
-              <Badge variant="outline" className="shrink-0 border-warning/20 bg-warning/10 px-1.5 py-0 text-[10px] text-warning">
-                <Layers className="size-3 mr-0.5" />
-                {itemsCount}
-              </Badge>
-            ) : null;
-          })()}
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate" title={cost.description}>
+              {cost.description}
+            </span>
+            {(() => {
+              const itemsCount = (cost as any).supplier_invoices?.supplier_invoice_items?.length || 0;
+              return itemsCount > 1 ? (
+                <Badge variant="outline" className="shrink-0 border-warning/20 bg-warning/10 px-1.5 py-0 text-[10px] text-warning">
+                  <Layers className="mr-0.5 size-3" />
+                  {itemsCount}
+                </Badge>
+              ) : null;
+            })()}
+          </div>
+          <div className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {getCostShortId(cost.id)}
+          </div>
         </div>
       </TableCell>
       <TableCell>

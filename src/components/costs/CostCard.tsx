@@ -1,10 +1,11 @@
-import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Cost } from '@/types/costs';
 import { Edit, Trash2, Calendar, DollarSign, Tag, Truck, User, FileText, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import { getCostShortId } from '@/utils/costHelpers';
 
 interface CostCardProps {
   cost: Cost;
@@ -43,9 +44,14 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }:
       <CardContent className="p-4">
         {/* Header con fecha y monto */}
         <div className="flex justify-between items-start mb-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Calendar className="size-4" />
-            <span className="font-medium">{formatDate(cost.date)}</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="size-4" />
+              <span className="font-medium">{formatDate(cost.date)}</span>
+            </div>
+            <Badge variant="outline" className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+              {getCostShortId(cost.id)}
+            </Badge>
           </div>
           <div className="flex items-center gap-1 text-lg font-bold text-tms-green">
             <DollarSign className="size-5" />

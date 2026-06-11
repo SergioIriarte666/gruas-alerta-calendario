@@ -25,7 +25,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
-import { getCreatorDisplayName } from '@/types/common';
 import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
@@ -35,6 +34,7 @@ import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 import { createLogger } from "@/lib/logger";
+import { getCostAuditDisplay } from '@/utils/costHelpers';
 
 
 const logger = createLogger("CostDetailsModal");
@@ -96,6 +96,20 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
   const [isDownloadingPdf, setIsDownloadingPdf] = React.useState(false);
   const { settings } = useSettings();
   const { toast } = useToast();
+  const { data: changeHistory } = useCostChangeHistory(isOpen ? cost.id : null);
+  const hasCreatedInfo = Boolean(cost.created_at);
+  const hasUpdatedInfo = Boolean(cost.updated_at);
+  const hasAuditInfo = hasCreatedInfo || hasUpdatedInfo;
+  const createdHistoryEntry = changeHistory?.find((entry) => entry.changeType === 'CREATE');
+  const latestUpdateEntry = changeHistory?.find((entry) => entry.changeType === 'UPDATE');
+  const { creatorDisplayName, updaterDisplayName } = getCostAuditDisplay({
+    creator: cost.creator,
+    createdHistoryEntry,
+    latestUpdateEntry,
+    hasCreatedInfo,
+    hasUpdatedInfo,
+    wasUpdatedAfterCreation: Boolean(cost.created_at && cost.updated_at && cost.created_at !== cost.updated_at),
+  });
 
   const handleDownloadPdf = async () => {
     try {
@@ -447,13 +461,24 @@ const CostDetailsModalInner = ({ cost, isOpen, onClose, onDuplicate }: CostDetai
         <Separator className="border-border" />
         <CostTraceabilityPanel costId={cost.id} />
 
-        <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
-          <span>
-            Creado: {formatForDisplayWithTime(cost.created_at)}
-            {cost.creator && ` por ${getCreatorDisplayName(cost.creator)}`}
-          </span>
-          <span>Actualizado: {formatForDisplayWithTime(cost.updated_at)}</span>
-        </div>
+        {hasAuditInfo && (
+          <div className="grid gap-1 border-t pt-4 mt-4 text-sm text-muted-foreground sm:grid-cols-2 sm:gap-3">
+            <span>
+              {hasCreatedInfo
+                ? `Creado: ${formatForDisplayWithTime(cost.created_at!)}`
+                : ''}
+            </span>
+            <span>
+              {creatorDisplayName ? `Creado por: ${creatorDisplayName}` : ''}
+            </span>
+            <span className="sm:col-span-2">
+              {hasUpdatedInfo ? `Actualizado: ${formatForDisplayWithTime(cost.updated_at!)}` : ''}
+            </span>
+            <span className="sm:col-span-2">
+              {updaterDisplayName ? `Ultima actualizacion por: ${updaterDisplayName}` : ''}
+            </span>
+          </div>
+        )}
         </div>
       </DialogContent>
     </Dialog>

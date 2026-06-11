@@ -27,9 +27,9 @@ import {
   StickyNote,
   History,
   Download,
+  FileUp,
 } from 'lucide-react';
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
-import { getCreatorDisplayName } from '@/types/common';
 import { supabase } from '@/integrations/supabase/client';
 import { useCostChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
@@ -38,6 +38,7 @@ import { triggerFileDownload } from '@/utils/fileDownload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
 import { createLogger } from "@/lib/logger";
+import { getCostAuditDisplay } from '@/utils/costHelpers';
 
 
 const logger = createLogger("ConsolidatedCostDetails");
@@ -47,6 +48,7 @@ interface ConsolidatedCostDetailsProps {
   onClose: () => void;
   onEdit?: (cost: Cost) => void;
   onDuplicate?: (cost: Cost) => void;
+  onImportXml?: (cost: Cost) => void;
 }
 
 export const ConsolidatedCostDetails = ({
@@ -55,6 +57,7 @@ export const ConsolidatedCostDetails = ({
   onClose,
   onEdit,
   onDuplicate,
+  onImportXml,
 }: ConsolidatedCostDetailsProps) => {
   const [showAssociations, setShowAssociations] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
@@ -63,6 +66,19 @@ export const ConsolidatedCostDetails = ({
   const { settings } = useSettings();
   const { toast } = useToast();
   const { data: changeHistory, isLoading: historyLoading } = useCostChangeHistory(isOpen ? cost.id : null);
+  const hasCreatedInfo = Boolean(cost.created_at);
+  const hasUpdatedInfo = Boolean(cost.updated_at);
+  const hasAuditInfo = hasCreatedInfo || hasUpdatedInfo;
+  const createdHistoryEntry = changeHistory?.find((entry) => entry.changeType === 'CREATE');
+  const latestUpdateEntry = changeHistory?.find((entry) => entry.changeType === 'UPDATE');
+  const { creatorDisplayName, updaterDisplayName } = getCostAuditDisplay({
+    creator: cost.creator,
+    createdHistoryEntry,
+    latestUpdateEntry,
+    hasCreatedInfo,
+    hasUpdatedInfo,
+    wasUpdatedAfterCreation: Boolean(cost.created_at && cost.updated_at && cost.created_at !== cost.updated_at),
+  });
 
   const handleDownloadPdf = async () => {
     try {
@@ -508,6 +524,16 @@ export const ConsolidatedCostDetails = ({
                 Editar
               </Button>
             )}
+            {onImportXml && (
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => onImportXml(cost)}
+              >
+                <FileUp className="size-4 mr-2" />
+                Actualizar con XML
+              </Button>
+            )}
             {onDuplicate && (
               <Button
                 variant="outline"
@@ -524,14 +550,25 @@ export const ConsolidatedCostDetails = ({
           </div>
 
           {/* Footer con auditoría */}
-          <Separator />
-          <div className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-            <span>
-              Creado: {formatForDisplayWithTime(cost.created_at)}
-              {cost.creator && ` por ${getCreatorDisplayName(cost.creator)}`}
-            </span>
-            <span>Actualizado: {formatForDisplayWithTime(cost.updated_at)}</span>
-          </div>
+          {hasAuditInfo && (
+            <>
+              <Separator />
+              <div className="grid gap-1 text-xs text-muted-foreground sm:grid-cols-2 sm:gap-3">
+                <span>
+                  {hasCreatedInfo ? `Creado: ${formatForDisplayWithTime(cost.created_at!)}` : ''}
+                </span>
+                <span>
+                  {creatorDisplayName ? `Creado por: ${creatorDisplayName}` : ''}
+                </span>
+                <span className="sm:col-span-2">
+                  {hasUpdatedInfo ? `Actualizado: ${formatForDisplayWithTime(cost.updated_at!)}` : ''}
+                </span>
+                <span className="sm:col-span-2">
+                  {updaterDisplayName ? `Ultima actualizacion por: ${updaterDisplayName}` : ''}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

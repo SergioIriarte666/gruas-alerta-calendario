@@ -45,6 +45,8 @@ const COSTS_SELECT_CLAUSE = `
 
 const COSTS_LIST_SELECT_CLAUSE = `
   id,
+  created_at,
+  updated_at,
   date,
   description,
   amount,
@@ -61,6 +63,11 @@ const COSTS_LIST_SELECT_CLAUSE = `
   supplier_payment_id,
   inventory_movement_id,
   cost_categories (id, name),
+  creator:profiles!costs_created_by_fkey (
+    id,
+    full_name,
+    email
+  ),
   cranes (id, brand, model, license_plate),
   operators (id, name),
   services (id, folio)
@@ -373,10 +380,10 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
   if (data.inventory_movement_id && validCostData.description !== undefined) {
     const { error: movementError } = await supabase
       .from('inventory_movements')
-      .update({ notes: validCostData.description })
+      .update({ observations: validCostData.description })
       .eq('id', data.inventory_movement_id);
     if (movementError) {
-      logger.warn('[useCosts - updateCost] Could not sync inventory_movement notes:', movementError.message);
+      logger.warn('[useCosts - updateCost] Could not sync inventory_movement observations:', movementError.message);
     }
   }
 
