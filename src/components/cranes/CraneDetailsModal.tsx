@@ -26,7 +26,7 @@ export const CraneDetailsModal = ({
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-2xl font-bold text-foreground">
-                Grúa {crane.licensePlate}
+                {crane.licensePlate}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground mt-1">
                 {crane.brand} {crane.model} • {crane.type}
@@ -40,7 +40,7 @@ export const CraneDetailsModal = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6">
+        <div className="flex flex-1 min-h-0 overflow-hidden">
           <CraneTabsWithCounters crane={crane} />
         </div>
 

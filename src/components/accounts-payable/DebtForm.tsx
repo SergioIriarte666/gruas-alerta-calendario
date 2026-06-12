@@ -27,7 +27,7 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
   const { data: creditors } = useCreditors();
   const { mutate: createDebt, isPending } = useCreateDebt();
   const { data: costCenters = [] } = useCostCenters();
-  const { cranes = [] } = useCranes();
+  const { operationalCranes: cranes = [] } = useCranes();
   const { operators = [] } = useOperators();
   const { data: categories = [] } = useCostCategories();
   const debtCategoryId = (categories as any[]).find((c: any) => c.name === 'Deudas y Obligaciones')?.id;

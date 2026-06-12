@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Crane, CraneStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -292,8 +293,17 @@ export const useCranes = (activeOnly = false) => {
     },
   });
 
+  // Grúas que admiten nuevos registros: excluye vendidas y dadas de baja.
+  // Incluye inactivas (fuera de servicio temporal) porque siguen recibiendo
+  // costos de reparación, movimientos de inventario, etc.
+  const operationalCranes = useMemo(
+    () => cranes.filter(c => c.status !== 'sold' && c.status !== 'written_off'),
+    [cranes]
+  );
+
   return {
     cranes,
+    operationalCranes,
     loading,
     createCrane: createCraneMutation.mutateAsync,
     updateCrane: (id: string, craneData: Partial<Crane>) => updateCraneMutation.mutateAsync({ id, craneData }),

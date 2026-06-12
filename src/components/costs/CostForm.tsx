@@ -59,13 +59,24 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
     const [receiptUrls, setReceiptUrls] = useState<string[]>([]);
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
-    const { cranes, loading: isLoadingCranes } = useCranes();
+    const { cranes, operationalCranes, loading: isLoadingCranes } = useCranes();
     const { data: operators = [], isLoading: isLoadingOperators } = useOperatorsData();
     const { getServicesForCosts, services, loading: isLoadingServices } = useServices();
     const { suppliers = [] } = useSuppliers();
     const { data: costCenters = [] } = useCostCenters();
 
     const servicesForCosts = getServicesForCosts();
+
+    // Grúas elegibles en el selector: operacionales + la grúa actual del costo
+    // en edición aunque esté vendida/dada de baja (para no vaciar el campo)
+    const selectableCranes = useMemo(() => {
+        const currentCrane = cost?.crane_id ? cranes.find(c => c.id === cost.crane_id) : undefined;
+        if (currentCrane && !operationalCranes.some(c => c.id === currentCrane.id)) {
+            return [...operationalCranes, currentCrane];
+        }
+        return operationalCranes;
+    }, [cranes, operationalCranes, cost?.crane_id]);
+
     const isQuickEntryPrefill = Boolean((prefilledData as any)?.quickEntryId);
     const receiptPhotoPaths = useMemo(
         () => ((((prefilledData as any)?.receipt_photo_paths as string[] | undefined) || []).filter(Boolean)),
@@ -776,7 +787,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                 {currentStep === 3 && (
                                                     <CostFormStep3
                                                         form={form}
-                                                        cranes={cranes}
+                                                        cranes={selectableCranes}
                                                         isLoadingCranes={isLoadingCranes}
                                                         operators={operators}
                                                         isLoadingOperators={isLoadingOperators}

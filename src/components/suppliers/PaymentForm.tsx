@@ -74,7 +74,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 }) => {
   const { createPayment, updatePayment, isCreating, isUpdating } = useSupplierPayments();
   const { suppliers } = useSuppliers();
-  const { cranes } = useCranes();
+  const { operationalCranes: cranes } = useCranes();
   const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
   const { checkDuplicate } = usePaymentDuplicateCheck();
   const { descriptionSuggestions, partNameSuggestions } = useFrequentSupplierData();

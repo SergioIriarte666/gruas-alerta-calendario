@@ -54,7 +54,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
   const { mutate: addCost, isPending } = useAddCost();
   
   const { data: categories = [] } = useCostCategories();
-  const { cranes } = useCranes();
+  const { operationalCranes: cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { data: costCenters = [] } = useCostCenters();
   

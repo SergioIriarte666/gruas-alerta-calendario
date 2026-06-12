@@ -1,5 +1,3 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { CraneServices } from './CraneServices';
 import { CraneCosts } from './CraneCosts';
 import { CraneParts } from './CraneParts';
@@ -8,22 +6,20 @@ import { CraneMetricsOverview } from './CraneMetricsOverview';
 import { CraneInventoryTab } from './CraneInventoryTab';
 import { Crane } from '@/types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart3, Wrench, DollarSign, Package, Settings, Warehouse } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CraneTabsWithCountersProps {
   crane: Crane;
 }
 
-const CounterBadge = ({ count }: { count: number }) => (
-  <Badge variant="secondary" className="ml-2 border-primary/20 bg-primary-soft text-foreground">
-    {count}
-  </Badge>
-);
+type CraneTabId = 'overview' | 'services' | 'costs' | 'parts' | 'maintenance' | 'inventory';
 
 export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<CraneTabId>('overview');
 
   useEffect(() => {
     if (!crane?.id) return;
@@ -99,64 +95,60 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
     }
   });
 
+  const navItems = [
+    { id: 'overview'     as const, label: 'Resumen',    Icon: BarChart3,  count: null },
+    { id: 'services'     as const, label: 'Servicios',  Icon: Wrench,     count: counters?.services ?? 0 },
+    { id: 'costs'        as const, label: 'Costos',     Icon: DollarSign, count: counters?.costs ?? 0 },
+    { id: 'parts'        as const, label: 'Piezas',     Icon: Package,    count: counters?.parts ?? 0 },
+    { id: 'maintenance'  as const, label: 'Mantención', Icon: Settings,   count: counters?.maintenance ?? 0 },
+    { id: 'inventory'    as const, label: 'Inventario', Icon: Warehouse,  count: null },
+  ];
+
   return (
-    <Tabs defaultValue="overview" className="size-full flex flex-col">
-      <TabsList className="flex w-full overflow-x-auto h-auto border border-border bg-muted/60 p-1">
-        <TabsTrigger value="overview" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <BarChart3 className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Resumen</span>
-        </TabsTrigger>
-        <TabsTrigger value="services" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Wrench className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Servicios</span>
-          <CounterBadge count={counters?.services || 0} />
-        </TabsTrigger>
-        <TabsTrigger value="costs" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <DollarSign className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Costos</span>
-          <CounterBadge count={counters?.costs || 0} />
-        </TabsTrigger>
-        <TabsTrigger value="parts" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Package className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Piezas</span>
-          <CounterBadge count={counters?.parts || 0} />
-        </TabsTrigger>
-        <TabsTrigger value="maintenance" className="flex-shrink-0 px-3 min-w-0 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Settings className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Mant.</span>
-          <CounterBadge count={counters?.maintenance || 0} />
-        </TabsTrigger>
-        <TabsTrigger value="inventory" className="hidden lg:flex flex-shrink-0 min-w-0 gap-2 px-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-          <Warehouse className="size-4 sm:mr-2" />
-          <span className="hidden sm:inline">Inventario</span>
-        </TabsTrigger>
-      </TabsList>
+    <div className="flex flex-1 min-w-0 min-h-0">
+      {/* Sidebar nav */}
+      <nav className="w-44 flex-shrink-0 border-r border-border/70 flex flex-col py-3 px-2">
+        <div className="flex flex-col gap-0.5 flex-1">
+          {navItems.map(({ id, label, Icon, count }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={cn(
+                  'flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-sm transition-colors text-left',
+                  isActive
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="size-4 flex-shrink-0" />
+                <span className="flex-1 leading-none">{label}</span>
+                {count !== null && (
+                  <span className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-full leading-none font-medium tabular-nums',
+                    isActive
+                      ? 'bg-white/20 text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
-      <div className="flex-1 overflow-hidden">
-        <TabsContent value="overview" className="h-full overflow-auto">
-          <CraneMetricsOverview crane={crane} />
-        </TabsContent>
-
-        <TabsContent value="services" className="h-full overflow-auto">
-          <CraneServices crane={crane} />
-        </TabsContent>
-
-        <TabsContent value="costs" className="h-full overflow-auto">
-          <CraneCosts crane={crane} />
-        </TabsContent>
-
-        <TabsContent value="parts" className="h-full overflow-auto">
-          <CraneParts crane={crane} />
-        </TabsContent>
-
-        <TabsContent value="maintenance" className="h-full overflow-auto">
-          <CraneMaintenanceTab crane={crane} />
-        </TabsContent>
-
-        <TabsContent value="inventory" className="h-full overflow-auto">
-          <CraneInventoryTab crane={crane} />
-        </TabsContent>
+      {/* Contenido activo */}
+      <div className="flex-1 min-w-0 overflow-y-auto p-6">
+        {activeTab === 'overview'    && <CraneMetricsOverview crane={crane} />}
+        {activeTab === 'services'    && <CraneServices crane={crane} />}
+        {activeTab === 'costs'       && <CraneCosts crane={crane} />}
+        {activeTab === 'parts'       && <CraneParts crane={crane} />}
+        {activeTab === 'maintenance' && <CraneMaintenanceTab crane={crane} />}
+        {activeTab === 'inventory'   && <CraneInventoryTab crane={crane} />}
       </div>
-    </Tabs>
+    </div>
   );
 };

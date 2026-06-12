@@ -82,7 +82,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   const { data: items } = useInventoryItems();
   const { data: locations } = useInventoryLocations();
   const { data: stockData } = useInventoryStock();
-  const { cranes } = useCranes();
+  const { operationalCranes: cranes } = useCranes();
   const { operators } = useOperators();
   const createMovement = useCreateInventoryMovement();
 

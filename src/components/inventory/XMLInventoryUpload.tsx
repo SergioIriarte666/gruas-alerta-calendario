@@ -209,7 +209,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({
   const { data: categories = [] } = useInventoryCategories();
   const { data: costCategories = [] } = useCostCategories();
   const { data: costCenters = [] } = useCostCenters();
-  const { cranes = [] } = useCranes();
+  const { operationalCranes: cranes = [] } = useCranes();
   const { operators = [] } = useOperators();
   const { getServicesForCosts } = useServices();
   const { data: locations = [] } = useInventoryLocations();
