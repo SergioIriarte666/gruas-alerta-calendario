@@ -4,7 +4,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useServicesForClosures } from '@/hooks/useServicesForClosures';
+import { useServicesForClosures, EXCESS_ROW_SUFFIX } from '@/hooks/useServicesForClosures';
+import { toast } from 'sonner';
 import { ServiceClosure, ClosureStatus } from '@/types';
 import DateRangePicker from './DateRangePicker';
 import ClientSelector from './ClientSelector';
@@ -141,8 +142,24 @@ const ClosureForm = ({
 
   const handleServiceSelection = (serviceId: string, checked: boolean) => {
     setFormData(prev => {
-      const newServiceIds = checked 
-        ? [...prev.serviceIds, serviceId] 
+      // Un cierre debe ser homogéneo: solo montos cubiertos o solo excedentes
+      if (checked) {
+        if (prev.serviceIds.includes(serviceId)) {
+          toast.error('Este servicio ya está incluido en este cierre con el mismo tipo de monto');
+          return prev;
+        }
+        const isExcess = serviceId.endsWith(EXCESS_ROW_SUFFIX);
+        const mixesTypes = prev.serviceIds.some(id => id.endsWith(EXCESS_ROW_SUFFIX) !== isExcess);
+        if (mixesTypes) {
+          toast.error('Un cierre no puede mezclar montos cubiertos y excedentes', {
+            description: 'Crea un cierre separado para los excedentes.',
+          });
+          return prev;
+        }
+      }
+
+      const newServiceIds = checked
+        ? [...prev.serviceIds, serviceId]
         : prev.serviceIds.filter(id => id !== serviceId);
 
       const selectedServices = services.filter(s => newServiceIds.includes(s.id));

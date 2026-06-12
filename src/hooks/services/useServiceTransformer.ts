@@ -144,6 +144,7 @@ export const useServiceTransformer = () => {
         hasExcess: item.has_excess || false,
         clientCoveredAmount: item.client_covered_amount ?? null, // Preserve null values for proper excess calculation
         excessAmount: item.excess_amount || 0,
+        thirdPartyClientId: item.third_party_client_id || null,
         // Invoice information
         invoiceFolio: item.invoice_folio || undefined,
         invoiceNumeroFiscal: item.invoice_numero_fiscal || undefined,

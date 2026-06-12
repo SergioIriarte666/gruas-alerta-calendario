@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -42,15 +42,7 @@ export type Database = {
           timestamp?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       backup_email_config: {
         Row: {
@@ -388,9 +380,9 @@ export type Database = {
           contact_name: string | null
           created_at: string | null
           created_by: string | null
-          display_name: string | null
           default_payment_term_id: string | null
           department: string
+          display_name: string | null
           email: string | null
           id: string
           is_active: boolean | null
@@ -407,9 +399,9 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
-          display_name?: string | null
           default_payment_term_id?: string | null
           department: string
+          display_name?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -426,9 +418,9 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
-          display_name?: string | null
           default_payment_term_id?: string | null
           department?: string
+          display_name?: string | null
           email?: string | null
           id?: string
           is_active?: boolean | null
@@ -458,19 +450,25 @@ export type Database = {
       }
       closure_services: {
         Row: {
+          amount: number | null
           closure_id: string
           id: string
           service_id: string
+          value_type: string
         }
         Insert: {
+          amount?: number | null
           closure_id: string
           id?: string
           service_id: string
+          value_type?: string
         }
         Update: {
+          amount?: number | null
           closure_id?: string
           id?: string
           service_id?: string
+          value_type?: string
         }
         Relationships: [
           {
@@ -1448,6 +1446,7 @@ export type Database = {
           model: string
           owner_company_name: string | null
           owner_company_rut: string | null
+          status: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry: string
           toll_vehicle_category: string
           type: Database["public"]["Enums"]["crane_type"]
@@ -1465,6 +1464,7 @@ export type Database = {
           model: string
           owner_company_name?: string | null
           owner_company_rut?: string | null
+          status?: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry: string
           toll_vehicle_category?: string
           type: Database["public"]["Enums"]["crane_type"]
@@ -1482,6 +1482,7 @@ export type Database = {
           model?: string
           owner_company_name?: string | null
           owner_company_rut?: string | null
+          status?: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry?: string
           toll_vehicle_category?: string
           type?: Database["public"]["Enums"]["crane_type"]
@@ -1803,6 +1804,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      frontend_error_logs: {
+        Row: {
+          component_name: string
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          id: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component_name: string
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component_name?: string
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       fuel_prices: {
         Row: {
@@ -2160,6 +2194,8 @@ export type Database = {
           id: string
           operator_id: string
           operator_signature: string
+          pdf_retiro_uploaded_at: string | null
+          pdf_retiro_url: string | null
           pdf_uploaded_at: string | null
           pdf_url: string | null
           photos_before_service: string[] | null
@@ -2176,6 +2212,8 @@ export type Database = {
           id?: string
           operator_id: string
           operator_signature: string
+          pdf_retiro_uploaded_at?: string | null
+          pdf_retiro_url?: string | null
           pdf_uploaded_at?: string | null
           pdf_url?: string | null
           photos_before_service?: string[] | null
@@ -2192,6 +2230,8 @@ export type Database = {
           id?: string
           operator_id?: string
           operator_signature?: string
+          pdf_retiro_uploaded_at?: string | null
+          pdf_retiro_url?: string | null
           pdf_uploaded_at?: string | null
           pdf_url?: string | null
           photos_before_service?: string[] | null
@@ -3342,6 +3382,69 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_documents: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          document_type: string
+          expiry_date: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          issued_date: string | null
+          notes: string | null
+          operator_id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          document_type: string
+          expiry_date?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          issued_date?: string | null
+          notes?: string | null
+          operator_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          issued_date?: string | null
+          notes?: string | null
+          operator_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_documents_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operators: {
         Row: {
           commission_exempt: boolean
@@ -4137,6 +4240,7 @@ export type Database = {
       service_closures: {
         Row: {
           client_id: string | null
+          closure_type: string
           created_at: string | null
           created_by: string | null
           date_from: string
@@ -4150,6 +4254,7 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          closure_type?: string
           created_at?: string | null
           created_by?: string | null
           date_from: string
@@ -4163,6 +4268,7 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          closure_type?: string
           created_at?: string | null
           created_by?: string | null
           date_from?: string
@@ -4598,6 +4704,7 @@ export type Database = {
           outsourced_cost: number | null
           outsourced_notes: string | null
           outsourced_provider_id: string | null
+          preferred_time: string | null
           purchase_order: string | null
           purchase_order_number: string | null
           quote_number: string | null
@@ -4610,6 +4717,7 @@ export type Database = {
           status: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id: string | null
           updated_at: string | null
+          urgency: string | null
           value: number
           vehicle_brand: string | null
           vehicle_model: string | null
@@ -4654,6 +4762,7 @@ export type Database = {
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
+          preferred_time?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
@@ -4666,6 +4775,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id?: string | null
           updated_at?: string | null
+          urgency?: string | null
           value: number
           vehicle_brand?: string | null
           vehicle_model?: string | null
@@ -4710,6 +4820,7 @@ export type Database = {
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
+          preferred_time?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
@@ -4722,6 +4833,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id?: string | null
           updated_at?: string | null
+          urgency?: string | null
           value?: number
           vehicle_brand?: string | null
           vehicle_model?: string | null
@@ -5392,33 +5504,28 @@ export type Database = {
         Row: {
           created_at: string
           event_type: string
-          id: string
+          id: number
+          metadata: Json | null
           path: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
           event_type: string
-          id?: string
+          id?: number
+          metadata?: Json | null
           path?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
           event_type?: string
-          id?: string
+          id?: number
+          metadata?: Json | null
           path?: string | null
-          user_id?: string | null
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_activity_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_invitations: {
         Row: {
@@ -5545,6 +5652,33 @@ export type Database = {
           updated_at?: string
           use_system_timezone?: boolean
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicle_api_cache: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          expires_at: string
+          id: string
+          lookup_value: string
+          response: Json
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          expires_at: string
+          id?: string
+          lookup_value: string
+          response: Json
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          expires_at?: string
+          id?: string
+          lookup_value?: string
+          response?: Json
         }
         Relationships: []
       }
@@ -5723,11 +5857,15 @@ export type Database = {
           notify_inspection_completed: boolean
           notify_invoice_overdue: boolean
           notify_operator_assigned: boolean
+          notify_operator_document_expiry: boolean
           notify_payment_pending: boolean
           notify_service_completed: boolean
           notify_service_no_operator: boolean
           notify_service_no_quote: boolean
+          notify_vehicle_pickup: boolean
+          notify_weekly_summary: boolean
           updated_at: string
+          whatsapp_enabled: boolean
         }
         Insert: {
           admin_phone_1?: string | null
@@ -5739,11 +5877,15 @@ export type Database = {
           notify_inspection_completed?: boolean
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
+          notify_operator_document_expiry?: boolean
           notify_payment_pending?: boolean
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
           notify_service_no_quote?: boolean
+          notify_vehicle_pickup?: boolean
+          notify_weekly_summary?: boolean
           updated_at?: string
+          whatsapp_enabled?: boolean
         }
         Update: {
           admin_phone_1?: string | null
@@ -5755,11 +5897,15 @@ export type Database = {
           notify_inspection_completed?: boolean
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
+          notify_operator_document_expiry?: boolean
           notify_payment_pending?: boolean
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
           notify_service_no_quote?: boolean
+          notify_vehicle_pickup?: boolean
+          notify_weekly_summary?: boolean
           updated_at?: string
+          whatsapp_enabled?: boolean
         }
         Relationships: []
       }
@@ -5819,14 +5965,14 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["related_client_id"]
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["client_id"]
+            columns: ["related_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -5890,9 +6036,13 @@ export type Database = {
       approve_pending_user: {
         Args: {
           new_role?: Database["public"]["Enums"]["app_role"]
-          target_client_id?: string | null
+          target_client_id?: string
           target_user_id: string
         }
+        Returns: undefined
+      }
+      assign_user_client: {
+        Args: { target_client_id?: string; target_user_id: string }
         Returns: undefined
       }
       audit_commission_system: { Args: never; Returns: Json }
@@ -5992,6 +6142,10 @@ export type Database = {
           supplier_rut: string
         }[]
       }
+      cleanup_bank_statement_imports: {
+        Args: { p_import_ids?: string[] }
+        Returns: Json
+      }
       cleanup_duplicate_inventory_costs: { Args: never; Returns: Json }
       cleanup_duplicate_payments: { Args: never; Returns: Json }
       cleanup_duplicate_profiles: { Args: never; Returns: undefined }
@@ -6008,6 +6162,16 @@ export type Database = {
             Args: { p_invoice_id: string; p_payment_date?: string }
             Returns: Json
           }
+      create_bank_statement_import: {
+        Args: {
+          p_bank_name?: string
+          p_file_name: string
+          p_file_type: string
+          p_movements?: Json
+          p_processing_summary?: Json
+        }
+        Returns: Json
+      }
       create_cost_with_payment_link: {
         Args: {
           p_amount: number
@@ -6067,16 +6231,6 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
-      }
-      create_bank_statement_import: {
-        Args: {
-          p_bank_name?: string
-          p_file_name: string
-          p_file_type: string
-          p_movements?: Json
-          p_processing_summary?: Json
-        }
-        Returns: Json
       }
       create_payment_from_existing_income: {
         Args: { p_income_id: string }
@@ -6243,6 +6397,7 @@ export type Database = {
         Args: never
         Returns: {
           amount: number
+          category_id: string
           client_name: string
           created_at: string
           date: string
@@ -6366,7 +6521,27 @@ export type Database = {
       }
       get_pending_users: {
         Args: never
-        Returns: Database["public"]["Tables"]["profiles"]["Row"][]
+        Returns: {
+          avatar_url: string | null
+          client_id: string | null
+          company: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          rut: string | null
+          status: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_pending_users_count: { Args: never; Returns: number }
       get_purchase_void_impact: { Args: { p_cost_id: string }; Returns: Json }
@@ -6457,18 +6632,6 @@ export type Database = {
       }
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
-      list_operators_config: {
-        Args: never
-        Returns: {
-          email: string
-          has_op_role: boolean
-          operator_id: string
-          operator_name: string
-          services_direct: number
-          services_resource: number
-          user_id_set: boolean
-        }[]
-      }
       list_bank_statement_invoice_candidates: {
         Args: { p_movement_id: string }
         Returns: {
@@ -6479,10 +6642,22 @@ export type Database = {
           folio: string
           invoice_id: string
           issue_date: string
-          match_reason: string | null
+          match_reason: string
           match_score: number
           numero_fiscal: string
           total: number
+        }[]
+      }
+      list_operators_config: {
+        Args: never
+        Returns: {
+          email: string
+          has_op_role: boolean
+          operator_id: string
+          operator_name: string
+          services_direct: number
+          services_resource: number
+          user_id_set: boolean
         }[]
       }
       log_audit_entry: {
@@ -6567,10 +6742,6 @@ export type Database = {
         Args: { p_invoice_id: string; p_movement_id: string }
         Returns: Json
       }
-      sync_bank_statement_movement_statuses: {
-        Args: { p_import_id: string }
-        Returns: Json
-      }
       reconcile_orphan_records: { Args: never; Returns: Json }
       reject_pending_user: {
         Args: { target_user_id: string }
@@ -6630,6 +6801,10 @@ export type Database = {
         }[]
       }
       smart_link_maintenance_costs: { Args: never; Returns: Json }
+      sync_bank_statement_movement_statuses: {
+        Args: { p_import_id: string }
+        Returns: Json
+      }
       sync_closure_invoice_status: { Args: never; Returns: Json }
       sync_crane_part_to_inventory: {
         Args: { p_inventory_item_id?: string; p_part_name: string }
@@ -6640,6 +6815,10 @@ export type Database = {
       sync_existing_supplier_payments_to_costs: { Args: never; Returns: Json }
       sync_maintenance_costs: { Args: never; Returns: string }
       sync_paid_invoices_with_payments: { Args: never; Returns: Json }
+      sync_service_commissions: {
+        Args: { p_service_id: string }
+        Returns: undefined
+      }
       sync_specific_income_to_payment: {
         Args: { p_income_id: string }
         Returns: Json
@@ -6677,10 +6856,6 @@ export type Database = {
         }
         Returns: Json
       }
-      update_vip_services_batch: {
-        Args: { p_updates: Json }
-        Returns: Json
-      }
       update_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]
@@ -6695,6 +6870,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_vip_services_batch: { Args: { p_updates: Json }; Returns: Json }
       validate_all_warnings_eliminated: { Args: never; Returns: undefined }
       validate_email: { Args: { email: string }; Returns: boolean }
       validate_payment_amounts: {
@@ -6749,6 +6925,7 @@ export type Database = {
         | "invoiced"
         | "quoted"
         | "purchase_order_pending"
+      crane_status: "active" | "inactive" | "sold" | "written_off"
       crane_type: "light" | "medium" | "heavy" | "taxi" | "other" | "horquilla"
       invoice_status:
         | "draft"
@@ -6916,6 +7093,7 @@ export const Constants = {
         "quoted",
         "purchase_order_pending",
       ],
+      crane_status: ["active", "inactive", "sold", "written_off"],
       crane_type: ["light", "medium", "heavy", "taxi", "other", "horquilla"],
       invoice_status: [
         "draft",

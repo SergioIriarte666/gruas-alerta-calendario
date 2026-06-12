@@ -1,11 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator, Sparkles, Plus } from 'lucide-react';
+import { ClientForm } from '@/components/clients/ClientForm';
+import { useClients } from '@/hooks/useClients';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Client } from '@/types';
 import { getServiceValueBreakdown } from '@/utils/serviceValueCalculations';
 
 interface EnhancedFinancialSectionProps {
@@ -19,6 +25,9 @@ interface EnhancedFinancialSectionProps {
   onClientCoveredAmountChange?: (value: number) => void;
   excessAmount?: number;
   onExcessAmountChange?: (value: number) => void;
+  thirdPartyClientId?: string | null;
+  onThirdPartyClientIdChange?: (value: string | null) => void;
+  clients?: Client[];
   disabled?: boolean;
   isCustodyService?: boolean;
   custodyTotalAmount?: number;
@@ -39,6 +48,9 @@ export const EnhancedFinancialSection = ({
   onClientCoveredAmountChange,
   excessAmount = 0,
   onExcessAmountChange,
+  thirdPartyClientId = null,
+  onThirdPartyClientIdChange,
+  clients = [],
   disabled = false,
   isCustodyService = false,
   custodyTotalAmount = 0,
@@ -46,6 +58,9 @@ export const EnhancedFinancialSection = ({
   valueFromRate = false,
   onClearRate
 }: EnhancedFinancialSectionProps) => {
+  const { createClient } = useClients();
+  const [isClientFormOpen, setIsClientFormOpen] = useState(false);
+
   // Get service value breakdown for display
   const serviceBreakdown = getServiceValueBreakdown({
     value,
@@ -289,6 +304,66 @@ export const EnhancedFinancialSection = ({
                 disabled
                 className="bg-muted text-muted-foreground font-semibold"
               />
+            </div>
+
+            {/* Tercero pagador del excedente */}
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="thirdPartyClient">
+                  Quién paga el excedente <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="flex items-center gap-1 text-xs"
+                  disabled={disabled}
+                  onClick={() => setIsClientFormOpen(true)}
+                >
+                  <Plus className="size-3.5" />
+                  Agregar Cliente
+                </Button>
+              </div>
+              <Select
+                value={thirdPartyClientId || ''}
+                onValueChange={(value) => onThirdPartyClientIdChange?.(value || null)}
+                disabled={disabled}
+              >
+                <SelectTrigger id="thirdPartyClient">
+                  <SelectValue placeholder="Seleccionar cliente o tercero..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.rut ? `· ${c.rut}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Empresa o persona que pagará el excedente de ${(excessAmount || 0).toLocaleString('es-CL')}
+              </p>
+
+              {/* Modal de creación rápida de cliente; al crear se auto-selecciona */}
+              <Dialog open={isClientFormOpen} onOpenChange={setIsClientFormOpen}>
+                <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-popover/95 p-0">
+                  <ClientForm
+                    onSubmit={async (data) => {
+                      try {
+                        const result = await createClient(data);
+                        const newClientId = (result as any)?.clients?.[0]?.id;
+                        if (newClientId) {
+                          onThirdPartyClientIdChange?.(newClientId);
+                        }
+                        setIsClientFormOpen(false);
+                      } catch {
+                        // El error ya se notifica vía toast en useClients
+                      }
+                    }}
+                    onCancel={() => setIsClientFormOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         )}

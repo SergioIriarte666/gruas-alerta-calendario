@@ -309,6 +309,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     hasExcess: serviceData.has_excess,
     clientCoveredAmount: serviceData.client_covered_amount,
     excessAmount: serviceData.excess_amount,
+    thirdPartyClientId: serviceData.third_party_client_id || null,
+    thirdPartyClientName: serviceData.third_party_client?.name || null,
+    thirdPartyClientRut: serviceData.third_party_client?.rut || null,
     invoiceFolio: serviceData.invoice_folio,
     invoiceNumeroFiscal: serviceData.invoice_numero_fiscal,
     // Campos de custodia

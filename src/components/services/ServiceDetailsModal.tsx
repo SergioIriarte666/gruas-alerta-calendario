@@ -23,8 +23,15 @@ import {
   Timer,
   Gauge,
   Copy,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle,
+  Pencil,
+  Plus
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useClients } from '@/hooks/useClients';
+import { ClientForm } from '@/components/clients/ClientForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
 import { ServiceChangeHistory } from './ServiceChangeHistory';
@@ -130,6 +137,182 @@ const DetailSection = ({ title, icon: Icon, children, color = 'blue' }: DetailSe
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         {children}
       </div>
+    </div>
+  );
+};
+
+const NO_THIRD_PARTY = '__none__';
+
+interface ThirdPartyPayerSectionProps {
+  serviceId: string;
+  thirdPartyClientId: string | null;
+  thirdPartyClientName?: string | null;
+  thirdPartyClientRut?: string | null;
+}
+
+// Selector inline del tercero pagador del excedente. Sin este dato no se puede
+// generar el cierre de excedente en el módulo de Cierres.
+const ThirdPartyPayerSection = ({
+  serviceId,
+  thirdPartyClientId,
+  thirdPartyClientName,
+  thirdPartyClientRut
+}: ThirdPartyPayerSectionProps) => {
+  const queryClient = useQueryClient();
+  const { clients, createClient } = useClients();
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [selectedId, setSelectedId] = React.useState<string>(thirdPartyClientId || NO_THIRD_PARTY);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isClientFormOpen, setIsClientFormOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setSelectedId(thirdPartyClientId || NO_THIRD_PARTY);
+    setIsEditing(false);
+  }, [thirdPartyClientId, serviceId]);
+
+  const activeClients = React.useMemo(
+    () => (clients || []).filter(c => c.isActive),
+    [clients]
+  );
+
+  const resolvedClient = React.useMemo(() => {
+    if (!thirdPartyClientId) return null;
+    const fromList = (clients || []).find(c => c.id === thirdPartyClientId);
+    if (fromList) {
+      return { name: fromList.displayName ?? fromList.name, rut: fromList.rut };
+    }
+    if (thirdPartyClientName) {
+      return { name: thirdPartyClientName, rut: thirdPartyClientRut || '' };
+    }
+    return null;
+  }, [clients, thirdPartyClientId, thirdPartyClientName, thirdPartyClientRut]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const newValue = selectedId === NO_THIRD_PARTY ? null : selectedId;
+      const { error } = await supabase
+        .from('services')
+        .update({ third_party_client_id: newValue })
+        .eq('id', serviceId);
+
+      if (error) throw error;
+
+      toast.success(newValue
+        ? 'Tercero pagador del excedente asignado'
+        : 'Tercero pagador del excedente removido');
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', serviceId] });
+    } catch (error: any) {
+      logger.error('Error actualizando tercero pagador:', error);
+      toast.error('No se pudo guardar el tercero pagador', {
+        description: error?.message || 'Error desconocido',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="col-span-1 md:col-span-2 space-y-3 rounded-md border border-warning/30 bg-warning/5 p-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Quién paga el excedente</Label>
+        {thirdPartyClientId && (
+          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+            Excedente asignado
+          </Badge>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="space-y-2">
+          <Select value={selectedId} onValueChange={setSelectedId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar cliente que paga el excedente..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_THIRD_PARTY}>— Sin asignar —</SelectItem>
+              {activeClients.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.displayName ?? c.name}{c.rut ? ` · ${c.rut}` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : 'Guardar'}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isSaving}
+                onClick={() => {
+                  setSelectedId(thirdPartyClientId || NO_THIRD_PARTY);
+                  setIsEditing(false);
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="flex items-center gap-1 text-xs"
+              disabled={isSaving}
+              onClick={() => setIsClientFormOpen(true)}
+            >
+              <Plus className="size-3.5" />
+              Agregar Cliente
+            </Button>
+          </div>
+
+          {/* Modal de creación rápida de cliente; al crear se auto-selecciona */}
+          <Dialog open={isClientFormOpen} onOpenChange={setIsClientFormOpen}>
+            <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border/70 bg-popover/95 p-0">
+              <ClientForm
+                onSubmit={async (data) => {
+                  try {
+                    const result = await createClient(data);
+                    const newClientId = (result as any)?.clients?.[0]?.id;
+                    if (newClientId) {
+                      setSelectedId(newClientId);
+                    }
+                    setIsClientFormOpen(false);
+                  } catch (error: any) {
+                    logger.error('Error creando cliente desde modal de servicio:', error);
+                  }
+                }}
+                onCancel={() => setIsClientFormOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          {resolvedClient ? (
+            <p className="text-sm text-muted-foreground">
+              {toTitleCase(resolvedClient.name)}{resolvedClient.rut ? ` · ${resolvedClient.rut}` : ''}
+            </p>
+          ) : (
+            <span className="text-sm text-amber-600 flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Sin tercero asignado — no se puede generar cierre de excedente
+            </span>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="flex items-center gap-1 text-xs"
+            onClick={() => setIsEditing(true)}
+          >
+            <Pencil className="size-3.5" />
+            {thirdPartyClientId ? 'Cambiar' : 'Asignar'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -599,13 +782,21 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                               value={formatCurrency(serviceData.clientCoveredAmount)} 
                               valueClass="text-md text-info font-medium" 
                             />
-                            <DetailItem 
-                              icon={DollarSign} 
-                              label="Excedente" 
-                              value={formatCurrency(displayServiceValue - (serviceData.clientCoveredAmount || 0))} 
-                              valueClass="text-md text-warning font-medium" 
+                            <DetailItem
+                              icon={DollarSign}
+                              label="Excedente"
+                              value={formatCurrency(displayServiceValue - (serviceData.clientCoveredAmount || 0))}
+                              valueClass="text-md text-warning font-medium"
                             />
                           </>
+                        )}
+                        {serviceData.hasExcess && (
+                          <ThirdPartyPayerSection
+                            serviceId={serviceData.id}
+                            thirdPartyClientId={serviceData.thirdPartyClientId || null}
+                            thirdPartyClientName={(serviceData as any).thirdPartyClientName}
+                            thirdPartyClientRut={(serviceData as any).thirdPartyClientRut}
+                          />
                         )}
                          <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}/>

@@ -662,7 +662,19 @@ const EnhancedServicesSelector = ({
                   />
                   <label htmlFor={service.id} className="text-sm text-foreground flex-1 cursor-pointer">
                     <div className="flex justify-between items-center">
-                      <span>{service.folio} - {toTitleCase(service.client.name)}</span>
+                      <span className="flex items-center gap-1.5">
+                        {service.folio} - {toTitleCase(service.client.name)}
+                        {(service as any)._closureType === 'covered' && (
+                          <Badge className="bg-teal-500/15 text-teal-700 border border-teal-500/30 text-[10px] h-4 px-1 hover:bg-teal-500/15">
+                            Cubierto
+                          </Badge>
+                        )}
+                        {(service as any)._closureType === 'excess' && (
+                          <Badge className="bg-amber-500/15 text-amber-700 border border-amber-500/30 text-[10px] h-4 px-1 hover:bg-amber-500/15">
+                            Excedente
+                          </Badge>
+                        )}
+                      </span>
                       <span className="font-medium text-violet-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">

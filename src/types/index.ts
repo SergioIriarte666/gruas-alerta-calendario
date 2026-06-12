@@ -30,6 +30,7 @@ export interface Service {
   hasExcess?: boolean;
   clientCoveredAmount?: number;
   excessAmount?: number;
+  thirdPartyClientId?: string | null;
   // Invoice information
   invoiceFolio?: string;
   invoiceNumeroFiscal?: string;
@@ -99,6 +100,7 @@ export interface ServiceFormData {
   hasExcess?: boolean;
   clientCoveredAmount?: number;
   excessAmount?: number;
+  thirdPartyClientId?: string | null;
   status: ServiceStatus;
   observations?: string;
   // Custody fields

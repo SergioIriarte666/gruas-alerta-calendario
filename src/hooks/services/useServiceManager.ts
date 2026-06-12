@@ -121,6 +121,7 @@ const transformToService = (data: any): Service => {
     hasExcess: data.has_excess || false,
     clientCoveredAmount: data.client_covered_amount ?? null, // Preserve null values for proper excess calculation
     excessAmount: data.excess_amount || 0,
+    thirdPartyClientId: data.third_party_client_id || null,
     invoiceFolio: data.invoice_folio || undefined,
     invoiceNumeroFiscal: data.invoice_numero_fiscal || undefined,
     // Transform custody fields from snake_case to camelCase
@@ -244,8 +245,13 @@ export const useServiceManager = () => {
           status: serviceData.status,
           observations: serviceData.observations || null,
           has_excess: serviceData.hasExcess || false,
-          client_covered_amount: serviceData.clientCoveredAmount || null,
-          excess_amount: serviceData.excessAmount || null,
+          client_covered_amount: serviceData.hasExcess ? (serviceData.clientCoveredAmount || null) : null,
+          excess_amount: serviceData.hasExcess
+            ? Math.max(0, (serviceData.value || 0) - (serviceData.clientCoveredAmount || 0))
+            : null,
+          third_party_client_id: serviceData.hasExcess && serviceData.thirdPartyClientId && serviceData.thirdPartyClientId.trim() !== ''
+            ? serviceData.thirdPartyClientId
+            : null,
           // Transform custody fields from camelCase to snake_case con validación
           custody_mode: serviceData.custodyMode || null,
           custody_days: serviceData.custodyDays || null,
@@ -634,10 +640,17 @@ export const useServiceManager = () => {
             has_excess: serviceData.hasExcess
           }),
           ...(serviceData.clientCoveredAmount !== undefined && {
-            client_covered_amount: serviceData.clientCoveredAmount
+            client_covered_amount: serviceData.hasExcess === false ? null : serviceData.clientCoveredAmount
           }),
           ...(serviceData.excessAmount !== undefined && {
-            excess_amount: serviceData.excessAmount || null
+            excess_amount: serviceData.hasExcess === false ? null : (serviceData.excessAmount || null)
+          }),
+          ...(serviceData.thirdPartyClientId !== undefined && {
+            third_party_client_id: serviceData.hasExcess === false
+              ? null
+              : (serviceData.thirdPartyClientId && serviceData.thirdPartyClientId.trim() !== ''
+                  ? serviceData.thirdPartyClientId
+                  : null)
           }),
           // ✅ CRÍTICO: Agregar operator_id y operator_commission
           ...(primaryOperatorId !== null && {

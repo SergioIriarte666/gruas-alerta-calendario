@@ -15,6 +15,17 @@ interface UseServicesForClosuresOptions {
   enabled?: boolean;
 }
 
+export type ClosureValueType = 'covered' | 'excess';
+
+// Sufijo de id virtual para la fila de excedente de un servicio expandido.
+// Al guardar el cierre se traduce a value_type='excess' en closure_services.
+export const EXCESS_ROW_SUFFIX = '::excess';
+
+export interface ClosureServiceRow extends Service {
+  _closureType?: ClosureValueType;
+  _closureAmount?: number;
+}
+
 interface ServicesForClosuresData {
   availableServices: Service[];
   pendingServices: Service[];
@@ -96,8 +107,9 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         created_by,
         created_at,
         updated_at,
-        client:clients!services_client_id_fkey(id, name),
-        third_party_client:clients!services_third_party_client_id_fkey(id, name)
+        third_party_client_id,
+        client:clients!services_client_id_fkey(id, name, rut),
+        third_party_client:clients!services_third_party_client_id_fkey(id, name, rut)
       `;
 
       let billableQuery = supabase
@@ -154,25 +166,28 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const pendingServices = pendingResult.data || [];
 
 
-      // Get only service IDs from the current candidate set that are already included in closures
+      // Get service+value_type pairs from the current candidate set already included in closures.
+      // Un servicio con excedente puede estar usado como 'covered' en un cierre y seguir
+      // disponible como 'excess' para otro (y viceversa).
       const currentBillableIds = billableServices.map(service => service.id);
       let usedServiceIds = new Set<string>();
+      const usedKeys = new Set<string>();
 
       if (currentBillableIds.length > 0) {
         const { data: closureServices, error: closureError } = await supabase
           .from('closure_services')
-          .select('service_id')
+          .select('service_id, value_type')
           .in('service_id', currentBillableIds);
 
         if (closureError) {
           logger.error('Error fetching closure services:', closureError);
         }
 
-        usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
+        (closureServices || []).forEach((cs: any) => {
+          usedServiceIds.add(cs.service_id);
+          usedKeys.add(`${cs.service_id}:${cs.value_type || 'covered'}`);
+        });
       }
-
-      // Filter out services that are already in closures
-      const availableBillableServices = billableServices.filter(service => !usedServiceIds.has(service.id));
 
       const nowIso = new Date().toISOString();
       const mapServiceForClosure = (item: any): Service => ({
@@ -238,7 +253,60 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         createdBy: item.created_by || undefined,
       });
 
-      const transformedBillable = availableBillableServices.map(mapServiceForClosure);
+      // Expande servicios con excedente + tercero pagador en dos filas virtuales:
+      // una 'covered' (cliente principal, monto cubierto) y una 'excess'
+      // (tercero pagador, excedente). La fila excess usa id virtual `${id}::excess`.
+      const expandServiceRows = (item: any): { key: string; service: ClosureServiceRow }[] => {
+        const base = mapServiceForClosure(item) as ClosureServiceRow;
+        const excessAmount = Number(item.excess_amount || 0);
+        const canSplit = Boolean(item.has_excess && item.third_party_client_id && excessAmount > 0);
+
+        if (!canSplit) {
+          return [{ key: `${item.id}:covered`, service: base }];
+        }
+
+        const coveredRow: ClosureServiceRow = {
+          ...base,
+          client: {
+            ...base.client,
+            id: item.client?.id || item.client_id || '',
+            name: item.client?.name || 'Cliente no disponible',
+            rut: item.client?.rut || '',
+          },
+          _closureType: 'covered',
+          _closureAmount: Number(item.client_covered_amount || 0),
+        };
+
+        const excessRow: ClosureServiceRow = {
+          ...base,
+          id: `${item.id}${EXCESS_ROW_SUFFIX}`,
+          client: {
+            ...base.client,
+            id: item.third_party_client?.id || item.third_party_client_id,
+            name: item.third_party_client?.name || 'Tercero excedente',
+            rut: item.third_party_client?.rut || '',
+          },
+          // La fila excedente se comporta como servicio simple por su monto excedente
+          // para que totales y visualización usen excess_amount.
+          value: excessAmount,
+          hasExcess: false,
+          clientCoveredAmount: null,
+          excessAmount: 0,
+          custodyTotalAmount: 0,
+          _closureType: 'excess',
+          _closureAmount: excessAmount,
+        };
+
+        return [
+          { key: `${item.id}:covered`, service: coveredRow },
+          { key: `${item.id}:excess`, service: excessRow },
+        ];
+      };
+
+      const transformedBillable = billableServices
+        .flatMap(expandServiceRows)
+        .filter(row => !usedKeys.has(row.key))
+        .map(row => row.service);
       const transformedPending = pendingServices.map(mapServiceForClosure);
 
       if (fetchId !== fetchIdRef.current) return;

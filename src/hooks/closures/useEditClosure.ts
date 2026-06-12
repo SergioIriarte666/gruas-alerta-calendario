@@ -156,6 +156,21 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
     try {
       logger.debug('Updating closure services:', { closure: closure.id, newServiceIds });
 
+      // Preservar value_type/amount existentes (un servicio puede estar como 'excess')
+      const { data: existingRows, error: existingError } = await supabase
+        .from('closure_services')
+        .select('service_id, value_type, amount')
+        .eq('closure_id', closure.id);
+
+      if (existingError) {
+        logger.error('Error fetching existing closure services:', existingError);
+        throw existingError;
+      }
+
+      const existingByServiceId = new Map(
+        (existingRows || []).map((row: any) => [row.service_id, row])
+      );
+
       // Delete existing relationships
       const { error: deleteError } = await supabase
         .from('closure_services')
@@ -167,12 +182,24 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         throw deleteError;
       }
 
-      // Insert new relationships
+      const allServices = [...currentServices, ...availableServices];
+
+      // Insert new relationships preserving value_type/amount; new services enter como 'covered'
+      let newTotal = 0;
       if (newServiceIds.length > 0) {
-        const closureServices = newServiceIds.map(serviceId => ({
-          closure_id: closure.id,
-          service_id: serviceId
-        }));
+        const closureServices = newServiceIds.map(serviceId => {
+          const existing = existingByServiceId.get(serviceId);
+          const service = allServices.find(s => s.id === serviceId);
+          const fallbackAmount = service ? Math.round(calculateClosureTotal([service])) : 0;
+          const amount = existing?.amount != null ? Math.round(Number(existing.amount)) : fallbackAmount;
+          newTotal += amount;
+          return {
+            closure_id: closure.id,
+            service_id: serviceId,
+            value_type: existing?.value_type || 'covered',
+            amount
+          };
+        });
 
         const { error: insertError } = await supabase
           .from('closure_services')
@@ -183,11 +210,6 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
           throw insertError;
         }
       }
-
-      // Calculate new total using closure-specific value calculation (includes excess)
-      const allServices = [...currentServices, ...availableServices];
-      const selectedServices = allServices.filter(s => newServiceIds.includes(s.id));
-      const newTotal = Math.round(calculateClosureTotal(selectedServices));
 
       // Update closure total
       const { error: updateError } = await supabase

@@ -55,6 +55,7 @@ const baseServiceFormSchema = z.object({
   hasExcess: z.boolean().default(false),
   clientCoveredAmount: z.number().optional(),
   excessAmount: z.number().optional(),
+  thirdPartyClientId: z.string().uuid().nullable().optional(),
   // Custody fields
   custodyMode: z.enum(['manual', 'calendar', 'none']).default('none'),
   custodyDays: z.number().min(1).optional(),
@@ -163,6 +164,13 @@ export const createServiceFormSchema = (serviceTypeConfig?: ServiceTypeConfig) =
       message: 'El monto cubierto por el cliente no puede ser mayor al valor del servicio',
       path: ['clientCoveredAmount']
     })
+    .refine(
+      (data) => !data.hasExcess || !!data.thirdPartyClientId,
+      {
+        message: 'Debes indicar quién paga el excedente',
+        path: ['thirdPartyClientId'],
+      }
+    )
     .refine((data) => {
       if (data.custodyMode === 'manual') {
         return data.custodyDays && data.custodyDailyRate;

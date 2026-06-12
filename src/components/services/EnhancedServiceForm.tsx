@@ -124,6 +124,7 @@ export const EnhancedServiceForm = ({
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
     excessAmount: service?.excessAmount || 0,
+    thirdPartyClientId: service?.thirdPartyClientId || '',
     status: service?.status || 'pending' as const,
     observations: service?.observations || '',
     custodyMode: service?.custodyMode || (service as any)?.custody_mode || 'none',
@@ -173,6 +174,7 @@ export const EnhancedServiceForm = ({
         hasExcess: false,
         clientCoveredAmount: 0,
         excessAmount: 0,
+        thirdPartyClientId: '',
         status: prefilledData.status || 'pending',
         observations: prefilledData.observations || '',
         custodyMode: prefilledData.inCustody ? 'entry_exit' : 'none',
@@ -355,6 +357,7 @@ export const EnhancedServiceForm = ({
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
         excessAmount: service.excessAmount || 0,
+        thirdPartyClientId: service.thirdPartyClientId || '',
         status: service.status,
         observations: service.observations || '',
         custodyMode: service.custodyMode || (service as any)?.custody_mode || 'none',
@@ -627,6 +630,14 @@ export const EnhancedServiceForm = ({
         if (errorStep && errorStep !== currentStep) {
           setCurrentStep(errorStep);
         }
+        return;
+      }
+
+      // Servicios con excedente requieren indicar quién paga el excedente
+      if (formData.hasExcess && !formData.thirdPartyClientId) {
+        playRetroErrorSound();
+        toast.error('Debes indicar quién paga el excedente');
+        setCurrentStep(4);
         return;
       }
 
@@ -1209,6 +1220,9 @@ export const EnhancedServiceForm = ({
                     onClientCoveredAmountChange={(value) => setFormData(prev => ({ ...prev, clientCoveredAmount: value }))}
                     excessAmount={formData.excessAmount}
                     onExcessAmountChange={(value) => setFormData(prev => ({ ...prev, excessAmount: value }))}
+                    thirdPartyClientId={formData.thirdPartyClientId}
+                    onThirdPartyClientIdChange={(value) => setFormData(prev => ({ ...prev, thirdPartyClientId: value || '' }))}
+                    clients={clients.filter(c => c.isActive)}
                     disabled={false}
                     isCustodyService={isCustodyService(formData)}
                     custodyTotalAmount={formData.custodyTotalAmount || 0}
