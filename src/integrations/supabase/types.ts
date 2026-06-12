@@ -6500,6 +6500,10 @@ export type Database = {
         }
         Returns: Json
       }
+      update_vip_services_batch: {
+        Args: { p_updates: Json }
+        Returns: Json
+      }
       update_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]

@@ -10,6 +10,12 @@ interface CreateServiceOptions {
   tolerateResourceSyncFailure?: boolean;
 }
 
+interface UpdateServiceOptions {
+  silent?: boolean;
+  skipInvalidation?: boolean;
+  skipRefetch?: boolean;
+}
+
 export const useServices = () => {
   const { services, loading, refetch } = useServiceFetcher();
   const { createService: createServiceMutation, updateService: updateServiceMutation, deleteService: deleteServiceMutation } = useServiceManager();
@@ -33,9 +39,15 @@ export const useServices = () => {
     return newService;
   };
 
-  const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service> => {
-    const updatedService = await updateServiceMutation(id, serviceData);
-    await refetch();
+  const updateService = async (
+    id: string,
+    serviceData: Partial<ServiceFormData>,
+    options?: UpdateServiceOptions
+  ): Promise<Service> => {
+    const updatedService = await updateServiceMutation(id, serviceData, options);
+    if (!options?.skipRefetch) {
+      await refetch();
+    }
     return updatedService;
   };
 

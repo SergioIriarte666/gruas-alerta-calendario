@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceFormData } from '@/types';
@@ -13,6 +12,11 @@ const logger = createLogger('ServiceManager');
 interface CreateServiceOptions {
   silent?: boolean;
   tolerateResourceSyncFailure?: boolean;
+}
+
+interface UpdateServiceOptions {
+  silent?: boolean;
+  skipInvalidation?: boolean;
 }
 
 const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') => {
@@ -445,9 +449,10 @@ export const useServiceManager = () => {
 
   // ACTUALIZAR SERVICIO
   const updateServiceMutation = useMutation({
-    mutationFn: async ({ id, serviceData }: { 
+    mutationFn: async ({ id, serviceData, options }: { 
       id: string; 
-      serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string } 
+      serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string };
+      options?: UpdateServiceOptions;
     }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
 
@@ -465,9 +470,8 @@ export const useServiceManager = () => {
       // Obtener estado real actual para auto-transiciones de flujo VIP
       let currentStatus: Service['status'] | undefined;
       const shouldResolveCurrentStatus =
-        serviceData.quoteNumber !== undefined ||
-        serviceData.purchaseOrderNumber !== undefined ||
-        serviceData.status !== undefined;
+        serviceData.status === undefined &&
+        (serviceData.quoteNumber !== undefined || serviceData.purchaseOrderNumber !== undefined);
 
       if (shouldResolveCurrentStatus) {
         const { data: currentService } = await supabase
@@ -1061,25 +1065,35 @@ export const useServiceManager = () => {
       }
 
       // Invalidar todas las queries relacionadas para asegurar datos actualizados
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['services'] }),
-        queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', id] }),
-        queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
-        queryClient.invalidateQueries({ queryKey: ['costs'] }),
-        queryClient.invalidateQueries({ queryKey: ['commissions'] }),
-        queryClient.invalidateQueries({ queryKey: ['supplier-payments'] }),
-        // ✅ Detalle proveedor (modal) usa estas keys, si no, queda cache viejo
-        queryClient.invalidateQueries({ queryKey: ['supplier-detail-payments'] }),
-        queryClient.invalidateQueries({ queryKey: ['supplier-stats'] })
-      ]);
+      if (!options?.skipInvalidation) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['services'] }),
+          queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', id] }),
+          queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
+          queryClient.invalidateQueries({ queryKey: ['costs'] }),
+          queryClient.invalidateQueries({ queryKey: ['commissions'] }),
+          queryClient.invalidateQueries({ queryKey: ['supplier-payments'] }),
+          // ✅ Detalle proveedor (modal) usa estas keys, si no, queda cache viejo
+          queryClient.invalidateQueries({ queryKey: ['supplier-detail-payments'] }),
+          queryClient.invalidateQueries({ queryKey: ['supplier-stats'] })
+        ]);
+      }
       
       return transformToService(updatedService);
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables.options?.silent) {
+        return;
+      }
+
       toast.success('Servicio actualizado exitosamente');
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
       logger.error('Error updating service:', error);
+
+      if (variables.options?.silent) {
+        return;
+      }
       
       let errorMessage = 'Error al actualizar servicio';
       
@@ -1142,8 +1156,12 @@ export const useServiceManager = () => {
     return createServiceMutation.mutateAsync({ serviceData, options });
   };
 
-  const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service> => {
-    return updateServiceMutation.mutateAsync({ id, serviceData });
+  const updateService = async (
+    id: string,
+    serviceData: Partial<ServiceFormData>,
+    options?: UpdateServiceOptions
+  ): Promise<Service> => {
+    return updateServiceMutation.mutateAsync({ id, serviceData, options });
   };
 
   const deleteService = async (id: string): Promise<void> => {

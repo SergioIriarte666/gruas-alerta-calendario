@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Service } from '@/types';
-import { ArrowLeft, Clock, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useClients } from '@/hooks/useClients';
@@ -25,18 +25,20 @@ import { ExecutiveReports } from '@/components/vip/ExecutiveReports';
 import { PredictiveInsights } from '@/components/vip/PredictiveInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { applyVipServiceBatchUpdates } from '@/utils/vipBatchServiceUpdater';
 
 import { toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("VipClientPipeline");
+
 export default function VipClientPipeline() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { clients } = useClients();
   const { services, loading, refetch } = useClientServices(clientId || null);
-  const { createService, updateService } = useServices();
+  const { createService, updateService, forceGlobalRefresh } = useServices();
   
   // Estados para modales y formularios
   const [selectedService, setSelectedService] = React.useState<Service | null>(null);
@@ -107,49 +109,74 @@ export default function VipClientPipeline() {
   const handleBatchUpdate = async (updates: any) => {
     try {
       logger.debug('🔄 Iniciando actualización por lotes:', updates);
+
+      const servicesToUpdate = updates.services.filter((serviceUpdate: any) =>
+        Boolean(serviceUpdate.quote_number || serviceUpdate.purchase_order_number || serviceUpdate.target_status)
+      );
+
+      if (servicesToUpdate.length === 0) {
+        toast.error('No hay cambios efectivos para registrar en el lote');
+        return;
+      }
       
       // Start progress modal
-      batchProgress.start('REGISTRANDO LOTE', updates.services.length);
+      batchProgress.start('REGISTRANDO LOTE', servicesToUpdate.length);
       
-      // Sequential loop instead of Promise.all for progress reporting
-      for (let i = 0; i < updates.services.length; i++) {
-        const serviceUpdate = updates.services[i];
-        const updateData: any = {};
-        
-        // Agregar campos según lo que se esté actualizando
-        if (serviceUpdate.quote_number) {
-          updateData.quoteNumber = serviceUpdate.quote_number;
-        }
-        if (serviceUpdate.purchase_order_number) {
-          updateData.purchaseOrder = serviceUpdate.purchase_order_number;
-        }
-        
-        // Agregar cambio de estado automático si está habilitado
-        if (updates.auto_update_status && serviceUpdate.target_status) {
-          updateData.status = serviceUpdate.target_status;
-        }
-        
-        await updateService(serviceUpdate.id, updateData);
-        
-        // Update progress
-        batchProgress.update(i + 1, serviceUpdate.folio || `Servicio ${i + 1}`);
-      }
+      const serviceLabelById = new Map<string, string>(
+        servicesToUpdate.map((serviceUpdate: any, index: number) => [
+          serviceUpdate.id,
+          serviceUpdate.folio || `Servicio ${index + 1}`,
+        ])
+      );
 
-      batchProgress.complete();
+      const payload = servicesToUpdate.map((serviceUpdate: any) => ({
+        id: serviceUpdate.id,
+        quote_number: serviceUpdate.quote_number || null,
+        purchase_order: serviceUpdate.purchase_order_number || null,
+        target_status: updates.auto_update_status ? serviceUpdate.target_status || null : null,
+      }));
+
+      const { successCount, failedIds } = await applyVipServiceBatchUpdates({
+        updates: payload,
+        getLabel: (update, index) => serviceLabelById.get(update.id) || `Servicio ${index + 1}`,
+        onProgress: ({ processedCount, currentLabel }) => {
+          batchProgress.update(processedCount, currentLabel);
+        },
+      });
+
+      const failedServices = failedIds.map((serviceId) => serviceLabelById.get(serviceId) || serviceId);
+
+      await Promise.all([
+        forceGlobalRefresh(),
+        refetch(),
+      ]);
       
       // Mensaje más detallado según lo que se actualizó
-      let message = `${updates.services.length} servicios actualizados correctamente`;
-      if (updates.auto_update_status && updates.services[0]?.target_status) {
-        const statusName = updates.services[0].target_status === 'quoted' ? 'Cotizado' : 'Con Orden de Compra';
+      let message = `${successCount} servicios actualizados correctamente`;
+      if (updates.auto_update_status && servicesToUpdate[0]?.target_status) {
+        const statusName = servicesToUpdate[0].target_status === 'quoted' ? 'Cotizado' : 'Con Orden de Compra';
         message += ` - Estado cambiado a '${statusName}'`;
       }
-      
-      // Delay to show completion animation
+
+      if (failedServices.length === 0) {
+        batchProgress.complete();
+        setTimeout(() => {
+          batchProgress.close();
+          toast.success(message);
+        }, 400);
+        return;
+      }
+
+      batchProgress.error(`${failedServices.length} de ${servicesToUpdate.length} con error`);
       setTimeout(() => {
         batchProgress.close();
-        toast.success(message);
-        refetch();
-      }, 1500);
+        toast.error('El lote terminó con errores parciales', {
+          description:
+            failedServices.length <= 3
+              ? `Fallaron: ${failedServices.join(', ')}`
+              : `Fallaron ${failedServices.length} servicios. Revisa el lote para identificar los pendientes.`,
+        });
+      }, 600);
     } catch (error) {
       batchProgress.close();
       logger.error('❌ Error en actualización por lotes:', error);

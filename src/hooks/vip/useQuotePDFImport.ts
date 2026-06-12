@@ -7,6 +7,7 @@ import { disableVipPdfAiForSession, invokeEdgeFunctionJson, isVipPdfAiDisabled }
 import { extractQuoteDataLocally } from '@/utils/localVipPdfParser';
 import { buildVipPdfImportError } from '@/utils/vipPdfImportErrors';
 import { loadPdfJsCompat } from '@/utils/loadPdfJsCompat';
+import { applyVipServiceBatchUpdates } from '@/utils/vipBatchServiceUpdater';
 import { createLogger } from "@/lib/logger";
 
 
@@ -181,7 +182,7 @@ const findFuzzyVinMatch = (
 };
 
 export function useQuotePDFImport(clientId: string | null, services: Service[]) {
-  const { updateService } = useServices();
+  const { forceGlobalRefresh } = useServices();
   const [state, setState] = useState<ImportState>({
     step: 'idle',
     parsedQuotes: [],
@@ -499,28 +500,47 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
 
     setState((prev) => ({ ...prev, step: 'applying', progress: { current: 0, total: validMatches.length, fileName: '' } }));
 
-    let successCount = 0;
-    for (let i = 0; i < validMatches.length; i++) {
-      const match = validMatches[i];
-      try {
-        const formattedQuote = `COT-${normalizeQuote(match.quoteNumber)}`;
-        await updateService(match.service!.id, {
-          quoteNumber: formattedQuote,
-          status: 'quoted' as any,
-        });
-        successCount += 1;
+    const payload = validMatches.map((match) => ({
+      id: match.service!.id,
+      quote_number: `COT-${normalizeQuote(match.quoteNumber)}`,
+      target_status: 'quoted',
+    }));
+
+    const labelById = new Map(
+      validMatches.map((match, index) => [
+        match.service!.id,
+        match.parsedItem.patente || match.service?.folio || `Servicio ${index + 1}`,
+      ])
+    );
+
+    const { successCount, failedIds } = await applyVipServiceBatchUpdates({
+      updates: payload,
+      getLabel: (update, index) => labelById.get(update.id) || `Servicio ${index + 1}`,
+      onProgress: ({ processedCount, totalCount, currentLabel }) => {
         setState((prev) => ({
           ...prev,
-          progress: { current: i + 1, total: validMatches.length, fileName: match.parsedItem.patente },
+          progress: { current: processedCount, total: totalCount, fileName: currentLabel },
         }));
-      } catch (err) {
-        logger.error(`Error updating service ${match.service!.folio}:`, err);
-      }
+      },
+    });
+
+    if (successCount > 0) {
+      await forceGlobalRefresh();
     }
 
     setState((prev) => ({ ...prev, step: 'done' }));
-    toast.success(`${successCount} de ${validMatches.length} servicios actualizados con cotización`);
-  }, [updateService]);
+    if (failedIds.length === 0) {
+      toast.success(`${successCount} de ${validMatches.length} servicios actualizados con cotización`);
+      return;
+    }
+
+    toast.error('La importación de cotizaciones terminó con errores parciales', {
+      description:
+        failedIds.length <= 3
+          ? `No se pudieron actualizar ${failedIds.length} servicio(s).`
+          : `Fallaron ${failedIds.length} servicios durante la aplicación por lote.`,
+    });
+  }, [forceGlobalRefresh]);
 
   return { state, processFiles, applyMatches, reset, reassignMatch };
 }
