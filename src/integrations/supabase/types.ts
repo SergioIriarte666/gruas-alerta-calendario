@@ -138,6 +138,145 @@ export type Database = {
           },
         ]
       }
+      bank_statement_imports: {
+        Row: {
+          bank_name: string | null
+          created_at: string
+          file_name: string
+          file_type: string
+          id: string
+          processing_summary: Json
+          status: string
+          total_movements: number
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          created_at?: string
+          file_name: string
+          file_type: string
+          id?: string
+          processing_summary?: Json
+          status?: string
+          total_movements?: number
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          id?: string
+          processing_summary?: Json
+          status?: string
+          total_movements?: number
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statement_imports_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_statement_movements: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          import_id: string
+          matched_invoice_id: string | null
+          payer_name: string | null
+          payment_id: string | null
+          posted_date: string | null
+          raw_payload: Json
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reconciliation_status: string
+          reference_id: string | null
+          row_index: number
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          import_id: string
+          matched_invoice_id?: string | null
+          payer_name?: string | null
+          payment_id?: string | null
+          posted_date?: string | null
+          raw_payload?: Json
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_status?: string
+          reference_id?: string | null
+          row_index: number
+          transaction_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          import_id?: string
+          matched_invoice_id?: string | null
+          payer_name?: string | null
+          payment_id?: string | null
+          posted_date?: string | null
+          raw_payload?: Json
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_status?: string
+          reference_id?: string | null
+          row_index?: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statement_movements_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "bank_statement_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_statement_movements_matched_invoice_id_fkey"
+            columns: ["matched_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_statement_movements_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_statement_movements_reconciled_by_fkey"
+            columns: ["reconciled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           client_id: string | null
@@ -5929,6 +6068,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_bank_statement_import: {
+        Args: {
+          p_bank_name?: string
+          p_file_name: string
+          p_file_type: string
+          p_movements?: Json
+          p_processing_summary?: Json
+        }
+        Returns: Json
+      }
       create_payment_from_existing_income: {
         Args: { p_income_id: string }
         Returns: Json
@@ -6320,6 +6469,22 @@ export type Database = {
           user_id_set: boolean
         }[]
       }
+      list_bank_statement_invoice_candidates: {
+        Args: { p_movement_id: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          client_rut: string
+          due_date: string
+          folio: string
+          invoice_id: string
+          issue_date: string
+          match_reason: string | null
+          match_score: number
+          numero_fiscal: string
+          total: number
+        }[]
+      }
       log_audit_entry: {
         Args: {
           p_new_data?: Json
@@ -6359,6 +6524,10 @@ export type Database = {
         Returns: undefined
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_bank_statement_movement_exception: {
+        Args: { p_movement_id: string; p_reason?: string }
+        Returns: Json
+      }
       mark_costs_paid_batch: {
         Args: { p_cost_ids: string[]; p_payment_date?: string }
         Returns: Json
@@ -6394,6 +6563,14 @@ export type Database = {
       preview_next_invoice_folio: { Args: never; Returns: string }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
+      reconcile_bank_statement_movement_full: {
+        Args: { p_invoice_id: string; p_movement_id: string }
+        Returns: Json
+      }
+      sync_bank_statement_movement_statuses: {
+        Args: { p_import_id: string }
+        Returns: Json
+      }
       reconcile_orphan_records: { Args: never; Returns: Json }
       reject_pending_user: {
         Args: { target_user_id: string }

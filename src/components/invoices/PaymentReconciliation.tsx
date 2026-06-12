@@ -26,6 +26,7 @@ import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
 import { usePDFGeneration } from '@/hooks/usePDFGeneration';
 import { generatePaymentReceiptPDF } from '@/utils/pdf/paymentReceiptPdfGenerator';
 import { createLogger } from "@/lib/logger";
+import { BankStatementReconciliationPanel } from './BankStatementReconciliationPanel';
 
 
 const logger = createLogger("PaymentReconciliation");
@@ -627,6 +628,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           </Button>
         </div>
       </div>
+
+      <BankStatementReconciliationPanel onPaymentsChanged={refetch} />
 
       {/* Estadísticas */}
       {reconciliationStats && (
