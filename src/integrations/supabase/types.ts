@@ -6739,7 +6739,11 @@ export type Database = {
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
       reconcile_bank_statement_movement_full: {
-        Args: { p_invoice_id: string; p_movement_id: string }
+        Args: {
+          p_invoice_id: string
+          p_movement_id: string
+          p_payment_date?: string
+        }
         Returns: Json
       }
       reconcile_orphan_records: { Args: never; Returns: Json }

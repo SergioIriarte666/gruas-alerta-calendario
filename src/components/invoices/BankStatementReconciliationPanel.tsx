@@ -231,6 +231,7 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
   const [statusFilter, setStatusFilter] = useState<MovementStatusFilter>('all');
   const [amountFilter, setAmountFilter] = useState<MovementAmountFilter>('positive');
   const [searchTerm, setSearchTerm] = useState('');
+  const [reconciliationDate, setReconciliationDate] = useState('');
 
   const sortedMovements = useMemo(() => {
     return [...movements].sort((a, b) => {
@@ -339,6 +340,7 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
     setSelectedMovement(movement);
     setDetailsOpen(true);
     clearAISuggestion();
+    setReconciliationDate(movement.transaction_date || '');
 
     try {
       const candidates = await loadCandidates(movement.id);
@@ -368,7 +370,7 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
     if (!selectedMovement) return;
 
     try {
-      await reconcileMovement(selectedMovement.id, candidate.invoice_id);
+      await reconcileMovement(selectedMovement.id, candidate.invoice_id, reconciliationDate || undefined);
       await loadCandidates(selectedMovement.id, true);
       await onPaymentsChanged?.();
       setDetailsOpen(false);
@@ -814,6 +816,21 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                   {aiError && !isLoadingAI && (
                     <p className="text-xs text-destructive pl-6">{aiError}</p>
                   )}
+                </div>
+              )}
+
+              {!isMovementReconciled(currentSelectedMovement) && (
+                <div className="flex items-center gap-3 rounded-lg border p-3">
+                  <label className="text-sm font-medium whitespace-nowrap">Fecha de conciliacion</label>
+                  <Input
+                    type="date"
+                    value={reconciliationDate}
+                    onChange={(event) => setReconciliationDate(event.target.value)}
+                    className="w-auto"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Por defecto se usa la fecha del movimiento en la cartola.
+                  </span>
                 </div>
               )}
 

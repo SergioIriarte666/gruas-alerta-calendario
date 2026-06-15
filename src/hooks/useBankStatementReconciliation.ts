@@ -369,13 +369,14 @@ export const useBankStatementReconciliation = () => {
   );
 
   const reconcileMovement = useCallback(
-    async (movementId: string, invoiceId: string) => {
+    async (movementId: string, invoiceId: string, paymentDate?: string) => {
       setReconcilingMovementId(movementId);
 
       try {
         const { data, error } = await supabase.rpc('reconcile_bank_statement_movement_full', {
           p_movement_id: movementId,
           p_invoice_id: invoiceId,
+          p_payment_date: paymentDate || undefined,
         });
 
         if (error) throw error;
