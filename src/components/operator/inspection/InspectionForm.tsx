@@ -230,6 +230,9 @@ export const InspectionForm = ({
     return () => subscription.unsubscribe();
   }, [currentPhase, form, saveFormData, isInitialized]);
 
+  const requiresDetail  = service.serviceType?.requiresDetail  ?? true;
+  const requiresPhotoSet = service.serviceType?.requiresPhotoSet ?? true;
+
   const handleSubmit = (values: InspectionFormValues) => {
     logger.debug('📤 Submitting inspection form:', {
       phase: currentPhase,
@@ -238,8 +241,8 @@ export const InspectionForm = ({
       hasClientSignature: !!values.clientSignature,
       hasReceptionSignature: !!values.vehicleReceptionSignature
     });
-    
-    const validationErrors = validateFormBeforeSubmit(values, currentPhase);
+
+    const validationErrors = validateFormBeforeSubmit(values, currentPhase, { requiresDetail, requiresPhotoSet });
     if (validationErrors.length > 0) {
       validationErrors.forEach(error => toast({ type: 'error', title: error }));
       return;
@@ -303,6 +306,8 @@ export const InspectionForm = ({
           phase={currentPhase}
           isInitialCompleted={isInitialPhaseCompleted()}
           serviceId={serviceId}
+          requiresDetail={requiresDetail}
+          requiresPhotoSet={requiresPhotoSet}
         />
 
         <div className="flex justify-end gap-2">

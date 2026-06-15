@@ -197,7 +197,6 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId }: Photograp
                       <input
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         onChange={(e) => handleFileSelect(e.target.files, category.id)}
                         className="hidden"
                         id={`camera-${category.id}`}

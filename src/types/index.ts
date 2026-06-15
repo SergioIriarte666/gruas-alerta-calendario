@@ -253,6 +253,9 @@ export interface ServiceType {
   vehicleBrandRequired: boolean;
   vehicleModelRequired: boolean;
   licensePlateRequired: boolean;
+  // Flags de inspección
+  requiresDetail?: boolean;
+  requiresPhotoSet?: boolean;
   createdAt: string;
   updatedAt: string;
 }

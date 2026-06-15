@@ -18,6 +18,7 @@ import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings
 import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid, ClipboardList } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
+import { InspectionEquipmentTab } from '@/components/settings/InspectionEquipmentTab';
 import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { ServiceHealthDashboard } from '@/components/dashboard/ServiceHealthDashboard';
@@ -81,6 +82,7 @@ const Settings = () => {
     { value: 'payment-terms', label: 'Cond. pago', icon: CreditCard },
     { value: 'notifications', label: 'Alertas', icon: Bell },
     { value: 'categories', label: 'Categorías', icon: Tag },
+    { value: 'inspection-equipment', label: 'Inventario', icon: ClipboardList },
     ...(isAdmin ? [
       { value: 'users',      label: 'Usuarios',    icon: Users },
       { value: 'audit',      label: 'Auditoría',  icon: ClipboardList },
@@ -136,7 +138,7 @@ const Settings = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
           <div className="overflow-x-auto">
-            <TabsList className={`grid w-full min-w-[760px] ${isAdmin ? 'grid-cols-10' : 'grid-cols-7'} rounded-xl bg-transparent p-0`}>
+            <TabsList className={`grid w-full min-w-[760px] ${isAdmin ? 'grid-cols-11' : 'grid-cols-8'} rounded-xl bg-transparent p-0`}>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
 
@@ -191,6 +193,10 @@ const Settings = () => {
 
           <TabsContent value="categories" className="mt-4">
             <CategoriesTab />
+          </TabsContent>
+
+          <TabsContent value="inspection-equipment" className="mt-4">
+            <InspectionEquipmentTab />
           </TabsContent>
 
           {isAdmin && (

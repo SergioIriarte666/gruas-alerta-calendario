@@ -75,6 +75,8 @@ export const useServiceTransformer = () => {
           vehicleBrandRequired: item.service_types.vehicle_brand_required !== false,
           vehicleModelRequired: item.service_types.vehicle_model_required !== false,
           licensePlateRequired: item.service_types.license_plate_required !== false,
+          requiresDetail: item.service_types.requires_detail ?? true,
+          requiresPhotoSet: item.service_types.requires_photo_set ?? true,
           createdAt: item.service_types.created_at || new Date().toISOString(),
           updatedAt: item.service_types.updated_at || new Date().toISOString()
         } : {
@@ -92,6 +94,8 @@ export const useServiceTransformer = () => {
           vehicleBrandRequired: true,
           vehicleModelRequired: true,
           licensePlateRequired: true,
+          requiresDetail: true,
+          requiresPhotoSet: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         },

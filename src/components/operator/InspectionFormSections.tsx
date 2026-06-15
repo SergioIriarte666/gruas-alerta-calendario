@@ -18,6 +18,8 @@ interface InspectionFormSectionsProps {
   phase?: 'initial' | 'final';
   isInitialCompleted?: boolean;
   serviceId: string;
+  requiresDetail?: boolean;
+  requiresPhotoSet?: boolean;
 }
 
 export const InspectionFormSections = ({
@@ -25,6 +27,8 @@ export const InspectionFormSections = ({
   phase = 'initial',
   isInitialCompleted = false,
   serviceId,
+  requiresDetail = true,
+  requiresPhotoSet = true,
 }: InspectionFormSectionsProps) => {
   const { user } = useUser();
   const operatorSignatureRef = useRef<SignaturePadRef>(null);
@@ -34,7 +38,7 @@ export const InspectionFormSections = ({
   return (
     <>
       {/* Sección de Kilometraje y Combustible */}
-      <Card className="bg-card border-border">
+      {requiresDetail && <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <Gauge className="size-5" />
@@ -192,30 +196,32 @@ export const InspectionFormSections = ({
             />
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
-      <VehicleEquipmentChecklist form={form} />
-      
+      {requiresDetail && <VehicleEquipmentChecklist form={form} />}
+
       {/* Sección de Set Fotográfico */}
-      <FormField
-        control={form.control}
-        name="photographicSet"
-        render={({ field }) => (
-          <FormItem>
-            <PhotographicSet
-              photos={field.value?.filter(photo => photo.fileName) as Array<{
-                fileName: string;
-                category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
-                storageUrl?: string;
-              }> || []}
-              onPhotosChange={field.onChange}
-              serviceId={serviceId}
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      
+      {requiresPhotoSet && (
+        <FormField
+          control={form.control}
+          name="photographicSet"
+          render={({ field }) => (
+            <FormItem>
+              <PhotographicSet
+                photos={field.value?.filter(photo => photo.fileName) as Array<{
+                  fileName: string;
+                  category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
+                  storageUrl?: string;
+                }> || []}
+                onPhotosChange={field.onChange}
+                serviceId={serviceId}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
       <Card className="bg-card border-border">
         <CardHeader><CardTitle className="text-foreground">Observaciones y Firmas</CardTitle></CardHeader>
         <CardContent className="space-y-6">
