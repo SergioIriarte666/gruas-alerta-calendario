@@ -7,6 +7,7 @@ import {
   FileSpreadsheet,
   Loader2,
   RefreshCw,
+  Sparkles,
   Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ import {
   BankStatementMovement,
   useBankStatementReconciliation,
 } from '@/hooks/useBankStatementReconciliation';
+import { useAIBankMatch } from '@/hooks/useAIBankMatch';
+import { getUsableAISuggestedInvoiceId, rankCandidatesWithAISuggestion } from '@/utils/bankStatementAIMatch';
 
 interface BankStatementReconciliationPanelProps {
   onPaymentsChanged?: () => void | Promise<void>;
@@ -208,6 +211,7 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
     selectedImportId,
     setSelectedImportId,
     candidateMap,
+    allPaidMovementIds,
     loadCandidates,
     loadingCandidatesMovementId,
     uploadStatement,
@@ -217,6 +221,8 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
     reconcileMovement,
     reconcilingMovementId,
   } = useBankStatementReconciliation();
+
+  const { aiSuggestion, isLoadingAI, aiError, suggestMatch, clearSuggestion: clearAISuggestion } = useAIBankMatch();
 
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<BankStatementMovement | null>(null);
@@ -264,6 +270,14 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
     [movements, selectedMovement],
   );
   const selectedMovementCandidates = currentSelectedMovement ? candidateMap[currentSelectedMovement.id] ?? [] : [];
+  const usableAISuggestedInvoiceId = useMemo(
+    () => getUsableAISuggestedInvoiceId(selectedMovementCandidates, aiSuggestion),
+    [aiSuggestion, selectedMovementCandidates],
+  );
+  const rankedSelectedMovementCandidates = useMemo(
+    () => rankCandidatesWithAISuggestion(selectedMovementCandidates, aiSuggestion),
+    [aiSuggestion, selectedMovementCandidates],
+  );
   const selectedMovementExceptionReason = getExceptionReason(currentSelectedMovement);
   const selectedMovementDetectedRuts = useMemo(() => extractDetectedRuts(currentSelectedMovement), [currentSelectedMovement]);
   const allDetectedRuts = useMemo(() => {
@@ -324,9 +338,27 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
   const openMovementDetails = async (movement: BankStatementMovement) => {
     setSelectedMovement(movement);
     setDetailsOpen(true);
+    clearAISuggestion();
 
     try {
-      await loadCandidates(movement.id);
+      const candidates = await loadCandidates(movement.id);
+      if (candidates && candidates.length > 0 && !isMovementReconciled(movement)) {
+        await suggestMatch(movement, candidates);
+      }
+    } catch {
+      // Error already handled in hook
+    }
+  };
+
+  const handleReloadCandidates = async () => {
+    if (!selectedMovement || !currentSelectedMovement) return;
+
+    try {
+      clearAISuggestion();
+      const candidates = await loadCandidates(selectedMovement.id, true);
+      if (candidates && candidates.length > 0 && !isMovementReconciled(currentSelectedMovement)) {
+        await suggestMatch(currentSelectedMovement, candidates, true);
+      }
     } catch {
       // Error already handled in hook
     }
@@ -410,15 +442,6 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
             </div>
           </div>
 
-          <Alert>
-            <AlertTriangle className="size-4" />
-            <AlertTitle>Regla estricta de conciliación</AlertTitle>
-            <AlertDescription>
-              Este flujo solo acepta abonos positivos, una factura sin pagos previos y coincidencia exacta entre
-              movimiento y total de factura. El soporte PDF está calibrado con una cartola real; si el formato del
-              banco cambia, conviene volver a validar una muestra.
-            </AlertDescription>
-          </Alert>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -596,9 +619,21 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                             Cliente plataforma: {platformClientLabels.join(', ')}
                           </div>
                         )}
+                        {getEffectiveMovementStatus(movement) === 'reconciled' && (
+                          <div className="flex items-center gap-1 text-xs font-medium text-green-700">
+                            <CheckCircle2 className="size-3 flex-shrink-0" />
+                            Ya conciliado
+                          </div>
+                        )}
                         {getEffectiveMovementStatus(movement) === 'exception' && getExceptionReason(movement) && (
                           <div className="truncate text-xs text-amber-700">
                             Excepción: {getExceptionReason(movement)}
+                          </div>
+                        )}
+                        {allPaidMovementIds.has(movement.id) && (
+                          <div className="mt-0.5 flex items-center gap-1 text-xs font-medium text-amber-600">
+                            <AlertTriangle className="size-3 flex-shrink-0" />
+                            Facturas de este cliente ya conciliadas
                           </div>
                         )}
                             </>
@@ -644,7 +679,7 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
         </CardContent>
       </Card>
 
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+      <Dialog open={detailsOpen} onOpenChange={(open) => { setDetailsOpen(open); if (!open) clearAISuggestion(); }}>
         <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Revisión de movimiento bancario</DialogTitle>
@@ -739,18 +774,61 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                 </Alert>
               )}
 
+              {(isLoadingAI || aiSuggestion || aiError) && (
+                <div className={cn(
+                  'rounded-lg border p-4 space-y-2',
+                  isLoadingAI && 'border-border bg-muted/30',
+                  aiSuggestion?.suggestion_type === 'exact' && 'border-green-200 bg-green-50',
+                  aiSuggestion?.suggestion_type === 'probable' && 'border-violet-200 bg-violet-50',
+                  aiSuggestion?.suggestion_type === 'uncertain' && 'border-amber-200 bg-amber-50',
+                  aiSuggestion?.suggestion_type === 'none' && 'border-border bg-muted/30',
+                  aiError && 'border-destructive/30 bg-destructive/5',
+                )}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className={cn(
+                      'size-4 flex-shrink-0',
+                      isLoadingAI && 'animate-pulse text-muted-foreground',
+                      aiSuggestion?.suggestion_type === 'exact' && 'text-green-600',
+                      aiSuggestion?.suggestion_type === 'probable' && 'text-violet-600',
+                      aiSuggestion?.suggestion_type === 'uncertain' && 'text-amber-600',
+                      aiSuggestion?.suggestion_type === 'none' && 'text-muted-foreground',
+                      aiError && 'text-destructive',
+                    )} />
+                    <span className="text-sm font-medium">
+                      {isLoadingAI && 'Analizando con IA...'}
+                      {!isLoadingAI && aiSuggestion?.suggestion_type === 'exact' && 'IA: Coincidencia clara'}
+                      {!isLoadingAI && aiSuggestion?.suggestion_type === 'probable' && 'IA: Coincidencia probable'}
+                      {!isLoadingAI && aiSuggestion?.suggestion_type === 'uncertain' && 'IA: Coincidencia incierta'}
+                      {!isLoadingAI && aiSuggestion?.suggestion_type === 'none' && 'IA: Sin sugerencia'}
+                      {!isLoadingAI && aiError && 'IA no disponible'}
+                    </span>
+                    {aiSuggestion && !isLoadingAI && (
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        Confianza: {Math.round((aiSuggestion.confidence ?? 0) * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  {aiSuggestion?.reasoning && !isLoadingAI && (
+                    <p className="text-sm text-muted-foreground pl-6">{aiSuggestion.reasoning}</p>
+                  )}
+                  {aiError && !isLoadingAI && (
+                    <p className="text-xs text-destructive pl-6">{aiError}</p>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold">Facturas candidatas</h3>
                   <p className="text-sm text-muted-foreground">
-                    Se listan solo facturas pendientes con monto exactamente igual al movimiento.
+                    Facturas ordenadas por coincidencia: monto exacto, RUT, número fiscal o razón social. Solo se puede conciliar si el monto coincide exactamente.
                   </p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => loadCandidates(selectedMovement.id, true)}
+                  onClick={handleReloadCandidates}
                   disabled={loadingCandidatesMovementId === selectedMovement.id}
                 >
                   {loadingCandidatesMovementId === selectedMovement.id ? (
@@ -804,16 +882,21 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                         <TableHead>Factura</TableHead>
                         <TableHead>Cliente</TableHead>
                         <TableHead>Vencimiento</TableHead>
-                        <TableHead>Total</TableHead>
+                        <TableHead>Monto</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead className="text-right">Acción</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedMovementCandidates.map((candidate) => (
+                      {rankedSelectedMovementCandidates.map((candidate) => (
                         <TableRow key={candidate.invoice_id}>
                           <TableCell>
-                            <div className="font-medium">{candidate.folio || '-'}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium">{candidate.folio || '-'}</div>
+                              {usableAISuggestedInvoiceId === candidate.invoice_id && (
+                                <Badge className="bg-violet-600 text-white hover:bg-violet-600">Sugerida por IA</Badge>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground">{candidate.numero_fiscal || '-'}</div>
                           </TableCell>
                           <TableCell>
@@ -821,7 +904,27 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                             <div className="text-xs text-muted-foreground">{candidate.client_rut || '-'}</div>
                           </TableCell>
                           <TableCell>{formatDate(candidate.due_date)}</TableCell>
-                          <TableCell>{formatCurrency(candidate.total)}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className={cn(
+                                'font-medium',
+                                candidate.already_paid && 'text-muted-foreground line-through',
+                                !candidate.amount_matches && 'text-amber-600'
+                              )}>
+                                {formatCurrency(candidate.total)}
+                              </div>
+                              {candidate.already_paid && (
+                                <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                                  Ya pagada
+                                </Badge>
+                              )}
+                              {!candidate.amount_matches && !candidate.already_paid && (
+                                <div className="text-[10px] text-amber-600">
+                                  Cartola: {formatCurrency(currentSelectedMovement?.amount ?? 0)}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
@@ -841,7 +944,16 @@ export const BankStatementReconciliationPanel: React.FC<BankStatementReconciliat
                               disabled={
                                 reconcilingMovementId === currentSelectedMovement.id ||
                                 currentSelectedMovement.amount <= 0 ||
-                                isMovementReconciled(currentSelectedMovement)
+                                isMovementReconciled(currentSelectedMovement) ||
+                                candidate.already_paid ||
+                                !candidate.amount_matches
+                              }
+                              title={
+                                candidate.already_paid
+                                  ? 'Esta factura ya está pagada'
+                                  : !candidate.amount_matches
+                                    ? 'El monto no coincide exactamente — verificar antes de conciliar'
+                                    : 'Conciliar este movimiento con la factura'
                               }
                             >
                               {reconcilingMovementId === currentSelectedMovement.id ? (

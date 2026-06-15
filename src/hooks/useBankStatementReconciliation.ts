@@ -27,6 +27,8 @@ export interface BankStatementInvoiceCandidate {
   due_date: string;
   match_score: number;
   match_reason: string | null;
+  amount_matches: boolean;
+  already_paid: boolean;
 }
 
 const IMPORTS_QUERY_KEY = ['bank-statement-imports'];
@@ -39,6 +41,7 @@ export const useBankStatementReconciliation = () => {
   const [sessionImportIds, setSessionImportIds] = useState<string[]>([]);
   const [selectedImportId, setSelectedImportId] = useState<string | null>(null);
   const [candidateMap, setCandidateMap] = useState<Record<string, BankStatementInvoiceCandidate[]>>({});
+  const [allPaidMovementIds, setAllPaidMovementIds] = useState<Set<string>>(new Set());
   const [loadingCandidatesMovementId, setLoadingCandidatesMovementId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [reconcilingMovementId, setReconcilingMovementId] = useState<string | null>(null);
@@ -199,6 +202,12 @@ export const useBankStatementReconciliation = () => {
       setIsUploading(true);
 
       try {
+        const buffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const contentHash = Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+
         const parsed = await parseBankStatementFile(file);
         const movementRows = parsed.movements.map((movement) => ({
           row_index: movement.rowIndex,
@@ -225,16 +234,40 @@ export const useBankStatementReconciliation = () => {
           p_bank_name: parsed.bankName ?? undefined,
           p_processing_summary: processingSummary,
           p_movements: movementRows,
+          p_content_hash: contentHash,
         });
 
         if (error) throw error;
 
-        const result = (data ?? {}) as { import_id?: string; total_movements?: number; success?: boolean };
+        const result = (data ?? {}) as {
+          import_id?: string;
+          total_movements?: number;
+          success?: boolean;
+          duplicate?: boolean;
+          message?: string;
+        };
+
         if (!result.import_id || result.success !== true) {
           throw new Error('No se pudo crear la importación de cartola');
         }
 
+        if (result.duplicate) {
+          toast.info('Esta cartola ya fue importada anteriormente', {
+            description: 'Mostrando los movimientos de la importación existente.',
+            duration: 5000,
+          });
+          setSelectedImportId(result.import_id as string);
+          setSessionImportIds((currentIds) =>
+            currentIds.includes(result.import_id as string)
+              ? currentIds
+              : [result.import_id as string, ...currentIds],
+          );
+          await queryClient.invalidateQueries({ queryKey: IMPORTS_QUERY_KEY });
+          return result;
+        }
+
         setCandidateMap({});
+        setAllPaidMovementIds(new Set());
         setSessionImportIds((currentIds) =>
           currentIds.includes(result.import_id as string) ? currentIds : [result.import_id as string, ...currentIds],
         );
@@ -280,6 +313,17 @@ export const useBankStatementReconciliation = () => {
 
         const candidates = (data ?? []) as BankStatementInvoiceCandidate[];
         setCandidateMap((prev) => ({ ...prev, [movementId]: candidates }));
+
+        if (candidates.length > 0 && candidates.every((c) => c.already_paid)) {
+          setAllPaidMovementIds((prev) => new Set([...prev, movementId]));
+        } else {
+          setAllPaidMovementIds((prev) => {
+            const next = new Set(prev);
+            next.delete(movementId);
+            return next;
+          });
+        }
+
         return candidates;
       } catch (error) {
         logger.error('Error loading invoice candidates:', error);
@@ -391,6 +435,7 @@ export const useBankStatementReconciliation = () => {
     selectedImportId,
     setSelectedImportId,
     candidateMap,
+    allPaidMovementIds,
     loadCandidates,
     loadingCandidatesMovementId,
     uploadStatement,
