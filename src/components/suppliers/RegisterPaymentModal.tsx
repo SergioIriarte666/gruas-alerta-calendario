@@ -93,15 +93,15 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card p-0">
-        <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+      <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card p-0 flex flex-col">
+        <DialogHeader className="shrink-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <CreditCard className="size-5 text-primary" />
             Registrar Pago
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 px-6 py-6">
+        <div className="space-y-6 px-6 py-6 overflow-y-auto flex-1 min-h-0">
           {/* Supplier filter */}
           <div>
             <Label className="text-foreground flex items-center gap-2 mb-2">

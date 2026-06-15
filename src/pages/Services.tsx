@@ -481,6 +481,7 @@ const Services = () => {
               onSort={handleSort}
               selectedServices={selectedServiceIds}
               onSelectionChange={setSelectedServiceIds}
+              allFilteredIds={filteredServices.map(s => s.id)}
             />
           )}
 

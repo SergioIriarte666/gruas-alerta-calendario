@@ -57,7 +57,7 @@ export const SavedLocationsManager = () => {
           <span className="hidden md:inline">Ubicaciones Guardadas</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-clip">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="size-5 text-violet-600" />

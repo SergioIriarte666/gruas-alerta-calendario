@@ -199,8 +199,8 @@ export const ServiceBatchUpdateModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-clip border-border/70 bg-card p-0">
-        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
+      <DialogContent className="max-h-[90vh] max-w-4xl w-[95vw] overflow-clip border-border/70 bg-card p-0 flex flex-col">
+        <DialogHeader className="shrink-0 border-b border-border/70 bg-muted/20 px-6 pb-4 pt-6">
           <DialogTitle className="flex items-center gap-3 text-lg">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
               <Layers className="size-5 text-primary" />
@@ -213,10 +213,10 @@ export const ServiceBatchUpdateModal = ({
         </DialogHeader>
 
         {/* Two-column layout */}
-        <div className="flex flex-1 overflow-clip">
+        <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Left panel - Services list */}
           <div className="flex w-[340px] flex-col border-r border-border/70 bg-muted/20">
-            <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+            <div className="shrink-0 flex items-center justify-between border-b border-border/70 px-4 py-3">
               <span className="text-sm font-medium">Servicios</span>
               <div className="flex gap-1">
                 <Button 

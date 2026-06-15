@@ -39,6 +39,7 @@ interface ServicesTableProps {
   onSort?: (field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status') => void;
   selectedServices?: Set<string>;
   onSelectionChange?: (selectedIds: Set<string>) => void;
+  allFilteredIds?: string[];
 }
 
 export const ServicesTable = ({
@@ -54,10 +55,15 @@ export const ServicesTable = ({
   onSort,
   selectedServices = new Set(),
   onSelectionChange,
+  allFilteredIds,
 }: ServicesTableProps) => {
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
+
+  const effectiveSelectAllIds = allFilteredIds ?? services.map(s => s.id);
+  const allFilteredSelected = effectiveSelectAllIds.length > 0 && effectiveSelectAllIds.every(id => selectedServices.has(id));
+  const someFilteredSelected = effectiveSelectAllIds.some(id => selectedServices.has(id));
 
   // Convert Set<string> → RowSelectionState for TanStack
   const rowSelection: RowSelectionState = useMemo(() => {
@@ -74,10 +80,16 @@ export const ServicesTable = ({
         id: 'select',
         size: 48,
         enableSorting: false,
-        header: ({ table }) => (
+        header: () => (
           <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            checked={allFilteredSelected ? true : someFilteredSelected ? 'indeterminate' as const : false}
+            onCheckedChange={(value) => {
+              if (value) {
+                onSelectionChange?.(new Set(effectiveSelectAllIds));
+              } else {
+                onSelectionChange?.(new Set());
+              }
+            }}
             aria-label="Seleccionar todo"
           />
         ),

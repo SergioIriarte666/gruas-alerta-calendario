@@ -857,11 +857,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       )}
 
       <Dialog open={showHistoricalBackfill} onOpenChange={setShowHistoricalBackfill}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Backfill histórico (cierre → factura → conciliación)</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Mes</Label>

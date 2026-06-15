@@ -12,6 +12,7 @@ interface InvoiceExportPreviewProps {
   dateTo: Date | undefined;
   clientId: string;
   status: string;
+  isLoading?: boolean;
 }
 
 const INVOICE_STATUS_LABELS: Record<string, string> = {
@@ -29,7 +30,8 @@ const InvoiceExportPreview = ({
   dateFrom, 
   dateTo, 
   clientId,
-  status 
+  status,
+  isLoading,
 }: InvoiceExportPreviewProps) => {
   const { clients } = useClients();
   const selectedClient = clients.find(c => c.id === clientId);
@@ -41,7 +43,6 @@ const InvoiceExportPreview = ({
     }).format(amount);
   };
 
-  const hasValidDateRange = dateFrom && dateTo;
   const hasInvoices = invoiceCount > 0;
 
   return (
@@ -50,11 +51,11 @@ const InvoiceExportPreview = ({
         <h3 className="text-sm font-medium">📊 VISTA PREVIA</h3>
       </div>
 
-      {!hasValidDateRange ? (
+      {isLoading ? (
         <Alert>
-          <AlertTriangle className="size-4" />
-          <AlertDescription>
-            Selecciona un rango de fechas para ver la vista previa
+          <AlertDescription className="flex items-center gap-2">
+            <span className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            Cargando facturas...
           </AlertDescription>
         </Alert>
       ) : !hasInvoices ? (

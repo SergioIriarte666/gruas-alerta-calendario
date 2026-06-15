@@ -310,8 +310,8 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const recommendation = getPaymentRecommendation();
   return <>
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl w-[95vw] border-border/70 bg-card p-0">
-        <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
+      <DialogContent className="max-h-[90vh] max-w-2xl w-[95vw] border-border/70 bg-card p-0 flex flex-col">
+        <DialogHeader className="shrink-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <DialogTitle className="flex items-center gap-2">
             <Zap className="size-5 text-primary" />
@@ -322,7 +322,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
           </Button>
           </div>
         </DialogHeader>
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cliente */}
             <div>

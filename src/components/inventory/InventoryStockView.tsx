@@ -248,12 +248,12 @@ export const InventoryStockView = () => {
                   <Plus className="size-4" />
                   Nuevo Producto
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
-                  <DialogHeader>
-                    <DialogTitle>Agregar Nuevo Producto</DialogTitle>
-                  </DialogHeader>
-                  <ProductFormModal onSuccess={() => setShowCreateProductForm(false)} onClose={() => setShowCreateProductForm(false)} />
-                </DialogContent>
+                <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+                    </DialogHeader>
+                    <ProductFormModal onSuccess={() => setShowCreateProductForm(false)} onClose={() => setShowCreateProductForm(false)} />
+                  </DialogContent>
               </Dialog>
 
               <Dialog open={showEntryForm} onOpenChange={setShowEntryForm}>
@@ -261,7 +261,7 @@ export const InventoryStockView = () => {
                   <Plus className="size-4" />
                   Nueva Entrada
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
+                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Entrada de Inventario</DialogTitle>
                   </DialogHeader>
@@ -274,7 +274,7 @@ export const InventoryStockView = () => {
                   <Minus className="size-4" />
                   Nueva Salida
                 </Button>
-                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card">
+                <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Salida de Inventario</DialogTitle>
                   </DialogHeader>

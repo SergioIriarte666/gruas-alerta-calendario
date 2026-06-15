@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 import InvoiceExportFilters from './InvoiceExportFilters';
 import InvoiceExportPreview from './InvoiceExportPreview';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Invoice } from '@/types';
 
 interface InvoiceExportModalProps {
   open: boolean;
@@ -23,6 +26,68 @@ export interface InvoiceExportFiltersState {
   includeNotes: boolean;
   format: 'pdf' | 'excel';
 }
+
+const INVOICE_SELECT = `
+  *,
+  client:clients!client_id (
+    id,
+    name,
+    rut,
+    email,
+    phone,
+    department
+  )
+`;
+
+const fetchFilteredInvoices = async (filters: {
+  dateFrom?: Date;
+  dateTo?: Date;
+  clientId?: string;
+  status?: string;
+}): Promise<Invoice[]> => {
+  let query = supabase
+    .from('invoices')
+    .select(INVOICE_SELECT)
+    .not('folio', 'like', 'HIST-%')
+    .order('created_at', { ascending: false });
+
+  if (filters.dateFrom) {
+    query = query.gte('issue_date', filters.dateFrom.toISOString().split('T')[0]);
+  }
+  if (filters.dateTo) {
+    query = query.lte('issue_date', filters.dateTo.toISOString().split('T')[0]);
+  }
+  if (filters.clientId && filters.clientId !== '') {
+    query = query.eq('client_id', filters.clientId);
+  }
+  if (filters.status && filters.status !== 'all') {
+    query = query.filter('status', 'eq', filters.status);
+  }
+
+  // Fetch up to 2000 invoices for export
+  const allData: any[] = [];
+  let page = 0;
+  const PAGE_SIZE = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error } = await query.range(from, to);
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allData.push(...data);
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+    page++;
+  }
+
+  return allData as Invoice[];
+};
 
 const InvoiceExportModal = ({ 
   open, 
@@ -48,36 +113,37 @@ const InvoiceExportModal = ({
     }
   }, [initialClientId]);
 
-  // Filter invoices based on selected filters
-  const filteredInvoices = useMemo(() => {
-    let filtered = [...initialInvoices];
-
-    if (filters.dateFrom) {
-      filtered = filtered.filter(inv => 
-        inv.issueDate && new Date(inv.issueDate) >= filters.dateFrom!
-      );
+  // Reset filters when modal opens
+  useEffect(() => {
+    if (open) {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: undefined,
+        dateTo: undefined,
+        status: 'all',
+        clientId: initialClientId,
+      }));
     }
+  }, [open, initialClientId]);
 
-    if (filters.dateTo) {
-      filtered = filtered.filter(inv => 
-        inv.issueDate && new Date(inv.issueDate) <= filters.dateTo!
-      );
-    }
-
-    if (filters.clientId && filters.clientId !== '') {
-      filtered = filtered.filter(inv => inv.clientId === filters.clientId);
-    }
-
-    if (filters.status && filters.status !== 'all') {
-      filtered = filtered.filter(inv => inv.status === filters.status);
-    }
-
-    return filtered;
-  }, [initialInvoices, filters.dateFrom, filters.dateTo, filters.clientId, filters.status]);
+  // Fetch invoices from Supabase with current filters
+  const {
+    data: filteredInvoices = [],
+    isLoading: isLoadingInvoices,
+  } = useQuery({
+    queryKey: ['invoice-export', filters.dateFrom, filters.dateTo, filters.clientId, filters.status],
+    queryFn: () => fetchFilteredInvoices({
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+      clientId: filters.clientId,
+      status: filters.status,
+    }),
+    enabled: open,
+    placeholderData: (prev) => prev,
+  });
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    // Excluir facturas anuladas (NC) del cálculo de pendientes/total
     const activeInvoices = filteredInvoices.filter(inv => inv.status !== 'cancelled');
     const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
     const totalPaid = activeInvoices.reduce((sum, inv) => {
@@ -103,24 +169,16 @@ const InvoiceExportModal = ({
   });
 
   const handleExport = async () => {
-    // Validations
-    if (!filters.dateFrom || !filters.dateTo) {
-      toast.error('Error de validación', {
-        description: 'Debes seleccionar un rango de fechas'
-      });
-      return;
-    }
-
-    if (filters.dateFrom > filters.dateTo) {
-      toast.error('Error de validación', {
-        description: 'La fecha "Desde" no puede ser mayor que la fecha "Hasta"'
-      });
-      return;
-    }
-
     if (filteredInvoices.length === 0) {
       toast.error('Sin resultados', {
         description: 'No se encontraron facturas con los filtros seleccionados'
+      });
+      return;
+    }
+
+    if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
+      toast.error('Error de validación', {
+        description: 'La fecha "Desde" no puede ser mayor que la fecha "Hasta"'
       });
       return;
     }
@@ -153,14 +211,14 @@ const InvoiceExportModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-xl font-semibold">
             Exportar Informe de Facturas
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 overflow-y-auto flex-1 min-h-0">
           <InvoiceExportFilters 
             filters={filters}
             onFilterChange={handleFilterChange}
@@ -174,10 +232,11 @@ const InvoiceExportModal = ({
             dateTo={filters.dateTo}
             clientId={filters.clientId}
             status={filters.status}
+            isLoading={isLoadingInvoices}
           />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
@@ -186,7 +245,7 @@ const InvoiceExportModal = ({
           </Button>
           <Button 
             onClick={handleExport}
-            disabled={!filters.dateFrom || !filters.dateTo}
+            disabled={isLoadingInvoices || filteredInvoices.length === 0}
             className="bg-primary hover:bg-primary/90"
           >
             Generar Informe

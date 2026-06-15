@@ -37,6 +37,7 @@ interface ClientsTableProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: (ids: string[]) => void;
   onDeselectAll: () => void;
+  allFilteredIds?: string[];
 }
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -69,6 +70,7 @@ export const ClientsTable = ({
   onToggleSelect,
   onSelectAll,
   onDeselectAll,
+  allFilteredIds,
 }: ClientsTableProps) => {
   const { isMobile } = useDeviceType();
   const navigate = useNavigate();
@@ -78,14 +80,15 @@ export const ClientsTable = ({
     navigate(`/clients/${client.id}/pipeline`);
   };
 
-  const allPageSelected = clients.length > 0 && clients.every(c => selectedClients.has(c.id));
-  const somePageSelected = clients.some(c => selectedClients.has(c.id));
+  const effectiveIds = allFilteredIds ?? clients.map(c => c.id);
+  const allSelected = effectiveIds.length > 0 && effectiveIds.every(id => selectedClients.has(id));
+  const someSelected = effectiveIds.some(id => selectedClients.has(id));
 
   const handleHeaderCheckbox = () => {
-    if (allPageSelected) {
+    if (allSelected) {
       onDeselectAll();
     } else {
-      onSelectAll(clients.map(c => c.id));
+      onSelectAll(effectiveIds);
     }
   };
 
@@ -152,10 +155,10 @@ export const ClientsTable = ({
               <tr className="border-b border-border/60 bg-muted/30">
                 <th className="py-3 px-2 w-10">
                   <Checkbox
-                    checked={allPageSelected}
+                    checked={allSelected}
                     onCheckedChange={handleHeaderCheckbox}
                     aria-label="Seleccionar todos"
-                    className={somePageSelected && !allPageSelected ? 'opacity-50' : ''}
+                    className={someSelected && !allSelected ? 'opacity-50' : ''}
                   />
                 </th>
                 <th className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => onSort?.('name')}>

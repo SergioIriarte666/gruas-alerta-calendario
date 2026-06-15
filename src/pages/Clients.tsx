@@ -276,6 +276,7 @@ const Clients = () => {
         onToggleSelect={handleToggleSelect}
         onSelectAll={handleSelectAll}
         onDeselectAll={handleDeselectAll}
+        allFilteredIds={filteredAndSortedClients.map(c => c.id)}
       />
       
       <AppPagination className="py-4" currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />

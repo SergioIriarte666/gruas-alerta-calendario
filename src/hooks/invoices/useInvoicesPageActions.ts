@@ -243,7 +243,7 @@ export const useInvoicesPageActions = ({
 
   const handleSelectAllToggle = (checked: boolean) => {
     if (checked) {
-      setSelectedInvoiceIds(paginatedInvoices.map((invoice) => invoice.id));
+      setSelectedInvoiceIds(invoices.map((invoice) => invoice.id));
       return;
     }
 
