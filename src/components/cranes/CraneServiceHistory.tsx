@@ -55,7 +55,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando historial de servicios...</div>
+        <div className="text-foreground">Cargando historial de servicios...</div>
       </div>
     );
   }
@@ -64,24 +64,24 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
     <div className="space-y-6">
       {/* Resumen */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-muted/30 border-border/70">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-300 text-sm">Total Servicios</p>
-                <p className="text-white text-2xl font-bold">{services.length}</p>
+                <p className="text-muted-foreground text-sm">Total Servicios</p>
+                <p className="text-foreground text-2xl font-bold">{services.length}</p>
               </div>
-              <FileText className="size-8 text-tms-green" />
+              <FileText className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-muted/30 border-border/70">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-300 text-sm">Completados</p>
-                <p className="text-white text-2xl font-bold">
+                <p className="text-muted-foreground text-sm">Completados</p>
+                <p className="text-foreground text-2xl font-bold">
                   {services.filter(s => s.status === 'completed').length}
                 </p>
               </div>
@@ -90,32 +90,32 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-muted/30 border-border/70">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-300 text-sm">Ingresos Totales</p>
-                <p className="text-white text-2xl font-bold">
+                <p className="text-muted-foreground text-sm">Ingresos Totales</p>
+                <p className="text-foreground text-2xl font-bold">
                   ${totalRevenue.toLocaleString()}
                 </p>
               </div>
-              <DollarSign className="size-8 text-tms-green" />
+              <DollarSign className="size-8 text-primary" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filtros */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-muted/30 border-border/70">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input
                 placeholder="Buscar por folio, cliente u operador..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-black border-tms-green/30 text-white"
+                className="pl-10 bg-background border-border/70 text-foreground"
               />
             </div>
             <div className="flex gap-2">
@@ -124,8 +124,8 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                 size="sm"
                 onClick={() => setFilterStatus('all')}
                 className={filterStatus === 'all' 
-                  ? 'bg-tms-green text-black' 
-                  : 'border-tms-green/50 text-tms-green hover:bg-tms-green/10'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'border-border text-primary hover:bg-primary/10'
                 }
               >
                 Todos
@@ -135,8 +135,8 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                 size="sm"
                 onClick={() => setFilterStatus('completed')}
                 className={filterStatus === 'completed' 
-                  ? 'bg-tms-green text-black' 
-                  : 'border-tms-green/50 text-tms-green hover:bg-tms-green/10'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'border-border text-primary hover:bg-primary/10'
                 }
               >
                 Completados
@@ -146,8 +146,8 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
                 size="sm"
                 onClick={() => setFilterStatus('pending')}
                 className={filterStatus === 'pending' 
-                  ? 'bg-tms-green text-black' 
-                  : 'border-tms-green/50 text-tms-green hover:bg-tms-green/10'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'border-border text-primary hover:bg-primary/10'
                 }
               >
                 Pendientes
@@ -158,16 +158,16 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
       </Card>
 
       {/* Lista de Servicios */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-muted/30 border-border/70">
         <CardHeader>
-          <CardTitle className="text-white">Historial de Servicios</CardTitle>
+          <CardTitle className="text-foreground">Historial de Servicios</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredServices.length === 0 ? (
             <div className="text-center py-8">
-              <FileText className="mx-auto size-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No se encontraron servicios</h3>
-              <p className="text-gray-400">
+              <FileText className="mx-auto size-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron servicios</h3>
+              <p className="text-muted-foreground">
                 {searchTerm || filterStatus !== 'all' 
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Esta grúa aún no tiene servicios registrados'
@@ -179,44 +179,44 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
               {filteredServices.map((service) => (
                 <div
                   key={service.id}
-                  className="border border-gray-700 rounded-lg p-4 hover:border-tms-green/50 transition-colors"
+                  className="border border-border/70 rounded-lg p-4 hover:border-border transition-colors"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <span className="text-tms-green font-medium">{service.folio}</span>
+                        <span className="text-primary font-medium">{service.folio}</span>
                         {getStatusBadge(service.status)}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Calendar className="size-4" />
                             {formatForDisplay(service.serviceDate)}
                           </div>
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <User className="size-4" />
                             {service.operatorName}
                           </div>
                         </div>
                         
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <MapPin className="size-4" />
                             {service.origin} → {service.destination}
                           </div>
-                          <div className="text-white font-medium">
+                          <div className="text-foreground font-medium">
                             {service.clientName}
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-tms-green">
+                    <div className="text-right shrink-0">
+                      <div className="text-xl font-bold text-primary">
                         ${service.value.toLocaleString()}
                       </div>
-                      <div className="text-gray-400 text-sm">
+                      <div className="text-muted-foreground text-sm">
                         Valor del servicio
                       </div>
                     </div>

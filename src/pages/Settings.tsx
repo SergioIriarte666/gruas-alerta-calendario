@@ -137,8 +137,8 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 px-3 pb-4 sm:px-6 sm:pb-6">
-          <div className="overflow-x-auto">
-            <TabsList className={`grid w-full min-w-[760px] ${isAdmin ? 'grid-cols-11' : 'grid-cols-8'} rounded-xl bg-transparent p-0`}>
+          <div className="overflow-x-auto scrollbar-none -mx-3 sm:-mx-6 px-3 sm:px-6">
+            <TabsList className="flex w-max min-w-full gap-1 rounded-xl bg-muted/50 p-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
 
@@ -146,9 +146,9 @@ const Settings = () => {
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-muted-foreground whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
-                    <Icon className="size-4" />
+                    <Icon className="size-3.5 sm:size-4 shrink-0" />
                     <span>{tab.label}</span>
                   </TabsTrigger>
                 );

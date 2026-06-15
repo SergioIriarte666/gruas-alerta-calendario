@@ -204,7 +204,8 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
       </div>
 
       <SectionCard flush className="border-border/70 bg-card/80 shadow-sm">
-        <Table>
+        <div className="overflow-x-auto">
+        <Table className="min-w-[400px]">
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30">
               <TableHead 
@@ -286,6 +287,7 @@ export const VehicleBrandsManager: React.FC<VehicleBrandsManagerProps> = ({ sear
             )}
           </TableBody>
         </Table>
+        </div>
       </SectionCard>
 
       {/* Edit Dialog */}

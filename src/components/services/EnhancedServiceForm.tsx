@@ -828,7 +828,7 @@ export const EnhancedServiceForm = ({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(90vh-80px)]">
+    <div className="flex flex-col h-full">
       {/* Header con progreso */}
       <div className="flex-shrink-0 pb-4 border-b border-border/50 mb-4">
         <div className="flex items-center gap-4">
@@ -884,7 +884,7 @@ export const EnhancedServiceForm = ({
         {/* Right Panel - Form Content */}
         <div
           ref={formContentRef}
-          className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0"
+          className="flex-1 overflow-y-auto overscroll-contain pr-0 md:pr-2 min-w-0"
         >
           {/* Alertas de Validación */}
           {selectedServiceType && validationErrors.length > 0 && (

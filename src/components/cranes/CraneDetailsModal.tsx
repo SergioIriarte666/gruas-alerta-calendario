@@ -21,7 +21,7 @@ export const CraneDetailsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="cranes-modal cranes-modal--details max-h-[90vh] max-w-7xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
+      <DialogContent className="cranes-modal cranes-modal--details h-[92dvh] max-w-7xl overflow-hidden flex flex-col border-border/70 bg-card p-0">
         <DialogHeader className="cranes-modal__header border-b border-border/70 p-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div>

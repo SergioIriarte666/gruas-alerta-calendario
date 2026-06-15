@@ -470,7 +470,7 @@ export const EnhancedCostsTable = ({
       <Card className="bg-background">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (
@@ -547,17 +547,17 @@ export const EnhancedCostsTable = ({
                       >
                         <TableCell colSpan={onSelectionChange ? 9 : 8}>
                           <div className="flex items-center justify-between py-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex min-w-0 flex-1 items-center gap-2 flex-wrap">
                               <span className={cn(
-                                'transform transition-transform',
+                                'transform transition-transform flex-shrink-0',
                                 isExpanded ? 'rotate-90' : ''
                               )}>
                                 ▶
                               </span>
-                              <span className="font-medium capitalize">{groupKey}</span>
-                              <Badge variant="secondary">{groupCosts.length} costos</Badge>
+                              <span className="font-medium capitalize truncate min-w-0 flex-1">{groupKey}</span>
+                              <Badge variant="secondary" className="flex-shrink-0">{groupCosts.length} costos</Badge>
                             </div>
-                            <span className="font-semibold text-primary">
+                            <span className="font-semibold text-primary flex-shrink-0 pl-2">
                               {formatCurrency(groupTotal)}
                             </span>
                           </div>

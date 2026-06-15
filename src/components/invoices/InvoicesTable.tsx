@@ -226,7 +226,7 @@ const InvoicesTable = ({
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-border/60 bg-muted/30">
                 <th className="py-3 px-4 text-left font-medium text-foreground">

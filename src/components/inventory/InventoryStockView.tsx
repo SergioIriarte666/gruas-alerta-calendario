@@ -34,6 +34,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const InventoryStockView = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,6 +61,7 @@ export const InventoryStockView = () => {
   const { data: allStock = [] } = useInventoryStock();
   const queryClient = useQueryClient();
   const { isAdmin } = useUserPermissions();
+  const isMobile = useIsMobile();
   const { data: locations = [] } = useInventoryLocations();
   const createMovement = useCreateInventoryMovement();
 
@@ -396,7 +398,7 @@ export const InventoryStockView = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 xl:flex-row">
+          <div className="flex flex-col gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -417,39 +419,41 @@ export const InventoryStockView = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button
-              variant={showZeroStock ? 'default' : 'outline'}
-              onClick={() => setShowZeroStock((value) => !value)}
-              className={cn('whitespace-nowrap', !showZeroStock && 'border-border/70 bg-background/60')}
-            >
-              {showZeroStock ? 'Mostrar todo' : 'Ocultar sin stock'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setViewMode((value) => (value === 'table' ? 'cards' : 'table'))}
-              className="whitespace-nowrap border-border/70 bg-background/60"
-            >
-              {viewMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCleanup(true);
-                scanOrphans();
-              }}
-              className="whitespace-nowrap border-border/70 bg-background/60"
-            >
-              Limpiar huérfanos
-            </Button>
-            {isAdmin ? (
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+              <Button
+                variant={showZeroStock ? 'default' : 'outline'}
+                onClick={() => setShowZeroStock((value) => !value)}
+                className={cn('shrink-0 whitespace-nowrap', !showZeroStock && 'border-border/70 bg-background/60')}
+              >
+                {showZeroStock ? 'Mostrar todo' : 'Ocultar sin stock'}
+              </Button>
               <Button
                 variant="outline"
-                onClick={() => setShowDuplicateMerge(true)}
-                className="whitespace-nowrap border-border/70 bg-background/60"
+                onClick={() => setViewMode((value) => (value === 'table' ? 'cards' : 'table'))}
+                className="shrink-0 whitespace-nowrap border-border/70 bg-background/60"
               >
-                Fusionar duplicados
+                {viewMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla'}
               </Button>
-            ) : null}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCleanup(true);
+                  scanOrphans();
+                }}
+                className="shrink-0 whitespace-nowrap border-border/70 bg-background/60"
+              >
+                Limpiar huérfanos
+              </Button>
+              {isAdmin ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDuplicateMerge(true)}
+                  className="shrink-0 whitespace-nowrap border-border/70 bg-background/60"
+                >
+                  Fusionar duplicados
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           {visibleRows.length === 0 ? (
@@ -458,7 +462,7 @@ export const InventoryStockView = () => {
             </div>
           ) : viewMode === 'table' ? (
             <div className="overflow-x-auto rounded-xl border border-border/70 bg-background/40">
-              <table className="min-w-full text-sm">
+              <table className="min-w-[500px] w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/70 text-muted-foreground">
                     <th className="px-4 py-3 text-left font-medium">Producto</th>
@@ -492,23 +496,31 @@ export const InventoryStockView = () => {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex flex-wrap items-center justify-end gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setSelectedProductId(item.id)} className="border-border/70 bg-background/60">
-                              Ver
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => { setEditProductId(item.id); setShowEditProductForm(true); }} className="border-border/70 bg-background/60">
-                              Editar
-                            </Button>
-                            <Button size="sm" variant="secondary" onClick={() => { setShowExitForm(true); setSelectedProductId(item.id); }}>
-                              Salida
-                            </Button>
-                            <Button size="sm" variant="secondary" onClick={() => { setShowEntryForm(true); setSelectedProductId(item.id); }}>
-                              Entrada
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(item.id, item.name)} disabled={isPreparingDelete}>
-                              {isPreparingDelete ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
-                            </Button>
-                          </div>
+                          {isMobile ? (
+                            <div className="flex justify-end">
+                              <Button size="sm" variant="outline" onClick={() => setSelectedProductId(item.id)} className="border-border/70 bg-background/60">
+                                Ver
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              <Button size="sm" variant="outline" onClick={() => setSelectedProductId(item.id)} className="border-border/70 bg-background/60">
+                                Ver
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => { setEditProductId(item.id); setShowEditProductForm(true); }} className="border-border/70 bg-background/60">
+                                Editar
+                              </Button>
+                              <Button size="sm" variant="secondary" onClick={() => { setShowExitForm(true); setSelectedProductId(item.id); }}>
+                                Salida
+                              </Button>
+                              <Button size="sm" variant="secondary" onClick={() => { setShowEntryForm(true); setSelectedProductId(item.id); }}>
+                                Entrada
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(item.id, item.name)} disabled={isPreparingDelete}>
+                                {isPreparingDelete ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );

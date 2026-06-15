@@ -55,7 +55,8 @@ export const MonthlyInstallments = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Vencimiento</TableHead>
@@ -106,6 +107,7 @@ export const MonthlyInstallments = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

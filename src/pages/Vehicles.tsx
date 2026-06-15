@@ -59,31 +59,29 @@ const Vehicles: React.FC = () => {
         <Card className="mx-6 border-border/70 bg-background/50 shadow-none">
           <CardContent className="p-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <div className="overflow-x-auto">
-                <TabsList className="grid w-full min-w-[420px] grid-cols-3 rounded-xl bg-transparent p-0">
-                  <TabsTrigger
-                    value="brands"
-                    className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <Tags className="size-4" />
-                    Marcas
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="models"
-                    className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <CarFront className="size-4" />
-                    Modelos
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="patent-lookup"
-                    className="gap-2 rounded-lg text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <ScanSearch className="size-4" />
-                    {isMobile ? 'Patentes' : 'Consulta de Patentes'}
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+              <TabsList className="flex w-full gap-1 rounded-xl bg-muted/50 p-1">
+                <TabsTrigger
+                  value="brands"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg text-xs sm:text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <Tags className="size-3.5 sm:size-4 shrink-0" />
+                  <span>Marcas</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="models"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg text-xs sm:text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <CarFront className="size-3.5 sm:size-4 shrink-0" />
+                  <span>Modelos</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="patent-lookup"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg text-xs sm:text-sm text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  <ScanSearch className="size-3.5 sm:size-4 shrink-0" />
+                  <span>{isMobile ? 'Patentes' : 'Consulta de Patentes'}</span>
+                </TabsTrigger>
+              </TabsList>
 
               <TabsContent value="brands" className="space-y-4 px-4 pb-4">
                 <VehicleBrandsManager searchTerm={searchTerm} setSearchTerm={setSearchTerm} />

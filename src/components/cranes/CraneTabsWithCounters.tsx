@@ -105,9 +105,43 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
   ];
 
   return (
-    <div className="flex flex-1 min-w-0 min-h-0">
-      {/* Sidebar nav */}
-      <nav className="w-44 flex-shrink-0 border-r border-border/70 flex flex-col py-3 px-2">
+    <div className="flex flex-1 min-w-0 min-h-0 flex-col md:flex-row">
+      {/* ── MOBILE: tabs horizontales con scroll ── */}
+      <div className="md:hidden flex-shrink-0 border-b border-border/70 overflow-x-auto scrollbar-none">
+        <div className="flex min-w-max gap-1 px-3 py-2">
+          {navItems.map(({ id, label, Icon, count }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={cn(
+                  'flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors whitespace-nowrap',
+                  isActive
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="size-3.5 flex-shrink-0" />
+                <span>{label}</span>
+                {count !== null && count > 0 && (
+                  <span className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-full leading-none font-medium tabular-nums',
+                    isActive
+                      ? 'bg-white/20 text-primary-foreground'
+                      : 'bg-muted text-muted-foreground'
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── DESKTOP: sidebar vertical ── */}
+      <nav className="hidden md:flex w-44 flex-shrink-0 border-r border-border/70 flex-col py-3 px-2">
         <div className="flex flex-col gap-0.5 flex-1">
           {navItems.map(({ id, label, Icon, count }) => {
             const isActive = activeTab === id;
@@ -140,8 +174,8 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
         </div>
       </nav>
 
-      {/* Contenido activo */}
-      <div className="flex-1 min-w-0 overflow-y-auto p-6">
+      {/* ── Contenido activo (mobile + desktop) ── */}
+      <div className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6">
         {activeTab === 'overview'    && <CraneMetricsOverview crane={crane} />}
         {activeTab === 'services'    && <CraneServices crane={crane} />}
         {activeTab === 'costs'       && <CraneCosts crane={crane} />}

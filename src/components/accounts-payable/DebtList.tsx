@@ -61,7 +61,8 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
         </Button>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
+        <div className="overflow-x-auto">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Acreedor</TableHead>
@@ -120,6 +121,7 @@ export const DebtList = ({ onCreateDebt, onViewDebt }: DebtListProps) => {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
   );
