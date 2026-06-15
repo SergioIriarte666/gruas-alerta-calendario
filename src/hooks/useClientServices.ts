@@ -11,6 +11,7 @@ const logger = createLogger("useClientServices");
 const CLIENT_SERVICE_SELECT = `
   id,
   folio,
+  client_id,
   request_date,
   service_date,
   purchase_order,
@@ -35,6 +36,7 @@ const CLIENT_SERVICE_SELECT = `
   observations,
   created_at,
   updated_at,
+  clients!client_id(id, name, rut, phone, email, address, department, is_active),
   cranes(id, license_plate, brand, model, type, is_active),
   operators(id, name, rut, phone, license_number, is_active),
   service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
@@ -50,7 +52,7 @@ export const useClientServices = (clientId: string | null) => {
             const { data, error } = await supabase
                 .from('services')
                 .select(CLIENT_SERVICE_SELECT)
-                .eq('client_id', id)
+                .or(`client_id.eq.${id},third_party_client_id.eq.${id}`)
                 .order('service_date', { ascending: false });
 
             if (error) {
@@ -63,36 +65,24 @@ export const useClientServices = (clientId: string | null) => {
                 return;
             }
 
-            // Get client data separately for more robust error handling
-            const { data: clientData, error: clientError } = await supabase
-                .from('clients')
-                .select('id, name, rut, phone, email, address, department, is_active')
-                .eq('id', id)
-                .single();
-
-            if (clientError) {
-                logger.error('Client fetch error:', clientError);
-                // Continue without client data rather than failing completely
-            }
-            
             const formattedServices: Service[] = data.map(service => ({
                 id: service.id,
                 folio: service.folio,
                 requestDate: service.request_date,
                 serviceDate: service.service_date,
-                client: clientData ? {
-                  id: clientData.id,
-                  name: clientData.name,
-                  rut: clientData.rut,
-                  phone: clientData.phone || '',
-                  email: clientData.email || '',
-                  address: clientData.address || '',
-                  department: clientData.department || 'General',
-                  isActive: clientData.is_active,
+                client: service.clients ? {
+                  id: (service.clients as any).id,
+                  name: (service.clients as any).name,
+                  rut: (service.clients as any).rut,
+                  phone: (service.clients as any).phone || '',
+                  email: (service.clients as any).email || '',
+                  address: (service.clients as any).address || '',
+                  department: (service.clients as any).department || 'General',
+                  isActive: (service.clients as any).is_active,
                   createdAt: '',
                   updatedAt: ''
                 } : {
-                  id: id,
+                  id: service.client_id || id,
                   name: 'Cliente no encontrado',
                   rut: '',
                   phone: '',
