@@ -65,7 +65,69 @@ export const useClientServices = (clientId: string | null) => {
                 return;
             }
 
+            const serviceIds = data.map((service) => service.id);
+            const closureBillingByServiceId = new Map<string, { coveredInvoiced: boolean; excessInvoiced: boolean }>();
+
+            if (serviceIds.length > 0) {
+                const { data: closureLinks, error: closureLinksError } = await supabase
+                    .from('closure_services')
+                    .select(`
+                      service_id,
+                      value_type,
+                      service_closures!closure_services_closure_id_fkey(
+                        id,
+                        client_id,
+                        closure_type,
+                        status,
+                        invoice_closures!fk_invoice_closures_closure_id(id)
+                      )
+                    `)
+                    .in('service_id', serviceIds);
+
+                if (closureLinksError) {
+                    logger.warn('Error fetching closure billing states for client services:', closureLinksError);
+                } else {
+                    for (const link of (closureLinks || []) as any[]) {
+                        const closure = Array.isArray(link.service_closures)
+                            ? link.service_closures[0]
+                            : link.service_closures;
+
+                        if (!closure || closure.client_id !== id) continue;
+
+                        const isInvoiced = closure.status === 'invoiced' || (closure.invoice_closures?.length || 0) > 0;
+                        if (!isInvoiced) continue;
+
+                        const current = closureBillingByServiceId.get(link.service_id) || {
+                            coveredInvoiced: false,
+                            excessInvoiced: false,
+                        };
+
+                        if (link.value_type === 'excess' || closure.closure_type === 'excess') {
+                            current.excessInvoiced = true;
+                        } else {
+                            current.coveredInvoiced = true;
+                        }
+
+                        closureBillingByServiceId.set(link.service_id, current);
+                    }
+                }
+            }
+
             const formattedServices: Service[] = data.map(service => ({
+                status: (() => {
+                  const closureBilling = closureBillingByServiceId.get(service.id);
+                  const isThirdPartyView = Boolean(service.third_party_client_id && service.third_party_client_id === id);
+
+                  if (closureBilling?.excessInvoiced && isThirdPartyView) {
+                    return 'invoiced' as Service['status'];
+                  }
+
+                  if (closureBilling?.coveredInvoiced && !isThirdPartyView) {
+                    return 'invoiced' as Service['status'];
+                  }
+
+                  return service.status as Service['status'];
+                })(),
                 id: service.id,
                 folio: service.folio,
                 requestDate: service.request_date,
@@ -158,7 +220,6 @@ export const useClientServices = (clientId: string | null) => {
                   examExpiry: ''
                 } : null,
                 operatorCommission: Number(service.operator_commission),
-                status: service.status as Service['status'],
                 observations: service.observations,
                 createdAt: service.created_at,
                 updatedAt: service.updated_at,

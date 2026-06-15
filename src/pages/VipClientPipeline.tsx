@@ -26,6 +26,7 @@ import { PredictiveInsights } from '@/components/vip/PredictiveInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { applyVipServiceBatchUpdates } from '@/utils/vipBatchServiceUpdater';
+import { getVipPipelineDisplayStatus, isVipPipelineInvoiced } from '@/utils/vipPipelineStatus';
 
 import { toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
@@ -61,7 +62,7 @@ export default function VipClientPipeline() {
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
-    if (service.status === 'purchase_order_pending' && !service.purchaseOrderNumber) {
+    if (getVipPipelineDisplayStatus(service) === 'purchase_order_pending' && !service.purchaseOrderNumber) {
       setShowPurchaseOrderDialog(true);
     } else {
       setShowServiceDetailsModal(true);
@@ -69,7 +70,7 @@ export default function VipClientPipeline() {
   };
 
   const handleServiceEdit = (service: Service) => {
-    if (service.status === 'invoiced') {
+    if (isVipPipelineInvoiced(service)) {
       toast.error('No se puede editar un servicio facturado');
       return;
     }

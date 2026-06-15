@@ -41,6 +41,7 @@ import { PipelineBatchActionBar } from './PipelineBatchActionBar';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 import { toTitleCase } from '@/lib/utils';
 
 interface SubGroupConfig {
@@ -227,23 +228,6 @@ const PIPELINE_STATUSES = [
   }
 ];
 
-const getPipelineDisplayStatus = (service: Service): ServiceStatus => {
-  const hasQuote = Boolean(service.quoteNumber?.trim());
-  const hasPurchaseOrder = Boolean((service.purchaseOrderNumber || service.purchaseOrder || '').trim());
-
-  // Flujo post-servicio: si ya tiene cotización no debe quedar visible en completados
-  if (service.status === 'completed' && hasQuote) {
-    return hasPurchaseOrder ? 'with_purchase_order' : 'quoted';
-  }
-
-  // Si ya tiene O.C., mostrar en la etapa administrativa final previa a facturación
-  if ((service.status === 'quoted' || service.status === 'purchase_order_pending') && hasPurchaseOrder) {
-    return 'with_purchase_order';
-  }
-
-  return service.status;
-};
-
 export const PipelineListView: React.FC<PipelineListViewProps> = ({
   services,
   loading,
@@ -336,7 +320,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     const filteredServices = applyAdvancedFilters(services, { searchTerm, statusFilter: 'all' });
     
     const groupedServices = filteredServices.reduce((groups, service) => {
-      const status = getPipelineDisplayStatus(service);
+      const status = getVipPipelineDisplayStatus(service);
       if (!groups[status]) {
         groups[status] = [];
       }

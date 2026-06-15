@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
@@ -37,9 +38,10 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'pending'>('all');
 
   // Filtrar servicios relevantes para órdenes de compra
-  const relevantServices = services.filter(service => 
-    ['quoted', 'purchase_order_pending', 'with_purchase_order', 'pending', 'in_progress', 'completed'].includes(service.status)
-  );
+  const relevantServices = services.filter((service) => {
+    const displayStatus = getVipPipelineDisplayStatus(service);
+    return ['quoted', 'purchase_order_pending', 'with_purchase_order', 'pending', 'in_progress', 'completed'].includes(displayStatus);
+  });
 
   // Aplicar filtros
   const filteredServices = relevantServices.filter(service => {
@@ -53,9 +55,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     if (statusFilter === 'all') {
       matchesStatus = true;
     } else if (statusFilter === 'with_purchase_order') {
-      matchesStatus = !!(service.purchaseOrderNumber || service.purchaseOrder);
+      matchesStatus = getVipPipelineDisplayStatus(service) === 'with_purchase_order';
     } else {
-      matchesStatus = service.status === statusFilter;
+      matchesStatus = getVipPipelineDisplayStatus(service) === statusFilter;
     }
     
     return matchesSearch && matchesStatus;
@@ -105,11 +107,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
 
   // Estadísticas
   const stats = {
-    quoted: relevantServices.filter(s => s.status === 'quoted').length,
-    pending_po: relevantServices.filter(s => s.status === 'purchase_order_pending').length,
-    with_purchase_order: relevantServices.filter(s => 
-      s.purchaseOrderNumber || s.purchaseOrder
-    ).length,
+    quoted: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'quoted').length,
+    pending_po: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'purchase_order_pending').length,
+    with_purchase_order: relevantServices.filter((s) => getVipPipelineDisplayStatus(s) === 'with_purchase_order').length,
     total_value: relevantServices.reduce((sum, s) => sum + s.value, 0)
   };
 
@@ -244,7 +244,8 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           </Card>
         ) : (
           filteredServices.map((service) => {
-            const statusInfo = getStatusInfo(service.status);
+            const displayStatus = getVipPipelineDisplayStatus(service);
+            const statusInfo = getStatusInfo(displayStatus);
             const StatusIcon = statusInfo.icon;
             
             return (
@@ -356,7 +357,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         size="sm"
                         className="text-blue-400 hover:text-blue-300"
                       >
-                        {service.status === 'purchase_order_pending' ? 'Registrar O.C.' : 'Ver Detalles'}
+                        {displayStatus === 'purchase_order_pending' ? 'Registrar O.C.' : 'Ver Detalles'}
                       </Button>
                     </div>
                   </div>

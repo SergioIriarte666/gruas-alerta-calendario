@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 
 import { toTitleCase } from '@/lib/utils';
 
@@ -30,13 +31,15 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
   const metrics = useMemo(() => {
     // Calcular métricas por estado
     const statusCounts = services.reduce((acc, service) => {
-      acc[service.status] = (acc[service.status] || 0) + 1;
+      const displayStatus = getVipPipelineDisplayStatus(service);
+      acc[displayStatus] = (acc[displayStatus] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Calcular valores totales por estado
     const statusValues = services.reduce((acc, service) => {
-      acc[service.status] = (acc[service.status] || 0) + getDisplayServiceValue(service, clientId);
+      const displayStatus = getVipPipelineDisplayStatus(service);
+      acc[displayStatus] = (acc[displayStatus] || 0) + getDisplayServiceValue(service, clientId);
       return acc;
     }, {} as Record<string, number>);
 
@@ -74,7 +77,8 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
 
     // Servicios con urgencia (más de 7 días)
     const urgentServices = services.filter(service => {
-      if (service.status === 'invoiced' || service.status === 'completed') return false;
+      const displayStatus = getVipPipelineDisplayStatus(service);
+      if (displayStatus === 'invoiced' || displayStatus === 'completed') return false;
       const daysSince = Math.floor(
         (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
       );
