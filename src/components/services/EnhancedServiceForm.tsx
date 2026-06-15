@@ -12,8 +12,6 @@ import { ServiceCostDetailsSection } from './form/ServiceCostDetailsSection';
 import { ProductSalesSection } from './form/ProductSalesSection';
 import { EnhancedFinancialSection } from './form/EnhancedFinancialSection';
 import { ObservationsSection } from './form/ObservationsSection';
-import { FormActions } from './form/FormActions';
-import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { ServiceValidationAlerts } from './form/ServiceValidationAlerts';
 import { CustodySection } from '../forms/CustodySection';
 import { FormStepNavigation, getDefaultSteps, FormStep } from './form/FormStepNavigation';
@@ -30,7 +28,7 @@ import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
-import { useUser } from '@/contexts/UserContext';
+import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -43,13 +41,14 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { OperatorNotificationDialogs } from './OperatorNotificationDialogs';
 
 const logger = createLogger('EnhancedServiceForm');
 
 interface EnhancedServiceFormProps {
   service?: Service | null;
   prefilledData?: any;
-  onSubmit: (serviceData: any) => void;
+  onSubmit: (serviceData: Service) => void;
   onCancel: () => void;
   fromCalendarEvent?: boolean;
 }
@@ -66,7 +65,6 @@ export const EnhancedServiceForm = ({
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { suppliers } = useSuppliers();
-  const { user } = useUser();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
@@ -84,6 +82,25 @@ export const EnhancedServiceForm = ({
   const [enableCustody, setEnableCustody] = useState(false);
   const [valueFromRate, setValueFromRate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCreationFlowComplete = useCallback((createdService: Service) => {
+    logger.debug('📞 Calling onSubmit callback...');
+    onSubmit?.(createdService);
+    onCancel?.();
+  }, [onCancel, onSubmit]);
+
+  const {
+    confirmOpen: operatorNotificationConfirmOpen,
+    retryOpen: operatorNotificationRetryOpen,
+    isSending: isSendingOperatorNotification,
+    openNotificationPrompt,
+    confirmNotification,
+    retryNotification,
+    declineNotification,
+    cancelRetry,
+  } = useOperatorNotificationFlow({
+    onComplete: handleCreationFlowComplete,
+  });
   
   // Detectar si está duplicando
   const isDuplicating = prefilledData?._isDuplicating;
@@ -261,7 +278,7 @@ export const EnhancedServiceForm = ({
     if (enhancedService && service?.id) {
       logger.debug('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
       
-      const costDetails = enhancedService.serviceCosts?.map(cost => ({
+      const costDetails = enhancedService.serviceCosts?.map((cost: any) => ({
         id: cost.id,
         description: cost.description,
         amount: cost.amount || 0,
@@ -748,76 +765,22 @@ export const EnhancedServiceForm = ({
       const action = service ? 'actualizado' : 'creado';
       logger.debug('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
-      // Obtener operatorId desde operators[] o desde campo legacy operator
-      const assignedOperator = finalData.operators?.[0];
-      const operatorId = assignedOperator?.operatorId ||
-                         (finalData as any).operator?.id ||
-                         result?.operator?.id ||
-                         null;
-
-      if (!operatorId) {
-        toast.info(`Servicio ${action} sin operador asignado. No se envio WhatsApp al operador.`);
-      } else if (result?.id) {
-        supabase.functions
-          .invoke('send-whatsapp-operator', {
-            body: {
-              operatorId,
-              serviceId: result.id,
-              folio: result.folio,
-              vehicleBrand: result.vehicleBrand || finalData.vehicleBrand || '',
-              vehicleModel: result.vehicleModel || finalData.vehicleModel || '',
-              licensePlate: result.licensePlate || finalData.licensePlate || '',
-              clientName: result.client?.name || '',
-              clientPhone: result.client?.phone || '',
-              contactPerson: (result as any).contactPerson || (result as any).contact_person || finalData.contactPerson || '',
-              contactPhone: (result as any).contactPhone || (result as any).contact_phone || finalData.contactPhone || '',
-              serviceDate: result.serviceDate,
-              origin: result.origin,
-              destination: result.destination,
-            },
-          })
-          .then(({ data, error }) => {
-            if (error) {
-              logger.warn('WhatsApp operador no enviado:', error);
-              const message = error?.context?.error?.message || error.message || 'Error desconocido';
-              toast.error('No se pudo enviar el WhatsApp al operador', { description: message });
-              return;
-            }
-
-            if ((data as any)?.skipped) {
-              const reason = (data as any)?.reason;
-              if (reason === 'whatsapp_disabled') {
-                toast.warning('Envío de WhatsApp deshabilitado en Configuración');
-              } else {
-                toast.info('WhatsApp al operador omitido', { description: reason || 'Envio omitido por configuracion' });
-              }
-              return;
-            }
-
-            const errorCode = (data as any)?.error?.code;
-            if (errorCode === 'NO_PHONE') {
-              toast.warning('WhatsApp al operador omitido', {
-                description: 'El operador asignado no tiene telefono configurado.',
-              });
-              return;
-            }
-
-            if (errorCode === 'INVALID_PHONE') {
-              toast.warning('WhatsApp al operador omitido', {
-                description: 'El telefono del operador no tiene un formato valido.',
-              });
-            }
-          });
-      }
-
       playRetroSuccessSound();
       toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
-      
-      logger.debug('📞 Calling onSubmit callback...');
-      onSubmit?.(result);
-      setIsSubmitting(false);
-      onCancel?.();
-      
+
+      if (!service) {
+        const assignedOperator = finalData.operators?.[0];
+        const operatorId = assignedOperator?.operatorId ||
+          (finalData as any).operator?.id ||
+          result?.operator?.id ||
+          null;
+
+        openNotificationPrompt(result, operatorId);
+        logger.debug('✅ Form submission completed successfully, pending operator notification decision');
+        return;
+      }
+
+      handleCreationFlowComplete(result);
       logger.debug('✅ Form submission completed successfully');
       
     } catch (error) {
@@ -1389,6 +1352,16 @@ export const EnhancedServiceForm = ({
           </div>
         </div>
       </div>
+
+      <OperatorNotificationDialogs
+        confirmOpen={operatorNotificationConfirmOpen}
+        retryOpen={operatorNotificationRetryOpen}
+        isSending={isSendingOperatorNotification}
+        onConfirmSend={confirmNotification}
+        onDecline={declineNotification}
+        onRetry={retryNotification}
+        onRetryCancel={cancelRetry}
+      />
     </div>
   );
 };

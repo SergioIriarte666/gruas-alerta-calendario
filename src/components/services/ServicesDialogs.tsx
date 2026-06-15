@@ -13,8 +13,8 @@ interface ServicesDialogsProps {
   onFormOpenChange: (open: boolean) => void;
   editingService: Service | null;
   prefilledData?: any;
-  onCreateService: (serviceData: any) => void;
-  onUpdateService: (serviceData: any) => void;
+  onCreateService: (serviceData: Service) => void;
+  onUpdateService: (serviceData: Service) => void;
   selectedService: Service | null;
   isDetailsOpen: boolean;
   onDetailsClose: () => void;

@@ -39,7 +39,7 @@ export default function VipClientPipeline() {
   const navigate = useNavigate();
   const { clients } = useClients();
   const { services, loading, refetch } = useClientServices(clientId || null);
-  const { createService, updateService, forceGlobalRefresh } = useServices();
+  const { forceGlobalRefresh } = useServices();
   
   // Estados para modales y formularios
   const [selectedService, setSelectedService] = React.useState<Service | null>(null);
@@ -79,28 +79,26 @@ export default function VipClientPipeline() {
   };
 
   // Función para crear servicio
-  const handleCreateService = async (serviceData: any) => {
+  const handleCreateService = async (createdService: Service) => {
     try {
-      await createService(serviceData);
+      logger.debug('Post-procesando servicio VIP creado:', createdService.folio);
+      await refetch();
       setIsFormOpen(false);
       setEditingService(null);
       toast.success('Servicio creado correctamente');
-      refetch();
     } catch (error) {
       logger.error('Error creando servicio:', error);
     }
   };
 
   // Función para actualizar servicio
-  const handleUpdateService = async (serviceData: any) => {
+  const handleUpdateService = async (updatedService: Service) => {
     try {
-      if (editingService?.id) {
-        await updateService(editingService.id, serviceData);
-        setIsFormOpen(false);
-        setEditingService(null);
-        toast.success('Servicio actualizado correctamente');
-        refetch();
-      }
+      logger.debug('Post-procesando servicio VIP actualizado:', updatedService.folio);
+      await refetch();
+      setIsFormOpen(false);
+      setEditingService(null);
+      toast.success('Servicio actualizado correctamente');
     } catch (error) {
       logger.error('Error actualizando servicio:', error);
     }

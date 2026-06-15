@@ -9,6 +9,7 @@ import { ServicesTable } from './ServicesTable';
 import { ServicesMobileView } from './ServicesMobileView';
 import { ServicesDialogs } from './ServicesDialogs';
 import { ServiceFilters } from './ServiceFilters';
+import { DateFilter } from './ServicesDateFilter';
 import { useToast } from '@/components/ui/custom-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@/contexts/UserContext';
@@ -36,7 +37,7 @@ type ViewMode = 'table' | 'pipeline';
 export const ServicesPageContent = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const queryClient = useQueryClient();
-  const { services = [], loading, createService, updateService, deleteService, refetch } = useServices();
+  const { services = [], loading, deleteService, refetch } = useServices();
   const { toast } = useToast();
   const { user } = useUser();
   const isMobile = useIsMobile();
@@ -59,6 +60,7 @@ export const ServicesPageContent = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [listDateFrom, setListDateFrom] = useState(() => format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [listDateTo, setListDateTo] = useState(() => format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [dateFilter, setDateFilter] = useState<DateFilter | 'custom'>('month');
 
   const isAdmin = user?.role === 'admin';
 
@@ -106,33 +108,35 @@ export const ServicesPageContent = () => {
   };
 
   // Función para crear servicio - SIMPLIFICADA para evitar errores
-  const handleCreateService = async (serviceData: any) => {
-    logger.debug('📝 [PAGE_CREATE] Iniciando creación desde página...');
+  const handleCreateService = async (createdService: Service) => {
+    logger.debug('📝 [PAGE_CREATE] Post-procesando servicio creado desde formulario...', createdService.folio);
     
     try {
-      await createService(serviceData);
+      await refetch();
       logger.debug('✅ [PAGE_CREATE] Servicio creado, cerrando formulario');
       setIsFormOpen(false);
       setEditingService(null);
     } catch (error) {
       logger.error('❌ [PAGE_CREATE] Error:', error);
-      // Error ya manejado por ConsolidatedServiceManager
+      toast({
+        type: 'error',
+        title: 'Error',
+        description: 'Servicio creado pero no se pudo refrescar la lista'
+      });
     }
   };
 
   // Función para actualizar servicio
-  const handleUpdateService = async (serviceData: any) => {
+  const handleUpdateService = async (_updatedService: Service) => {
     try {
-      if (editingService?.id) {
-        await updateService(editingService.id, serviceData);
-        setIsFormOpen(false);
-        setEditingService(null);
-        toast({
-          type: 'success',
-          title: 'Servicio actualizado',
-          description: 'El servicio se ha actualizado correctamente'
-        });
-      }
+      await refetch();
+      setIsFormOpen(false);
+      setEditingService(null);
+      toast({
+        type: 'success',
+        title: 'Servicio actualizado',
+        description: 'El servicio se ha actualizado correctamente'
+      });
     } catch (error) {
       logger.error('Error updating service:', error);
       toast({
@@ -291,6 +295,8 @@ export const ServicesPageContent = () => {
         pendingServicesCount={pendingServicesCount}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        dateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
       />
 
       <ServiceFilters
