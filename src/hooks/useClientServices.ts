@@ -24,6 +24,10 @@ const CLIENT_SERVICE_SELECT = `
   origin,
   destination,
   value,
+  has_excess,
+  client_covered_amount,
+  excess_amount,
+  third_party_client_id,
   custody_total_amount,
   custody_mode,
   operator_commission,
@@ -128,6 +132,14 @@ export const useClientServices = (clientId: string | null) => {
                   updatedAt: service.service_types.updated_at || ''
                 },
                 value: Number(service.value),
+                hasExcess: service.has_excess || false,
+                clientCoveredAmount: service.client_covered_amount
+                  ? Number(service.client_covered_amount)
+                  : null,
+                excessAmount: service.excess_amount
+                  ? Number(service.excess_amount)
+                  : null,
+                thirdPartyClientId: service.third_party_client_id || null,
                 custodyTotalAmount: service.custody_total_amount || 0,
                 custodyMode: (service.custody_mode as "manual" | "none" | "calendar") || 'none',
                 crane: service.cranes ? {
@@ -196,8 +208,8 @@ export const useClientServices = (clientId: string | null) => {
 
     const serviceMetrics = {
         totalServices: services.length,
-        totalBilled: services.reduce((acc, s) => acc + getDisplayServiceValue(s), 0),
-        averageTicket: services.length > 0 ? services.reduce((acc, s) => acc + getDisplayServiceValue(s), 0) / services.length : 0,
+        totalBilled: services.reduce((acc, s) => acc + getDisplayServiceValue(s, clientId ?? undefined), 0),
+        averageTicket: services.length > 0 ? services.reduce((acc, s) => acc + getDisplayServiceValue(s, clientId ?? undefined), 0) / services.length : 0,
     };
 
     return { services, loading, metrics: serviceMetrics, refetch: () => clientId && fetchServicesByClient(clientId) };

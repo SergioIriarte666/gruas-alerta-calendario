@@ -258,7 +258,7 @@ export default function VipClientPipeline() {
       </div>
 
       {/* Pipeline Metrics */}
-      <PipelineMetrics services={services} clientName={toTitleCase(client.name)} />
+      <PipelineMetrics services={services} clientName={toTitleCase(client.name)} clientId={clientId} />
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">

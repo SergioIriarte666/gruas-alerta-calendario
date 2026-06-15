@@ -63,6 +63,7 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
         badgeBg: 'bg-violet-500/10'
       };
     case 'invoiced':
+    case 'partially_invoiced':
       return {
         fieldExtractor: (s) => s.invoiceNumeroFiscal || '',
         emptyLabel: 'Sin Factura',
@@ -87,13 +88,13 @@ interface POSubGroup {
   totalValue: number;
 }
 
-const groupByField = (services: Service[], config: SubGroupConfig, sortField?: SortField, sortDirection?: SortDirection): POSubGroup[] => {
+const groupByField = (services: Service[], config: SubGroupConfig, sortField?: SortField, sortDirection?: SortDirection, clientId?: string): POSubGroup[] => {
   const map: Record<string, POSubGroup> = {};
   services.forEach(s => {
     const val = config.fieldExtractor(s) || config.emptyLabel;
     if (!map[val]) map[val] = { poNumber: val, services: [], totalValue: 0 };
     map[val].services.push(s);
-    map[val].totalValue += getDisplayServiceValue(s);
+    map[val].totalValue += getDisplayServiceValue(s, clientId);
   });
   return Object.values(map).sort((a, b) => {
     // "Sin X" groups always go last
@@ -209,6 +210,13 @@ const PIPELINE_STATUSES = [
     description: 'Servicios con orden de compra recibida',
     color: 'bg-secondary text-secondary-foreground',
     textColor: 'text-foreground'
+  },
+  {
+    id: 'partially_invoiced' as ServiceStatus,
+    title: 'Parcialmente Facturado',
+    description: 'Servicios con un cierre facturado, falta el otro',
+    color: 'bg-amber-500/10 text-amber-700',
+    textColor: 'text-amber-700'
   },
   {
     id: 'invoiced' as ServiceStatus,
@@ -339,7 +347,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     return PIPELINE_STATUSES
       .map(statusConfig => {
         const statusServices = groupedServices[statusConfig.id] || [];
-        const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0);
+        const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0);
         const averageDays = statusServices.length > 0 
           ? statusServices.reduce((sum, s) => {
               const days = differenceInDays(new Date(), parseFromDatabase(s.serviceDate));
@@ -397,7 +405,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         } as ServiceGroup;
       })
       .filter(group => group.services.length > 0);
-  }, [services, searchTerm, sortField, sortDirection, advancedFilters, applyAdvancedFilters]);
+  }, [services, searchTerm, sortField, sortDirection, advancedFilters, applyAdvancedFilters, clientId]);
 
   const toggleGroup = (status: ServiceStatus) => {
     const newExpanded = new Set(expandedGroups);
@@ -467,9 +475,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
 
   // Calcular suma total de servicios seleccionados
-  const selectedTotalValue = useMemo(() => 
-    selectedServicesArray.reduce((sum, s) => sum + getDisplayServiceValue(s), 0),
-    [selectedServicesArray]
+  const selectedTotalValue = useMemo(() =>
+    selectedServicesArray.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0),
+    [selectedServicesArray, clientId]
   );
 
   const handleSort = (field: SortField) => {
@@ -640,7 +648,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               <DollarSign className="size-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
-                  ${services.reduce((sum, s) => sum + getDisplayServiceValue(s), 0).toLocaleString()}
+                  ${services.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Valor total pipeline</div>
               </div>
@@ -720,7 +728,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   <CardContent className="pt-0">
                     {(() => {
                       const subGroupConfig = getSubGroupConfig(group.status);
-                      const poSubGroups = groupByField(group.services, subGroupConfig, sortField, sortDirection);
+                      const poSubGroups = groupByField(group.services, subGroupConfig, sortField, sortDirection, clientId);
                       const hasMultiplePOs = poSubGroups.length > 1;
 
                       const renderServiceRow = (service: Service) => {
@@ -754,7 +762,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               <span className="font-medium text-foreground">
-                                ${getDisplayServiceValue(service).toLocaleString()}
+                                ${getDisplayServiceValue(service, clientId).toLocaleString()}
                               </span>
                             </TableCell>
                             <TableCell>

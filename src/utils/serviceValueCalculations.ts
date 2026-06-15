@@ -136,10 +136,36 @@ export const getCustodyInfo = (service: any) => {
 };
 
 /**
- * Calculates the display value that should be shown in modals and reports.
- * Always returns the complete/total service value (base + custody).
+ * Calcula el valor a mostrar en el Pipeline VIP de un cliente.
+ * Para servicios con excedente, muestra el monto que corresponde
+ * a ese cliente específico, no el valor total.
+ *
+ * @param service - Service object
+ * @param viewingClientId - ID del cliente cuyo pipeline se está viendo (opcional)
  */
-export const getDisplayServiceValue = (service: any): number => {
+export const getDisplayServiceValue = (
+  service: any,
+  viewingClientId?: string
+): number => {
+  if (!service) return 0;
+
+  if (viewingClientId && service.hasExcess) {
+    if (
+      service.client?.id === viewingClientId &&
+      service.clientCoveredAmount != null &&
+      service.clientCoveredAmount > 0
+    ) {
+      return Math.round(service.clientCoveredAmount);
+    }
+    if (
+      service.thirdPartyClientId === viewingClientId &&
+      service.excessAmount != null &&
+      service.excessAmount > 0
+    ) {
+      return Math.round(service.excessAmount);
+    }
+  }
+
   return getCompleteServiceValue(service);
 };
 

@@ -19,11 +19,13 @@ import { toTitleCase } from '@/lib/utils';
 interface PipelineMetricsProps {
   services: Service[];
   clientName: string;
+  clientId?: string;
 }
 
 export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
   services,
-  clientName
+  clientName,
+  clientId
 }) => {
   const metrics = useMemo(() => {
     // Calcular métricas por estado
@@ -34,7 +36,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
 
     // Calcular valores totales por estado
     const statusValues = services.reduce((acc, service) => {
-      acc[service.status] = (acc[service.status] || 0) + getDisplayServiceValue(service);
+      acc[service.status] = (acc[service.status] || 0) + getDisplayServiceValue(service, clientId);
       return acc;
     }, {} as Record<string, number>);
 
@@ -54,9 +56,11 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
     const completed = statusCounts['completed'] || 0;
     const completedValue = statusValues['completed'] || 0;
 
-    // Servicios facturados
+    // Servicios facturados (total y parcialmente)
     const invoiced = statusCounts['invoiced'] || 0;
     const invoicedValue = statusValues['invoiced'] || 0;
+    const partiallyInvoiced = statusCounts['partially_invoiced'] || 0;
+    const partiallyInvoicedValue = statusValues['partially_invoiced'] || 0;
 
     // Tiempo promedio de procesamiento (días desde serviceDate)
     const avgProcessingTime = services.length > 0 ? Math.round(
@@ -79,7 +83,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
 
     return {
       total: services.length,
-      totalValue: services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0),
+      totalValue: services.reduce((sum, service) => sum + getDisplayServiceValue(service, clientId), 0),
       pendingOC,
       pendingOCValue,
       inPipeline,
@@ -88,6 +92,8 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       completedValue,
       invoiced,
       invoicedValue,
+      partiallyInvoiced,
+      partiallyInvoicedValue,
       avgProcessingTime,
       urgentServices
     };
@@ -118,6 +124,15 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       icon: <CheckCircle className="size-5" />,
       color: 'text-green-400',
       bgColor: 'bg-green-500/10 border-green-500/20'
+    },
+    {
+      title: 'Parc. Facturados',
+      value: metrics.partiallyInvoiced,
+      subtitle: `$${metrics.partiallyInvoicedValue.toLocaleString()}`,
+      icon: <FileText className="size-5" />,
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-500/10 border-amber-500/20',
+      urgent: metrics.partiallyInvoiced > 0
     },
     {
       title: 'Facturados',
