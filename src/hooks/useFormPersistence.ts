@@ -15,8 +15,8 @@ export const useFormPersistence = (
   const saveFormData = useCallback(() => {
     try {
       const formData = form.getValues();
-      localStorage.setItem(storageKey, JSON.stringify(formData));
-      logger.debug('Form data saved to localStorage:', formData);
+      sessionStorage.setItem(storageKey, JSON.stringify(formData));
+      logger.debug('Form data saved to sessionStorage:', formData);
     } catch (error) {
       logger.error('Error saving form data:', error);
     }
@@ -24,7 +24,7 @@ export const useFormPersistence = (
 
   const loadFormData = useCallback(() => {
     try {
-      const savedData = localStorage.getItem(storageKey);
+      const savedData = sessionStorage.getItem(storageKey);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
         logger.debug('Loading saved form data:', parsedData);
@@ -40,15 +40,15 @@ export const useFormPersistence = (
       }
     } catch (error) {
       logger.error('Error parsing saved form data:', error);
-      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
     }
     return null;
   }, [form, storageKey]);
 
   const clearFormData = useCallback(() => {
     try {
-      localStorage.removeItem(storageKey);
-      logger.debug('Form data cleared from localStorage');
+      sessionStorage.removeItem(storageKey);
+      logger.debug('Form data cleared from sessionStorage');
     } catch (error) {
       logger.error('Error clearing form data:', error);
     }

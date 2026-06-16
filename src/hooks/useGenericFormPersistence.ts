@@ -23,7 +23,7 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
 
   const saveFormData = useCallback(() => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(formData));
+      sessionStorage.setItem(storageKey, JSON.stringify(formData));
       logger.debug(`Form data saved for ${key}:`, formData);
     } catch (error) {
       logger.error(`Error saving form data for ${key}:`, error);
@@ -39,7 +39,7 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
     }
 
     try {
-      const savedData = localStorage.getItem(storageKey);
+      const savedData = sessionStorage.getItem(storageKey);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
         logger.debug(`Loading saved form data for ${key}:`, parsedData);
@@ -48,14 +48,14 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
       }
     } catch (error) {
       logger.error(`Error loading form data for ${key}:`, error);
-      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
     }
     return null;
   }, [storageKey, setFormData, key]);
 
   const clearFormData = useCallback(() => {
     try {
-      localStorage.removeItem(storageKey);
+      sessionStorage.removeItem(storageKey);
       skipLoadRef.current = true; // Activar flag para evitar siguiente carga
       logger.debug(`Form data cleared for ${key}, skip load activated`);
     } catch (error) {
@@ -123,6 +123,6 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
     saveFormData,
     clearFormData,
     markAsSubmitted,
-    hasPersistedData: () => !!localStorage.getItem(storageKey)
+    hasPersistedData: () => !!sessionStorage.getItem(storageKey)
   };
 };

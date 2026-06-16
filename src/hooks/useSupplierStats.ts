@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierStats } from '@/types/suppliers';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useSupplierStats');
 
 interface ExtendedSupplierStats extends SupplierStats {
   total_paid_this_month: number;

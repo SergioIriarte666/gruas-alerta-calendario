@@ -24,6 +24,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useImportMappings, type ImportMappingResolution } from '@/hooks/useImportMappings';
 import { useImportHistoryLog, type ImportHistoryLogEntry } from '@/hooks/useImportHistoryLog';
+import { useHistoricalImport } from '@/hooks/useHistoricalImport';
 import {
   parseCSVFile,
   parseXLSXFile,
@@ -33,6 +34,7 @@ import {
 } from '@/utils/purchaseHistoryParser';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { createLogger } from "@/lib/logger";
+import { formatCLP, formatDate, normalizeRut, rutCandidates, rutMatches, getInvoiceStatusBadgeClass } from '@/utils/purchase/purchaseImportHelpers';
 
 
 const logger = createLogger("PurchaseHistoryImport");
@@ -47,33 +49,6 @@ type Step = 'upload' | 'preview' | 'importing' | 'done';
 type ResolvedUnmatchedSupplier = UnmatchedSupplier & {
   autoResolvedByMapping?: boolean;
   mappingSourceResolution?: ImportMappingResolution;
-};
-
-const formatCLP = (amount: number) =>
-  new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
-
-const formatDate = (value?: string | null) => {
-  if (!value) return '-';
-  const [year, month, day] = value.slice(0, 10).split('-');
-  if (!year || !month || !day) return value;
-  return `${day}/${month}/${year}`;
-};
-
-const normalizeRut = (rut: string): string =>
-  rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
-
-const rutCandidates = (rut: string): string[] => {
-  const n = normalizeRut(rut);
-  if (!n) return [''];
-  if (n.length === 1) return [n];
-  const base = n.slice(0, -1);
-  return n === base ? [n] : [n, base];
-};
-
-const rutMatches = (a: string, b: string): boolean => {
-  const aC = rutCandidates(a);
-  const bC = new Set(rutCandidates(b));
-  return aC.some((c) => bC.has(c));
 };
 
 const sortUnmatchedSuppliers = (items: ResolvedUnmatchedSupplier[]) =>
@@ -95,23 +70,12 @@ const getPreviewDateRange = (preview: PurchaseImportPreview | null) => {
   };
 };
 
-const getInvoiceStatusBadgeClass = (status: 'paid' | 'pending' | 'overdue') => {
-  if (status === 'paid') {
-    return 'border border-green-200 bg-green-50 text-green-700';
-  }
-
-  if (status === 'overdue') {
-    return 'border border-red-200 bg-red-50 text-red-700';
-  }
-
-  return 'border border-slate-200 bg-slate-100 text-slate-700';
-};
-
 const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { suppliers } = useSuppliers();
   const queryClient = useQueryClient();
   const { getMappings, saveMapping } = useImportMappings('purchase');
   const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('purchase', 5);
+  const { getCurrentUserId, insertInvoiceBatch, insertSupplier, loadExistingDedupData } = useHistoricalImport();
   const [step, setStep] = useState<Step>('upload');
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<PurchaseImportPreview | null>(null);
@@ -761,7 +725,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     let imported = 0;
     let errors = 0;
-    const userId = (await supabase.auth.getUser()).data.user?.id;
+    const userId = await getCurrentUserId();
     
     // 1. Prepare supplier mapping (RUT -> ID) for creation or assignment
     // Map includes newly created suppliers AND assigned existing suppliers
@@ -826,28 +790,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     const existingSup = allSups?.find(s => rutMatches(s.rut || '', nRut));
                     
                     if (!existingSup) {
-                         const { error: supError } = await supabase
-                            .from('suppliers')
-                            .insert({
-                                name: us.razonSocial,
-                                rut: us.rut,
-                                category: 'General',
-                                created_by: userId,
-                                is_active: true
-                            });
-                         if (supError && !supError.message?.includes('duplicate')) {
-                             // Fallback for created_by
-                             if (supError.message?.includes('created_by')) {
-                                 await supabase.from('suppliers').insert({
-                                    name: us.razonSocial,
-                                    rut: us.rut,
-                                    category: 'General',
-                                    is_active: true
-                                 });
-                             } else {
-                                 logger.warn('Could not sync to suppliers table:', supError);
-                             }
-                         }
+                        await insertSupplier(us.razonSocial, us.rut, userId);
                     }
                 } catch (e) {
                     logger.warn('Error syncing to suppliers table:', e);
@@ -1048,10 +991,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     // Pre-filter: check existing invoices using RUT normalization to skip duplicates
     if (invoicesToInsert.length > 0) {
-        const [{ data: existingInvs }, { data: invSups }] = await Promise.all([
-            supabase.from('supplier_invoices').select('invoice_number, supplier_id'),
-            supabase.from('inventory_suppliers').select('id, rut'),
-        ]);
+        const { existingInvs, invSups } = await loadExistingDedupData();
         
         const sidToRut = new Map<string, string>();
         invSups?.forEach((s: any) => {

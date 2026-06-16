@@ -25,8 +25,8 @@ export const useInspectionPersistence = (serviceId: string) => {
 
   useEffect(() => {
     // Load saved data on mount
-    const saved = localStorage.getItem(storageKey);
-    const savedMetadata = localStorage.getItem(metadataKey);
+    const saved = sessionStorage.getItem(storageKey);
+    const savedMetadata = sessionStorage.getItem(metadataKey);
 
     if (saved) {
       try {
@@ -38,7 +38,7 @@ export const useInspectionPersistence = (serviceId: string) => {
         setSavedData(parsedData);
       } catch (error) {
         logger.error('Error parsing saved inspection data:', error);
-        localStorage.removeItem(storageKey);
+        sessionStorage.removeItem(storageKey);
       }
     }
 
@@ -48,7 +48,7 @@ export const useInspectionPersistence = (serviceId: string) => {
         setMetadata(parsedMetadata);
       } catch (error) {
         logger.error('Error parsing metadata:', error);
-        localStorage.removeItem(metadataKey);
+        sessionStorage.removeItem(metadataKey);
       }
     }
   }, [storageKey, metadataKey]);
@@ -89,8 +89,8 @@ export const useInspectionPersistence = (serviceId: string) => {
       service_id: serviceId,
     };
 
-    localStorage.setItem(storageKey, JSON.stringify(finalData));
-    localStorage.setItem(metadataKey, JSON.stringify(newMetadata));
+    sessionStorage.setItem(storageKey, JSON.stringify(finalData));
+    sessionStorage.setItem(metadataKey, JSON.stringify(newMetadata));
     
     setSavedData(finalData);
     setMetadata(newMetadata);
@@ -98,8 +98,8 @@ export const useInspectionPersistence = (serviceId: string) => {
 
   const clearPersistedData = () => {
     logger.debug('🧹 Clearing all inspection persistence data');
-    localStorage.removeItem(storageKey);
-    localStorage.removeItem(metadataKey);
+    sessionStorage.removeItem(storageKey);
+    sessionStorage.removeItem(metadataKey);
     setSavedData(null);
     setMetadata(null);
   };

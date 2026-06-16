@@ -21,6 +21,54 @@ interface DailyServiceSummary {
   todayServices: Array<{ folio: string; client: string; status: string }>;
 }
 
+interface ServiceRow {
+  id?: string;
+  folio?: string;
+  status?: string;
+  service_date?: string;
+  value?: number;
+  client?: { name: string; department?: string; billing_type?: string } | null;
+  [key: string]: unknown;
+}
+
+interface ClientRow {
+  id?: string;
+  name?: string;
+  department?: string;
+  billing_type?: string;
+  [key: string]: unknown;
+}
+
+interface InvoiceRow {
+  id?: string;
+  service_id?: string;
+  folio?: string;
+  status?: string;
+  total?: number;
+  client_name?: string;
+  days_overdue?: number;
+  due_date?: string;
+  [key: string]: unknown;
+}
+
+interface CraneRow {
+  id?: string;
+  brand?: string;
+  model?: string;
+  license_plate?: string;
+  circulation_permit_expiry?: string;
+  insurance_expiry?: string;
+  technical_review_expiry?: string;
+  [key: string]: unknown;
+}
+
+interface OperatorRow {
+  id?: string;
+  name?: string;
+  exam_expiry?: string;
+  [key: string]: unknown;
+}
+
 const fetchTodayServices = async (todayStr: string): Promise<DailyServiceSummary> => {
   const { data } = await supabase
     .from('services')
@@ -37,12 +85,12 @@ const fetchTodayServices = async (todayStr: string): Promise<DailyServiceSummary
   };
 
   return {
-    scheduled: services.filter((s: any) => s.status === 'scheduled' || s.status === 'pending').length,
-    completed: services.filter((s: any) => s.status === 'completed').length,
-    inProgress: services.filter((s: any) => s.status === 'in_progress').length,
-    cancelled: services.filter((s: any) => s.status === 'cancelled').length,
-    todayServices: services.map((s: any) => {
-      const clientObj = s.client as any;
+    scheduled: services.filter((s: ServiceRow) => s.status === 'scheduled' || s.status === 'pending').length,
+    completed: services.filter((s: ServiceRow) => s.status === 'completed').length,
+    inProgress: services.filter((s: ServiceRow) => s.status === 'in_progress').length,
+    cancelled: services.filter((s: ServiceRow) => s.status === 'cancelled').length,
+    todayServices: services.map((s: ServiceRow) => {
+      const clientObj = s.client;
       const clientLabel = clientObj ? (clientObj.department && clientObj.department !== 'General' ? `${clientObj.name} - ${clientObj.department}` : clientObj.name) : 'N/A';
       return {
         folio: s.folio,
@@ -116,8 +164,8 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     fetchTodayServices(todayStr),
   ]);
 
-  const allCompletedIds = (allCompletedRes.data || []).map((s: any) => s.id);
-  const completedOldIds = (completedOldRes.data || []).map((s: any) => s.id);
+  const allCompletedIds = (allCompletedRes.data || []).map((s: ServiceRow) => s.id);
+  const completedOldIds = (completedOldRes.data || []).map((s: ServiceRow) => s.id);
 
   const emptyServiceLinks = { data: [] as Array<{ service_id: string }>, error: null };
   const [invoicedServiceIdsRes, closedServiceIdsRes] = await Promise.all([
@@ -129,30 +177,30 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       : Promise.resolve(emptyServiceLinks),
   ]);
 
-  const clientLabel = (c: any) => {
+  const clientLabel = (c: ClientRow) => {
     if (!c) return 'N/A';
     return c.department && c.department !== 'General' ? `${c.name} - ${c.department}` : c.name;
   };
 
-  const invoicedSet = new Set((invoicedServiceIdsRes.data || []).map((r: any) => r.service_id));
+  const invoicedSet = new Set((invoicedServiceIdsRes.data || []).map((r: { service_id: string }) => r.service_id));
 
   // Helper: hide monthly-billing services only if they belong to the current month (safe date-only comparison)
-  const isCurrentMonthMonthly = (s: any) => {
-    const bt = (s.client as any)?.billing_type;
+  const isCurrentMonthMonthly = (s: ServiceRow) => {
+    const bt = (s.client as ClientRow)?.billing_type;
     if (bt !== 'monthly') return false;
     return isSameYearMonth(s.service_date, todayStr);
   };
 
   // Build monthly client summary
-  const monthlyCurrentMonthServices = (allCompletedRes.data || []).filter((s: any) => isCurrentMonthMonthly(s));
+  const monthlyCurrentMonthServices = (allCompletedRes.data || []).filter((s: ServiceRow) => isCurrentMonthMonthly(s));
   const monthlyByClient: Record<string, number> = {};
-  monthlyCurrentMonthServices.forEach((s: any) => {
-    const name = clientLabel(s.client);
+  monthlyCurrentMonthServices.forEach((s: ServiceRow) => {
+    const name = clientLabel(s.client as ClientRow);
     monthlyByClient[name] = (monthlyByClient[name] || 0) + 1;
   });
 
   const monthlyClientNames = new Set<string>([
-    ...(monthlyClientsRes.data || []).map((c: any) => clientLabel(c)),
+    ...(monthlyClientsRes.data || []).map((c: ClientRow) => clientLabel(c)),
     ...Object.keys(monthlyByClient),
   ]);
 
@@ -164,10 +212,10 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     .map((name) => [name, `${monthlyByClient[name] || 0} servicio(s)`]);
 
   // Process data using safe date helpers
-  const allPendingInvoicing = (allCompletedRes.data || []).filter((s: any) => !invoicedSet.has(s.id));
+  const allPendingInvoicing = (allCompletedRes.data || []).filter((s: ServiceRow) => !invoicedSet.has(s.id));
   const pendingInvoicing = allPendingInvoicing
-    .filter((s: any) => !isCurrentMonthMonthly(s))
-    .map((s: any) => [
+    .filter((s: ServiceRow) => !isCurrentMonthMonthly(s))
+    .map((s: ServiceRow) => [
       s.folio, clientLabel(s.client),
       safeDateToDisplay(s.service_date),
       safeDaysSince(s.service_date, todayStr).toString(),
@@ -175,38 +223,38 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     ]);
 
   const withoutOC = (servicesWithoutOCRes.data || [])
-    .filter((s: any) => !isCurrentMonthMonthly(s))
-    .map((s: any) => [
+    .filter((s: ServiceRow) => !isCurrentMonthMonthly(s))
+    .map((s: ServiceRow) => [
       s.folio, clientLabel(s.client),
       safeDateToDisplay(s.service_date),
       safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
   const withoutQuote = (servicesWithoutQuoteRes.data || [])
-    .filter((s: any) => !isCurrentMonthMonthly(s))
-    .map((s: any) => [
+    .filter((s: ServiceRow) => !isCurrentMonthMonthly(s))
+    .map((s: ServiceRow) => [
       s.folio, clientLabel(s.client),
       safeDateToDisplay(s.service_date),
       safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
-  const overdueInvoices = (!overdueRes.error && overdueRes.data || []).map((inv: any) => [
+  const overdueInvoices = (!overdueRes.error && overdueRes.data || []).map((inv: InvoiceRow) => [
     inv.folio, inv.client_name,
     `${inv.days_overdue} días`,
     `$${Number(inv.total).toLocaleString('es-CL')}`,
   ]);
 
-  const closedIds = new Set((closedServiceIdsRes.data || []).map((i: any) => i.service_id));
+  const closedIds = new Set((closedServiceIdsRes.data || []).map((i: { service_id: string }) => i.service_id));
   const pendingClosures = (completedOldRes.data || [])
-    .filter((s: any) => !closedIds.has(s.id))
-    .map((s: any) => [
+    .filter((s: ServiceRow) => !closedIds.has(s.id))
+    .map((s: ServiceRow) => [
       s.folio, clientLabel(s.client),
       safeDateToDisplay(s.service_date),
       safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
   const expiringDocs: string[][] = [];
-  (expiringCranesRes.data || []).forEach((crane: any) => {
+  (expiringCranesRes.data || []).forEach((crane: CraneRow) => {
     [
       { type: 'Permiso Circulación', date: crane.circulation_permit_expiry },
       { type: 'Seguro', date: crane.insurance_expiry },
@@ -224,7 +272,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       }
     });
   });
-  (expiringOperatorsRes.data || []).forEach((op: any) => {
+  (expiringOperatorsRes.data || []).forEach((op: OperatorRow) => {
     if (op.exam_expiry) {
       const d = safeDaysSince(todayStr, op.exam_expiry);
       if (d <= alertDays) {
@@ -289,7 +337,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     return { rows: result, clientRowIndices, clientNames };
   };
 
-  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any, groupByClient?: boolean) => {
+  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: Record<string, unknown>, groupByClient?: boolean) => {
     if (y > doc.internal.pageSize.getHeight() - 40) {
       doc.addPage();
       y = 15;

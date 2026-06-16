@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Loader2, ShieldAlert, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useReAuth } from '@/hooks/useReAuth';
 import { ServiceClosure } from '@/types';
 
 interface RelatedData {
@@ -26,6 +27,7 @@ export const ClosureDeleteConfirmDialog = ({
   onOpenChange,
   onConfirmDelete,
 }: ClosureDeleteConfirmDialogProps) => {
+  const { verifyPassword } = useReAuth();
   const [related, setRelated] = useState<RelatedData | null>(null);
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
@@ -65,17 +67,7 @@ export const ClosureDeleteConfirmDialog = ({
     setVerifying(true);
     setPasswordError('');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) throw new Error('No se pudo obtener el email del usuario');
-      const { error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
-      if (error) {
-        setPasswordError('Contraseña incorrecta');
-        setVerifying(false);
-        return;
-      }
+      await verifyPassword(password);
     } catch {
       setPasswordError('Error al verificar contraseña');
       setVerifying(false);

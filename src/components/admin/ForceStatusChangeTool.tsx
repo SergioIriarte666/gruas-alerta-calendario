@@ -10,9 +10,9 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { useAdminServiceOps } from '@/hooks/useAdminServiceOps';
 import type { Database } from '@/integrations/supabase/types';
 
 type ServiceStatus = Database['public']['Enums']['service_status'];
@@ -52,6 +52,7 @@ interface ServiceInfo {
 }
 
 export const ForceStatusChangeTool = () => {
+  const { searchServiceByFolio, forceServiceStatus } = useAdminServiceOps();
   const [searchInput, setSearchInput] = useState('');
   const [searching, setSearching] = useState(false);
   const [service, setService] = useState<ServiceInfo | null>(null);
@@ -70,36 +71,25 @@ export const ForceStatusChangeTool = () => {
     setTargetStatus('');
 
     try {
-      const folio = searchInput.trim().toUpperCase();
-      const { data: svc, error: svcErr } = await supabase
-        .from('services')
-        .select('id, folio, status, value, invoice_folio, client:clients!services_client_id_fkey(name)')
-        .eq('folio', folio)
-        .maybeSingle();
+      const result = await searchServiceByFolio(searchInput.trim());
+      if (!result) {
+        setError(`No se encontró servicio con folio ${searchInput.trim().toUpperCase()}`);
+        return;
+      }
 
-      if (svcErr) throw svcErr;
-      if (!svc) { setError(`No se encontró servicio con folio ${folio}`); return; }
-
-      // Check relations
-      const [invRes, closRes] = await Promise.all([
-        supabase.from('invoice_services').select('id').eq('service_id', svc.id).limit(1),
-        supabase.from('closure_services').select('id').eq('service_id', svc.id).limit(1),
-      ]);
-
-      const clientObj = svc.client as any;
       setService({
-        id: svc.id,
-        folio: svc.folio || folio,
-        status: svc.status as ServiceStatus,
-        value: svc.value || 0,
-        clientName: clientObj?.name || 'Sin cliente',
-        invoice_folio: svc.invoice_folio,
-        hasInvoice: (invRes.data?.length || 0) > 0,
-        hasClosure: (closRes.data?.length || 0) > 0,
+        id: result.id,
+        folio: result.folio,
+        status: result.status as ServiceStatus,
+        value: result.value,
+        clientName: result.clientName,
+        invoice_folio: result.invoiceFolio,
+        hasInvoice: result.hasInvoice,
+        hasClosure: result.hasClosure,
         hasPayments: false,
       });
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
       setSearching(false);
     }
@@ -112,22 +102,7 @@ export const ForceStatusChangeTool = () => {
     setExecuting(true);
 
     try {
-      const updateData: Record<string, any> = {
-        status: targetStatus,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Clear invoice_folio when moving to non-invoiced states
-      if (['pending', 'in_progress', 'completed', 'with_purchase_order', 'quoted', 'purchase_order_pending'].includes(targetStatus)) {
-        updateData.invoice_folio = null;
-      }
-
-      const { error } = await supabase
-        .from('services')
-        .update(updateData)
-        .eq('id', service.id);
-
-      if (error) throw error;
+      await forceServiceStatus(service.id, targetStatus);
 
       toast.success('Estado actualizado', {
         description: `${service.folio} cambiado a "${SERVICE_STATUSES.find(s => s.value === targetStatus)?.label}"`,

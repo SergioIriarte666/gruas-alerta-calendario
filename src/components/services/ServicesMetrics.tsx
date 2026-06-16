@@ -15,7 +15,7 @@ interface ServicesMetricsProps {
   showSensitiveData?: boolean;
 }
 
-export const ServicesMetrics = ({ metrics, showSensitiveData = true }: ServicesMetricsProps) => {
+export const ServicesMetrics = React.memo(({ metrics, showSensitiveData = true }: ServicesMetricsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
       <MetricCard
@@ -51,4 +51,4 @@ export const ServicesMetrics = ({ metrics, showSensitiveData = true }: ServicesM
       />
     </div>
   );
-};
+});

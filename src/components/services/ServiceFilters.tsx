@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,7 +33,7 @@ const STATUS_OPTIONS = [
   { value: 'failed', label: 'Fallido' },
 ];
 
-export const ServiceFilters = ({
+export const ServiceFilters = React.memo(({
   searchTerm,
   onSearchChange,
   statusFilter,
@@ -143,4 +143,4 @@ export const ServiceFilters = ({
       )}
     </div>
   );
-};
+});

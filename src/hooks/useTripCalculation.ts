@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentFuelPrices } from './useFuelPrices';
 import { useConsumptionRates, type ConsumptionRate } from './useConsumptionRates';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useTripCalculation');
 
 export type ReturnTripConfig = 'empty' | '1_vehicle' | '2_vehicles';
 

@@ -144,13 +144,13 @@ export const useLogoUpdater = () => {
       logger.debug("🏢 Subiendo logo predeterminado de la empresa...");
       
       // Fetch the default logo image
-      const response = await fetch('/images/company-logo.jpg');
+      const response = await fetch('/images/company-logo.webp');
       if (!response.ok) {
         throw new Error('No se pudo cargar el logo predeterminado');
       }
       
       const blob = await response.blob();
-      const file = new File([blob], 'company-logo.jpg', { type: 'image/jpeg' });
+      const file = new File([blob], 'company-logo.webp', { type: 'image/webp' });
       
       // Use the existing updateLogo function
       const result = await updateLogo(file, {

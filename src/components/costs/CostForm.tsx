@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -46,7 +46,7 @@ interface CostFormProps {
     }) => void;
 }
 
-export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCostCreated }: CostFormProps) => {
+export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onInventoryCostCreated }: CostFormProps) => {
     const queryClient = useQueryClient();
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
@@ -77,9 +77,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
         return operationalCranes;
     }, [cranes, operationalCranes, cost?.crane_id]);
 
-    const isQuickEntryPrefill = Boolean((prefilledData as any)?.quickEntryId);
+    const isQuickEntryPrefill = Boolean((prefilledData as Record<string, unknown>)?.quickEntryId);
     const receiptPhotoPaths = useMemo(
-        () => ((((prefilledData as any)?.receipt_photo_paths as string[] | undefined) || []).filter(Boolean)),
+        () => ((((prefilledData as Record<string, unknown>)?.receipt_photo_paths as string[] | undefined) || []).filter(Boolean)),
         [prefilledData],
     );
     const receiptPhotoPathsKey = useMemo(() => receiptPhotoPaths.join('|'), [receiptPhotoPaths]);
@@ -260,10 +260,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 service_folio: cost.service_folio || '',
                 subcategory: cost.subcategory || '',
                 notes: cost.notes || '',
-                document_type: (cost as any).document_type || 'none',
-                document_number: (cost as any).document_number || '',
-                location_text: (cost as any).location_text || '',
-                other_reason: (cost as any).other_reason || '',
+                document_type: String((cost as Record<string, unknown>).document_type) || 'none',
+                document_number: String((cost as Record<string, unknown>).document_number) || '',
+                location_text: String((cost as Record<string, unknown>).location_text) || '',
+                other_reason: String((cost as Record<string, unknown>).other_reason) || '',
                 cost_center_id: cost.cost_center_id || 'none',
                 part_name: cost.crane_parts?.[0]?.part_name || '',
                 supplier: cost.crane_parts?.[0]?.supplier || '',
@@ -279,8 +279,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 payment_date: cost.payment_date ? formatForInput(cost.payment_date as any) : '',
             });
         } else if (prefilledData) {
-            const dateValue = (prefilledData as any)?.date
-                ? formatForInput((prefilledData as any).date)
+            const dateValue = (prefilledData as Record<string, unknown>)?.date
+                ? formatForInput((prefilledData as Record<string, unknown>).date)
                 : getCurrentChileDateString();
             reset({
                 date: dateValue,
@@ -293,10 +293,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 service_folio: prefilledData.service_folio || '',
                 subcategory: prefilledData.subcategory || '',
                 notes: prefilledData.notes || '',
-                document_type: (prefilledData as any).document_type || 'none',
-                document_number: (prefilledData as any).document_number || '',
-                location_text: (prefilledData as any).location_text || '',
-                other_reason: (prefilledData as any).other_reason || '',
+                document_type: (prefilledData as Record<string, unknown>).document_type || 'none',
+                document_number: (prefilledData as Record<string, unknown>).document_number || '',
+                location_text: (prefilledData as Record<string, unknown>).location_text || '',
+                other_reason: (prefilledData as Record<string, unknown>).other_reason || '',
                 cost_center_id: prefilledData.cost_center_id || 'none',
                 purchase_quantity: prefilledData.purchase_quantity ?? null,
                 purchase_unit_cost: prefilledData.purchase_unit_cost ?? null,
@@ -524,10 +524,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     date: submissionData.date,
                                 });
                             } else if (hasCraneSelected) {
-                                if ((cost as any).supplier_invoice_id) {
+                                if ((cost as Record<string, unknown>).supplier_invoice_id) {
                                     await UnifiedPurchaseService.syncImportedInvoiceConsumption({
                                         costId: cost.id,
-                                        supplierInvoiceId: (cost as any).supplier_invoice_id,
+                                        supplierInvoiceId: String((cost as Record<string, unknown>).supplier_invoice_id || ''),
                                         craneId: submissionData.crane_id!,
                                         date: submissionData.date,
                                         supplierId: submissionData.supplier_id,
@@ -598,8 +598,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
-                        const quickEntryId = (prefilledData as any)?.quickEntryId;
-                        const receiptPhotoPaths = (prefilledData as any)?.receipt_photo_paths as string[] | undefined;
+                        const quickEntryId = (prefilledData as Record<string, unknown>)?.quickEntryId;
+                        const receiptPhotoPaths = (prefilledData as Record<string, unknown>)?.receipt_photo_paths as string[] | undefined;
                         if (receiptPhotoPaths?.length && data?.[0]?.id) {
                             try {
                                 await supabase
@@ -679,9 +679,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                     },
                 });
             }
-        } catch (validationError: any) {
+        } catch (validationError: unknown) {
+            const err = validationError as { message?: string };
             toast.error("Error de Validación", { 
-                description: validationError.message || "Revise los datos ingresados" 
+                description: err.message || "Revise los datos ingresados" 
             });
         }
     };
@@ -793,7 +794,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         isLoadingOperators={isLoadingOperators}
                                                         services={servicesForCosts}
                                                         isLoadingServices={isLoadingServices}
-                                                        hasCraneParts={Boolean(cost?.crane_parts && (cost.crane_parts as any[]).length > 0)}
+                                                        hasCraneParts={Boolean(cost?.crane_parts && (cost.crane_parts as Array<Record<string, unknown>>).length > 0)}
                                                     />
                                                 )}
                                                 {currentStep === 4 && (
@@ -893,4 +894,4 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             />
         </>
     );
-};
+});

@@ -13,7 +13,6 @@ import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlu
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { useClients } from '@/hooks/useClients';
-import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { Input } from '@/components/ui/input';
@@ -24,6 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useImportMappings, type ImportMappingResolution } from '@/hooks/useImportMappings';
 import { useImportHistoryLog, type ImportHistoryLogEntry } from '@/hooks/useImportHistoryLog';
+import { useHistoricalImport } from '@/hooks/useHistoricalImport';
 import {
   parseCSVFile,
   parseXLSXFile,
@@ -110,6 +110,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const { clients, createClient } = useClients();
   const { getMappings, saveMapping } = useImportMappings('sale');
   const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('sale', 5);
+  const { getCurrentUserId, insertInvoiceBatch, fetchExistingInvoiceRefs } = useHistoricalImport();
   const [step, setStep] = useState<Step>('upload');
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<ImportPreview | null>(null);
@@ -456,17 +457,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         return;
       }
 
-      const { data: existingInvoices } = await supabase
-        .from('invoices')
-        .select('numero_fiscal, folio');
-
-      const existingNumeros = new Set<string>(
-        (existingInvoices || []).map((inv: any) => inv.numero_fiscal).filter(Boolean)
-      );
-
-      const existingFolios = new Set<string>(
-        (existingInvoices || []).map((inv: any) => inv.folio).filter(Boolean)
-      );
+      const { numeros: existingNumeros, folios: existingFolios } = await fetchExistingInvoiceRefs();
 
       const result = processInvoiceRows(rows, clients, existingNumeros, existingFolios);
       const savedMappings = await getMappings('sale');
@@ -649,12 +640,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     };
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      if (!userId) {
-        throw new Error('No se pudo obtener el usuario actual. Inicie sesión nuevamente.');
-      }
+      const userId = await getCurrentUserId();
 
       // Step 1: Create clients that need to be created
       setProgressStage('Resolviendo clientes...');
@@ -837,32 +823,15 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       for (let i = 0; i < invoicesToInsert.length; i += batchSize) {
         const batch = invoicesToInsert.slice(i, i + batchSize);
         setProgressStage(`Insertando facturas (${Math.min(i + batch.length, invoicesToInsert.length)}/${invoicesToInsert.length})...`);
-        const { error } = await supabase.from('invoices').insert(batch);
+        const result = await insertInvoiceBatch(batch as Record<string, unknown>[]);
         
-        if (error) {
-          const m = (error.message || '').toLowerCase();
-          const isMissingProductServiceDescriptionColumn =
-            m.includes('product_service_description') && (m.includes('could not find') || m.includes('schema cache'));
-
-          if (isMissingProductServiceDescriptionColumn) {
-            const sanitizedBatch = batch.map((row: any) => {
-              const { product_service_description: _ignored, ...rest } = row;
-              return rest;
-            });
-            const { error: retryError } = await supabase.from('invoices').insert(sanitizedBatch);
-            if (!retryError) {
-              imported += sanitizedBatch.length;
-              updateProgress(batch.length);
-              continue;
-            }
-          }
-
-          logger.error('Batch insert error:', error);
+        if (result.error) {
+          logger.error('Batch insert error:', result.message);
           errors += batch.length;
-          const isDuplicate = error.message?.includes('invoices_folio_key') || error.message?.includes('duplicate key');
+          const isDuplicate = (result.message || '').includes('invoices_folio_key') || (result.message || '').includes('duplicate key');
           const msg = isDuplicate
             ? `Se encontraron ${batch.length} facturas que ya existen en el sistema. Estas facturas ya fueron importadas anteriormente.`
-            : (error.message || 'Error desconocido al insertar facturas');
+            : (result.message || 'Error desconocido al insertar facturas');
           setLastError(msg);
           if (!isDuplicate) {
             toast.error(`Error en lote ${Math.floor(i/batchSize) + 1}`, { description: msg });

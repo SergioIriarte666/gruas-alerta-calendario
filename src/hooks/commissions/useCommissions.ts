@@ -9,15 +9,17 @@ const logger = createLogger("useCommissions");
 const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
 
 /**
- * Helper: aplica filtros de fecha a una query de Supabase
+ * Helper: aplica filtros de fecha y operador a una query de Supabase
  */
-const applyDateFilters = <T>(
+const applyFilters = <T>(
   query: any,
   dateFrom?: string,
   dateTo?: string,
+  operatorId?: string,
 ) => {
   if (dateFrom) query = query.gte('date', dateFrom);
   if (dateTo) query = query.lte('date', dateTo);
+  if (operatorId) query = query.eq('operator_id', operatorId);
   return query;
 };
 
@@ -109,34 +111,34 @@ export const validateCommissionsAgainstCosts = async (commissions: Commission[])
  * Fuente de verdad ÚNICA: tabla costs.
  * Se usa como fallback cuando el RPC falla.
  */
-const fetchCommissionsFromCosts = async (dateFrom?: string, dateTo?: string): Promise<Commission[]> => {
-  logger.debug('🔁 Fetching commissions from costs...', { dateFrom, dateTo });
+const fetchCommissionsFromCosts = async (dateFrom?: string, dateTo?: string, operatorId?: string): Promise<Commission[]> => {
+  logger.debug('🔁 Fetching commissions from costs...', { dateFrom, dateTo, operatorId });
 
   const commissionCategoryIds = await fetchCommissionCategoryIds();
   const categoryIdsToUse = [...new Set([COMMISSION_CATEGORY_ID, ...commissionCategoryIds])];
 
   // Buscar por todas las variantes posibles para no perder comisiones históricas
   const [byCategoryRes, bySubcategoryRes, byDesc1Res, byDesc2Res] = await Promise.all([
-    applyDateFilters(supabase
+    applyFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .in('category_id', categoryIdsToUse)
-      .order('date', { ascending: false }), dateFrom, dateTo),
-    applyDateFilters(supabase
+      .order('date', { ascending: false }), dateFrom, dateTo, operatorId),
+    applyFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .in('subcategory', ['comisiones', 'comisiones_pagadas', 'Comisión Operador'])
-      .order('date', { ascending: false }), dateFrom, dateTo),
-    applyDateFilters(supabase
+      .order('date', { ascending: false }), dateFrom, dateTo, operatorId),
+    applyFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .ilike('description', '%Comisión operador%')
-      .order('date', { ascending: false }), dateFrom, dateTo),
-    applyDateFilters(supabase
+      .order('date', { ascending: false }), dateFrom, dateTo, operatorId),
+    applyFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .ilike('description', '%Comision operador%')
-      .order('date', { ascending: false }), dateFrom, dateTo),
+      .order('date', { ascending: false }), dateFrom, dateTo, operatorId),
   ]);
 
   const error = byCategoryRes.error || bySubcategoryRes.error || byDesc1Res.error || byDesc2Res.error;
@@ -279,12 +281,12 @@ const fetchCommissionsFromCosts = async (dateFrom?: string, dateTo?: string): Pr
  * @param dateFrom  Filtro opcional YYYY-MM-DD (fecha inicio)
  * @param dateTo    Filtro opcional YYYY-MM-DD (fecha fin)
  */
-const fetchCommissions = async (dateFrom?: string, dateTo?: string): Promise<Commission[]> => {
-  logger.debug('🔍 Fetching commissions (single source: costs table)...', { dateFrom, dateTo });
+const fetchCommissions = async (dateFrom?: string, dateTo?: string, operatorId?: string): Promise<Commission[]> => {
+  logger.debug('🔍 Fetching commissions (single source: costs table)...', { dateFrom, dateTo, operatorId });
   
-  // Si hay filtros de fecha, ir directo a costs (el RPC no acepta filtros de fecha)
-  if (dateFrom || dateTo) {
-    const costsData = await fetchCommissionsFromCosts(dateFrom, dateTo);
+  // Si hay filtros de fecha O filtro de operador, ir directo a costs (el RPC no acepta estos filtros)
+  if (dateFrom || dateTo || operatorId) {
+    const costsData = await fetchCommissionsFromCosts(dateFrom, dateTo, operatorId);
     logger.debug('✅ Commissions from costs (filtered):', costsData.length);
     return costsData;
   }
@@ -361,10 +363,7 @@ export const useCommissions = (filters?: CommissionFilters) => {
 export const useCommissionsByOperator = (operatorId: string) => {
   return useQuery<Commission[], Error>({
     queryKey: ['commissions', 'by-operator', operatorId],
-    queryFn: async () => {
-      const all = await fetchCommissions();
-      return all.filter(c => c.operator_id === operatorId);
-    },
+    queryFn: () => fetchCommissions(undefined, undefined, operatorId),
     enabled: !!operatorId,
   });
 };

@@ -39,6 +39,12 @@ interface EnhancedCostsTableProps {
   onSelectionChange?: (selected: Set<string>) => void;
   onBatchUpdate?: () => void;
   onBatchMarkPaid?: () => void;
+  // Server-side pagination: cuando se proporcionan, el componente delega la paginación al padre
+  serverPage?: number;
+  serverPageSize?: number;
+  serverTotal?: number;
+  onServerPageChange?: (page: number) => void;
+  onServerPageSizeChange?: (pageSize: number) => void;
 }
 
 type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
@@ -58,8 +64,14 @@ export const EnhancedCostsTable = ({
   selectedCosts = new Set<string>(),
   onSelectionChange,
   onBatchUpdate,
-  onBatchMarkPaid
+  onBatchMarkPaid,
+  serverPage,
+  serverPageSize,
+  serverTotal,
+  onServerPageChange,
+  onServerPageSizeChange,
 }: EnhancedCostsTableProps) => {
+  const isServerPaged = serverTotal !== undefined;
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -69,10 +81,33 @@ export const EnhancedCostsTable = ({
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
 
-  // Reset page when costs change (e.g. search/filter)
+  // Sincronizar página desde server-side pagination
+  const effectivePage = isServerPaged ? (serverPage ?? 1) : currentPage;
+  const effectivePageSize = isServerPaged ? (serverPageSize ?? 20) : itemsPerPage;
+
+  const handlePageChange = (page: number) => {
+    if (isServerPaged) {
+      onServerPageChange?.(page);
+    } else {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    if (isServerPaged) {
+      onServerPageSizeChange?.(size);
+    } else {
+      setItemsPerPage(size);
+      setCurrentPage(1);
+    }
+  };
+
+  // Reset page when costs change (e.g. search/filter) - solo en modo client-side
   useEffect(() => {
-    setCurrentPage(1);
-  }, [costs]);
+    if (!isServerPaged) {
+      setCurrentPage(1);
+    }
+  }, [costs, isServerPaged]);
   
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
   const { data: activeCategories = [] } = useCostCategories();
@@ -215,12 +250,18 @@ export const EnhancedCostsTable = ({
       return groupedCosts; // No paginar cuando hay agrupación
     }
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return { 'all': sortedCosts.slice(startIndex, endIndex) };
-  }, [groupedCosts, currentPage, itemsPerPage, groupBy, sortedCosts]);
+    // Server-side: los costs ya vienen paginados, no rebanar
+    if (isServerPaged) {
+      return { 'all': sortedCosts };
+    }
 
-  const totalPages = groupBy !== 'none' ? 1 : Math.ceil(costs.length / itemsPerPage);
+    const startIndex = (effectivePage - 1) * effectivePageSize;
+    const endIndex = startIndex + effectivePageSize;
+    return { 'all': sortedCosts.slice(startIndex, endIndex) };
+  }, [groupedCosts, effectivePage, effectivePageSize, groupBy, sortedCosts, isServerPaged]);
+
+  const totalCount = isServerPaged ? (serverTotal ?? 0) : costs.length;
+  const totalPages = groupBy !== 'none' ? 1 : Math.ceil(totalCount / effectivePageSize);
 
   const toggleGroup = (groupKey: string) => {
     const newExpanded = new Set(expandedGroups);
@@ -449,11 +490,8 @@ export const EnhancedCostsTable = ({
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Mostrar:</span>
             <Select 
-              value={String(itemsPerPage)} 
-              onValueChange={(v) => {
-                setItemsPerPage(Number(v));
-                setCurrentPage(1);
-              }}
+              value={String(effectivePageSize)} 
+              onValueChange={(v) => handlePageSizeChange(Number(v))}
             >
               <SelectTrigger className="w-[80px] h-9">
                 <SelectValue />
@@ -578,25 +616,25 @@ export const EnhancedCostsTable = ({
       {groupBy === 'none' && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, costs.length)} de {costs.length}
+            Mostrando {((effectivePage - 1) * effectivePageSize) + 1} - {Math.min(effectivePage * effectivePageSize, totalCount)} de {totalCount}
           </p>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              onClick={() => handlePageChange(Math.max(1, effectivePage - 1))}
+              disabled={effectivePage === 1}
             >
               <ChevronLeft className="size-4" />
             </Button>
             <span className="text-sm text-foreground">
-              Página {currentPage} de {totalPages}
+              Página {effectivePage} de {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(Math.min(totalPages, effectivePage + 1))}
+              disabled={effectivePage === totalPages}
             >
               <ChevronRight className="size-4" />
             </Button>

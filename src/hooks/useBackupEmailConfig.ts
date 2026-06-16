@@ -1,5 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useBackupEmailConfig');
 
 export interface BackupEmailConfig {
   id: string;
@@ -27,7 +30,11 @@ export const useBackupEmailConfig = () => {
       .select('*')
       .limit(1)
       .maybeSingle();
-    if (!error) setConfig(data as BackupEmailConfig | null);
+    if (error) {
+      logger.warn('Error loading backup config:', error.message);
+    } else {
+      setConfig(data as BackupEmailConfig | null);
+    }
     setLoading(false);
   }, []);
 
@@ -52,7 +59,7 @@ export const useBackupEmailConfig = () => {
         body: { force: true },
       });
       if (error) return { error: error.message };
-      if ((data as any)?.success === false) return { error: (data as any).error };
+      if ((data as Record<string, unknown>)?.success === false) return { error: String((data as Record<string, unknown>).error) };
       await load();
       return { data };
     } finally {

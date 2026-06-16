@@ -96,10 +96,10 @@ export const InspectionForm = ({
       logger.debug('📷 Photos count:', savedData.photographicSet?.length || 0);
       logger.debug('🔄 Loading phase:', metadata.inspection_phase);
       
-      // Verificar que las fotos existen en localStorage
+      // Verificar que las fotos existen en sessionStorage
       if (savedData.photographicSet && savedData.photographicSet.length > 0) {
         const validPhotos = savedData.photographicSet.filter(photo => {
-          const photoExists = localStorage.getItem(`photo-${photo.fileName}`) !== null;
+          const photoExists = sessionStorage.getItem(`photo-${photo.fileName}`) !== null;
           if (!photoExists) {
             logger.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
           }
@@ -140,17 +140,17 @@ export const InspectionForm = ({
       // Caso crítico: servicio en inspection_completed pero sin datos en memoria
       if (service?.status === 'inspection_completed') {
         try {
-          // Intentar recuperar datos de localStorage
-          const persistedData = localStorage.getItem(`inspection_${serviceId}`);
-          const persistedMetadata = localStorage.getItem(`inspection_metadata_${serviceId}`);
+          // Intentar recuperar datos de sessionStorage
+          const persistedData = sessionStorage.getItem(`inspection_${serviceId}`);
+          const persistedMetadata = sessionStorage.getItem(`inspection_metadata_${serviceId}`);
           
           if (persistedData && persistedMetadata) {
             const parsedData = JSON.parse(persistedData);
             const parsedMetadata = JSON.parse(persistedMetadata);
             
-            // Validar que las fotos existen en localStorage
+            // Validar que las fotos existen en sessionStorage
             const validPhotos = parsedData.photographicSet?.filter((photo: any) => {
-              return localStorage.getItem(`photo-${photo.fileName}`) !== null;
+              return sessionStorage.getItem(`photo-${photo.fileName}`) !== null;
             }) || [];
             
             if (validPhotos.length > 0) {
@@ -196,8 +196,8 @@ export const InspectionForm = ({
         } catch (error) {
           logger.error('Error al recuperar datos persistidos:', error);
           // Limpiar datos corruptos
-          localStorage.removeItem(`inspection_${serviceId}`);
-          localStorage.removeItem(`inspection_metadata_${serviceId}`);
+          sessionStorage.removeItem(`inspection_${serviceId}`);
+          sessionStorage.removeItem(`inspection_metadata_${serviceId}`);
           setCurrentPhase('final');
           if (!toastShownRef.current) {
             toast({ type: 'error', title: 'Error al cargar datos guardados. Datos limpiados.' });

@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
-import { Service } from '@/types';
+import { Service, ServiceSnakeCase } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -47,13 +47,13 @@ const logger = createLogger('EnhancedServiceForm');
 
 interface EnhancedServiceFormProps {
   service?: Service | null;
-  prefilledData?: any;
+  prefilledData?: Partial<ServiceSnakeCase>;
   onSubmit: (serviceData: Service) => void;
   onCancel: () => void;
   fromCalendarEvent?: boolean;
 }
 
-export const EnhancedServiceForm = ({ 
+export const EnhancedServiceForm = React.memo(({ 
   service, 
   prefilledData, 
   onSubmit, 
@@ -118,7 +118,7 @@ export const EnhancedServiceForm = ({
     endTime: service?.endTime,
     craneMileage: service?.craneMileage,
     client: service?.client?.id || '',
-    purchaseOrder: (service as any)?.purchaseOrderNumber || service?.purchaseOrder || '',
+    purchaseOrder: (service as ServiceSnakeCase)?.purchaseOrderNumber || service?.purchaseOrder || '',
     quoteNumber: service?.quoteNumber || '',
     serviceType: service?.serviceType?.id || '',
     vehicleBrand: service?.vehicleBrand || '',
@@ -144,23 +144,23 @@ export const EnhancedServiceForm = ({
     thirdPartyClientId: service?.thirdPartyClientId || '',
     status: service?.status || 'pending' as const,
     observations: service?.observations || '',
-    custodyMode: service?.custodyMode || (service as any)?.custody_mode || 'none',
-    custodyDays: service?.custodyDays || (service as any)?.custody_days || undefined,
-    custodyDailyRate: service?.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
-    custodyRateType: (service as any)?.custodyRateType || (service as any)?.custody_rate_type || 'daily',
-    custodyStartDate: service?.custodyStartDate || (service as any)?.custody_start_date || '',
-    custodyEndDate: service?.custodyEndDate || (service as any)?.custody_end_date || '',
-    custodyVehicleType: service?.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
-    custodyDiscountPercentage: (service?.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
-    custodyTotalAmount: service?.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
-    custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || '',
-    insuredName: service?.insuredName || (service as any)?.insured_name || '',
-    contactPerson: service?.contactPerson || (service as any)?.contact_person || '',
-    contactPhone: service?.contactPhone || (service as any)?.contact_phone || '',
+    custodyMode: service?.custodyMode || (service as ServiceSnakeCase)?.custody_mode || 'none',
+    custodyDays: service?.custodyDays || (service as ServiceSnakeCase)?.custody_days || undefined,
+    custodyDailyRate: service?.custodyDailyRate || (service as ServiceSnakeCase)?.custody_daily_rate || undefined,
+    custodyRateType: (service as ServiceSnakeCase)?.custodyRateType || (service as ServiceSnakeCase)?.custody_rate_type || 'daily',
+    custodyStartDate: service?.custodyStartDate || (service as ServiceSnakeCase)?.custody_start_date || '',
+    custodyEndDate: service?.custodyEndDate || (service as ServiceSnakeCase)?.custody_end_date || '',
+    custodyVehicleType: service?.custodyVehicleType || (service as ServiceSnakeCase)?.custody_vehicle_type || '',
+    custodyDiscountPercentage: (service?.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as ServiceSnakeCase)?.custody_discount_percentage) || 0,
+    custodyTotalAmount: service?.custodyTotalAmount || (service as ServiceSnakeCase)?.custody_total_amount || undefined,
+    custodyNotes: service?.custodyNotes || (service as ServiceSnakeCase)?.custody_notes || '',
+    insuredName: service?.insuredName || (service as ServiceSnakeCase)?.insured_name || '',
+    contactPerson: service?.contactPerson || (service as ServiceSnakeCase)?.contact_person || '',
+    contactPhone: service?.contactPhone || (service as ServiceSnakeCase)?.contact_phone || '',
     // Outsourced/Third-party service fields
-    outsourcedProviderId: service?.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
-    outsourcedCost: service?.outsourcedCost || (service as any)?.outsourced_cost || 0,
-    outsourcedNotes: service?.outsourcedNotes || (service as any)?.outsourced_notes || ''
+    outsourcedProviderId: service?.outsourcedProviderId || (service as ServiceSnakeCase)?.outsourced_provider_id || '',
+    outsourcedCost: service?.outsourcedCost || (service as ServiceSnakeCase)?.outsourced_cost || 0,
+    outsourcedNotes: service?.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || ''
   });
 
   // Map prefilledData to formData when duplicating
@@ -278,7 +278,7 @@ export const EnhancedServiceForm = ({
     if (enhancedService && service?.id) {
       logger.debug('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
       
-      const costDetails = enhancedService.serviceCosts?.map((cost: any) => ({
+      const costDetails = enhancedService.serviceCosts?.map((cost: { id: string; description: string; amount?: number; notes?: string; category_id?: string; subcategory?: string }) => ({
         id: cost.id,
         description: cost.description,
         amount: cost.amount || 0,
@@ -315,8 +315,8 @@ export const EnhancedServiceForm = ({
         startTime: enhancedService.startTime ? enhancedService.startTime.substring(0, 5) : undefined,
         endTime: enhancedService.endTime ? enhancedService.endTime.substring(0, 5) : undefined,
         craneMileage: enhancedService.craneMileage,
-        contactPerson: enhancedService.contactPerson || (enhancedService as any).contact_person || prev.contactPerson,
-        contactPhone: enhancedService.contactPhone || (enhancedService as any).contact_phone || prev.contactPhone,
+        contactPerson: enhancedService.contactPerson || (enhancedService as ServiceSnakeCase).contact_person || prev.contactPerson,
+        contactPhone: enhancedService.contactPhone || (enhancedService as ServiceSnakeCase).contact_phone || prev.contactPhone,
         custodyMode: enhancedService.custodyMode || enhancedService.custody_mode || prev.custodyMode,
         custodyDays: enhancedService.custodyDays || enhancedService.custody_days || prev.custodyDays,
         custodyDailyRate: enhancedService.custodyDailyRate || enhancedService.custody_daily_rate || prev.custodyDailyRate,
@@ -351,7 +351,7 @@ export const EnhancedServiceForm = ({
         endTime: service.endTime,
         craneMileage: service.craneMileage,
         client: service.client?.id || '',
-        purchaseOrder: (service as any)?.purchaseOrderNumber || service.purchaseOrder || '',
+        purchaseOrder: (service as ServiceSnakeCase)?.purchaseOrderNumber || service.purchaseOrder || '',
         quoteNumber: service.quoteNumber || '',
         serviceType: service.serviceType?.id || '',
         vehicleBrand: service.vehicleBrand,
@@ -377,22 +377,22 @@ export const EnhancedServiceForm = ({
         thirdPartyClientId: service.thirdPartyClientId || '',
         status: service.status,
         observations: service.observations || '',
-        custodyMode: service.custodyMode || (service as any)?.custody_mode || 'none',
-        custodyDays: service.custodyDays || (service as any)?.custody_days || undefined,
-        custodyDailyRate: service.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
-        custodyRateType: (service as any)?.custodyRateType || (service as any)?.custody_rate_type || 'daily',
-        custodyStartDate: service.custodyStartDate || (service as any)?.custody_start_date || '',
-        custodyEndDate: service.custodyEndDate || (service as any)?.custody_end_date || '',
-        custodyVehicleType: service.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
-        custodyDiscountPercentage: (service.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
-        custodyTotalAmount: service.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
-        custodyNotes: service.custodyNotes || (service as any)?.custody_notes || '',
-        insuredName: service.insuredName || (service as any)?.insured_name || '',
-        contactPerson: service.contactPerson || (service as any)?.contact_person || '',
-        contactPhone: service.contactPhone || (service as any)?.contact_phone || '',
-        outsourcedProviderId: service.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
-        outsourcedCost: service.outsourcedCost || (service as any)?.outsourced_cost || 0,
-        outsourcedNotes: service.outsourcedNotes || (service as any)?.outsourced_notes || ''
+        custodyMode: service.custodyMode || (service as ServiceSnakeCase)?.custody_mode || 'none',
+        custodyDays: service.custodyDays || (service as ServiceSnakeCase)?.custody_days || undefined,
+        custodyDailyRate: service.custodyDailyRate || (service as ServiceSnakeCase)?.custody_daily_rate || undefined,
+        custodyRateType: (service as ServiceSnakeCase)?.custodyRateType || (service as ServiceSnakeCase)?.custody_rate_type || 'daily',
+        custodyStartDate: service.custodyStartDate || (service as ServiceSnakeCase)?.custody_start_date || '',
+        custodyEndDate: service.custodyEndDate || (service as ServiceSnakeCase)?.custody_end_date || '',
+        custodyVehicleType: service.custodyVehicleType || (service as ServiceSnakeCase)?.custody_vehicle_type || '',
+        custodyDiscountPercentage: (service.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as ServiceSnakeCase)?.custody_discount_percentage) || 0,
+        custodyTotalAmount: service.custodyTotalAmount || (service as ServiceSnakeCase)?.custody_total_amount || undefined,
+        custodyNotes: service.custodyNotes || (service as ServiceSnakeCase)?.custody_notes || '',
+        insuredName: service.insuredName || (service as ServiceSnakeCase)?.insured_name || '',
+        contactPerson: service.contactPerson || (service as ServiceSnakeCase)?.contact_person || '',
+        contactPhone: service.contactPhone || (service as ServiceSnakeCase)?.contact_phone || '',
+        outsourcedProviderId: service.outsourcedProviderId || (service as ServiceSnakeCase)?.outsourced_provider_id || '',
+        outsourcedCost: service.outsourcedCost || (service as ServiceSnakeCase)?.outsourced_cost || 0,
+        outsourcedNotes: service.outsourcedNotes || (service as ServiceSnakeCase)?.outsourced_notes || ''
       });
       setIsManualFolio(true);
     }
@@ -1364,4 +1364,4 @@ export const EnhancedServiceForm = ({
       />
     </div>
   );
-};
+});

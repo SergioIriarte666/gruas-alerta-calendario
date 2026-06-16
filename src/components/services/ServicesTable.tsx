@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,7 @@ interface ServicesTableProps {
   allFilteredIds?: string[];
 }
 
-export const ServicesTable = ({
+export const ServicesTable = React.memo(({
   services,
   hasInitialServices,
   onViewDetails,
@@ -475,4 +475,4 @@ export const ServicesTable = ({
       </CardContent>
     </Card>
   );
-};
+});

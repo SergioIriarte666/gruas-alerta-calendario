@@ -17,7 +17,7 @@ import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
 import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDialog';
-import { useCosts, useDeleteCost } from '@/hooks/useCosts';
+import { usePagedCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { useDateFilters } from '@/hooks/useDateFilters';
@@ -74,6 +74,9 @@ const CostsPage = () => {
         costCenterId: 'all',
     });
 
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+
     // Rango inválido (desde > hasta): no enviar la query, solo marcar visualmente
     const isDateRangeInvalid = Boolean(
         filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo
@@ -86,10 +89,17 @@ const CostsPage = () => {
     const advancedTo = isDateRangeInvalid ? '' : filters.dateTo;
     const fromCandidates = [periodRange?.from, advancedFrom].filter(Boolean) as string[];
     const toCandidates = [periodRange?.to, advancedTo].filter(Boolean) as string[];
-    const { data: costs = [], isLoading } = useCosts({
-        dateFrom: fromCandidates.length ? fromCandidates.reduce((a, b) => (a > b ? a : b)) : '',
-        dateTo: toCandidates.length ? toCandidates.reduce((a, b) => (a < b ? a : b)) : '',
-    });
+    const dateFrom = fromCandidates.length ? fromCandidates.reduce((a, b) => (a > b ? a : b)) : '';
+    const dateTo = toCandidates.length ? toCandidates.reduce((a, b) => (a < b ? a : b)) : '';
+
+    const { data: pagedResult, isLoading } = usePagedCosts(page, pageSize, { dateFrom, dateTo });
+    const costs: Cost[] = pagedResult?.costs ?? [];
+    const totalCostCount = pagedResult?.total ?? 0;
+
+    // Reiniciar página cuando cambian los filtros de fecha
+    useEffect(() => {
+        setPage(1);
+    }, [dateFrom, dateTo, pageSize]);
     const { mutate: deleteCost } = useDeleteCost();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
@@ -219,6 +229,7 @@ const CostsPage = () => {
             maxAmount: '',
             costCenterId: 'all',
         });
+        setPage(1);
     }, []);
 
     const handleOpenXMLUpload = useCallback(() => {
@@ -442,6 +453,11 @@ const CostsPage = () => {
                     onSelectionChange={setSelectedCostIds}
                     onBatchUpdate={() => setIsBatchUpdateOpen(true)}
                     onBatchMarkPaid={() => setIsBatchMarkPaidOpen(true)}
+                    serverPage={page}
+                    serverPageSize={pageSize}
+                    serverTotal={totalCostCount}
+                    onServerPageChange={setPage}
+                    onServerPageSizeChange={setPageSize}
                 />
             ) : (
                 <CostList 

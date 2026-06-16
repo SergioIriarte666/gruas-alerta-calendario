@@ -60,6 +60,91 @@ export interface Service {
   creatorName?: string;
 }
 
+/** Variante snake_case de Service para datos sin transformar desde Supabase */
+export interface ServiceSnakeCase extends Service {
+  [key: string]: unknown;
+  purchase_order_number?: string;
+  custody_mode?: 'manual' | 'calendar' | 'none' | 'entry_exit';
+  custody_days?: number;
+  custody_daily_rate?: number;
+  custody_rate_type?: string;
+  custody_start_date?: string;
+  custody_end_date?: string;
+  custody_vehicle_type?: string;
+  custody_discount_percentage?: number;
+  custody_total_amount?: number;
+  custody_notes?: string;
+  insured_name?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  outsourced_provider_id?: string;
+  outsourced_cost?: number;
+  outsourced_notes?: string;
+  // Campos snake_case de DB (no camelCase en Service)
+  request_date?: string;
+  service_date?: string;
+  purchase_order?: string;
+  quote_number?: string;
+  vehicle_brand?: string;
+  vehicle_model?: string;
+  license_plate?: string;
+  has_excess?: boolean;
+  client_covered_amount?: number;
+  excess_amount?: number;
+  third_party_client_id?: string;
+  invoice_folio?: string;
+  invoice_numero_fiscal?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  creator?: { full_name?: string; email?: string };
+  service_resources?: Array<{
+    resource_type: string;
+    resource_id: string;
+    is_primary: boolean;
+    resource?: { id: string; name?: string };
+  }>;
+  // Campos de cost_details / prefilledData
+  operator_id?: string;
+  operator_commission?: number;
+  service_type_id?: string;
+  crane_id?: string;
+  client_id?: string;
+  cost_center_id?: string;
+  service_folio?: string;
+  payment_date?: string;
+  supplier_id?: string;
+  supplier_invoice_id?: string;
+  supplier_payment_id?: string;
+  inventory_movement_id?: string;
+  document_type?: string;
+  document_number?: string;
+  location_text?: string;
+  other_reason?: string;
+  purchase_quantity?: number;
+  purchase_unit_cost?: number;
+  immediate_consumption?: boolean;
+  receipt_photo_paths?: string[];
+  quickEntryId?: string;
+  _source?: string;
+  _processCosts?: boolean;
+  // Campos de prefilledData usados en EnhancedServiceForm
+  _isDuplicating?: boolean;
+  _originalFolio?: string;
+  clientId?: string;
+  serviceTypeId?: string;
+  craneId?: string;
+  operators?: Array<{ id: string; operatorId: string; commission: number; name?: string; isPrimary?: boolean }>;
+  inCustody?: boolean;
+  custodyDetails?: {
+    estimatedDays?: number;
+    dailyRate?: number;
+    entryDate?: string;
+    exitDate?: string;
+    totalAmount?: number;
+  };
+}
+
 export interface ServiceFormData {
   folio?: string;
   requestDate: string;

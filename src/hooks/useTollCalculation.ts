@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useTollCalculation');
 
 export interface TollDetail {
   peaje: string;

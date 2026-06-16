@@ -132,14 +132,21 @@ export const useCosts = (filters: CostDateFilters = {}) => {
   });
 };
 
-export const usePagedCosts = (page: number, pageSize: number) => {
+export const usePagedCosts = (
+  page: number,
+  pageSize: number,
+  filters: CostDateFilters = {}
+) => {
+  const dateFrom = filters.dateFrom || undefined;
+  const dateTo = filters.dateTo || undefined;
+
   return useQuery({
-    queryKey: ['costs', 'paged', page, pageSize],
+    queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo }],
     queryFn: async (): Promise<{ costs: Cost[]; total: number }> => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('costs')
         .select(COSTS_LIST_SELECT_CLAUSE, { count: 'exact' })
         .order('payment_date', { ascending: false, nullsFirst: false })
@@ -147,6 +154,11 @@ export const usePagedCosts = (page: number, pageSize: number) => {
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(from, to);
+
+      if (dateFrom) query = query.gte('date', dateFrom);
+      if (dateTo) query = query.lte('date', dateTo);
+
+      const { data, error, count } = await query;
 
       if (error) {
         logger.error('Error fetching paged costs:', error);
@@ -160,6 +172,7 @@ export const usePagedCosts = (page: number, pageSize: number) => {
         total,
       };
     },
+    placeholderData: keepPreviousData,
     enabled: page > 0 && pageSize > 0,
     staleTime: 30000,
     refetchOnWindowFocus: false,

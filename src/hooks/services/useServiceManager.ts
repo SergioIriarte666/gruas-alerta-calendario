@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Service, ServiceFormData } from '@/types';
+import { Service, ServiceFormData, ServiceSnakeCase } from '@/types';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
@@ -19,19 +19,21 @@ interface UpdateServiceOptions {
   skipInvalidation?: boolean;
 }
 
-const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') => {
+const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
   if (!error) return fallback;
   if (typeof error === 'string' && error.trim()) return error;
 
-  const parts = [error.message, error.details, error.hint]
+  const err = error as Record<string, unknown>;
+
+  const parts = [err.message, err.details, err.hint]
     .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
   if (parts.length > 0) {
     return parts.join(' · ');
   }
 
-  if (typeof error.code === 'string' && error.code.trim()) {
-    return `Código ${error.code}`;
+  if (typeof err.code === 'string' && err.code.trim()) {
+    return `Código ${err.code}`;
   }
 
   try {
@@ -44,7 +46,7 @@ const getReadableSupabaseError = (error: any, fallback = 'Error desconocido') =>
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
 // Función para transformar datos de Supabase a Service con manejo robusto de campos opcionales
-const transformToService = (data: any): Service => {
+const transformToService = (data: ServiceSnakeCase): Service => {
   
   
   // Buscar operador principal en service_resources
@@ -52,7 +54,7 @@ const transformToService = (data: any): Service => {
   
   if (data.service_resources && data.service_resources.length > 0) {
     const primaryResource = data.service_resources.find(
-      (resource: any) => resource.resource_type === 'operator' && resource.is_primary
+      (resource: Record<string, unknown>) => resource.resource_type === 'operator' && resource.is_primary
     );
     
     if (primaryResource?.operator) {
@@ -60,7 +62,7 @@ const transformToService = (data: any): Service => {
     } else {
       // Si no hay operador principal marcado, tomar el primero
       const firstOperatorResource = data.service_resources.find(
-        (resource: any) => resource.resource_type === 'operator'
+        (resource: Record<string, unknown>) => resource.resource_type === 'operator'
       );
       if (firstOperatorResource?.operator) {
         primaryOperator = firstOperatorResource.operator;
@@ -351,15 +353,15 @@ export const useServiceManager = () => {
               crane_id: newService.crane_id,
               service_folio: newService.folio,
               subcategory: cost.subcategory,
-              supplier_id: (cost as any).supplier_id || null,
-              operator_id: (cost as any).operator_id || null,
-              document_type: (cost as any).document_type || null,
-              document_number: (cost as any).document_number || null,
-              location_text: (cost as any).location_text || null,
-              other_reason: (cost as any).other_reason || null,
-              purchase_quantity: (cost as any).purchase_quantity || null,
-              purchase_unit_cost: (cost as any).purchase_unit_cost || null,
-              immediate_consumption: !!(cost as any).immediate_consumption,
+              supplier_id: (cost as Record<string, unknown>).supplier_id || null,
+              operator_id: (cost as Record<string, unknown>).operator_id || null,
+              document_type: (cost as Record<string, unknown>).document_type || null,
+              document_number: (cost as Record<string, unknown>).document_number || null,
+              location_text: (cost as Record<string, unknown>).location_text || null,
+              other_reason: (cost as Record<string, unknown>).other_reason || null,
+              purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
+              purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
+              immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
             };
             
             const { error: costError } = await supabase
@@ -439,7 +441,7 @@ export const useServiceManager = () => {
         toast.success('Servicio creado exitosamente');
       }
     },
-    onError: (error: any, variables) => {
+    onError: (error: unknown, variables) => {
       logger.error('[useServiceManager - createService] Error:', error);
 
       if (variables.options?.silent) {
@@ -469,7 +471,7 @@ export const useServiceManager = () => {
 
       
 
-      let transformedData: any = {};
+      let transformedData: Record<string, unknown> = {};
       const { data: { user } } = await supabase.auth.getUser();
       const createdBy = user?.id || null;
 
@@ -564,7 +566,7 @@ export const useServiceManager = () => {
               if (!clientValue) return null;
               // Si es un objeto, extraer el ID
               if (typeof clientValue === 'object') {
-                return (clientValue as any).id || null;
+                return (clientValue as { id: string } | null)?.id || null;
               }
               // Si es un string, validar que no esté vacío
               if (typeof clientValue === 'string') {
@@ -743,7 +745,7 @@ export const useServiceManager = () => {
       // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
       // ✅ NUEVO: Solo procesar costos si viene del formulario principal
-      const isFromMainForm = (serviceData as any)._source === 'main_form' || (serviceData as any)._processCosts === true;
+      const isFromMainForm = (serviceData as ServiceSnakeCase)._source === 'main_form' || (serviceData as ServiceSnakeCase)._processCosts === true;
       
       if (isFromMainForm) {
         
@@ -787,15 +789,15 @@ export const useServiceManager = () => {
           payment_date: serviceData.markCostsPaidOnCreate
             ? (currentService?.service_date || serviceData.serviceDate || getTodayLocal())
             : null,
-          supplier_id: (cost as any).supplier_id || null,
-          operator_id: (cost as any).operator_id || null,
-          document_type: (cost as any).document_type || null,
-          document_number: (cost as any).document_number || null,
-          location_text: (cost as any).location_text || null,
-          other_reason: (cost as any).other_reason || null,
-          purchase_quantity: (cost as any).purchase_quantity || null,
-          purchase_unit_cost: (cost as any).purchase_unit_cost || null,
-          immediate_consumption: !!(cost as any).immediate_consumption,
+          supplier_id: (cost as Record<string, unknown>).supplier_id || null,
+          operator_id: (cost as Record<string, unknown>).operator_id || null,
+          document_type: (cost as Record<string, unknown>).document_type || null,
+          document_number: (cost as Record<string, unknown>).document_number || null,
+          location_text: (cost as Record<string, unknown>).location_text || null,
+          other_reason: (cost as Record<string, unknown>).other_reason || null,
+          purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
+          purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
+          immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
             created_by: createdBy
           }));
       
@@ -1101,7 +1103,7 @@ export const useServiceManager = () => {
 
       toast.success('Servicio actualizado exitosamente');
     },
-    onError: (error: any, variables) => {
+    onError: (error: unknown, variables) => {
       logger.error('Error updating service:', error);
 
       if (variables.options?.silent) {

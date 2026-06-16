@@ -9,9 +9,9 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { useAdminServiceOps } from '@/hooks/useAdminServiceOps';
 
 interface ServiceDependencies {
   id: string;
@@ -26,14 +26,8 @@ interface ServiceDependencies {
   invoiceLinks: number;
 }
 
-const statusLabels: Record<string, string> = {
-  pending: 'Pendiente', in_progress: 'En progreso', completed: 'Completado',
-  cancelled: 'Cancelado', invoiced: 'Facturado', with_purchase_order: 'Con OC',
-  inspection_completed: 'Inspección completada', quoted: 'Cotizado',
-  purchase_order_pending: 'OC Pendiente', failed: 'Fallido',
-};
-
 export const ServiceDeletionTool = () => {
+  const { searchServiceByFolio, deleteServiceCascade } = useAdminServiceOps();
   const [searchInput, setSearchInput] = useState('');
   const [searching, setSearching] = useState(false);
   const [service, setService] = useState<ServiceDependencies | null>(null);
@@ -50,55 +44,37 @@ export const ServiceDeletionTool = () => {
     setService(null);
 
     try {
-      const folio = searchInput.trim().toUpperCase();
-      const { data: svc, error: svcErr } = await supabase
-        .from('services')
-        .select('id, folio, status, value, client:clients!services_client_id_fkey(name)')
-        .eq('folio', folio)
-        .maybeSingle();
+      const result = await searchServiceByFolio(searchInput.trim());
+      if (!result) {
+        setError(`No se encontró servicio con folio ${searchInput.trim().toUpperCase()}`);
+        return;
+      }
 
-      if (svcErr) throw svcErr;
-      if (!svc) { setError(`No se encontró servicio con folio ${folio}`); return; }
-
-      // Count dependencies in parallel
-      const [costsRes, inspRes, calRes, closRes, invRes] = await Promise.all([
-        supabase.from('costs').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-        supabase.from('inspections').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-        supabase.from('calendar_events').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-        supabase.from('closure_services').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-        supabase.from('invoice_services').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-      ]);
-
-      const clientObj = svc.client as any;
       setService({
-        id: svc.id,
-        folio: svc.folio || folio,
-        status: svc.status || 'unknown',
-        value: svc.value || 0,
-        clientName: clientObj?.name || 'Sin cliente',
-        costs: costsRes.count || 0,
-        inspections: inspRes.count || 0,
-        calendarEvents: calRes.count || 0,
-        closureLinks: closRes.count || 0,
-        invoiceLinks: invRes.count || 0,
+        id: result.id,
+        folio: result.folio,
+        status: result.status,
+        value: result.value,
+        clientName: result.clientName,
+        costs: result.dependencies.costs,
+        inspections: result.dependencies.inspections,
+        calendarEvents: result.dependencies.calendarEvents,
+        closureLinks: result.dependencies.closureLinks,
+        invoiceLinks: result.dependencies.invoiceLinks,
       });
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
       setSearching(false);
     }
   };
-
-  const expectedText = service ? `ELIMINAR ${service.folio}` : '';
 
   const handleDelete = async () => {
     if (!service || confirmText !== expectedText) return;
     setDeleting(true);
 
     try {
-      const { error } = await supabase.rpc('delete_service_cascade', { p_service_id: service.id });
-      if (error) throw error;
-
+      await deleteServiceCascade(service.id);
       toast.success('Servicio eliminado', {
         description: `${service.folio} y todas sus dependencias han sido eliminados.`,
       });
@@ -106,8 +82,8 @@ export const ServiceDeletionTool = () => {
       setConfirmText('');
       setService(null);
       setSearchInput('');
-    } catch (e: any) {
-      toast.error('Error al eliminar', { description: e.message });
+    } catch (e: unknown) {
+      toast.error('Error al eliminar', { description: e instanceof Error ? e.message : 'Error desconocido' });
     } finally {
       setDeleting(false);
     }
@@ -116,6 +92,15 @@ export const ServiceDeletionTool = () => {
   const totalDeps = service
     ? service.costs + service.inspections + service.calendarEvents + service.closureLinks + service.invoiceLinks
     : 0;
+
+  const expectedText = service ? `ELIMINAR ${service.folio}` : '';
+
+  const statusLabels: Record<string, string> = {
+    pending: 'Pendiente', in_progress: 'En progreso', completed: 'Completado',
+    cancelled: 'Cancelado', invoiced: 'Facturado', with_purchase_order: 'Con OC',
+    inspection_completed: 'Inspección completada', quoted: 'Cotizado',
+    purchase_order_pending: 'OC Pendiente', failed: 'Fallido',
+  };
 
   return (
     <div className="space-y-4">

@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useCraneStatistics');
 
 export interface CraneStatistics {
   totalServices: number;

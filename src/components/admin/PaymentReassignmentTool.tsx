@@ -10,37 +10,12 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-
-interface PaymentInfo {
-  id: string;
-  amount: number;
-  payment_date: string;
-  bank_reference: string | null;
-  payment_method: string;
-  status: string;
-  applied_amount: number;
-  remaining_amount: number;
-  clientName: string;
-  clientId: string;
-  applications: Array<{
-    id: string;
-    invoice_id: string;
-    invoice_folio: string;
-    applied_amount: number;
-  }>;
-}
-
-interface AvailableInvoice {
-  id: string;
-  folio: string;
-  total: number;
-  remaining_amount: number;
-}
+import { usePaymentReassignment, PaymentInfo, AvailableInvoice } from '@/hooks/usePaymentReassignment';
 
 export const PaymentReassignmentTool = () => {
+  const { searchPayment, fetchAvailableInvoices, removeApplication, reassignApplication } = usePaymentReassignment();
   const [searchInput, setSearchInput] = useState('');
   const [searching, setSearching] = useState(false);
   const [payment, setPayment] = useState<PaymentInfo | null>(null);
@@ -62,72 +37,15 @@ export const PaymentReassignmentTool = () => {
     setAvailableInvoices([]);
 
     try {
-      // Search by bank_reference or amount
-      const trimmed = searchInput.trim();
-      let query = supabase.from('payments').select('*, client:clients!payments_client_id_fkey(id, name)');
+      const paymentInfo = await searchPayment(searchInput);
+      setPayment(paymentInfo);
 
-      if (trimmed.startsWith('$') || !isNaN(Number(trimmed))) {
-        const amount = Number(trimmed.replace('$', '').replace(/,/g, ''));
-        query = query.eq('amount', amount);
-      } else {
-        query = query.ilike('bank_reference', `%${trimmed}%`);
+      if (paymentInfo.clientId) {
+        const invoices = await fetchAvailableInvoices(paymentInfo.clientId);
+        setAvailableInvoices(invoices);
       }
-
-      const { data: payments, error: pErr } = await query.limit(1);
-      if (pErr) throw pErr;
-      if (!payments || payments.length === 0) { setError('No se encontró pago con esa referencia o monto'); return; }
-
-      const p = payments[0];
-      const clientObj = p.client as any;
-
-      // Get applications
-      const { data: apps } = await supabase
-        .from('payment_applications')
-        .select('id, invoice_id, applied_amount')
-        .eq('payment_id', p.id);
-
-      const appsList: PaymentInfo['applications'] = [];
-      for (const app of apps || []) {
-        const { data: inv } = await supabase
-          .from('invoices')
-          .select('folio')
-          .eq('id', app.invoice_id)
-          .single();
-        appsList.push({
-          id: app.id,
-          invoice_id: app.invoice_id,
-          invoice_folio: inv?.folio || 'Desconocida',
-          applied_amount: app.applied_amount,
-        });
-      }
-
-      setPayment({
-        id: p.id,
-        amount: p.amount,
-        payment_date: p.payment_date,
-        bank_reference: p.bank_reference,
-        payment_method: p.payment_method,
-        status: p.status,
-        applied_amount: p.applied_amount,
-        remaining_amount: p.remaining_amount,
-        clientName: clientObj?.name || 'Sin cliente',
-        clientId: clientObj?.id || '',
-        applications: appsList,
-      });
-
-      // Get available invoices for the same client
-      if (clientObj?.id) {
-        const { data: invoices } = await supabase
-          .from('invoices')
-          .select('id, folio, total, remaining_amount')
-          .eq('client_id', clientObj.id)
-          .gt('remaining_amount', 0)
-          .neq('status', 'cancelled')
-          .order('folio', { ascending: false });
-        setAvailableInvoices(invoices || []);
-      }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
       setSearching(false);
     }
@@ -158,77 +76,28 @@ export const PaymentReassignmentTool = () => {
       const app = payment.applications.find(a => a.id === selectedAppId);
       if (!app) throw new Error('Aplicación no encontrada');
 
+      let message: string;
+
       if (actionType === 'remove') {
-        // Remove application and recalculate
-        const { error: delErr } = await supabase.from('payment_applications').delete().eq('id', app.id);
-        if (delErr) throw delErr;
-
-        // Recalc invoice
-        await recalcInvoice(app.invoice_id);
-        // Recalc payment
-        await recalcPayment(payment.id);
-
-        toast.success('Aplicación eliminada', { description: `Se removió la aplicación de ${formatCurrency(app.applied_amount)} a ${app.invoice_folio}` });
+        message = await removeApplication(payment.id, app.id, app.invoice_id, app.applied_amount, app.invoice_folio);
       } else if (actionType === 'reassign' && targetInvoiceId) {
-        // Update the application's invoice_id
-        const { error: updErr } = await supabase
-          .from('payment_applications')
-          .update({ invoice_id: targetInvoiceId })
-          .eq('id', app.id);
-        if (updErr) throw updErr;
-
-        // Recalc both invoices
-        await recalcInvoice(app.invoice_id);
-        await recalcInvoice(targetInvoiceId);
-
         const targetInv = availableInvoices.find(i => i.id === targetInvoiceId);
-        toast.success('Pago reasignado', { description: `Movido de ${app.invoice_folio} a ${targetInv?.folio}` });
+        message = await reassignApplication(
+          payment.id, app.id, app.invoice_id, targetInvoiceId,
+          app.invoice_folio, targetInv?.folio || targetInvoiceId
+        );
+      } else {
+        throw new Error('Acción no válida');
       }
 
+      toast.success('Operación completada', { description: message });
       setConfirmOpen(false);
       setPayment(null);
       setSearchInput('');
-    } catch (e: any) {
-      toast.error('Error', { description: e.message });
+    } catch (e: unknown) {
+      toast.error('Error', { description: e instanceof Error ? e.message : 'Error desconocido' });
     } finally {
       setExecuting(false);
-    }
-  };
-
-  const recalcInvoice = async (invoiceId: string) => {
-    const { data: apps } = await supabase
-      .from('payment_applications')
-      .select('applied_amount')
-      .eq('invoice_id', invoiceId);
-    
-    const totalPaid = (apps || []).reduce((sum, a) => sum + (a.applied_amount || 0), 0);
-    const { data: inv } = await supabase.from('invoices').select('total').eq('id', invoiceId).single();
-    
-    if (inv) {
-      await supabase.from('invoices').update({
-        paid_amount: totalPaid,
-        remaining_amount: inv.total - totalPaid,
-        updated_at: new Date().toISOString(),
-      }).eq('id', invoiceId);
-    }
-  };
-
-  const recalcPayment = async (paymentId: string) => {
-    const { data: apps } = await supabase
-      .from('payment_applications')
-      .select('applied_amount')
-      .eq('payment_id', paymentId);
-    
-    const totalApplied = (apps || []).reduce((sum, a) => sum + (a.applied_amount || 0), 0);
-    const { data: p } = await supabase.from('payments').select('amount').eq('id', paymentId).single();
-    
-    if (p) {
-      await supabase.from('payments').update({
-        applied_amount: totalApplied,
-        remaining_amount: p.amount - totalApplied,
-        status: totalApplied === 0 ? 'pending' : totalApplied >= p.amount ? 'applied' : 'partial',
-        updated_at: new Date().toISOString(),
-      }).eq('id', paymentId);
     }
   };
 

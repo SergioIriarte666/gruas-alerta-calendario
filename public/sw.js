@@ -1,21 +1,21 @@
 
 const CACHE_NAME = 'tms-operador-v10';
 const SW_VERSION = '10.0.0';
+const DEBUG = false;
 
 self.addEventListener('install', (event) => {
-  console.log(`[Service Worker] Install v${SW_VERSION} - Clean install`);
+  if (DEBUG) console.log(`[Service Worker] Install v${SW_VERSION} - Clean install`);
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log(`[Service Worker] Activate v${SW_VERSION} - Clearing ALL caches`);
+  if (DEBUG) console.log(`[Service Worker] Activate v${SW_VERSION} - Clearing ALL caches`);
   event.waitUntil(
     Promise.all([
-      // Delete ALL caches to prevent stale chunk references
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            console.log('[Service Worker] Deleting cache:', cacheName);
+            if (DEBUG) console.log('[Service Worker] Deleting cache:', cacheName);
             return caches.delete(cacheName);
           })
         );
@@ -25,21 +25,19 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// REMOVED fetch listener to prevent CORS conflicts
-
 // Enhanced push notifications handler with better error handling
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push notification received');
+  if (DEBUG) console.log('[Service Worker] Push notification received');
   
   if (!event.data) {
-    console.log('[Service Worker] No push data received');
+    if (DEBUG) console.log('[Service Worker] No push data received');
     return;
   }
   
   let data;
   try {
     data = event.data.json();
-    console.log('[Service Worker] Parsed push data:', data);
+    if (DEBUG) console.log('[Service Worker] Parsed push data:', data);
   } catch (error) {
     console.warn('[Service Worker] Error parsing push data, using fallback:', error);
     data = {
@@ -49,7 +47,6 @@ self.addEventListener('push', (event) => {
     };
   }
   
-  // Validate required fields
   if (!data.title || !data.body) {
     console.error('[Service Worker] Invalid notification data:', data);
     return;
@@ -101,7 +98,7 @@ self.addEventListener('push', (event) => {
 
 // Enhanced notification click handler with better error handling
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification clicked:', event.notification);
+  if (DEBUG) console.log('[Service Worker] Notification clicked:', event.notification);
   
   try {
     event.notification.close();
@@ -164,7 +161,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  console.log('[Service Worker] Background sync:', event.tag);
+  if (DEBUG) console.log('[Service Worker] Background sync:', event.tag);
   
   if (event.tag === 'push-subscription-sync') {
     event.waitUntil(syncPushSubscription());
@@ -175,7 +172,7 @@ self.addEventListener('sync', (event) => {
 
 async function syncPushSubscription() {
   try {
-    console.log('[Service Worker] Syncing push subscription');
+    if (DEBUG) console.log('[Service Worker] Syncing push subscription');
     // This would sync any pending push subscription updates
     // Implementation depends on your offline storage strategy
   } catch (error) {
@@ -185,7 +182,7 @@ async function syncPushSubscription() {
 
 async function syncOfflineActions() {
   try {
-    console.log('[Service Worker] Syncing offline actions');
+    if (DEBUG) console.log('[Service Worker] Syncing offline actions');
     
     // Notify all clients that sync is happening
     const clients = await self.clients.matchAll();

@@ -13,4 +13,17 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-charts": ["recharts"],
+          "vendor-pdf": ["jspdf", "jspdf-autotable", "pdfjs-dist"],
+          "vendor-ocr": ["tesseract.js"],
+          "vendor-xlsx": ["xlsx"],
+          "vendor-supabase": ["@supabase/supabase-js"],
+        },
+      },
+    },
+  },
 }));
