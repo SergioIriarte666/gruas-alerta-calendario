@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react';
 import { Service } from '@/types';
+import { businessClock } from '@/utils/businessClock';
 
 export const useServiceTransformer = () => {
   const transformRawServiceData = useMemo(() => (data: any[]): Service[] => {
@@ -35,8 +36,8 @@ export const useServiceTransformer = () => {
           address: embeddedClient.address || '',
           department: embeddedClient.department || '',
           isActive: embeddedClient.is_active ?? true,
-          createdAt: embeddedClient.created_at || new Date().toISOString(),
-          updatedAt: embeddedClient.updated_at || new Date().toISOString()
+          createdAt: embeddedClient.created_at || businessClock.nowISO(),
+          updatedAt: embeddedClient.updated_at || businessClock.nowISO()
         } : embeddedThirdPartyClient ? {
           id: embeddedThirdPartyClient.id,
           name: embeddedThirdPartyClient.name,
@@ -46,8 +47,8 @@ export const useServiceTransformer = () => {
           address: embeddedThirdPartyClient.address || '',
           department: embeddedThirdPartyClient.department || '',
           isActive: embeddedThirdPartyClient.is_active ?? true,
-          createdAt: embeddedThirdPartyClient.created_at || new Date().toISOString(),
-          updatedAt: embeddedThirdPartyClient.updated_at || new Date().toISOString()
+          createdAt: embeddedThirdPartyClient.created_at || businessClock.nowISO(),
+          updatedAt: embeddedThirdPartyClient.updated_at || businessClock.nowISO()
         } : {
           id: item.client_id || '',
           name: 'Cliente no disponible',
@@ -57,8 +58,8 @@ export const useServiceTransformer = () => {
           address: '',
           department: '',
           isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: businessClock.nowISO(),
+          updatedAt: businessClock.nowISO()
         },
         serviceType: item.service_types ? {
           id: item.service_types.id,
@@ -77,8 +78,8 @@ export const useServiceTransformer = () => {
           licensePlateRequired: item.service_types.license_plate_required !== false,
           requiresDetail: item.service_types.requires_detail ?? true,
           requiresPhotoSet: item.service_types.requires_photo_set ?? true,
-          createdAt: item.service_types.created_at || new Date().toISOString(),
-          updatedAt: item.service_types.updated_at || new Date().toISOString()
+          createdAt: item.service_types.created_at || businessClock.nowISO(),
+          updatedAt: item.service_types.updated_at || businessClock.nowISO()
         } : {
           id: item.service_type_id || '',
           name: 'Tipo no disponible',
@@ -96,8 +97,8 @@ export const useServiceTransformer = () => {
           licensePlateRequired: true,
           requiresDetail: true,
           requiresPhotoSet: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: businessClock.nowISO(),
+          updatedAt: businessClock.nowISO()
         },
         crane: embeddedCrane ? {
           id: embeddedCrane.id,

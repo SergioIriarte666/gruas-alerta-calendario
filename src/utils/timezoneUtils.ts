@@ -132,7 +132,10 @@ export const getCurrentChileDate = (): Date => {
   return businessClock.todayDate();
 };
 
-// Get current date in Chile timezone as yyyy-MM-dd string
+/**
+ * @deprecated Use businessClock.today() directly instead.
+ * Get current date in Chile timezone as yyyy-MM-dd string
+ */
 export const getCurrentChileDateString = (): string => {
   return businessClock.today();
 };
@@ -594,6 +597,34 @@ export const getPeriodRange = (period: CostPeriod): { from: string; to: string }
     default:
       return null;
   }
+};
+
+// ===================== QUERY HELPERS PARA SUPABASE =====================
+
+/**
+ * "Hoy" en TZ del negocio para filtros .gte/.lte sobre columnas date.
+ * Devuelve string YYYY-MM-DD listo para encadenar en queries Supabase.
+ */
+export const queryToday = (): string => businessClock.today();
+
+/**
+ * ISO 8601 con offset de la TZ del negocio para filtros timestamp.
+ * Devuelve string listo para encadenar en queries Supabase.
+ * Ej: '2026-04-18T11:45:08-04:00'
+ */
+export const queryNowISO = (): string => businessClock.nowISO();
+
+/**
+ * Genera { gte, lte } listo para encadenar en queries Supabase.
+ * Útil para filtros de rango de fechas sobre columnas date o timestamptz.
+ *
+ * @param field  Nombre de la columna (se ignora, solo se usa para legibilidad
+ *               en el contexto de llamada, pero no es necesario).
+ * @param from   Fecha de inicio YYYY-MM-DD.
+ * @param to     Fecha de fin YYYY-MM-DD.
+ */
+export const queryDateRange = (field: string, from: string, to: string) => {
+  return { gte: from, lte: to };
 };
 
 // Invalidar userSettingsCache cuando el usuario cambia el formato de fecha

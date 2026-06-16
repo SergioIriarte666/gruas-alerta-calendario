@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
+import { businessClock } from '@/utils/businessClock';
 import {
   Dialog,
   DialogContent,
@@ -123,7 +124,7 @@ export const ReceiveInventoryModal = ({
           movement_type: 'entry',
           quantity: item.quantity,
           unit_cost: item.unit_cost,
-          movement_date: new Date().toISOString(), // Use current date for reception
+          movement_date: businessClock.nowISO(), // Use current date for reception
           observations: data.observations,
           supplier_id: invoice.supplier_id || undefined,
           supplier_name: invoice.supplier?.name,

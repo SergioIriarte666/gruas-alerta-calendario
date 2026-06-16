@@ -4,13 +4,14 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
 import { getCurrentMonthRange, isFutureDate, isCurrentMonth, parseFromDatabase, toLocalDateString } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useDashboardData");
 const getPreviousMonthRange = () => {
-  const now = new Date();
+  const now = businessClock.todayDate();
   const currentDayOfMonth = now.getDate(); // Día actual del mes (ej: 17)
   const previousMonth = subMonths(now, 1);
   const start = startOfMonth(previousMonth);
@@ -23,7 +24,7 @@ const fetchDashboardData = async () => {
   const { start: startDate, end: endDate } = getCurrentMonthRange();
   
   // Only fetch services from the last 2 months (current + previous) instead of ALL
-  const twoMonthsAgo = subMonths(new Date(), 2);
+  const twoMonthsAgo = subMonths(businessClock.todayDate(), 2);
   const queryStartDate = toLocalDateString(startOfMonth(twoMonthsAgo));
 
   const [

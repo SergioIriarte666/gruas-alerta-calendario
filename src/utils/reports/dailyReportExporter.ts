@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { formatForDisplayShort } from '@/utils/timezoneUtils';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { ExportDailyReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
@@ -23,7 +24,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
 
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Fecha: ${formatDate(new Date(selectedDate + 'T00:00:00'), 'EEEE, dd MMMM yyyy', { locale: es })}`, 14, startY);
+    doc.text(`Fecha: ${businessClock.format(new Date(`${selectedDate}T12:00:00Z`), 'EEEE, dd MMMM yyyy')}`, 14, startY);
     startY += 15;
 
     // Resumen Ejecutivo
@@ -362,7 +363,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     // Footer
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generado el ${formatDate(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 14, doc.internal.pageSize.height - 10);
+    doc.text(`Generado el ${businessClock.format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, doc.internal.pageSize.height - 10);
 
     doc.save(`${exportFileDefaultName}.pdf`);
 
@@ -378,7 +379,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       [`Tel: ${company.phone} | Email: ${company.email}`],
       [],
       ['INFORME DIARIO'],
-      [`Fecha: ${formatDate(new Date(selectedDate + 'T00:00:00'), 'EEEE, dd MMMM yyyy', { locale: es })}`],
+      [`Fecha: ${businessClock.format(new Date(`${selectedDate}T12:00:00Z`), 'EEEE, dd MMMM yyyy')}`],
       [],
       ['RESUMEN EJECUTIVO'],
       ['Métrica', 'Valor'],

@@ -28,6 +28,7 @@ import { ProductDrawer } from './ProductDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SimpleEntryForm } from './SimpleEntryForm';
 import { SimpleExitForm } from './SimpleExitForm';
+import { businessClock } from '@/utils/businessClock';
 import { ProductFormModal } from './ProductFormModal';
 import { DuplicateProductsPanel } from './DuplicateProductsPanel';
 import { supabase } from '@/integrations/supabase/client';
@@ -371,7 +372,7 @@ export const InventoryStockView = () => {
                     return;
                   }
 
-                  const movementDate = new Date().toISOString();
+                  const movementDate = businessClock.nowISO();
                   createMovement.mutate({
                     item_id: quickItemId,
                     location_id: quickLocationId,

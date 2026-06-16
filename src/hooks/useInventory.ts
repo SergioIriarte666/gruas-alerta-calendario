@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { createInventoryCost } from '@/utils/inventoryCostHelper';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useUniversalSync } from './useUniversalSync';  // FASE 5
+import { businessClock } from '@/utils/businessClock';
 
 export interface InventoryItem {
   id: string;
@@ -569,7 +570,7 @@ export const useCreateInventoryMovement = () => {
           const cost = await createInventoryCost({
             amount: totalCost,
             description: `Compra de inventario: ${itemData.name}`,
-            date: movement.movement_date.split('T')[0],
+            date: businessClock.format(movement.movement_date, 'yyyy-MM-dd'),
             item_name: itemData.name,
             supplier_name: movement.supplier_name,
             quantity: movement.quantity,

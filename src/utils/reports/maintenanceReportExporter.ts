@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { MaintenanceReportData, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { Settings } from '@/types/settings';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
@@ -160,8 +161,8 @@ export const exportMaintenanceReport = async ({
           'Costo Partes': c.totalPartsCost,
           'Costo Total': c.totalMaintenanceCost + c.totalPartsCost,
           'Intervenciones': c.interventionCount,
-          'Último Mantenimiento': c.lastMaintenance ? formatDate(new Date(c.lastMaintenance), 'dd/MM/yyyy', { locale: es }) : 'N/A',
-          'Próximo Mantenimiento': c.nextMaintenance ? formatDate(new Date(c.nextMaintenance), 'dd/MM/yyyy', { locale: es }) : 'N/A',
+          'Último Mantenimiento': c.lastMaintenance ? businessClock.format(new Date(c.lastMaintenance), 'dd/MM/yyyy') : 'N/A',
+          'Próximo Mantenimiento': c.nextMaintenance ? businessClock.format(new Date(c.nextMaintenance), 'dd/MM/yyyy') : 'N/A',
         }))
       );
       XLSX.utils.book_append_sheet(wb, crane_ws, 'Análisis por Grúa');

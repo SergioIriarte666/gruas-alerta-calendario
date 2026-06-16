@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { businessClock } from '@/utils/businessClock';
 
 export type CranePart = Database['public']['Tables']['crane_parts']['Row'];
 export type CreateCranePartData = Database['public']['Tables']['crane_parts']['Insert'];

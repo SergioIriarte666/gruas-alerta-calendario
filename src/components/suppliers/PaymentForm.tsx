@@ -30,6 +30,7 @@ import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
 import { parseFromDatabase, formatForDisplay, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { Badge } from '@/components/ui/badge';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
@@ -111,7 +112,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       part_unit_price: payment?.part_unit_price || undefined,
       crane_id: payment?.crane_id || '',
       add_to_inventory: payment?.add_to_inventory || false,
-      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : getTodayLocal()
+      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : businessClock.today()
     }
   });
 

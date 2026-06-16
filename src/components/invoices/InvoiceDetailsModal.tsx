@@ -107,11 +107,8 @@ const getStatusConfig = (status: string) => {
   return configs[status] || configs.draft;
 };
 
-const isBankStatementPayment = (paymentMethod?: string | null) => paymentMethod === 'cartola_bancaria';
-
 const getPaymentMethodLabel = (paymentMethod?: string | null) => {
   if (!paymentMethod) return '-';
-  if (paymentMethod === 'cartola_bancaria') return 'Cartola bancaria';
   return toTitleCase(paymentMethod.replace(/_/g, ' '));
 };
 
@@ -554,11 +551,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                           <td className="py-2 px-3 text-foreground">
                             <div className="space-y-1">
                               <div>{formatSafeDate(pa.payment?.payment_date || pa.created_at)}</div>
-                              {isBankStatementPayment(pa.payment?.payment_method) && (
-                                <Badge variant="secondary" className="text-[11px]">
-                                  Fecha de pago cartola
-                                </Badge>
-                              )}
                             </div>
                           </td>
                           <td className="py-2 px-3 font-medium text-success">

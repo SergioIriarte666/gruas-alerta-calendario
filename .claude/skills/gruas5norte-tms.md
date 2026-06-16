@@ -193,6 +193,68 @@ toast.error('Error al guardar');
 
 ---
 
+## Fuente de tiempo: businessClock (regla obligatoria)
+
+`businessClock` (`src/utils/businessClock.ts`) es la **fuente única de verdad de zona horaria** en toda la app. Lee `company_data.report_timezone` (default `America/Santiago`) y todas las fechas del negocio deben pasar por él.
+
+### Prohibido (causa bugs de TZ en reportes, duplicados, vencimientos)
+
+| Patrón prohibido | Por qué está mal | Usar en su lugar |
+|---|---|---|
+| `new Date().toISOString()` | UTC, no TZ del negocio | `businessClock.nowISO()` |
+| `new Date()` para cálculo de fecha de negocio | Hora del navegador, no del negocio | `businessClock.todayDate()` |
+| `dateStr.split('T')[0]` | Frágil, no respeta TZ | `businessClock.format(date, 'yyyy-MM-dd')` |
+| `new Date(str + 'T00:00:00')` | Medianoche UTC, desfasa en CHL | `businessClock.format(new Date(\`${str}T12:00:00Z\`), fmt)` |
+| `new Date(Date.now() - N)` para ventanas de detección | UTC, inconsistente con DB | `businessClock.format(new Date(Date.now() - N), "yyyy-MM-dd'T'HH:mm:ssXXX")` |
+
+### API de businessClock (referencia rápida)
+
+```typescript
+import { businessClock } from '@/utils/businessClock';
+
+businessClock.now()       // Date "ahora" en TZ del negocio
+businessClock.nowISO()    // string ISO con offset → para created_at/updated_at/movement_date en DB
+businessClock.today()     // 'YYYY-MM-DD' → para columnas date
+businessClock.todayDate() // Date a las 12:00 del día comercial → para comparaciones (subMonths, etc.)
+businessClock.timezone()  // 'America/Santiago' (o lo configurado)
+businessClock.format(date, 'yyyy-MM-dd')  // formatea Date o string en TZ del negocio
+businessClock.toTimestamp(date) // fecha elegida por usuario → timestamp ISO con offset
+businessClock.bootstrap() // precarga el cache (una vez al iniciar la app)
+businessClock.invalidate() // fuerza refresh (cuando el usuario cambia la TZ en Config)
+```
+
+### Helpers en timezoneUtils que ya derivan de businessClock (seguros, mantenerlos)
+
+- `getCurrentChileDateString()` → OK, llama a `businessClock.today()`
+- `getCurrentMonthRange()` → OK, usa `businessClock.todayDate()`
+- `getTodayString()` → OK, llama a `businessClock.today()`
+- `getBusinessToday()` / `getBusinessTodayDate()` → OK, wrappers directos
+- `queryToday()` / `queryNowISO()` / `queryDateRange()` → OK, helpers para queries Supabase
+
+### Funciones deprecadas (no usar en código nuevo)
+
+- `getTodayLocal()` → `@deprecated` → usar `businessClock.today()`
+- `toLocalDateString()` → `@deprecated` → usar `formatForDatabase()` o `businessClock.today()`
+- `getCurrentChileDateString()` → `@deprecated` → usar `businessClock.today()`
+
+### Instrucción obligatoria para prompts que toquen fechas, timestamps o reportes
+
+- Incluir en `ARCHIVOS A LEER PRIMERO`:
+  - `src/utils/businessClock.ts`
+  - `src/utils/timezoneUtils.ts`
+- Y en `NOTAS` indicar:
+  - "Toda fecha/hora de negocio debe pasar por `businessClock`. Prohibido `new Date().toISOString()`, `new Date(str + 'T00:00:00')`, y `.split('T')[0]`. Usar `businessClock.nowISO()` para escrituras DB, `businessClock.today()` para columnas date, y `businessClock.format()` para formateo."
+
+### Verificación pre-commit recomendada
+
+```bash
+# Después de cambios en fechas, verificar que no haya regresiones:
+grep -rn "new Date()\.toISOString()" src/ --include="*.ts" --include="*.tsx" | grep -v node_modules
+grep -rn "T00:00:00" src/utils/reports/ --include="*.ts"
+```
+
+---
+
 ## Migraciones SQL
 
 - Carpeta: `supabase/migrations/`

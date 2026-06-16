@@ -157,7 +157,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       const {
         data,
         error
-      } = await supabase.from('payments').select('id, amount, payment_date, status').eq('client_id', formData.client_id).eq('amount', parseFloat(formData.amount)).eq('payment_date', formData.payment_date).gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      } = await supabase.from('payments').select('id, amount, payment_date, status').eq('client_id', formData.client_id).eq('amount', parseFloat(formData.amount)).eq('payment_date', formData.payment_date).gte('created_at', businessClock.format(new Date(Date.now() - 24 * 60 * 60 * 1000), "yyyy-MM-dd'T'HH:mm:ssXXX"));
       if (error) throw error;
       if (data && data.length > 0) {
         setDuplicateWarning(`⚠️ Ya existe un pago similar por ${formatCurrency(parseFloat(formData.amount))} del ${formData.payment_date}`);

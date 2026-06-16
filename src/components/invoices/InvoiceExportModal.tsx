@@ -52,10 +52,10 @@ const fetchFilteredInvoices = async (filters: {
     .order('created_at', { ascending: false });
 
   if (filters.dateFrom) {
-    query = query.gte('issue_date', filters.dateFrom.toISOString().split('T')[0]);
+    query = query.gte('issue_date', toLocalDateString(filters.dateFrom));
   }
   if (filters.dateTo) {
-    query = query.lte('issue_date', filters.dateTo.toISOString().split('T')[0]);
+    query = query.lte('issue_date', toLocalDateString(filters.dateTo));
   }
   if (filters.clientId && filters.clientId !== '') {
     query = query.eq('client_id', filters.clientId);

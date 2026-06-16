@@ -1,8 +1,10 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate } from 'date-fns';
+import { format as formatDate, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
+import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { sendBlobToDownloadWindow } from './downloadWindow';
@@ -23,7 +25,7 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
   
   switch (key) {
     case 'fecha':
-      return formatDate(new Date(service.serviceDate + 'T00:00:00'), 'dd/MM/yy');
+      return formatReportDate(service.serviceDate, 'dd/MM/yy');
     case 'folio':
       return service.folio;
     case 'cliente':
@@ -54,11 +56,11 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
     }
     case 'custodiaInicio':
       return (service as any).custodyStartDate 
-        ? formatDate(new Date((service as any).custodyStartDate + 'T00:00:00'), 'dd/MM/yy') 
+        ? formatReportDate((service as any).custodyStartDate, 'dd/MM/yy') 
         : '-';
     case 'custodiaFin':
       return (service as any).custodyEndDate 
-        ? formatDate(new Date((service as any).custodyEndDate + 'T00:00:00'), 'dd/MM/yy') 
+        ? formatReportDate((service as any).custodyEndDate, 'dd/MM/yy') 
         : '-';
     case 'custodiaDias':
       return (service as any).custodyDays > 0 
@@ -87,7 +89,7 @@ const parseReportDate = (value: unknown): Date | null => {
   }
 
   const normalizedValue = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? `${value}T00:00:00`
+    ? `${value}T12:00:00Z`
     : value;
   const parsedDate = new Date(normalizedValue);
 
@@ -96,7 +98,7 @@ const parseReportDate = (value: unknown): Date | null => {
 
 const formatReportDate = (value: unknown, pattern: string): string => {
   const parsedDate = parseReportDate(value);
-  return parsedDate ? formatDate(parsedDate, pattern) : '-';
+  return parsedDate ? businessClock.format(parsedDate, pattern) : '-';
 };
 
 const formatCurrency = (value: unknown): string => {
@@ -177,8 +179,8 @@ export const exportServiceReport = async ({
   
   // Ordenar servicios por fecha (más antiguas primero)
   const sortedServices = [...services].sort((a, b) => {
-    const dateA = new Date(a.serviceDate + 'T00:00:00').getTime();
-    const dateB = new Date(b.serviceDate + 'T00:00:00').getTime();
+    const dateA = safeParseDateOnly(a.serviceDate).getTime();
+    const dateB = safeParseDateOnly(b.serviceDate).getTime();
     return dateA - dateB;
   });
   
@@ -200,7 +202,7 @@ export const exportServiceReport = async ({
       startY += 10;
       
       const filterLabels = [
-        ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+        ['Período', `${formatReportDate(appliedFilters.dateRange.from, 'P')} - ${formatReportDate(appliedFilters.dateRange.to, 'P')}`],
         ['Cliente', appliedFilters.client]
       ];
       doc.setFontSize(11);
@@ -301,7 +303,7 @@ export const exportServiceReport = async ({
     const services_data = sortedServices.map(s => {
       const breakdown = getServiceValueBreakdown(s);
       return {
-        'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+        'Fecha Servicio': formatReportDate(s.serviceDate, 'yyyy-MM-dd'),
         'Hora Inicio': s.startTime || '-',
         'Hora Término': s.endTime || '-',
         'Kilómetros Recorridos': s.craneMileage || '-',
@@ -338,7 +340,7 @@ export const exportServiceReport = async ({
       [company.name],
       ['Informe de Servicios'], [],
       ['Filtros Aplicados'],
-      ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} a ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+      ['Período', `${formatReportDate(appliedFilters.dateRange.from, 'P')} a ${formatReportDate(appliedFilters.dateRange.to, 'P')}`],
       ['Cliente', appliedFilters.client], [],
       ['Resumen'],
       ['Métrica', 'Valor'],

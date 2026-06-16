@@ -12,6 +12,7 @@ import { useCreateInventoryMovement, useInventoryLocations, useInventorySupplier
 import { toast } from 'sonner';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
+import { businessClock } from '@/utils/businessClock';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
@@ -76,7 +77,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
     }
 
     try {
-      const movementDate = new Date(data.movement_date).toISOString();
+      const movementDate = businessClock.toTimestamp(data.movement_date);
       
       await createMovement.mutateAsync({
         item_id: item.id,

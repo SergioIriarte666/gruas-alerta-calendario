@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { format, addDays, isBefore, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
 
@@ -28,7 +29,7 @@ export const exportSupplierPaymentReport = async ({
 const generatePDF = async (payments: any[], suppliers: any[], categories: any[], settings: any, filters: any) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
-  const today = format(new Date(), 'dd/MM/yyyy', { locale: es });
+  const today = businessClock.format(new Date(), 'dd/MM/yyyy');
   
   // Helper function to get supplier name
   const getSupplierName = (supplierId: string) => {

@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { ExportReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
@@ -70,7 +71,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
       doc.text('Tendencia de Costos Mensuales:', 14, lastY + 10);
       autoTable(doc, {
         head: [['Mes', 'Costo Total']],
-        body: metrics.costsByMonth.map(c => [formatDate(new Date(c.month + '-02T00:00:00'), "MMM yyyy", { locale: es }), `$${c.total.toLocaleString()}`]),
+        body: metrics.costsByMonth.map(c => [businessClock.format(new Date(`${c.month}-02T12:00:00Z`), "MMM yyyy"), `$${c.total.toLocaleString()}`]),
         startY: lastY + 14
       });
       lastY = (doc as any).lastAutoTable.finalY;
@@ -119,7 +120,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
     // Add additional sheets
     if(metrics.servicesByMonth.length > 0) {
       const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth.map(s => ({
-        'Mes': formatDate(new Date(s.month + '-02T00:00:00'), "MMM yyyy", { locale: es }),
+        'Mes': businessClock.format(new Date(`${s.month}-02T12:00:00Z`), "MMM yyyy"),
         'Servicios': s.services,
         'Ingresos': s.revenue
       })));
@@ -128,7 +129,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
 
     if(metrics.costsByMonth.length > 0) {
       const costs_month_ws = XLSX.utils.json_to_sheet(metrics.costsByMonth.map(c => ({ 
-        'Mes': formatDate(new Date(c.month + '-02T00:00:00'), "MMM yyyy", { locale: es }), 
+        'Mes': businessClock.format(new Date(`${c.month}-02T12:00:00Z`), "MMM yyyy"), 
         'Costo Total': c.total 
       })));
       XLSX.utils.book_append_sheet(wb, costs_month_ws, 'Costos por Mes');

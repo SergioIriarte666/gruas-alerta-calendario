@@ -2,6 +2,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 
 export interface CraneInventoryMetrics {
   // PIEZAS INSTALADAS (desde crane_parts directos)
@@ -80,7 +81,7 @@ export const useCraneInventoryMetrics = (craneId: string) => {
         .select('id')
         .eq('crane_id', craneId)
         .eq('status', 'scheduled')
-        .lte('scheduled_date', new Date().toISOString());
+        .lte('scheduled_date', businessClock.today());
 
       if (maintenanceError) throw maintenanceError;
 
@@ -91,7 +92,7 @@ export const useCraneInventoryMetrics = (craneId: string) => {
       const totalInventoryConsumptions = consumptionData?.length || 0;
       const consumptionValue = consumptionData?.reduce((sum, consumption) => sum + (consumption.total_cost || 0), 0) || 0;
 
-      const thirtyDaysAgo = new Date();
+      const thirtyDaysAgo = businessClock.now();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const recentPurchases = installedPartsData?.filter(part => 

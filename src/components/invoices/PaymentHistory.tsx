@@ -44,10 +44,8 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
   const [showPaymentDetail, setShowPaymentDetail] = useState(false);
   const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
 
-  const isBankStatementPayment = (paymentMethod?: string | null) => paymentMethod === 'cartola_bancaria';
   const getPaymentMethodLabel = (paymentMethod?: string | null) => {
     if (!paymentMethod) return '-';
-    if (paymentMethod === 'cartola_bancaria') return 'Cartola bancaria';
     return toTitleCase(paymentMethod.replace(/_/g, ' '));
   };
 
@@ -300,11 +298,6 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                           <TableCell className="text-foreground">
                             <div className="space-y-1">
                               <div>{new Date(payment.payment_date).toLocaleDateString()}</div>
-                              {isBankStatementPayment(payment.payment_method) && (
-                                <Badge variant="secondary" className="text-[11px]">
-                                  Fecha de pago cartola
-                                </Badge>
-                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-foreground">{formatCurrency(payment.amount)}</TableCell>

@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { ExportCostReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
@@ -22,7 +23,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     
     // Filtros aplicados
     const filterLabels = [
-      ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+      ['Período', `${businessClock.format(new Date(`${appliedFilters.dateRange.from}T12:00:00Z`), 'P')} - ${businessClock.format(new Date(`${appliedFilters.dateRange.to}T12:00:00Z`), 'P')}`],
       ['Empresa', appliedFilters.companyName || 'Todas las empresas'],
       ['Categoría', appliedFilters.categoryName || 'Todas las categorías'],
       ['Grúa', appliedFilters.craneName || 'Todas las grúas'],
@@ -48,7 +49,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     autoTable(doc, {
       head: [['Fecha', 'Descripción', 'Categoría', 'Monto', 'Asociado a', 'Notas']],
       body: costs.map(cost => [
-        formatDate(new Date(cost.date + 'T00:00:00'), 'dd/MM/yy'),
+        businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'dd/MM/yy'),
         cost.description.length > 20 ? cost.description.substring(0, 20) + '...' : cost.description,
         cost.subcategory && cost.cost_categories.name === 'Gastos de Servicios' 
           ? `${cost.cost_categories.name} - ${cost.subcategory}` 
@@ -79,7 +80,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
 
     // Hoja principal: Detalle completo de costos
     const costs_data = costs.map(cost => ({
-      'Fecha': formatDate(new Date(cost.date + 'T00:00:00'), 'yyyy-MM-dd'),
+      'Fecha': businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'yyyy-MM-dd'),
       'Descripción': cost.description,
       'Categoría': cost.subcategory && cost.cost_categories.name === 'Gastos de Servicios' 
         ? `${cost.cost_categories.name} - ${cost.subcategory}` 
@@ -116,7 +117,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
 
     // Hoja de tendencia mensual
     const monthlyTrend = costs.reduce((acc, cost) => {
-      const month = formatDate(new Date(cost.date + 'T00:00:00'), 'yyyy-MM');
+      const month = businessClock.format(new Date(`${cost.date}T12:00:00Z`), 'yyyy-MM');
       if (!acc[month]) {
         acc[month] = { count: 0, total: 0 };
       }
@@ -141,7 +142,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
       [company.name],
       ['Informe Detallado de Costos'], [],
       ['Filtros Aplicados'],
-      ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} a ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+      ['Período', `${businessClock.format(new Date(`${appliedFilters.dateRange.from}T12:00:00Z`), 'P')} a ${businessClock.format(new Date(`${appliedFilters.dateRange.to}T12:00:00Z`), 'P')}`],
       ['Categoría', appliedFilters.categoryName || 'Todas las categorías'],
       ['Grúa', appliedFilters.craneName || 'Todas las grúas'],
       ['Operador', appliedFilters.operatorName || 'Todos los operadores'], [],

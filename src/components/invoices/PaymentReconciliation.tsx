@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye, Download } from 'lucide-react';
+import { businessClock } from '@/utils/businessClock';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
@@ -401,7 +402,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       .upsert({ invoice_id: invoice.id, closure_id: closureId } as any, { onConflict: 'invoice_id,closure_id', ignoreDuplicates: true });
     if (relError) throw relError;
 
-    await supabase.from('service_closures').update({ status: 'invoiced', updated_at: new Date().toISOString() }).eq('id', closureId);
+    await supabase.from('service_closures').update({ status: 'invoiced', updated_at: businessClock.nowISO() }).eq('id', closureId);
 
     if (invoice.folio && !invoice.folio.startsWith('HIST-')) {
       const newFolio = `HIST-F-${invoice.folio}`;

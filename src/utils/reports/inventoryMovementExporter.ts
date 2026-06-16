@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { Settings } from '@/types/settings';
 import { InventoryMovement } from '@/hooks/useInventory';
@@ -206,7 +207,7 @@ export const exportInventoryMovementReport = async ({
     // Movements Detail Sheet
     if (movements.length > 0) {
       const movementsData = movements.map(movement => ({
-        'Fecha': formatDate(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm'),
+        'Fecha': businessClock.format(new Date(movement.movement_date), 'dd/MM/yyyy HH:mm'),
         'Tipo': movement.movement_type === 'entry' ? 'Entrada' : 
                movement.movement_type === 'exit' ? 'Salida' :
                movement.movement_type === 'transfer' ? 'Transferencia' : 'Ajuste',
