@@ -1,8 +1,8 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
 import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
-import { corsHeaders as _cors } from '../_shared/cors.ts';
+import { getCorsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = { ..._cors, 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
+const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' });
 
 const MONTHS_ES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -25,12 +25,12 @@ function formatServiceDate(value: string): string {
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHdrs(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, ['admin', 'operator']);
-    if ('response' in authContext) return withHeaders(authContext.response, corsHeaders);
+    if ('response' in authContext) return withHeaders(authContext.response, corsHdrs(req));
 
     // Verificar master switch + flag individual (helper compartido)
     const gate = await getWhatsAppGate(authContext.supabaseAdmin);
@@ -39,14 +39,14 @@ Deno.serve(async (req: Request) => {
       console.log('[send-whatsapp-inspection] Master switch OFF — mensaje omitido');
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'whatsapp_disabled' }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
     if (gate.settings?.notify_inspection_completed === false) {
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: 'Notificación de inspección desactivada' }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
     } = body;
 
     if (!folio || !pdfUrl) {
-      return withHeaders(jsonResponse({ error: 'folio y pdfUrl son requeridos' }, 400), corsHeaders);
+      return withHeaders(jsonResponse({ error: 'folio y pdfUrl son requeridos' }, 400), corsHdrs(req));
     }
 
     const formattedDate = formatServiceDate(serviceDate || '');
@@ -97,13 +97,13 @@ Deno.serve(async (req: Request) => {
     const allSuccess = results.length === 0 || results.every(r => r.success);
     return withHeaders(
       jsonResponse({ success: allSuccess, results, sent: results.length }),
-      corsHeaders,
+      corsHdrs(req),
     );
   } catch (err) {
     console.error('[send-whatsapp-inspection] Error:', err);
     return withHeaders(
       jsonResponse({ error: err instanceof Error ? err.message : 'Error interno' }, 500),
-      corsHeaders,
+      corsHdrs(req),
     );
   }
 });

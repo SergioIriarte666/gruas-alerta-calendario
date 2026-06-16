@@ -1,8 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getWhatsAppGate, sendWhatsAppTemplateBulk, normalizeChileanPhone } from "../_shared/whatsapp.ts";
-import { corsHeaders as _cors } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = {
+const corsHdrs(req) = {
   ..._cors,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -67,7 +67,7 @@ async function shouldRun(supabase: any, alertKey: string, dateISO: string, conte
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHdrs(req) });
 
   // Authentication: CRON_SECRET header o JWT admin
   const cronSecret = Deno.env.get("CRON_SECRET");
@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
 
   if (!authenticated) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHdrs(req), "Content-Type": "application/json" },
     });
   }
 
@@ -106,14 +106,14 @@ Deno.serve(async (req: Request) => {
   if (!gate.enabled) {
     console.log("[whatsapp-daily-alerts] Master switch OFF — alertas omitidas");
     return new Response(JSON.stringify({ ok: true, skipped: true, reason: "whatsapp_disabled" }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHdrs(req), "Content-Type": "application/json" },
     });
   }
 
   const phones = await getAdminPhones(supabase, settings);
   if (phones.length === 0) {
     return new Response(JSON.stringify({ ok: false, reason: "No hay teléfonos admin configurados" }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHdrs(req), "Content-Type": "application/json" },
     });
   }
 
@@ -364,6 +364,6 @@ Deno.serve(async (req: Request) => {
   }
 
   return new Response(JSON.stringify({ ok: true, date: todayISO, ...results }), {
-    status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200, headers: { ...corsHdrs(req), "Content-Type": "application/json" },
   });
 });

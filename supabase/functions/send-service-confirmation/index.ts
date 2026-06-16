@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 import { Resend } from "npm:resend@6";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -22,14 +22,14 @@ interface ServiceConfirmationRequest {
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     // ── Authentication: require valid JWT ──
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
     }
 
     const supabaseAuth = createClient(
@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
     }
 
     console.log('Iniciando proceso de envío de confirmación de servicio...');
@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
     // ── Derive recipient email server-side from the service's client (do NOT trust body input) ──
     if (!serviceId || typeof serviceId !== 'string') {
       return new Response(JSON.stringify({ error: 'serviceId requerido' }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 400, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
     const { data: serviceRow, error: serviceError } = await supabase
@@ -77,14 +77,14 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
     if (serviceError || !serviceRow) {
       return new Response(JSON.stringify({ error: 'Servicio no encontrado' }), {
-        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 404, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
     const clientEmail = (serviceRow as any).clients?.email?.trim().toLowerCase();
     const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!clientEmail || !EMAIL_REGEX.test(clientEmail) || clientEmail.length > 254) {
       return new Response(JSON.stringify({ error: 'El cliente del servicio no tiene un email válido registrado' }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 400, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
     console.log(`Procesando confirmación para: ${clientEmail}, Folio: ${folio}`);
@@ -213,7 +213,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...getCorsHeaders(req),
       },
     });
   } catch (error: any) {
@@ -224,7 +224,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       }
     );
   }

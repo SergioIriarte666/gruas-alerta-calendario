@@ -1,8 +1,8 @@
 import { requireUserRoles, withHeaders, jsonResponse } from "../_shared/auth.ts";
 import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from "../_shared/whatsapp.ts";
-import { corsHeaders as _cors } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = { ..._cors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), "Access-Control-Allow-Methods": "POST, OPTIONS" });
 
 const MONTHS_ES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -60,13 +60,13 @@ type OperatorWhatsAppRequest = {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHdrs(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, ["admin", "operator"]);
     if ("response" in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, corsHdrs(req));
     }
 
     // Master switch + flag individual (helper compartido: única fuente de verdad)
@@ -76,7 +76,7 @@ Deno.serve(async (req: Request) => {
       console.log("[send-whatsapp-operator] Master switch OFF — mensaje omitido");
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -87,7 +87,7 @@ Deno.serve(async (req: Request) => {
           skipped: true,
           reason: "Notificación de operador desactivada en configuración",
         }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     if (!operatorId || !folio || !serviceDate) {
       return withHeaders(
         jsonResponse({ error: "operatorId, folio y serviceDate son requeridos" }, 400),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
                 : "Operador ya notificado para este servicio",
               notifiedAt: existing.operator_notified_at,
             }),
-            corsHeaders,
+            corsHdrs(req),
           );
         }
       }
@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
     if (operatorError) {
       return withHeaders(
         jsonResponse({ error: "No se pudo obtener el operador", details: operatorError }, 500),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -170,7 +170,7 @@ Deno.serve(async (req: Request) => {
           { success: false, error: { code: "NO_PHONE", message: "Operador sin teléfono" } },
           422,
         ),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -181,7 +181,7 @@ Deno.serve(async (req: Request) => {
           { success: false, error: { code: "INVALID_PHONE", message: normalized.reason } },
           422,
         ),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -224,7 +224,7 @@ Deno.serve(async (req: Request) => {
     if (!result.success) {
       return withHeaders(
         jsonResponse({ success: false, error: result.error }, 502),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -249,13 +249,13 @@ Deno.serve(async (req: Request) => {
         message: "WhatsApp enviado al operador",
         messageId: result.messageId,
       }),
-      corsHeaders,
+      corsHdrs(req),
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return withHeaders(
       jsonResponse({ success: false, error: { code: "INTERNAL_ERROR", message } }, 500),
-      corsHeaders,
+      corsHdrs(req),
     );
   }
 });

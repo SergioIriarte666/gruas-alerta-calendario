@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import jsPDFModule from "jspdf";
 import autoTableModule from "jspdf-autotable";
-import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 // Handle both ESM default export and CJS module.exports
 const jsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default?.jsPDF || jsPDFModule;
@@ -57,7 +57,7 @@ const getDateInTimezone = (value: string | Date, timeZone: string): string => {
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -119,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
           } else {
             return new Response(JSON.stringify({ error: 'Forbidden: admin role required' }), {
               status: 403,
-              headers: { "Content-Type": "application/json", ...corsHeaders },
+              headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
             });
           }
         }
@@ -129,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!authenticated) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       });
     }
 
@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error fetching company data:", companyError);
       return new Response(JSON.stringify({ error: "No company data found" }), {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       });
     }
 
@@ -153,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("📭 Reporte diario desactivado. Saliendo.");
       return new Response(JSON.stringify({ message: "Daily report disabled" }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       });
     }
 
@@ -166,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("📭 No hay destinatarios configurados.");
       return new Response(JSON.stringify({ message: "No recipients" }), {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       });
     }
 
@@ -193,7 +193,7 @@ const handler = async (req: Request): Promise<Response> => {
           }),
           {
             status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
+            headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
           }
         );
       }
@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
             }),
             {
               status: 200,
-              headers: { "Content-Type": "application/json", ...corsHeaders },
+              headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
             }
           );
         }
@@ -719,7 +719,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       }
     );
   } catch (error: any) {
@@ -747,7 +747,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: "Error en el servicio de reporte diario" }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       }
     );
   }

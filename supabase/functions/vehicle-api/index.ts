@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const allowedRoles = ['admin', 'viewer'] as const;
 
@@ -17,13 +17,13 @@ const VALID_ENDPOINTS = new Set(['plate', 'vin', 'stolen', 'recall', 'appraisal'
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, [...allowedRoles]);
     if ('response' in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, getCorsHeaders(req));
     }
 
     const body = await req.json();
@@ -32,14 +32,14 @@ serve(async (req: Request) => {
     if (!endpoint || !value) {
       return new Response(
         JSON.stringify({ success: false, error: 'endpoint y value son requeridos' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
     if (!VALID_ENDPOINTS.has(endpoint)) {
       return new Response(
         JSON.stringify({ success: false, error: 'endpoint inválido' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -64,7 +64,7 @@ serve(async (req: Request) => {
       console.log(`[vehicle-api] Cache hit: ${endpoint}/${cleanValue}`);
       return new Response(
         JSON.stringify({ success: true, data: cached.response, cached: true }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -73,7 +73,7 @@ serve(async (req: Request) => {
       console.error('[vehicle-api] GETAPI_CHILE_API_KEY not configured');
       return new Response(
         JSON.stringify({ success: false, error: 'API key no configurada' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -92,32 +92,32 @@ serve(async (req: Request) => {
       if (response.status === 404) {
         return new Response(
           JSON.stringify({ success: true, data: null }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 401) {
         return new Response(
           JSON.stringify({ success: false, error: 'API key inválida' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 422) {
         return new Response(
           JSON.stringify({ success: false, error: 'Formato inválido' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ success: false, error: 'Límite de consultas alcanzado. Intenta en unos minutos.' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
       const errText = await response.text();
       console.error(`[vehicle-api] GetAPI error ${response.status}: ${errText}`);
       return new Response(
         JSON.stringify({ success: false, error: 'Error al consultar la API' }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -126,7 +126,7 @@ serve(async (req: Request) => {
     if (!data.success) {
       return new Response(
         JSON.stringify({ success: true, data: null }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -151,14 +151,14 @@ serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ success: true, data: responseData }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('[vehicle-api] Unexpected error:', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Error interno del servidor' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

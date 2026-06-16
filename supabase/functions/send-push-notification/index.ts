@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
-import { corsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 interface PushNotificationRequest {
   userId: string;
@@ -15,7 +15,7 @@ interface PushNotificationRequest {
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
         error: 'No autorizado'
       }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
         error: 'Usuario no autenticado'
       }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -68,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: 'Datos de solicitud inválidos'
       }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         error: 'Error verificando permisos'
       }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
         error: 'No autorizado para enviar notificaciones a este usuario'
       }), {
         status: 403,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -127,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
         message: 'No hay suscripción activa para este usuario'
       }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
       });
     }
 
@@ -185,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
       notificationType: notification.type
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
     });
 
   } catch (error: any) {
@@ -195,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
       error: 'Error en el servicio de notificación push'
     }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: { 'Content-Type': 'application/json', ...getCorsHeaders(req) },
     });
   }
 };

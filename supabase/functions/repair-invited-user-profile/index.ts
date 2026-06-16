@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 type AppRole = "admin" | "operator" | "viewer" | "client";
 
@@ -8,7 +8,7 @@ const ROLE_PRIORITY: AppRole[] = ["admin", "operator", "client", "viewer"];
 
 serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -54,7 +54,7 @@ serve(async (req: Request): Promise<Response> => {
         JSON.stringify({ repaired: false, reason: "no_active_invitation" }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
         },
       );
     }
@@ -74,7 +74,7 @@ serve(async (req: Request): Promise<Response> => {
         JSON.stringify({ repaired: false, reason: "profile_rejected" }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
         },
       );
     }
@@ -131,7 +131,7 @@ serve(async (req: Request): Promise<Response> => {
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       },
     );
   } catch (error) {
@@ -140,7 +140,7 @@ serve(async (req: Request): Promise<Response> => {
       JSON.stringify({ repaired: false, error: message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       },
     );
   }

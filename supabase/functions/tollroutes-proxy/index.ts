@@ -1,18 +1,18 @@
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
-import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 const allowedRoles = ["admin", "viewer"] as const;
 
 const GETAPI_BASE = "https://chile.getapi.cl/v1/tollroutes/api";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, [...allowedRoles]);
     if ("response" in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, getCorsHeaders(req));
     }
 
     const API_KEY =
@@ -24,7 +24,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: "GetAPI key not configured (GETAPI_CHILE_TOLL_API_KEY)" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
       });
       const data = await res.json();
       return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
       });
       const data = await res.json();
       return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
       });
       const data = await res.json();
       return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
           JSON.stringify({ error: "origin and destination are required" }),
           {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
           }),
           {
             status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -108,7 +108,7 @@ Deno.serve(async (req: Request) => {
       console.log("Toll route-cost response:", JSON.stringify(data));
 
       return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   } catch (err) {
@@ -127,7 +127,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

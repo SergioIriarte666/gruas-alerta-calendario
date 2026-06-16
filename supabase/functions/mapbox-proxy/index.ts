@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
-import { corsHeadersExtended as corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 const allowedRoles = ["admin", "viewer"] as const;
 
 function encodePolyline(coordinates: [number, number][]): string {
@@ -70,20 +70,20 @@ function buildStaticMapUrl(
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, [...allowedRoles]);
     if ("response" in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, getCorsHeaders(req));
     }
 
     const MAPBOX_TOKEN = Deno.env.get("MAPBOX_ACCESS_TOKEN");
     if (!MAPBOX_TOKEN) {
       return new Response(
         JSON.stringify({ error: "Mapbox token not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
       if (!geometry?.coordinates || !origin || !destination) {
         return new Response(
           JSON.stringify({ error: "geometry, origin and destination required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -128,14 +128,14 @@ Deno.serve(async (req: Request) => {
       if (!imageRes.ok) {
         return new Response(
           JSON.stringify({ error: "Failed to fetch static map" }),
-          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       const imageData = await imageRes.arrayBuffer();
       const contentType = imageRes.headers.get("Content-Type") ?? "image/png";
       return new Response(imageData, {
         headers: {
-          ...corsHeaders,
+          ...getCorsHeaders(req),
           "Content-Type": contentType,
           "Cache-Control": "private, max-age=300",
         },
@@ -146,7 +146,7 @@ Deno.serve(async (req: Request) => {
     if (action === "geocode") {
       if (!query) {
         return new Response(JSON.stringify({ error: "query is required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
       );
 
       return new Response(JSON.stringify({ results }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -171,7 +171,7 @@ Deno.serve(async (req: Request) => {
       if (!origin || !destination) {
         return new Response(
           JSON.stringify({ error: "origin and destination are required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -183,7 +183,7 @@ Deno.serve(async (req: Request) => {
 
       if (!data.routes || data.routes.length === 0) {
         return new Response(JSON.stringify({ error: "No route found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
@@ -194,18 +194,18 @@ Deno.serve(async (req: Request) => {
           estimated_time_hours: Math.round((route.duration / 3600) * 10) / 10,
           geometry: route.geometry,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
       JSON.stringify({ error: "Invalid action. Use 'geocode' or 'directions'" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

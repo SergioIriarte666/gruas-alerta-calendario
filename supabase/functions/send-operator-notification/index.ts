@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0'
 import { Resend } from "npm:resend@6";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -30,14 +30,14 @@ interface OperatorNotificationRequest {
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
     // Authenticate the caller
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
     }
     const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -47,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
     }
     const callerId = (claimsData.claims as any).sub as string;
 
@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: callerId, _role: 'admin' });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Solo administradores pueden enviar notificaciones de operador' }), {
-        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 403, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
 
@@ -79,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!operatorId) {
       return new Response(JSON.stringify({ error: 'operatorId es requerido' }), {
-        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 400, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
 
@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
     if (opErr || !operator?.user_id) {
       return new Response(JSON.stringify({ error: 'Operador no encontrado o sin usuario vinculado' }), {
-        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 404, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
     const { data: profile } = await supabase
@@ -101,7 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
     if (!profile?.email) {
       return new Response(JSON.stringify({ error: 'No se encontró email del operador' }), {
-        status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+        status: 404, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) }
       });
     }
     const operatorEmail = profile.email as string;
@@ -230,7 +230,7 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
+        ...getCorsHeaders(req),
       },
     });
   } catch (error: any) {
@@ -241,7 +241,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       }
     );
   }

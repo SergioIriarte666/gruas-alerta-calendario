@@ -5,9 +5,9 @@ import {
   sendWhatsAppTemplateBulk,
   normalizeChileanPhone,
 } from "../_shared/whatsapp.ts";
-import { corsHeaders as _cors } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = { ..._cors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), "Access-Control-Allow-Methods": "POST, OPTIONS" });
 
 type AdminWhatsAppRequest = {
   event: string;
@@ -54,13 +54,13 @@ const templates: Record<string, { name: string; params: (d: any) => string[] }> 
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHdrs(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, ["admin"]);
     if ("response" in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, corsHdrs(req));
     }
 
     const body: AdminWhatsAppRequest = await req.json();
@@ -70,15 +70,15 @@ Deno.serve(async (req: Request) => {
     const testPhone = body?.testPhone;
 
     if (!event || typeof event !== "string") {
-      return withHeaders(jsonResponse({ error: "event es requerido" }, 400), corsHeaders);
+      return withHeaders(jsonResponse({ error: "event es requerido" }, 400), corsHdrs(req));
     }
     if (!data || typeof data !== "object") {
-      return withHeaders(jsonResponse({ error: "data es requerido" }, 400), corsHeaders);
+      return withHeaders(jsonResponse({ error: "data es requerido" }, 400), corsHdrs(req));
     }
 
     const template = templates[event];
     if (!template) {
-      return withHeaders(jsonResponse({ error: "Evento no soportado", event }, 400), corsHeaders);
+      return withHeaders(jsonResponse({ error: "Evento no soportado", event }, 400), corsHdrs(req));
     }
 
     const parameters = template.params(data);
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
       console.log("[send-whatsapp-admin] Master switch OFF — mensaje omitido");
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: "whatsapp_disabled" }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -108,7 +108,7 @@ Deno.serve(async (req: Request) => {
     if (!testMode && settingKey && waSettings && (waSettings as any)[settingKey] === false) {
       return withHeaders(
         jsonResponse({ success: true, skipped: true, reason: "Notificación desactivada en configuración" }),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
       if (!norm.ok) {
         return withHeaders(
           jsonResponse({ success: false, error: { code: "INVALID_PHONE", message: norm.reason } }, 400),
-          corsHeaders,
+          corsHdrs(req),
         );
       }
       const result = await sendWhatsAppTemplate(norm.phone, template.name, parameters, sendOpts);
@@ -132,7 +132,7 @@ Deno.serve(async (req: Request) => {
           { success: result.success, event, notified: result.success ? 1 : 0, error: result.error },
           result.success ? 200 : 502,
         ),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
     if (rawNumbers.length === 0) {
       return withHeaders(
         jsonResponse({ error: "No hay números de administrador configurados" }, 422),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
           },
           422,
         ),
-        corsHeaders,
+        corsHdrs(req),
       );
     }
 
@@ -183,13 +183,13 @@ Deno.serve(async (req: Request) => {
         },
         status,
       ),
-      corsHeaders,
+      corsHdrs(req),
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return withHeaders(
       jsonResponse({ success: false, error: { code: "INTERNAL_ERROR", message } }, 500),
-      corsHeaders,
+      corsHdrs(req),
     );
   }
 });

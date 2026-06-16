@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 const allowedRoles = ['admin', 'viewer'] as const;
 
 const SRE_API_URL = "https://sre.cl/api/company_info";
@@ -68,20 +68,20 @@ function mapRutsInfoResponse(data: any) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
     const authContext = await requireUserRoles(req, [...allowedRoles]);
     if ('response' in authContext) {
-      return withHeaders(authContext.response, corsHeaders);
+      return withHeaders(authContext.response, getCorsHeaders(req));
     }
 
     const token = Deno.env.get("SRE_API_TOKEN");
     if (!token) {
       return new Response(
         JSON.stringify({ error: "SRE_API_TOKEN no configurado" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
     if (!rut || typeof rut !== "string" || rut.length < 3 || rut.length > 15) {
       return new Response(
         JSON.stringify({ error: "RUT inválido" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -126,7 +126,7 @@ Deno.serve(async (req: Request) => {
         if (!useFallback) {
           return new Response(
             JSON.stringify({ error: `Error de API SRE (${sreResponse.status})` }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
           );
         }
       } else {
@@ -201,7 +201,7 @@ Deno.serve(async (req: Request) => {
 
           return new Response(
             JSON.stringify(result),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
           );
         }
       }
@@ -223,7 +223,7 @@ Deno.serve(async (req: Request) => {
           console.error(`ruts.info error: ${rutsResponse.status} - ${errText}`);
           return new Response(
             JSON.stringify({ error: `Ambas fuentes fallaron. SRE: ${sreError}. ruts.info: HTTP ${rutsResponse.status}` }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
           );
         }
 
@@ -233,34 +233,34 @@ Deno.serve(async (req: Request) => {
         if (rutsData.error) {
           return new Response(
             JSON.stringify({ error: rutsData.error }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
           );
         }
 
         const result = mapRutsInfoResponse(rutsData);
         return new Response(
           JSON.stringify(result),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       } catch (fallbackError) {
         console.error("ruts.info fallback error:", fallbackError);
         const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
         return new Response(
           JSON.stringify({ error: `SRE: ${sreError}. ruts.info: ${fallbackMessage}` }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
 
     return new Response(
       JSON.stringify({ error: "Error inesperado" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("sre-lookup error:", error);
     return new Response(
       JSON.stringify({ error: "Error interno del servidor" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
