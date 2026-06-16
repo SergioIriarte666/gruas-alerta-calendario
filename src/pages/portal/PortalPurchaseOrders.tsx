@@ -11,10 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { getPurchaseOrderPendingServices } from './portalServices.utils';
+import { businessClock } from '@/utils/businessClock';
 
 const daysPending = (serviceDate: string): number => {
   const svc = new Date(serviceDate);
-  const today = new Date();
+  const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
   svc.setHours(0, 0, 0, 0);
   return Math.floor((today.getTime() - svc.getTime()) / (1000 * 60 * 60 * 24));

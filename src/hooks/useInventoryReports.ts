@@ -465,7 +465,7 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
     queryKey: ['predictive-analysis', filters],
     queryFn: async (): Promise<PredictiveAnalysisData> => {
       // Get consumption data from last 6 months
-      const sixMonthsAgo = format(subMonths(new Date(), 6), 'yyyy-MM-dd');
+      const sixMonthsAgo = format(subMonths(businessClock.todayDate(), 6), 'yyyy-MM-dd');
       
       const { data: movements, error } = await supabase
         .from('inventory_movements')

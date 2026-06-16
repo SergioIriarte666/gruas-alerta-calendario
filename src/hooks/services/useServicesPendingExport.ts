@@ -5,6 +5,7 @@ import { exportServiceReport } from '@/utils/reports/serviceReportExporter';
 import { Service } from '@/types';
 import { format as formatDate } from 'date-fns';
 import { createLogger } from '@/lib/logger';
+import { businessClock } from '@/utils/businessClock';
 
 const logger = createLogger('ServicesPendingExport');
 
@@ -31,7 +32,7 @@ export const useServicesPendingExport = (services: Service[]) => {
     setIsExporting(true);
     
     try {
-      const today = new Date();
+      const today = businessClock.todayDate();
       const formattedDate = formatDate(today, 'yyyy-MM-dd');
       
       await exportServiceReport({

@@ -1,11 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Commission } from '@/types/commissions';
+import { Commission, CommissionFilters } from '@/types/commissions';
+import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useCommissions");
 const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+
+/**
+ * Helper: aplica filtros de fecha a una query de Supabase
+ */
+const applyDateFilters = <T>(
+  query: any,
+  dateFrom?: string,
+  dateTo?: string,
+) => {
+  if (dateFrom) query = query.gte('date', dateFrom);
+  if (dateTo) query = query.lte('date', dateTo);
+  return query;
+};
 
 const mapRawCommissionToCommission = (commission: any): Commission => {
   const serviceValue = commission.service_value || 0;
@@ -95,34 +109,34 @@ export const validateCommissionsAgainstCosts = async (commissions: Commission[])
  * Fuente de verdad ÚNICA: tabla costs.
  * Se usa como fallback cuando el RPC falla.
  */
-const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
-  logger.debug('🔁 Falling back to costs-based commissions query...');
+const fetchCommissionsFromCosts = async (dateFrom?: string, dateTo?: string): Promise<Commission[]> => {
+  logger.debug('🔁 Fetching commissions from costs...', { dateFrom, dateTo });
 
   const commissionCategoryIds = await fetchCommissionCategoryIds();
   const categoryIdsToUse = [...new Set([COMMISSION_CATEGORY_ID, ...commissionCategoryIds])];
 
   // Buscar por todas las variantes posibles para no perder comisiones históricas
   const [byCategoryRes, bySubcategoryRes, byDesc1Res, byDesc2Res] = await Promise.all([
-    supabase
+    applyDateFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .in('category_id', categoryIdsToUse)
-      .order('date', { ascending: false }),
-    supabase
+      .order('date', { ascending: false }), dateFrom, dateTo),
+    applyDateFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .in('subcategory', ['comisiones', 'comisiones_pagadas', 'Comisión Operador'])
-      .order('date', { ascending: false }),
-    supabase
+      .order('date', { ascending: false }), dateFrom, dateTo),
+    applyDateFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .ilike('description', '%Comisión operador%')
-      .order('date', { ascending: false }),
-    supabase
+      .order('date', { ascending: false }), dateFrom, dateTo),
+    applyDateFilters(supabase
       .from('costs')
       .select('id, date, description, amount, operator_id, service_id, service_folio, subcategory, created_at, updated_at, payment_date, payment_batch_id, category_id')
       .ilike('description', '%Comision operador%')
-      .order('date', { ascending: false }),
+      .order('date', { ascending: false }), dateFrom, dateTo),
   ]);
 
   const error = byCategoryRes.error || bySubcategoryRes.error || byDesc1Res.error || byDesc2Res.error;
@@ -261,9 +275,19 @@ const fetchCommissionsFromCosts = async (): Promise<Commission[]> => {
  * Se eliminó fetchMainOperatorCommissionsFromServices que generaba
  * comisiones fantasma con IDs sintéticos (service-main-{id}).
  * Ahora solo: RPC + fallback costs, deduplicados por id.
+ * 
+ * @param dateFrom  Filtro opcional YYYY-MM-DD (fecha inicio)
+ * @param dateTo    Filtro opcional YYYY-MM-DD (fecha fin)
  */
-const fetchCommissions = async (): Promise<Commission[]> => {
-  logger.debug('🔍 Fetching commissions (single source: costs table)...');
+const fetchCommissions = async (dateFrom?: string, dateTo?: string): Promise<Commission[]> => {
+  logger.debug('🔍 Fetching commissions (single source: costs table)...', { dateFrom, dateTo });
+  
+  // Si hay filtros de fecha, ir directo a costs (el RPC no acepta filtros de fecha)
+  if (dateFrom || dateTo) {
+    const costsData = await fetchCommissionsFromCosts(dateFrom, dateTo);
+    logger.debug('✅ Commissions from costs (filtered):', costsData.length);
+    return costsData;
+  }
   
   // Try RPC first
   try {
@@ -290,7 +314,7 @@ const fetchCommissions = async (): Promise<Commission[]> => {
           expectedCount: expectedSet.size,
           missingFromRpc,
         });
-        const costsData = await fetchCommissionsFromCosts();
+        const costsData = await fetchCommissionsFromCosts(dateFrom, dateTo);
         logger.debug('✅ Commissions from costs fallback:', costsData.length);
         return costsData;
       }
@@ -311,7 +335,7 @@ const fetchCommissions = async (): Promise<Commission[]> => {
 
   // Fallback to costs table
   try {
-    const costsData = await fetchCommissionsFromCosts();
+    const costsData = await fetchCommissionsFromCosts(dateFrom, dateTo);
     logger.debug('✅ Commissions from costs fallback:', costsData.length);
     return costsData;
   } catch (e) {
@@ -320,10 +344,17 @@ const fetchCommissions = async (): Promise<Commission[]> => {
   }
 };
 
-export const useCommissions = () => {
+export const useCommissions = (filters?: CommissionFilters) => {
+  const dateFrom = filters?.date_from 
+    ? businessClock.format(filters.date_from, 'yyyy-MM-dd')
+    : undefined;
+  const dateTo = filters?.date_to
+    ? businessClock.format(filters.date_to, 'yyyy-MM-dd')
+    : undefined;
+
   return useQuery<Commission[], Error>({
-    queryKey: ['commissions'],
-    queryFn: fetchCommissions,
+    queryKey: ['commissions', { dateFrom, dateTo }],
+    queryFn: () => fetchCommissions(dateFrom, dateTo),
   });
 };
 

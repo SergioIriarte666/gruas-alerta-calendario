@@ -6,6 +6,7 @@ import { Edit, Trash2, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, E
 import { Invoice } from '@/types';
 import { isValid, parseISO, differenceInDays } from 'date-fns';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
 import { toTitleCase } from '@/lib/utils';
@@ -76,7 +77,7 @@ const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
       return <Badge className="border-border/70 bg-muted/40 text-foreground">Fecha inválida</Badge>;
     }
     
-    const today = new Date();
+    const today = businessClock.todayDate();
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
     

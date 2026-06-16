@@ -11,13 +11,14 @@ import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { businessClock } from '@/utils/businessClock';
 
 export const MonthlyInstallments = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [payingInstallment, setPayingInstallment] = useState<DebtInstallment | null>(null);
   const { data: installments, isLoading } = useMonthlyInstallments(currentMonth);
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = businessClock.today();
 
   const formatAmount = (amount: number, currency?: string) => {
     if (currency === 'UF') {

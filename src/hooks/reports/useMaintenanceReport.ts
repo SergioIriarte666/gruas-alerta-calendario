@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useMaintenanceReport");
@@ -70,8 +71,8 @@ export interface MaintenanceReportData {
 }
 
 const defaultFilters: MaintenanceReportFilters = {
-  dateFrom: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
-  dateTo: format(new Date(), 'yyyy-MM-dd'),
+  dateFrom: format(new Date(businessClock.todayDate().getFullYear(), 0, 1), 'yyyy-MM-dd'),
+  dateTo: businessClock.today(),
 };
 
 export const useMaintenanceReport = (filters: MaintenanceReportFilters = defaultFilters) => {

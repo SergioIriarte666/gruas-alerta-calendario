@@ -4,6 +4,7 @@ import { Supplier } from '@/types/suppliers';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 
 export type PurchaseDocumentType = 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exenta';
 
@@ -148,7 +149,7 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'pendi
     const dueDateStr = parseDate(fechaVencimiento);
     if (dueDateStr) {
       const due = new Date(dueDateStr);
-      const today = new Date();
+      const today = businessClock.todayDate();
       today.setHours(0, 0, 0, 0);
       due.setHours(0, 0, 0, 0);
       const dueTime = due.getTime() + (due.getTimezoneOffset() * 60000);

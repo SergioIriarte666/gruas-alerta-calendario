@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useSettings } from '@/hooks/useSettings';
 import { addDays, isBefore, isAfter } from 'date-fns';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useSupplierPaymentExport");
@@ -45,7 +46,7 @@ export const useSupplierPaymentExport = () => {
       let filteredPayments = [...payments];
       
       if (filters.reportType === 'future') {
-        const today = new Date();
+        const today = businessClock.todayDate();
         const futureDate = addDays(today, filters.daysAhead || 90);
         
         filteredPayments = payments.filter(payment => {

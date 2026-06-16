@@ -16,6 +16,7 @@ import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
 import { SimilarProductAlert } from './SimilarProductAlert';
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
 import type { SimilarItem } from '@/utils/inventoryHelper';
+import { businessClock } from '@/utils/businessClock';
 
 interface PartsFormProps {
   isOpen: boolean;
@@ -46,7 +47,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
       notes: editingPart.notes || '',
       kilometraje: (editingPart as any).kilometraje || undefined,
     } : {
-      date: format(new Date(), 'yyyy-MM-dd'),
+      date: businessClock.today(),
       supplier: '',
       phone: '',
       part_name: '',

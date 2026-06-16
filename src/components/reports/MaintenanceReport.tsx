@@ -14,12 +14,13 @@ import { useSettings } from '@/hooks/useSettings';
 import { exportMaintenanceReport } from '@/utils/reportExporter';
 import { useToast } from '@/components/ui/custom-toast';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("MaintenanceReport");
 const defaultFilters: MaintenanceReportFilters = {
-  dateFrom: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
-  dateTo: format(new Date(), 'yyyy-MM-dd'),
+  dateFrom: format(new Date(businessClock.todayDate().getFullYear(), 0, 1), 'yyyy-MM-dd'),
+  dateTo: businessClock.today(),
 };
 
 export const MaintenanceReport = () => {

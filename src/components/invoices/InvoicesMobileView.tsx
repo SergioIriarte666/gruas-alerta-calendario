@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, Edit, CheckCircle, Ban, FileText, Calendar, User, DollarSign } from 'lucide-react';
 import { isValid, parseISO, differenceInDays } from 'date-fns';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
@@ -55,7 +56,7 @@ const getDaysUntilDueBadge = (dueDate: any, status: string) => {
   try {
     const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
     if (!isValid(due)) return null;
-    const today = new Date();
+    const today = businessClock.todayDate();
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
     const days = differenceInDays(due, today);

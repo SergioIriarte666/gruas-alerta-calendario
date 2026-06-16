@@ -16,6 +16,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
+import { businessClock } from '@/utils/businessClock';
 
 interface DebtFormProps {
   open: boolean;
@@ -40,16 +41,16 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
     installments_count: '',
     currency: 'CLP',
     frequency: 'monthly',
-    first_due_date: format(new Date(), 'yyyy-MM-dd'),
+    first_due_date: businessClock.today(),
     interest_enabled: false,
     interest_rate: '',
     adjustment_enabled: false,
     adjustment_rate: '',
     has_down_payment: false,
     down_payment_amount: '',
-    down_payment_date: format(new Date(), 'yyyy-MM-dd'),
+    down_payment_date: businessClock.today(),
     down_payment_paid: false,
-    down_payment_payment_date: format(new Date(), 'yyyy-MM-dd'),
+    down_payment_payment_date: businessClock.today(),
     down_payment_method: 'transferencia',
     cost_center_id: 'none',
     crane_id: 'none',

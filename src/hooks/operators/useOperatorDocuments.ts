@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import {
+import { businessClock } from '@/utils/businessClock';
   OperatorDocument,
   OperatorDocumentInsert,
   DocumentType,
@@ -32,7 +33,7 @@ const OPERATOR_DOCUMENTS_SELECT = `
 
 export function getDocumentStatus(expiryDate?: string | null): DocumentStatus {
   if (!expiryDate) return 'sin_fecha';
-  const today = new Date();
+  const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(`${expiryDate}T12:00:00Z`);
   const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -43,7 +44,7 @@ export function getDocumentStatus(expiryDate?: string | null): DocumentStatus {
 
 export function getDaysUntilExpiry(expiryDate?: string | null): number | null {
   if (!expiryDate) return null;
-  const today = new Date();
+  const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
   const expiry = new Date(`${expiryDate}T12:00:00Z`);
   return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -255,7 +256,7 @@ export const useOperatorDocumentAlerts = () => {
   return useQuery({
     queryKey: ['operator-document-alerts'],
     queryFn: async () => {
-      const today = new Date();
+      const today = businessClock.todayDate();
       today.setHours(0, 0, 0, 0);
       const in30 = new Date(today);
       in30.setDate(in30.getDate() + 30);

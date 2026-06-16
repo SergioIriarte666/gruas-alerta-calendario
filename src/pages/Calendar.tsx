@@ -11,6 +11,7 @@ import { DayView } from '@/components/calendar/DayView';
 import { EventsSidebar } from '@/components/calendar/EventsSidebar';
 import { format, addMonths, subMonths, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 
 const Calendar = () => {
   const { 
@@ -30,8 +31,8 @@ const Calendar = () => {
 
   // Count upcoming service events for awareness (today and onwards)
   const upcomingCounts = useMemo(() => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const thisMonth = format(new Date(), 'yyyy-MM');
+    const todayStr = businessClock.today();
+    const thisMonth = format(businessClock.todayDate(), 'yyyy-MM');
     let thisMonthCount = 0;
     let futureCount = 0;
     for (const ev of events) {

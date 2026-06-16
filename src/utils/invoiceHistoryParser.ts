@@ -3,7 +3,8 @@ import * as XLSX from 'xlsx';
 import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
 
 
@@ -173,7 +174,7 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent'
     const dueDateStr = parseDate(fechaVencimiento);
     if (dueDateStr) {
       const due = new Date(dueDateStr);
-      const today = new Date();
+      const today = businessClock.todayDate();
       today.setHours(0, 0, 0, 0);
       due.setHours(0, 0, 0, 0);
       const dueTime = due.getTime() + (due.getTimezoneOffset() * 60000);

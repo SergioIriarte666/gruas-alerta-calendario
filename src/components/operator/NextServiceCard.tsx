@@ -5,6 +5,7 @@ import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
+import { businessClock } from '@/utils/businessClock';
 
 interface NextServiceCardProps {
   service: Service;
@@ -18,7 +19,7 @@ const getCountdown = (serviceDate: string, startTime?: string): { label: string;
   if (days === 0) {
     if (startTime) {
       const [h, m] = startTime.split(':').map(Number);
-      const now = new Date();
+      const now = businessClock.todayDate();
       const serviceTime = new Date();
       serviceTime.setHours(h, m, 0, 0);
       const diffMins = differenceInMinutes(serviceTime, now);

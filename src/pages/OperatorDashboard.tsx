@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { NextServiceCard } from '@/components/operator/NextServiceCard';
 import { createLogger } from '@/lib/logger';
+import { businessClock } from '@/utils/businessClock';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -135,7 +136,7 @@ const OperatorDashboard = () => {
       )}
 
       <p className="text-center text-zinc-700 text-xs pb-2">
-        Grúas 5 Norte © {new Date().getFullYear()}
+        Grúas 5 Norte © {businessClock.todayDate().getFullYear()}
       </p>
     </div>
   );

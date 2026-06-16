@@ -8,6 +8,7 @@ import InvoiceExportPreview from './InvoiceExportPreview';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
+import { businessClock } from '@/utils/businessClock';
 
 interface InvoiceExportModalProps {
   open: boolean;
@@ -199,7 +200,7 @@ const InvoiceExportModal = ({
   };
 
   const handleQuickFilter = (days: number | 'all') => {
-    const today = new Date();
+    const today = businessClock.todayDate();
     if (days === 'all') {
       setFilters(prev => ({ ...prev, dateFrom: undefined, dateTo: undefined }));
     } else {

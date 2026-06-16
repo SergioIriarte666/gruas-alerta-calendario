@@ -7,6 +7,7 @@ import { PayInstallmentModal } from './PayInstallmentModal';
 import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 
 export const DebtCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -17,7 +18,7 @@ export const DebtCalendar = () => {
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = businessClock.today();
 
   const formatAmount = (amount: number, currency?: string) => {
     if (currency === 'UF') {

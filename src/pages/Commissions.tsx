@@ -39,7 +39,7 @@ const Commissions = () => {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   
-  const { data: commissions, isLoading, isFetching, isError, error, refetch } = useCommissions();
+  const { data: commissions, isLoading, isFetching, isError, error, refetch } = useCommissions(filters);
   const createPaymentBatch = useCreatePaymentBatch();
   const { toast } = useToast();
   const queryClient = useQueryClient();

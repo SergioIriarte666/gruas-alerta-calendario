@@ -27,6 +27,7 @@ import autoTable from 'jspdf-autotable';
 import { Invoice } from '@/types';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import {
+import { businessClock } from '@/utils/businessClock';
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -68,7 +69,7 @@ export const HistoricalResults: React.FC = () => {
 
   // Period date range
   const dateRange = useMemo(() => {
-    const now = new Date();
+    const now = businessClock.todayDate();
     switch (period) {
       case 'this_year':
         return { from: startOfYear(now), to: endOfYear(now) };
@@ -150,7 +151,7 @@ export const HistoricalResults: React.FC = () => {
 
   // Interannual comparison
   const interannualData = useMemo(() => {
-    const now = new Date();
+    const now = businessClock.todayDate();
     const thisYear = now.getFullYear();
     const lastYear = thisYear - 1;
 
@@ -252,7 +253,7 @@ export const HistoricalResults: React.FC = () => {
       const ws = XLSX.utils.json_to_sheet(data);
       ws['!cols'] = [{ wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 12 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
-      XLSX.writeFile(wb, `resultados-historicos-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      XLSX.writeFile(wb, `resultados-historicos-${businessClock.today()}.xlsx`);
       toast.success('Excel exportado correctamente');
     } catch { toast.error('Error al exportar Excel'); }
   }, [monthlySummary, totalSales, totalPurchases, grossMargin]);
@@ -285,7 +286,7 @@ export const HistoricalResults: React.FC = () => {
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       });
 
-      doc.save(`resultados-historicos-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`resultados-historicos-${businessClock.today()}.pdf`);
       toast.success('PDF exportado correctamente');
     } catch { toast.error('Error al exportar PDF'); }
   }, [monthlySummary, dateRange, totalSales, totalPurchases, grossMargin]);

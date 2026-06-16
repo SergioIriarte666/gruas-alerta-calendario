@@ -7,6 +7,7 @@ import { exportServiceReport } from '@/utils/reports/serviceReportExporter';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useClientServiceExport");
@@ -217,7 +218,7 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
       const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
 
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;
 
       // Transformar servicios
@@ -273,7 +274,7 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
       const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
 
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;
 
       // Transformar servicios

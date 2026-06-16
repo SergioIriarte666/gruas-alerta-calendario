@@ -42,7 +42,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
   // Métricas calculadas
   const metrics = useMemo(() => {
-    const today = new Date();
+    const today = businessClock.todayDate();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;

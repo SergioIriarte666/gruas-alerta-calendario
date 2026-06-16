@@ -8,6 +8,7 @@ import autoTable from 'jspdf-autotable';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("usePurchaseExport");
@@ -50,7 +51,7 @@ export const usePurchaseExport = () => {
       XLSX.utils.book_append_sheet(wb, ws, 'Compras');
       
       // Generate file
-      XLSX.writeFile(wb, `${fileName}-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      XLSX.writeFile(wb, `${fileName}-${businessClock.today()}.xlsx`);
       
       toast.success('Reporte Excel generado correctamente');
     } catch (error) {
@@ -68,7 +69,7 @@ export const usePurchaseExport = () => {
       doc.text('Reporte de Compras Históricas', 14, 20);
       
       doc.setFontSize(10);
-      doc.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 14, 30);
+      doc.text(`Generado el: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, 14, 30);
       
       // Calculate totals
       const totalAmount = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
@@ -99,7 +100,7 @@ export const usePurchaseExport = () => {
         footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
       });
 
-      doc.save(`${fileName}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`${fileName}-${businessClock.today()}.pdf`);
       
       toast.success('Reporte PDF generado correctamente');
     } catch (error) {

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { businessClock } from '@/utils/businessClock';
 import { 
   TrendingUp, 
   Clock, 
@@ -69,7 +70,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
     const avgProcessingTime = services.length > 0 ? Math.round(
       services.reduce((sum, service) => {
         const daysSince = Math.floor(
-          (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+          (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
         );
         return sum + daysSince;
       }, 0) / services.length
@@ -80,7 +81,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
       const displayStatus = getVipPipelineDisplayStatus(service);
       if (displayStatus === 'invoiced' || displayStatus === 'completed') return false;
       const daysSince = Math.floor(
-        (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
       );
       return daysSince > 7;
     }).length;

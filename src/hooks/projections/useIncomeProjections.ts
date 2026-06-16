@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 
 export interface ProjectedInvoice {
   id: string;
@@ -40,7 +41,7 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
     queryKey: ['income-projections', dateRange, clientId, status],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const today = new Date();
+      const today = businessClock.todayDate();
 
       const validStatuses = (status || ['sent', 'partial', 'overdue']) as ('sent' | 'partial' | 'overdue')[];
       

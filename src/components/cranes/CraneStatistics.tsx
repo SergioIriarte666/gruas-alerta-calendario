@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Crane } from '@/types';
 import { useCraneStatistics } from '@/hooks/useCraneStatistics';
+import { businessClock } from '@/utils/businessClock';
 
 interface CraneStatisticsProps {
   crane: Crane;
@@ -64,7 +65,7 @@ export const CraneStatistics = ({ crane }: CraneStatisticsProps) => {
 
   if (!statistics) return null;
 
-  const currentMonth = new Date().getMonth();
+  const currentMonth = businessClock.todayDate().getMonth();
   const last6Months = Array(6).fill(0).map((_, i) => {
     const monthIndex = (currentMonth - 5 + i + 12) % 12;
     return {

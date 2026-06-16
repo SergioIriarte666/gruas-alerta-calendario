@@ -11,6 +11,7 @@ import { CalendarIcon, X, Search, Filter, SlidersHorizontal } from 'lucide-react
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { businessClock } from '@/utils/businessClock';
 
 export interface FilterConfig {
   dateFrom: Date | undefined;
@@ -49,7 +50,7 @@ export const HistoricalSalesFilters = ({
   };
 
   const applyQuickDate = (type: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear') => {
-    const today = new Date();
+    const today = businessClock.todayDate();
     let from, to;
 
     switch (type) {

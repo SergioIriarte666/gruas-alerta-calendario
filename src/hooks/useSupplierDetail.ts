@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 
 const SUPPLIER_PAYMENTS_SELECT = `
   id,
@@ -140,7 +141,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
     cranePartsCount: craneParts.length,
   };
 
-  const today = new Date();
+  const today = businessClock.todayDate();
   today.setHours(0, 0, 0, 0);
 
   // Calculate stats from invoices (primary source for debt)

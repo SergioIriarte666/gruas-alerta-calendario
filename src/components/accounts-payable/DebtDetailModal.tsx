@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useUpdateDebt } from '@/hooks/useDebts';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { businessClock } from '@/utils/businessClock';
 
 interface DebtDetailModalProps {
   debt: DebtWithProgress;
@@ -41,7 +42,7 @@ export const DebtDetailModal = ({ debt, open, onOpenChange }: DebtDetailModalPro
     adjustment_rate: debt.adjustment_rate?.toString() || '',
   });
   const { mutate: updateDebt, isPending: updating } = useUpdateDebt();
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = businessClock.today();
 
   const formatAmount = (amount: number, currency?: string) => {
     if (currency === 'UF') {

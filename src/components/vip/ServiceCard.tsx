@@ -16,6 +16,7 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { businessClock } from '@/utils/businessClock';
 
 interface ServiceCardProps {
   service: Service;
@@ -28,7 +29,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 }) => {
   // Calcular días desde la fecha del servicio
   const serviceDate = new Date(service.serviceDate);
-  const daysSince = Math.floor((new Date().getTime() - serviceDate.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSince = Math.floor((businessClock.todayDate().getTime() - serviceDate.getTime()) / (1000 * 60 * 60 * 24));
   
   // Determinar color de urgencia
   const getUrgencyColor = () => {

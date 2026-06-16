@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getBusinessToday } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -71,7 +72,7 @@ const OPERATION_LABELS: Record<AuditOperation, string> = {
 const ALL_OPERATIONS: AuditOperation[] = ['INSERT', 'UPDATE', 'DELETE'];
 
 function daysAgo(n: number): string {
-  const d = new Date();
+  const d = businessClock.todayDate();
   d.setDate(d.getDate() - n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }

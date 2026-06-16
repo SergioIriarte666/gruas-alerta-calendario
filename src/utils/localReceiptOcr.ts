@@ -51,7 +51,7 @@ const normalizeDate = (day: string, month: string, year: string) => {
   const dd = day.padStart(2, '0');
 
   const date = new Date(`${yyyy}-${mm}-${dd}T12:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) return null;
+  if (Number.isNaN(date.getTime())) return null;
   return `${yyyy}-${mm}-${dd}`;
 };
 
@@ -199,11 +199,7 @@ export const extractReceiptDataLocally = async (imageSource: string | Blob): Pro
     revoke = resolved.revoke;
     logger.debug('[LocalOCR] Imagen resuelta, creando worker OCR...');
 
-    worker = await createWorker('eng', 1, {
-      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
-      langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0',
-    });
+    worker = await createWorker('eng');
     logger.debug('[LocalOCR] Worker creado, ejecutando reconocimiento...');
 
     const result = await worker.recognize(resolved.source);

@@ -333,7 +333,7 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
 };
 
 const calculateMetrics = (payments: any[], filters: any) => {
-  const today = new Date();
+  const today = businessClock.todayDate();
   
   const metrics = {
     totalPayments: payments.length,

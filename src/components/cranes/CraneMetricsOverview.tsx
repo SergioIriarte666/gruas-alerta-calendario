@@ -21,6 +21,7 @@ import { useCraneMetrics } from '@/hooks/useCraneMetrics';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { CraneDocumentsSection } from './CraneDocumentsSection';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("CraneMetricsOverview");
@@ -44,7 +45,7 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
         logger.warn('Invalid date:', date);
         return 0;
       }
-      const today = new Date();
+      const today = businessClock.todayDate();
       const diffTime = expiry.getTime() - today.getTime();
       const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return days;

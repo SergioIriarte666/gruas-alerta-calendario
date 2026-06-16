@@ -41,6 +41,7 @@ import {
   getServiceStatusLabel,
 } from '@/utils/statusHelpers';
 import {
+import { businessClock } from '@/utils/businessClock';
   getMonthBounds,
   getMonthStatusCounts,
   getServiceDateKey,
@@ -53,7 +54,7 @@ type SortDirection = 'asc' | 'desc';
 const PortalServices = () => {
   const { data: services, isLoading, isError, error } = useClientServices();
   const [viewMode, setViewMode] = useState<'month' | 'table' | 'grid'>('table');
-  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(businessClock.todayDate()));
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tableSortField, setTableSortField] = useState<ServiceSortField>('service_date');
   const [tableSortDirection, setTableSortDirection] = useState<SortDirection>('desc');
@@ -166,7 +167,7 @@ const PortalServices = () => {
   };
 
   const resetToCurrentMonth = () => {
-    setCurrentMonth(startOfMonth(new Date()));
+    setCurrentMonth(startOfMonth(businessClock.todayDate()));
   };
 
   const handleTableSort = (field: ServiceSortField) => {

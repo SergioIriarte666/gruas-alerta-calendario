@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import { businessClock } from '@/utils/businessClock';
 
 export interface ClientInvoice {
   id: string;
@@ -29,7 +30,7 @@ export interface ClientInvoice {
 const shouldBeOverdue = (status: string, dueDate: string): boolean => {
   if (status !== 'sent') return false;
   
-  const today = new Date();
+  const today = businessClock.todayDate();
   const due = new Date(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);

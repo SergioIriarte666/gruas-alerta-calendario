@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2, Shield, Truck, TriangleAlert } from 'lucide-react';
+import { businessClock } from '@/utils/businessClock';
 
 
 const Cranes = () => {
@@ -111,8 +112,8 @@ const Cranes = () => {
   );
 
   const craneMetrics = useMemo(() => {
-    const today = new Date();
-    const next30Days = new Date();
+    const today = businessClock.todayDate();
+    const next30Days = businessClock.todayDate();
     next30Days.setDate(next30Days.getDate() + 30);
 
     const dueSoon = cranes.filter((crane) => {

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierStats } from '@/types/suppliers';
+import { businessClock } from '@/utils/businessClock';
 
 interface ExtendedSupplierStats extends SupplierStats {
   total_paid_this_month: number;
@@ -30,7 +31,7 @@ const fetchSupplierStats = async (): Promise<ExtendedSupplierStats> => {
   const totalOverdueAmount = overduePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   // Paid this month
-  const now = new Date();
+  const now = businessClock.todayDate();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const paidThisMonth = (payments || []).filter(p => 
     p.status === 'paid' && p.paid_date && p.paid_date >= monthStart

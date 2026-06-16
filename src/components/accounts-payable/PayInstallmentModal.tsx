@@ -11,6 +11,7 @@ import { usePayInstallment, DebtInstallment } from '@/hooks/useDebtInstallments'
 import { format } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { businessClock } from '@/utils/businessClock';
 
 interface PayInstallmentModalProps {
   installment: DebtInstallment;
@@ -19,7 +20,7 @@ interface PayInstallmentModalProps {
 }
 
 export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInstallmentModalProps) => {
-  const [paymentDate, setPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [paymentDate, setPaymentDate] = useState(businessClock.today());
   const [method, setMethod] = useState('transferencia');
   const [notes, setNotes] = useState('');
   const [ufValue, setUfValue] = useState<string>('');

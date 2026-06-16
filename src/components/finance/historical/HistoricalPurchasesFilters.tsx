@@ -21,6 +21,7 @@ import { format, subMonths, startOfMonth, startOfYear, endOfMonth, endOfYear } f
 import { es } from 'date-fns/locale';
 import { CalendarIcon, Search, X, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { businessClock } from '@/utils/businessClock';
 
 export interface PurchaseFilterConfig {
   dateFrom: Date | undefined;
@@ -59,7 +60,7 @@ export const HistoricalPurchasesFilters = ({
   };
 
   const applyQuickDate = (type: 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear') => {
-    const today = new Date();
+    const today = businessClock.todayDate();
     let from: Date;
     let to: Date;
 

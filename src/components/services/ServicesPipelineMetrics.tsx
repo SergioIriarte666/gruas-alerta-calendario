@@ -12,6 +12,7 @@ import {
   Quote
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { businessClock } from '@/utils/businessClock';
 
 interface ServicesPipelineMetricsProps {
   services: Service[];
@@ -65,7 +66,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
     const avgProcessingTime = services.length > 0 ? Math.round(
       services.reduce((sum, service) => {
         const daysSince = Math.floor(
-          (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+          (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
         );
         return sum + daysSince;
       }, 0) / services.length
@@ -75,7 +76,7 @@ export const ServicesPipelineMetrics: React.FC<ServicesPipelineMetricsProps> = (
     const urgentServices = services.filter(service => {
       if (service.status === 'invoiced' || service.status === 'completed') return false;
       const daysSince = Math.floor(
-        (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
       );
       return daysSince > 7;
     }).length;

@@ -7,6 +7,7 @@ import { Service, ServiceStatus } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("usePipelineServiceExport");
@@ -164,7 +165,7 @@ export const usePipelineServiceExport = (
       const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
       const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
 
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = businessClock.today();
       const customFileName = `pipeline-vip-${clientName.toLowerCase().replace(/\s+/g, '-')}-${currentDate}`;
 
       // Transformar servicios
@@ -238,7 +239,7 @@ export const usePipelineServiceExport = (
       const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
       const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
 
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = businessClock.today();
       const customFileName = `pipeline-vip-${clientName.toLowerCase().replace(/\s+/g, '-')}-${currentDate}`;
 
       // Transformar servicios

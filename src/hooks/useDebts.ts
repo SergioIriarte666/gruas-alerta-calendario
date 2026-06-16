@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { addMonths, addWeeks, format } from 'date-fns';
+import { businessClock } from '@/utils/businessClock';
 
 export interface Debt {
   id: string;
@@ -100,7 +101,7 @@ export const useDebtsWithProgress = () => {
         .select('debt_id, status, total_amount, paid_amount, due_date');
       if (iErr) throw iErr;
 
-      const today = format(new Date(), 'yyyy-MM-dd');
+      const today = businessClock.today();
 
       return (debts || []).map((debt) => {
         const di = (installments || []).filter((i) => i.debt_id === debt.id);

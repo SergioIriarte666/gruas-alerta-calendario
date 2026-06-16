@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CostCenter, CostCenterFormData, CostCenterWithStats } from '@/types/costCenters';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useCostCenters");
@@ -31,7 +32,7 @@ const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
 
   if (centersError) throw new Error(centersError.message);
 
-  const now = new Date();
+  const now = businessClock.todayDate();
 
   const periodStart = (period: string | null): string => {
     switch (period) {

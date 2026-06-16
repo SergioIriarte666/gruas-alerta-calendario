@@ -37,11 +37,12 @@ import { PaymentDetailsModal } from '@/components/payments/PaymentDetailsModal';
 import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';
 import { OperatorDetailsModal } from '@/components/operators/OperatorDetailsModal';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("DailyReportPage");
 const DailyReportPage = () => {
-  const [selectedDate, setSelectedDate] = useState(formatForInput(new Date()));
+  const [selectedDate, setSelectedDate] = useState(businessClock.today());
   const [isExporting, setIsExporting] = useState(false);
   
   // Modal states
@@ -75,7 +76,7 @@ const DailyReportPage = () => {
   };
 
   const handleToday = () => {
-    setSelectedDate(formatForInput(new Date()));
+    setSelectedDate(businessClock.today());
   };
 
   const handleExportPDF = async () => {

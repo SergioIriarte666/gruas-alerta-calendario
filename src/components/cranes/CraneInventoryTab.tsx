@@ -35,6 +35,7 @@ import { es } from 'date-fns/locale';
 import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { businessClock } from '@/utils/businessClock';
 
 interface CraneInventoryTabProps {
   crane: Crane;
@@ -255,7 +256,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       const logoUrl = company.logo || '/logo-gruas-5-norte.png';
       const logoImg = await loadImage(logoUrl);
       const logoFormat = getLogoFormat(logoUrl);
-      const generatedAtLabel = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
+      const generatedAtLabel = businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm');
       const rangeLabel = `${format(reportRange.start, 'dd/MM/yyyy', { locale: es })} - ${format(reportRange.end, 'dd/MM/yyyy', { locale: es })}`;
       const craneLabel = `Grúa ${crane.licensePlate}${crane.brand || crane.model ? ` • ${crane.brand} ${crane.model}` : ''}${crane.type ? ` • ${crane.type}` : ''}`;
 

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useInvoiceData");
@@ -276,7 +277,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
 
       // Apply due_this_week filter client-side
       if (statusFilter === 'due_this_week') {
-        const today = new Date();
+        const today = businessClock.todayDate();
         const day = today.getDay();
         const monday = new Date(today);
         monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));

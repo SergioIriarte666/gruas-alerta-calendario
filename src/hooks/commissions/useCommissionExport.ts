@@ -6,6 +6,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useCommissionExport");
@@ -95,7 +96,7 @@ const getDateRange = (commissions: Commission[], filters: CommissionFilters) => 
 
   // Si no hay filtros de fecha, usar el rango de las comisiones
   if (commissions.length === 0) {
-    const today = new Date();
+    const today = businessClock.todayDate();
     return {
       from: formatDate(today, 'dd/MM/yyyy', { locale: es }),
       to: formatDate(today, 'dd/MM/yyyy', { locale: es })

@@ -4,6 +4,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useInventoryAlerts");
@@ -204,7 +205,7 @@ export const useActiveAlerts = () => {
         
         if (noMovementConfig && stock.item && stock.last_movement_date) {
           const daysSinceMovement = Math.floor(
-            (new Date().getTime() - new Date(stock.last_movement_date).getTime()) / (1000 * 60 * 60 * 24)
+            (businessClock.todayDate().getTime() - new Date(stock.last_movement_date).getTime()) / (1000 * 60 * 60 * 24)
           );
           const threshold = noMovementConfig.threshold_value || 90;
           
@@ -247,7 +248,7 @@ export const useActiveAlerts = () => {
           
           if (expiringConfig && movement.expiration_date) {
             const daysToExpiry = Math.ceil(
-              (new Date(movement.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+              (new Date(movement.expiration_date).getTime() - businessClock.todayDate().getTime()) / (1000 * 60 * 60 * 24)
             );
             const threshold = expiringConfig.threshold_value || 30;
             

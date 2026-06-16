@@ -15,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Eye, Edit, Trash2, Copy, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal, Layers, CheckCircle, Circle, CalendarClock } from 'lucide-react';
 import { Cost } from '@/types/costs';
+import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
@@ -338,7 +339,7 @@ export const EnhancedCostsTable = ({
               </TooltipTrigger>
               <TooltipContent>
                 {cost.payment_date
-                  ? new Date(`${cost.payment_date}T12:00:00Z`) > new Date()
+                  ? new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.todayDate()
                     ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
                   : 'Pagado'
                 : 'Pendiente'}

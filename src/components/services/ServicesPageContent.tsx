@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2 } from 'lucide-react';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("ServicesPageContent");
@@ -58,8 +59,8 @@ export const ServicesPageContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [listDateFrom, setListDateFrom] = useState(() => format(startOfMonth(new Date()), 'yyyy-MM-dd'));
-  const [listDateTo, setListDateTo] = useState(() => format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [listDateFrom, setListDateFrom] = useState(() => format(startOfMonth(businessClock.todayDate()), 'yyyy-MM-dd'));
+  const [listDateTo, setListDateTo] = useState(() => format(endOfMonth(businessClock.todayDate()), 'yyyy-MM-dd'));
   const [dateFilter, setDateFilter] = useState<DateFilter | 'custom'>('month');
 
   const isAdmin = user?.role === 'admin';

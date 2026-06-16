@@ -6,6 +6,7 @@ import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { isValid, parseISO, differenceInDays } from 'date-fns';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import {
   FileText,
   Calendar,
@@ -389,7 +390,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                   try {
                     const issued = typeof invoice.issueDate === 'string' ? parseISO(invoice.issueDate) : new Date(invoice.issueDate);
                     if (!isValid(issued)) return null;
-                    const today = new Date();
+                    const today = businessClock.todayDate();
                     today.setHours(0, 0, 0, 0);
                     issued.setHours(0, 0, 0, 0);
                     const daysSinceIssue = differenceInDays(today, issued);
@@ -410,7 +411,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                   try {
                     const due = typeof invoice.dueDate === 'string' ? parseISO(invoice.dueDate) : new Date(invoice.dueDate);
                     if (!isValid(due)) return null;
-                    const today = new Date();
+                    const today = businessClock.todayDate();
                     today.setHours(0, 0, 0, 0);
                     due.setHours(0, 0, 0, 0);
                     const daysUntilDue = differenceInDays(due, today);

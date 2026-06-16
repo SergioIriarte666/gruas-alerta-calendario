@@ -4,6 +4,7 @@ import { useClientInvoices } from './useClientInvoices';
 import { useClientClosures } from './useClientClosures';
 import { useClientRequests } from './useClientRequests';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { businessClock } from '@/utils/businessClock';
 
 export const useClientMetrics = (clientId: string | null) => {
   const { services, loading: servicesLoading, metrics: serviceMetrics } = useClientServices(clientId);
@@ -23,7 +24,7 @@ export const useClientMetrics = (clientId: string | null) => {
       : 0;
 
     // Calcular tendencias mensuales (últimos 6 meses)
-    const sixMonthsAgo = new Date();
+    const sixMonthsAgo = businessClock.todayDate();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
     const recentServices = services.filter(s => 

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { businessClock } from '@/utils/businessClock';
 
 export interface CraneStatistics {
   totalServices: number;
@@ -50,7 +51,7 @@ export const useCraneStatistics = (craneId: string) => {
 
       if (fuelError) throw fuelError;
 
-      const currentYear = new Date().getFullYear();
+      const currentYear = businessClock.todayDate().getFullYear();
       const currentServices = services?.filter(s => 
         new Date(s.service_date).getFullYear() === currentYear
       ) || [];

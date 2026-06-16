@@ -24,6 +24,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { ServicesPipelineMetrics } from './ServicesPipelineMetrics';
 import { toTitleCase } from '@/lib/utils';
+import { businessClock } from '@/utils/businessClock';
 
 interface ServiceGroup {
   status: ServiceStatus;
@@ -132,7 +133,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
       const avgDays = statusServices.length > 0 ? Math.round(
         statusServices.reduce((sum, service) => {
           const daysSince = Math.floor(
-            (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+            (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
           );
           return sum + Math.max(0, daysSince);
         }, 0) / statusServices.length

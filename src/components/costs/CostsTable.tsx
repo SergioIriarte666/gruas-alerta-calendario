@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Edit, Trash2, Eye, CheckCircle, Circle, CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Cost } from '@/types/costs';
+import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -94,7 +95,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     {cost.payment_date
-                                                        ? new Date(`${cost.payment_date}T12:00:00Z`) > new Date()
+                                                        ? new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.todayDate()
                                                             ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
                                                             : 'Pagado'
                                                         : 'Pendiente'}

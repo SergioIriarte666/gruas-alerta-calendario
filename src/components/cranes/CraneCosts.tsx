@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { useCraneCosts } from '@/hooks/useCraneCosts';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
@@ -68,7 +69,7 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
   const monthlyTotal = costs
     .filter(cost => {
       const costDate = new Date(cost.date);
-      const currentDate = new Date();
+      const currentDate = businessClock.todayDate();
       return costDate.getMonth() === currentDate.getMonth() && 
              costDate.getFullYear() === currentDate.getFullYear();
     })

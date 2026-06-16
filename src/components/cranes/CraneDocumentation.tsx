@@ -20,6 +20,7 @@ import { useCraneDocuments } from '@/hooks/useCraneDocuments';
 import { DocumentUploadModal } from './DocumentUploadModal';
 import { DocumentSettingsForm } from './forms/DocumentSettingsForm';
 import { useToast } from '@/components/ui/custom-toast';
+import { businessClock } from '@/utils/businessClock';
 
 interface CraneDocumentationProps {
   crane: Crane;
@@ -38,7 +39,7 @@ export const CraneDocumentation = ({ crane }: CraneDocumentationProps) => {
 
   const getDaysUntilExpiry = (date: string) => {
     const expiry = new Date(date);
-    const today = new Date();
+    const today = businessClock.todayDate();
     const diffTime = expiry.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };

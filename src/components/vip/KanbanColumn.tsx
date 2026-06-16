@@ -4,6 +4,7 @@ import { ServiceCard } from './ServiceCard';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Package, AlertCircle } from 'lucide-react';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { businessClock } from '@/utils/businessClock';
 
 interface ColumnConfig {
   id: ServiceStatus;
@@ -50,7 +51,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   const avgDays = services.length > 0 ? Math.round(
     services.reduce((sum, service) => {
       const daysDiff = Math.floor(
-        (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+        (businessClock.todayDate().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
       );
       return sum + daysDiff;
     }, 0) / services.length

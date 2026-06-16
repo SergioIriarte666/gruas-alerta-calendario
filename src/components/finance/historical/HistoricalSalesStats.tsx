@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { format, subMonths, isSameMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TrendingUp, FileText, DollarSign, Users } from 'lucide-react';
+import { businessClock } from '@/utils/businessClock';
 
 interface HistoricalSalesStatsProps {
   invoices: Invoice[];
@@ -21,7 +22,7 @@ export const HistoricalSalesStats = ({ invoices }: HistoricalSalesStatsProps) =>
     const uniqueClients = new Set(invoices.map(inv => inv.client?.id || inv.client?.name)).size;
 
     // Prepare chart data (Last 6 months)
-    const today = new Date();
+    const today = businessClock.todayDate();
     const chartData = [];
     
     for (let i = 5; i >= 0; i--) {

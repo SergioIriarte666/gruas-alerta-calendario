@@ -37,7 +37,7 @@ const shouldBeOverdue = (status: string, dueDate: string, remainingAmount: numbe
   if (status === 'cancelled' || status === 'draft') return false;
   if (remainingAmount <= 0) return false;
 
-  const today = new Date();
+  const today = businessClock.todayDate();
   const due = new Date(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);

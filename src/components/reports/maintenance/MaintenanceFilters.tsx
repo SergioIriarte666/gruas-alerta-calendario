@@ -8,6 +8,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { businessClock } from '@/utils/businessClock';
 
 interface MaintenanceFiltersProps {
   filters: MaintenanceReportFilters;
@@ -42,8 +43,8 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
 
   const handleReset = () => {
     onFiltersChange({
-      dateFrom: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
-      dateTo: format(new Date(), 'yyyy-MM-dd'),
+      dateFrom: format(new Date(businessClock.todayDate().getFullYear(), 0, 1), 'yyyy-MM-dd'),
+      dateTo: businessClock.today(),
     });
   };
 

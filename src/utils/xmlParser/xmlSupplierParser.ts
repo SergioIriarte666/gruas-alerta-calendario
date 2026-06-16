@@ -1,7 +1,8 @@
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
+import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { toTitleCaseEs } from '@/utils/textNormalization';
 
 export class XMLSupplierParser {
@@ -770,7 +771,7 @@ export class XMLSupplierParser {
   private calculateDefaultDueDate(issueDate: string): string {
     if (!issueDate) {
       // Si no hay fecha de emisión, usar fecha actual + 30 días
-      const today = new Date();
+      const today = businessClock.todayDate();
       today.setDate(today.getDate() + 30);
       return toLocalDateString(today);
     }

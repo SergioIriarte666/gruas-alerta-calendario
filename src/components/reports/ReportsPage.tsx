@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { format, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { businessClock } from '@/utils/businessClock';
 
 const tabs = [
   { id: 'servicios', label: 'Servicios', icon: BarChart3 },
@@ -59,7 +60,7 @@ const periodOptions = [
 ];
 
 const getPeriodDates = (period: string) => {
-  const today = new Date();
+  const today = businessClock.todayDate();
   switch (period) {
     case 'today': return { from: today, to: today };
     case 'last7': return { from: subDays(today, 7), to: today };
@@ -103,7 +104,7 @@ const ReportsPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>('servicios');
   const [selectedPeriod, setSelectedPeriod] = useState('this_month');
   const [selectedClientId, setSelectedClientId] = useState<string>('all');
-  const [customFrom, setCustomFrom] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(startOfMonth(businessClock.todayDate()));
   const [customTo, setCustomTo] = useState<Date | undefined>(new Date());
 
   const { clients } = useClients();

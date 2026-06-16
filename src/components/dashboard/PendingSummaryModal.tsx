@@ -16,10 +16,11 @@ import {
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toTitleCase } from '@/lib/utils';
+import { businessClock } from '@/utils/businessClock';
 
 const SESSION_KEY = 'pending_summary_dismissed';
 
-const getDismissKey = () => `${SESSION_KEY}_${format(new Date(), 'yyyy-MM-dd')}`;
+const getDismissKey = () => `${SESSION_KEY}_${businessClock.today()}`;
 
 export const PendingSummaryModal: React.FC = () => {
   const [open, setOpen] = useState(false);

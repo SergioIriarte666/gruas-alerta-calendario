@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { businessClock } from '@/utils/businessClock';
 
 const logger = createLogger('IntegrityValidator');
 
@@ -114,7 +115,7 @@ export const useIntegrityValidator = () => {
 
       const rows = (data ?? []) as unknown as CommissionRow[];
       const detectedIssues: IntegrityIssue[] = [];
-      const now = new Date();
+      const now = businessClock.todayDate();
       const staleCutoff = new Date(now);
       staleCutoff.setDate(staleCutoff.getDate() - STALE_DAYS);
 

@@ -490,7 +490,7 @@ export const useCranePartsStats = (craneId: string) => {
       const uniqueSuppliers = new Set([...directSuppliers, ...costSuppliers, ...consumptionSuppliers]).size;
       
       // Get recent parts (last 30 days)
-      const thirtyDaysAgo = new Date();
+      const thirtyDaysAgo = businessClock.todayDate();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const recentDirectParts = directParts?.filter(part => 

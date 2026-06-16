@@ -543,10 +543,10 @@ export const toLocalDateString = (date: Date): string => {
 };
 
 /**
+ * @deprecated Use businessClock.today() instead.
  * Get today as YYYY-MM-DD in local time.
- * Equivalent to getCurrentChileDateString but synchronous and without timezone conversion overhead.
  */
-export const getTodayLocal = (): string => toLocalDateString(new Date());
+export const getTodayLocal = (): string => businessClock.today();
 
 // ===================== HELPERS PUBLICOS BASADOS EN BUSINESS TZ =====================
 

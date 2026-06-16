@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Truck, FileText, Shield } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 
 interface CraneInformationProps {
   crane: Crane;
@@ -11,7 +12,7 @@ interface CraneInformationProps {
 export const CraneInformation = ({ crane }: CraneInformationProps) => {
   const getDaysUntilExpiry = (date: string) => {
     const expiry = new Date(date);
-    const today = new Date();
+    const today = businessClock.todayDate();
     const diffTime = expiry.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };

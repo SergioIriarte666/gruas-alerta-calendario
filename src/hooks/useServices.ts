@@ -4,6 +4,7 @@ import { useServiceFetcher } from './services/useServiceFetcher';
 import { useServiceManager } from './services/useServiceManager';
 import { useQueryClient } from '@tanstack/react-query';
 import { refreshAllServiceData } from '@/utils/globalDataRefresh';
+import { businessClock } from '@/utils/businessClock';
 
 interface CreateServiceOptions {
   silent?: boolean;
@@ -22,7 +23,7 @@ export const useServices = () => {
   const queryClient = useQueryClient();
 
   const getServicesForCosts = () => {
-    const sixMonthsAgo = new Date();
+    const sixMonthsAgo = businessClock.todayDate();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
     
     return services

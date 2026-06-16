@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { businessClock } from '@/utils/businessClock';
 
 
 const logger = createLogger("useWhatsAppSettings");
@@ -193,7 +194,7 @@ export const useWhatsAppSettings = () => {
           event: 'cierre_mensual',
           data: {
             mes: 'Mayo',
-            anio: new Date().getFullYear().toString(),
+            anio: businessClock.todayDate().getFullYear().toString(),
             totalServicios: '1',
             totalIngresos: '0',
           },

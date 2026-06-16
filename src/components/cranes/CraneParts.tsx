@@ -17,6 +17,7 @@ import {
   useInventoryMovementChangeHistory,
 } from '@/hooks/useChangeHistory';
 import { cn } from '@/lib/utils';
+import { businessClock } from '@/utils/businessClock';
 
 interface CranePartsProps {
   crane: Crane;
@@ -133,7 +134,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
 
   const totalConsumed = consumptions.reduce((sum: number, m: any) => sum + getDisplayTotalCost(m), 0);
   const lastDate = consumptions[0]?.movement_date ? new Date(consumptions[0].movement_date) : null;
-  const thirtyDaysAgo = new Date();
+  const thirtyDaysAgo = businessClock.todayDate();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const recentCount = consumptions.filter((m: any) => m.movement_date && new Date(m.movement_date) >= thirtyDaysAgo).length;
 
@@ -141,12 +142,12 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
     if (activeFilter === 'all') return true;
     if (!m.movement_date) return false;
     const date = new Date(m.movement_date);
-    const now = new Date();
+    const now = businessClock.todayDate();
     if (activeFilter === 'month') {
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     }
     if (activeFilter === '3months') {
-      const threeMonthsAgo = new Date();
+      const threeMonthsAgo = businessClock.todayDate();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
       return date >= threeMonthsAgo;
     }
