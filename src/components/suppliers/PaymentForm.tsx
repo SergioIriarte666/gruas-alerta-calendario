@@ -91,7 +91,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     defaultValues: {
       supplier_id: payment?.supplier_id || preselectedSupplierId || '',
       amount: payment?.amount || 0,
-      due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
+      due_date: payment?.due_date ? businessClock.format(payment.due_date, 'yyyy-MM-dd') : '',
       description: payment?.description || '',
       category: (() => {
         if (!payment?.category) return costCategories?.[0]?.id || '';
@@ -112,7 +112,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       part_unit_price: payment?.part_unit_price || undefined,
       crane_id: payment?.crane_id || '',
       add_to_inventory: payment?.add_to_inventory || false,
-      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : businessClock.today()
+      paid_date: payment?.paid_date ? businessClock.format(payment.paid_date, 'yyyy-MM-dd') : businessClock.today()
     }
   });
 

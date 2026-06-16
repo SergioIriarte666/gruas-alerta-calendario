@@ -50,7 +50,7 @@ const normalizeDate = (day: string, month: string, year: string) => {
   const mm = month.padStart(2, '0');
   const dd = day.padStart(2, '0');
 
-  const parsed = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+  const date = new Date(`${yyyy}-${mm}-${dd}T12:00:00Z`);
   if (Number.isNaN(parsed.getTime())) return null;
   return `${yyyy}-${mm}-${dd}`;
 };

@@ -58,7 +58,7 @@ export const MaintenanceReport = () => {
 
   const getAppliedFilterLabels = () => {
     const labels: string[][] = [
-      ['Período', `${formatDate(new Date(filters.dateFrom + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(filters.dateTo + 'T00:00:00'), 'P', { locale: es })}`]
+      ['Período', `${formatDate(new Date(`${filters.dateFrom}T12:00:00Z`), 'P', { locale: es })} - ${formatDate(new Date(`${filters.dateTo}T12:00:00Z`), 'P', { locale: es })}`]
     ];
     
     if (filters.craneId) {

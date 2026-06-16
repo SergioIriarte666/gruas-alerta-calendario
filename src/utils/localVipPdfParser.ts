@@ -77,7 +77,7 @@ const formatIsoDate = (day: string, month: string, year: string) => {
   const normalizedYear = year.length === 2 ? `20${year}` : year;
   const normalizedMonth = month.padStart(2, '0');
   const normalizedDay = day.padStart(2, '0');
-  const date = new Date(`${normalizedYear}-${normalizedMonth}-${normalizedDay}T00:00:00`);
+  const date = new Date(`${normalizedYear}-${normalizedMonth}-${normalizedDay}T12:00:00Z`);
   if (Number.isNaN(date.getTime())) return null;
   return `${normalizedYear}-${normalizedMonth}-${normalizedDay}`;
 };

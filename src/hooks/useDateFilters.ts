@@ -1,10 +1,11 @@
 
 import { useMemo } from 'react';
 import { Cost } from '@/types/costs';
+import { businessClock } from '@/utils/businessClock';
 
 export const useDateFilters = (costs: Cost[]) => {
   const dateMetrics = useMemo(() => {
-    const today = new Date();
+    const today = businessClock.todayDate();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -12,19 +13,19 @@ export const useDateFilters = (costs: Cost[]) => {
 
     // Filtrar costos de hoy
     const todayCosts = costs.filter(cost => {
-      const costDate = new Date(cost.date + 'T00:00:00');
+      const costDate = new Date(`${cost.date}T12:00:00Z`);
       return costDate.toDateString() === today.toDateString();
     });
 
     // Filtrar costos del mes actual
     const currentMonthCosts = costs.filter(cost => {
-      const costDate = new Date(cost.date + 'T00:00:00');
+      const costDate = new Date(`${cost.date}T12:00:00Z`);
       return costDate.getMonth() === currentMonth && costDate.getFullYear() === currentYear;
     });
 
     // Filtrar costos del mes anterior
     const previousMonthCosts = costs.filter(cost => {
-      const costDate = new Date(cost.date + 'T00:00:00');
+      const costDate = new Date(`${cost.date}T12:00:00Z`);
       return costDate.getMonth() === previousMonth && costDate.getFullYear() === previousMonthYear;
     });
 

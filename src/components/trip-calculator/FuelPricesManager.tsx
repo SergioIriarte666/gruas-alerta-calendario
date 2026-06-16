@@ -45,7 +45,7 @@ const formatCurrency = (amount: number) =>
 
 /** Get Monday of the week for a given date string (YYYY-MM-DD) */
 const getWeekMonday = (dateStr: string): string => {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(`${dateStr}T12:00:00Z`);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d.setDate(diff));
@@ -54,7 +54,7 @@ const getWeekMonday = (dateStr: string): string => {
 
 /** Format week label like "Sem 24-Feb" */
 const formatWeekLabel = (mondayStr: string): string => {
-  const d = new Date(mondayStr + 'T00:00:00');
+  const d = new Date(`${mondayStr}T12:00:00Z`);
   const day = d.getDate();
   const month = d.toLocaleDateString('es-CL', { month: 'short' });
   return `Sem ${day}-${month.charAt(0).toUpperCase() + month.slice(1)}`;
@@ -165,7 +165,7 @@ export const FuelPricesManager = () => {
                       <span className="text-sm font-normal text-muted-foreground">/litro</span>
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Desde {new Date(price.price_date + 'T00:00:00').toLocaleDateString('es-CL')}
+                      Desde {new Date(`${price.price_date}T12:00:00Z`).toLocaleDateString('es-CL')}
                       {price.source && ` • ${price.source}`}
                     </p>
                   </>
@@ -252,7 +252,7 @@ export const FuelPricesManager = () => {
                                 <PopoverContent className="w-48 p-2" align="center">
                                   <div className="space-y-1 text-xs">
                                     <p className="text-muted-foreground">
-                                      {new Date(fp.price_date + 'T00:00:00').toLocaleDateString('es-CL')}
+                                      {new Date(`${fp.price_date}T12:00:00Z`).toLocaleDateString('es-CL')}
                                     </p>
                                     {fp.region && <p>Región: {fp.region}</p>}
                                     {fp.source && <p>Fuente: {fp.source}</p>}

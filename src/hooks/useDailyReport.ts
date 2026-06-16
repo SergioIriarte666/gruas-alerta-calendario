@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatForDatabase, formatForDisplay, getWeekStart, getCurrentChileDate } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
+import { addDays } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
@@ -107,7 +109,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     supabase.from('invoices').select(`
       id, folio, due_date, total, status, paid_amount,
       client:clients(name)
-    `).lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)))
+    `).lte('due_date', formatForDatabase(addDays(businessClock.todayDate(), 30)))
       .eq('status', 'sent'),
 
     // Pagos programados - próximos 15 días
@@ -115,7 +117,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       id, amount, scheduled_date, status, payment_method,
       supplier_invoice:supplier_invoices(invoice_number, inventory_suppliers(name))
     `).gte('scheduled_date', dateForDB)
-      .lte('scheduled_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
+      .lte('scheduled_date', formatForDatabase(addDays(businessClock.todayDate(), 15))),
 
     supabase.from('supplier_payments').select(`
       id, amount, due_date, status, description, category, reference_number,
@@ -123,7 +125,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       suppliers:inventory_suppliers(id, name, category, rut, email, phone, contact_name)
     `)
     .in('status', ['pending', 'overdue'])
-    .lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))),
+    .lte('due_date', formatForDatabase(addDays(businessClock.todayDate(), 30))),
 
     // Estado de grúas
     supabase.from('cranes').select(`
@@ -210,7 +212,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const invoicesDueToday = invoices.filter(i => i.due_date === dateForDB);
   const invoicesDueThisWeek = invoices.filter(i => {
     // Safe string comparison for date-only fields
-    return i.due_date > dateForDB && i.due_date <= formatForDatabase(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+    return i.due_date > dateForDB && i.due_date <= formatForDatabase(addDays(currentDate, 7));
   });
   const invoicesOverdue = invoices.filter(i => i.due_date < dateForDB);
   
@@ -229,7 +231,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
   const supplierPaymentsOverdue = supplierPayments.filter(sp => sp.due_date < dateForDB);
   const supplierPaymentsDueWeek = supplierPayments.filter(sp => {
-    return sp.due_date > dateForDB && sp.due_date <= formatForDatabase(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+    return sp.due_date > dateForDB && sp.due_date <= formatForDatabase(addDays(currentDate, 7));
   });
   
   const supplierTotalDueToday = supplierPaymentsDueToday.reduce((sum, sp) => sum + (sp.amount || 0), 0);

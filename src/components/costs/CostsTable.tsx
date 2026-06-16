@@ -83,7 +83,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                             <Tooltip>
                                                 <TooltipTrigger>
                                                     {cost.payment_date ? (
-                                                        new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
+                                                        new Date(`${cost.payment_date}T12:00:00Z`) > new Date() ? (
                                                             <CalendarClock className="mx-auto size-5 text-warning" />
                                                         ) : (
                                                             <CheckCircle className="mx-auto size-5 text-success" />
@@ -94,8 +94,8 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     {cost.payment_date
-                                                        ? new Date(cost.payment_date + 'T00:00:00') > new Date()
-                                                            ? `Pago programado - ${format(new Date(cost.payment_date + 'T00:00:00'), 'dd/MM/yyyy')}`
+                                                        ? new Date(`${cost.payment_date}T12:00:00Z`) > new Date()
+                                                            ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
                                                             : 'Pagado'
                                                         : 'Pendiente'}
                                                 </TooltipContent>

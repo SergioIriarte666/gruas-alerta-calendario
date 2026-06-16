@@ -57,8 +57,8 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
   const reportRange = useMemo(() => {
     if (!reportDateFrom || !reportDateTo) return null;
-    const start = new Date(`${reportDateFrom}T00:00:00`);
-    const end = new Date(`${reportDateTo}T23:59:59.999`);
+    const start = new Date(`${reportDateFrom}T12:00:00Z`);
+    const end = new Date(`${reportDateTo}T12:00:00Z`);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
     return { start, end };
   }, [reportDateFrom, reportDateTo]);

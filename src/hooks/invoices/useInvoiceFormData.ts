@@ -3,6 +3,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { Invoice, InvoiceStatus } from '@/types';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
+import { addDays } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
@@ -25,7 +27,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
       return {
         closureId: invoice.closureId || '',
         issueDate: invoice.issueDate || getTodayLocal(),
-        dueDate: invoice.dueDate || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        dueDate: invoice.dueDate || toLocalDateString(addDays(businessClock.todayDate(), 30)),
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
@@ -37,7 +39,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
     return {
       closureId: preselectedClosureId || '',
       issueDate: getTodayLocal(),
-      dueDate: toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+      dueDate: toLocalDateString(addDays(businessClock.todayDate(), 30)),
       status: 'draft' as InvoiceStatus,
       paymentTermId: undefined,
       paymentDate: '',

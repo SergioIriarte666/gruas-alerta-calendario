@@ -165,7 +165,7 @@ export const useIntegrityValidator = () => {
       for (const row of rows) {
         if (isPaid(row) || !row.services) continue;
         if (!COMMISSION_ELIGIBLE_STATUSES.includes(row.services.status)) continue;
-        if (new Date(row.date + 'T00:00:00') < staleCutoff) {
+        if (new Date(`${row.date}T12:00:00Z`) < staleCutoff) {
           detectedIssues.push({
             id: `${row.id}_stale`,
             serviceId: row.service_id,

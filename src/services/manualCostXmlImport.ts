@@ -711,8 +711,8 @@ const collectPreviewConflicts = (params: {
     });
   }
 
-  const costDate = new Date(`${cost.date}T00:00:00`);
-  const issueDate = new Date(`${document.issue_date}T00:00:00`);
+  const costDate = new Date(`${cost.date}T12:00:00Z`);
+  const issueDate = new Date(`${document.issue_date}T12:00:00Z`);
   const diffDays = Math.abs(Math.round((issueDate.getTime() - costDate.getTime()) / (1000 * 60 * 60 * 24)));
   if (Number.isFinite(diffDays) && diffDays > 45) {
     conflicts.push({

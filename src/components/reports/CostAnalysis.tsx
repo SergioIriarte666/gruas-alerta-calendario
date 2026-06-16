@@ -20,7 +20,7 @@ const costsByMonthConfig = {
 export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
   const formattedCostsByMonth = metrics.costsByMonth.map(item => ({
     ...item,
-    month: formatDate(new Date(item.month + '-02T00:00:00'), "MMM yyyy", { locale: es }), // Adding day and time to parse correctly
+    month: formatDate(new Date(`${item.month}-02T12:00:00Z`), "MMM yyyy", { locale: es }),
   }));
 
   return (

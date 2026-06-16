@@ -16,6 +16,8 @@ import { InvoiceFormStep2 } from './form/InvoiceFormStep2';
 import { InvoiceFormStep3 } from './form/InvoiceFormStep3';
 
 import { toLocalDateString, getTodayLocal, safeParseDateOnly } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
+import { addDays } from 'date-fns';
 
 const invoiceSchema = z.object({
   closureId: z.string().min(1, 'Debe seleccionar un cierre'),
@@ -62,7 +64,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       const resetFormData = invoice ? {
         closureId: invoice.closureId || '',
         issueDate: invoice.issueDate || getTodayLocal(),
-        dueDate: invoice.dueDate || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        dueDate: invoice.dueDate || toLocalDateString(addDays(businessClock.todayDate(), 30)),
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
@@ -70,7 +72,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       } : {
         closureId: preselectedClosureId || '',
         issueDate: getTodayLocal(),
-        dueDate: toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        dueDate: toLocalDateString(addDays(businessClock.todayDate(), 30)),
         status: 'draft' as InvoiceStatus,
         paymentTermId: undefined,
         paymentDate: '',

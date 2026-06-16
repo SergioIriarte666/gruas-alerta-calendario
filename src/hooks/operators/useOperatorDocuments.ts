@@ -34,7 +34,7 @@ export function getDocumentStatus(expiryDate?: string | null): DocumentStatus {
   if (!expiryDate) return 'sin_fecha';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expiry = new Date(expiryDate + 'T00:00:00');
+  const expiry = new Date(`${expiryDate}T12:00:00Z`);
   const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return 'vencido';
   if (diffDays <= 30) return 'por_vencer';
@@ -45,7 +45,7 @@ export function getDaysUntilExpiry(expiryDate?: string | null): number | null {
   if (!expiryDate) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const expiry = new Date(expiryDate + 'T00:00:00');
+  const expiry = new Date(`${expiryDate}T12:00:00Z`);
   return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 

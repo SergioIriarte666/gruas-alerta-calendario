@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
+import { addDays } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
@@ -74,7 +76,7 @@ export const formatInvoiceData = (data: any): Invoice => {
   if (!data.folio) throw new Error('Folio de factura es requerido');
   if (!data.client_id) throw new Error('ID de cliente es requerido');
 
-  const dueDate = safeDate(data.due_date) || toLocalDateString(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+  const dueDate = safeDate(data.due_date) || toLocalDateString(addDays(businessClock.todayDate(), 30));
   const subtotal = safeNumber(data.subtotal);
   const vat = safeNumber(data.vat);
   const total = safeNumber(data.total);

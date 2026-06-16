@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, DollarSign, FileText, BarChart3, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Cost } from '@/types/costs';
+import { businessClock } from '@/utils/businessClock';
 import { cn } from '@/lib/utils';
 
 interface CostsDashboardProps {
@@ -54,14 +55,14 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
     // Costos del mes actual (de todos los costos)
     const currentMonthCosts = allCosts.filter(c => {
-      const d = new Date(c.date + 'T00:00:00');
+      const d = new Date(`${c.date}T12:00:00Z`);
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
     const currentMonthTotal = currentMonthCosts.reduce((sum, c) => sum + Number(c.amount), 0);
 
     // Costos del mes anterior
     const lastMonthCosts = allCosts.filter(c => {
-      const d = new Date(c.date + 'T00:00:00');
+      const d = new Date(`${c.date}T12:00:00Z`);
       return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
     });
     const lastMonthTotal = lastMonthCosts.reduce((sum, c) => sum + Number(c.amount), 0);
@@ -73,7 +74,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
 
     // Costos de hoy
     const todayCosts = allCosts.filter(c => {
-      const d = new Date(c.date + 'T00:00:00');
+      const d = new Date(`${c.date}T12:00:00Z`);
       return d.toDateString() === today.toDateString();
     });
     const todayTotal = todayCosts.reduce((sum, c) => sum + Number(c.amount), 0);

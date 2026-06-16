@@ -88,7 +88,7 @@ const Inventory = () => {
                 unit_cost: prefill?.amount ?? undefined,
                 observations: prefill?.notes || undefined,
                 reason: prefill?.description || undefined,
-                movement_date: prefill?.date ? new Date(prefill.date + 'T00:00:00') : undefined,
+                movement_date: prefill?.date ? new Date(`${prefill.date}T12:00:00Z`) : undefined,
               }}
             />
           </div>

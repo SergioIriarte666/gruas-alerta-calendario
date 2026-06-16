@@ -294,7 +294,7 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         quantity: consumption.quantity, // ✅ Positivo tal como está en BD
         unit_price: consumption.unit_cost || 0,
         total_value: consumption.total_cost || (consumption.unit_cost * consumption.quantity) || 0, // ✅ Positivo
-        date: consumption.movement_date.split('T')[0], // Convertir timestamp a date
+        date: businessClock.format(consumption.movement_date, 'yyyy-MM-dd'), // Convertir timestamp a date
         notes: consumption.observations,
         kilometraje: null,
         inventory_movement_id: consumption.id,

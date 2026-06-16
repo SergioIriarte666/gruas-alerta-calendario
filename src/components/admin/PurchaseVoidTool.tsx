@@ -23,7 +23,7 @@ import { formatCurrency } from '@/lib/utils';
 const formatDate = (d: string | null | undefined) => {
   if (!d) return '—';
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString('es-CL');
+    return new Date(`${d}T12:00:00Z`).toLocaleDateString('es-CL');
   } catch {
     return d;
   }

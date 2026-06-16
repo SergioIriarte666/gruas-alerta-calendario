@@ -292,7 +292,7 @@ export const CostsTableView = ({
                         </TableCell>
                       )}
                       <TableCell className="font-medium">
-                        {new Date(cost.date + 'T00:00:00').toLocaleDateString('es-ES')}
+                        {new Date(`${cost.date}T12:00:00Z`).toLocaleDateString('es-ES')}
                       </TableCell>
                       <TableCell className="max-w-xs">
                         <div className="flex items-center gap-1.5">

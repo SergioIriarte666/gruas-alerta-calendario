@@ -194,7 +194,7 @@ export const EnhancedCostsTable = ({
     sortedCosts.forEach(cost => {
       let key: string;
       if (groupBy === 'date') {
-        key = format(new Date(cost.date + 'T00:00:00'), "MMMM yyyy", { locale: es });
+        key = format(new Date(`${cost.date}T12:00:00Z`), "MMMM yyyy", { locale: es });
       } else {
         key = getCategoryDisplay(cost);
       }
@@ -282,7 +282,7 @@ export const EnhancedCostsTable = ({
         </TableCell>
       )}
       <TableCell className="font-medium">
-        {format(new Date(cost.date + 'T00:00:00'), 'dd/MM/yyyy')}
+        {format(new Date(`${cost.date}T12:00:00Z`), 'dd/MM/yyyy')}
       </TableCell>
       <TableCell className="max-w-xs">
         <div className="space-y-1">
@@ -326,20 +326,20 @@ export const EnhancedCostsTable = ({
             <TooltipTrigger asChild>
               <span className="inline-flex">
                 {cost.payment_date ? (
-                  new Date(cost.payment_date + 'T00:00:00') > new Date() ? (
-                    <CalendarClock className="size-5 text-warning" />
+                  new Date(`${cost.payment_date}T12:00:00Z`) > new Date() ? (
+                    <CalendarClock className="mx-auto size-5 text-warning" />
                   ) : (
-                    <CheckCircle className="size-5 text-success" />
+                    <CheckCircle className="mx-auto size-5 text-success" />
                   )
                 ) : (
-                  <Circle className="size-5 text-danger" />
+                  <Circle className="mx-auto size-5 text-danger" />
                 )}
               </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              {cost.payment_date
-                ? new Date(cost.payment_date + 'T00:00:00') > new Date()
-                  ? `Pago programado - ${format(new Date(cost.payment_date + 'T00:00:00'), 'dd/MM/yyyy')}`
+              </TooltipTrigger>
+              <TooltipContent>
+                {cost.payment_date
+                  ? new Date(`${cost.payment_date}T12:00:00Z`) > new Date()
+                    ? `Pago programado - ${format(new Date(`${cost.payment_date}T12:00:00Z`), 'dd/MM/yyyy')}`
                   : 'Pagado'
                 : 'Pendiente'}
             </TooltipContent>

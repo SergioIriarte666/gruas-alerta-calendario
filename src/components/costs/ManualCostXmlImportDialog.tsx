@@ -276,7 +276,7 @@ export const ManualCostXmlImportDialog = ({
               </CardHeader>
               <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoLine label="Descripción" value={cost.description} />
-                <InfoLine label="Fecha costo" value={format(new Date(`${cost.date}T00:00:00`), 'dd MMM yyyy', { locale: es })} />
+                <InfoLine label="Fecha costo" value={format(new Date(`${cost.date}T12:00:00Z`), 'dd MMM yyyy', { locale: es })} />
                 <InfoLine label="Monto actual" value={formatCurrency(Number(cost.amount || 0))} />
               </CardContent>
             </Card>
