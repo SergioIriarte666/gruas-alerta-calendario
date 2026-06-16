@@ -191,6 +191,7 @@ export const InvoicesPageContent = ({
         <TabsContent value="cancellations">
           <InvoiceCancellationsHistory />
         </TabsContent>
+
       </Tabs>
 
       <InvoiceExportModal
