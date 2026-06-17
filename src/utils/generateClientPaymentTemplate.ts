@@ -8,7 +8,7 @@ import {
 
 const TEMPLATE_HEADERS = [HEADER_REFERENCIA, HEADER_MONTO, HEADER_DETALLE, HEADER_FECHA];
 
-const TEMPLATE_EXAMPLE_ROW = ['4128', 150000, 'Pago factura abril', '15.04.2026'];
+const TEMPLATE_EXAMPLE_ROW = ['4128', 150000, 'Pago factura abril', '21.04.2026'];
 
 export function downloadClientPaymentTemplate() {
   const sheet = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, TEMPLATE_EXAMPLE_ROW]);

@@ -96,6 +96,16 @@ export function useClientPaymentImport() {
     );
   };
 
+  const toggleAll = (value: boolean) => {
+    setValidatedRows((prev) =>
+      prev.map((row) =>
+        row.matchStatus === 'found' || row.matchStatus === 'partial_mismatch'
+          ? { ...row, incluir: value }
+          : row,
+      ),
+    );
+  };
+
   const importRows = async () => {
     const eligible = validatedRows.filter(
       (row) => row.incluir && (row.matchStatus === 'found' || row.matchStatus === 'partial_mismatch') && row.invoice,
@@ -221,6 +231,7 @@ export function useClientPaymentImport() {
     batchSummary,
     loadFile,
     toggleIncluir,
+    toggleAll,
     importRows,
     setStep,
     reset,

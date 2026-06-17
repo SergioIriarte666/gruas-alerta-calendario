@@ -52,13 +52,23 @@ const ROW_BG: Record<ClientPaymentMatchStatus, string> = {
 
 type SortColumn = 'referencia' | 'numeroFiscal' | 'monto' | 'saldo' | 'estado';
 
-const SORTABLE_COLUMNS: { key: SortColumn; label: string; className?: string }[] = [
+const SORTABLE_COLUMNS_BEFORE_FECHA: { key: SortColumn; label: string; className?: string }[] = [
   { key: 'referencia', label: 'NF' },
   { key: 'numeroFiscal', label: 'Nro. Fiscal' },
   { key: 'monto', label: 'Monto archivo', className: 'text-right' },
+];
+
+const SORTABLE_COLUMNS_AFTER_FECHA: { key: SortColumn; label: string; className?: string }[] = [
   { key: 'saldo', label: 'Saldo pendiente', className: 'text-right' },
   { key: 'estado', label: 'Estado' },
 ];
+
+function formatFechaPago(fechaPago: string): string {
+  if (!fechaPago) return '-';
+  const [year, month, day] = fechaPago.split('-');
+  if (!year || !month || !day) return '-';
+  return `${day}/${month}/${year}`;
+}
 
 export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImportDialogProps) {
   const queryClient = useQueryClient();
@@ -77,6 +87,7 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
     importErrors,
     loadFile,
     toggleIncluir,
+    toggleAll,
     importRows,
     reset,
     setStep,
@@ -126,6 +137,17 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
 
   const canEditIncluir = (row: ValidatedClientPaymentRow) => row.matchStatus === 'partial_mismatch';
   const isIncluirChecked = (row: ValidatedClientPaymentRow) => row.incluir;
+
+  const eligibleRows = validatedRows.filter(
+    (row) => row.matchStatus === 'found' || row.matchStatus === 'partial_mismatch',
+  );
+  const allEligibleSelected = eligibleRows.length > 0 && eligibleRows.every((row) => row.incluir);
+  const someEligibleSelected = eligibleRows.some((row) => row.incluir);
+  const masterCheckedState: boolean | 'indeterminate' = allEligibleSelected
+    ? true
+    : someEligibleSelected
+      ? 'indeterminate'
+      : false;
 
   const handleSortClick = (column: SortColumn) => {
     if (sortColumn !== column) {
@@ -253,7 +275,7 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {SORTABLE_COLUMNS.map((column) => (
+                        {SORTABLE_COLUMNS_BEFORE_FECHA.map((column) => (
                           <TableHead key={column.key} className={column.className}>
                             <button
                               type="button"
@@ -265,7 +287,29 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
                             </button>
                           </TableHead>
                         ))}
-                        <TableHead>Incluir</TableHead>
+                        <TableHead>Fecha de Pago</TableHead>
+                        {SORTABLE_COLUMNS_AFTER_FECHA.map((column) => (
+                          <TableHead key={column.key} className={column.className}>
+                            <button
+                              type="button"
+                              onClick={() => handleSortClick(column.key)}
+                              className={`inline-flex items-center gap-1 hover:text-foreground ${column.className === 'text-right' ? 'flex-row-reverse' : ''}`}
+                            >
+                              {column.label}
+                              {renderSortIcon(column.key)}
+                            </button>
+                          </TableHead>
+                        ))}
+                        <TableHead>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Incluir</span>
+                            <Checkbox
+                              checked={masterCheckedState}
+                              disabled={eligibleRows.length === 0}
+                              onCheckedChange={() => toggleAll(!allEligibleSelected)}
+                            />
+                          </div>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -274,6 +318,7 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
                           <TableCell>{row.referencia}</TableCell>
                           <TableCell>{row.invoice?.numero_fiscal ?? '-'}</TableCell>
                           <TableCell className="text-right">{formatCurrency(row.monto)}</TableCell>
+                          <TableCell>{formatFechaPago(row.fechaPago)}</TableCell>
                           <TableCell className="text-right">
                             {row.invoice ? formatCurrency(row.invoice.remaining_amount) : '-'}
                           </TableCell>
