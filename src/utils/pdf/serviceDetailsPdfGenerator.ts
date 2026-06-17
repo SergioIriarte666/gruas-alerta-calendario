@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { supabase } from '@/integrations/supabase/client';
 import { addPDFHeader } from './pdfHeader';
 import { fetchCompanyData } from './companyDataFetcher';
 import { formatCurrency, formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
@@ -21,6 +22,88 @@ interface ServiceDetailsPDFData {
 
 const TMS_GREEN = [0, 150, 136] as [number, number, number];
 const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
+const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
+
+const addServiceItemsSection = async (
+  doc: jsPDF,
+  serviceId: string,
+  yPosition: number
+): Promise<number> => {
+  const { data: items, error } = await supabase
+    .from('service_items')
+    .select('*')
+    .eq('service_id', serviceId)
+    .order('created_at', { ascending: true });
+
+  if (error || !items || items.length === 0) return yPosition;
+
+  const clp = new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0,
+  });
+
+  yPosition = addSectionTitle(doc, 'DESGLOSE DE TRABAJOS', yPosition);
+
+  const subtotal = items.reduce(
+    (sum: number, item: any) => sum + Number(item.cantidad) * Number(item.valor_unitario),
+    0
+  );
+  const iva = Math.round(subtotal * 0.19);
+  const total = subtotal + iva;
+
+  const tableBody = items.map((item: any) => [
+    item.glosa || '',
+    Number(item.cantidad).toString(),
+    clp.format(Number(item.valor_unitario)),
+    clp.format(Number(item.cantidad) * Number(item.valor_unitario)),
+  ]);
+
+  autoTable(doc, {
+    startY: yPosition,
+    head: [['Glosa', 'Cant.', 'Valor unit.', 'Total neto']],
+    body: tableBody,
+    foot: [
+      ['', '', 'Subtotal neto', clp.format(subtotal)],
+      ['', '', 'IVA 19%', clp.format(iva)],
+      ['', '', 'Total con IVA', clp.format(total)],
+    ],
+    theme: 'grid',
+    headStyles: {
+      fillColor: TMS_GREEN,
+      textColor: [255, 255, 255] as [number, number, number],
+      fontStyle: 'bold',
+      fontSize: 9,
+    },
+    columnStyles: {
+      0: { cellWidth: 95 },
+      1: { cellWidth: 18, halign: 'center' },
+      2: { cellWidth: 35, halign: 'right' },
+      3: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
+    },
+    footStyles: {
+      fillColor: LIGHT_GRAY,
+      textColor: [0, 0, 0] as [number, number, number],
+      fontStyle: 'bold',
+      fontSize: 9,
+    },
+    didParseCell: function (data) {
+      if (data.section === 'foot' && data.row.index === 2) {
+        data.cell.styles.fillColor = TMS_GREEN;
+        data.cell.styles.textColor = [255, 255, 255] as [number, number, number];
+        data.cell.styles.fontSize = 10;
+      }
+    },
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      textColor: [0, 0, 0] as [number, number, number],
+    },
+    margin: { left: 20, right: 20 },
+  });
+
+  return (doc as any).lastAutoTable.finalY + 10;
+};
 
 export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Promise<Blob> => {
   const doc = new jsPDF();
@@ -72,6 +155,13 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
   yPosition = checkPageBreak(doc, yPosition, 40);
   yPosition = addResourcesSection(doc, service, yPosition);
   
+  // 8.5. Sección Desglose de Trabajos (si aplica)
+  const serviceTypeName = service.serviceType?.name || service.service_type?.name || '';
+  if (ITEMS_SERVICE_TYPES.includes(serviceTypeName)) {
+    yPosition = checkPageBreak(doc, yPosition, 60);
+    yPosition = await addServiceItemsSection(doc, service.id, yPosition);
+  }
+
   // 9. Sección Finanzas
   yPosition = checkPageBreak(doc, yPosition, 70);
   yPosition = addFinancesSection(doc, service, data, yPosition);

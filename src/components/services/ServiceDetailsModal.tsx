@@ -51,7 +51,6 @@ import { generateQuotePDF } from '@/utils/pdf/quotePdfGenerator';
 import { generateWorkOrderPDF } from '@/utils/pdf/workOrderPdfGenerator';
 import { useSettings } from '@/hooks/useSettings';
 import { createLogger } from "@/lib/logger";
-import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { ServiceItemsTab } from './ServiceItemsTab';
 
 
@@ -360,6 +359,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const isCustody = serviceData ? isCustodyService(serviceData) : false;
   const custodyInfo = isCustody && serviceData ? getCustodyInfo(serviceData) : null;
   const isEquipmentRental = serviceData ? isEquipmentRentalService(serviceData) : false;
+
+  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
+  const showItemsTab = ITEMS_SERVICE_TYPES.includes(serviceData?.serviceType?.name ?? '');
   
   // Refrescar datos al abrir. La antigua "sincronización silenciosa" de comisiones
   // (rpc force_commission_sync_for_service) se eliminó: era un write-path oculto
@@ -377,7 +379,6 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   // Hooks que deben ejecutarse SIEMPRE antes de cualquier early-return
   const { settings } = useSettings();
   const { isGenerating: isGeneratingDoc, generateAndDownload } = usePDFGeneration();
-  const { user: currentUser } = useUserPermissions();
 
   if (!isOpen || !serviceData) return null;
   
@@ -581,10 +582,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
         <ScrollArea className="flex-1 px-6">
           <Tabs defaultValue="general" className="w-full py-6">
-            <TabsList className="mb-6 w-full border border-border/70 bg-muted/30 sm:grid sm:grid-cols-6">
+            <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
-              <TabsTrigger value="items">Desglose</TabsTrigger>
+              {showItemsTab && <TabsTrigger value="items">Desglose</TabsTrigger>}
               <TabsTrigger value="costs">Costos</TabsTrigger>
               <TabsTrigger value="history">Historial</TabsTrigger>
               <TabsTrigger value="changes">Cambios</TabsTrigger>
@@ -814,12 +815,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               </div>
             </TabsContent>
 
-            <TabsContent value="items" className="mt-0">
-              <ServiceItemsTab
-                serviceId={serviceData.id}
-                readOnly={currentUser?.role !== 'admin'}
-              />
-            </TabsContent>
+            {showItemsTab && (
+              <TabsContent value="items" className="mt-0">
+                <ServiceItemsTab
+                  serviceId={serviceData.id}
+                  readOnly={true}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent value="costs" className="mt-0">
               <ServiceCostsSection serviceId={serviceData.id} enhancedService={enhancedService} />

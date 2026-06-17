@@ -177,20 +177,22 @@ export function ServiceItemsTab({ serviceId, readOnly = false }: ServiceItemsTab
         </Button>
       )}
 
-      <div className="rounded-md border border-border bg-muted/20 p-4 space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal neto</span>
-          <span className="tabular-nums font-medium">{clp.format(subtotal)}</span>
+      {!readOnly && (
+        <div className="rounded-md border border-border bg-muted/20 p-4 space-y-1 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Subtotal neto</span>
+            <span className="tabular-nums font-medium">{clp.format(subtotal)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">IVA 19%</span>
+            <span className="tabular-nums font-medium">{clp.format(iva)}</span>
+          </div>
+          <div className="flex justify-between border-t border-border pt-1 mt-1">
+            <span className="font-semibold">Total con IVA</span>
+            <span className="tabular-nums font-bold text-primary">{clp.format(total)}</span>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">IVA 19%</span>
-          <span className="tabular-nums font-medium">{clp.format(iva)}</span>
-        </div>
-        <div className="flex justify-between border-t border-border pt-1 mt-1">
-          <span className="font-semibold">Total con IVA</span>
-          <span className="tabular-nums font-bold text-primary">{clp.format(total)}</span>
-        </div>
-      </div>
+      )}
 
       {!readOnly && (
         <div className="flex justify-end">

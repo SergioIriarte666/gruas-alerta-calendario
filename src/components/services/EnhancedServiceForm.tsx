@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
-import { Service, ServiceSnakeCase } from '@/types';
+import { Service, ServiceSnakeCase, ServiceItemDraft } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -29,12 +29,15 @@ import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGen
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
+import { useServiceItems } from '@/hooks/services/useServiceItems';
+import { useQueryClient } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save } from 'lucide-react';
+import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2, Save, Trash2, Plus } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
@@ -69,6 +72,8 @@ export const EnhancedServiceForm = React.memo(({
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
+  const { items: existingServiceItems, isLoading: loadingServiceItems } = useServiceItems(service?.id);
+  const queryClient = useQueryClient();
   
   // Step navigation state
   const [currentStep, setCurrentStep] = useState(1);
@@ -80,6 +85,7 @@ export const EnhancedServiceForm = React.memo(({
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
+  const [enableItems, setEnableItems] = useState(false);
   const [valueFromRate, setValueFromRate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -138,6 +144,7 @@ export const EnhancedServiceForm = React.memo(({
     costDetails: [],
     markCostsPaidOnCreate: true,
     salesItems: [],
+    serviceItems: [] as ServiceItemDraft[],
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
     excessAmount: service?.excessAmount || 0,
@@ -188,6 +195,7 @@ export const EnhancedServiceForm = React.memo(({
         costDetails: [],
         markCostsPaidOnCreate: true,
         salesItems: [],
+        serviceItems: [],
         hasExcess: false,
         clientCoveredAmount: 0,
         excessAmount: 0,
@@ -371,6 +379,7 @@ export const EnhancedServiceForm = React.memo(({
         costDetails: [],
         markCostsPaidOnCreate: true,
         salesItems: [],
+        serviceItems: [],
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
         excessAmount: service.excessAmount || 0,
@@ -400,6 +409,66 @@ export const EnhancedServiceForm = React.memo(({
 
   // Obtener el tipo de servicio seleccionado
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
+
+  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
+  const isItemsServiceType = ITEMS_SERVICE_TYPES.includes(selectedServiceType?.name ?? '');
+
+  // Cargar ítems existentes una sola vez por servicio al editar, antes de que
+  // el efecto de auto-toggle pueda limpiarlos
+  const itemsLoadedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (service?.id && !loadingServiceItems && itemsLoadedRef.current !== service.id) {
+      setFormData(prev => ({
+        ...prev,
+        serviceItems: (existingServiceItems || []).map(i => ({
+          id: i.id,
+          glosa: i.glosa,
+          cantidad: i.cantidad,
+          valor_unitario: i.valor_unitario,
+        }))
+      }));
+      if ((existingServiceItems || []).length > 0) {
+        setEnableItems(true);
+      }
+      itemsLoadedRef.current = service.id;
+    }
+  }, [service?.id, loadingServiceItems, existingServiceItems]);
+
+  useEffect(() => {
+    if (isItemsServiceType) {
+      setEnableItems(true);
+      return;
+    }
+    // Mientras se edita un servicio existente, no limpiar los ítems hasta
+    // que terminen de cargarse desde la base de datos
+    if (service?.id && itemsLoadedRef.current !== service.id) {
+      return;
+    }
+    setEnableItems(false);
+    setFormData(prev => (prev.serviceItems?.length === 0 ? prev : { ...prev, serviceItems: [] }));
+  }, [isItemsServiceType, service?.id]);
+
+  const addServiceItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      serviceItems: [...(prev.serviceItems ?? []),
+        { id: crypto.randomUUID(), glosa: '', cantidad: 1, valor_unitario: 0 }]
+    }));
+  };
+  const removeServiceItem = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceItems: (prev.serviceItems ?? []).filter(i => i.id !== id)
+    }));
+  };
+  const updateServiceItem = (id: string, field: keyof ServiceItemDraft, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceItems: (prev.serviceItems ?? []).map(i =>
+        i.id === id ? { ...i, [field]: value } : i
+      )
+    }));
+  };
 
   // Hook de validación del formulario
   const validationFormData = useMemo(() => ({
@@ -629,6 +698,40 @@ export const EnhancedServiceForm = React.memo(({
     service,
   ]);
 
+  // Sincroniza el desglose de ítems (creación, edición y eliminación) tanto
+  // al crear como al actualizar un servicio
+  const syncServiceItems = async (resultId: string) => {
+    const drafts = formData.serviceItems || [];
+    if (drafts.length === 0 && (existingServiceItems || []).length === 0) {
+      return;
+    }
+
+    const draftIds = new Set(drafts.map(i => i.id));
+    const toDelete = (existingServiceItems || [])
+      .filter(i => !draftIds.has(i.id))
+      .map(i => i.id);
+    const toUpsert = drafts
+      .filter(item => item.glosa.trim() !== '')
+      .map(item => ({
+        id: item.id,
+        service_id: resultId,
+        glosa: item.glosa,
+        cantidad: item.cantidad,
+        valor_unitario: item.valor_unitario,
+      }));
+
+    if (toDelete.length > 0) {
+      const { error } = await supabase.from('service_items').delete().in('id', toDelete);
+      if (error) logger.warn('Error eliminando service_items:', error);
+    }
+    if (toUpsert.length > 0) {
+      const { error } = await supabase.from('service_items').upsert(toUpsert, { onConflict: 'id' });
+      if (error) logger.warn('Error guardando service_items:', error);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['service-items', resultId] });
+  };
+
   // Handler único de guardado: usado por el submit del form (fase 4)
   // y por el botón "Guardar" persistente disponible en todas las fases
   const performSave = async () => {
@@ -717,6 +820,8 @@ export const EnhancedServiceForm = React.memo(({
             toast.success(deductionResult.message);
           }
         }
+
+        await syncServiceItems(result.id);
       } else {
         logger.debug('🔄 Creating new service...');
         result = await createService(finalData);
@@ -760,6 +865,8 @@ export const EnhancedServiceForm = React.memo(({
             toast.success(deductionResult.message);
           }
         }
+
+        await syncServiceItems(result.id);
       }
 
       const action = service ? 'actualizado' : 'creado';
@@ -1223,6 +1330,77 @@ export const EnhancedServiceForm = React.memo(({
                       disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
                     />
                   </div>
+
+                  {/* Toggle para habilitar Desglose de Trabajos */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-4">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Habilitar Desglose de Trabajos</Label>
+                      <div className="text-sm text-muted-foreground">
+                        Activar para registrar ítems con glosa, cantidad y valor
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enableItems || isItemsServiceType}
+                      onCheckedChange={(checked) => {
+                        setEnableItems(checked);
+                        if (!checked) setFormData(prev => ({ ...prev, serviceItems: [] }));
+                      }}
+                      disabled={isItemsServiceType}
+                    />
+                  </div>
+
+                  {/* Tabla de ítems */}
+                  {(enableItems || isItemsServiceType) && (
+                    <div className="space-y-3 pt-2">
+                      <div className="overflow-x-auto rounded-md border border-border">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Glosa</th>
+                              <th className="w-20 px-3 py-2 text-center font-medium text-muted-foreground">Cant.</th>
+                              <th className="w-32 px-3 py-2 text-right font-medium text-muted-foreground">Valor unit.</th>
+                              <th className="w-32 px-3 py-2 text-right font-medium text-muted-foreground">Total neto</th>
+                              <th className="w-10" />
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {(formData.serviceItems ?? []).map((item) => (
+                              <tr key={item.id} className="bg-card">
+                                <td className="px-3 py-2">
+                                  <Input value={item.glosa} placeholder="Descripción del trabajo"
+                                    className="h-8 min-w-[160px]"
+                                    onChange={(e) => updateServiceItem(item.id, 'glosa', e.target.value)} />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <Input type="number" min="0.01" step="0.01" value={item.cantidad}
+                                    className="h-8 w-20 text-right"
+                                    onChange={(e) => updateServiceItem(item.id, 'cantidad', parseFloat(e.target.value) || 0)} />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <Input type="number" min="0" step="1" value={item.valor_unitario}
+                                    className="h-8 w-32 text-right"
+                                    onChange={(e) => updateServiceItem(item.id, 'valor_unitario', parseFloat(e.target.value) || 0)} />
+                                </td>
+                                <td className="px-3 py-2 text-right font-medium tabular-nums">
+                                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(item.cantidad * item.valor_unitario)}
+                                </td>
+                                <td className="px-2 py-2">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    type="button" onClick={() => removeServiceItem(item.id)}>
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <Button variant="outline" size="sm" type="button"
+                        className="flex items-center gap-1.5" onClick={addServiceItem}>
+                        <Plus className="size-4" /> Agregar ítem
+                      </Button>
+                    </div>
+                  )}
                 </ColoredSectionCard>
 
                 {/* Custodia/Arriendo de Equipos */}
