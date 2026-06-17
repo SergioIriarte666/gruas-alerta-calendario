@@ -6,24 +6,34 @@ export const HEADER_MONTO = 'Monto';
 export const HEADER_DETALLE = 'Detalle';
 export const HEADER_FECHA = 'Fecha de Pago';
 
-function excelSerialToISODate(serial: number): string {
-  const date = new Date((serial - 25569) * 86400 * 1000);
-  date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+function parseFechaPago(raw: unknown): string {
+  if (!raw) return '';
 
-function parseFechaPago(value: unknown): string {
-  if (typeof value === 'number') {
-    return excelSerialToISODate(value);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    const sep = trimmed.includes('.') ? '.' : trimmed.includes('/') ? '/' : null;
+    if (!sep) return '';
+    const parts = trimmed.split(sep);
+    if (parts.length !== 3) return '';
+    const [dd, mm, yyyy] = parts;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
   }
-  const str = String(value ?? '').trim();
-  const match = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (!match) return '';
-  const [, day, month, year] = match;
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+
+  if (typeof raw === 'number') {
+    const date = XLSX.SSF.parse_date_code(raw);
+    const mm = String(date.m).padStart(2, '0');
+    const dd = String(date.d).padStart(2, '0');
+    return `${date.y}-${mm}-${dd}`;
+  }
+
+  if (raw instanceof Date) {
+    const yyyy = raw.getFullYear();
+    const mm = String(raw.getMonth() + 1).padStart(2, '0');
+    const dd = String(raw.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return '';
 }
 
 function parseMonto(value: unknown): number {

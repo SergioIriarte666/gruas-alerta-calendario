@@ -493,6 +493,16 @@ export const safeDateToDisplay = (dateStr: string): string => {
 };
 
 /**
+ * Format a YYYY-MM-DD string to dd/MM/yyyy for display (pure string operation, no Date).
+ */
+export const safeDateToDisplaySlashes = (dateStr: string): string => {
+  if (!dateStr) return '-';
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return dateStr;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+};
+
+/**
  * Calculate days between a YYYY-MM-DD date string and a reference YYYY-MM-DD string.
  * Pure date-only arithmetic — no timezone shift possible.
  */

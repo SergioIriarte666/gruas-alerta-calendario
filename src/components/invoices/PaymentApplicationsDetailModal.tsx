@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import { PaymentWithDetails } from '@/types/payments';
 import { usePaymentApplications, PaymentApplicationDetail } from '@/hooks/usePaymentApplications';
 import { createLogger } from "@/lib/logger";
@@ -173,7 +174,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Fecha Pago:</span>
                   <span className="font-medium text-foreground">
-                    {new Date(payment.payment_date).toLocaleDateString()}
+                    {safeDateToDisplaySlashes(payment.payment_date)}
                   </span>
                 </div>
                 <div className="flex justify-between">

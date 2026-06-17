@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, History, RefreshCw, Eye, Download, DollarSign, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import type { PaymentWithDetails } from '@/types/payments';
@@ -169,7 +170,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         <div className="text-sm text-muted-foreground">{payment.bank_reference}</div>
                       </TableCell>
                       <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{safeDateToDisplaySlashes(payment.payment_date)}</TableCell>
                       <TableCell><Badge variant={getStatusBadgeVariant(payment.status)}>{getStatusLabel(payment.status)}</Badge></TableCell>
                       <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
                       <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>

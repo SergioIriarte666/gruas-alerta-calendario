@@ -19,6 +19,7 @@ import {
   Eye
 } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { PaymentWithDetails } from '@/types/payments';
 import { createLogger } from "@/lib/logger";
@@ -261,7 +262,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                           <TableCell className="text-foreground">{formatCurrency(invoice.remaining_amount)}</TableCell>
                           <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                           <TableCell className="text-foreground">
-                            {invoice.payment_date ? new Date(invoice.payment_date).toLocaleDateString() : '-'}
+                            {invoice.payment_date ? safeDateToDisplaySlashes(invoice.payment_date) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -297,7 +298,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                         <TableRow key={payment.id}>
                           <TableCell className="text-foreground">
                             <div className="space-y-1">
-                              <div>{new Date(payment.payment_date).toLocaleDateString()}</div>
+                              <div>{safeDateToDisplaySlashes(payment.payment_date)}</div>
                             </div>
                           </TableCell>
                           <TableCell className="text-foreground">{formatCurrency(payment.amount)}</TableCell>

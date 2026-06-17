@@ -135,7 +135,8 @@ export function ClientPaymentImportDialog({ open, onClose }: ClientPaymentImport
   const excludedCount = validatedRows.length - includedRows.length;
   const includedTotal = includedRows.reduce((sum, row) => sum + row.monto, 0);
 
-  const canEditIncluir = (row: ValidatedClientPaymentRow) => row.matchStatus === 'partial_mismatch';
+  const canEditIncluir = (row: ValidatedClientPaymentRow) =>
+    row.matchStatus === 'found' || row.matchStatus === 'partial_mismatch';
   const isIncluirChecked = (row: ValidatedClientPaymentRow) => row.incluir;
 
   const eligibleRows = validatedRows.filter(
