@@ -403,7 +403,10 @@ export const Sidebar = ({
   const MobileSidebarContent = () => (
     <div className="flex h-full flex-col border-r border-border/60 bg-card/95 backdrop-blur-xl">
       {/* Profile header */}
-      <div className="flex items-center gap-3 border-b border-border/60 p-4">
+      <div
+        className="flex items-center gap-3 border-b border-border/60 p-4"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      >
         <Avatar className="size-10 shrink-0 border border-border/70 shadow-sm">
           <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">

@@ -143,8 +143,8 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           </Badge>
         </div>
       
-      <div className="overflow-x-auto">
-        <Table>
+      <div className="overflow-x-auto -mx-2 px-2">
+        <Table className="min-w-[650px]">
           <TableHeader>
             <TableRow className="border-border">
               <TableHead className="text-foreground">Folio</TableHead>

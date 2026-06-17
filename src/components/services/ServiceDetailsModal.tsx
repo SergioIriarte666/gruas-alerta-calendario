@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Service } from '@/types';
 import { 
   Calendar, 
@@ -500,7 +499,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex h-[90vh] max-w-4xl w-[95vw] flex-col border-border/70 bg-card p-0">
+      <DialogContent className="flex h-[90vh] max-w-7xl w-[95vw] flex-col border-border/70 bg-card p-0">
         <DialogHeader className="flex flex-shrink-0 flex-col gap-3 border-b border-border/70 px-6 pb-4 pt-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -580,7 +579,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6">
+        <div className="flex-1 overflow-y-auto px-6">
           <Tabs defaultValue="general" className="w-full py-6">
             <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
               <TabsTrigger value="general">General</TabsTrigger>
@@ -849,7 +848,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
             </span>
             <span>Actualizado: {formatForDisplayWithTime(serviceData.updatedAt)}</span>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

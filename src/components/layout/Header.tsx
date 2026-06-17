@@ -68,10 +68,16 @@ export const Header = ({
   };
 
   return (
-    <header className={cn(
-      "sticky top-0 z-30 flex items-center justify-between border-b border-border/70 bg-background/85 backdrop-blur-xl transition-colors duration-300",
-      isMobile ? "h-14 px-3" : isTablet ? "h-16 px-4" : "h-16 px-6"
-    )}>
+    <header
+      className={cn(
+        "sticky top-0 z-30 flex items-center justify-between border-b border-border/70 bg-background/85 backdrop-blur-xl transition-colors duration-300",
+        isMobile ? "min-h-[3.5rem] px-3" : isTablet ? "min-h-[4rem] px-4" : "min-h-[4rem] px-6"
+      )}
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+      }}
+    >
       <div className="flex min-w-0 items-center gap-3">
         <Button 
           variant="ghost" 
