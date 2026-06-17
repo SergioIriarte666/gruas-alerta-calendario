@@ -17,6 +17,7 @@ import {
   MapPin,
   TrendingUp,
   Database,
+  Archive,
   type LucideIcon
 } from 'lucide-react';
 
@@ -109,6 +110,14 @@ export const APP_MODULES: AppModule[] = [
     description: 'Gestión de inventario',
     defaultRoles: ['admin', 'viewer', 'operator'],
     route: '/inventory'
+  },
+  {
+    key: 'document-library',
+    label: 'Biblioteca Documental',
+    icon: Archive,
+    description: 'Gestión documental del negocio',
+    defaultRoles: ['admin', 'viewer'],
+    route: '/document-library'
   },
   { 
     key: 'trip-calculator', 

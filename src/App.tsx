@@ -44,6 +44,7 @@ const routeImports = {
   AccountsPayable: () => import('@/pages/AccountsPayable'),
   CostCenters: () => import('@/pages/CostCenters'),
   Inventory: () => import('@/pages/Inventory'),
+  DocumentLibrary: () => import('@/pages/DocumentLibrary'),
   Reports: () => import('@/pages/Reports'),
   Commissions: () => import('@/pages/Commissions'),
   Settings: () => import('@/pages/Settings'),
@@ -90,6 +91,7 @@ const Costs = lazy(routeImports.Costs);
 const AccountsPayable = lazy(routeImports.AccountsPayable);
 const CostCenters = lazy(routeImports.CostCenters);
 const Inventory = lazy(routeImports.Inventory);
+const DocumentLibrary = lazy(routeImports.DocumentLibrary);
 const Reports = lazy(routeImports.Reports);
 const Commissions = lazy(routeImports.Commissions);
 const Settings = lazy(routeImports.Settings);
@@ -215,6 +217,7 @@ function AppContent() {
           <Route path="/daily-report" element={<DailyReport />} />
           <Route path="/clients/:clientId/pipeline" element={<VipClientPipeline />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/document-library" element={<DocumentLibrary />} />
 
           {/* Admin-only routes */}
           <Route path="/operators" element={<AdminOnlyRoute><Operators /></AdminOnlyRoute>} />

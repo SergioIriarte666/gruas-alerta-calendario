@@ -15,7 +15,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,6 +55,7 @@ export const Sidebar = ({
     '/daily-report': 'reports',
     '/services': 'services',
     '/clients': 'clients',
+    '/document-library': 'document-library',
     '/calendar': 'calendar',
     '/cranes': 'cranes',
     '/operators': 'operators',
@@ -108,6 +109,7 @@ export const Sidebar = ({
       icon: Briefcase,
       items: [
         { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
+        { name: 'Biblioteca Documental', href: '/document-library', icon: Archive, adminOnly: false },
         { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
       ]
     },

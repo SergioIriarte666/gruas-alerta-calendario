@@ -1,4 +1,3 @@
-Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -155,6 +154,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      business_documents: {
+        Row: {
+          category: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          document_date: string | null
+          expires_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_confidential: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          document_date?: string | null
+          expires_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_confidential?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          document_date?: string | null
+          expires_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_confidential?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
       }
       calendar_events: {
         Row: {
@@ -7066,5 +7128,3 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.106.0 (currently installed v2.33.9)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
