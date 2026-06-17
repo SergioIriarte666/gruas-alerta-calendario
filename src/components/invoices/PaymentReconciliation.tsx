@@ -7,16 +7,17 @@ import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
 import { SelectivePaymentModal } from './SelectivePaymentModal';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
-import { BackfillDialog } from './BackfillDialog';
+import { ClientPaymentImportDialog } from '@/components/facturas/ClientPaymentImportDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, History, RefreshCw, Eye, Download, DollarSign, AlertTriangle } from 'lucide-react';
+import { Plus, History, RefreshCw, Eye, Download, DollarSign, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useUser } from '@/contexts/UserContext';
 import type { PaymentWithDetails } from '@/types/payments';
 
 interface PaymentReconciliationProps {
@@ -39,6 +40,7 @@ const getStatusLabel = (status: string) => {
 export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ onClose }) => {
   const hook = usePaymentReconciliation();
   const { isGenerating: isGeneratingReceipt, generateAndDownload } = usePDFGeneration();
+  const { user } = useUser();
 
   const [selectedClient, setSelectedClient] = useState('all');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -49,6 +51,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [selectivePaymentModalOpen, setSelectivePaymentModalOpen] = useState(false);
   const [showPaymentDetail, setShowPaymentDetail] = useState(false);
   const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
+  const [showClientPaymentImport, setShowClientPaymentImport] = useState(false);
 
   const filteredPayments = selectedClient === 'all'
     ? hook.payments
@@ -98,22 +101,19 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     { label: 'Total Monto', value: formatCurrency(s.total_amount || 0), color: 'text-purple-500' },
   ] : [];
 
-  const toggleClient = (clientId: string, checked: boolean) => {
-    hook.setBackfillSelectionDirty(true);
-    hook.setSelectedBackfillClientIds(prev =>
-      checked ? (prev.includes(clientId) ? prev : [...prev, clientId]) : prev.filter(id => id !== clientId)
-    );
-  };
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Conciliación de Pagos</h2>
         <div className="flex gap-2">
-          {hook.isAdmin && <Button onClick={hook.openBackfillDialog} variant="outline" size="sm"><Zap className="size-4 mr-2" />Backfill Mes</Button>}
           <Button onClick={() => hook.refetch()} variant="outline" size="sm" disabled={hook.paymentsLoading}>
             <RefreshCw className={`size-4 mr-2 ${hook.paymentsLoading ? 'animate-spin' : ''}`} />Actualizar
           </Button>
+          {user?.role === 'admin' && (
+            <Button onClick={() => setShowClientPaymentImport(true)} variant="outline" size="sm">
+              <FileSpreadsheet className="size-4 mr-2" />Importar pago cliente
+            </Button>
+          )}
           <Button onClick={() => setShowPaymentForm(true)} size="sm"><Plus className="size-4 mr-2" />Registrar Pago</Button>
           <Button onClick={() => setShowHistory(true)} variant="outline" size="sm"><History className="size-4 mr-2" />Historial</Button>
         </div>
@@ -217,16 +217,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           onClose={() => { setShowPaymentDetail(false); setSelectedPaymentForDetail(null); }} />
       )}
 
-      <BackfillDialog
-        open={hook.showHistoricalBackfill} onOpenChange={hook.setShowHistoricalBackfill}
-        historicalMonth={hook.historicalMonth} onHistoricalMonthChange={hook.setHistoricalMonth}
-        showAllBackfillClients={hook.showAllBackfillClients} onShowAllBackfillClientsChange={hook.setShowAllBackfillClients}
-        selectedBackfillClientIds={hook.selectedBackfillClientIds}
-        onSelectAll={ids => { hook.setBackfillSelectionDirty(true); hook.setSelectedBackfillClientIds(ids); }}
-        onDeselectAll={() => { hook.setBackfillSelectionDirty(true); hook.setSelectedBackfillClientIds([]); }}
-        onToggleClient={toggleClient}
-        backfillIsRunning={hook.backfillIsRunning} backfillPreview={hook.backfillPreview} backfillResults={hook.backfillResults}
-        onBuildPreview={hook.buildBackfillPreview} onRunBackfill={hook.runHistoricalBackfill}
+      <ClientPaymentImportDialog
+        open={showClientPaymentImport}
+        onClose={() => setShowClientPaymentImport(false)}
       />
     </div>
   );

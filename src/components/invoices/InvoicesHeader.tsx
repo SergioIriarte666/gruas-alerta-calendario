@@ -10,6 +10,7 @@ interface InvoicesHeaderProps {
 
 const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderProps) => {
   const isMobile = useIsMobile();
+
   return (
     <PageHeader
       title="Facturas"
