@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -76,7 +77,7 @@ export const ClientLogoUpload: React.FC<ClientLogoUploadProps> = ({
 
       const { error: dbError } = await supabase
         .from('clients')
-        .update({ logo_url: data.publicUrl, updated_at: new Date().toISOString() })
+        .update({ logo_url: data.publicUrl, updated_at: businessClock.nowISO() })
         .eq('id', clientId);
 
       if (dbError) throw dbError;
@@ -105,7 +106,7 @@ export const ClientLogoUpload: React.FC<ClientLogoUploadProps> = ({
 
       const { error } = await supabase
         .from('clients')
-        .update({ logo_url: null, updated_at: new Date().toISOString() })
+        .update({ logo_url: null, updated_at: businessClock.nowISO() })
         .eq('id', clientId);
 
       if (error) throw error;

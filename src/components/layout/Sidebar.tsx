@@ -10,8 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { useUpcomingServicesCount } from '@/hooks/useUpcomingServicesCount';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { usePendingUsersCount } from '@/hooks/usePendingUsersCount';
 import { 
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
@@ -39,19 +38,7 @@ export const Sidebar = ({
   const location = useLocation();
   const companyName = settings?.company?.name || 'TMS Grúas';
   const { data: upcomingCount = 0 } = useUpcomingServicesCount();
-  const { data: pendingUsersCount = 0 } = useQuery({
-    queryKey: ['pending-users-count'],
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    enabled: user?.role === 'admin',
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_pending_users_count');
-      if (error) return 0;
-      return data ?? 0;
-    },
-  });
+  const { data: pendingUsersCount = 0 } = usePendingUsersCount(user?.role === 'admin');
 
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['principal']);
 

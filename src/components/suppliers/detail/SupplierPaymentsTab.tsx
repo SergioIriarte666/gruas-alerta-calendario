@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -29,14 +30,14 @@ interface SupplierPaymentsTabProps {
 const getStatusColor = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'border-success/30 bg-success/10 text-success';
   if (status === 'overdue') return 'border-danger/30 bg-danger/10 text-danger';
-  if (dueDate && new Date(dueDate) < new Date()) return 'border-danger/30 bg-danger/10 text-danger';
+  if (dueDate && new Date(dueDate) < businessClock.now()) return 'border-danger/30 bg-danger/10 text-danger';
   return 'border-warning/30 bg-warning/10 text-warning';
 };
 
 const getStatusLabel = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'Pagado';
   if (status === 'overdue') return 'Vencido';
-  if (dueDate && new Date(dueDate) < new Date()) return 'Vencido';
+  if (dueDate && new Date(dueDate) < businessClock.now()) return 'Vencido';
   return 'Pendiente';
 };
 

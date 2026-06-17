@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useMemo, useState } from 'react';
 import { useClientInvoices, type ClientInvoice } from '@/hooks/portal/useClientInvoices';
@@ -322,7 +323,7 @@ const PortalInvoices = () => {
                   mode="single"
                   selected={dateFrom}
                   onSelect={setDateFrom}
-                  disabled={(date) => date > new Date() || (dateTo && date > dateTo)}
+                  disabled={(date) => date > businessClock.now() || (dateTo && date > dateTo)}
                   initialFocus
                 />
               </PopoverContent>
@@ -356,7 +357,7 @@ const PortalInvoices = () => {
                   mode="single"
                   selected={dateTo}
                   onSelect={setDateTo}
-                  disabled={(date) => date > new Date() || (dateFrom && date < dateFrom)}
+                  disabled={(date) => date > businessClock.now() || (dateFrom && date < dateFrom)}
                   initialFocus
                 />
               </PopoverContent>

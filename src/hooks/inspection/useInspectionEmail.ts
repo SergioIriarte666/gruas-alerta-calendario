@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -26,7 +27,7 @@ export const useInspectionEmail = () => {
           clientName: service.client?.name || 'Cliente',
           clientEmail: service.client?.email || 'cliente@example.com',
           operatorName: service.operator?.name || 'Operador',
-          serviceDate: service.serviceDate || new Date().toLocaleDateString('es-CL'),
+          serviceDate: service.serviceDate || businessClock.format(businessClock.now(), 'dd/MM/yyyy'),
           equipmentCount: inspection.equipment?.length || 0,
         },
         pdfBlob: base64,

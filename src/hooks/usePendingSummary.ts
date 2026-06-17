@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, parseISO } from 'date-fns';
 import { getBusinessTimezone, getTodayStringInTimezone, safeParseDateOnly, safeDaysSince, isSameYearMonth } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("usePendingSummary");
 
 export interface PendingServiceWithoutOC {
   id: string;
@@ -139,7 +142,9 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .select('service_id')
       .in('service_id', completedOldIds);
 
-    if (!closureLinksError) {
+    if (closureLinksError) {
+      logger.error('[usePendingSummary] Error consultando closure_services para cierres pendientes:', closureLinksError);
+    } else {
       closedIds = new Set((closureLinks || []).map((item: any) => item.service_id));
     }
   }

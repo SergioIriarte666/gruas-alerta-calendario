@@ -30,17 +30,13 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { data: costCategories = [] } = useCostCategories();
-  const { data: allCosts = [] } = useCosts();
+  const { data: allCosts = [] } = useCosts({
+    dateFrom: costReportFilters?.dateRange?.from || undefined,
+    dateTo:   costReportFilters?.dateRange?.to   || undefined,
+  });
 
   const getFilteredCosts = () => {
     return allCosts.filter(cost => {
-      const costDate = new Date(cost.date);
-      const fromDate = new Date(costReportFilters.dateRange.from);
-      const toDate = new Date(costReportFilters.dateRange.to);
-      
-      // Filtro por fecha
-      if (costDate < fromDate || costDate > toDate) return false;
-      
       // Filtro por categoría
       if (costReportFilters.categoryId !== 'all' && cost.category_id !== costReportFilters.categoryId) return false;
       

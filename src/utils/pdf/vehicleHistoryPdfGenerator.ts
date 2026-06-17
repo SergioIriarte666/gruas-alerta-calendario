@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { fetchCompanyData } from './companyDataFetcher';
@@ -288,7 +289,7 @@ export const generateVehicleHistoryPDF = async (
         
         // Fecha de generación
         doc.text(
-          `Generado: ${new Date().toLocaleString('es-CL')}`,
+          `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`,
           margin,
           pageHeight - 8
         );

@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Suggestion } from '@/components/common/AutocompleteInput';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useFrequentFormData");
 
 function buildSuggestions(values: string[]): Suggestion[] {
   const counts = new Map<string, number>();
@@ -25,7 +28,10 @@ export function useFrequentCostDescriptions() {
         .select('description')
         .order('created_at', { ascending: false })
         .limit(500);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFrequentFormData] Error cargando descripciones de costos:', error);
+        throw error;
+      }
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -59,8 +65,14 @@ export function useFrequentCostLocations() {
           .limit(500),
       ]);
 
-      if (costsResult.error) throw costsResult.error;
-      if (servicesResult.error) throw servicesResult.error;
+      if (costsResult.error) {
+        logger.error('[useFrequentFormData] Error cargando ubicaciones de costos:', costsResult.error);
+        throw costsResult.error;
+      }
+      if (servicesResult.error) {
+        logger.error('[useFrequentFormData] Error cargando ubicaciones de servicios:', servicesResult.error);
+        throw servicesResult.error;
+      }
 
       const costLocations = (costsResult.data || []).map((c: any) => c.location_text).filter(Boolean);
       const serviceLocations = (servicesResult.data || [])
@@ -91,7 +103,10 @@ export function useFrequentObservations() {
         .not('observations', 'eq', '')
         .order('created_at', { ascending: false })
         .limit(500);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFrequentFormData] Error cargando observaciones de servicios:', error);
+        throw error;
+      }
       return data || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -114,7 +129,10 @@ export function useFrequentQuickEntryDescriptions() {
         .select('description')
         .order('created_at', { ascending: false })
         .limit(300);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFrequentFormData] Error cargando descripciones de entradas rápidas:', error);
+        throw error;
+      }
       return data || [];
     },
     staleTime: 5 * 60 * 1000,

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { Service, ServiceClosure } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -216,7 +217,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .from('service_closures')
         .update({ 
           total: newTotal,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', closure.id);
 
@@ -234,7 +235,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       onUpdate({
         serviceIds: newServiceIds,
         total: newTotal,
-        updatedAt: new Date().toISOString()
+        updatedAt: businessClock.nowISO()
       });
 
       toast({

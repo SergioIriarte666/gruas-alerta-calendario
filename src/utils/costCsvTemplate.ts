@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import * as XLSX from 'xlsx';
 
 const TEMPLATE_COLUMNS = [
@@ -62,7 +63,7 @@ export const generateCostExcelTemplate = () => {
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Costos');
-  const timestamp = new Date().toISOString().slice(0, 10);
+  const timestamp = businessClock.today();
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([wbout], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -135,7 +136,7 @@ export const useSystemSettings = () => {
         overdue_notifications: notificationSettings.overdueNotifications,
         system_updates: notificationSettings.systemUpdates,
         report_column_config: JSON.parse(JSON.stringify(systemSettings.reportColumnConfig)) as Json,
-        updated_at: new Date().toISOString(),
+        updated_at: businessClock.nowISO(),
       };
 
       // Verificar si ya existe una configuración

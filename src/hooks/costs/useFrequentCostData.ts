@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { useCosts } from '@/hooks/useCosts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 
 interface FrequentData {
   value: string;
@@ -7,7 +9,32 @@ interface FrequentData {
 }
 
 export const useFrequentCostData = (categoryId?: string) => {
-  const { data: costs = [] } = useCosts();
+  const oneYearAgo = (() => {
+    const d = new Date(businessClock.todayDate());
+    d.setFullYear(d.getFullYear() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const { data: costs = [] } = useQuery({
+    queryKey: ['costs', 'frequent-data', categoryId ?? 'all', oneYearAgo],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('costs')
+        .select(`
+          id,
+          description,
+          subcategory,
+          category_id,
+          crane_parts (supplier, part_name)
+        `)
+        .gte('date', oneYearAgo)
+        .limit(500);
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+    staleTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   const frequentDescriptions = useMemo(() => {
     const descriptionCounts = new Map<string, number>();

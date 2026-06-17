@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import jsPDF from 'jspdf';
 import { compressImageForPDF } from './photos/photoProcessor';
@@ -104,7 +105,7 @@ export const addPhotographicSetSection = async (
               doc.setDrawColor(0, 0, 0);
               doc.setFillColor(0, 0, 0);
               doc.rect(xPos + 2, yPosition + photoHeight - 7, 45, 10, 'F');
-              doc.text(new Date().toLocaleString('es-CL'), xPos + 4, yPosition + photoHeight);
+              doc.text(businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm'), xPos + 4, yPosition + photoHeight);
               
               validPhotosAdded++;
               logger.debug(`Foto agregada exitosamente: ${item.photo!.fileName} (${item.category})`);

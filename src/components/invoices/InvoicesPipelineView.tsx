@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -113,7 +114,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
     );
 
     const groups: Record<string, { invoices: Invoice[]; stats: InvoiceGroup }> = {};
-    const now = new Date();
+    const now = businessClock.now();
     
     PIPELINE_STATUSES.forEach(status => {
       const statusInvoices = filtered.filter(invoice => invoice.status === status.key);
@@ -185,7 +186,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
 
   const calculateDaysFromDue = (dueDate: string) => {
     const due = new Date(dueDate);
-    const now = new Date();
+    const now = businessClock.now();
     const diffTime = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;

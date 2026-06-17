@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useCreditors");
 
 export interface Creditor {
   id: string;
@@ -31,7 +34,10 @@ export const useCreditors = () => {
         .select('*')
         .eq('is_active', true)
         .order('name');
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCreditors] Error cargando acreedores:', error);
+        throw error;
+      }
       return data as Creditor[];
     },
     staleTime: 5 * 60 * 1000,
@@ -57,7 +63,10 @@ export const useCreateCreditor = () => {
         })
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCreditors] Error creando acreedor:', error);
+        throw error;
+      }
       return result;
     },
     onSuccess: () => {
@@ -86,7 +95,10 @@ export const useUpdateCreditor = () => {
           updated_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCreditors] Error actualizando acreedor:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['creditors'] });

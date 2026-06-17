@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { useSupplierInvoices, SupplierInvoice } from '@/hooks/useSupplierInvoices';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,7 +23,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const getInvoiceStatusBadge = (invoice: SupplierInvoice) => {
-  const isOverdue = isBefore(parseISO(invoice.due_date), new Date());
+  const isOverdue = isBefore(parseISO(invoice.due_date), businessClock.now());
   const isPaid = invoice.status === 'paid' || (invoice.balance !== null && invoice.balance <= 0);
   const isPartial = (invoice.paid_amount || 0) > 0 && !isPaid;
 

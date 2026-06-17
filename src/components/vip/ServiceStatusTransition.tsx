@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -128,7 +129,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
         .from('services')
         .update({ 
           status: nextStatus,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', service.id);
 
@@ -145,12 +146,7 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
                 folio: service.folio,
                 operatorName: service.operator?.name || 'Sin operador',
                 clientName: service.client?.name || '',
-                fechaCompletado: new Date().toLocaleDateString('es-CL', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                }),
+                fechaCompletado: businessClock.format(businessClock.now(), 'EEEE, d \'de\' MMMM yyyy'),
               },
             },
           })

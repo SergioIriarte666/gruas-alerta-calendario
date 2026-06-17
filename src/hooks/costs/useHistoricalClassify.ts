@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { useCosts } from '@/hooks/useCosts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 import { useDebounce } from '@/hooks/useDebounce';
 
 interface HistoricalClassificationResult {
@@ -31,7 +33,29 @@ export const useHistoricalClassify = (
   currentCategoryId?: string | null,
   enabled: boolean = true
 ): { suggestion: HistoricalClassificationResult | null; isReady: boolean } => {
-  const { data: costs = [] } = useCosts();
+  const sixMonthsAgo = (() => {
+    const d = new Date(businessClock.todayDate());
+    d.setMonth(d.getMonth() - 6);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const { data: costs = [] } = useQuery({
+    queryKey: ['costs', 'classify-history', sixMonthsAgo],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('costs')
+        .select('id, description, category_id, subcategory, date')
+        .gte('date', sixMonthsAgo)
+        .order('date', { ascending: false })
+        .limit(500);
+      if (error) throw new Error(error.message);
+      return data || [];
+    },
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled,
+  });
+
   const debouncedDescription = useDebounce(description, 300);
 
   const suggestion = useMemo(() => {

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -508,7 +509,7 @@ export const usePayments = () => {
           .insert({
             client_id: invoice.client_id,
             amount: invoice.total,
-            payment_date: invoice.updated_at || new Date().toISOString(),
+            payment_date: invoice.updated_at || businessClock.nowISO(),
             payment_method: 'automatic_correction',
             bank_reference: `AUTO-${invoice.folio}`,
             notes: 'Pago creado automáticamente para corregir inconsistencia',

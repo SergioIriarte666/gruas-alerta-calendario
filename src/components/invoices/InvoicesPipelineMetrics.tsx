@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +12,7 @@ interface InvoicesPipelineMetricsProps {
 
 export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = ({ invoices }) => {
   const metrics = useMemo(() => {
-    const now = new Date();
+    const now = businessClock.now();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Group invoices by status

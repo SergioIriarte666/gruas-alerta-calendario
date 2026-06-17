@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_MODULES } from '@/constants/modules';
@@ -110,7 +111,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
           user_id: userId,
           module_key: moduleKey,
           is_enabled: isEnabled,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         }, {
           onConflict: 'user_id,module_key'
         });
@@ -137,7 +138,7 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
         user_id: userId,
         module_key: p.moduleKey,
         is_enabled: p.isEnabled,
-        updated_at: new Date().toISOString()
+        updated_at: businessClock.nowISO()
       }));
 
       const { error: upsertError } = await supabase

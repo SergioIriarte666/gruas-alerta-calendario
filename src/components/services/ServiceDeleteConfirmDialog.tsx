@@ -5,17 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Loader2, ShieldAlert, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useReAuth } from '@/hooks/useReAuth';
 import { Service } from '@/types';
-
-interface RelatedData {
-  costs: number;
-  inspections: number;
-  calendarEvents: number;
-  closureLinks: number;
-  invoiceLinks: number;
-}
+import { useServiceDependencies } from '@/hooks/useServiceDependencies';
 
 interface ServiceDeleteConfirmDialogProps {
   service: Service | null;
@@ -31,53 +23,17 @@ export const ServiceDeleteConfirmDialog = ({
   onConfirmDelete,
 }: ServiceDeleteConfirmDialogProps) => {
   const { verifyPassword } = useReAuth();
-  const [relatedData, setRelatedData] = useState<RelatedData | null>(null);
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  const hasRelatedData = useMemo(() => {
-    if (!relatedData) return false;
-    return (
-      relatedData.costs > 0 ||
-      relatedData.inspections > 0 ||
-      relatedData.calendarEvents > 0 ||
-      relatedData.closureLinks > 0 ||
-      relatedData.invoiceLinks > 0
-    );
-  }, [relatedData]);
+  const serviceId = open && service ? service.id : null;
+  const { dependencies, isLoading, hasRelatedData } = useServiceDependencies(serviceId);
 
   useEffect(() => {
-    const fetchRelatedData = async (svc: Service) => {
-      setLoading(true);
-      setRelatedData(null);
-
-      try {
-        const [costsRes, inspRes, calRes, closRes, invRes] = await Promise.all([
-          supabase.from('costs').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-          supabase.from('inspections').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-          supabase.from('calendar_events').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-          supabase.from('closure_services').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-          supabase.from('invoice_services').select('id', { count: 'exact', head: true }).eq('service_id', svc.id),
-        ]);
-
-        setRelatedData({
-          costs: costsRes.count || 0,
-          inspections: inspRes.count || 0,
-          calendarEvents: calRes.count || 0,
-          closureLinks: closRes.count || 0,
-          invoiceLinks: invRes.count || 0,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (open && service) {
+    if (open) {
       setPassword('');
       setPasswordError('');
-      fetchRelatedData(service);
     }
   }, [open, service]);
 
@@ -135,7 +91,7 @@ export const ServiceDeleteConfirmDialog = ({
               </div>
             )}
 
-            {loading ? (
+            {isLoading ? (
               <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 <span className="text-sm">Verificando datos relacionados...</span>
@@ -150,33 +106,33 @@ export const ServiceDeleteConfirmDialog = ({
                     </div>
 
                     <div className="space-y-2 rounded-xl border border-border/70 bg-background/40 p-3">
-                      {relatedData?.costs ? (
+                      {dependencies?.costsCount ? (
                         <div className="flex items-center justify-between text-sm">
-                          <span>{relatedData.costs} costo(s)</span>
+                          <span>{dependencies.costsCount} costo(s)</span>
                           <Badge variant="destructive" className="text-xs">Se eliminará</Badge>
                         </div>
                       ) : null}
-                      {relatedData?.inspections ? (
+                      {dependencies?.inspectionsCount ? (
                         <div className="flex items-center justify-between text-sm">
-                          <span>{relatedData.inspections} inspección(es)</span>
+                          <span>{dependencies.inspectionsCount} inspección(es)</span>
                           <Badge variant="destructive" className="text-xs">Se eliminará</Badge>
                         </div>
                       ) : null}
-                      {relatedData?.calendarEvents ? (
+                      {dependencies?.calendarCount ? (
                         <div className="flex items-center justify-between text-sm">
-                          <span>{relatedData.calendarEvents} evento(s) calendario</span>
+                          <span>{dependencies.calendarCount} evento(s) calendario</span>
                           <Badge variant="destructive" className="text-xs">Se eliminará</Badge>
                         </div>
                       ) : null}
-                      {relatedData?.closureLinks ? (
+                      {dependencies?.closuresCount ? (
                         <div className="flex items-center justify-between text-sm">
-                          <span>{relatedData.closureLinks} vínculo(s) a cierre</span>
+                          <span>{dependencies.closuresCount} vínculo(s) a cierre</span>
                           <Badge variant="secondary" className="text-xs">Se desvinculará</Badge>
                         </div>
                       ) : null}
-                      {relatedData?.invoiceLinks ? (
+                      {dependencies?.invoicesCount ? (
                         <div className="flex items-center justify-between text-sm">
-                          <span>{relatedData.invoiceLinks} vínculo(s) a factura</span>
+                          <span>{dependencies.invoicesCount} vínculo(s) a factura</span>
                           <Badge variant="secondary" className="text-xs">Se desvinculará</Badge>
                         </div>
                       ) : null}
@@ -220,7 +176,7 @@ export const ServiceDeleteConfirmDialog = ({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={loading || verifying || isInvoiced || !password.trim()}
+            disabled={isLoading || verifying || isInvoiced || !password.trim()}
           >
             {verifying ? (
               <>

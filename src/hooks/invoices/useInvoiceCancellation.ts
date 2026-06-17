@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -127,7 +128,7 @@ export const useInvoiceCancellation = () => {
         .update({ 
           status: 'cancelled',
           paid_amount: invoice.total,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', data.invoiceId);
 
@@ -166,7 +167,7 @@ export const useInvoiceCancellation = () => {
               status: 'completed', 
               invoice_folio: null,
               invoice_numero_fiscal: null,
-              updated_at: new Date().toISOString() 
+              updated_at: businessClock.nowISO() 
             })
             .in('id', serviceIds)
             .eq('status', 'invoiced');
@@ -181,7 +182,7 @@ export const useInvoiceCancellation = () => {
         // 9. Revertir estado de cierres de 'invoiced' a 'closed'
         const { error: closureRevertError } = await supabase
           .from('service_closures')
-          .update({ status: 'closed', updated_at: new Date().toISOString() })
+          .update({ status: 'closed', updated_at: businessClock.nowISO() })
           .in('id', closureIds)
           .eq('status', 'invoiced');
 
@@ -218,7 +219,7 @@ export const useInvoiceCancellation = () => {
             status: 'completed', 
             invoice_folio: null,
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO() 
           })
           .in('id', directServiceIds)
           .eq('status', 'invoiced');

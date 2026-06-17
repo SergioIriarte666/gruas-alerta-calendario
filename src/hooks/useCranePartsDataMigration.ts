@@ -2,6 +2,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useCranePartsDataMigration");
 
 interface MigrationResult {
   success: boolean;
@@ -28,7 +31,10 @@ export const useMigrateLegacyCranePartsData = () => {
         p_crane_id: craneId || null
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCranePartsDataMigration] Error migrando datos de piezas:', error);
+        throw error;
+      }
       return data as MigrationResult;
     },
     onSuccess: (data, craneId) => {
@@ -53,7 +59,10 @@ export const useDetectDuplicateParts = () => {
         p_crane_id: craneId || null
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCranePartsDataMigration] Error detectando duplicados:', error);
+        throw error;
+      }
       return data as DuplicateResult;
     },
     onSuccess: (data) => {

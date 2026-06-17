@@ -1,5 +1,9 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useServiceLiberation");
 
 export interface LiberationSearchResult {
   type: 'invoice' | 'closure';
@@ -63,7 +67,10 @@ export const useServiceLiberation = () => {
       .eq('folio', folio)
       .maybeSingle();
 
-    if (invErr) throw invErr;
+    if (invErr) {
+      logger.error('[useServiceLiberation] Error buscando factura por folio:', invErr);
+      throw invErr;
+    }
     if (!invoice) { setError(`No se encontró factura con folio ${folio}`); return; }
 
     // Get linked services
@@ -131,7 +138,10 @@ export const useServiceLiberation = () => {
       .eq('folio', folio)
       .maybeSingle();
 
-    if (clErr) throw clErr;
+    if (clErr) {
+      logger.error('[useServiceLiberation] Error buscando cierre por folio:', clErr);
+      throw clErr;
+    }
     if (!closure) { setError(`No se encontró cierre con folio ${folio}`); return; }
 
     // Get linked services
@@ -212,14 +222,20 @@ export const useServiceLiberation = () => {
         .from('invoice_services')
         .delete()
         .eq('invoice_id', invoiceId);
-      if (e1) throw e1;
+      if (e1) {
+        logger.error('[useServiceLiberation] Error eliminando invoice_services:', e1);
+        throw e1;
+      }
 
       // 2. Delete invoice_closures
       const { error: e2 } = await supabase
         .from('invoice_closures')
         .delete()
         .eq('invoice_id', invoiceId);
-      if (e2) throw e2;
+      if (e2) {
+        logger.error('[useServiceLiberation] Error eliminando invoice_closures:', e2);
+        throw e2;
+      }
 
       // 3. Eliminar en cascada los cierres vinculados (si no están compartidos con otra factura)
       const deletedClosureIds: string[] = [];
@@ -246,23 +262,32 @@ export const useServiceLiberation = () => {
             .from('closure_services')
             .delete()
             .in('closure_id', deletedClosureIds);
-          if (e3a) throw e3a;
+          if (e3a) {
+            logger.error('[useServiceLiberation] Error eliminando closure_services en cascada:', e3a);
+            throw e3a;
+          }
 
           // 3b. Borrar service_closures (padres)
           const { error: e3b } = await supabase
             .from('service_closures')
             .delete()
             .in('id', deletedClosureIds);
-          if (e3b) throw e3b;
+          if (e3b) {
+            logger.error('[useServiceLiberation] Error eliminando service_closures en cascada:', e3b);
+            throw e3b;
+          }
         }
 
         if (keptClosureIds.length > 0) {
           // Cierres compartidos: solo revertir a 'closed' (fallback seguro)
           const { error: e3c } = await supabase
             .from('service_closures')
-            .update({ status: 'closed', updated_at: new Date().toISOString() })
+            .update({ status: 'closed', updated_at: businessClock.nowISO() })
             .in('id', keptClosureIds);
-          if (e3c) throw e3c;
+          if (e3c) {
+            logger.error('[useServiceLiberation] Error revirtiendo cierres compartidos a closed:', e3c);
+            throw e3c;
+          }
         }
       }
 
@@ -271,21 +296,27 @@ export const useServiceLiberation = () => {
         .from('invoices')
         .delete()
         .eq('id', invoiceId);
-      if (e4) throw e4;
+      if (e4) {
+        logger.error('[useServiceLiberation] Error eliminando factura:', e4);
+        throw e4;
+      }
 
       // 5. Reset services (factura ∪ servicios de cierres eliminados)
       const idsToReset = Array.from(allServiceIds);
       if (idsToReset.length > 0) {
         const { error: e5 } = await supabase
           .from('services')
-          .update({ 
-            status: 'with_purchase_order', 
+          .update({
+            status: 'with_purchase_order',
             invoice_folio: null,
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO()
           })
           .in('id', idsToReset);
-        if (e5) throw e5;
+        if (e5) {
+          logger.error('[useServiceLiberation] Error reseteando servicios liberados de factura:', e5);
+          throw e5;
+        }
       }
 
       setResult(null);
@@ -305,34 +336,46 @@ export const useServiceLiberation = () => {
         .from('closure_services')
         .delete()
         .eq('closure_id', closureId);
-      if (e1) throw e1;
+      if (e1) {
+        logger.error('[useServiceLiberation] Error eliminando closure_services del cierre:', e1);
+        throw e1;
+      }
 
       // 2. Delete invoice_closures if any
       const { error: e2 } = await supabase
         .from('invoice_closures')
         .delete()
         .eq('closure_id', closureId);
-      if (e2) throw e2;
+      if (e2) {
+        logger.error('[useServiceLiberation] Error eliminando invoice_closures del cierre:', e2);
+        throw e2;
+      }
 
       // 3. Delete the closure
       const { error: e3 } = await supabase
         .from('service_closures')
         .delete()
         .eq('id', closureId);
-      if (e3) throw e3;
+      if (e3) {
+        logger.error('[useServiceLiberation] Error eliminando service_closure:', e3);
+        throw e3;
+      }
 
       // 4. Reset services
       if (serviceIds.length > 0) {
         const { error: e4 } = await supabase
           .from('services')
-          .update({ 
-            status: 'with_purchase_order', 
+          .update({
+            status: 'with_purchase_order',
             invoice_folio: null,
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO()
           })
           .in('id', serviceIds);
-        if (e4) throw e4;
+        if (e4) {
+          logger.error('[useServiceLiberation] Error reseteando servicios liberados de cierre:', e4);
+          throw e4;
+        }
       }
 
       setResult(null);

@@ -215,7 +215,7 @@ export const useIntegrityValidator = () => {
         issuesBySeverity,
         issuesByType,
         autoRepairableIssues: 0, // los issues reales requieren revisión humana
-        lastAuditTime: new Date(),
+        lastAuditTime: businessClock.now(),
         systemHealthScore:
           totalServices > 0 ? Math.round((consistentServices / totalServices) * 100) : 100,
       };

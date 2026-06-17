@@ -4,6 +4,9 @@ import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { logUserActivity } from '@/utils/activityLog';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useOperatorNotificationFlow");
 
 interface UseOperatorNotificationFlowParams {
   onComplete: (service: Service) => void;
@@ -81,6 +84,7 @@ export const useOperatorNotificationFlow = ({
       });
 
       if (error) {
+        logger.error('[useOperatorNotificationFlow] Error invocando función de WhatsApp:', error);
         await registerActivity('service_operator_whatsapp_failed', service);
         setConfirmOpen(false);
         setRetryOpen(true);
@@ -125,7 +129,8 @@ export const useOperatorNotificationFlow = ({
       toast.success('Operador notificado por WhatsApp');
       await registerActivity('service_operator_whatsapp_sent', service);
       completeFlow(service);
-    } catch {
+    } catch (err) {
+      logger.error('[useOperatorNotificationFlow] Error inesperado al enviar notificación:', err);
       if (context) {
         await registerActivity('service_operator_whatsapp_failed', context.service);
       }

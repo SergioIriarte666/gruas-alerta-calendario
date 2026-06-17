@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceInfo {
@@ -76,7 +77,7 @@ export function useAdminServiceOps() {
   ): Promise<void> => {
     const updateData: Record<string, unknown> = {
       status: targetStatus,
-      updated_at: new Date().toISOString(),
+      updated_at: businessClock.nowISO(),
     };
 
     if (['pending', 'in_progress', 'completed', 'with_purchase_order', 'quoted', 'purchase_order_pending'].includes(targetStatus)) {
@@ -91,5 +92,17 @@ export function useAdminServiceOps() {
     if (error) throw error;
   };
 
-  return { searchServiceByFolio, deleteServiceCascade, forceServiceStatus };
+  const closeService = async (serviceId: string): Promise<{ success: boolean; message?: string }> => {
+    const { data, error } = await supabase.rpc('emergency_close_service', {
+      p_service_id: serviceId,
+    });
+    if (error) throw error;
+    const result = data as any;
+    if (!result?.success) {
+      throw new Error(result?.error || 'Error desconocido al cerrar servicio');
+    }
+    return result;
+  };
+
+  return { searchServiceByFolio, deleteServiceCascade, forceServiceStatus, closeService };
 }

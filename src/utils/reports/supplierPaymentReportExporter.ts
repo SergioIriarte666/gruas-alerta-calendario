@@ -29,7 +29,7 @@ export const exportSupplierPaymentReport = async ({
 const generatePDF = async (payments: any[], suppliers: any[], categories: any[], settings: any, filters: any) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
-  const today = businessClock.format(new Date(), 'dd/MM/yyyy');
+  const today = businessClock.format(businessClock.now(), 'dd/MM/yyyy');
   
   // Helper function to get supplier name
   const getSupplierName = (supplierId: string) => {
@@ -207,7 +207,7 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
   });
   
   // Save PDF
-  const filename = `pagos_proveedores_${filters.reportType}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+  const filename = `pagos_proveedores_${filters.reportType}_${businessClock.today()}.pdf`;
   doc.save(filename);
 };
 
@@ -254,7 +254,7 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
     ['Dirección:', companyData.address],
     ['Teléfono:', companyData.phone],
     ['Email:', companyData.email],
-    ['Fecha de generación:', format(new Date(), 'dd/MM/yyyy', { locale: es })],
+    ['Fecha de generación:', businessClock.format(businessClock.now(), 'dd/MM/yyyy')],
     ['Tipo de reporte:', filters.reportType === 'future' ? 'Pagos Futuros' : 'Listado Completo'],
     [''],
     ['Filtros aplicados:'],
@@ -328,7 +328,7 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
   }
   
   // Save Excel
-  const filename = `pagos_proveedores_${filters.reportType}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+  const filename = `pagos_proveedores_${filters.reportType}_${businessClock.today()}.xlsx`;
   XLSX.writeFile(workbook, filename);
 };
 

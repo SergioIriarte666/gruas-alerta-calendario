@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('UserContext');
@@ -180,7 +181,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       full_name: updates.name,
       email: updates.email,
       avatar_url: updates.avatar_url,
-      updated_at: new Date().toISOString()
+      updated_at: businessClock.nowISO()
       })
       .eq('id', user.id);
 

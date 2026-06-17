@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import * as XLSX from 'xlsx';
 import { createLogger } from "@/lib/logger";
@@ -31,7 +32,7 @@ export class TemplateGenerator {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const timestamp = new Date().toISOString().slice(0, 10);
+    const timestamp = businessClock.today();
     a.download = `plantilla_servicios_${timestamp}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
@@ -104,7 +105,7 @@ export class TemplateGenerator {
 
       // Generate and download file
       logger.debug('💾 Downloading Excel template...');
-      const timestamp = new Date().toISOString().slice(0, 10);
+      const timestamp = businessClock.today();
       XLSX.writeFile(wb, `plantilla_servicios_${timestamp}.xlsx`);
       logger.debug('✅ Excel template downloaded successfully');
 

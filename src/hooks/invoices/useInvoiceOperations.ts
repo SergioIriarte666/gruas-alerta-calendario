@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
@@ -132,7 +133,7 @@ export const useInvoiceOperations = () => {
         .from('service_closures')
         .update({ 
           status: 'invoiced',
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', invoiceData.closureId);
 
@@ -476,7 +477,7 @@ export const useInvoiceOperations = () => {
         description: "La factura ha sido actualizada exitosamente.",
       });
 
-      return { ...invoiceData, updatedAt: new Date().toISOString() };
+      return { ...invoiceData, updatedAt: businessClock.nowISO() };
     } catch (error: any) {
       logger.error('❌ Invoice update transaction failed:', error);
       
@@ -546,7 +547,7 @@ export const useInvoiceOperations = () => {
                 status: 'completed', 
                 invoice_folio: null,
                 invoice_numero_fiscal: null,
-                updated_at: new Date().toISOString() 
+                updated_at: businessClock.nowISO() 
               })
               .in('id', servicesToRevert.map(s => s.id));
 
@@ -557,7 +558,7 @@ export const useInvoiceOperations = () => {
         // 4. DESPUÉS revertir estado de cierres de 'invoiced' a 'closed'
         const { error: closureRevertError } = await supabase
           .from('service_closures')
-          .update({ status: 'closed', updated_at: new Date().toISOString() })
+          .update({ status: 'closed', updated_at: businessClock.nowISO() })
           .in('id', closureIds)
           .eq('status', 'invoiced');
 
@@ -580,7 +581,7 @@ export const useInvoiceOperations = () => {
             status: 'completed', 
             invoice_folio: null,
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO() 
           })
           .in('id', directServiceIds)
           .eq('status', 'invoiced');
@@ -669,7 +670,7 @@ export const useInvoiceOperations = () => {
         description: "La factura ha sido marcada como pagada y el pago registrado automáticamente.",
       });
 
-      return { status: 'paid' as const, updatedAt: new Date().toISOString() };
+      return { status: 'paid' as const, updatedAt: businessClock.nowISO() };
     } catch (error: any) {
       logger.error('Error marking invoice as paid:', error);
       toast.error("Error al marcar como pagada", {

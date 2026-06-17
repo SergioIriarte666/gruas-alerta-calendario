@@ -14,7 +14,7 @@ import { useToast } from '@/components/ui/custom-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/integrations/supabase/client';
+import { useAdminServiceOps } from '@/hooks/useAdminServiceOps';
 import { useQueryClient } from '@tanstack/react-query';
 import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
 import {
@@ -42,6 +42,7 @@ export const ServicesPageContent = () => {
   const { toast } = useToast();
   const { user } = useUser();
   const isMobile = useIsMobile();
+  const { closeService } = useAdminServiceOps();
   
   // Estados del formulario
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -187,27 +188,10 @@ export const ServicesPageContent = () => {
     }
 
     try {
-      // Usar la función de cierre seguro para evitar duplicar comisiones
-      const { data, error } = await supabase.rpc('emergency_close_service', {
-        p_service_id: service.id
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      const result = data as any;
-      if (!result?.success) {
-        throw new Error(result?.error || 'Error desconocido al cerrar servicio');
-      }
-
-      // Refrescar la lista de servicios y invalidar caché de comisiones
+      const result = await closeService(service.id);
       refetch();
-      
-      // Invalidar caché de comisiones para que se actualicen en tiempo real
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
-      
       toast({
         type: 'success',
         title: 'Servicio cerrado',

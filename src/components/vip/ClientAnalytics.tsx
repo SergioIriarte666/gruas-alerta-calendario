@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,7 +70,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
   // Generate analytics data based on time range
   const generateAnalyticsData = (): AnalyticsData[] => {
-    const now = new Date();
+    const now = businessClock.now();
     let intervals: Date[] = [];
     let formatString = '';
 

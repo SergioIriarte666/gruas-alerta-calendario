@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -272,7 +273,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       title: 'Servicios Pendientes de Cierre',
       message: `${pendingServices.length} servicios completados hace más de 30 días necesitan ser incluidos en un cierre.`,
       type: 'warning',
-      timestamp: new Date(),
+      timestamp: businessClock.now(),
       actionType: 'navigate',
       actionUrl: '/closures',
       actionData: { filter: 'pending-services' },
@@ -285,7 +286,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       title: 'Servicios Muy Antiguos Sin Cierre',
       message: `${criticalServices.length} servicios de hace más de 60 días requieren atención urgente.`,
       type: 'error',
-      timestamp: new Date(),
+      timestamp: businessClock.now(),
       actionType: 'navigate',
       actionUrl: '/closures',
       actionData: { filter: 'critical-services' },
@@ -329,7 +330,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       title: 'Servicios sin Orden de Compra',
       message: `${servicesNoOC.length} servicios completados no tienen orden de compra registrada.`,
       type: servicesNoOC.length > 10 ? 'error' : 'warning',
-      timestamp: new Date(),
+      timestamp: businessClock.now(),
       actionType: 'navigate',
       actionUrl: '/services',
       actionData: { filter: 'without-oc' },

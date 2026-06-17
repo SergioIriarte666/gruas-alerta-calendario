@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 /**
  * Auto-SKU generator for XML-imported products.
  *
@@ -9,7 +10,7 @@
  * still requires an explicit SKU (see mem://constraints/inventory/manual-sku-enforcement-v2).
  */
 export const generateAutoSku = (): string => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const date = businessClock.today().replace(/-/g, '');
   const hex = Math.floor(Math.random() * 0xffff)
     .toString(16)
     .toUpperCase()

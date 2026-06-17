@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,7 +80,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
   // Calculate metrics
   const calculateMetrics = (): ServiceMetrics => {
-    const now = new Date();
+    const now = businessClock.now();
     const periodDays = parseInt(selectedPeriod);
     const periodStart = subDays(now, periodDays);
     
@@ -122,7 +123,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   // Generate trend data
   const generateTrendData = (): TrendData[] => {
     const months = [];
-    const now = new Date();
+    const now = businessClock.now();
     
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
@@ -206,7 +207,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       toast.loading(`Generando reporte ejecutivo en formato ${exportFormat.toUpperCase()}...`);
       
       const metrics = calculateMetrics();
-      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const currentDate = businessClock.today();
       const fileName = `reporte-ejecutivo-${clientName}-${currentDate}`;
       
       if (exportFormat === 'pdf') {
@@ -239,7 +240,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
     yPosition += 8;
 
     doc.setFontSize(10);
-    doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(`Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 15;
 
     // Métricas principales
@@ -308,7 +309,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
     const summaryData = [
       ['REPORTE EJECUTIVO - ' + toTitleCase(clientName)],
       [''],
-      ['Fecha de Generación:', format(new Date(), 'dd/MM/yyyy HH:mm')],
+      ['Fecha de Generación:', businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')],
       [''],
       ['MÉTRICAS PRINCIPALES'],
       ['Total de Servicios', metrics.totalServices],
@@ -698,7 +699,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
           <div className="border-t border-gray-700 pt-4">
             <p className="text-xs text-gray-400">
-              Reporte generado el {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })} • 
+              Reporte generado el {businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')} •
               Datos de los últimos {selectedPeriod} días • 
               {services.length} servicios analizados
             </p>

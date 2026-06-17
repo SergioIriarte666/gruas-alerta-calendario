@@ -1,6 +1,10 @@
+import { businessClock } from '@/utils/businessClock';
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useImportMappings");
 
 export type ImportType = 'purchase' | 'sale';
 export type ImportMappingResolution = 'create' | 'assign' | 'ignore';
@@ -41,7 +45,10 @@ const fetchMappings = async (importType: ImportType): Promise<ImportRutMapping[]
     .eq('import_type', importType)
     .order('updated_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    logger.error('[useImportMappings] Error cargando mappings de RUT:', error);
+    throw error;
+  }
   return (data ?? []).map(mapImportRutMapping);
 };
 
@@ -91,6 +98,7 @@ export const useImportMappings = (importType?: ImportType) => {
       } = await supabase.auth.getUser();
 
       if (!user?.id) {
+        logger.error('[useImportMappings] Usuario no autenticado al guardar mapping');
         throw new Error('No se pudo obtener el usuario actual para guardar el mapping.');
       }
 
@@ -104,7 +112,7 @@ export const useImportMappings = (importType?: ImportType) => {
         resolution,
         mapped_entity_id: entityId ?? null,
         mapped_entity_name: entityName ?? null,
-        updated_at: new Date().toISOString(),
+        updated_at: businessClock.nowISO(),
       };
 
       const { data, error } = await supabase
@@ -115,7 +123,10 @@ export const useImportMappings = (importType?: ImportType) => {
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useImportMappings] Error guardando mapping de RUT:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({
         queryKey: ['import-rut-mappings', requestedImportType],

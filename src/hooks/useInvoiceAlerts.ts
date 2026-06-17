@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -69,7 +70,7 @@ export const useInvoiceAlerts = () => {
       if (existingSettings) {
         const { data, error } = await supabase
           .from('invoice_alert_settings')
-          .update({ ...settings, updated_at: new Date().toISOString() })
+          .update({ ...settings, updated_at: businessClock.nowISO() })
           .eq('id', existingSettings.id)
           .select(INVOICE_ALERT_SETTINGS_SELECT)
           .single();

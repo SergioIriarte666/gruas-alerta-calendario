@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useIncomeProjections");
 
 export interface ProjectedInvoice {
   id: string;
@@ -69,7 +72,10 @@ export const useIncomeProjections = (params: UseIncomeProjectionsParams = {}) =>
 
       const { data, error } = await query.order('due_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useIncomeProjections] Error cargando proyecciones de ingresos:', error);
+        throw error;
+      }
 
       // Formatear datos y calcular métricas
       const invoices: ProjectedInvoice[] = (data || []).map((invoice: any) => {

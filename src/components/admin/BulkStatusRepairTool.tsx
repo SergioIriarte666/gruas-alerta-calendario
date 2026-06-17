@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import * as React from 'react';
 import { useState } from 'react';
 import { ScanSearch, AlertTriangle, Wrench, Loader2, CheckCircle } from 'lucide-react';
@@ -179,7 +180,7 @@ export const BulkStatusRepairTool = () => {
             status: 'completed', 
             invoice_folio: null, 
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO() 
           })
           .eq('id', issue.id);
         if (error) throw error;
@@ -205,7 +206,7 @@ export const BulkStatusRepairTool = () => {
           const remaining = inv.total - totalPaid;
           const { error } = await supabase
             .from('invoices')
-            .update({ paid_amount: totalPaid, remaining_amount: remaining, updated_at: new Date().toISOString() })
+            .update({ paid_amount: totalPaid, remaining_amount: remaining, updated_at: businessClock.nowISO() })
             .eq('id', issue.id);
           if (error) throw error;
           return `✅ ${issue.folio}: Montos recalculados (pagado: ${formatCurrency(totalPaid)}, restante: ${formatCurrency(remaining)})`;

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import { manualChapters } from '@/data/userManualContent';
 
@@ -80,7 +81,7 @@ export function generateUserManualPDF(): void {
   }
 
   // Fecha generación
-  const today = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
+  const today = businessClock.format(businessClock.now(), 'dd/MM/yyyy');
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
   doc.text(sanitizeText(`Generado el ${today}`), pageWidth / 2, pageHeight - 25, { align: 'center' });

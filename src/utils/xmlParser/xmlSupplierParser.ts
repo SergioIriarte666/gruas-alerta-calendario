@@ -570,7 +570,7 @@ export class XMLSupplierParser {
     return {
       folio: folio || `DOC-${Date.now()}`,
       document_type: 'Factura',
-      issue_date: this.formatDate(fecha) || this.formatDate(new Date().toISOString()),
+      issue_date: this.formatDate(fecha) || this.formatDate(businessClock.nowISO()),
       due_date: fechaVencimiento ? this.formatDate(fechaVencimiento) : undefined,
       net_amount: neto || (total * 0.84), // Si no hay neto, calcularlo aproximado
       vat_amount: iva || (total * 0.19), // Si no hay IVA, calcularlo aproximado

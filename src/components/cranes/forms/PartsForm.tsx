@@ -28,7 +28,7 @@ interface PartsFormProps {
 type FormData = Omit<CreateCranePartData, 'crane_id' | 'created_by'>;
 
 export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date>(editingPart ? new Date(editingPart.date) : new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(editingPart ? new Date(editingPart.date) : businessClock.now());
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<SimilarItem | null>(null);
   const [confirmCreateNew, setConfirmCreateNew] = useState(false);
@@ -100,7 +100,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
   const handleClose = () => {
     reset();
-    setSelectedDate(new Date());
+    setSelectedDate(businessClock.now());
     setConfirmCreateNew(false);
     setShowDetailsModal(false);
     setSelectedProductForDetails(null);

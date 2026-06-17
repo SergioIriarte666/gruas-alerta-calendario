@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,8 +63,8 @@ export const CreateHistoricalPurchaseModal = ({
     defaultValues: {
       supplier_id: '',
       invoice_number: '',
-      issue_date: new Date(),
-      due_date: new Date(),
+      issue_date: businessClock.now(),
+      due_date: businessClock.now(),
       net_amount: 0,
       tax_amount: 0,
       amount: 0,

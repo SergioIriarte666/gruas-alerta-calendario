@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useMemo } from 'react';
 import {
   Dialog,
@@ -168,7 +169,7 @@ export const BatchEditHistoricalInvoicesModal = ({
         // Add audit log if there are changes
         if (changes.length > 0 || updateNote) {
           const newAuditEntry = {
-            date: new Date().toISOString(),
+            date: businessClock.nowISO(),
             action: 'BATCH_UPDATE',
             details: `Batch Update: ${changes.join(', ')}${updateNote ? '. Note appended.' : ''}`,
           };

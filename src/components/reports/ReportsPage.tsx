@@ -105,7 +105,7 @@ const ReportsPage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('this_month');
   const [selectedClientId, setSelectedClientId] = useState<string>('all');
   const [customFrom, setCustomFrom] = useState<Date | undefined>(startOfMonth(businessClock.todayDate()));
-  const [customTo, setCustomTo] = useState<Date | undefined>(new Date());
+  const [customTo, setCustomTo] = useState<Date | undefined>(businessClock.now());
 
   const { clients } = useClients();
   const { data: costCategories = [] } = useCostCategories();

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect, useCallback } from 'react';
 import { Service, Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +33,7 @@ interface ClientClosureData {
 }
 
 export const useClosureAutomation = () => {
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState<Date>(businessClock.now());
   const [clientsData, setClientsData] = useState<ClientClosureData[]>([]);
   const [loading, setLoading] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -189,7 +190,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         });
       }
 
-      const nowIso = new Date().toISOString();
+      const nowIso = businessClock.nowISO();
       const mapServiceForClosure = (item: any): Service => ({
         id: item.id,
         folio: item.folio || 'Sin folio',

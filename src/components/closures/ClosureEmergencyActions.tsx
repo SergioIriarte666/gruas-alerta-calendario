@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
       if (serviceIds.length > 0) {
         const { error: revertError } = await supabase
           .from('services')
-          .update({ status: 'completed', updated_at: new Date().toISOString() })
+          .update({ status: 'completed', updated_at: businessClock.nowISO() })
           .in('id', serviceIds);
 
         if (revertError) throw revertError;

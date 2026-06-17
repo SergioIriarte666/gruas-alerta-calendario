@@ -3,6 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useCraneInventoryMetrics");
 
 export interface CraneInventoryMetrics {
   // PIEZAS INSTALADAS (desde crane_parts directos)
@@ -62,7 +65,10 @@ export const useCraneInventoryMetrics = (craneId: string) => {
         .eq('crane_id', craneId)
         .is('inventory_movement_id', null); // Solo piezas directas
 
-      if (partsError) throw partsError;
+      if (partsError) {
+        logger.error('[useCraneInventoryMetrics] Error cargando piezas instaladas:', partsError);
+        throw partsError;
+      }
 
       // 2. Obtener consumos de inventario (movimientos de salida)
       const { data: consumptionData, error: consumptionError } = await supabase
@@ -73,7 +79,10 @@ export const useCraneInventoryMetrics = (craneId: string) => {
         .eq('status', 'active')
         .order('movement_date', { ascending: false });
 
-      if (consumptionError) throw consumptionError;
+      if (consumptionError) {
+        logger.error('[useCraneInventoryMetrics] Error cargando consumos de inventario:', consumptionError);
+        throw consumptionError;
+      }
 
       // 3. Obtener alertas de mantenimiento pendientes
       const { data: maintenanceData, error: maintenanceError } = await supabase
@@ -83,7 +92,10 @@ export const useCraneInventoryMetrics = (craneId: string) => {
         .eq('status', 'scheduled')
         .lte('scheduled_date', businessClock.today());
 
-      if (maintenanceError) throw maintenanceError;
+      if (maintenanceError) {
+        logger.error('[useCraneInventoryMetrics] Error cargando alertas de mantenimiento:', maintenanceError);
+        throw maintenanceError;
+      }
 
       // CALCULAR MÉTRICAS SEPARADAS
       const totalPartsInstalled = installedPartsData?.length || 0;

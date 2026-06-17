@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useConsumptionRates");
 
 export interface ConsumptionRate {
   id: string;
@@ -51,7 +54,10 @@ export function useAddConsumptionRate() {
         .insert(rate)
         .select(CONSUMPTION_RATES_SELECT)
         .single();
-      if (error) throw error;
+      if (error) {
+        logger.error('[useConsumptionRates] Error creando tasa de consumo:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -70,7 +76,10 @@ export function useUpdateConsumptionRate() {
         .eq('id', id)
         .select(CONSUMPTION_RATES_SELECT)
         .single();
-      if (error) throw error;
+      if (error) {
+        logger.error('[useConsumptionRates] Error actualizando tasa de consumo:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -87,7 +96,10 @@ export function useDeleteConsumptionRate() {
         .from('crane_consumption_rates')
         .update({ is_active: false })
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useConsumptionRates] Error desactivando tasa de consumo:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consumption-rates'] });

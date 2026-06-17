@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -75,7 +76,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
               status: 'completed', 
               invoice_folio: null,
               invoice_numero_fiscal: null,
-              updated_at: new Date().toISOString() 
+              updated_at: businessClock.nowISO() 
             })
             .in('id', serviceIds)
             .eq('status', 'invoiced');
@@ -87,7 +88,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
         // 4. Revert closure status from 'invoiced' to 'closed'
         const { error: closureRevertError } = await supabase
           .from('service_closures')
-          .update({ status: 'closed', updated_at: new Date().toISOString() })
+          .update({ status: 'closed', updated_at: businessClock.nowISO() })
           .in('id', closureIds)
           .eq('status', 'invoiced');
 
@@ -109,7 +110,7 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
             status: 'completed', 
             invoice_folio: null,
             invoice_numero_fiscal: null,
-            updated_at: new Date().toISOString() 
+            updated_at: businessClock.nowISO() 
           })
           .in('id', directServiceIds)
           .eq('status', 'invoiced');

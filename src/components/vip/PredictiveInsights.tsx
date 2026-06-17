@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,7 +57,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
   // Generate predictive insights
   const generatePredictions = (): Prediction[] => {
-    const now = new Date();
+    const now = businessClock.now();
     const predictions: Prediction[] = [];
 
     // Analyze service patterns for demand prediction
@@ -178,7 +179,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
   // Generate forecast data
   const generateForecastData = (): ForecastData[] => {
-    const now = new Date();
+    const now = businessClock.now();
     const forecast: ForecastData[] = [];
 
     // Generate 6 weeks of forecast

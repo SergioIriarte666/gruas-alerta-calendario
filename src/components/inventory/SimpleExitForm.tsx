@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,7 +58,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
   } = useForm<ExitFormData>({
     resolver: zodResolver(exitSchema),
     defaultValues: {
-      movement_date: new Date(),
+      movement_date: businessClock.now(),
       quantity: 1,
       destination_type: 'crane',
       crane_id: defaultCraneId,

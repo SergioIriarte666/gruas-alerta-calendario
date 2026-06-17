@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useFuelPrices");
 
 export interface FuelPrice {
   id: string;
@@ -113,7 +116,10 @@ export function useAddFuelPrice() {
         .select(FUEL_PRICES_SELECT)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFuelPrices] Error insertando precio de combustible:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -136,7 +142,10 @@ export function useUpdateFuelPrice() {
         .eq('id', id)
         .select(FUEL_PRICES_SELECT)
         .single();
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFuelPrices] Error actualizando precio de combustible:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -154,7 +163,10 @@ export function useDeleteFuelPrice() {
         .from('fuel_prices')
         .delete()
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useFuelPrices] Error eliminando precio de combustible:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fuel-prices'] });

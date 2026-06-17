@@ -268,6 +268,25 @@ export interface Operator {
   creatorName?: string;
 }
 
+// ── Desglose de ítems por servicio ───────────────────────────────────────────
+
+export interface ServiceItem {
+  id: string;
+  service_id: string;
+  glosa: string;
+  cantidad: number;
+  valor_unitario: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceItemDraft {
+  id: string;
+  glosa: string;
+  cantidad: number;
+  valor_unitario: number;
+}
+
 // ── Documentos de Operadores ──────────────────────────────────────────────────
 
 export type DocumentType =

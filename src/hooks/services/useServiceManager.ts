@@ -6,6 +6,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
+import { businessClock } from '@/utils/businessClock';
 
 const logger = createLogger('ServiceManager');
 
@@ -85,8 +86,8 @@ const transformToService = (data: ServiceSnakeCase): Service => {
       address: '',
       department: '',
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: businessClock.nowISO(),
+      updatedAt: businessClock.nowISO()
     },
     purchaseOrder: data.purchase_order || '',
     quoteNumber: data.quote_number || '',
@@ -111,8 +112,8 @@ const transformToService = (data: ServiceSnakeCase): Service => {
       vehicleBrandRequired: true,
       vehicleModelRequired: true,
       licensePlateRequired: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: businessClock.nowISO(),
+      updatedAt: businessClock.nowISO()
     },
     value: data.value,
     crane: data.crane || null,
@@ -878,7 +879,7 @@ export const useServiceManager = () => {
                 is_primary: index === 0,
                 commission_amount: operator.commission || 0,
                 role: operator.role || 'Principal',
-                updated_at: new Date().toISOString()
+                updated_at: businessClock.nowISO()
               })
               .eq('id', existingResource.id);
             
@@ -990,7 +991,7 @@ export const useServiceManager = () => {
               amount: serviceData.outsourcedCost || 0,
               supplier_id: newSupplierId,
               notes: serviceData.outsourcedNotes || null,
-              updated_at: new Date().toISOString()
+              updated_at: businessClock.nowISO()
             })
             .eq('id', existingOutsourcedCost.id);
 
@@ -1013,7 +1014,7 @@ export const useServiceManager = () => {
                 .update({
                   amount: serviceData.outsourcedCost || 0,
                   supplier_id: newSupplierId,
-                  updated_at: new Date().toISOString()
+                  updated_at: businessClock.nowISO()
                 })
                 .eq('id', existingPayment.id);
 

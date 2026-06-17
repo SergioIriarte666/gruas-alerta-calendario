@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,7 +58,7 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
   } as any);
 
   const receiptNumber = `COMP-${String(payment.id).slice(0, 8).toUpperCase()}`;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = businessClock.today();
 
   // Cabecera del documento
   autoTable(doc, {
@@ -187,7 +188,7 @@ export const generatePaymentReceiptPDF = async (paymentId: string): Promise<Blob
     doc.line(marginX, ph - 14, pageWidth - marginX, ph - 14);
     doc.setFontSize(8);
     doc.setTextColor(...MUTED);
-    doc.text(`Generado: ${formatForDisplayWithTime(new Date().toISOString())}`, marginX, ph - 9);
+    doc.text(`Generado: ${formatForDisplayWithTime(businessClock.nowISO())}`, marginX, ph - 9);
     doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 9, { align: 'right' });
   }
 

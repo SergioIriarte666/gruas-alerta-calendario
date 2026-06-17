@@ -92,14 +92,19 @@ const CostsPage = () => {
     const dateFrom = fromCandidates.length ? fromCandidates.reduce((a, b) => (a > b ? a : b)) : '';
     const dateTo = toCandidates.length ? toCandidates.reduce((a, b) => (a < b ? a : b)) : '';
 
-    const { data: pagedResult, isLoading } = usePagedCosts(page, pageSize, { dateFrom, dateTo });
+    const serverSearchTerm = searchTerm && !searchTerm.startsWith('id:') ? searchTerm : undefined;
+    const { data: pagedResult, isLoading } = usePagedCosts(page, pageSize, {
+        dateFrom,
+        dateTo,
+        searchTerm: serverSearchTerm,
+    });
     const costs: Cost[] = pagedResult?.costs ?? [];
     const totalCostCount = pagedResult?.total ?? 0;
 
-    // Reiniciar página cuando cambian los filtros de fecha
+    // Reiniciar página cuando cambian los filtros de fecha o búsqueda
     useEffect(() => {
         setPage(1);
-    }, [dateFrom, dateTo, pageSize]);
+    }, [dateFrom, dateTo, pageSize, searchTerm]);
     const { mutate: deleteCost } = useDeleteCost();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
@@ -252,25 +257,8 @@ const CostsPage = () => {
         if (searchTerm.startsWith('id:')) {
             const costId = searchTerm.substring(3);
             filtered = filtered.filter(cost => matchesCostIdentifier(cost.id, costId));
-        } else if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(cost => {
-                const matchesCost = matchesCostIdentifier(cost.id, searchLower) ||
-                    cost.description.toLowerCase().includes(searchLower) ||
-                    cost.notes?.toLowerCase().includes(searchLower) ||
-                    cost.cost_categories?.name.toLowerCase().includes(searchLower) ||
-                    cost.subcategory?.toLowerCase().includes(searchLower) ||
-                    (cost.service_folio && cost.service_folio.toLowerCase().includes(searchLower)) ||
-                    (cost.services?.folio && cost.services.folio.toLowerCase().includes(searchLower));
-                
-                const matchesMaintenance = cost.crane_maintenance?.description?.toLowerCase().includes(searchLower) ||
-                    cost.crane_maintenance?.provider?.toLowerCase().includes(searchLower) ||
-                    cost.crane_maintenance?.maintenance_type?.toLowerCase().includes(searchLower) ||
-                    cost.crane_maintenance?.notes?.toLowerCase().includes(searchLower);
-                
-                return matchesCost || matchesMaintenance;
-            });
         }
+        // Los demás términos de búsqueda se filtran server-side en usePagedCosts
 
         if (filters.category && filters.category !== 'all') {
             filtered = filtered.filter(cost => cost.category_id === filters.category);
@@ -458,6 +446,7 @@ const CostsPage = () => {
                     serverTotal={totalCostCount}
                     onServerPageChange={setPage}
                     onServerPageSizeChange={setPageSize}
+                    disableServerPagination={!!serverSearchTerm}
                 />
             ) : (
                 <CostList 

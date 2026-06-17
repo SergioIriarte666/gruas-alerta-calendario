@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useSavedLocations");
 
 export interface SavedLocation {
   id: string;
@@ -36,7 +39,10 @@ export function useSavedLocations() {
         longitude: loc.longitude,
         created_by: user?.id ?? null,
       });
-      if (error) throw error;
+      if (error) {
+        logger.error('[useSavedLocations] Error guardando ubicación:', error);
+        throw error;
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-locations'] }),
   });
@@ -44,7 +50,10 @@ export function useSavedLocations() {
   const deleteLocation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('saved_locations').delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useSavedLocations] Error eliminando ubicación:', error);
+        throw error;
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-locations'] }),
   });

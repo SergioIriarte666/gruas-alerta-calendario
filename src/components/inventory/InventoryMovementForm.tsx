@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { toLocalDateString } from '@/utils/timezoneUtils';
 import { useForm } from 'react-hook-form';
@@ -90,7 +91,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
     resolver: zodResolver(movementSchema),
     defaultValues: {
       movement_type: defaultMovementType,
-      movement_date: new Date(),
+      movement_date: businessClock.now(),
       quantity: 1,
     },
   });
@@ -173,7 +174,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
       toast.success('Movimiento registrado correctamente');
       form.reset({
         movement_type: defaultMovementType,
-        movement_date: new Date(),
+        movement_date: businessClock.now(),
         quantity: 1,
       });
       onSuccess?.();

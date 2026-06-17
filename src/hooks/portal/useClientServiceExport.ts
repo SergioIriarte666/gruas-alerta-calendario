@@ -215,8 +215,8 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       });
 
       // Calcular fechas
-      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
-      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
+      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
 
       const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;
@@ -271,8 +271,8 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
       });
 
       // Calcular fechas
-      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
-      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : new Date());
+      const calculatedDateFrom = dateFrom || (servicesToUse.length > 0 ? new Date(Math.min(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
+      const calculatedDateTo = dateTo || (servicesToUse.length > 0 ? new Date(Math.max(...servicesToUse.map(s => new Date(s.service_date).getTime()))) : businessClock.now());
 
       const currentDate = businessClock.today();
       const customFileName = `mis-servicios-${currentDate}`;

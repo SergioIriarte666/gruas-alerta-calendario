@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -75,7 +76,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
   } = useForm<EntryFormData>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
-      movement_date: new Date(),
+      movement_date: businessClock.now(),
       quantity: 1,
       unit_cost: 0,
       item_name: '',

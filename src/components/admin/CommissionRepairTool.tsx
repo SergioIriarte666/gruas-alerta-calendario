@@ -14,55 +14,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AlertTriangle, CheckCircle, Loader2, ScanSearch, Wrench } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { createLogger } from "@/lib/logger";
+import { useCommissionRepair } from '@/hooks/useCommissionRepair';
 
-
-const logger = createLogger("CommissionRepairTool");
 /**
  * Herramienta de auditoría y reparación del sistema de comisiones.
  * Migrada desde el antiguo módulo de respaldos. Pertenece al panel
  * de emergencia de administración.
  */
 export const CommissionRepairTool = () => {
-  const [auditing, setAuditing] = useState(false);
-  const [repairing, setRepairing] = useState(false);
   const [confirmRepairOpen, setConfirmRepairOpen] = useState(false);
-  const [auditData, setAuditData] = useState<any>(null);
-  const [repairData, setRepairData] = useState<any>(null);
-
-  const auditCommissionSystem = async () => {
-    try {
-      setAuditing(true);
-      const { data, error } = await supabase.rpc('audit_commission_system');
-      if (error) throw error;
-      setAuditData(data);
-      toast.success('Auditoría completada');
-    } catch (error: any) {
-      logger.error('Error in audit:', error);
-      toast.error(error.message || 'Error al ejecutar auditoría');
-    } finally {
-      setAuditing(false);
-    }
-  };
-
-  const repairCommissionSystem = async () => {
-    try {
-      setRepairing(true);
-      const { data, error } = await supabase.rpc('repair_commission_system');
-      if (error) throw error;
-      const info = data as any;
-      setRepairData(info);
-      toast.success(`Sistema reparado: ${info.commissions_created} comisiones creadas, ${info.services_synced} servicios sincronizados`);
-      await auditCommissionSystem();
-    } catch (error: any) {
-      logger.error('Error in repair:', error);
-      toast.error(error.message || 'Error al reparar sistema');
-    } finally {
-      setRepairing(false);
-    }
-  };
+  const { audit, repair, auditing, repairing, auditData, repairData } = useCommissionRepair();
 
   return (
     <Card className="bg-card border">
@@ -85,7 +46,7 @@ export const CommissionRepairTool = () => {
         </Alert>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Button onClick={auditCommissionSystem} disabled={auditing} variant="outline">
+          <Button onClick={audit} disabled={auditing} variant="outline">
             {auditing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <ScanSearch className="size-4 mr-2" />}
             Auditar Sistema
           </Button>
@@ -160,7 +121,7 @@ export const CommissionRepairTool = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={repairCommissionSystem}
+              onClick={repair}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Continuar reparación

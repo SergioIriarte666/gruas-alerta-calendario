@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -170,7 +171,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                     <p>
                       <span className="font-medium">Fecha:</span>{' '}
-                      {formatForDisplay(new Date())}
+                      {formatForDisplay(businessClock.nowISO())}
                     </p>
                     <p>
                       <span className="font-medium">Operador:</span>{' '}

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectedInvoice } from "@/hooks/projections/useIncomeProjections";
 import { formatCurrency } from "@/lib/utils";
@@ -18,7 +19,7 @@ interface AgingBucket {
 }
 
 export const AgingReport = ({ invoices }: AgingReportProps) => {
-  const today = startOfDay(new Date());
+  const today = startOfDay(businessClock.now());
 
   // Filtrar solo facturas vencidas (por status o por fecha)
   const overdueInvoices = invoices.filter(inv => inv.status === 'overdue');

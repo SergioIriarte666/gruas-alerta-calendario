@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Service } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -57,7 +58,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
       const updateData: any = {
         purchase_order_number: purchaseOrderNumber.trim(),
         status: 'pending',
-        updated_at: new Date().toISOString()
+        updated_at: businessClock.nowISO()
       };
 
       // Agregar quote_number solo si se proporcionó

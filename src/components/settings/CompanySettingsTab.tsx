@@ -10,9 +10,13 @@ import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { LogoUpload } from './LogoUpload';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRut } from '@/utils/rutFormatter';
+import {
+  useCompanyProfiles,
+  useSaveCompanyProfile,
+  useUpdateCompanyProfileLogo,
+} from '@/hooks/useCompanyProfiles';
 
 const inputClassName = 'border-border/70 bg-background/60';
 const sectionCardClassName = 'border-border/70 bg-card/80 shadow-sm';
@@ -21,14 +25,6 @@ export const CompanySettingsTab = () => {
   const { settings, updateSettings, saveSettings, saving } = useSettings();
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const [localSettings, setLocalSettings] = useState(settings.company);
-  const [companyProfiles, setCompanyProfiles] = useState<Array<{
-    rut: string;
-    name: string;
-    address?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    logo_url?: string | null;
-  }>>([]);
   const [selectedProfileRut, setSelectedProfileRut] = useState<string>('__new__');
   const [profileForm, setProfileForm] = useState({
     rut: '',
@@ -38,38 +34,19 @@ export const CompanySettingsTab = () => {
     email: '',
     logoUrl: '' as string | undefined
   });
-  const [savingProfile, setSavingProfile] = useState(false);
   const [updatingProfileLogo, setUpdatingProfileLogo] = useState(false);
+
+  const { data: companyProfiles = [] } = useCompanyProfiles();
+  const saveProfileMutation = useSaveCompanyProfile();
+  const updateLogoMutation = useUpdateCompanyProfileLogo();
 
   React.useEffect(() => {
     setLocalSettings(settings.company);
   }, [settings.company]);
 
   React.useEffect(() => {
-    const loadProfiles = async () => {
-      const { data, error } = await supabase
-        .from('company_profiles')
-        .select('rut, name, address, phone, email, logo_url')
-        .order('name', { ascending: true });
-      if (error) {
-        setCompanyProfiles([]);
-        return;
-      }
-      setCompanyProfiles(data || []);
-    };
-    loadProfiles();
-  }, []);
-
-  React.useEffect(() => {
     if (selectedProfileRut === '__new__') {
-      setProfileForm({
-        rut: '',
-        name: '',
-        address: '',
-        phone: '',
-        email: '',
-        logoUrl: undefined
-      });
+      setProfileForm({ rut: '', name: '', address: '', phone: '', email: '', logoUrl: undefined });
       return;
     }
     const found = companyProfiles.find(p => p.rut === selectedProfileRut);
@@ -121,27 +98,15 @@ export const CompanySettingsTab = () => {
       toast.error('Datos incompletos', { description: 'RUT y Nombre son obligatorios.' });
       return;
     }
-    setSavingProfile(true);
-    const payload = {
+    await saveProfileMutation.mutateAsync({
       rut: profileForm.rut.trim(),
       name: profileForm.name.trim(),
       address: profileForm.address.trim() || null,
       phone: profileForm.phone.trim() || null,
       email: profileForm.email.trim() || null,
-      logo_url: profileForm.logoUrl || null
-    };
-    const { error } = await supabase.from('company_profiles').upsert(payload, { onConflict: 'rut' });
-    setSavingProfile(false);
-    if (error) {
-      toast.error('Error al guardar', { description: error.message });
-      return;
-    }
-    const { data, error: refreshError } = await supabase
-      .from('company_profiles')
-      .select('rut, name, address, phone, email, logo_url')
-      .order('name', { ascending: true });
-    if (!refreshError) setCompanyProfiles(data || []);
-    setSelectedProfileRut(payload.rut);
+      logo_url: profileForm.logoUrl || null,
+    });
+    setSelectedProfileRut(profileForm.rut.trim());
     toast.success('Empresa guardada', { description: 'Se guardó el perfil de empresa para encabezados y logotipo.' });
   };
 
@@ -152,51 +117,17 @@ export const CompanySettingsTab = () => {
     }
     setUpdatingProfileLogo(true);
     try {
-      const rut = profileForm.rut.trim();
-      const existing = companyProfiles.find(p => p.rut === rut);
-      const oldLogoUrl = existing?.logo_url || null;
-
-      let newLogoUrlForDB: string | null = oldLogoUrl;
-      let newLogoPath: string | undefined;
-
-      if (logoFile) {
-        newLogoPath = `public/company-profile-${rut}-${Date.now()}-${logoFile.name}`;
-        const { error: uploadError } = await supabase.storage.from('company-assets').upload(newLogoPath, logoFile);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('company-assets').getPublicUrl(newLogoPath);
-        newLogoUrlForDB = urlData.publicUrl;
-      } else if (logoFile === null) {
-        newLogoUrlForDB = null;
-      }
-
-      const { error: upsertError } = await supabase
-        .from('company_profiles')
-        .upsert({
-          rut,
-          name: profileForm.name.trim(),
-          address: profileForm.address.trim() || null,
-          phone: profileForm.phone.trim() || null,
-          email: profileForm.email.trim() || null,
-          logo_url: newLogoUrlForDB
-        }, { onConflict: 'rut' });
-      if (upsertError) {
-        if (newLogoPath) await supabase.storage.from('company-assets').remove([newLogoPath]);
-        throw upsertError;
-      }
-
-      if (oldLogoUrl && newLogoUrlForDB !== oldLogoUrl) {
-        const oldLogoPath = oldLogoUrl.split('/company-assets/')[1]?.split('?')[0];
-        if (oldLogoPath) {
-          await supabase.storage.from('company-assets').remove([oldLogoPath]);
-        }
-      }
-
-      setProfileForm(prev => ({ ...prev, logoUrl: newLogoUrlForDB || undefined }));
-      const { data, error: refreshError } = await supabase
-        .from('company_profiles')
-        .select('rut, name, address, phone, email, logo_url')
-        .order('name', { ascending: true });
-      if (!refreshError) setCompanyProfiles(data || []);
+      const existing = companyProfiles.find(p => p.rut === profileForm.rut.trim());
+      const newLogoUrl = await updateLogoMutation.mutateAsync({
+        rut: profileForm.rut.trim(),
+        name: profileForm.name.trim(),
+        address: profileForm.address,
+        phone: profileForm.phone,
+        email: profileForm.email,
+        logoFile,
+        currentLogoUrl: existing?.logo_url ?? null,
+      });
+      setProfileForm(prev => ({ ...prev, logoUrl: newLogoUrl || undefined }));
       toast.success('Logotipo actualizado', { description: 'El logotipo de la empresa se actualizó correctamente.' });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'No se pudo actualizar el logotipo.';
@@ -412,8 +343,8 @@ export const CompanySettingsTab = () => {
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button onClick={saveCompanyProfile} disabled={savingProfile}>
-              {savingProfile && <Loader2 className="size-4 mr-2 animate-spin" />}
+            <Button onClick={saveCompanyProfile} disabled={saveProfileMutation.isPending}>
+              {saveProfileMutation.isPending && <Loader2 className="size-4 mr-2 animate-spin" />}
               Guardar Empresa
             </Button>
           </div>

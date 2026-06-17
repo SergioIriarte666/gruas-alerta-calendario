@@ -164,7 +164,7 @@ export const useActiveAlerts = () => {
               location_name: stock.location?.name,
               current_value: stock.current_quantity,
               threshold_value: threshold,
-              created_at: new Date().toISOString(),
+              created_at: businessClock.nowISO(),
               item_id: stock.item_id
             });
           }
@@ -190,7 +190,7 @@ export const useActiveAlerts = () => {
               location_name: stock.location?.name,
               current_value: stock.current_quantity,
               threshold_value: threshold,
-              created_at: new Date().toISOString(),
+              created_at: businessClock.nowISO(),
               item_id: stock.item_id
             });
           }
@@ -220,7 +220,7 @@ export const useActiveAlerts = () => {
               location_name: stock.location?.name,
               current_value: daysSinceMovement,
               threshold_value: threshold,
-              created_at: new Date().toISOString(),
+              created_at: businessClock.nowISO(),
               item_id: stock.item_id
             });
           }
@@ -263,7 +263,7 @@ export const useActiveAlerts = () => {
                 location_name: movement.location?.name,
                 current_value: daysToExpiry,
                 threshold_value: threshold,
-                created_at: new Date().toISOString(),
+                created_at: businessClock.nowISO(),
                 item_id: movement.item_id
               });
             }

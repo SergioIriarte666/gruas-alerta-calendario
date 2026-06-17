@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
@@ -200,7 +201,7 @@ export const useClosureOperations = () => {
         description: "El cierre ha sido actualizado exitosamente.",
       });
 
-      return { ...closureData, updatedAt: new Date().toISOString() };
+      return { ...closureData, updatedAt: businessClock.nowISO() };
     } catch (error: any) {
       logger.error('Error updating closure:', error);
       toast.error("Error", {
@@ -244,7 +245,7 @@ export const useClosureOperations = () => {
         description: "El cierre ha sido procesado exitosamente.",
       });
 
-      return { status: 'closed' as const, updatedAt: new Date().toISOString() };
+      return { status: 'closed' as const, updatedAt: businessClock.nowISO() };
     } catch (error: any) {
       logger.error('Error closing closure:', error);
       toast.error("Error", {

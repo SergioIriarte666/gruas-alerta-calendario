@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { fetchCompanyData } from './companyDataFetcher';
@@ -72,7 +73,7 @@ const addHeader = async (doc: jsPDF, companyData: Awaited<ReturnType<typeof fetc
   doc.setFont('helvetica', 'bold');
   doc.text('Manual de Costos y Centros de Costo', MARGIN + 4, y + 9.5);
 
-  const now = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+  const now = businessClock.format(businessClock.now(), 'dd/MM/yyyy');
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...MUTED);
@@ -476,7 +477,7 @@ export const generateCostManualPDF = async (): Promise<{ blob: Blob; fileName: s
   y = (doc as any).lastAutoTable.finalY + 6;
 
   y = checkSpace(doc, y, 16, pageRef);
-  y = callout(doc, `Versión generada el ${new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })}. Para modificar este manual, actualizar el archivo src/utils/pdf/costManualPdfGenerator.ts y regenerar desde la página de Centros de Costo.`, y, 'info');
+  y = callout(doc, `Versión generada el ${businessClock.format(businessClock.now(), 'dd/MM/yyyy')}. Para modificar este manual, actualizar el archivo src/utils/pdf/costManualPdfGenerator.ts y regenerar desde la página de Centros de Costo.`, y, 'info');
 
   // Footers en todas las páginas
   const totalPages = (doc as any).internal.pages.length - 1;
@@ -485,6 +486,6 @@ export const generateCostManualPDF = async (): Promise<{ blob: Blob; fileName: s
     addFooter(doc, i, totalPages);
   }
 
-  const fileName = `manual-costos-g5n-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const fileName = `manual-costos-g5n-${businessClock.today()}.pdf`;
   return { blob: doc.output('blob'), fileName };
 };

@@ -84,7 +84,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails, onDelete }: CostsTabl
                                             <Tooltip>
                                                 <TooltipTrigger>
                                                     {cost.payment_date ? (
-                                                        new Date(`${cost.payment_date}T12:00:00Z`) > new Date() ? (
+                                                        new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.now() ? (
                                                             <CalendarClock className="mx-auto size-5 text-warning" />
                                                         ) : (
                                                             <CheckCircle className="mx-auto size-5 text-success" />

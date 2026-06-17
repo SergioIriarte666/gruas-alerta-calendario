@@ -20,7 +20,7 @@ const getCountdown = (serviceDate: string, startTime?: string): { label: string;
     if (startTime) {
       const [h, m] = startTime.split(':').map(Number);
       const now = businessClock.todayDate();
-      const serviceTime = new Date();
+      const serviceTime = businessClock.now();
       serviceTime.setHours(h, m, 0, 0);
       const diffMins = differenceInMinutes(serviceTime, now);
       if (diffMins <= 0) return { label: 'En curso', urgent: false };

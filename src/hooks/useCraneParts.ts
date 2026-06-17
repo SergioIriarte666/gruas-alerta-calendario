@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useCraneParts");
 
 export type CranePart = Database['public']['Tables']['crane_parts']['Row'];
 export type CreateCranePartData = Database['public']['Tables']['crane_parts']['Insert'];
@@ -114,7 +117,10 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
         .eq('crane_id', craneId)
         .order('date', { ascending: false });
 
-      if (directError) throw directError;
+      if (directError) {
+        logger.error('[useCraneParts] Error cargando piezas directas:', directError);
+        throw directError;
+      }
 
       // Mapear IDs referenciados por piezas directas
       const referencedMovementIds = (directPartsRaw || [])
@@ -233,7 +239,10 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
 
       const { data: costParts, error: costError } = await costPartsQuery;
 
-      if (costError) throw costError;
+      if (costError) {
+        logger.error('[useCraneParts] Error cargando costos de piezas:', costError);
+        throw costError;
+      }
 
       // Obtener IDs de movimientos de inventario que ya están vinculados en crane_parts
       const linkedMovementIds = (directParts || [])
@@ -257,7 +266,10 @@ export const useCraneParts = (craneId: string, options?: { source?: 'direct' | '
 
       const { data: inventoryConsumptions, error: consumptionError } = await consumptionQuery;
 
-      if (consumptionError) throw consumptionError;
+      if (consumptionError) {
+        logger.error('[useCraneParts] Error cargando consumos de inventario:', consumptionError);
+        throw consumptionError;
+      }
 
       // Convertir costos huérfanos a formato de piezas
       const costBasedParts: EnhancedCranePart[] = (costParts || []).map(cost => ({
@@ -370,7 +382,10 @@ export const useCreateCranePart = () => {
         .select(CRANE_PARTS_SELECT)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCraneParts] Error creando pieza:', error);
+        throw error;
+      }
       return result;
     },
     onSuccess: (data) => {
@@ -398,7 +413,10 @@ export const useUpdateCranePart = () => {
         .select(CRANE_PARTS_SELECT)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCraneParts] Error actualizando pieza:', error);
+        throw error;
+      }
       return result;
     },
     onSuccess: (data) => {
@@ -424,7 +442,10 @@ export const useDeleteCranePart = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useCraneParts] Error eliminando pieza:', error);
+        throw error;
+      }
       return id;
     },
     onSuccess: (_, id) => {
@@ -451,7 +472,10 @@ export const useCranePartsStats = (craneId: string) => {
         .select('id, supplier, total_value, date')
         .eq('crane_id', craneId);
 
-      if (directPartsError) throw directPartsError;
+      if (directPartsError) {
+        logger.error('[useCraneParts] Error cargando estadísticas de piezas directas:', directPartsError);
+        throw directPartsError;
+      }
 
       // Get parts from costs (maintenance category with subcategory "Piezas y Repuestos")
       const { data: costParts, error: costPartsError } = await supabase
@@ -460,7 +484,10 @@ export const useCranePartsStats = (craneId: string) => {
         .eq('crane_id', craneId)
         .eq('subcategory', 'Piezas y Repuestos');
 
-      if (costPartsError) throw costPartsError;
+      if (costPartsError) {
+        logger.error('[useCraneParts] Error cargando estadísticas de costos de piezas:', costPartsError);
+        throw costPartsError;
+      }
 
       // Get inventory consumptions
       const { data: consumptions, error: consumptionsError } = await supabase
@@ -470,7 +497,10 @@ export const useCranePartsStats = (craneId: string) => {
         .eq('movement_type', 'exit')
         .eq('status', 'active');
 
-      if (consumptionsError) throw consumptionsError;
+      if (consumptionsError) {
+        logger.error('[useCraneParts] Error cargando estadísticas de consumos:', consumptionsError);
+        throw consumptionsError;
+      }
 
       // Combine all sources for total calculations
       const totalDirectParts = directParts?.length || 0;

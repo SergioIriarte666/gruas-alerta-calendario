@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useEffect, useState } from 'react';
 import { useServices } from './useServices';
 import { useInvoices } from './useInvoices';
@@ -50,7 +51,7 @@ export interface ReportFilters {
 export const useReports = (filters?: ReportFilters) => {
   const [metrics, setMetrics] = useState<ReportMetrics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [lastUpdate, setLastUpdate] = useState<Date>(businessClock.now());
   const [refreshKey, setRefreshKey] = useState(0);
   
   const { services } = useServices();
@@ -58,7 +59,10 @@ export const useReports = (filters?: ReportFilters) => {
   const { clients } = useClients();
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
-  const { data: costs = [] } = useCosts();
+  const { data: costs = [] } = useCosts({
+    dateFrom: filters?.dateRange?.from || undefined,
+    dateTo:   filters?.dateRange?.to   || undefined,
+  });
   const { data: costCategories = [] } = useCostCategories();
 
   useEffect(() => {
@@ -114,9 +118,6 @@ export const useReports = (filters?: ReportFilters) => {
 
     // Métricas de costos y rentabilidad
     const filteredCosts = costs.filter(cost => {
-        if (filters?.dateRange.from && filters?.dateRange.to) {
-            if (cost.date < filters.dateRange.from || cost.date > filters.dateRange.to) return false;
-        }
         if (filters?.costCategoryId && filters.costCategoryId !== 'all' && cost.category_id !== filters.costCategoryId) {
             return false;
         }
@@ -195,7 +196,7 @@ export const useReports = (filters?: ReportFilters) => {
     };
     
     calculateMetrics();
-    setLastUpdate(new Date());
+    setLastUpdate(businessClock.now());
   }, [clients, costCategories, costs, cranes, filters, invoices, operators, services, refreshKey]);
 
   const calculateServicesByMonth = (services: Service[]) => {

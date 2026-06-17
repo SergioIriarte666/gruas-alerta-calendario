@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 
@@ -91,7 +92,7 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.setTextColor(...C.green);
   doc.text(`Folio: ${data.service.folio || 'N/A'}`, MARGIN + 4, y + 6.5);
 
-  const now = new Date().toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+  const now = businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm');
   doc.setTextColor(100, 100, 100);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generado: ${now}`, PAGE_W / 2, y + 6.5, { align: 'center' });

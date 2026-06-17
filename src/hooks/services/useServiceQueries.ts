@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceStatus } from '@/types';
@@ -179,13 +180,13 @@ const transformClient = (raw: any) => {
     address: raw.address || '',
     department: raw.department || '',
     isActive: raw.is_active ?? true,
-    createdAt: raw.created_at || new Date().toISOString(),
-    updatedAt: raw.updated_at || new Date().toISOString(),
+    createdAt: raw.created_at || businessClock.nowISO(),
+    updatedAt: raw.updated_at || businessClock.nowISO(),
   };
 };
 
 const transformServiceType = (raw: any) => {
-  if (!raw) return { id: '', name: 'Tipo no disponible', description: '', basePrice: null, isActive: true, vehicleInfoOptional: false, purchaseOrderRequired: false, originRequired: true, destinationRequired: true, craneRequired: true, operatorRequired: true, vehicleBrandRequired: true, vehicleModelRequired: true, licensePlateRequired: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  if (!raw) return { id: '', name: 'Tipo no disponible', description: '', basePrice: null, isActive: true, vehicleInfoOptional: false, purchaseOrderRequired: false, originRequired: true, destinationRequired: true, craneRequired: true, operatorRequired: true, vehicleBrandRequired: true, vehicleModelRequired: true, licensePlateRequired: true, createdAt: businessClock.nowISO(), updatedAt: businessClock.nowISO() };
   return {
     id: raw.id,
     name: raw.name,
@@ -201,8 +202,8 @@ const transformServiceType = (raw: any) => {
     vehicleBrandRequired: raw.vehicle_brand_required !== false,
     vehicleModelRequired: raw.vehicle_model_required !== false,
     licensePlateRequired: raw.license_plate_required !== false,
-    createdAt: raw.created_at || new Date().toISOString(),
-    updatedAt: raw.updated_at || new Date().toISOString(),
+    createdAt: raw.created_at || businessClock.nowISO(),
+    updatedAt: raw.updated_at || businessClock.nowISO(),
   };
 };
 

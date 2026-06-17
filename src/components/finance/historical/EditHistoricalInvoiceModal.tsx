@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -131,7 +132,7 @@ export const EditHistoricalInvoiceModal = ({
       }
 
       const newAuditEntry = {
-        date: new Date().toISOString(),
+        date: businessClock.nowISO(),
         action: 'UPDATE',
         details: `Editado vía Historical Editor. ${auditDetails.join('. ') || 'Sin cambios de estado/origen'}`,
       };

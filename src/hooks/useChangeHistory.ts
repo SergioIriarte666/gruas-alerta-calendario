@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useChangeHistory");
 
 export interface ChangeHistoryEntry {
   id: string;
@@ -47,7 +50,10 @@ export const useCostChangeHistory = (costId: string | null) =>
         .select('id, cost_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('cost_id', costId)
         .order('changed_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        logger.error('[useChangeHistory] Error cargando historial de cambios de costo:', error);
+        throw error;
+      }
       return (data || []).map((r: any) => mapRow(r, 'cost_id'));
     },
     enabled: !!costId,
@@ -63,7 +69,10 @@ export const useInventoryMovementChangeHistory = (movementId: string | null) =>
         .select('id, movement_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('movement_id', movementId)
         .order('changed_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        logger.error('[useChangeHistory] Error cargando historial de cambios de movimiento:', error);
+        throw error;
+      }
       return (data || []).map((r: any) => mapRow(r, 'movement_id'));
     },
     enabled: !!movementId,
@@ -79,7 +88,10 @@ export const useCranePartChangeHistory = (cranePartId: string | null) =>
         .select('id, crane_part_id, changed_by, changed_at, change_type, field_name, old_value, new_value, change_summary, profiles:changed_by (id, full_name, email)')
         .eq('crane_part_id', cranePartId)
         .order('changed_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        logger.error('[useChangeHistory] Error cargando historial de cambios de pieza:', error);
+        throw error;
+      }
       return (data || []).map((r: any) => mapRow(r, 'crane_part_id'));
     },
     enabled: !!cranePartId,

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
@@ -36,7 +37,7 @@ export const useSubmitPurchaseOrder = () => {
       const updateData: Record<string, unknown> = {
         purchase_order_number: purchaseOrderNumber.trim(),
         status: 'pending',
-        updated_at: new Date().toISOString(),
+        updated_at: businessClock.nowISO(),
       };
 
       if (quoteNumber?.trim()) {

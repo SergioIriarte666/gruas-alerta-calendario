@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,7 @@ type FormData = {
 
 export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefill, receiptPhotoPaths, quickEntryId, onCreated }: MaintenanceFormProps) => {
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    editingRecord?.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : new Date()
+    editingRecord?.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.now()
   );
   const [completedDate, setCompletedDate] = useState<Date | undefined>(
     editingRecord?.completedDate ? parseFromDatabase(editingRecord.completedDate) : undefined
@@ -92,7 +93,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
       });
 
       // Update date states
-      setScheduledDate(editingRecord.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : new Date());
+      setScheduledDate(editingRecord.scheduledDate ? parseFromDatabase(editingRecord.scheduledDate) : businessClock.now());
       setCompletedDate(editingRecord.completedDate ? parseFromDatabase(editingRecord.completedDate) : undefined);
       setNextMaintenanceDate(editingRecord.nextMaintenanceDate ? parseFromDatabase(editingRecord.nextMaintenanceDate) : undefined);
     } else {
@@ -107,7 +108,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         kilometraje: undefined,
         performed_by: '',
       });
-      setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : new Date());
+      setScheduledDate(prefill?.date ? parseFromDatabase(prefill.date) : businessClock.now());
       setCompletedDate(undefined);
       setNextMaintenanceDate(undefined);
     }
@@ -176,7 +177,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
 
   const handleClose = () => {
     reset();
-    setScheduledDate(new Date());
+    setScheduledDate(businessClock.now());
     setCompletedDate(undefined);
     setNextMaintenanceDate(undefined);
     onClose();

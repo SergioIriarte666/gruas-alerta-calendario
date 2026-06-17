@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useState, useEffect } from 'react';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
@@ -80,7 +81,7 @@ export const useInspectionPersistence = (serviceId: string) => {
 
     const newMetadata: InspectionPhaseMetadata = {
       inspection_phase: phase,
-      initial_completion_date: phase === 'initial' ? new Date().toISOString() : metadata?.initial_completion_date,
+      initial_completion_date: phase === 'initial' ? businessClock.nowISO() : metadata?.initial_completion_date,
       signatures_status: {
         operator: !!finalData.operatorSignature,
         client: !!finalData.clientSignature,

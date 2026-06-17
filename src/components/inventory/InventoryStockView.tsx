@@ -31,11 +31,14 @@ import { SimpleExitForm } from './SimpleExitForm';
 import { businessClock } from '@/utils/businessClock';
 import { ProductFormModal } from './ProductFormModal';
 import { DuplicateProductsPanel } from './DuplicateProductsPanel';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  useInventoryOrphans,
+  useInventoryItemHardDelete,
+  type DeleteCandidateInfo,
+} from '@/hooks/useInventoryOrphans';
 
 export const InventoryStockView = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,18 +52,12 @@ export const InventoryStockView = () => {
   const [showZeroStock, setShowZeroStock] = useState(false);
   const [showCleanup, setShowCleanup] = useState(false);
   const [showDuplicateMerge, setShowDuplicateMerge] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isCleaning, setIsCleaning] = useState(false);
-  const [orphans, setOrphans] = useState<Array<{ id: string; name: string; stock: number }>>([]);
+  const [deleteCandidate, setDeleteCandidate] = useState<DeleteCandidateInfo | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
-  const [deleteCandidate, setDeleteCandidate] = useState<{ id: string; name: string; force: boolean } | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [preparingDeleteId, setPreparingDeleteId] = useState<string | null>(null);
 
   const { data: items = [], isLoading } = useInventoryItems();
   const { data: categories = [] } = useInventoryCategories();
   const { data: allStock = [] } = useInventoryStock();
-  const queryClient = useQueryClient();
   const { isAdmin } = useUserPermissions();
   const isMobile = useIsMobile();
   const { data: locations = [] } = useInventoryLocations();
@@ -84,107 +81,10 @@ export const InventoryStockView = () => {
     return itemStock.reduce((sum, stockRow) => sum + (stockRow.available_quantity || 0), 0);
   };
 
-  const invalidateInventoryQueries = () => {
-    queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-    queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-  };
+  const activeItems = items.filter((item) => item.is_active);
 
-  async function scanOrphans() {
-    try {
-      setIsScanning(true);
-      const candidates = items.filter((item) => item.is_active).map((item) => ({
-        id: item.id,
-        name: item.name,
-        stock: getItemStock(item.id),
-      }));
-      const zeroStock = candidates.filter((candidate) => candidate.stock === 0);
-      const counts = await getActiveMovementCounts(zeroStock.map((item) => item.id));
-      setOrphans(zeroStock.filter((item) => (counts[item.id] || 0) === 0));
-    } catch {
-      toast.error('No se pudo escanear ítems huérfanos');
-    } finally {
-      setIsScanning(false);
-    }
-  }
-
-  async function deactivateOrphans() {
-    try {
-      setIsCleaning(true);
-      const ids = orphans.map((orphan) => orphan.id);
-      if (ids.length === 0) return;
-      const { error } = await supabase.from('inventory_items').update({ is_active: false }).in('id', ids);
-      if (error) throw error;
-      toast.success(`Marcados inactivos: ${ids.length}`);
-      setOrphans([]);
-      invalidateInventoryQueries();
-    } catch {
-      toast.error('No se pudo actualizar el estado');
-    } finally {
-      setIsCleaning(false);
-    }
-  }
-
-  async function deleteOrphans() {
-    try {
-      setIsCleaning(true);
-      const ids = orphans.map((orphan) => orphan.id);
-      if (ids.length === 0) return;
-      const { error } = await supabase.from('inventory_items').delete().in('id', ids);
-      if (error) throw error;
-      toast.success(`Eliminados: ${ids.length}`);
-      setOrphans([]);
-      invalidateInventoryQueries();
-    } catch {
-      toast.error('No se pudo eliminar');
-    } finally {
-      setIsCleaning(false);
-    }
-  }
-
-  async function openDeleteDialog(itemId: string, itemName: string) {
-    try {
-      setPreparingDeleteId(itemId);
-      const stock = getItemStock(itemId);
-      const { data: movements } = await supabase
-        .from('inventory_movements')
-        .select('id')
-        .eq('item_id', itemId)
-        .eq('status', 'active')
-        .limit(1);
-      const hasActive = (movements || []).length > 0;
-      setDeleteCandidate({ id: itemId, name: itemName, force: stock > 0 || hasActive });
-    } catch {
-      toast.error('No se pudo preparar la eliminación del registro');
-    } finally {
-      setPreparingDeleteId(null);
-    }
-  }
-
-  async function confirmDeleteItem() {
-    if (!deleteCandidate) return;
-
-    try {
-      setDeleteLoading(true);
-
-      if (deleteCandidate.force) {
-        await forceDeleteItem(deleteCandidate.id);
-        toast.success('Registro forzado eliminado');
-      } else {
-        await supabase.from('inventory_stock').delete().eq('item_id', deleteCandidate.id);
-        const { error } = await supabase.from('inventory_items').delete().eq('id', deleteCandidate.id);
-        if (error) throw error;
-        toast.success('Registro eliminado');
-      }
-
-      setDeleteCandidate(null);
-      invalidateInventoryQueries();
-    } catch {
-      toast.error('Error eliminando el registro');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
+  const orphans = useInventoryOrphans(getItemStock, activeItems);
+  const hardDelete = useInventoryItemHardDelete();
 
   const filteredItems = items.filter((item) => {
     const matchesSearch =
@@ -250,11 +150,11 @@ export const InventoryStockView = () => {
                   Nuevo Producto
                 </Button>
                 <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Agregar Nuevo Producto</DialogTitle>
-                    </DialogHeader>
-                    <ProductFormModal onSuccess={() => setShowCreateProductForm(false)} onClose={() => setShowCreateProductForm(false)} />
-                  </DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+                  </DialogHeader>
+                  <ProductFormModal onSuccess={() => setShowCreateProductForm(false)} onClose={() => setShowCreateProductForm(false)} />
+                </DialogContent>
               </Dialog>
 
               <Dialog open={showEntryForm} onOpenChange={setShowEntryForm}>
@@ -293,7 +193,7 @@ export const InventoryStockView = () => {
                 <Sparkles className="size-3.5" />
                 Movimiento rápido
               </Badge>
-              <Badge variant="outline">{items.filter((item) => item.is_active).length} productos activos</Badge>
+              <Badge variant="outline">{activeItems.length} productos activos</Badge>
               <Badge variant="outline">{locations.length} ubicaciones</Badge>
             </div>
 
@@ -304,7 +204,7 @@ export const InventoryStockView = () => {
                     <SelectValue placeholder="Seleccionar producto" />
                   </SelectTrigger>
                   <SelectContent>
-                    {items.filter((item) => item.is_active).map((item) => (
+                    {activeItems.map((item) => (
                       <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -371,8 +271,6 @@ export const InventoryStockView = () => {
                     toast.error('Completa producto, ubicación y cantidad');
                     return;
                   }
-
-                  const movementDate = businessClock.nowISO();
                   createMovement.mutate({
                     item_id: quickItemId,
                     location_id: quickLocationId,
@@ -380,7 +278,7 @@ export const InventoryStockView = () => {
                     quantity: quickQty,
                     unit_cost: quickType === 'entry' ? quickUnitCost : 0,
                     total_cost: quickType === 'entry' ? quickQty * quickUnitCost : 0,
-                    movement_date: movementDate,
+                    movement_date: businessClock.nowISO(),
                     reason: quickType === 'entry' ? 'Entrada rápida' : 'Salida rápida',
                     observations: null,
                     crane_id: null,
@@ -439,7 +337,7 @@ export const InventoryStockView = () => {
                 variant="outline"
                 onClick={() => {
                   setShowCleanup(true);
-                  scanOrphans();
+                  orphans.scan();
                 }}
                 className="shrink-0 whitespace-nowrap border-border/70 bg-background/60"
               >
@@ -478,7 +376,7 @@ export const InventoryStockView = () => {
                     const totalStock = getItemStock(item.id);
                     const status = getStockStatus(item);
                     const StatusIcon = status.icon;
-                    const isPreparingDelete = preparingDeleteId === item.id;
+                    const isPreparing = hardDelete.preparingId === item.id;
 
                     return (
                       <tr key={item.id} className="border-b border-border/60 transition-colors hover:bg-muted/30">
@@ -517,8 +415,16 @@ export const InventoryStockView = () => {
                               <Button size="sm" variant="secondary" onClick={() => { setShowEntryForm(true); setSelectedProductId(item.id); }}>
                                 Entrada
                               </Button>
-                              <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(item.id, item.name)} disabled={isPreparingDelete}>
-                                {isPreparingDelete ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                  const candidate = await hardDelete.prepareDelete(item.id, item.name, getItemStock);
+                                  if (candidate) setDeleteCandidate(candidate);
+                                }}
+                                disabled={isPreparing}
+                              >
+                                {isPreparing ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
                               </Button>
                             </div>
                           )}
@@ -535,7 +441,7 @@ export const InventoryStockView = () => {
                 const totalStock = getItemStock(item.id);
                 const status = getStockStatus(item);
                 const StatusIcon = status.icon;
-                const isPreparingDelete = preparingDeleteId === item.id;
+                const isPreparing = hardDelete.preparingId === item.id;
 
                 return (
                   <div
@@ -566,8 +472,16 @@ export const InventoryStockView = () => {
                       <Button size="sm" variant="outline" onClick={() => { setEditProductId(item.id); setShowEditProductForm(true); }} className="border-border/70 bg-background/60">
                         Editar
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(item.id, item.name)} disabled={isPreparingDelete}>
-                        {isPreparingDelete ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          const candidate = await hardDelete.prepareDelete(item.id, item.name, getItemStock);
+                          if (candidate) setDeleteCandidate(candidate);
+                        }}
+                        disabled={isPreparing}
+                      >
+                        {isPreparing ? <Loader2 className="size-4 animate-spin" /> : 'Eliminar'}
                       </Button>
                     </div>
                   </div>
@@ -581,7 +495,7 @@ export const InventoryStockView = () => {
             <Badge variant="outline" className="border-primary/20 bg-primary/10 font-semibold text-primary">
               {visibleRows.length}
             </Badge>
-            de {items.filter((item) => item.is_active).length} productos activos
+            de {activeItems.length} productos activos
           </div>
         </CardContent>
       </Card>
@@ -613,13 +527,13 @@ export const InventoryStockView = () => {
               Ítems sin stock, sin movimientos activos y potencialmente residuales. Puedes marcarlos como inactivos o eliminarlos.
             </p>
             <div className="max-h-60 overflow-auto rounded-xl border border-border/70 bg-background/40">
-              {isScanning ? (
+              {orphans.isScanning ? (
                 <div className="p-4 text-sm text-muted-foreground">Buscando ítems...</div>
-              ) : orphans.length === 0 ? (
+              ) : orphans.orphans.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground">No se detectaron ítems huérfanos.</div>
               ) : (
                 <ul className="divide-y divide-border/70">
-                  {orphans.map((orphan) => (
+                  {orphans.orphans.map((orphan) => (
                     <li key={orphan.id} className="flex items-center justify-between p-3">
                       <span className="text-sm text-foreground">{orphan.name}</span>
                       <Badge variant="secondary">Stock: {orphan.stock}</Badge>
@@ -629,14 +543,14 @@ export const InventoryStockView = () => {
               )}
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
-              <Button variant="secondary" onClick={scanOrphans} disabled={isScanning || isCleaning}>
+              <Button variant="secondary" onClick={orphans.scan} disabled={orphans.isScanning || orphans.isCleaning}>
                 Reescanear
               </Button>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={deactivateOrphans} disabled={isScanning || isCleaning || orphans.length === 0}>
+                <Button variant="outline" onClick={() => orphans.deactivateOrphans(orphans.orphans.map(o => o.id))} disabled={orphans.isScanning || orphans.isCleaning || orphans.orphans.length === 0}>
                   Marcar inactivos
                 </Button>
-                <Button variant="destructive" onClick={deleteOrphans} disabled={isScanning || isCleaning || orphans.length === 0}>
+                <Button variant="destructive" onClick={() => orphans.deleteOrphans(orphans.orphans.map(o => o.id))} disabled={orphans.isScanning || orphans.isCleaning || orphans.orphans.length === 0}>
                   Eliminar definitivamente
                 </Button>
               </div>
@@ -654,7 +568,7 @@ export const InventoryStockView = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && !deleteLoading && setDeleteCandidate(null)}>
+      <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && !hardDelete.isDeleting && setDeleteCandidate(null)}>
         <AlertDialogContent className="border-border/70 bg-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-foreground">
@@ -668,9 +582,20 @@ export const InventoryStockView = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteItem} disabled={deleteLoading} className="bg-danger text-danger-foreground hover:bg-danger/90">
-              {deleteLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            <AlertDialogCancel disabled={hardDelete.isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteCandidate) {
+                  hardDelete.deleteItem(
+                    { id: deleteCandidate.id, force: deleteCandidate.force },
+                    { onSuccess: () => setDeleteCandidate(null) },
+                  );
+                }
+              }}
+              disabled={hardDelete.isDeleting}
+              className="bg-danger text-danger-foreground hover:bg-danger/90"
+            >
+              {hardDelete.isDeleting ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {deleteCandidate?.force ? 'Eliminar forzadamente' : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -679,24 +604,3 @@ export const InventoryStockView = () => {
     </>
   );
 };
-
-async function getActiveMovementCounts(itemIds: string[]) {
-  if (itemIds.length === 0) return {};
-  const { data } = await supabase
-    .from('inventory_movements')
-    .select('item_id')
-    .in('item_id', itemIds)
-    .eq('status', 'active');
-  const counts: Record<string, number> = {};
-  (data || []).forEach((movement: any) => {
-    const id = movement.item_id as string;
-    counts[id] = (counts[id] || 0) + 1;
-  });
-  return counts;
-}
-
-async function forceDeleteItem(itemId: string) {
-  await supabase.from('inventory_movements').delete().eq('item_id', itemId);
-  await supabase.from('inventory_stock').delete().eq('item_id', itemId);
-  await supabase.from('inventory_items').delete().eq('id', itemId);
-}

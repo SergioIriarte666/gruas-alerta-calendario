@@ -100,7 +100,7 @@ export const usePipelineServiceExport = (
         invoiceFolio: service.invoiceFolio || '',
         invoiceNumeroFiscal: service.invoiceNumeroFiscal || '',
         observations: service.observations || '',
-      daysInStatus: differenceInDays(new Date(), parseFromDatabase(service.serviceDate)),
+      daysInStatus: differenceInDays(businessClock.now(), parseFromDatabase(service.serviceDate)),
       hasExcess: service.hasExcess || false,
       clientCoveredAmount: service.clientCoveredAmount,
     }));

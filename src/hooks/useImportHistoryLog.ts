@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { ImportType } from '@/hooks/useImportMappings';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useImportHistoryLog");
 
 export type ImportHistoryStatus = 'success' | 'partial' | 'failed';
 
@@ -55,7 +58,10 @@ const fetchImportLogs = async (
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (error) throw error;
+  if (error) {
+    logger.error('[useImportHistoryLog] Error cargando historial de importaciones:', error);
+    throw error;
+  }
   return (data ?? []).map(mapImportHistoryLog);
 };
 
@@ -93,7 +99,10 @@ export const useImportHistoryLog = (importType?: ImportType, limit = 5) => {
         .gte('date_range_end', startDate)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useImportHistoryLog] Error buscando logs solapados:', error);
+        throw error;
+      }
       return (data ?? []).map(mapImportHistoryLog);
     },
     []
@@ -106,6 +115,7 @@ export const useImportHistoryLog = (importType?: ImportType, limit = 5) => {
       } = await supabase.auth.getUser();
 
       if (!user?.id) {
+        logger.error('[useImportHistoryLog] Usuario no autenticado al guardar log');
         throw new Error('No se pudo obtener el usuario actual para guardar el log.');
       }
 
@@ -125,7 +135,10 @@ export const useImportHistoryLog = (importType?: ImportType, limit = 5) => {
         .select('*')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useImportHistoryLog] Error guardando log de importación:', error);
+        throw error;
+      }
 
       await queryClient.invalidateQueries({
         queryKey: ['import-history-log', input.importType],

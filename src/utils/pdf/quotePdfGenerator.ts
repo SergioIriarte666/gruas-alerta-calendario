@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
@@ -55,7 +56,7 @@ export const generateQuotePDF = async (
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, 'normal');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = businessClock.today();
   const quoteNumber = service.quoteNumber || `COT-${service.folio}`;
   const validUntil = addDaysISO(today, 15);
 

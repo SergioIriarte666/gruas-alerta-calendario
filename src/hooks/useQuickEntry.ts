@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
@@ -90,7 +91,7 @@ export function useQuickEntry() {
     try {
       const { error } = await supabase
         .from('quick_entries')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status, updated_at: businessClock.nowISO() })
         .eq('id', id);
 
       if (error) throw error;

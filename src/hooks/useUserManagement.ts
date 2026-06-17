@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -206,7 +207,7 @@ export const useUserManagement = () => {
       if (existingOperatorId && existingOperatorId !== operatorId) {
         const { error: unlinkError } = await supabase
           .from('operators')
-          .update({ user_id: null, updated_at: new Date().toISOString() })
+          .update({ user_id: null, updated_at: businessClock.nowISO() })
           .eq('id', existingOperatorId);
 
         if (unlinkError) throw unlinkError;
@@ -215,7 +216,7 @@ export const useUserManagement = () => {
       if (operatorId) {
         const { error: linkError } = await supabase
           .from('operators')
-          .update({ user_id: userId, updated_at: new Date().toISOString() })
+          .update({ user_id: userId, updated_at: businessClock.nowISO() })
           .eq('id', operatorId);
 
         if (linkError) throw linkError;

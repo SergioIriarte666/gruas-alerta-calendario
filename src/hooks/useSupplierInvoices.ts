@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -119,7 +120,7 @@ export const useSupplierInvoices = (supplierId?: string) => {
         .update({
           paid_amount: newPaidAmount,
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', invoiceId)
         .select('id, supplier_id, paid_amount, amount, status, balance, updated_at')

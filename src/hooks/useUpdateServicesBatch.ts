@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -116,7 +117,7 @@ export const useUpdateServicesBatch = () => {
                   operator_id: operatorId,
                   is_primary: true,
                   role: 'Principal',
-                  updated_at: new Date().toISOString(),
+                  updated_at: businessClock.nowISO(),
                 })
                 .eq('id', existingPrimaryId);
 
@@ -128,7 +129,7 @@ export const useUpdateServicesBatch = () => {
               // Ensure no other operator resource remains marked as primary
               const { error: demoteError } = await supabase
                 .from('service_resources')
-                .update({ is_primary: false, updated_at: new Date().toISOString() })
+                .update({ is_primary: false, updated_at: businessClock.nowISO() })
                 .eq('service_id', serviceId)
                 .eq('resource_type', 'operator')
                 .neq('id', existingPrimaryId)

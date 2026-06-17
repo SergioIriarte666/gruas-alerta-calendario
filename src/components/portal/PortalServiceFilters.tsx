@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -59,7 +60,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                 selected={dateFrom}
                 onSelect={onDateFromChange}
                 disabled={(date) =>
-                  date > new Date() || (dateTo && date > dateTo)
+                  date > businessClock.now() || (dateTo && date > dateTo)
                 }
                 initialFocus
               />
@@ -95,7 +96,7 @@ export const PortalServiceFilters: React.FC<PortalServiceFiltersProps> = ({
                 selected={dateTo}
                 onSelect={onDateToChange}
                 disabled={(date) =>
-                  date > new Date() || (dateFrom && date < dateFrom)
+                  date > businessClock.now() || (dateFrom && date < dateFrom)
                 }
                 initialFocus
               />

@@ -45,6 +45,8 @@ interface EnhancedCostsTableProps {
   serverTotal?: number;
   onServerPageChange?: (page: number) => void;
   onServerPageSizeChange?: (pageSize: number) => void;
+  // En modo búsqueda activa el servidor devuelve todos los resultados sin paginar
+  disableServerPagination?: boolean;
 }
 
 type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
@@ -70,8 +72,9 @@ export const EnhancedCostsTable = ({
   serverTotal,
   onServerPageChange,
   onServerPageSizeChange,
+  disableServerPagination,
 }: EnhancedCostsTableProps) => {
-  const isServerPaged = serverTotal !== undefined;
+  const isServerPaged = serverTotal !== undefined && !disableServerPagination;
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -368,7 +371,7 @@ export const EnhancedCostsTable = ({
             <TooltipTrigger asChild>
               <span className="inline-flex">
                 {cost.payment_date ? (
-                  new Date(`${cost.payment_date}T12:00:00Z`) > new Date() ? (
+                  new Date(`${cost.payment_date}T12:00:00Z`) > businessClock.now() ? (
                     <CalendarClock className="mx-auto size-5 text-warning" />
                   ) : (
                     <CheckCircle className="mx-auto size-5 text-success" />
@@ -612,8 +615,19 @@ export const EnhancedCostsTable = ({
         </CardContent>
       </Card>
 
+      {/* Indicador de búsqueda activa (sin paginación server-side) */}
+      {disableServerPagination && serverTotal !== undefined && (
+        <div className="flex items-center justify-center">
+          <Badge variant="outline" className="text-xs text-muted-foreground">
+            {serverTotal >= 500
+              ? `Mostrando los primeros 500 resultados — refine la búsqueda`
+              : `${serverTotal} resultado${serverTotal !== 1 ? 's' : ''} encontrado${serverTotal !== 1 ? 's' : ''}`}
+          </Badge>
+        </div>
+      )}
+
       {/* Paginación */}
-      {groupBy === 'none' && totalPages > 1 && (
+      {groupBy === 'none' && totalPages > 1 && !disableServerPagination && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             Mostrando {((effectivePage - 1) * effectivePageSize) + 1} - {Math.min(effectivePage * effectivePageSize, totalCount)} de {totalCount}

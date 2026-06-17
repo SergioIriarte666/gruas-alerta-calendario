@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -53,9 +54,9 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
   };
 
   const getDefaultDescription = (subcategoryName: string) => {
-    const now = new Date();
-    const dateString = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeString = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const now = businessClock.now();
+    const dateString = businessClock.format(now, 'dd/MM/yyyy');
+    const timeString = businessClock.format(now, 'HH:mm');
     const serviceInfo = baseData.service_folio ? ` - ${baseData.service_folio}` : '';
     return `${subcategoryName} ${dateString} ${timeString}${serviceInfo}`;
   };

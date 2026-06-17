@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -18,7 +19,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   useEffect(() => {
     setZoomDays(dateRange);
   }, [dateRange]);
-  const today = startOfDay(new Date());
+  const today = startOfDay(businessClock.now());
 
   // Separar facturas vencidas y próximas
   const overdueInvoices = invoices.filter(inv => isBefore(new Date(inv.due_date), today));

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
@@ -69,7 +70,7 @@ export const useInventoryDeduction = () => {
             location_id: defaultLocationId,
             movement_type: 'sale',
             quantity: -Math.abs(item.quantity), // Negative for sales/exits
-            movement_date: new Date().toISOString(),
+            movement_date: businessClock.nowISO(),
             unit_cost: item.unitPrice,
             total_cost: item.quantity * item.unitPrice,
             reason: `Venta de producto - Servicio ${serviceFolio}`,
@@ -102,7 +103,7 @@ export const useInventoryDeduction = () => {
           .from('inventory_stock')
           .update({
             current_quantity: newQuantity,
-            last_movement_date: new Date().toISOString()
+            last_movement_date: businessClock.nowISO()
           })
           .eq('item_id', item.productId)
           .eq('location_id', defaultLocationId);

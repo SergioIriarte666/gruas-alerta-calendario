@@ -1,7 +1,8 @@
+import { businessClock } from '@/utils/businessClock';
 
 export class PhotoProcessor {
   static generateFileName(prefix: string): string {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = businessClock.nowISO().replace(/[:.]/g, '-');
     const random = Math.random().toString(36).substring(7);
     return `${prefix}-${timestamp}-${random}.jpg`;
   }

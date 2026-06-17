@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +29,7 @@ const createServiceRequest = async ({
   const serviceData = {
     folio: folio,
     client_id: clientId,
-    request_date: new Date().toISOString(),
+    request_date: businessClock.nowISO(),
     service_date: formData.service_date,
     service_type_id: formData.service_type_id,
     origin: formData.origin,

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +45,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   const getWorkflowSteps = (): WorkflowStep[] => {
     const currentStatus = service.status;
     const serviceDate = new Date(service.serviceDate);
-    const now = new Date();
+    const now = businessClock.now();
 
     const steps: WorkflowStep[] = [
       {

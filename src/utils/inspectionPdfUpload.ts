@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
@@ -16,7 +17,7 @@ export const uploadInspectionPdf = async (
   folio: string,
 ): Promise<UploadResult | null> => {
   try {
-    const date = new Date().toISOString().slice(0, 10);
+    const date = businessClock.today();
     const path = `${serviceId}/${folio}-${date}.pdf`;
 
     const { error: uploadError } = await supabase.storage
@@ -51,8 +52,8 @@ export const savePdfUrlToInspection = async (
   phase: 'initial' | 'final' = 'final',
 ): Promise<void> => {
   const updatePayload = phase === 'initial'
-    ? { pdf_retiro_url: pdfUrl, pdf_retiro_uploaded_at: new Date().toISOString() }
-    : { pdf_url: pdfUrl, pdf_uploaded_at: new Date().toISOString() };
+    ? { pdf_retiro_url: pdfUrl, pdf_retiro_uploaded_at: businessClock.nowISO() }
+    : { pdf_url: pdfUrl, pdf_uploaded_at: businessClock.nowISO() };
 
   const { error } = await supabase
     .from('inspections')

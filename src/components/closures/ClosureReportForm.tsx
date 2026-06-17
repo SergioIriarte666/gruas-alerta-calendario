@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import DateRangePicker from './DateRangePicker';
@@ -85,7 +86,7 @@ const ClosureReportForm = ({ closures, onClose }: ClosureReportFormProps) => {
       return matchesClient && from >= dateFrom && to <= dateTo;
     });
 
-    const baseDate = dateFrom ?? new Date();
+    const baseDate = dateFrom ?? businessClock.now();
     const rawMonth = baseDate.toLocaleString('es-CL', { month: 'long' });
     const mes = rawMonth ? `${rawMonth.charAt(0).toUpperCase()}${rawMonth.slice(1)}` : '';
     const anio = baseDate.getFullYear().toString();

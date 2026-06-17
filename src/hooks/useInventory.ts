@@ -5,6 +5,9 @@ import { createInventoryCost } from '@/utils/inventoryCostHelper';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useUniversalSync } from './useUniversalSync';  // FASE 5
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useInventory");
 
 export interface InventoryItem {
   id: string;
@@ -550,7 +553,8 @@ export const useCreateInventoryMovement = () => {
           .single();
 
         if (stockData && stockData.current_quantity < movement.quantity) {
-          throw new Error(`Stock insuficiente. Disponible: ${stockData.current_quantity}, Solicitado: ${movement.quantity}`);
+          logger.error('[useInventory] Stock insuficiente para movimiento de salida:', { available: stockData.current_quantity, requested: movement.quantity });
+        throw new Error(`Stock insuficiente. Disponible: ${stockData.current_quantity}, Solicitado: ${movement.quantity}`);
         }
       }
 
@@ -612,7 +616,10 @@ export const useCreateInventoryMovement = () => {
             .limit(1)
             .single();
 
-          if (existingEntryError || !existingEntry) throw error;
+          if (existingEntryError || !existingEntry) {
+          logger.error('[useInventory] Error creando movimiento de inventario (23505 sin entrada existente):', error);
+          throw error;
+        }
 
           const updates: Partial<InventoryMovement> = {};
           if (!existingEntry.supplier_id && (movementData as any).supplier_id) updates.supplier_id = (movementData as any).supplier_id;
@@ -635,6 +642,7 @@ export const useCreateInventoryMovement = () => {
           return updatedEntry as any;
         }
 
+        logger.error('[useInventory] Error creando movimiento de inventario:', error);
         throw error;
       }
       return data;
@@ -664,7 +672,10 @@ export const useCreateInventoryItem = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error creando ítem de inventario:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -693,7 +704,10 @@ export const useUpdateInventoryItem = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error actualizando ítem de inventario:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -728,7 +742,10 @@ export const useMergeInventoryItems = () => {
         p_master_name: masterName || null,
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error fusionando ítems de inventario:', error);
+        throw error;
+      }
       return data as unknown as MergeInventoryItemsResult;
     },
     onSuccess: (result) => {
@@ -762,7 +779,10 @@ export const useUpdateInventoryMovement = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error actualizando movimiento de inventario:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -792,7 +812,10 @@ export const useCancelInventoryMovement = () => {
         .update({ status: 'cancelled' })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error anulando movimiento de inventario:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
@@ -821,7 +844,10 @@ export const useDeleteInventoryItem = () => {
         .update({ is_active: false })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInventory] Error desactivando ítem de inventario:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-items'] });

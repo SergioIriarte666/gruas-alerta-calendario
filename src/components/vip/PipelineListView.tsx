@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -123,7 +124,7 @@ const groupByField = (services: Service[], config: SubGroupConfig, sortField?: S
         return aType.localeCompare(bType) * dir;
       }
       case 'daysInStatus': {
-        const now = new Date().getTime();
+        const now = businessClock.now().getTime();
         const aAvg = a.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / a.services.length;
         const bAvg = b.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / b.services.length;
         return (aAvg - bAvg) * dir;
@@ -289,8 +290,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           bValue = b.value || 0;
           break;
         case 'daysInStatus':
-          aValue = differenceInDays(new Date(), parseFromDatabase(a.serviceDate));
-          bValue = differenceInDays(new Date(), parseFromDatabase(b.serviceDate));
+          aValue = differenceInDays(businessClock.now(), parseFromDatabase(a.serviceDate));
+          bValue = differenceInDays(businessClock.now(), parseFromDatabase(b.serviceDate));
           break;
         case 'quoteNumber':
           aValue = a.quoteNumber || '';
@@ -334,7 +335,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0);
         const averageDays = statusServices.length > 0 
           ? statusServices.reduce((sum, s) => {
-              const days = differenceInDays(new Date(), parseFromDatabase(s.serviceDate));
+              const days = differenceInDays(businessClock.now(), parseFromDatabase(s.serviceDate));
               return sum + days;
             }, 0) / statusServices.length
           : 0;
@@ -716,7 +717,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                       const hasMultiplePOs = poSubGroups.length > 1;
 
                       const renderServiceRow = (service: Service) => {
-                        const daysInStatus = differenceInDays(new Date(), parseFromDatabase(service.serviceDate));
+                        const daysInStatus = differenceInDays(businessClock.now(), parseFromDatabase(service.serviceDate));
                         return (
                           <TableRow key={service.id} className="border-muted">
                             <TableCell>

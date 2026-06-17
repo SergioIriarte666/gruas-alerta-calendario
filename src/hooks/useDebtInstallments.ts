@@ -1,7 +1,11 @@
+import { businessClock } from '@/utils/businessClock';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useDebtInstallments");
 
 export interface DebtInstallment {
   id: string;
@@ -47,7 +51,7 @@ export const useDebtInstallments = (debtId?: string) => {
 };
 
 export const useMonthlyInstallments = (monthDate?: Date) => {
-  const target = monthDate || new Date();
+  const target = monthDate || businessClock.now();
   const start = format(startOfMonth(target), 'yyyy-MM-dd');
   const end = format(endOfMonth(target), 'yyyy-MM-dd');
 
@@ -103,7 +107,10 @@ export const usePayInstallment = () => {
           updated_by: userId,
         })
         .eq('id', installment.id);
-      if (uErr) throw uErr;
+      if (uErr) {
+        logger.error('[useDebtInstallments] Error actualizando cuota a pagada:', uErr);
+        throw uErr;
+      }
 
       // 2. Create debt_payment record
       const paymentNotes = [
@@ -119,7 +126,10 @@ export const usePayInstallment = () => {
         notes: paymentNotes,
         created_by: userId,
       });
-      if (pErr) throw pErr;
+      if (pErr) {
+        logger.error('[useDebtInstallments] Error registrando pago de cuota:', pErr);
+        throw pErr;
+      }
 
       // 3. Find "Deudas y Obligaciones" category
       const { data: categories } = await supabase
@@ -129,7 +139,10 @@ export const usePayInstallment = () => {
         .limit(1);
 
       const categoryId = categories?.[0]?.id;
-      if (!categoryId) throw new Error('Categoría "Deudas y Obligaciones" no encontrada');
+      if (!categoryId) {
+        logger.error('[useDebtInstallments] Categoría "Deudas y Obligaciones" no encontrada');
+        throw new Error('Categoría "Deudas y Obligaciones" no encontrada');
+      }
 
       const creditorName = installment.debts?.creditors?.name || 'Acreedor';
       const debtDesc = installment.debts?.description || 'Deuda';
@@ -152,7 +165,10 @@ export const usePayInstallment = () => {
         notes: paymentNotes,
         created_by: userId,
       });
-      if (cErr) throw cErr;
+      if (cErr) {
+        logger.error('[useDebtInstallments] Error creando costo al pagar cuota:', cErr);
+        throw cErr;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['debt-installments'] });

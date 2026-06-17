@@ -1,22 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Trash2, Package, CreditCard, Wrench, Loader2, ShieldAlert } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useReAuth } from '@/hooks/useReAuth';
 import { Cost } from '@/types/costs';
-import { createLogger } from "@/lib/logger";
-
-
-const logger = createLogger("CostDeleteConfirmDialog");
-interface RelatedData {
-  supplierPayments: number;
-  inventoryMovements: number;
-  craneParts: number;
-}
+import { useCostDependencies } from '@/hooks/useCostDependencies';
 
 interface CostDeleteConfirmDialogProps {
   cost: Cost | null;
@@ -27,64 +18,27 @@ interface CostDeleteConfirmDialogProps {
 
 export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDelete }: CostDeleteConfirmDialogProps) => {
   const { verifyPassword } = useReAuth();
-  const [relatedData, setRelatedData] = useState<RelatedData | null>(null);
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  const hasRelatedData = relatedData && (
-    relatedData.supplierPayments > 0 || 
-    relatedData.inventoryMovements > 0 || 
-    relatedData.craneParts > 0
+  const costId = open && cost ? cost.id : null;
+  const { dependencies, isLoading, hasRelatedData } = useCostDependencies(
+    costId,
+    cost?.supplier_payment_id,
   );
 
   useEffect(() => {
-    if (open && cost) {
+    if (open) {
       setPassword('');
       setPasswordError('');
-      fetchRelatedData(cost);
     }
   }, [open, cost]);
-
-  const fetchRelatedData = async (cost: Cost) => {
-    setLoading(true);
-    try {
-      // Supplier payments linked to this cost
-      const paymentsQuery = supabase.from('supplier_payments')
-        .select('id', { count: 'exact', head: true })
-        .or(`cost_id.eq.${cost.id}${cost.supplier_payment_id ? `,id.eq.${cost.supplier_payment_id}` : ''}`);
-
-      // Active inventory movements
-      const movementsQuery = supabase.from('inventory_movements')
-        .select('id', { count: 'exact', head: true })
-        .eq('cost_id', cost.id);
-
-      // Crane parts
-      const partsQuery = supabase.from('crane_parts')
-        .select('id', { count: 'exact', head: true })
-        .eq('cost_id', cost.id);
-
-      const [payments, movements, parts] = await Promise.all([paymentsQuery, movementsQuery, partsQuery]);
-
-      setRelatedData({
-        supplierPayments: payments.count || 0,
-        inventoryMovements: movements.count || 0,
-        craneParts: parts.count || 0,
-      });
-    } catch (err) {
-      logger.error('Error fetching related data:', err);
-      setRelatedData({ supplierPayments: 0, inventoryMovements: 0, craneParts: 0 });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!cost) return;
 
     if (hasRelatedData) {
-      // Require password
       if (!password.trim()) {
         setPasswordError('Ingrese su contraseña');
         return;
@@ -127,7 +81,6 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
 
         {cost && (
           <div className="space-y-4">
-            {/* Cost info */}
             <div className="rounded-xl border border-border/70 bg-background/50 p-3">
               <p className="font-medium text-sm text-foreground">{cost.description}</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -135,8 +88,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
               </p>
             </div>
 
-            {/* Related data impact */}
-            {loading ? (
+            {isLoading ? (
               <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 <span className="text-sm">Verificando datos relacionados...</span>
@@ -149,36 +101,35 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
                 </div>
 
                 <div className="space-y-2 rounded-xl border border-border/70 bg-background/40 p-3">
-                  {relatedData!.supplierPayments > 0 && (
+                  {dependencies!.paymentsCount > 0 && (
                     <div className="flex items-center gap-2">
                       <CreditCard className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
-                        {relatedData!.supplierPayments} pago(s) de proveedor
+                        {dependencies!.paymentsCount} pago(s) de proveedor
                       </span>
                       <Badge variant="destructive" className="text-xs">Se eliminará</Badge>
                     </div>
                   )}
-                  {relatedData!.inventoryMovements > 0 && (
+                  {dependencies!.movementsCount > 0 && (
                     <div className="flex items-center gap-2">
                       <Package className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
-                        {relatedData!.inventoryMovements} movimiento(s) de inventario
+                        {dependencies!.movementsCount} movimiento(s) de inventario
                       </span>
                       <Badge variant="destructive" className="text-xs">Se cancelará</Badge>
                     </div>
                   )}
-                  {relatedData!.craneParts > 0 && (
+                  {dependencies!.partsCount > 0 && (
                     <div className="flex items-center gap-2">
                       <Wrench className="size-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">
-                        {relatedData!.craneParts} pieza(s) de grúa
+                        {dependencies!.partsCount} pieza(s) de grúa
                       </span>
                       <Badge variant="secondary" className="text-xs">Se desvinculará</Badge>
                     </div>
                   )}
                 </div>
 
-                {/* Password field */}
                 <div className="space-y-2 border-t border-border/70 pt-2">
                   <Label htmlFor="delete-password" className="text-sm">
                     Ingrese su contraseña para confirmar
@@ -214,7 +165,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={loading || verifying || (hasRelatedData && !password.trim())}
+            disabled={isLoading || verifying || (hasRelatedData && !password.trim())}
           >
             {verifying ? (
               <>

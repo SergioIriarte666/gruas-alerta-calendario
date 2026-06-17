@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { useEffect } from 'react';
 import {
   Dialog,
@@ -30,7 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 // Get nearest Thursday
 function getNearestThursday(): string {
-  const now = new Date();
+  const now = businessClock.now();
   const day = now.getDay(); // 0=Sun, 4=Thu
   const diff = (4 - day + 7) % 7;
   const thursday = new Date(now);

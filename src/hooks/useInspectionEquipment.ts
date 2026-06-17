@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { vehicleEquipment } from '@/data/equipmentData';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useInspectionEquipment");
 
 export interface EquipmentItem {
   id: string;
@@ -44,7 +47,10 @@ export const useInspectionEquipment = () => {
       const { error } = await supabase
         .from('inspection_equipment_items')
         .insert({ id: slug, name: name.trim(), is_active: true, sort_order: maxOrder + 1 });
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInspectionEquipment] Error insertando elemento de equipo:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inspection-equipment-items'] });
@@ -59,7 +65,10 @@ export const useInspectionEquipment = () => {
         .from('inspection_equipment_items')
         .update({ name: item.name, is_active: item.is_active, sort_order: item.sort_order })
         .eq('id', item.id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInspectionEquipment] Error actualizando elemento de equipo:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inspection-equipment-items'] });
@@ -73,7 +82,10 @@ export const useInspectionEquipment = () => {
         .from('inspection_equipment_items')
         .delete()
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useInspectionEquipment] Error eliminando elemento de equipo:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inspection-equipment-items'] });

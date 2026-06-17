@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,6 +79,10 @@ export interface CostDateFilters {
   dateTo?: string;   // 'YYYY-MM-DD'
 }
 
+export interface CostQueryFilters extends CostDateFilters {
+  searchTerm?: string;
+}
+
 const fetchCosts = async (filters: CostDateFilters = {}): Promise<Cost[]> => {
   const PAGE_SIZE = 1000;
   const allCosts: Cost[] = [];
@@ -135,16 +140,20 @@ export const useCosts = (filters: CostDateFilters = {}) => {
 export const usePagedCosts = (
   page: number,
   pageSize: number,
-  filters: CostDateFilters = {}
+  filters: CostQueryFilters = {}
 ) => {
   const dateFrom = filters.dateFrom || undefined;
   const dateTo = filters.dateTo || undefined;
+  const searchTerm = filters.searchTerm?.trim() || undefined;
 
   return useQuery({
-    queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo }],
+    queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo, searchTerm: searchTerm ?? '' }],
     queryFn: async (): Promise<{ costs: Cost[]; total: number }> => {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
+      const hasSearch = !!searchTerm;
+      const searchLower = searchTerm?.toLowerCase() ?? '';
+
+      const from = hasSearch ? 0 : (page - 1) * pageSize;
+      const to   = hasSearch ? 499 : from + pageSize - 1;
 
       let query = supabase
         .from('costs')
@@ -157,6 +166,17 @@ export const usePagedCosts = (
 
       if (dateFrom) query = query.gte('date', dateFrom);
       if (dateTo) query = query.lte('date', dateTo);
+
+      if (hasSearch) {
+        query = query.or(
+          [
+            `description.ilike.%${searchLower}%`,
+            `notes.ilike.%${searchLower}%`,
+            `subcategory.ilike.%${searchLower}%`,
+            `service_folio.ilike.%${searchLower}%`,
+          ].join(',')
+        );
+      }
 
       const { data, error, count } = await query;
 
@@ -741,7 +761,7 @@ export const useLinkInvoiceToCost = () => {
         service_folio: invoiceData.folio,
         notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
         supplier_invoice_id: invoice.id,
-        updated_at: new Date().toISOString(),
+        updated_at: businessClock.nowISO(),
       };
       if (isPaid && invoiceData.paidDate) {
         costUpdate.payment_date = invoiceData.paidDate;

@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,7 +53,7 @@ export const useFolioGenerator = () => {
         .from('company_data')
         .update({ 
           next_service_folio_number: currentNumber + 1,
-          updated_at: new Date().toISOString()
+          updated_at: businessClock.nowISO()
         })
         .eq('id', companyData.id);
 
@@ -149,7 +150,7 @@ export const useFolioGenerator = () => {
           .from('company_data')
           .update({ 
             next_service_folio_number: newNextNumber,
-            updated_at: new Date().toISOString()
+            updated_at: businessClock.nowISO()
           })
           .eq('id', companyData.id);
 
@@ -225,7 +226,7 @@ export const useFolioGenerator = () => {
           .from('company_data')
           .update({ 
             next_service_folio_number: newNextNumber,
-            updated_at: new Date().toISOString()
+            updated_at: businessClock.nowISO()
           })
           .eq('id', companyData.id);
 

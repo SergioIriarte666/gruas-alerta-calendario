@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useTripEstimates");
 
 export interface TripEstimate {
   id: string;
@@ -64,7 +67,10 @@ export function useAddTripEstimate() {
         .insert(insertData)
         .select(TRIP_ESTIMATES_SELECT)
         .single();
-      if (error) throw error;
+      if (error) {
+        logger.error('[useTripEstimates] Error creando estimación de viaje:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -81,7 +87,10 @@ export function useDeleteTripEstimate() {
         .from('trip_estimates')
         .delete()
         .eq('id', id);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useTripEstimates] Error eliminando estimación de viaje:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip-estimates'] });

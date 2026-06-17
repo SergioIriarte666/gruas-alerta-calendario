@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("useUpdateClientsBatch");
 
 interface BatchUpdatePayload {
   ids: string[];
@@ -19,7 +22,10 @@ export const useUpdateClientsBatch = () => {
         .from('clients')
         .update(updates)
         .in('id', ids);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useUpdateClientsBatch] Error actualizando clientes en lote:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -40,7 +46,10 @@ export const useDeleteClientsBatch = () => {
         .from('clients')
         .delete()
         .in('id', ids);
-      if (error) throw error;
+      if (error) {
+        logger.error('[useUpdateClientsBatch] Error eliminando clientes en lote:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });

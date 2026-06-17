@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
@@ -42,7 +43,7 @@ async function recalcInvoice(invoiceId: string) {
     await supabase.from('invoices').update({
       paid_amount: totalPaid,
       remaining_amount: inv.total - totalPaid,
-      updated_at: new Date().toISOString(),
+      updated_at: businessClock.nowISO(),
     }).eq('id', invoiceId);
   }
 }
@@ -61,7 +62,7 @@ async function recalcPayment(paymentId: string) {
       applied_amount: totalApplied,
       remaining_amount: p.amount - totalApplied,
       status: totalApplied === 0 ? 'pending' : totalApplied >= p.amount ? 'applied' : 'partial',
-      updated_at: new Date().toISOString(),
+      updated_at: businessClock.nowISO(),
     }).eq('id', paymentId);
   }
 }

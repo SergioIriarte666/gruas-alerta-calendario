@@ -5,14 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Loader2, ShieldAlert, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useReAuth } from '@/hooks/useReAuth';
 import { ServiceClosure } from '@/types';
-
-interface RelatedData {
-  services: number;
-  invoices: number;
-}
+import { useClosureDependencies } from '@/hooks/useClosureDependencies';
 
 interface ClosureDeleteConfirmDialogProps {
   closure: ServiceClosure | null;
@@ -28,32 +23,17 @@ export const ClosureDeleteConfirmDialog = ({
   onConfirmDelete,
 }: ClosureDeleteConfirmDialogProps) => {
   const { verifyPassword } = useReAuth();
-  const [related, setRelated] = useState<RelatedData | null>(null);
-  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
+  const closureId = open && closure ? closure.id : null;
+  const { dependencies, isLoading } = useClosureDependencies(closureId);
+
   useEffect(() => {
-    const fetchRelated = async (cl: ServiceClosure) => {
-      setLoading(true);
-      try {
-        const [servicesRes, invoicesRes] = await Promise.all([
-          supabase.from('closure_services').select('id', { count: 'exact', head: true }).eq('closure_id', cl.id),
-          supabase.from('invoice_closures').select('id', { count: 'exact', head: true }).eq('closure_id', cl.id),
-        ]);
-        setRelated({
-          services: servicesRes.count || 0,
-          invoices: invoicesRes.count || 0,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (open && closure) {
+    if (open) {
       setPassword('');
       setPasswordError('');
-      fetchRelated(closure);
     }
   }, [open, closure]);
 
@@ -108,7 +88,7 @@ export const ClosureDeleteConfirmDialog = ({
               </div>
             )}
 
-            {loading ? (
+            {isLoading ? (
               <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
                 <Loader2 className="size-4 animate-spin" />
                 <span className="text-sm">Verificando dependencias...</span>
@@ -121,11 +101,11 @@ export const ClosureDeleteConfirmDialog = ({
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span>{related?.services || 0} servicio(s) vinculados</span>
+                    <span>{dependencies?.servicesCount || 0} servicio(s) vinculados</span>
                     <Badge variant="secondary" className="text-xs">Se desvinculará</Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span>{related?.invoices || 0} factura(s) vinculadas</span>
+                    <span>{dependencies?.invoicesCount || 0} factura(s) vinculadas</span>
                     <Badge variant="secondary" className="text-xs">Se desvinculará</Badge>
                   </div>
                 </div>
@@ -157,7 +137,7 @@ export const ClosureDeleteConfirmDialog = ({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={loading || verifying || isInvoiced || !password.trim()}
+            disabled={isLoading || verifying || isInvoiced || !password.trim()}
           >
             {verifying ? (
               <>

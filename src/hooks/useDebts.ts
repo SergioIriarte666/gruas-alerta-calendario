@@ -313,7 +313,7 @@ export const useUpdateDebt = () => {
         operator_id: data.operator_id ?? undefined,
         subcategory: data.subcategory ?? undefined,
         updated_by: userId,
-        updated_at: new Date().toISOString(),
+        updated_at: businessClock.nowISO(),
       };
       Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
       const { error } = await supabase.from('debts').update(updateData).eq('id', id);

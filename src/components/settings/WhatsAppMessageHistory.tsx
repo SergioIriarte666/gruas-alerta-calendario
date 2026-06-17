@@ -1,3 +1,4 @@
+import { businessClock } from '@/utils/businessClock';
 import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -146,7 +147,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
     setActing(true);
     const { data: userRes } = await supabase.auth.getUser();
     const payload = hide
-      ? { hidden_at: new Date().toISOString(), hidden_by: userRes.user?.id ?? null }
+      ? { hidden_at: businessClock.nowISO(), hidden_by: userRes.user?.id ?? null }
       : { hidden_at: null, hidden_by: null };
     const { error } = await supabase
       .from('whatsapp_message_log')
