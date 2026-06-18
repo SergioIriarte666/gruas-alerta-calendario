@@ -222,11 +222,17 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         auto_update_status: autoUpdateStatus
       };
 
+      // Cerrar este modal antes de iniciar la operación asíncrona: el padre
+      // muestra un modal de progreso (BatchProgressModal) durante el batch,
+      // y tener dos Dialogs de Radix abiertos a la vez provoca que el de
+      // progreso tape visualmente a este, dando la apariencia de que se
+      // cierra y reabre solo cuando el de progreso termina.
+      onOpenChange(false);
+
       await onBatchUpdate(updateData);
-      
+
       const typesText = activeTypes.length === 2 ? 'COT + OC' : activeTypes[0] === 'quote' ? 'cotizaciones' : 'órdenes de compra';
       toast.success(`${activeServices.length} servicios actualizados con ${typesText}`);
-      onOpenChange(false);
 
       // Reset
       setBatchData({

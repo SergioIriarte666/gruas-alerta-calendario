@@ -11,6 +11,7 @@ import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { ProcessedServiceInfo } from '@/hooks/useServicesForClosures';
 import { toTitleCase } from '@/lib/utils';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface EnhancedServicesSelectorProps {
   services: Service[];
@@ -55,11 +56,15 @@ const EnhancedServicesSelector = ({
   const [showPending, setShowPending] = useState(false);
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  // El servidor (useServicesForClosures) refetch cuando cambia este valor;
+  // se debounce para no disparar un fetch por cada tecla. El filtrado local
+  // de abajo sigue usando `searchTerm` sin debounce para que la UI sea instantánea.
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    onSearchTermChange?.(searchTerm);
-  }, [searchTerm, onSearchTermChange]);
+    onSearchTermChange?.(debouncedSearchTerm);
+  }, [debouncedSearchTerm, onSearchTermChange]);
 
   // Function to filter services by search term
   const filterServicesBySearch = useCallback((serviceList: Service[]) => {

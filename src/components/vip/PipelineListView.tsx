@@ -457,7 +457,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     }
   };
 
-  const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
+  const selectedServicesArray = useMemo(
+    () => services.filter(s => selectedServices.has(s.id)),
+    [services, selectedServices]
+  );
 
   // Calcular suma total de servicios seleccionados
   const selectedTotalValue = useMemo(() =>
