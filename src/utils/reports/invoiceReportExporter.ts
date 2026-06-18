@@ -5,6 +5,10 @@ import { es } from 'date-fns/locale';
 import { ExportInvoiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
+const getInvoiceFiscalNumber = (invoice: any): string | null => {
+  return invoice.numero_fiscal ?? invoice.numeroFiscal ?? null;
+};
+
 export const exportInvoiceReport = async ({ 
   format, 
   invoices, 
@@ -91,7 +95,7 @@ export const exportInvoiceReport = async ({
     const tableData = invoices.map(invoice => [
       invoice.client?.name || 'N/A',
       invoice.folio || 'N/A',
-      invoice.numeroFiscal || 'N/A',
+      getInvoiceFiscalNumber(invoice) ?? '-',
       (invoice.productServiceDescription || '').slice(0, 60),
       invoice.issueDate 
         ? formatDate(new Date(invoice.issueDate), 'dd/MM/yy', { locale: es })
@@ -175,7 +179,7 @@ export const exportInvoiceReport = async ({
     const detailData = invoices.map(invoice => ({
       'Cliente': invoice.client?.name || '',
       'Folio': invoice.folio || '',
-      'Número Fiscal': invoice.numeroFiscal || '',
+      'Número Fiscal': getInvoiceFiscalNumber(invoice) ?? '',
       'Descripción de Producto o Servicio': invoice.productServiceDescription || '',
       'Fecha Emisión': invoice.issueDate,
       'Fecha Vencimiento': invoice.dueDate,
