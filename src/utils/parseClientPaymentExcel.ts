@@ -6,34 +6,50 @@ export const HEADER_MONTO = 'Monto';
 export const HEADER_DETALLE = 'Detalle';
 export const HEADER_FECHA = 'Fecha de Pago';
 
-function parseFechaPago(raw: unknown): string {
-  if (!raw) return '';
+function parseFechaPago(raw: unknown): string | null {
+  if (!raw) return null;
 
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    const sep = trimmed.includes('.') ? '.' : trimmed.includes('/') ? '/' : null;
-    if (!sep) return '';
-    const parts = trimmed.split(sep);
-    if (parts.length !== 3) return '';
-    const [dd, mm, yyyy] = parts;
-    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  // Caso A: string con formato dd.mm.yyyy o dd/mm/yyyy
+  if (typeof raw === 'string' && raw.trim()) {
+    const str = raw.trim();
+    // Detectar separador
+    const sep = str.includes('.') ? '.' : str.includes('/') ? '/' : null;
+    if (sep) {
+      const parts = str.split(sep);
+      if (parts.length === 3) {
+        const [dd, mm, yyyy] = parts;
+        if (yyyy.length === 4 && !isNaN(Number(dd)) && !isNaN(Number(mm))) {
+          return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+        }
+      }
+    }
+    // Caso: ya viene en formato yyyy-mm-dd
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    return null;
   }
 
+  // Caso B: número serial de Excel
   if (typeof raw === 'number') {
-    const date = XLSX.SSF.parse_date_code(raw);
-    const mm = String(date.m).padStart(2, '0');
-    const dd = String(date.d).padStart(2, '0');
-    return `${date.y}-${mm}-${dd}`;
-  }
-
-  if (raw instanceof Date) {
-    const yyyy = raw.getFullYear();
-    const mm = String(raw.getMonth() + 1).padStart(2, '0');
-    const dd = String(raw.getDate()).padStart(2, '0');
+    // Convertir serial de Excel a fecha sin usar new Date() con strings
+    // Excel usa días desde 1900-01-01 (con bug del año bisiesto 1900)
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const ms = excelEpoch.getTime() + raw * 86400000;
+    const d = new Date(ms);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  return '';
+  // Caso C: objeto Date de JS - usar componentes UTC para evitar timezone
+  if (raw instanceof Date) {
+    const yyyy = raw.getUTCFullYear();
+    const mm = String(raw.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(raw.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return null;
 }
 
 function parseMonto(value: unknown): number {
@@ -53,7 +69,7 @@ export function parseClientPaymentExcel(file: File): Promise<ClientPaymentRow[]>
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const sheetRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { raw: true });
 
-        const rows: ClientPaymentRow[] = [];
+        const rows: Array<Omit<ClientPaymentRow, 'fechaPago'> & { fechaPago: string | null }> = [];
         for (const sheetRow of sheetRows) {
           const referencia = String(sheetRow[HEADER_REFERENCIA] ?? '').trim();
           if (!referencia) continue;
@@ -66,7 +82,7 @@ export function parseClientPaymentExcel(file: File): Promise<ClientPaymentRow[]>
             fechaPago: parseFechaPago(sheetRow[HEADER_FECHA]),
           });
         }
-        resolve(rows);
+        resolve(rows as ClientPaymentRow[]);
       } catch (error) {
         reject(error);
       }

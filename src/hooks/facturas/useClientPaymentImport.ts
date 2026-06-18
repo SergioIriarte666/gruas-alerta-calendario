@@ -10,6 +10,14 @@ import type {
 
 const logger = createLogger('ClientPaymentImport');
 
+function getImportErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return 'Error inesperado';
+}
+
 export function useClientPaymentImport() {
   const [filename, setFilename] = useState('');
   const [rows, setRows] = useState<ClientPaymentRow[]>([]);
@@ -144,6 +152,14 @@ export function useClientPaymentImport() {
     for (const row of eligible) {
       if (!row.invoice) continue;
       try {
+        if (!row.fechaPago) {
+          errors.push({
+            referencia: row.referencia,
+            error: 'Fecha de pago inválida o vacía',
+          });
+          continue;
+        }
+
         const { data: payment, error: paymentError } = await supabase
           .from('payments')
           .insert({
@@ -159,7 +175,13 @@ export function useClientPaymentImport() {
           .select('id')
           .single();
 
-        if (paymentError || !payment) throw paymentError ?? new Error('Error al crear pago');
+        if (paymentError) {
+          const msg = paymentError.message || paymentError.details || JSON.stringify(paymentError);
+          errors.push({ referencia: row.referencia, error: msg });
+          continue;
+        }
+
+        if (!payment) throw new Error('Error al crear pago');
 
         const appliedAmount = Math.min(row.monto, row.invoice.remaining_amount);
         const { data: application, error: applicationError } = await supabase
@@ -190,7 +212,7 @@ export function useClientPaymentImport() {
         imported += 1;
         totalAmount += row.monto;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Error desconocido';
+        const message = getImportErrorMessage(error);
         errors.push({ referencia: row.referencia, error: message });
         logger.error('Error importing row', row.referencia, error);
       } finally {

@@ -1,3 +1,4 @@
+Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -6096,6 +6097,10 @@ export type Database = {
         Returns: string
       }
       can_access_client_sensitive_data: { Args: never; Returns: boolean }
+      can_manage_confidential_business_documents: {
+        Args: never
+        Returns: boolean
+      }
       can_view_notification: {
         Args: { target_user_id: string }
         Returns: boolean
@@ -7128,3 +7133,5 @@ export const Constants = {
     },
   },
 } as const
+A new version of Supabase CLI is available: v2.107.0 (currently installed v2.33.9)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
