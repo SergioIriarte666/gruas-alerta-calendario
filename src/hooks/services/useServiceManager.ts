@@ -336,13 +336,18 @@ export const useServiceManager = () => {
 
         // Si hay costos, crearlos
         if (serviceData.costDetails && serviceData.costDetails.length > 0) {
-          const costPromises = serviceData.costDetails.map(async (cost) => {
-            const { data: category } = await supabase
-              .from('cost_categories')
-              .select('id')
-              .eq('name', 'Gastos de Servicios')
-              .single();
+          const { data: serviceCostCategory, error: serviceCostCategoryError } = await supabase
+            .from('cost_categories')
+            .select('id')
+            .eq('name', 'Gastos de Servicios')
+            .maybeSingle();
 
+          if (serviceCostCategoryError) throw serviceCostCategoryError;
+          if (!serviceCostCategory) {
+            throw new Error('No se encontró la categoría Gastos de Servicios');
+          }
+
+          const costPromises = serviceData.costDetails.map(async (cost) => {
             const costData = {
               service_id: newService.id,
               amount: cost.amount,
@@ -350,7 +355,7 @@ export const useServiceManager = () => {
               date: transformedData.service_date,
               payment_date: serviceData.markCostsPaidOnCreate ? transformedData.service_date : null,
               notes: cost.notes || 'Costo desde formulario de servicio',
-              category_id: cost.category_id || category?.id,
+              category_id: serviceCostCategory.id,
               crane_id: newService.crane_id,
               service_folio: newService.folio,
               subcategory: cost.subcategory,
@@ -749,6 +754,16 @@ export const useServiceManager = () => {
       const isFromMainForm = (serviceData as ServiceSnakeCase)._source === 'main_form' || (serviceData as ServiceSnakeCase)._processCosts === true;
       
       if (isFromMainForm) {
+        const { data: serviceCostCategory, error: serviceCostCategoryError } = await supabase
+          .from('cost_categories')
+          .select('id')
+          .eq('name', 'Gastos de Servicios')
+          .maybeSingle();
+
+        if (serviceCostCategoryError) throw serviceCostCategoryError;
+        if (!serviceCostCategory) {
+          throw new Error('No se encontró la categoría Gastos de Servicios');
+        }
         
         
         const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
@@ -766,7 +781,7 @@ export const useServiceManager = () => {
       
         // Filter valid cost details
         const validCostDetails = serviceData.costDetails.filter(cost => 
-          cost.description && cost.amount > 0 && cost.category_id
+          cost.description && cost.amount > 0
         );
       
         if (validCostDetails.length > 0) {
@@ -779,7 +794,7 @@ export const useServiceManager = () => {
       
           const serviceCosts = validCostDetails.map(cost => ({
             amount: cost.amount,
-            category_id: cost.category_id,
+            category_id: serviceCostCategory.id,
             service_id: id,
             service_folio: currentService?.folio || 'Unknown',
             date: currentService?.service_date || serviceData.serviceDate || getTodayLocal(),

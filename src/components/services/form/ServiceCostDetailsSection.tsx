@@ -10,7 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, Receipt, Calculator, Info } from 'lucide-react';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { useAddCost, useUpdateCost, useDeleteCost } from '@/hooks/useCosts';
-import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { debounce } from 'lodash';
@@ -67,7 +66,25 @@ export const ServiceCostDetailsSection = ({
   logger.debug('[ServiceCostDetailsSection] Add button should be disabled?', disabled);
   
   const [nextId, setNextId] = useState(1);
-  const { data: categories = [] } = useCostCategories();
+  const {
+    data: serviceCostCategory,
+    isLoading: serviceCostCategoryLoading,
+    isError: serviceCostCategoryError,
+  } = useQuery({
+    queryKey: ['service-cost-category'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cost_categories')
+        .select('id, name')
+        .eq('name', 'Gastos de Servicios')
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error('No se encontró la categoría Gastos de Servicios');
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
   const costDescriptionSuggestions = useFrequentCostDescriptions();
   const costLocationSuggestions = useFrequentCostLocations();
   const { data: existingCosts, isLoading: existingCostsLoading, refetch: refetchCosts } = useServiceCosts(serviceId || null);
@@ -94,42 +111,18 @@ export const ServiceCostDetailsSection = ({
 
   // Track selected categories to load their subcategories dynamically
   const [subcategoriesCache, setSubcategoriesCache] = useState<Record<string, CostSubcategory[]>>({});
-  const inventoryKeywords = [
-    'filtro',
-    'racor',
-    'aceite',
-    'lubric',
-    'hidraul',
-    'repuesto',
-    'correa',
-    'rodamiento',
-    'manguera',
-    'bomba',
-    'alternador',
-    'bateria',
-    'pastilla',
-    'disco',
-    'embrague',
-    'neumatic',
-    'llanta',
-  ];
-
   // Filter out commission costs - these are handled by MultipleOperatorsSection
-  const commissionCategoryId = categories.find(cat => 
-    cat.name.toLowerCase().includes('comisión') || 
-    cat.name.toLowerCase().includes('comision')
-  )?.id;
-
-  const filteredExistingCosts = existingCosts?.filter(cost => 
-    cost.category_id !== commissionCategoryId
-  ) || [];
+  const filteredExistingCosts = existingCosts?.filter(cost => {
+    const categoryName = cost.cost_categories?.name?.toLowerCase() || '';
+    return !categoryName.includes('comisión') && !categoryName.includes('comision');
+  }) || [];
 
   // Load existing costs when editing a service (excluding commissions)
   useEffect(() => {
     // Only load if we have a serviceId, categories are loaded, existing costs are available, 
     // and we haven't loaded costs yet
     if (serviceId && 
-        categories.length > 0 && 
+        serviceCostCategory &&
         filteredExistingCosts.length > 0 && 
         costDetails.length === 0 && 
         !existingCostsLoading) {
@@ -143,7 +136,7 @@ export const ServiceCostDetailsSection = ({
         quantity: 1,
         unitPrice: Number(cost.amount),
         notes: cost.notes || '',
-        category_id: cost.category_id,
+        category_id: serviceCostCategory.id,
         subcategory: cost.subcategory || '',
         supplier_id: cost.supplier_id || undefined,
         operator_id: cost.operator_id || undefined,
@@ -160,19 +153,23 @@ export const ServiceCostDetailsSection = ({
       
       onCostDetailsChange(mappedCosts);
     }
-  }, [serviceId, categories.length, filteredExistingCosts.length, costDetails.length, existingCostsLoading, onCostDetailsChange]);
-
-  // Filter categories to exclude commission categories
-  const nonCommissionCategories = categories.filter(cat => 
-    !cat.name.toLowerCase().includes('comisión') && 
-    !cat.name.toLowerCase().includes('comision')
-  );
+  }, [serviceId, serviceCostCategory?.id, filteredExistingCosts.length, costDetails.length, existingCostsLoading, onCostDetailsChange]);
 
   // ✅ AGREGAR: Estado para prevenir doble clic
   const [isAddingCost, setIsAddingCost] = useState(false);
+
+  // Keep costs received from persisted/draft form state pinned to the service category too.
+  useEffect(() => {
+    if (!serviceCostCategory || !costDetails.some(cost => cost.category_id !== serviceCostCategory.id)) return;
+
+    onCostDetailsChange(costDetails.map(cost => ({
+      ...cost,
+      category_id: serviceCostCategory.id,
+    })));
+  }, [serviceCostCategory?.id, costDetails, onCostDetailsChange]);
   
   const addCostDetail = () => {
-    if (isAddingCost) return; // Prevenir múltiples clics
+    if (isAddingCost || !serviceCostCategory) return; // Prevenir múltiples clics
     
     setIsAddingCost(true);
     
@@ -180,7 +177,7 @@ export const ServiceCostDetailsSection = ({
       id: `temp-${Date.now()}`,
       description: '',
       amount: 0,
-      category_id: '',
+      category_id: serviceCostCategory.id,
       subcategory: '',
       notes: '',
       quantity: 1,
@@ -266,34 +263,21 @@ export const ServiceCostDetailsSection = ({
       return;
     }
 
-    const selectedCategoryName = nonCommissionCategories.find(cat => cat.id === costDetail.category_id)?.name || '';
-    const inventarioCategoryId = nonCommissionCategories.find(cat => cat.name === 'Inventario')?.id;
-    const normalizedDesc = (costDetail.description || '').toLowerCase();
-    const matchesInventoryKeyword = inventoryKeywords.some(k => normalizedDesc.includes(k));
-
-    if (selectedCategoryName === 'Gastos de Servicios' && matchesInventoryKeyword && inventarioCategoryId) {
-      updateCostDetail(costDetail.id, 'category_id', inventarioCategoryId);
-      updateCostDetail(costDetail.id, 'subcategory', '');
-      updateCostDetail(costDetail.id, 'purchase_quantity', costDetail.quantity || 1);
-      updateCostDetail(costDetail.id, 'purchase_unit_cost', costDetail.unitPrice || 0);
-      updateCostDetail(costDetail.id, 'immediate_consumption', true);
-      toast.info('Se detectó una compra para grúa, se cambió a Inventario para registrar en bodega.');
+    if (!serviceCostCategory) {
+      toast.error("No se pudo resolver la categoría Gastos de Servicios");
       return;
     }
 
-    if (!costDetail.category_id) {
-      toast.error("Debe seleccionar una categoría");
-      return;
-    }
+    const categoryId = serviceCostCategory.id;
 
     // Validar subcategoría si es requerida para la categoría seleccionada
-    const requiredSubcategories = getSubcategoriesForCategory(costDetail.category_id);
+    const requiredSubcategories = getSubcategoriesForCategory(categoryId);
     if (requiredSubcategories.length > 0 && !costDetail.subcategory?.trim()) {
       toast.error("Debe seleccionar una subcategoría");
       return;
     }
 
-    const subcategoryConfig = getSubcategoryConfig(costDetail.category_id, costDetail.subcategory);
+    const subcategoryConfig = getSubcategoryConfig(categoryId, costDetail.subcategory);
     if (subcategoryConfig?.requires_supplier && !costDetail.supplier_id) {
       toast.error("Debe seleccionar un proveedor");
       return;
@@ -353,7 +337,7 @@ export const ServiceCostDetailsSection = ({
       : costDate;
     const costData = {
       service_id: serviceId,
-      category_id: costDetail.category_id,
+      category_id: categoryId,
       description: costDetail.description.trim(),
       amount: costDetail.amount,
       date: costDate,
@@ -423,7 +407,7 @@ export const ServiceCostDetailsSection = ({
 
   const getCostsByCategory = () => {
     const grouped = costDetails.reduce((acc, cost) => {
-      const categoryName = nonCommissionCategories.find(cat => cat.id === cost.category_id)?.name || 'Sin categoría';
+      const categoryName = serviceCostCategory?.name || 'Gastos de Servicios';
       if (!acc[categoryName]) acc[categoryName] = 0;
       acc[categoryName] += cost.amount || 0;
       return acc;
@@ -512,27 +496,6 @@ export const ServiceCostDetailsSection = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Categoría */}
-              <div className="space-y-2">
-                <Label>Categoría *</Label>
-                <Select
-                  value={cost.category_id}
-                  onValueChange={(value) => updateCostDetail(cost.id, 'category_id', value)}
-                  disabled={disabled}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {nonCommissionCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Subcategoría */}
               {cost.category_id && getSubcategoriesForCategory(cost.category_id).length > 0 && (
                 <div className="space-y-2">
@@ -610,7 +573,7 @@ export const ServiceCostDetailsSection = ({
               </div>
 
               {(() => {
-                const categoryName = nonCommissionCategories.find(cat => cat.id === cost.category_id)?.name || '';
+                const categoryName = serviceCostCategory?.name || '';
                 const cfg = getSubcategoryConfig(cost.category_id, cost.subcategory);
                 const shouldShowInventoryFields = categoryName === 'Inventario' || !!cfg?.routes_to_inventory;
                 const shouldShowSupplier = !!cfg?.requires_supplier;
@@ -799,7 +762,7 @@ export const ServiceCostDetailsSection = ({
             type="button"
             variant="outline"
             onClick={addCostDetail}
-            disabled={disabled || isAddingCost}
+            disabled={disabled || isAddingCost || serviceCostCategoryLoading || serviceCostCategoryError}
             className="flex items-center gap-2 bg-green-100 hover:bg-green-200"
           >
             <Plus className="size-4" />
