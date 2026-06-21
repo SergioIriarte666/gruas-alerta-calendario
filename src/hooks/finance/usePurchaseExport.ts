@@ -1,22 +1,30 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 import { businessClock } from '@/utils/businessClock';
 
-
 const logger = createLogger("usePurchaseExport");
+
+interface ExportMeta {
+  periodLabel?: string;
+  sourceLabel?: string;
+}
+
 export const usePurchaseExport = () => {
-  const exportToExcel = useCallback((invoices: SupplierInvoiceWithDetails[], fileName: string = 'reporte-compras') => {
+  // Las librerías xlsx/jspdf se cargan dinámicamente solo al exportar, para no
+  // incluirlas en el bundle inicial del módulo.
+  const exportToExcel = useCallback(async (
+    invoices: SupplierInvoiceWithDetails[],
+    fileName: string = 'reporte-compras',
+    meta?: ExportMeta
+  ) => {
     try {
+      const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
-      
+
       // Transform data for Excel
       const data = invoices.map(inv => ({
         'Folio': inv.invoice_number,
@@ -31,8 +39,15 @@ export const usePurchaseExport = () => {
         'Monto Total': inv.amount,
       }));
 
-      const ws = XLSX.utils.json_to_sheet(data);
-      
+      const metaRows = [
+        { 'Folio': `Período: ${meta?.periodLabel || 'Todos'}` },
+        { 'Folio': `Origen: ${meta?.sourceLabel || 'Todos'}` },
+        { 'Folio': `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}` },
+        { 'Folio': '' },
+      ];
+
+      const ws = XLSX.utils.json_to_sheet([...metaRows, ...data]);
+
       // Auto-width columns
       const colWidths = [
         { wch: 15 }, // Folio
@@ -49,10 +64,10 @@ export const usePurchaseExport = () => {
       ws['!cols'] = colWidths;
 
       XLSX.utils.book_append_sheet(wb, ws, 'Compras');
-      
+
       // Generate file
       XLSX.writeFile(wb, `${fileName}-${businessClock.today()}.xlsx`);
-      
+
       toast.success('Reporte Excel generado correctamente');
     } catch (error) {
       logger.error('Error exporting to Excel:', error);
@@ -60,25 +75,31 @@ export const usePurchaseExport = () => {
     }
   }, []);
 
-  const exportToPDF = useCallback((invoices: SupplierInvoiceWithDetails[], fileName: string = 'reporte-compras') => {
+  const exportToPDF = useCallback(async (
+    invoices: SupplierInvoiceWithDetails[],
+    fileName: string = 'reporte-compras',
+    meta?: ExportMeta
+  ) => {
     try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF();
-      
+
       // Header
       doc.setFontSize(18);
       doc.text('Reporte de Compras Históricas', 14, 20);
-      
+
       doc.setFontSize(10);
-      doc.text(`Generado el: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, 14, 30);
-      
+      doc.text(`Período: ${meta?.periodLabel || 'Todos'}`, 14, 28);
+      doc.text(`Origen: ${meta?.sourceLabel || 'Todos'}`, 14, 34);
+      doc.text(`Generado el: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
+
       // Calculate totals
       const totalAmount = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
-      const totalNet = invoices.reduce((sum, inv) => sum + (inv.net_amount || 0), 0);
-      const totalTax = invoices.reduce((sum, inv) => sum + (inv.tax_amount || 0), 0);
-      
-      doc.text(`Total Registros: ${invoices.length}`, 14, 40);
-      doc.text(`Monto Total: ${formatCurrency(totalAmount)}`, 14, 45);
-      
+
+      doc.text(`Total Registros: ${invoices.length}`, 14, 48);
+      doc.text(`Monto Total: ${formatCurrency(totalAmount)}`, 14, 53);
+
       // Table
       const tableData = invoices.map(inv => [
         inv.invoice_number,
@@ -90,7 +111,7 @@ export const usePurchaseExport = () => {
       ]);
 
       autoTable(doc, {
-        startY: 55,
+        startY: 60,
         head: [['Folio', 'Proveedor', 'Fecha', 'Descripción', 'Estado', 'Total']],
         body: tableData,
         theme: 'striped',
@@ -101,7 +122,7 @@ export const usePurchaseExport = () => {
       });
 
       doc.save(`${fileName}-${businessClock.today()}.pdf`);
-      
+
       toast.success('Reporte PDF generado correctamente');
     } catch (error) {
       logger.error('Error exporting to PDF:', error);

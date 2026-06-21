@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { SourceBadge } from './SourceBadge';
 
 export type SortKey = 'issueDate' | 'total' | 'client' | 'status' | 'folio';
 export type SortDirection = 'asc' | 'desc';
@@ -38,7 +39,7 @@ interface HistoricalSalesTableProps {
   hideClientColumn?: boolean;
   selectedIds?: string[];
   onSelectId?: (id: string, checked: boolean) => void;
-  onSelectAll?: (checked: boolean) => void;
+  onSelectAll?: (ids: string[], checked: boolean) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -90,14 +91,14 @@ export const HistoricalSalesTable = ({
   );
 
   return (
-    <div className="rounded-md border shadow-sm bg-card overflow-hidden">
-      <Table>
+    <div className="rounded-md border shadow-sm bg-card overflow-x-auto">
+      <Table className="min-w-[900px]">
         <TableHeader className="bg-muted/40">
           <TableRow>
             <TableHead className="w-[40px]">
               <Checkbox
                 checked={invoices.length > 0 && invoices.every((inv) => selectedIds.includes(inv.id))}
-                onCheckedChange={(checked) => onSelectAll?.(!!checked)}
+                onCheckedChange={(checked) => onSelectAll?.(invoices.map((inv) => inv.id), !!checked)}
                 aria-label="Seleccionar todo"
               />
             </TableHead>
@@ -220,15 +221,7 @@ export const HistoricalSalesTable = ({
                       );
                     })()}
                     {invoice.numeroFiscal || invoice.folio}
-                    {invoice.folio.startsWith('HIST-') ? (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1.5 py-0">
-                        Importada
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0">
-                        App
-                      </Badge>
-                    )}
+                    <SourceBadge source={invoice.source} />
                   </div>
                 </TableCell>
                 
@@ -259,7 +252,7 @@ export const HistoricalSalesTable = ({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right flex items-center justify-end gap-1">
-                {!invoice.folio.startsWith('HIST-') && (
+                {invoice.source !== 'historico' && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>

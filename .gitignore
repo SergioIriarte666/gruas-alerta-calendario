@@ -32,3 +32,5 @@ supabase/.temp/
 
 # Tesseract OCR trained data (loaded from CDN)
 eng.traineddata
+
+*.tsbuildinfo

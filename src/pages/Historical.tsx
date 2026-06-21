@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoricalSales } from '@/components/finance/HistoricalSales';
 import { HistoricalPurchases } from '@/components/finance/HistoricalPurchases';
 import { HistoricalResults } from '@/components/finance/historical/HistoricalResults';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const Historical = () => {
   return (
@@ -21,13 +20,13 @@ const Historical = () => {
             value="sales"
             className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
           >
-            Histórico de Ventas
+            Ventas
           </TabsTrigger>
           <TabsTrigger
             value="purchases"
             className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
           >
-            Histórico de Compras
+            Compras
           </TabsTrigger>
           <TabsTrigger
             value="results"
@@ -36,47 +35,17 @@ const Historical = () => {
             Resultados
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="sales" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Ventas</CardTitle>
-              <CardDescription>
-                Registro histórico de facturación y ventas.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <HistoricalSales />
-            </CardContent>
-          </Card>
+          <HistoricalSales />
         </TabsContent>
-        
+
         <TabsContent value="purchases" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Compras</CardTitle>
-              <CardDescription>
-                Registro histórico de adquisiciones y gastos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <HistoricalPurchases />
-            </CardContent>
-          </Card>
+          <HistoricalPurchases />
         </TabsContent>
-        
+
         <TabsContent value="results" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resultados Financieros</CardTitle>
-              <CardDescription>
-                Panel financiero completo con visión cruzada de ventas y compras.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <HistoricalResults />
-            </CardContent>
-          </Card>
+          <HistoricalResults />
         </TabsContent>
       </Tabs>
     </div>

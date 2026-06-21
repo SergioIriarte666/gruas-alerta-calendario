@@ -112,4 +112,23 @@ describe('HistoricalSalesTable', () => {
 
     expect(mockOnEdit).toHaveBeenCalledWith(mockInvoices[0]);
   });
+
+  it('muestra el badge de origen según inv.source, no según el folio', () => {
+    const invoicesWithSource: Invoice[] = [
+      { ...mockInvoices[0], folio: '1001', source: 'historico' },
+      { ...mockInvoices[1], folio: '1002', source: 'sistema' },
+    ];
+
+    render(
+      <HistoricalSalesTable
+        invoices={invoicesWithSource}
+        sortConfig={mockSortConfig}
+        onSort={mockOnSort}
+        onEdit={mockOnEdit}
+      />
+    );
+
+    expect(screen.getByText('Importada')).toBeInTheDocument();
+    expect(screen.getByText('Sistema')).toBeInTheDocument();
+  });
 });

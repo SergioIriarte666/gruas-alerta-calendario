@@ -172,7 +172,7 @@ export const HistoricalSalesGroupedList = ({
                     hideClientColumn
                     selectedIds={selectedIds}
                     onSelectId={onSelectId}
-                    onSelectAll={(checked) => onSelectAll?.(filteredClientInvoices.map(i => i.id), checked)}
+                    onSelectAll={(_ids, checked) => onSelectAll?.(filteredClientInvoices.map(i => i.id), checked)}
                   />
                 ) : (
                   <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/5">

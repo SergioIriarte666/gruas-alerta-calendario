@@ -3,14 +3,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
-import { useInvoiceData } from './invoices/useInvoiceData';
+import { useInvoiceData, UseInvoiceDataOptions } from './invoices/useInvoiceData';
 import { useInvoiceOperations } from './invoices/useInvoiceOperations';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useInvoices");
-export const useInvoices = () => {
-  const { invoices, loading, addInvoice, updateInvoice: updateInvoiceData, removeInvoice, refetch } = useInvoiceData();
+export const useInvoices = (options?: UseInvoiceDataOptions) => {
+  const { invoices, loading, addInvoice, updateInvoice: updateInvoiceData, removeInvoice, refetch } = useInvoiceData(options);
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid } = useInvoiceOperations();
   const [closuresMap, setClosuresMap] = useState<Record<string, any>>({});
   const [clientsMap, setClientsMap] = useState<Record<string, any>>({});

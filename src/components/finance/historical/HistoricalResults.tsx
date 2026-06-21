@@ -21,9 +21,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Invoice } from '@/types';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { businessClock } from '@/utils/businessClock';
@@ -33,6 +30,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip as UiTooltip,
+  TooltipContent as UiTooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
+import { SourceFilter, SOURCE_FILTER_OPTIONS, matchesSource } from './useSourceFilter';
+import { HistoricalEmptyState } from './HistoricalEmptyState';
 
 type PeriodType = 'this_year' | 'last_year' | 'custom';
 
@@ -66,50 +72,103 @@ export const HistoricalResults: React.FC = () => {
   const [period, setPeriod] = useState<PeriodType>('this_year');
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
+  const [source, setSource] = useState<SourceFilter>('all');
+
+  // Valida que "Desde" no sea posterior a "Hasta": si se viola, ajusta el otro extremo.
+  const handleCustomFromChange = (date: Date | undefined) => {
+    setCustomFrom(date);
+    if (date && customTo && date > customTo) setCustomTo(date);
+  };
+  const handleCustomToChange = (date: Date | undefined) => {
+    setCustomTo(date);
+    if (date && customFrom && date < customFrom) setCustomFrom(date);
+  };
 
   // Period date range
   const dateRange = useMemo(() => {
     const now = businessClock.todayDate();
     switch (period) {
       case 'this_year':
-        return { from: startOfYear(now), to: endOfYear(now) };
+        // No incluir meses/días futuros: el tope es hoy, no el 31 de diciembre.
+        return { from: startOfYear(now), to: now };
       case 'last_year':
         return { from: startOfYear(subYears(now, 1)), to: endOfYear(subYears(now, 1)) };
       case 'custom':
-        return { 
-          from: customFrom || startOfYear(now), 
-          to: customTo || endOfYear(now) 
+        return {
+          from: customFrom || startOfYear(now),
+          to: customTo || now
         };
     }
   }, [period, customFrom, customTo]);
+
+  // Período anterior equivalente (mismo N° de días inmediatamente anterior a dateRange.from)
+  const previousDateRange = useMemo(() => {
+    const days = Math.max(1, Math.round((dateRange.to.getTime() - dateRange.from.getTime()) / 86400000) + 1);
+    const to = new Date(dateRange.from.getTime() - 86400000);
+    const from = new Date(to.getTime() - (days - 1) * 86400000);
+    return { from, to };
+  }, [dateRange]);
 
   // Filter sales
   const filteredSales = useMemo(() => {
     return salesInvoices.filter(inv => {
       if (inv.status === 'cancelled') return false;
+      if (!matchesSource(inv.source, source)) return false;
       try {
         const d = parseISO(inv.issueDate);
         return isWithinInterval(d, { start: dateRange.from, end: dateRange.to });
       } catch { return false; }
     });
-  }, [salesInvoices, dateRange]);
+  }, [salesInvoices, dateRange, source]);
 
   // Filter purchases
   const filteredPurchases = useMemo(() => {
     return purchaseInvoices.filter(inv => {
       if (inv.status === 'cancelled') return false;
+      if (!matchesSource(inv.source, source)) return false;
       try {
         const d = parseISO(inv.issue_date);
         return isWithinInterval(d, { start: dateRange.from, end: dateRange.to });
       } catch { return false; }
     });
-  }, [purchaseInvoices, dateRange]);
+  }, [purchaseInvoices, dateRange, source]);
+
+  // Período anterior equivalente, para mostrar variación % en los KPIs principales.
+  const previousTotals = useMemo(() => {
+    const prevSales = salesInvoices.filter(inv => {
+      if (inv.status === 'cancelled' || !matchesSource(inv.source, source)) return false;
+      try {
+        const d = parseISO(inv.issueDate);
+        return isWithinInterval(d, { start: previousDateRange.from, end: previousDateRange.to });
+      } catch { return false; }
+    });
+    const prevPurchases = purchaseInvoices.filter(inv => {
+      if (inv.status === 'cancelled' || !matchesSource(inv.source, source)) return false;
+      try {
+        const d = parseISO(inv.issue_date);
+        return isWithinInterval(d, { start: previousDateRange.from, end: previousDateRange.to });
+      } catch { return false; }
+    });
+    const sales = prevSales.reduce((s, i) => s + (i.total || 0), 0);
+    const purchases = prevPurchases.reduce((s, i) => s + (i.amount || 0), 0);
+    return { sales, purchases, margin: sales - purchases };
+  }, [salesInvoices, purchaseInvoices, previousDateRange, source]);
+
+  const variationPct = (current: number, previous: number): number | null => {
+    if (previous === 0) return null;
+    return ((current - previous) / Math.abs(previous)) * 100;
+  };
 
   // KPIs
   const totalSales = useMemo(() => filteredSales.reduce((s, i) => s + (i.total || 0), 0), [filteredSales]);
   const totalPurchases = useMemo(() => filteredPurchases.reduce((s, i) => s + (i.amount || 0), 0), [filteredPurchases]);
+  // Resultado simple ventas - compras; NO es "margen bruto" contable (no descuenta COGS).
   const grossMargin = totalSales - totalPurchases;
   const ratio = totalSales > 0 ? (totalPurchases / totalSales) * 100 : 0;
+
+  const salesVariation = variationPct(totalSales, previousTotals.sales);
+  const purchasesVariation = variationPct(totalPurchases, previousTotals.purchases);
+  const marginVariation = variationPct(grossMargin, previousTotals.margin);
 
   // Monthly data for charts
   const monthlyData = useMemo(() => {
@@ -149,34 +208,34 @@ export const HistoricalResults: React.FC = () => {
       }));
   }, [filteredSales, filteredPurchases, dateRange]);
 
-  // Interannual comparison
+  // Comparación interanual: el año de referencia es el del período filtrado
+  // (dateRange.to), no siempre "hoy" — así depende del período seleccionado.
   const interannualData = useMemo(() => {
-    const now = businessClock.todayDate();
-    const thisYear = now.getFullYear();
-    const lastYear = thisYear - 1;
+    const refYear = dateRange.to.getFullYear();
+    const prevYear = refYear - 1;
 
     const yearData: Record<number, { sales: number; purchases: number }> = {
-      [lastYear]: { sales: 0, purchases: 0 },
-      [thisYear]: { sales: 0, purchases: 0 },
+      [prevYear]: { sales: 0, purchases: 0 },
+      [refYear]: { sales: 0, purchases: 0 },
     };
 
     salesInvoices.forEach(inv => {
-      if (inv.status === 'cancelled') return;
+      if (inv.status === 'cancelled' || !matchesSource(inv.source, source)) return;
       const y = parseInt(inv.issueDate.substring(0, 4));
       if (yearData[y]) yearData[y].sales += inv.total || 0;
     });
 
     purchaseInvoices.forEach(inv => {
-      if (inv.status === 'cancelled') return;
+      if (inv.status === 'cancelled' || !matchesSource(inv.source, source)) return;
       const y = parseInt(inv.issue_date.substring(0, 4));
       if (yearData[y]) yearData[y].purchases += inv.amount || 0;
     });
 
     return [
-      { year: String(lastYear), ventas: yearData[lastYear].sales, compras: yearData[lastYear].purchases },
-      { year: String(thisYear), ventas: yearData[thisYear].sales, compras: yearData[thisYear].purchases },
+      { year: String(prevYear), ventas: yearData[prevYear].sales, compras: yearData[prevYear].purchases },
+      { year: String(refYear), ventas: yearData[refYear].sales, compras: yearData[refYear].purchases },
     ];
-  }, [salesInvoices, purchaseInvoices]);
+  }, [salesInvoices, purchaseInvoices, dateRange, source]);
 
   // Pie chart - purchases by supplier
   const supplierDistribution = useMemo(() => {
@@ -232,46 +291,60 @@ export const HistoricalResults: React.FC = () => {
     });
   }, [monthlyData]);
 
-  // Export functions
-  const exportToExcel = useCallback(() => {
+  const sourceLabel = SOURCE_FILTER_OPTIONS.find((o) => o.value === source)?.label || 'Todos';
+
+  // Export functions. Las librerías xlsx/jspdf se cargan dinámicamente solo al exportar
+  // (no se incluyen en el bundle inicial) y el reporte incluye período, origen y fecha de generación.
+  const exportToExcel = useCallback(async () => {
     try {
+      const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
       const data = monthlySummary.map(m => ({
         'Mes': m.month,
         'Ventas': m.ventas,
         'Compras': m.compras,
-        'Margen': m.margen,
+        'Resultado (Ventas - Compras)': m.margen,
         'Variación %': m.variation !== null ? `${m.variation.toFixed(1)}%` : 'N/A',
       }));
       data.push({
         'Mes': 'TOTAL',
         'Ventas': totalSales,
         'Compras': totalPurchases,
-        'Margen': grossMargin,
+        'Resultado (Ventas - Compras)': grossMargin,
         'Variación %': '',
       });
-      const ws = XLSX.utils.json_to_sheet(data);
-      ws['!cols'] = [{ wch: 12 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 12 }];
+      const metaRows = [
+        { 'Mes': `Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}` },
+        { 'Mes': `Origen: ${sourceLabel}` },
+        { 'Mes': `Generado: ${businessClock.format(businessClock.todayDate(), 'dd/MM/yyyy HH:mm')}` },
+        { 'Mes': '' },
+      ];
+      const ws = XLSX.utils.json_to_sheet([...metaRows, ...data]);
+      ws['!cols'] = [{ wch: 28 }, { wch: 15 }, { wch: 15 }, { wch: 22 }, { wch: 12 }];
       XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
       XLSX.writeFile(wb, `resultados-historicos-${businessClock.today()}.xlsx`);
       toast.success('Excel exportado correctamente');
     } catch { toast.error('Error al exportar Excel'); }
-  }, [monthlySummary, totalSales, totalPurchases, grossMargin]);
+  }, [monthlySummary, totalSales, totalPurchases, grossMargin, dateRange, sourceLabel]);
 
-  const exportToPDF = useCallback(() => {
+  const exportToPDF = useCallback(async () => {
     try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF();
       doc.setFontSize(18);
       doc.text('Resultados Históricos', 14, 20);
       doc.setFontSize(10);
       doc.text(`Período: ${format(dateRange.from, 'dd/MM/yyyy')} - ${format(dateRange.to, 'dd/MM/yyyy')}`, 14, 30);
-      doc.text(`Total Ventas: ${formatCurrency(totalSales)}`, 14, 38);
-      doc.text(`Total Compras: ${formatCurrency(totalPurchases)}`, 14, 44);
-      doc.text(`Margen Bruto: ${formatCurrency(grossMargin)}`, 14, 50);
+      doc.text(`Origen: ${sourceLabel}`, 14, 36);
+      doc.text(`Generado: ${businessClock.format(businessClock.todayDate(), 'dd/MM/yyyy HH:mm')}`, 14, 42);
+      doc.text(`Total Ventas: ${formatCurrency(totalSales)}`, 14, 50);
+      doc.text(`Total Compras: ${formatCurrency(totalPurchases)}`, 14, 56);
+      doc.text(`Resultado (Ventas - Compras): ${formatCurrency(grossMargin)}`, 14, 62);
 
       autoTable(doc, {
-        startY: 58,
-        head: [['Mes', 'Ventas', 'Compras', 'Margen', 'Var. %']],
+        startY: 70,
+        head: [['Mes', 'Ventas', 'Compras', 'Resultado', 'Var. %']],
         body: monthlySummary.map(m => [
           m.month,
           formatCurrency(m.ventas),
@@ -289,7 +362,7 @@ export const HistoricalResults: React.FC = () => {
       doc.save(`resultados-historicos-${businessClock.today()}.pdf`);
       toast.success('PDF exportado correctamente');
     } catch { toast.error('Error al exportar PDF'); }
-  }, [monthlySummary, dateRange, totalSales, totalPurchases, grossMargin]);
+  }, [monthlySummary, dateRange, totalSales, totalPurchases, grossMargin, sourceLabel]);
 
   const isLoading = salesLoading || purchasesLoading;
 
@@ -327,7 +400,7 @@ export const HistoricalResults: React.FC = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" />
+                  <Calendar mode="single" selected={customFrom} onSelect={handleCustomFromChange} className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
               <Popover>
@@ -338,14 +411,25 @@ export const HistoricalResults: React.FC = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" />
+                  <Calendar mode="single" selected={customTo} onSelect={handleCustomToChange} className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
             </div>
           )}
 
+          <Select value={source} onValueChange={(v) => setSource(v as SourceFilter)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Origen" />
+            </SelectTrigger>
+            <SelectContent>
+              {SOURCE_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Badge variant="secondary" className="text-[10px]">
-            {format(dateRange.from, 'dd/MM/yy')} - {format(dateRange.to, 'dd/MM/yy')}
+            Período: {format(dateRange.from, 'dd/MM/yy')} - {format(dateRange.to, 'dd/MM/yy')} · Origen: {sourceLabel}
           </Badge>
         </div>
 
@@ -368,17 +452,34 @@ export const HistoricalResults: React.FC = () => {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard icon={DollarSign} title="Total Ventas" value={formatCurrency(totalSales)} description={`${filteredSales.length} facturas`} />
-        <KPICard icon={ShoppingCart} title="Total Compras" value={formatCurrency(totalPurchases)} description={`${filteredPurchases.length} facturas`} />
-        <KPICard 
-          icon={TrendingUp} 
-          title="Margen Bruto" 
-          value={formatCurrency(grossMargin)} 
+        <KPICard
+          icon={DollarSign}
+          title="Total Ventas"
+          value={formatCurrency(totalSales)}
+          description={`${filteredSales.length} facturas`}
+          variation={salesVariation}
+        />
+        <KPICard
+          icon={ShoppingCart}
+          title="Total Compras"
+          value={formatCurrency(totalPurchases)}
+          description={`${filteredPurchases.length} facturas`}
+          variation={purchasesVariation}
+        />
+        <KPICard
+          icon={TrendingUp}
+          title="Resultado (Ventas − Compras)"
+          value={formatCurrency(grossMargin)}
           description={grossMargin >= 0 ? 'Positivo' : 'Negativo'}
           valueClassName={grossMargin >= 0 ? 'text-green-600' : 'text-destructive'}
+          variation={marginVariation}
+          tooltip="Diferencia simple entre ventas y compras del período. No es un margen bruto contable (no descuenta costo de ventas/COGS)."
         />
         <KPICard icon={Percent} title="Ratio C/V" value={`${ratio.toFixed(1)}%`} description="Compras / Ventas" />
       </div>
+      <p className="text-xs text-muted-foreground">
+        Comparación vs. período anterior equivalente ({format(previousDateRange.from, 'dd/MM/yy')} - {format(previousDateRange.to, 'dd/MM/yy')}).
+      </p>
 
       {/* Charts Row 1: Bar + Line */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -403,7 +504,7 @@ export const HistoricalResults: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Evolución del Margen Bruto</CardTitle>
+            <CardTitle className="text-sm font-semibold">Evolución del Resultado (Ventas − Compras)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -427,7 +528,7 @@ export const HistoricalResults: React.FC = () => {
           </CardHeader>
           <CardContent>
             {supplierDistribution.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Sin datos de proveedores</p>
+              <HistoricalEmptyState variant={purchaseInvoices.length === 0 ? 'none' : 'filtered'} />
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -455,7 +556,7 @@ export const HistoricalResults: React.FC = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Comparación Interanual</CardTitle>
+            <CardTitle className="text-sm font-semibold">Comparación Interanual (según período seleccionado)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -483,7 +584,7 @@ export const HistoricalResults: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-2">
             {topClients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin datos</p>
+              <HistoricalEmptyState variant={salesInvoices.length === 0 ? 'none' : 'filtered'} className="py-2" />
             ) : topClients.map((c, i) => {
               const maxVal = topClients[0]?.total || 1;
               return (
@@ -510,7 +611,7 @@ export const HistoricalResults: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-2">
             {topSuppliers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin datos</p>
+              <HistoricalEmptyState variant={purchaseInvoices.length === 0 ? 'none' : 'filtered'} className="py-2" />
             ) : topSuppliers.map((s, i) => {
               const maxVal = topSuppliers[0]?.total || 1;
               return (
@@ -537,7 +638,8 @@ export const HistoricalResults: React.FC = () => {
           <CardDescription className="text-xs">Desglose mensual de ventas, compras y margen con variación porcentual</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Mes</TableHead>
@@ -589,6 +691,7 @@ export const HistoricalResults: React.FC = () => {
               </TableRow>
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -602,15 +705,44 @@ const KPICard: React.FC<{
   value: string;
   description: string;
   valueClassName?: string;
-}> = ({ icon: Icon, title, value, description, valueClassName }) => (
+  /** Variación % vs. período anterior equivalente, si hay datos para compararla. */
+  variation?: number | null;
+  /** Texto aclaratorio mostrado en un ícono de información, para KPIs cuyo nombre podría confundirse con un término contable. */
+  tooltip?: string;
+}> = ({ icon: Icon, title, value, description, valueClassName, variation, tooltip }) => (
   <Card className="bg-card border overflow-hidden">
     <CardContent className="p-3 sm:p-4">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+        <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+          {title}
+          {tooltip && (
+            <TooltipProvider>
+              <UiTooltip>
+                <TooltipTrigger asChild>
+                  <Info className="size-3 text-muted-foreground/70" aria-label={`Aclaración sobre ${title}`} />
+                </TooltipTrigger>
+                <UiTooltipContent className="max-w-[220px] text-xs">{tooltip}</UiTooltipContent>
+              </UiTooltip>
+            </TooltipProvider>
+          )}
+        </p>
         <Icon className="size-4 text-muted-foreground" />
       </div>
       <div className={cn("text-lg sm:text-2xl font-bold truncate", valueClassName || 'text-foreground')}>{value}</div>
-      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{description}</p>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <p className="text-[10px] sm:text-xs text-muted-foreground">{description}</p>
+        {variation !== undefined && variation !== null && (
+          <span
+            className={cn(
+              "text-[10px] font-medium px-1 rounded",
+              variation >= 0 ? 'text-green-700 bg-green-50' : 'text-destructive bg-destructive/10'
+            )}
+            title="Variación vs. período anterior equivalente"
+          >
+            {variation >= 0 ? '▲' : '▼'} {Math.abs(variation).toFixed(1)}%
+          </span>
+        )}
+      </div>
     </CardContent>
   </Card>
 );

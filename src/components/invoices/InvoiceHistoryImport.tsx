@@ -708,6 +708,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           notes: inv.notes,
           product_service_description: normalizeProductServiceDescription(inv.notes),
           created_by: userId,
+          source: 'historico',
         });
       }
 
@@ -749,6 +750,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
           notes: inv.notes,
           product_service_description: normalizeProductServiceDescription(inv.notes),
           created_by: userId,
+          source: 'historico',
         });
       }
 
@@ -799,6 +801,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
             notes: inv.notes,
             product_service_description: normalizeProductServiceDescription(inv.notes),
             created_by: userId,
+            source: 'historico',
           });
         }
       }

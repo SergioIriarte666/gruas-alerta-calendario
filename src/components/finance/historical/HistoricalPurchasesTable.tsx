@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SourceBadge } from './SourceBadge';
 
 export type PurchaseSortKey = 'invoice_number' | 'supplier' | 'issue_date' | 'due_date' | 'amount' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -79,8 +80,8 @@ export const HistoricalPurchasesTable = ({
   };
 
   return (
-    <div className="rounded-md border shadow-sm bg-card overflow-hidden">
-      <Table>
+    <div className="rounded-md border shadow-sm bg-card overflow-x-auto">
+      <Table className="min-w-[900px]">
         <TableHeader className="bg-muted/40">
           <TableRow>
             <TableHead className="w-[40px]">
@@ -231,6 +232,7 @@ export const HistoricalPurchasesTable = ({
                       );
                     })()}
                     {invoice.invoice_number}
+                    <SourceBadge source={invoice.source} />
                   </div>
                 </TableCell>
                 

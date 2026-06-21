@@ -11,7 +11,7 @@ import { businessClock } from '@/utils/businessClock';
 const logger = createLogger("useInvoiceData");
 const PAGE_SIZE = 1000;
 
-const fetchAllInvoices = async (): Promise<any[]> => {
+const fetchAllInvoices = async (excludeHistorical: boolean): Promise<any[]> => {
   const allData: any[] = [];
   let page = 0;
   let hasMore = true;
@@ -20,7 +20,7 @@ const fetchAllInvoices = async (): Promise<any[]> => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('invoices')
       .select(`
         *,
@@ -37,8 +37,13 @@ const fetchAllInvoices = async (): Promise<any[]> => {
           full_name,
           email
         )
-      `)
-      .not('folio', 'like', 'HIST-%')
+      `);
+
+    if (excludeHistorical) {
+      query = query.not('folio', 'like', 'HIST-%');
+    }
+
+    const { data, error } = await query
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -56,8 +61,8 @@ const fetchAllInvoices = async (): Promise<any[]> => {
   return allData;
 };
 
-const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
-  const invoicesData = await fetchAllInvoices();
+const fetchInvoicesFromDB = async (excludeHistorical: boolean): Promise<Invoice[]> => {
+  const invoicesData = await fetchAllInvoices(excludeHistorical);
 
   const invoiceIds = invoicesData.map(invoice => invoice.id);
 
@@ -103,30 +108,43 @@ const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
   return formattedInvoices;
 };
 
-export const useInvoiceData = () => {
+export interface UseInvoiceDataOptions {
+  /**
+   * Excluye facturas importadas como histórico (folio LIKE 'HIST-%').
+   * Usado por la página de Facturas (operación corriente), que no debe
+   * mezclar papelería histórica con las facturas del día a día.
+   * El módulo de Históricos (HistoricalSales/HistoricalResults) y Reportes
+   * necesitan verlas, así que el default es incluirlas todas.
+   */
+  excludeHistorical?: boolean;
+}
+
+export const useInvoiceData = (options?: UseInvoiceDataOptions) => {
   const queryClient = useQueryClient();
+  const excludeHistorical = options?.excludeHistorical ?? false;
+  const queryKey = ['invoices', { excludeHistorical }];
 
   const { data: invoices = [], isLoading: loading, refetch } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: fetchInvoicesFromDB,
+    queryKey,
+    queryFn: () => fetchInvoicesFromDB(excludeHistorical),
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 
   const addInvoice = (invoice: Invoice) => {
-    queryClient.setQueryData<Invoice[]>(['invoices'], (old) => 
+    queryClient.setQueryData<Invoice[]>(queryKey, (old) =>
       old ? [invoice, ...old] : [invoice]
     );
   };
 
   const updateInvoice = (id: string, updates: Partial<Invoice>) => {
-    queryClient.setQueryData<Invoice[]>(['invoices'], (old) => 
+    queryClient.setQueryData<Invoice[]>(queryKey, (old) =>
       old ? old.map(inv => inv.id === id ? { ...inv, ...updates } : inv) : []
     );
   };
 
   const removeInvoice = (id: string) => {
-    queryClient.setQueryData<Invoice[]>(['invoices'], (old) => 
+    queryClient.setQueryData<Invoice[]>(queryKey, (old) =>
       old ? old.filter(inv => inv.id !== id) : []
     );
   };

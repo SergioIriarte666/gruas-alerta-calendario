@@ -57,7 +57,7 @@ const InvoicesLoadingState = () => (
 );
 
 const Invoices = () => {
-  const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
+  const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices({ excludeHistorical: true });
   const isMobile = useIsMobile();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);

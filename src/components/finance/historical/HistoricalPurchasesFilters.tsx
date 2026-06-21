@@ -22,6 +22,7 @@ import { es } from 'date-fns/locale';
 import { CalendarIcon, Search, X, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { businessClock } from '@/utils/businessClock';
+import { SourceFilter, SOURCE_FILTER_OPTIONS } from './useSourceFilter';
 
 export interface PurchaseFilterConfig {
   dateFrom: Date | undefined;
@@ -33,6 +34,7 @@ export interface PurchaseFilterConfig {
   maxAmount: string;
   status: string;
   productName: string;
+  source: SourceFilter;
 }
 
 interface HistoricalPurchasesFiltersProps {
@@ -54,7 +56,14 @@ export const HistoricalPurchasesFilters = ({
   }, [filters]);
 
   const handleChange = (key: keyof PurchaseFilterConfig, value: any) => {
-    const next = { ...localFilters, [key]: value };
+    let next = { ...localFilters, [key]: value };
+    // Valida que "Desde" no sea posterior a "Hasta": si se viola, ajusta el otro extremo.
+    if (key === 'dateFrom' && value && next.dateTo && value > next.dateTo) {
+      next = { ...next, dateTo: value };
+    }
+    if (key === 'dateTo' && value && next.dateFrom && value < next.dateFrom) {
+      next = { ...next, dateFrom: value };
+    }
     setLocalFilters(next);
     onFilterChange(next);
   };
@@ -76,8 +85,9 @@ export const HistoricalPurchasesFilters = ({
         break;
       }
       case 'thisYear':
+        // No incluir meses/días futuros: el tope es hoy, no el 31 de diciembre.
         from = startOfYear(today);
-        to = endOfYear(today);
+        to = today;
         break;
       default: {
         const lastYear = subMonths(today, 12);
@@ -101,6 +111,7 @@ export const HistoricalPurchasesFilters = ({
     filters.minAmount,
     filters.maxAmount,
     filters.status !== 'all' && filters.status,
+    filters.source !== 'all' && filters.source,
     filters.searchTerm,
   ].filter(Boolean).length;
 
@@ -122,6 +133,7 @@ export const HistoricalPurchasesFilters = ({
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('thisMonth')} className="h-7 text-xs">Este Mes</Button>
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('lastMonth')} className="h-7 text-xs">Mes Anterior</Button>
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('thisYear')} className="h-7 text-xs">Este Año</Button>
+            <Button variant="ghost" size="sm" onClick={() => applyQuickDate('lastYear')} className="h-7 text-xs">Año Anterior</Button>
           </div>
 
           <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -216,9 +228,29 @@ export const HistoricalPurchasesFilters = ({
                       </Popover>
                     </div>
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Si "Desde" queda después de "Hasta", se ajusta automáticamente para mantener el rango válido.
+                  </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase">Origen</Label>
+                  <Select
+                    value={localFilters.source}
+                    onValueChange={(value) => handleChange('source', value as SourceFilter)}
+                  >
+                    <SelectTrigger className="h-9 w-full">
+                      <SelectValue placeholder="Seleccionar origen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOURCE_FILTER_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Proveedor</Label>
                   <Input
                     placeholder="Ej: Copec"
@@ -228,7 +260,7 @@ export const HistoricalPurchasesFilters = ({
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Producto / Descripción</Label>
                   <Input
                     placeholder="Ej: aceite, filtro..."
@@ -238,7 +270,7 @@ export const HistoricalPurchasesFilters = ({
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">N° Factura</Label>
                   <Input
                     placeholder="Ej: 12345"
@@ -248,7 +280,7 @@ export const HistoricalPurchasesFilters = ({
                   />
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Estado</Label>
                   <Select value={localFilters.status} onValueChange={(value) => handleChange('status', value)}>
                     <SelectTrigger className="h-9 w-full">
@@ -265,7 +297,7 @@ export const HistoricalPurchasesFilters = ({
                   </Select>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Monto ($)</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
@@ -305,6 +337,80 @@ export const HistoricalPurchasesFilters = ({
           </Popover>
         </div>
       </div>
+
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2 border-t mt-4">
+          <span className="text-xs text-muted-foreground self-center mr-2">Filtros activos:</span>
+          {localFilters.dateFrom && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+              Desde: {format(localFilters.dateFrom, "P", { locale: es })}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                onClick={() => handleChange('dateFrom', undefined)}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+          {localFilters.dateTo && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
+              Hasta: {format(localFilters.dateTo, "P", { locale: es })}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
+                onClick={() => handleChange('dateTo', undefined)}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+          {localFilters.source && localFilters.source !== 'all' && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">
+              Origen: {SOURCE_FILTER_OPTIONS.find((o) => o.value === localFilters.source)?.label}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-purple-700"
+                onClick={() => handleChange('source', 'all')}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+          {localFilters.status && localFilters.status !== 'all' && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200">
+              Estado: {localFilters.status}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-orange-700"
+                onClick={() => handleChange('status', 'all')}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+          {(localFilters.minAmount || localFilters.maxAmount) && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
+              Monto: {localFilters.minAmount || '0'} - {localFilters.maxAmount || '∞'}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-green-700"
+                onClick={() => {
+                  handleChange('minAmount', '');
+                  handleChange('maxAmount', '');
+                }}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+        </div>
+      )}
     </div>
   );
 };

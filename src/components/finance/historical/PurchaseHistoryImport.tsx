@@ -926,6 +926,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 net_amount: inv.net_amount,
                 description: psd,
                 product_service_description: psd,
+                source: 'historico',
             }, inv.status));
         }
     });
@@ -955,6 +956,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     description: psd,
                     product_service_description: psd,
+                    source: 'historico',
                 }, inv.status));
             } else {
                 logger.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
@@ -982,6 +984,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     description: psd,
                     product_service_description: psd,
+                    source: 'historico',
                 }, inv.status));
              } else {
                  errors++;

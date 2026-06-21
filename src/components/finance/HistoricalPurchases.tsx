@@ -45,6 +45,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { createLogger } from "@/lib/logger";
+import { matchesSource, SOURCE_FILTER_OPTIONS } from './historical/useSourceFilter';
+import { format } from 'date-fns';
+import { useHistoricalPagination } from './historical/useHistoricalPagination';
+import { HistoricalPaginationControls } from './historical/HistoricalPaginationControls';
 
 const logger = createLogger("HistoricalPurchases");
 
@@ -79,6 +83,7 @@ export const HistoricalPurchases = () => {
     maxAmount: '',
     status: 'all',
     productName: '',
+    source: 'all',
   });
 
   // Sort State
@@ -106,6 +111,7 @@ export const HistoricalPurchases = () => {
       maxAmount: '',
       status: 'all',
       productName: '',
+      source: 'all',
     });
   };
 
@@ -203,6 +209,7 @@ export const HistoricalPurchases = () => {
       const max = parseFloat(filters.maxAmount);
       if (!isNaN(max)) result = result.filter((inv) => inv.amount <= max);
     }
+    result = result.filter((inv) => matchesSource(inv.source, filters.source));
 
     // Apply Sort
     result.sort((a, b) => {
@@ -224,6 +231,22 @@ export const HistoricalPurchases = () => {
 
     return result;
   }, [invoices, filters, sortConfig]);
+
+  const exportMeta = useMemo(() => ({
+    periodLabel: filters.dateFrom || filters.dateTo
+      ? `${filters.dateFrom ? format(filters.dateFrom, 'dd/MM/yyyy') : '...'} - ${filters.dateTo ? format(filters.dateTo, 'dd/MM/yyyy') : '...'}`
+      : 'Todos los períodos',
+    sourceLabel: SOURCE_FILTER_OPTIONS.find((o) => o.value === filters.source)?.label || 'Todos',
+  }), [filters.dateFrom, filters.dateTo, filters.source]);
+
+  // Paginación local: solo aplica a la vista de tabla.
+  const pagination = useHistoricalPagination({
+    resetKey: JSON.stringify(filters) + sortConfig.key + sortConfig.direction,
+  });
+  const paginatedInvoices = useMemo(
+    () => pagination.paginate(filteredAndSortedInvoices),
+    [filteredAndSortedInvoices, pagination.paginate]
+  );
 
   // Delete Handlers
   const confirmDelete = (id: string) => {
@@ -324,13 +347,7 @@ export const HistoricalPurchases = () => {
 
   return (
     <div className="space-y-6 relative pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-1">
-          <h3 className="text-2xl font-bold tracking-tight">Histórico de Compras</h3>
-          <p className="text-muted-foreground">
-            Gestiona y analiza el registro histórico de compras
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
         <div className="w-full sm:w-auto space-y-3">
             <RecentImportLogsCard
               importType="purchase"
@@ -346,11 +363,11 @@ export const HistoricalPurchases = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => exportToExcel(filteredAndSortedInvoices)}>
+                <DropdownMenuItem onClick={() => exportToExcel(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
                   <FileSpreadsheet className="mr-2 size-4" />
                   Excel
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportToPDF(filteredAndSortedInvoices)}>
+                <DropdownMenuItem onClick={() => exportToPDF(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
                   <FileText className="mr-2 size-4" />
                   PDF
                 </DropdownMenuItem>
@@ -372,7 +389,7 @@ export const HistoricalPurchases = () => {
       <HistoricalPurchasesStats invoices={filteredAndSortedInvoices} />
 
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center flex-wrap">
           <HistoricalPurchasesFilters
             filters={filters}
             onFilterChange={setFilters}
@@ -438,7 +455,7 @@ export const HistoricalPurchases = () => {
         ) : (
           <div className="rounded-md border bg-card">
             <HistoricalPurchasesTable
-              invoices={filteredAndSortedInvoices}
+              invoices={paginatedInvoices}
               invoiceItemsMap={invoiceItemsMap}
               sortConfig={sortConfig}
               onSort={handleSort}
@@ -447,7 +464,15 @@ export const HistoricalPurchases = () => {
               onReceiveInventory={setReceivingInventoryInvoice}
               selectedIds={selectedIds}
               onSelectId={handleSelectId}
-              onSelectAll={handleSelectAll}
+              onSelectAll={(_ids, checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
+            />
+            <HistoricalPaginationControls
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              totalPages={pagination.getTotalPages(filteredAndSortedInvoices.length)}
+              rangeLabel={pagination.getRangeLabel(filteredAndSortedInvoices.length)}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
             />
           </div>
         )}
@@ -455,13 +480,15 @@ export const HistoricalPurchases = () => {
 
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 border border-border/10">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] max-w-[95vw] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 flex-wrap border border-border/10">
             <div className="flex items-center gap-2 px-2">
               <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
                 {selectedIds.length}
               </span>
-              <span className="font-medium text-sm whitespace-nowrap">seleccionados</span>
+              <span className="font-medium text-sm whitespace-nowrap">
+                seleccionados ({selectedIds.length} de {filteredAndSortedInvoices.length} filtrados, no solo la página visible)
+              </span>
             </div>
             
             <div className="h-4 w-px bg-background/20" />

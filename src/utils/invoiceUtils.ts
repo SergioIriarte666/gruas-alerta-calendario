@@ -131,7 +131,8 @@ export const formatInvoiceData = (data: any): Invoice => {
     createdAt: safeString(data.created_at),
     updatedAt: safeString(data.updated_at),
     createdBy: data.created_by || undefined,
-    creatorName: data.creator?.full_name || data.creator?.email || undefined
+    creatorName: data.creator?.full_name || data.creator?.email || undefined,
+    source: data.source === 'historico' ? 'historico' : 'sistema'
   };
 };
 

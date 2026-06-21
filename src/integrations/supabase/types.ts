@@ -3137,6 +3137,7 @@ export type Database = {
           payment_term_id: string | null
           product_service_description: string
           remaining_amount: number | null
+          source: string
           status: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
           total: number
@@ -3158,6 +3159,7 @@ export type Database = {
           payment_term_id?: string | null
           product_service_description: string
           remaining_amount?: number | null
+          source?: string
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
           total: number
@@ -3179,6 +3181,7 @@ export type Database = {
           payment_term_id?: string | null
           product_service_description?: string
           remaining_amount?: number | null
+          source?: string
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
           total?: number
@@ -5082,6 +5085,7 @@ export type Database = {
           paid_amount: number | null
           payment_terms: number | null
           product_service_description: string
+          source: string
           source_module: string
           status: string | null
           supplier_id: string | null
@@ -5103,6 +5107,7 @@ export type Database = {
           paid_amount?: number | null
           payment_terms?: number | null
           product_service_description: string
+          source?: string
           source_module?: string
           status?: string | null
           supplier_id?: string | null
@@ -5124,6 +5129,7 @@ export type Database = {
           paid_amount?: number | null
           payment_terms?: number | null
           product_service_description?: string
+          source?: string
           source_module?: string
           status?: string | null
           supplier_id?: string | null

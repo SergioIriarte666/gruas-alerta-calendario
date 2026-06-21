@@ -53,6 +53,7 @@ export interface SupplierInvoice {
   updated_at: string | null;
   source_module?: string;
   xml_file_name?: string | null;
+  source?: 'sistema' | 'historico';
 }
 
 export interface SupplierInvoiceWithDetails extends SupplierInvoice {

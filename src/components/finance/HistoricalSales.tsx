@@ -44,10 +44,11 @@ import { LayoutList, Users, LayoutGrid } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { createLogger } from "@/lib/logger";
-
+import { matchesSource } from './historical/useSourceFilter';
+import { useHistoricalPagination } from './historical/useHistoricalPagination';
+import { HistoricalPaginationControls } from './historical/HistoricalPaginationControls';
 
 const logger = createLogger("HistoricalSales");
-const HISTORICAL_NOTE = 'Importación historial';
 
 export const HistoricalSales = () => {
   const { invoices, refetch, updateInvoice, deleteInvoice } = useInvoices();
@@ -99,6 +100,7 @@ export const HistoricalSales = () => {
     minAmount: '',
     maxAmount: '',
     status: 'all',
+    source: 'all',
   });
 
   // Sort State
@@ -125,6 +127,7 @@ export const HistoricalSales = () => {
       minAmount: '',
       maxAmount: '',
       status: 'all',
+      source: 'all',
     });
   };
 
@@ -183,6 +186,7 @@ export const HistoricalSales = () => {
       const max = parseFloat(filters.maxAmount);
       if (!isNaN(max)) result = result.filter((inv) => inv.total <= max);
     }
+    result = result.filter((inv) => matchesSource(inv.source, filters.source));
 
     // 3. Apply Sort
     result.sort((a, b) => {
@@ -211,6 +215,16 @@ export const HistoricalSales = () => {
 
     return result;
   }, [invoices, filters, sortConfig]);
+
+  // Paginación local: solo aplica a la vista de tabla (las vistas agrupada/pipeline
+  // organizan los datos de otra forma y se dejan sin paginar).
+  const pagination = useHistoricalPagination({
+    resetKey: JSON.stringify(filters) + sortConfig.key + sortConfig.direction,
+  });
+  const paginatedInvoices = useMemo(
+    () => pagination.paginate(filteredAndSortedInvoices),
+    [filteredAndSortedInvoices, pagination.paginate]
+  );
 
   const handleUpdateInvoice = async (id: string, updates: Partial<Invoice>) => {
     await updateInvoice(id, updates);
@@ -296,13 +310,7 @@ export const HistoricalSales = () => {
 
   return (
     <div className="space-y-6 relative pb-20">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="space-y-1">
-          <h3 className="text-2xl font-bold tracking-tight">Historial de Ventas</h3>
-          <p className="text-muted-foreground">
-            Gestiona y analiza el registro histórico de facturación
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
         <div className="w-full sm:w-auto space-y-3">
           <RecentImportLogsCard
             importType="sale"
@@ -321,7 +329,7 @@ export const HistoricalSales = () => {
       <HistoricalSalesStats invoices={filteredAndSortedInvoices} />
 
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center flex-wrap">
           <HistoricalSalesFilters
             filters={filters}
             onFilterChange={setFilters}
@@ -383,16 +391,26 @@ export const HistoricalSales = () => {
                 onSelectAll={handleSelectAll}
               />
             ) : (
-              <HistoricalSalesTable
-                invoices={filteredAndSortedInvoices}
-                sortConfig={sortConfig}
-                onSort={handleSort}
-                onEdit={setEditingInvoice}
-                onDelete={confirmDelete}
-                selectedIds={selectedIds}
-                onSelectId={handleSelectId}
-                onSelectAll={(checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
-              />
+              <>
+                <HistoricalSalesTable
+                  invoices={paginatedInvoices}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  onEdit={setEditingInvoice}
+                  onDelete={confirmDelete}
+                  selectedIds={selectedIds}
+                  onSelectId={handleSelectId}
+                  onSelectAll={(_ids, checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
+                />
+                <HistoricalPaginationControls
+                  page={pagination.page}
+                  pageSize={pagination.pageSize}
+                  totalPages={pagination.getTotalPages(filteredAndSortedInvoices.length)}
+                  rangeLabel={pagination.getRangeLabel(filteredAndSortedInvoices.length)}
+                  onPageChange={pagination.setPage}
+                  onPageSizeChange={pagination.setPageSize}
+                />
+              </>
             )}
           </div>
         )}
@@ -400,13 +418,15 @@ export const HistoricalSales = () => {
 
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 border border-border/10">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] max-w-[95vw] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 flex-wrap border border-border/10">
             <div className="flex items-center gap-2 px-2">
               <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
                 {selectedIds.length}
               </span>
-              <span className="font-medium text-sm whitespace-nowrap">seleccionados</span>
+              <span className="font-medium text-sm whitespace-nowrap">
+                seleccionados ({selectedIds.length} de {filteredAndSortedInvoices.length} filtrados, no solo la página visible)
+              </span>
             </div>
             
             <div className="h-4 w-px bg-background/20" />
@@ -476,7 +496,10 @@ export const HistoricalSales = () => {
       <InvoiceHistoryImport
         open={importHistoryOpen}
         onOpenChange={setImportHistoryOpen}
-        onImportComplete={() => refetch()}
+        onImportComplete={() => {
+          refetch();
+          pagination.setPage(1);
+        }}
       />
 
       <EditHistoricalInvoiceModal

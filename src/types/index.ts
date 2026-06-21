@@ -412,6 +412,7 @@ export interface Invoice {
   updatedAt: string;
   createdBy?: string;
   creatorName?: string;
+  source?: 'sistema' | 'historico';
 }
 
 export interface PaymentTerm {

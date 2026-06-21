@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { format, subMonths, startOfMonth, startOfYear, endOfMonth, endOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarIcon, X, Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { CalendarIcon, X, Search, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { businessClock } from '@/utils/businessClock';
+import { SourceFilter, SOURCE_FILTER_OPTIONS } from './useSourceFilter';
 
 export interface FilterConfig {
   dateFrom: Date | undefined;
@@ -22,6 +23,7 @@ export interface FilterConfig {
   minAmount: string;
   maxAmount: string;
   status: string;
+  source: SourceFilter;
 }
 
 interface HistoricalSalesFiltersProps {
@@ -44,7 +46,14 @@ export const HistoricalSalesFilters = ({
   }, [filters]);
 
   const handleChange = (key: keyof FilterConfig, value: any) => {
-    const newFilters = { ...localFilters, [key]: value };
+    let newFilters = { ...localFilters, [key]: value };
+    // Valida que "Desde" no sea posterior a "Hasta": si se viola, ajusta el otro extremo.
+    if (key === 'dateFrom' && value && newFilters.dateTo && value > newFilters.dateTo) {
+      newFilters = { ...newFilters, dateTo: value };
+    }
+    if (key === 'dateTo' && value && newFilters.dateFrom && value < newFilters.dateFrom) {
+      newFilters = { ...newFilters, dateFrom: value };
+    }
     setLocalFilters(newFilters);
     onFilterChange(newFilters);
   };
@@ -65,8 +74,9 @@ export const HistoricalSalesFilters = ({
         break;
       }
       case 'thisYear':
+        // No incluir meses/días futuros: el tope es hoy, no el 31 de diciembre.
         from = startOfYear(today);
-        to = endOfYear(today);
+        to = today;
         break;
       case 'lastYear': {
         const lastYear = subMonths(today, 12);
@@ -75,7 +85,7 @@ export const HistoricalSalesFilters = ({
         break;
       }
     }
-    
+
     const newFilters = { ...localFilters, dateFrom: from, dateTo: to };
     setLocalFilters(newFilters);
     onFilterChange(newFilters);
@@ -89,13 +99,14 @@ export const HistoricalSalesFilters = ({
     filters.minAmount,
     filters.maxAmount,
     filters.status !== 'all' && filters.status,
+    filters.source !== 'all' && filters.source,
     filters.searchTerm,
   ].filter(Boolean).length;
 
   return (
     <div className="space-y-4 mb-6 bg-card p-4 rounded-lg border shadow-sm">
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        
+
         {/* Search Bar */}
         <div className="relative flex-1 w-full lg:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
@@ -113,6 +124,7 @@ export const HistoricalSalesFilters = ({
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('thisMonth')} className="h-7 text-xs">Este Mes</Button>
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('lastMonth')} className="h-7 text-xs">Mes Anterior</Button>
             <Button variant="ghost" size="sm" onClick={() => applyQuickDate('thisYear')} className="h-7 text-xs">Este Año</Button>
+            <Button variant="ghost" size="sm" onClick={() => applyQuickDate('lastYear')} className="h-7 text-xs">Año Anterior</Button>
           </div>
 
           <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -127,25 +139,32 @@ export const HistoricalSalesFilters = ({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 sm:w-96 p-4" align="end">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium leading-none">Filtros Avanzados</h4>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 px-2 lg:px-3 text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      onClearFilters();
-                      setIsOpen(false);
-                    }}
-                  >
-                    Limpiar todo
-                    <X className="ml-2 size-3" />
-                  </Button>
+            <PopoverContent
+              className="w-80 sm:w-96 p-0 max-h-[var(--radix-popover-content-available-height)] overflow-hidden"
+              align="end"
+              side="top"
+              sideOffset={8}
+              collisionPadding={12}
+            >
+              <div className="max-h-[var(--radix-popover-content-available-height)] overflow-auto p-4">
+                <div className="sticky top-0 z-10 bg-popover pb-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium leading-none">Filtros Avanzados</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 lg:px-3 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        onClearFilters();
+                        setIsOpen(false);
+                      }}
+                    >
+                      Limpiar todo
+                      <X className="ml-2 size-3" />
+                    </Button>
+                  </div>
+                  <Separator className="mt-3" />
                 </div>
-                
-                <Separator />
 
                 <div className="space-y-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Rango de Fechas</Label>
@@ -204,9 +223,29 @@ export const HistoricalSalesFilters = ({
                       </Popover>
                     </div>
                   </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Si "Desde" queda después de "Hasta", se ajusta automáticamente para mantener el rango válido.
+                  </p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase">Origen</Label>
+                  <Select
+                    value={localFilters.source}
+                    onValueChange={(value) => handleChange('source', value as SourceFilter)}
+                  >
+                    <SelectTrigger className="h-9 w-full">
+                      <SelectValue placeholder="Seleccionar origen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOURCE_FILTER_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Estado</Label>
                   <Select
                     value={localFilters.status}
@@ -226,7 +265,7 @@ export const HistoricalSalesFilters = ({
                   </Select>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Monto ($)</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
@@ -246,7 +285,7 @@ export const HistoricalSalesFilters = ({
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 mt-3">
                   <Label className="text-xs font-medium text-muted-foreground uppercase">Folio Exacto</Label>
                   <Input
                     placeholder="Ej: 12345"
@@ -255,6 +294,22 @@ export const HistoricalSalesFilters = ({
                     onChange={(e) => handleChange('folio', e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="sticky bottom-0 z-10 bg-popover border-t px-4 py-3 flex items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
+                  Cerrar
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    onClearFilters();
+                    setIsOpen(false);
+                  }}
+                >
+                  Limpiar
+                </Button>
               </div>
             </PopoverContent>
           </Popover>
@@ -285,6 +340,19 @@ export const HistoricalSalesFilters = ({
                 size="sm"
                 className="size-auto p-0 ml-2 hover:bg-transparent text-blue-700"
                 onClick={() => handleChange('dateTo', undefined)}
+              >
+                <X className="size-3" />
+              </Button>
+            </Badge>
+          )}
+          {localFilters.source && localFilters.source !== 'all' && (
+            <Badge variant="secondary" className="rounded-md px-2 py-1 font-normal bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200">
+              Origen: {SOURCE_FILTER_OPTIONS.find((o) => o.value === localFilters.source)?.label}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-auto p-0 ml-2 hover:bg-transparent text-purple-700"
+                onClick={() => handleChange('source', 'all')}
               >
                 <X className="size-3" />
               </Button>
