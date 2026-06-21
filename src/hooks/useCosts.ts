@@ -57,6 +57,9 @@ const COSTS_LIST_SELECT_CLAUSE = `
   crane_id,
   service_id,
   service_folio,
+  cost_center_id,
+  document_type,
+  document_number,
   payment_date,
   notes,
   supplier_id,
@@ -64,6 +67,7 @@ const COSTS_LIST_SELECT_CLAUSE = `
   supplier_payment_id,
   inventory_movement_id,
   cost_categories (id, name),
+  cost_centers (id, name),
   creator:profiles!costs_created_by_fkey (
     id,
     full_name,
@@ -71,7 +75,23 @@ const COSTS_LIST_SELECT_CLAUSE = `
   ),
   cranes (id, brand, model, license_plate),
   operators (id, name),
-  services (id, folio)
+  services (id, folio),
+  inventory_suppliers!costs_supplier_id_fkey (id, name, rut, address, phone, email),
+  supplier_invoices!costs_supplier_invoice_id_fkey (
+    id,
+    invoice_number,
+    supplier_invoice_items (
+      id,
+      line_number,
+      product_name,
+      description,
+      quantity,
+      unit_price,
+      subtotal,
+      tax_amount,
+      total_amount
+    )
+  )
 `;
 
 export interface CostDateFilters {

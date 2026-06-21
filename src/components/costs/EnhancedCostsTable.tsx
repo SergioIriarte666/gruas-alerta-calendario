@@ -51,7 +51,7 @@ interface EnhancedCostsTableProps {
 
 type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
 type SortDirection = 'asc' | 'desc';
-type GroupBy = 'none' | 'date' | 'category';
+type GroupBy = 'none' | 'date' | 'category' | 'crane' | 'operator' | 'service_folio' | 'supplier' | 'payment_status';
 
 const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -234,6 +234,25 @@ export const EnhancedCostsTable = ({
       let key: string;
       if (groupBy === 'date') {
         key = format(new Date(`${cost.date}T12:00:00Z`), "MMMM yyyy", { locale: es });
+      } else if (groupBy === 'category') {
+        key = getCategoryDisplay(cost);
+      } else if (groupBy === 'crane') {
+        const crane = (cost as any).cranes;
+        key = crane
+          ? `${crane.brand || ''} ${crane.model || ''} (${crane.license_plate || ''})`.trim()
+          : 'Sin grúa asignada';
+      } else if (groupBy === 'operator') {
+        const operator = (cost as any).operators;
+        key = operator?.name || 'Sin operador asignado';
+      } else if (groupBy === 'service_folio') {
+        key = cost.service_folio
+          ? `Servicio ${cost.service_folio}`
+          : 'Sin folio de servicio';
+      } else if (groupBy === 'supplier') {
+        const supplier = (cost as any).inventory_suppliers;
+        key = supplier?.name || 'Sin proveedor';
+      } else if (groupBy === 'payment_status') {
+        key = (cost as any).payment_date ? 'Pagado' : 'Pendiente de pago';
       } else {
         key = getCategoryDisplay(cost);
       }
@@ -459,6 +478,20 @@ export const EnhancedCostsTable = ({
     </TableRow>
   );
 
+  const groupEntries = Object.entries(paginatedGroups);
+
+  // Para agrupaciones que no sean 'none' o 'date', ordenar las claves alfabéticamente
+  // poniendo los grupos "Sin X" siempre al final
+  if (groupBy !== 'none' && groupBy !== 'date') {
+    groupEntries.sort(([a], [b]) => {
+      const aIsEmpty = a.startsWith('Sin ');
+      const bIsEmpty = b.startsWith('Sin ');
+      if (aIsEmpty && !bIsEmpty) return 1;
+      if (!aIsEmpty && bIsEmpty) return -1;
+      return a.localeCompare(b, 'es');
+    });
+  }
+
   return (
     <div className="space-y-4">
       {/* Barra de acciones por lotes */}
@@ -485,6 +518,11 @@ export const EnhancedCostsTable = ({
               <SelectItem value="none">Sin agrupar</SelectItem>
               <SelectItem value="date">Fecha</SelectItem>
               <SelectItem value="category">Categoría</SelectItem>
+              <SelectItem value="crane">Grúa</SelectItem>
+              <SelectItem value="operator">Operador</SelectItem>
+              <SelectItem value="service_folio">Folio Servicio</SelectItem>
+              <SelectItem value="supplier">Proveedor</SelectItem>
+              <SelectItem value="payment_status">Estado de Pago</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -565,7 +603,7 @@ export const EnhancedCostsTable = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.entries(paginatedGroups).map(([groupKey, groupCosts]) => {
+                {groupEntries.map(([groupKey, groupCosts]) => {
                   if (groupBy === 'none') {
                     return groupCosts.length === 0 ? (
                       <TableRow key="empty">

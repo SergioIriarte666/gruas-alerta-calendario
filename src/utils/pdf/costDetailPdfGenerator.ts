@@ -67,16 +67,23 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
   const paymentDate = (cost as any).payment_date as string | null | undefined;
   const isPaid = !!paymentDate;
 
+  const supplier = (cost as any).inventory_suppliers as {
+    name?: string; rut?: string; address?: string; phone?: string; email?: string;
+  } | null | undefined;
+
+  // La etiqueta cambia según si el costo tiene servicio asociado o no
+  const folioLabel = cost.service_id ? 'Folio Servicio' : 'N° Doc. Proveedor';
+
   const basicRows: [string, string][] = [
     ['Fecha', fmtDate(cost.date)],
     ['Fecha de Pago', paymentDate ? fmtDate(paymentDate) : 'Pendiente'],
     ['Estado de Pago', isPaid ? 'Pagado' : 'Pendiente'],
     ['Categoría', category],
     ['Monto', formatCLP(Number(cost.amount))],
-    ['Centro de Costo', (cost as any).cost_centers?.name || '—'],
-    ['Folio Servicio', cost.service_folio || '—'],
-    ['Tipo Documento', (cost as any).document_type || '—'],
-    ['N° Documento', (cost as any).document_number || '—'],
+    ['Centro de Costo', cost.cost_centers?.name || '—'],
+    [folioLabel, cost.service_folio || '—'],
+    ['Tipo Documento', cost.document_type || '—'],
+    ['N° Documento', cost.document_number || '—'],
   ];
 
   autoTable(doc, {
@@ -93,6 +100,16 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
 
   // ── Asociaciones ──
   const assocRows: [string, string][] = [];
+
+  // Datos del proveedor (desde inventory_suppliers via join)
+  if (supplier?.name) {
+    assocRows.push(['Proveedor', supplier.name]);
+    if (supplier.rut) assocRows.push(['RUT Proveedor', supplier.rut]);
+    if (supplier.address) assocRows.push(['Dirección', supplier.address]);
+    if (supplier.phone) assocRows.push(['Teléfono', supplier.phone]);
+    if (supplier.email) assocRows.push(['Email', supplier.email]);
+  }
+
   if (cost.cranes) {
     assocRows.push(['Grúa', `${cost.cranes.brand || ''} ${cost.cranes.model || ''} (${cost.cranes.license_plate || ''})`.trim()]);
     if (cost.cranes.type) assocRows.push(['Tipo de Grúa', cost.cranes.type]);
@@ -149,6 +166,58 @@ export const generateCostDetailPDF = async ({ cost, settings, logoUrl }: Generat
       styles: { fontSize: 8, cellPadding: 1.5 },
       margin: { left: marginX, right: marginX },
     });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  }
+
+  // ── Desglose de Ítems (supplier_invoice_items) ──
+  const invoiceItems = cost.supplier_invoices?.supplier_invoice_items;
+  if (invoiceItems && invoiceItems.length > 0) {
+    const itemRows = [...invoiceItems]
+      .sort((a, b) => (a.line_number ?? 0) - (b.line_number ?? 0))
+      .map(item => [
+        item.product_name || item.description || '—',
+        item.description && item.description !== item.product_name
+          ? item.description
+          : '—',
+        item.quantity != null ? String(item.quantity) : '—',
+        item.unit_price != null
+          ? formatCLP(Number(item.unit_price))
+          : '—',
+        item.subtotal != null
+          ? formatCLP(Number(item.subtotal))
+          : '—',
+        item.tax_amount != null
+          ? formatCLP(Number(item.tax_amount))
+          : '—',
+        item.total_amount != null
+          ? formatCLP(Number(item.total_amount))
+          : '—',
+      ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Descripción', 'Detalle', 'Cant.', 'P. Unit.', 'Neto', 'IVA', 'Total']],
+      body: itemRows,
+      theme: 'grid',
+      headStyles: {
+        fillColor: VIOLET,
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 9,
+      },
+      styles: { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 36 },
+        1: { cellWidth: 36 },
+        2: { cellWidth: 12, halign: 'center' },
+        3: { cellWidth: 26, halign: 'right' },
+        4: { cellWidth: 22, halign: 'right' },
+        5: { cellWidth: 22, halign: 'right' },
+        6: { cellWidth: 28, halign: 'right' },
+      },
+      margin: { left: marginX, right: marginX },
+    });
+
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 

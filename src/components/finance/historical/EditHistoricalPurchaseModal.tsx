@@ -13,6 +13,7 @@ import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { format, parse } from 'date-fns';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 
 
@@ -59,8 +60,8 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
     if (invoice && open) {
       form.reset({
         invoice_number: invoice.invoice_number,
-        issue_date: new Date(invoice.issue_date),
-        due_date: new Date(invoice.due_date),
+        issue_date: parseFromDatabase(invoice.issue_date),
+        due_date: parseFromDatabase(invoice.due_date),
         amount: invoice.amount,
         net_amount: invoice.net_amount,
         tax_amount: invoice.tax_amount || 0,

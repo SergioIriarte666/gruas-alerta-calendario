@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -57,6 +57,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
     const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [calculatedServiceTotal, setCalculatedServiceTotal] = useState(0);
     const [receiptUrls, setReceiptUrls] = useState<string[]>([]);
+    const isInitialMount = useRef(true);
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, operationalCranes, loading: isLoadingCranes } = useCranes();
@@ -144,6 +145,14 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
 
     // Auto-fill fields when service is selected
     useEffect(() => {
+        // En modo edición (cost existe), no auto-rellenar al montar —
+        // los valores ya fueron cargados en el reset inicial.
+        // Solo auto-rellenar cuando el usuario cambia activamente el servicio.
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
         if (selectedServiceId && selectedServiceId !== 'none') {
             const selectedService = services.find(service => service.id === selectedServiceId);
             if (selectedService) {
@@ -161,6 +170,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
     useEffect(() => {
         if (isOpen) {
             setCurrentStep(1);
+            isInitialMount.current = true; // reset para la próxima apertura
         }
     }, [isOpen]);
 
@@ -260,10 +270,10 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 service_folio: cost.service_folio || '',
                 subcategory: cost.subcategory || '',
                 notes: cost.notes || '',
-                document_type: String((cost as Record<string, unknown>).document_type) || 'none',
-                document_number: String((cost as Record<string, unknown>).document_number) || '',
-                location_text: String((cost as Record<string, unknown>).location_text) || '',
-                other_reason: String((cost as Record<string, unknown>).other_reason) || '',
+                document_type: ((cost as Record<string, unknown>).document_type as string | null) || 'none',
+                document_number: ((cost as Record<string, unknown>).document_number as string | null) || '',
+                location_text: ((cost as Record<string, unknown>).location_text as string | null) || '',
+                other_reason: ((cost as Record<string, unknown>).other_reason as string | null) || '',
                 cost_center_id: cost.cost_center_id || 'none',
                 part_name: cost.crane_parts?.[0]?.part_name || '',
                 supplier: cost.crane_parts?.[0]?.supplier || '',
@@ -822,6 +832,23 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                 </div>
 
                                                 <div className="flex gap-2">
+                                                    {/* Botón guardar persistente en modo edición */}
+                                                    {cost && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            disabled={isSubmitting}
+                                                            onClick={form.handleSubmit(onSubmit)}
+                                                            className="gap-2 border-green-600 text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950"
+                                                        >
+                                                            {isSubmitting ? (
+                                                                <Loader2 className="size-4 animate-spin" />
+                                                            ) : (
+                                                                <Save className="size-4" />
+                                                            )}
+                                                            {isSubmitting ? 'Guardando...' : 'Guardar'}
+                                                        </Button>
+                                                    )}
                                                     {currentStep < 4 ? (
                                                         <Button
                                                             type="button"
@@ -831,7 +858,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                             Siguiente
                                                             <ChevronRight className="size-4" />
                                                         </Button>
-                                                    ) : (
+                                                    ) : !cost ? (
                                                         <Button
                                                             type="button"
                                                             disabled={isSubmitting}
@@ -846,11 +873,11 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                                             ) : (
                                                                 <>
                                                                     <Save className="size-4" />
-                                                                    {cost ? 'Actualizar' : 'Guardar'}
+                                                                    Guardar
                                                                 </>
                                                             )}
                                                         </Button>
-                                                    )}
+                                                    ) : null}
                                                 </div>
                                             </div>
                                             {!cost && currentStep === 4 && (

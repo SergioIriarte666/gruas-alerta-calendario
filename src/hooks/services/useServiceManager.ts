@@ -660,11 +660,9 @@ export const useServiceManager = () => {
                   ? serviceData.thirdPartyClientId
                   : null)
           }),
-          // ✅ CRÍTICO: Agregar operator_id y operator_commission
-          ...(primaryOperatorId !== null && {
-            operator_id: primaryOperatorId,
-            operator_commission: primaryOperatorCommission
-          }),
+          // Siempre escribir operator_id y commission, incluyendo null si se quitaron operadores
+          operator_id: primaryOperatorId,
+          operator_commission: primaryOperatorCommission,
           // Transform custody fields from camelCase to snake_case con validación SOLO si están presentes
           ...(serviceData.custodyMode !== undefined && {
             custody_mode: serviceData.custodyMode

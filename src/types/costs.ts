@@ -7,8 +7,14 @@ export type CostSubcategory = Database['public']['Tables']['cost_subcategories']
 export type Cost = Database['public']['Tables']['costs']['Row'] & {
   payment_date?: string | null;  // Agregar explícitamente para claridad
   payment_batch_id?: string | null;  // Agregar explícitamente para claridad
+  cost_center_id?: string | null;
+  document_type?: string | null;
+  document_number?: string | null;
   cost_categories: CostCategory;
-  cost_centers: Database['public']['Tables']['cost_centers']['Row'] | null;
+  cost_centers?: {
+    id: string;
+    name: string;
+  } | null;
   cranes: Database['public']['Tables']['cranes']['Row'] | null;
   operators: Database['public']['Tables']['operators']['Row'] | null;
   services: (Database['public']['Tables']['services']['Row'] & {
@@ -29,6 +35,29 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
     maintenance_type: string;
     provider: string | null;
     notes: string | null;
+  } | null;
+  inventory_suppliers?: {
+    id: string;
+    name: string;
+    rut: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+  } | null;
+  supplier_invoices?: {
+    id: string;
+    invoice_number: string | null;
+    supplier_invoice_items: {
+      id: string;
+      line_number: number | null;
+      product_name: string | null;
+      description: string | null;
+      quantity: number | null;
+      unit_price: number | null;
+      subtotal: number | null;
+      tax_amount: number | null;
+      total_amount: number | null;
+    }[];
   } | null;
   creator?: CreatorInfo | null;
 };

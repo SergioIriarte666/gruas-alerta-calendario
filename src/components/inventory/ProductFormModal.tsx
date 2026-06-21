@@ -62,6 +62,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
     formState: { errors, isSubmitting },
     setValue,
     watch,
+    reset,
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -80,6 +81,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
       has_expiration: product?.has_expiration ?? false,
     },
   });
+
+  React.useEffect(() => {
+    reset({
+      name: product?.name || '',
+      description: product?.description || '',
+      sku: product?.sku || '',
+      barcode: product?.barcode || '',
+      category_id: product?.category_id || 'none',
+      unit_of_measure: product?.unit_of_measure || 'unidad',
+      minimum_stock: product?.minimum_stock || 0,
+      maximum_stock: product?.maximum_stock || 0,
+      safety_stock: product?.safety_stock || 0,
+      unit_cost: product?.unit_cost || 0,
+      is_active: product?.is_active ?? true,
+      is_critical: product?.is_critical ?? false,
+      has_expiration: product?.has_expiration ?? false,
+    });
+  }, [product, reset]);
 
   const watchedValues = watch();
   const productName = watchedValues.name || '';
