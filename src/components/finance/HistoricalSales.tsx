@@ -310,20 +310,19 @@ export const HistoricalSales = () => {
 
   return (
     <div className="space-y-6 relative pb-20">
-      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-        <div className="w-full sm:w-auto space-y-3">
-          <RecentImportLogsCard
-            importType="sale"
-            accentClassName="text-violet-600"
-            title="Ultimas importaciones"
-          />
-          <div className="flex justify-start sm:justify-end">
-            <Button onClick={() => setImportHistoryOpen(true)} className="bg-violet-600 hover:bg-violet-700">
-              <Plus className="mr-2 size-4" />
-              Importar Histórico
-            </Button>
-          </div>
-        </div>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <RecentImportLogsCard
+          importType="sale"
+          accentClassName="text-violet-600"
+          title="Últimas importaciones"
+        />
+        <Button
+          onClick={() => setImportHistoryOpen(true)}
+          className="w-full bg-violet-600 hover:bg-violet-700 sm:w-auto"
+        >
+          <Plus className="mr-2 size-4" />
+          Importar Histórico
+        </Button>
       </div>
 
       <HistoricalSalesStats invoices={filteredAndSortedInvoices} />

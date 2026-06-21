@@ -347,43 +347,39 @@ export const HistoricalPurchases = () => {
 
   return (
     <div className="space-y-6 relative pb-20">
-      <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-        <div className="w-full sm:w-auto space-y-3">
-            <RecentImportLogsCard
-              importType="purchase"
-              accentClassName="text-emerald-600"
-              title="Ultimas importaciones"
-            />
-        <div className="flex flex-wrap gap-2 justify-start sm:justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Download className="mr-2 size-4" />
-                  Exportar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => exportToExcel(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
-                  <FileSpreadsheet className="mr-2 size-4" />
-                  Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportToPDF(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
-                  <FileText className="mr-2 size-4" />
-                  PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <div className="flex flex-wrap items-center justify-stretch gap-2 sm:justify-end">
+        <RecentImportLogsCard
+          importType="purchase"
+          accentClassName="text-emerald-600"
+          title="Últimas importaciones"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex-1 sm:flex-none">
+              <Download className="mr-2 size-4" />
+              Exportar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => exportToExcel(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
+              <FileSpreadsheet className="mr-2 size-4" />
+              Excel
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => exportToPDF(filteredAndSortedInvoices, 'reporte-compras', exportMeta)}>
+              <FileText className="mr-2 size-4" />
+              PDF
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-            <Button onClick={() => setIsImportOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="mr-2 size-4" />
-              Importar Histórico
-            </Button>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="mr-2 size-4" />
-              Nueva Factura
-            </Button>
-        </div>
-        </div>
+        <Button onClick={() => setIsImportOpen(true)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 sm:flex-none">
+          <Plus className="mr-2 size-4" />
+          Importar Histórico
+        </Button>
+        <Button onClick={() => setIsCreateOpen(true)} className="flex-1 sm:flex-none">
+          <Plus className="mr-2 size-4" />
+          Nueva Factura
+        </Button>
       </div>
 
       <HistoricalPurchasesStats invoices={filteredAndSortedInvoices} />
