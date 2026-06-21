@@ -489,8 +489,12 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
           const linkCostId = linkDecisions[documentKey];
           if (linkCostId && linkCostId !== 'new') {
-            const supplier = parseResult.suppliers.find(s => s.rut === doc.supplier_rut);
-            const supplierId = supplierIdByRut.get(doc.supplier_rut) || await ensureSupplierId(doc.supplier_rut, supplier?.name || '');
+            const supplierId = supplierIdByRut.get(doc.supplier_rut);
+            if (!supplierId) {
+              logger.warn(`[useXmlCostUpload] Proveedor ${doc.supplier_rut} no encontrado en cache, omitiendo documento`);
+              errorCount++;
+              continue;
+            }
             const computedDueDate = getComputedDueDate(doc) || emissionDate;
             await linkInvoiceMutation.mutateAsync({ costId: linkCostId, supplierId, invoiceData: { folio: doc.folio, issueDate: emissionDate, dueDate: computedDueDate, amount: doc.total_amount, netAmount: doc.net_amount, taxAmount: doc.vat_amount, description: effectiveGlosa, currency: doc.currency, paidDate: paymentDate || undefined, status: paymentDate ? 'paid' : 'pending' } });
             successCount++;
@@ -500,8 +504,12 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           const mappedCategory = supplierCategoryMapping[doc.supplier_rut] || '';
           const categoryId = resolveCategoryId(mappedCategory) || costCategoriesData[0]?.id || '';
           const subcatName = supplierSubcategoryMapping[doc.supplier_rut] || null;
-          const supplier = parseResult.suppliers.find(s => s.rut === doc.supplier_rut);
-          const supplierId = supplierIdByRut.get(doc.supplier_rut) || await ensureSupplierId(doc.supplier_rut, supplier?.name || '');
+          const supplierId = supplierIdByRut.get(doc.supplier_rut);
+          if (!supplierId) {
+            logger.warn(`[useXmlCostUpload] Proveedor ${doc.supplier_rut} no encontrado en cache, omitiendo documento`);
+            errorCount++;
+            continue;
+          }
 
           const duplicateInfo = getDuplicateInfoForDocument(doc);
           const isDuplicateByCheck = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';

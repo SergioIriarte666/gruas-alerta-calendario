@@ -245,9 +245,29 @@ export const EnhancedCostsTable = ({
         const operator = (cost as any).operators;
         key = operator?.name || 'Sin operador asignado';
       } else if (groupBy === 'service_folio') {
-        key = cost.service_folio
-          ? `Servicio ${cost.service_folio}`
-          : 'Sin folio de servicio';
+        const hasService = !!cost.service_id;
+        const hasSupplier = !!cost.supplier_id;
+        const hasFolio = !!cost.service_folio;
+
+        if (hasService && hasFolio) {
+          // Costo vinculado a un servicio real
+          key = `Servicio ${cost.service_folio}`;
+        } else if (hasService && !hasFolio) {
+          // Vinculado a servicio pero sin folio registrado
+          key = 'Servicio sin folio';
+        } else if (!hasService && hasFolio && hasSupplier) {
+          // Compra de proveedor externo: service_folio es el folio del DTE
+          key = `Compra (Doc. ${cost.service_folio})`;
+        } else if (!hasService && !hasFolio && hasSupplier) {
+          // Compra de proveedor sin folio de documento
+          const supplier = (cost as any).inventory_suppliers;
+          key = supplier?.name
+            ? `Compra — ${supplier.name}`
+            : 'Compra sin documento';
+        } else {
+          // Sin servicio, sin proveedor externo → gasto propio G5N
+          key = 'Gastos propios G5N';
+        }
       } else if (groupBy === 'supplier') {
         const supplier = (cost as any).inventory_suppliers;
         key = supplier?.name || 'Sin proveedor';

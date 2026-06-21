@@ -22,6 +22,7 @@ import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 import { BarChart3, Calendar, CheckCircle, Download, Tag, Building2, User, FileText, Plus, Loader2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
@@ -49,6 +50,19 @@ export const CostBatchUpdateModal = ({
   const { data: costCenters = [] } = useCostCenters();
   const { data: suppliers = [] } = useInventorySuppliers();
   const batchProgress = useBatchProgress();
+
+  const supplierOptions = useMemo(() => suppliers.map((supplier) => ({
+    ...supplier,
+    rut: supplier.rut ?? null,
+    email: supplier.email ?? null,
+    phone: supplier.phone ?? null,
+    address: supplier.address ?? null,
+    contact_person: supplier.contact_person ?? null,
+    category: '',
+    payment_terms: supplier.payment_terms ?? null,
+    delivery_time_days: supplier.delivery_time_days ?? null,
+    created_by: supplier.created_by ?? null,
+  })), [suppliers]);
 
   // Estados para los toggles de cada campo
   const [enableCategory, setEnableCategory] = useState(false);
@@ -698,19 +712,15 @@ export const CostBatchUpdateModal = ({
                       />
                     </div>
                     {enableSupplier && (
-                      <Select value={supplierId} onValueChange={setSupplierId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar proveedor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Sin proveedor</SelectItem>
-                          {suppliers.map((sup) => (
-                            <SelectItem key={sup.id} value={sup.id}>
-                              {sup.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <SupplierCombobox
+                        value={supplierId || null}
+                        onValueChange={(val) => setSupplierId(val || '')}
+                        placeholder="Buscar proveedor por nombre o RUT..."
+                        allowCreate={false}
+                        noneLabel="Sin proveedor"
+                        showNoneOption={true}
+                        options={supplierOptions}
+                      />
                     )}
                   </div>
                 </div>
