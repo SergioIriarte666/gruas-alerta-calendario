@@ -18,4 +18,4 @@ export interface CalendarEvent {
   source?: 'manual' | 'service' | 'maintenance';
 }
 
-export type CalendarViewMode = 'month' | 'week' | 'day';
+export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';

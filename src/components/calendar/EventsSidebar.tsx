@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 interface EventsSidebarProps {
   selectedDate: Date;
   getEventsForDate: (date: Date) => CalendarEvent[];
-  getEventTypeColor: (type: CalendarEvent['type']) => string;
+  getEventTypeColor: (type: CalendarEvent['type'], status?: CalendarEvent['status'], date?: string) => string;
   getEventTypeLabel: (type: CalendarEvent['type']) => string;
   createEvent: (event: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
@@ -176,7 +176,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
               events.map((event) => (
                 <div
                   key={event.id}
-                  className={`p-3 rounded-lg border border-border/60 ${getEventTypeColor(event.type)}`}
+                  className={`p-3 rounded-lg border border-border/60 ${getEventTypeColor(event.type, event.status, event.date)}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

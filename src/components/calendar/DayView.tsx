@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/custom-toast';
 interface DayViewProps {
   selectedDate: Date;
   getEventsForDate: (date: Date) => CalendarEvent[];
-  getEventTypeColor: (type: CalendarEvent['type']) => string;
+  getEventTypeColor: (type: CalendarEvent['type'], status?: CalendarEvent['status'], date?: string) => string;
   getEventTypeLabel: (type: CalendarEvent['type']) => string;
   createEvent: (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
   deleteEvent: (id: string) => void;
@@ -79,7 +79,7 @@ export const DayView = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-x-2">
-                  <Badge className={getEventTypeColor(event.type)}>
+                  <Badge className={getEventTypeColor(event.type, event.status, event.date)}>
                     {getEventTypeLabel(event.type)}
                   </Badge>
                   {!event.serviceId && event.status !== 'completed' && (

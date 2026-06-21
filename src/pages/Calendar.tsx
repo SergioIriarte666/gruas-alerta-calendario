@@ -8,6 +8,7 @@ import { CalendarControls } from '@/components/calendar/CalendarControls';
 import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
+import { ListView } from '@/components/calendar/ListView';
 import { EventsSidebar } from '@/components/calendar/EventsSidebar';
 import { format, addMonths, subMonths, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -44,7 +45,18 @@ const Calendar = () => {
     return { thisMonthCount, futureCount };
   }, [events]);
 
-  const getEventTypeColor = (type: CalendarEvent['type']) => {
+  const getEventTypeColor = (
+    type: CalendarEvent['type'],
+    status?: CalendarEvent['status'],
+    date?: string
+  ) => {
+    // Eventos pasados o completados: estilo atenuado independiente del tipo
+    const today = businessClock.today();
+    const isPast = status === 'completed' || (date && date < today);
+    if (isPast) {
+      return 'bg-gray-100 text-gray-400 line-through opacity-70';
+    }
+
     switch (type) {
       case 'service': return 'bg-green-100 text-green-900';
       case 'maintenance': return 'bg-blue-100 text-blue-900';
@@ -89,6 +101,8 @@ const Calendar = () => {
       }
       case 'month':
         return format(currentMonth, 'MMMM yyyy', { locale: es });
+      case 'list':
+        return 'Todos los eventos';
       default:
         return '';
     }
@@ -132,7 +146,7 @@ const Calendar = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-x-2 text-foreground">
                 <CalendarIcon className="size-5 text-green-500" />
-                <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : 'Mensual'}</span>
+                <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : viewMode === 'list' ? 'Lista' : 'Mensual'}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -162,6 +176,14 @@ const Calendar = () => {
                   createEvent={createEvent}
                   deleteEvent={deleteEvent}
                   updateEvent={updateEvent}
+                />
+              )}
+              {viewMode === 'list' && (
+                <ListView
+                  events={events}
+                  getEventTypeColor={getEventTypeColor}
+                  getEventTypeLabel={getEventTypeLabel}
+                  onDeleteEvent={deleteEvent}
                 />
               )}
             </CardContent>

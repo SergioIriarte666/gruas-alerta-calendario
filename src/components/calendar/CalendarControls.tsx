@@ -2,13 +2,14 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { CalendarViewMode } from '@/types/calendar';
 
 interface CalendarControlsProps {
   viewTitle: string;
-  viewMode: 'month' | 'week' | 'day';
+  viewMode: CalendarViewMode;
   onNavigate: (direction: 'prev' | 'next') => void;
-  onViewModeChange: (mode: 'month' | 'week' | 'day') => void;
+  onViewModeChange: (mode: CalendarViewMode) => void;
 }
 
 export const CalendarControls = ({ 
@@ -66,6 +67,15 @@ export const CalendarControls = ({
               onClick={() => onViewModeChange('month')}
             >
               Mes
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => onViewModeChange('list')}
+              className={viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'border-border/70 bg-background/60'}
+            >
+              <List className="size-4 mr-1" />
+              Lista
             </Button>
           </div>
         </div>

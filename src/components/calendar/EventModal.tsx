@@ -7,17 +7,19 @@ import DatePickerInput from '@/components/common/DatePickerInput';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarEvent } from '@/hooks/useCalendar';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
 
 interface EventModalProps {
-  onCreateEvent: (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onCreateEvent: (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void> | void;
   selectedDate?: Date;
 }
 
 export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,39 +34,48 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
     craneId: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    onCreateEvent({
-      title: formData.title,
-      description: formData.description,
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      type: formData.type,
-      status: formData.status,
-      serviceId: formData.serviceId || undefined,
-      clientId: formData.clientId || undefined,
-      operatorId: formData.operatorId || undefined,
-      craneId: formData.craneId || undefined
-    });
+    if (!formData.title.trim()) {
+      toast.error('El título es obligatorio');
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      title: '',
-      description: '',
-      date: selectedDate ? toLocalDateString(selectedDate) : getTodayLocal(),
-      startTime: '09:00',
-      endTime: '10:00',
-      type: 'other',
-      status: 'scheduled',
-      serviceId: '',
-      clientId: '',
-      operatorId: '',
-      craneId: ''
-    });
-    
-    setOpen(false);
+    setIsSubmitting(true);
+    try {
+      await onCreateEvent({
+        title: formData.title,
+        description: formData.description,
+        date: formData.date,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        type: formData.type,
+        status: formData.status,
+        serviceId: formData.serviceId || undefined,
+        clientId: formData.clientId || undefined,
+        operatorId: formData.operatorId || undefined,
+        craneId: formData.craneId || undefined
+      });
+      toast.success('Evento creado correctamente');
+      setFormData({
+        title: '',
+        description: '',
+        date: selectedDate ? toLocalDateString(selectedDate) : getTodayLocal(),
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'other',
+        status: 'scheduled',
+        serviceId: '',
+        clientId: '',
+        operatorId: '',
+        craneId: ''
+      });
+      setOpen(false);
+    } catch (error) {
+      toast.error('Error al crear el evento. Inténtalo nuevamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -159,8 +170,10 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit">
-              Crear Evento
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" />Guardando...</>
+              ) : 'Crear Evento'}
             </Button>
           </div>
         </form>

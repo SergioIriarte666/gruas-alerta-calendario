@@ -8,7 +8,7 @@ interface MonthViewProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   getEventsForDate: (date: Date) => CalendarEvent[];
-  getEventTypeColor: (type: CalendarEvent['type']) => string;
+  getEventTypeColor: (type: CalendarEvent['type'], status?: CalendarEvent['status'], date?: string) => string;
 }
 
 export const MonthView = ({ 
@@ -63,7 +63,7 @@ export const MonthView = ({
                     key={event.id}
                     className={`
                       text-xs px-1 py-0.5 rounded truncate
-                      ${getEventTypeColor(event.type)}
+                      ${getEventTypeColor(event.type, event.status, event.date)}
                     `}
                     title={event.title}
                   >

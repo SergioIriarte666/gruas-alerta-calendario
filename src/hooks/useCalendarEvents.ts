@@ -5,6 +5,7 @@ import { CalendarEvent } from '@/types/calendar';
 import { sanitizeEventData } from '@/utils/calendarValidation';
 import { toast } from 'sonner';
 import { getBusinessToday } from '@/utils/timezoneUtils';
+import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
 
 
@@ -142,7 +143,31 @@ export const useCalendarEvents = () => {
         };
       });
 
-      setEvents(serviceEvents);
+      // Auto-completar eventos manuales cuya fecha ya pasó
+      const today = businessClock.today();
+      const overdueEventIds = (calendarRes.data || [])
+        .filter(e => e.date < today && e.status === 'scheduled')
+        .map(e => e.id);
+
+      if (overdueEventIds.length > 0) {
+        // Actualizar en BD sin bloquear el render — fire and forget
+        supabase
+          .from('calendar_events')
+          .update({ status: 'completed' })
+          .in('id', overdueEventIds)
+          .then(({ error }) => {
+            if (error) logger.warn('Error auto-completing past events:', error);
+          });
+
+        // Actualizar también en memoria para que el render sea inmediato
+        manualEvents.forEach(ev => {
+          if (overdueEventIds.includes(ev.id)) {
+            ev.status = 'completed';
+          }
+        });
+      }
+
+      setEvents([...manualEvents, ...serviceEvents, ...maintenanceEvents]);
     } catch (error) {
       logger.error('Error loading calendar events:', error);
     } finally {
