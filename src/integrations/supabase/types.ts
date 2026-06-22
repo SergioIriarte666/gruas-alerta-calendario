@@ -2263,6 +2263,7 @@ export type Database = {
           created_at: string
           equipment_checklist: string[]
           id: string
+          initial_vehicle_state: Json | null
           operator_id: string
           operator_signature: string
           pdf_retiro_uploaded_at: string | null
@@ -2281,6 +2282,7 @@ export type Database = {
           created_at?: string
           equipment_checklist: string[]
           id?: string
+          initial_vehicle_state?: Json | null
           operator_id: string
           operator_signature: string
           pdf_retiro_uploaded_at?: string | null
@@ -2299,6 +2301,7 @@ export type Database = {
           created_at?: string
           equipment_checklist?: string[]
           id?: string
+          initial_vehicle_state?: Json | null
           operator_id?: string
           operator_signature?: string
           pdf_retiro_uploaded_at?: string | null

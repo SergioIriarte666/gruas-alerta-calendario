@@ -95,7 +95,7 @@ export const addDigitalSignatures = async (
     {
       label: 'Firma del Operador',
       signature: data.inspection.operatorSignature,
-      name: data.service.operator?.name || 'Operador',
+      name: data.inspection.operatorName || data.service.operator?.name || 'Operador',
     },
     {
       label: 'Firma del Cliente',

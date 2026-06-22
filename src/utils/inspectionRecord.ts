@@ -12,8 +12,9 @@ const logger = createLogger('Inspection');
 type PhotographicSetItem = NonNullable<InspectionFormValues['photographicSet']>[number];
 
 export interface InitialInspectionEvidence {
-  pdfUrl: string;
+  pdfUrl: string | null;
   photos: string[];
+  initialState: Pick<InspectionFormValues, 'equipment' | 'kilometraje' | 'combustible' | 'llaves' | 'documentacion'>;
 }
 
 /**
@@ -31,7 +32,7 @@ export const fetchInitialInspectionEvidence = async (
 ): Promise<InitialInspectionEvidence | null> => {
   const { data, error } = await supabase
     .from('inspections')
-    .select('pdf_url, photos_before_service')
+    .select('pdf_url, photos_before_service, equipment_checklist, initial_vehicle_state')
     .eq('service_id', serviceId)
     .maybeSingle();
 
@@ -40,21 +41,41 @@ export const fetchInitialInspectionEvidence = async (
     throw new Error(`Error al consultar inspección inicial: ${error.message}`);
   }
 
-  if (!data?.pdf_url) {
+  if (!data) {
     return null;
   }
 
-  const pdfPath = extractStoragePath(data.pdf_url, PDF_BUCKET)!;
+  const pdfPath = data.pdf_url ? extractStoragePath(data.pdf_url, PDF_BUCKET) : null;
   const photoPaths = (data.photos_before_service || [])
     .map((photo) => extractStoragePath(photo, PHOTO_BUCKET))
     .filter((path): path is string => !!path);
 
   const [pdfUrl, photos] = await Promise.all([
-    getInspectionPdfSignedUrl(pdfPath),
+    pdfPath ? getInspectionPdfSignedUrl(pdfPath) : Promise.resolve(null),
     Promise.all(photoPaths.map((path) => getInspectionPhotoSignedUrl(path))),
   ]);
 
-  return { pdfUrl, photos };
+  const storedState = data.initial_vehicle_state && typeof data.initial_vehicle_state === 'object'
+    ? data.initial_vehicle_state as Record<string, unknown>
+    : {};
+
+  return {
+    pdfUrl,
+    photos,
+    initialState: {
+      equipment: Array.isArray(storedState.equipment)
+        ? storedState.equipment.filter((item): item is string => typeof item === 'string')
+        : data.equipment_checklist || [],
+      kilometraje: typeof storedState.kilometraje === 'string' ? storedState.kilometraje : '',
+      combustible: ['0', '1/4', '1/2', '3/4', 'full'].includes(String(storedState.combustible))
+        ? storedState.combustible as InspectionFormValues['combustible']
+        : undefined,
+      llaves: storedState.llaves === 'si' || storedState.llaves === 'no' ? storedState.llaves : undefined,
+      documentacion: storedState.documentacion === 'si' || storedState.documentacion === 'no'
+        ? storedState.documentacion
+        : undefined,
+    },
+  };
 };
 
 /**
@@ -111,6 +132,15 @@ export const persistInspection = async (
     operator_signature: values.operatorSignature,
     client_name: values.clientName || null,
     client_rut: values.clientRut || null,
+    ...(phase === 'initial' ? {
+      initial_vehicle_state: {
+        equipment: values.equipment || [],
+        kilometraje: values.kilometraje || '',
+        combustible: values.combustible || null,
+        llaves: values.llaves || null,
+        documentacion: values.documentacion || null,
+      },
+    } : {}),
     ...photoFields,
     ...pdfFields,
   };

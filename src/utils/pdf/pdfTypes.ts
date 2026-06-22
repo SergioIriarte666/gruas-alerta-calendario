@@ -10,6 +10,7 @@ export interface InspectionPDFData {
     combustible?: string;
     llaves?: string;
     documentacion?: string;
+    operatorName?: string;
     operatorSignature?: string;
     clientSignature?: string;
     clientName?: string;

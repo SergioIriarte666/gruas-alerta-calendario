@@ -17,12 +17,14 @@ export const InitialInspectionEvidenceCard = ({ evidence }: InitialInspectionEvi
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button variant="outline" size="sm" asChild>
-          <a href={evidence.pdfUrl} target="_blank" rel="noopener noreferrer">
-            <FileText className="size-4 mr-2" />
-            Ver PDF de inspección inicial
-          </a>
-        </Button>
+        {evidence.pdfUrl && (
+          <Button variant="outline" size="sm" asChild>
+            <a href={evidence.pdfUrl} target="_blank" rel="noopener noreferrer">
+              <FileText className="size-4 mr-2" />
+              Ver PDF de inspección inicial
+            </a>
+          </Button>
+        )}
 
         {evidence.photos.length > 0 && (
           <div>

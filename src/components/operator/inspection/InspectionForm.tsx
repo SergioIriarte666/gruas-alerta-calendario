@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
 import { fetchInitialInspectionEvidence, InitialInspectionEvidence } from '@/utils/inspectionRecord';
 import { createLogger } from '@/lib/logger';
+import { reportFrontendError } from '@/utils/reportFrontendError';
 
 const logger = createLogger('InspectionForm');
 
@@ -52,11 +53,12 @@ export const InspectionForm = ({
       llaves: undefined,
       documentacion: undefined,
       operatorSignature: '',
-      clientName: '',
+      operatorName: service.operator?.name || '',
+      clientName: service.client?.name || '',
       clientRut: '',
       clientSignature: '',
       vehicleReceptionSignature: '',
-      receptionPersonName: '',
+      receptionPersonName: service.client?.name || '',
       photographicSet: [],
     },
   });
@@ -87,6 +89,61 @@ export const InspectionForm = ({
       return;
     }
     
+    // En entrega, la DB siempre es la fuente de verdad. La caché puede ayudar a
+    // recuperar campos locales, pero nunca decide si existe evidencia inicial.
+    if (service?.status === 'inspection_completed') {
+      setCurrentPhase('final');
+      fetchInitialInspectionEvidence(serviceId)
+        .then((evidence) => {
+          if (!evidence) {
+            logger.warn('⚠️ La base de datos no tiene inspección inicial para este servicio');
+            toast({
+              type: 'warning',
+              title: 'Sin datos de inspección inicial',
+              description: 'La base de datos no contiene una inspección inicial para este servicio'
+            });
+            return;
+          }
+
+          setInitialEvidence(evidence);
+          const initialState = evidence.initialState;
+          form.reset({
+            ...form.getValues(),
+            equipment: initialState.equipment.length > 0 ? initialState.equipment : savedData?.equipment || [],
+            kilometraje: initialState.kilometraje || savedData?.kilometraje || '',
+            combustible: initialState.combustible || savedData?.combustible,
+            llaves: initialState.llaves || savedData?.llaves,
+            documentacion: initialState.documentacion || savedData?.documentacion,
+            vehicleObservations: savedData?.vehicleObservations || '',
+            operatorName: service.operator?.name || '',
+            clientName: service.client?.name || savedData?.clientName || '',
+            receptionPersonName: service.client?.name || '',
+            operatorSignature: '',
+            clientSignature: '',
+            vehicleReceptionSignature: '',
+            photographicSet: [],
+          });
+          saveFormData(form.getValues(), 'final');
+          toast({
+            type: 'success',
+            title: 'Inspección inicial recuperada',
+            description: `${evidence.photos.length} fotografía(s) disponibles; estado inicial precargado para comparar`
+          });
+        })
+        .catch((error) => {
+          logger.error('Error al recuperar evidencia de inspección inicial desde la base de datos:', error);
+          toast({ type: 'error', title: 'No se pudo cargar la inspección inicial' });
+          reportFrontendError({
+            componentName: 'InspectionForm.fetchInitialInspectionEvidence',
+            errorMessage: error instanceof Error ? error.message : String(error),
+            errorStack: error instanceof Error ? error.stack : undefined,
+            url: window.location.href,
+          }).catch(() => {});
+        })
+        .finally(() => setIsInitialized(true));
+      return;
+    }
+
     // Si hay datos guardados, cargarlos
     if (savedData && metadata) {
       logger.debug('✅ Loading saved inspection data');
@@ -115,15 +172,7 @@ export const InspectionForm = ({
         form.reset(savedData);
       }
       
-      // Determinar fase correcta basada en el estado del servicio Y los metadatos
-      if (service?.status === 'inspection_completed' && metadata.inspection_phase === 'initial') {
-        logger.debug('🚚 Service completed initial inspection - transitioning to final phase');
-        setCurrentPhase('final');
-        // Guardar los datos como fase final para continuar con la entrega
-        saveFormData(savedData, 'final');
-      } else {
-        setCurrentPhase(metadata.inspection_phase);
-      }
+      setCurrentPhase(metadata.inspection_phase);
       
       if (!toastShownRef.current) {
         toast({ 
@@ -133,44 +182,6 @@ export const InspectionForm = ({
         });
         toastShownRef.current = true;
       }
-    } else if (service?.status === 'inspection_completed') {
-      // Sin cache de sesión (pestaña/dispositivo distinto, o sessionStorage vencido): la base
-      // de datos es la única fuente confiable de la evidencia de la fase inicial.
-      setCurrentPhase('final');
-      fetchInitialInspectionEvidence(serviceId)
-        .then((evidence) => {
-          if (evidence) {
-            logger.debug('🚚 Evidencia de fase inicial recuperada desde la base de datos');
-            setInitialEvidence(evidence);
-            if (!toastShownRef.current) {
-              toast({
-                type: 'success',
-                title: 'Datos de inspección inicial recuperados',
-                description: `${evidence.photos.length} fotografía(s) de la fase inicial disponibles`
-              });
-              toastShownRef.current = true;
-            }
-          } else {
-            logger.warn('⚠️ La base de datos no tiene inspección inicial para este servicio');
-            if (!toastShownRef.current) {
-              toast({
-                type: 'warning',
-                title: 'Sin datos de inspección inicial',
-                description: 'El servicio está listo para entrega pero no se encontraron datos de la fase inicial'
-              });
-              toastShownRef.current = true;
-            }
-          }
-        })
-        .catch((error) => {
-          logger.error('Error al recuperar evidencia de inspección inicial desde la base de datos:', error);
-          if (!toastShownRef.current) {
-            toast({ type: 'error', title: 'Error al cargar la inspección inicial desde la base de datos' });
-            toastShownRef.current = true;
-          }
-        })
-        .finally(() => setIsInitialized(true));
-      return;
     } else {
       logger.debug('🔄 Starting initial phase');
       setCurrentPhase('initial');
@@ -239,6 +250,8 @@ export const InspectionForm = ({
           serviceId={serviceId}
           requiresDetail={requiresDetail}
           requiresPhotoSet={requiresPhotoSet}
+          clientName={service.client?.name || ''}
+          operatorName={service.operator?.name || ''}
         />
 
         <div className="flex justify-end gap-2">

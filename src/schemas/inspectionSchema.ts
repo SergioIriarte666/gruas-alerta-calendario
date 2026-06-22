@@ -9,6 +9,7 @@ export const inspectionFormSchema = z.object({
   llaves: z.enum(['si', 'no']).optional(),
   documentacion: z.enum(['si', 'no']).optional(),
   operatorSignature: z.string().min(1, 'La firma del operador es requerida'),
+  operatorName: z.string().optional(),
   clientSignature: z.string().optional(),
   clientName: z.string().optional(),
   clientRut: z.string().optional(),

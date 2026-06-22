@@ -10,7 +10,7 @@ import { PhotographicSet } from '@/components/operator/PhotographicSet';
 import { SignaturePad, SignaturePadRef } from '@/components/operator/SignaturePad';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useUser } from '@/contexts/UserContext';
-import { User, Gauge, Fuel, Key, FileText, PenTool, Check, X } from 'lucide-react';
+import { Gauge, Fuel, Key, FileText, Check, X } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface InspectionFormSectionsProps {
@@ -20,6 +20,8 @@ interface InspectionFormSectionsProps {
   serviceId: string;
   requiresDetail?: boolean;
   requiresPhotoSet?: boolean;
+  clientName?: string;
+  operatorName?: string;
 }
 
 export const InspectionFormSections = ({
@@ -29,6 +31,8 @@ export const InspectionFormSections = ({
   serviceId,
   requiresDetail = true,
   requiresPhotoSet = true,
+  clientName = '',
+  operatorName = '',
 }: InspectionFormSectionsProps) => {
   const { user } = useUser();
   const operatorSignatureRef = useRef<SignaturePadRef>(null);
@@ -243,50 +247,6 @@ export const InspectionFormSections = ({
             )}
           />
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="clientName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-foreground">
-                    <User className="size-4" /> 
-                    Nombre del Cliente (si está presente)
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Nombre de quien solicita el servicio" 
-                      {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="receptionPersonName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-foreground">
-                    <PenTool className="size-4" /> 
-                    Nombre de quien recibe el vehículo
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Nombre de quien recibe el vehículo" 
-                      {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
           {/* Sección de Firmas Digitales */}
           <div className="space-y-8">
             <h4 className="text-lg font-semibold text-foreground border-b border-border pb-2">
@@ -298,11 +258,17 @@ export const InspectionFormSections = ({
                 control={form.control}
                 name="operatorSignature"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
+                    <FormField control={form.control} name="operatorName" render={({ field: nameField }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del operador</FormLabel>
+                        <FormControl><Input {...nameField} placeholder="Nombre del operador" /></FormControl>
+                      </FormItem>
+                    )} />
                     <SignaturePad
                       ref={operatorSignatureRef}
                       label="Firma del Operador"
-                      personName={user?.name || user?.email || 'Operador'}
+                      personName={form.watch('operatorName') || operatorName || user?.name || user?.email || 'Operador'}
                       onSignatureChange={field.onChange}
                       signature={field.value}
                     />
@@ -315,11 +281,17 @@ export const InspectionFormSections = ({
                 control={form.control}
                 name="clientSignature"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
+                    <FormField control={form.control} name="clientName" render={({ field: nameField }) => (
+                      <FormItem>
+                        <FormLabel>Nombre del cliente</FormLabel>
+                        <FormControl><Input {...nameField} placeholder="Nombre del cliente" /></FormControl>
+                      </FormItem>
+                    )} />
                     <SignaturePad
                       ref={clientSignatureRef}
                       label="Firma del Cliente"
-                      personName={form.watch('clientName') || 'Cliente'}
+                      personName={form.watch('clientName') || clientName || 'Cliente'}
                       onSignatureChange={field.onChange}
                       signature={field.value}
                     />
@@ -332,7 +304,14 @@ export const InspectionFormSections = ({
                 control={form.control}
                 name="vehicleReceptionSignature"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
+                    <FormField control={form.control} name="receptionPersonName" render={({ field: nameField }) => (
+                      <FormItem>
+                        <FormLabel>Nombre de quien recibe el vehículo</FormLabel>
+                        <FormControl><Input {...nameField} placeholder="Nombre de quien recibe el vehículo" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <SignaturePad
                       ref={receptionSignatureRef}
                       label="Recepción del Vehículo"

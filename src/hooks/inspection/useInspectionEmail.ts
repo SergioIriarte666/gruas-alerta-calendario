@@ -5,9 +5,11 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { createLogger } from "@/lib/logger";
+import { arrayBufferToBase64 } from '@/utils/base64';
 
 
 const logger = createLogger("useInspectionEmail");
+
 export const useInspectionEmail = () => {
   const sendInspectionEmailMutation = useMutation({
     mutationFn: async ({ pdfBlob, service, inspection }: {
@@ -18,7 +20,7 @@ export const useInspectionEmail = () => {
       logger.debug('📧 [EMAIL] Enviando inspección por email...');
       
       const arrayBuffer = await pdfBlob.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const base64 = arrayBufferToBase64(arrayBuffer);
       
       const emailData = {
         inspectionData: {
