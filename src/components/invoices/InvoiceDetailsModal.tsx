@@ -150,6 +150,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   const [paymentApplications, setPaymentApplications] = useState<PaymentApplicationRow[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [services, setServices] = useState<ServiceRow[]>([]);
+  const [serviceAmounts, setServiceAmounts] = useState<Record<string, number>>({});
   const [closures, setClosures] = useState<ClosureRow[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
   const [cancellation, setCancellation] = useState<{
@@ -223,6 +224,24 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         .eq('invoice_id', invoice.id),
     ]).then(async ([servicesRes, closuresRes]) => {
       const serviceIds = (servicesRes.data || []).map((s: any) => s.service_id);
+      const closureIds = (closuresRes.data || []).map((c: any) => c.closure_id);
+
+      if (closureIds.length > 0) {
+        const { data: closureServices } = await supabase
+          .from('closure_services')
+          .select('service_id, amount')
+          .in('closure_id', closureIds);
+
+        const amountByServiceId: Record<string, number> = {};
+        (closureServices || []).forEach((row: any) => {
+          const current = amountByServiceId[row.service_id] || 0;
+          amountByServiceId[row.service_id] = current + Math.round(Number(row.amount || 0));
+        });
+        setServiceAmounts(amountByServiceId);
+      } else {
+        setServiceAmounts({});
+      }
+
       if (serviceIds.length > 0) {
         const { data } = await supabase
           .from('services')
@@ -233,7 +252,6 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
         setServices([]);
       }
 
-      const closureIds = (closuresRes.data || []).map((c: any) => c.closure_id);
       if (closureIds.length > 0) {
         const { data } = await supabase
           .from('service_closures')
@@ -249,6 +267,11 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   }, [invoice, isOpen]);
 
   if (!invoice) return null;
+
+  const getServiceDisplayAmount = (service: ServiceRow): number => {
+    if (serviceAmounts[service.id] != null) return serviceAmounts[service.id];
+    return service.value || 0;
+  };
 
   const isCancelled = invoice.status === 'cancelled';
   const rawPaidAmount = invoice.paidAmount ?? 0;
@@ -643,14 +666,14 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                         const printWindow = window.open('', '_blank');
                         if (!printWindow) return;
                         const esc = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-                        const totalServicios = services.reduce((sum, s) => sum + (s.value || 0), 0);
+                        const totalServicios = services.reduce((sum, s) => sum + getServiceDisplayAmount(s), 0);
                         const rows = services.map(s => `
                            <tr>
                              <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.folio || 'N/A')}</td>
                              <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(formatSafeDate(s.service_date))}</td>
                              <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${s.vehicle_brand && s.vehicle_model ? `${esc(s.vehicle_brand)} ${esc(s.vehicle_model)}` : 'N/A'}</td>
                              <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.license_plate || 'N/A')}</td>
-                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${esc(formatCurrency(s.value))}</td>
+                             <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;text-align:right">${esc(formatCurrency(getServiceDisplayAmount(s)))}</td>
                              <td style="padding:6px 10px;border-bottom:1px solid #e5e7eb">${esc(s.status || 'N/A')}</td>
                            </tr>
                          `).join('');
@@ -724,7 +747,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                                 : 'N/A'}
                             </td>
                             <td className="py-2 px-3 text-foreground font-mono text-xs">{s.license_plate || 'N/A'}</td>
-                            <td className="py-2 px-3 text-foreground">{formatCurrency(s.value)}</td>
+                            <td className="py-2 px-3 text-foreground">{formatCurrency(getServiceDisplayAmount(s))}</td>
                             <td className="py-2 px-3">
                               <Badge variant="outline" className="text-xs">{s.status}</Badge>
                             </td>

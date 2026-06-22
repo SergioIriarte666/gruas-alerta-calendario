@@ -103,11 +103,17 @@ export const useInvoicesPageActions = ({
         try {
           const paymentDate = data.paymentDate || data.issueDate || getTodayLocal();
           await markAsPaid(newInvoice.id, paymentDate);
+          setTimeout(() => {
+            refetch();
+          }, 500);
         } catch (payError) {
           logger.error('Error registering automatic payment:', payError);
           toast.warning("Factura creada", {
             description: "La factura se creó pero no se pudo registrar el pago automático.",
           });
+          setTimeout(() => {
+            refetch();
+          }, 500);
           return;
         }
       }
@@ -115,6 +121,9 @@ export const useInvoicesPageActions = ({
       toast.success("Factura creada", {
         description: "La factura ha sido creada exitosamente.",
       });
+      setTimeout(() => {
+        refetch();
+      }, 500);
     } catch (error) {
       logger.error('Error creating invoice:', error);
     }

@@ -239,8 +239,9 @@ export const useInvoiceOperations = () => {
 
       originalState = { ...currentInvoice };
 
+      const invoiceSource = (currentInvoice as Record<string, unknown>).source;
       const isHistoricalInvoice =
-        currentInvoice.source === 'historico' || currentInvoice.folio?.startsWith('HIST-');
+        invoiceSource === 'historico' || currentInvoice.folio?.startsWith('HIST-');
       if (
         options.protectSystemStatus &&
         invoiceData.status !== undefined &&
@@ -545,6 +546,42 @@ export const useInvoiceOperations = () => {
         (error as any).code = 'PROTECTED_INVOICE';
         (error as any).folio = invoiceCheck?.folio;
         throw error;
+      }
+
+      const invoiceFolio = invoiceCheck?.folio || '';
+      const { data: invoicePaymentApplications, error: paymentAppsError } = await supabase
+        .from('payment_applications')
+        .select('payment_id')
+        .eq('invoice_id', id);
+
+      if (paymentAppsError) throw paymentAppsError;
+
+      const paymentIds = Array.from(new Set((invoicePaymentApplications || []).map((row: any) => row.payment_id).filter(Boolean)));
+
+      if (paymentIds.length > 0) {
+        const { error: deleteAppsError } = await supabase
+          .from('payment_applications')
+          .delete()
+          .eq('invoice_id', id);
+
+        if (deleteAppsError) throw deleteAppsError;
+
+        if (invoiceFolio) {
+          const { data: autoPayments } = await supabase
+            .from('payments')
+            .select('id')
+            .in('id', paymentIds)
+            .eq('bank_reference', `AUTO-${invoiceFolio}`)
+            .ilike('notes', '%Pago automático%');
+
+          const autoPaymentIds = (autoPayments || []).map((p: any) => p.id).filter(Boolean);
+          if (autoPaymentIds.length > 0) {
+            await supabase
+              .from('payments')
+              .delete()
+              .in('id', autoPaymentIds);
+          }
+        }
       }
 
       // 1. Obtener relaciones invoice_closures

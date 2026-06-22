@@ -81,7 +81,12 @@ export const useClosureOperations = () => {
         if (svc.has_excess && svc.client_covered_amount != null && Number(svc.client_covered_amount) > 0) {
           return Math.round(Number(svc.client_covered_amount));
         }
-        return Math.round(Number(svc.value || 0) + Number(svc.custody_total_amount || 0));
+        const baseValue = Number(svc.value || 0);
+        const custodyValue = Number(svc.custody_total_amount || 0);
+        if (custodyValue > 0 && baseValue === custodyValue) {
+          return Math.round(custodyValue);
+        }
+        return Math.round(baseValue + custodyValue);
       };
 
       const closureServicesPayload = entries.map(entry => ({
