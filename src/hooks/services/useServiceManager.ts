@@ -174,6 +174,13 @@ export const useServiceManager = () => {
           .eq('id', serviceData.serviceType)
           .single();
 
+        const serviceTypeName = typeof serviceTypeConfig?.name === 'string' ? serviceTypeConfig.name.trim() : '';
+        const custodyTotalAmount = serviceData.custodyTotalAmount || 0;
+        const shouldZeroBaseValue =
+          (serviceTypeName === 'Custodia de Vehículos' && custodyTotalAmount > 0) ||
+          (custodyTotalAmount > 0 && (serviceData.value || 0) === custodyTotalAmount);
+        const normalizedBaseValue = shouldZeroBaseValue ? 0 : serviceData.value;
+
         
 
         // Obtener el usuario actual para created_by
@@ -226,7 +233,7 @@ export const useServiceManager = () => {
           service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
             ? serviceData.serviceType 
             : null,
-          value: serviceData.value,
+          value: normalizedBaseValue,
           
           // VALIDACIÓN INTEGRAL DE GRÚA
           // Si el tipo de servicio no requiere grúa Y no se proporciona grúa, guardar null
@@ -250,7 +257,7 @@ export const useServiceManager = () => {
           has_excess: serviceData.hasExcess || false,
           client_covered_amount: serviceData.hasExcess ? (serviceData.clientCoveredAmount || null) : null,
           excess_amount: serviceData.hasExcess
-            ? Math.max(0, (serviceData.value || 0) - (serviceData.clientCoveredAmount || 0))
+            ? Math.max(0, (normalizedBaseValue || 0) - (serviceData.clientCoveredAmount || 0))
             : null,
           third_party_client_id: serviceData.hasExcess && serviceData.thirdPartyClientId && serviceData.thirdPartyClientId.trim() !== ''
             ? serviceData.thirdPartyClientId
@@ -635,7 +642,10 @@ export const useServiceManager = () => {
             destination: serviceData.destination
           }),
           ...(serviceData.value !== undefined && {
-            value: serviceData.value
+            value:
+              (serviceData.custodyTotalAmount || 0) > 0 && (serviceData.value || 0) === (serviceData.custodyTotalAmount || 0)
+                ? 0
+                : serviceData.value
           }),
           ...(serviceData.status !== undefined && {
             status: serviceData.status

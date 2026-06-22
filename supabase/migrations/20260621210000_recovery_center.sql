@@ -1,7 +1,7 @@
 -- Centro de recuperacion: auditoria unificada, simulacion y reversion transaccional.
 -- No migra ni modifica datos existentes. La auditoria comienza al aplicar esta migracion.
 
-CREATE TABLE public.recovery_audit_entries (
+CREATE TABLE IF NOT EXISTS public.recovery_audit_entries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operation_id uuid NOT NULL DEFAULT gen_random_uuid(),
   organization_id uuid NOT NULL,
@@ -26,17 +26,18 @@ CREATE TABLE public.recovery_audit_entries (
   )
 );
 
-CREATE INDEX recovery_audit_operation_idx ON public.recovery_audit_entries(operation_id);
-CREATE INDEX recovery_audit_org_created_idx ON public.recovery_audit_entries(organization_id, created_at DESC);
-CREATE INDEX recovery_audit_module_created_idx ON public.recovery_audit_entries(module, created_at DESC);
-CREATE INDEX recovery_audit_user_idx ON public.recovery_audit_entries(user_id);
-CREATE INDEX recovery_audit_record_idx ON public.recovery_audit_entries(module, record_id);
+CREATE INDEX IF NOT EXISTS recovery_audit_operation_idx ON public.recovery_audit_entries(operation_id);
+CREATE INDEX IF NOT EXISTS recovery_audit_org_created_idx ON public.recovery_audit_entries(organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS recovery_audit_module_created_idx ON public.recovery_audit_entries(module, created_at DESC);
+CREATE INDEX IF NOT EXISTS recovery_audit_user_idx ON public.recovery_audit_entries(user_id);
+CREATE INDEX IF NOT EXISTS recovery_audit_record_idx ON public.recovery_audit_entries(module, record_id);
 
 COMMENT ON TABLE public.recovery_audit_entries IS
   'Bitacora inmutable de operaciones reversibles. Solo funciones SECURITY DEFINER pueden escribir o marcar reversiones.';
 
 ALTER TABLE public.recovery_audit_entries ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS recovery_audit_admin_read ON public.recovery_audit_entries;
 CREATE POLICY recovery_audit_admin_read ON public.recovery_audit_entries
   FOR SELECT TO authenticated
   USING (public.is_admin_user_safe());
@@ -44,7 +45,7 @@ CREATE POLICY recovery_audit_admin_read ON public.recovery_audit_entries
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.recovery_audit_entries FROM anon, authenticated;
 GRANT SELECT ON public.recovery_audit_entries TO authenticated;
 
-CREATE TABLE public.recovery_settings (
+CREATE TABLE IF NOT EXISTS public.recovery_settings (
   organization_id uuid PRIMARY KEY,
   retention_days integer NOT NULL DEFAULT 90 CHECK (retention_days BETWEEN 30 AND 3650),
   max_records_per_reversal integer NOT NULL DEFAULT 100 CHECK (max_records_per_reversal BETWEEN 1 AND 500),
@@ -53,6 +54,7 @@ CREATE TABLE public.recovery_settings (
 );
 
 ALTER TABLE public.recovery_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS recovery_settings_admin_read ON public.recovery_settings;
 CREATE POLICY recovery_settings_admin_read ON public.recovery_settings
   FOR SELECT TO authenticated USING (public.is_admin_user_safe());
 REVOKE INSERT, UPDATE, DELETE ON public.recovery_settings FROM anon, authenticated;
@@ -121,12 +123,16 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS recovery_audit_invoices ON public.invoices;
 CREATE TRIGGER recovery_audit_invoices AFTER INSERT OR UPDATE OR DELETE ON public.invoices
   FOR EACH ROW EXECUTE FUNCTION public.capture_recovery_audit('invoices', 'folio');
+DROP TRIGGER IF EXISTS recovery_audit_services ON public.services;
 CREATE TRIGGER recovery_audit_services AFTER INSERT OR UPDATE OR DELETE ON public.services
   FOR EACH ROW EXECUTE FUNCTION public.capture_recovery_audit('services', 'folio');
+DROP TRIGGER IF EXISTS recovery_audit_costs ON public.costs;
 CREATE TRIGGER recovery_audit_costs AFTER INSERT OR UPDATE OR DELETE ON public.costs
   FOR EACH ROW EXECUTE FUNCTION public.capture_recovery_audit('costs', 'description');
+DROP TRIGGER IF EXISTS recovery_audit_inventory ON public.inventory_movements;
 CREATE TRIGGER recovery_audit_inventory AFTER INSERT OR UPDATE OR DELETE ON public.inventory_movements
   FOR EACH ROW EXECUTE FUNCTION public.capture_recovery_audit('inventory', 'reference_document');
 
@@ -311,3 +317,5 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public.purge_expired_recovery_audit() FROM PUBLIC;
+
+NOTIFY pgrst, 'reload schema';

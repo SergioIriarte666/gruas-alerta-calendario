@@ -577,7 +577,7 @@ export const EnhancedServiceForm = React.memo(({
 
   // Auto-initialize custody mode for "Custodia de Vehículos" service type
   useEffect(() => {
-    if (selectedServiceType?.name === 'Custodia de Vehículos ' && formData.custodyMode === 'none') {
+    if (selectedServiceType?.name?.trim() === 'Custodia de Vehículos' && formData.custodyMode === 'none') {
       setFormData(prev => ({ 
         ...prev, 
         custodyMode: 'manual' 
@@ -585,11 +585,27 @@ export const EnhancedServiceForm = React.memo(({
     }
   }, [selectedServiceType?.name, formData.custodyMode]);
 
+  useEffect(() => {
+    if (selectedServiceType?.name?.trim() !== 'Custodia de Vehículos') {
+      return;
+    }
+
+    if (formData.value === 0) {
+      return;
+    }
+
+    if ((formData.custodyTotalAmount || 0) <= 0 && formData.custodyMode === 'none') {
+      return;
+    }
+
+    setFormData((prev) => (prev.value === 0 ? prev : { ...prev, value: 0 }));
+  }, [selectedServiceType?.name, formData.custodyMode, formData.custodyTotalAmount, formData.value]);
+
   // Auto-enable custody toggle for specific service types and existing services
   useEffect(() => {
     const shouldEnableCustody = 
       selectedServiceType?.name === 'Arriendo de Equipos' || 
-      selectedServiceType?.name === 'Custodia de Vehículos ' ||
+      selectedServiceType?.name?.trim() === 'Custodia de Vehículos' ||
       (service && formData.custodyMode !== 'none');
     
     setEnableCustody(shouldEnableCustody);
@@ -1288,6 +1304,7 @@ export const EnhancedServiceForm = React.memo(({
                     }}
                     totalCommissions={totalCommissions}
                     totalCosts={totalCosts}
+                    serviceTypeName={selectedServiceType?.name}
                     hasExcess={formData.hasExcess}
                     onHasExcessChange={(value) => setFormData(prev => ({ ...prev, hasExcess: value }))}
                     clientCoveredAmount={formData.clientCoveredAmount}
@@ -1322,16 +1339,16 @@ export const EnhancedServiceForm = React.memo(({
                       </div>
                     </div>
                     <Switch
-                      checked={enableCustody || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+                      checked={enableCustody || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name?.trim() === 'Custodia de Vehículos'}
                       onCheckedChange={(checked) => {
                         setEnableCustody(checked);
                         if (checked && formData.custodyMode === 'none') {
                           setFormData(prev => ({ ...prev, custodyMode: 'manual' }));
-                        } else if (!checked && formData.custodyMode !== 'none' && selectedServiceType?.name !== 'Arriendo de Equipos' && selectedServiceType?.name !== 'Custodia de Vehículos ') {
+                        } else if (!checked && formData.custodyMode !== 'none' && selectedServiceType?.name !== 'Arriendo de Equipos' && selectedServiceType?.name?.trim() !== 'Custodia de Vehículos') {
                           setFormData(prev => ({ ...prev, custodyMode: 'none' }));
                         }
                       }}
-                      disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+                      disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name?.trim() === 'Custodia de Vehículos'}
                     />
                   </div>
 
@@ -1408,7 +1425,7 @@ export const EnhancedServiceForm = React.memo(({
                 </ColoredSectionCard>
 
                 {/* Custodia/Arriendo de Equipos */}
-                {(enableCustody || formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
+                {(enableCustody || formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name?.trim() === 'Custodia de Vehículos') && (
                   <CustodySection 
                     serviceTypeName={selectedServiceType?.name}
                     custodyMode={formData.custodyMode}

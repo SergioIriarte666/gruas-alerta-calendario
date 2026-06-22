@@ -19,6 +19,7 @@ interface EnhancedFinancialSectionProps {
   onValueChange: (value: number) => void;
   totalCommissions: number;
   totalCosts: number;
+  serviceTypeName?: string;
   hasExcess?: boolean;
   onHasExcessChange?: (value: boolean) => void;
   clientCoveredAmount?: number;
@@ -42,6 +43,7 @@ export const EnhancedFinancialSection = ({
   onValueChange,
   totalCommissions,
   totalCosts,
+  serviceTypeName,
   hasExcess = false,
   onHasExcessChange,
   clientCoveredAmount = 0,
@@ -65,7 +67,8 @@ export const EnhancedFinancialSection = ({
   const serviceBreakdown = getServiceValueBreakdown({
     value,
     custody_total_amount: custodyTotalAmount,
-    custodyTotalAmount
+    custodyTotalAmount,
+    serviceTypeName
   });
   
   // Calculate excess amount automatically

@@ -10,9 +10,12 @@ const logger = createLogger("serviceValueCalculations");
  */
 export const isEquipmentRentalService = (service: any): boolean => {
   // Check both service type name and service_type relation
-  const serviceTypeName = service.service_type?.name || service.serviceType?.name || service.serviceTypeName;
+  const serviceTypeName = (service.service_type?.name || service.serviceType?.name || service.serviceTypeName || '').trim();
   return serviceTypeName === 'Arriendo de Equipos';
 };
+
+const getNormalizedServiceTypeName = (service: any): string =>
+  (service?.service_type?.name || service?.serviceType?.name || service?.serviceTypeName || '').trim();
 
 /**
  * Gets the base service value (excluding custody calculations)
@@ -50,11 +53,20 @@ export const getCompleteServiceValue = (service: any): number => {
     return 0;
   }
 
+  const serviceTypeName = getNormalizedServiceTypeName(service);
   const baseValue = getBaseServiceValue(service);
   const custodyValue = getCustodyTotalAmount(service);
+
+  if (serviceTypeName === 'Custodia de Vehículos' || serviceTypeName === 'Arriendo de Equipos') {
+    return Math.round(custodyValue || baseValue);
+  }
   
   // If both exist, sum them. Otherwise return whichever exists.
   if (baseValue > 0 && custodyValue > 0) {
+    if (baseValue === custodyValue && isCustodyService(service)) {
+      return Math.round(baseValue);
+    }
+
     return Math.round(baseValue + custodyValue);
   }
   
@@ -195,6 +207,7 @@ export const getServiceValueBreakdown = (service: any) => {
     return { baseValue: 0, custodyValue: 0, totalValue: 0, hasBothValues: false };
   }
 
+  const serviceTypeName = getNormalizedServiceTypeName(service);
   const rawBaseValue = service.value || 0;
   const rawCustodyValue = getCustodyTotalAmount(service);
   
@@ -207,27 +220,34 @@ export const getServiceValueBreakdown = (service: any) => {
   
   let baseValue: number;
   let custodyValue: number;
+  let totalValue: number;
   
-  if (hasBothValues) {
-    // Servicio con adicional (ej: grúa + custodia)
+  if (serviceTypeName === 'Custodia de Vehículos' || serviceTypeName === 'Arriendo de Equipos') {
+    baseValue = 0;
+    custodyValue = rawCustodyValue || rawBaseValue;
+    totalValue = custodyValue;
+  } else if (hasBothValues && rawBaseValue === rawCustodyValue && isCustodyService(service)) {
+    baseValue = 0;
+    custodyValue = rawCustodyValue;
+    totalValue = rawCustodyValue;
+  } else if (hasBothValues) {
     baseValue = rawBaseValue;
     custodyValue = rawCustodyValue;
+    totalValue = rawBaseValue + rawCustodyValue;
   } else if (rawBaseValue > 0) {
-    // Solo servicio base
     baseValue = rawBaseValue;
     custodyValue = 0;
+    totalValue = rawBaseValue;
   } else {
-    // Solo custody (arriendo, venta, etc.) - ES el servicio principal
     baseValue = rawCustodyValue;
     custodyValue = 0;
+    totalValue = rawCustodyValue;
   }
-  
-  const totalValue = rawBaseValue + rawCustodyValue;
 
   return {
     baseValue,
     custodyValue,
     totalValue,
-    hasBothValues
+    hasBothValues: baseValue > 0 && custodyValue > 0
   };
 };
