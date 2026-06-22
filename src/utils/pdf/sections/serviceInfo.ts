@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from '../pdfTypes';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
+import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 
 
@@ -36,7 +37,7 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
 
     const leftData = [
       ['Cliente', data.service.client?.name || 'N/A'],
-      ['Fecha de servicio', new Date(data.service.serviceDate).toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })],
+      ['Fecha de servicio', formatBusinessDateLong(data.service.serviceDate)],
       ['Origen', data.service.origin || 'N/A'],
       ['Destino', data.service.destination || 'N/A'],
       ['Grúa asignada', data.service.crane?.licensePlate || 'N/A'],
@@ -48,8 +49,8 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
       ['Patente', patente],
       ['Kilometraje', data.inspection.kilometraje ? `${Number(data.inspection.kilometraje).toLocaleString('es-CL')} km` : 'N/A'],
       ['Combustible', combustibleMap[data.inspection.combustible || ''] || data.inspection.combustible || 'N/A'],
-      ['Llaves', data.inspection.llaves === 'si' ? '✓ Presentes' : '✗ No presentes'],
-      ['Documentación', data.inspection.documentacion === 'si' ? '✓ Completa' : '✗ Incompleta'],
+      ['Llaves', data.inspection.llaves === 'si' ? 'Presentes' : 'No presentes'],
+      ['Documentación', data.inspection.documentacion === 'si' ? 'Completa' : 'Incompleta'],
     ];
 
     const colW = (PAGE_W - MARGIN * 2 - 4) / 2;

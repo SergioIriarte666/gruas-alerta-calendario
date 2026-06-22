@@ -15,50 +15,28 @@ export const uploadInspectionPdf = async (
   pdfBlob: Blob,
   serviceId: string,
   folio: string,
-): Promise<UploadResult | null> => {
-  try {
-    const date = businessClock.today();
-    const path = `${serviceId}/${folio}-${date}.pdf`;
+): Promise<UploadResult> => {
+  const date = businessClock.today();
+  const path = `${serviceId}/${folio}-${date}.pdf`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: true });
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: true });
 
-    if (uploadError) {
-      logger.error('Error subiendo PDF:', uploadError.message);
-      return null;
-    }
-
-    const { data } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(path, SIGNED_URL_SECONDS);
-
-    if (!data?.signedUrl) {
-      logger.error('No se pudo generar signed URL para el PDF');
-      return null;
-    }
-
-    logger.debug(`PDF subido: ${path}`);
-    return { signedUrl: data.signedUrl, path };
-  } catch (err) {
-    logger.error('uploadInspectionPdf error:', err);
-    return null;
+  if (uploadError) {
+    logger.error('Error subiendo PDF:', uploadError.message);
+    throw new Error(`Error al subir el PDF a Storage: ${uploadError.message}`);
   }
-};
 
-export const savePdfUrlToInspection = async (
-  serviceId: string,
-  pdfUrl: string,
-  phase: 'initial' | 'final' = 'final',
-): Promise<void> => {
-  const updatePayload = phase === 'initial'
-    ? { pdf_retiro_url: pdfUrl, pdf_retiro_uploaded_at: businessClock.nowISO() }
-    : { pdf_url: pdfUrl, pdf_uploaded_at: businessClock.nowISO() };
+  const { data, error: urlError } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(path, SIGNED_URL_SECONDS);
 
-  const { error } = await supabase
-    .from('inspections')
-    .update(updatePayload)
-    .eq('service_id', serviceId);
+  if (urlError || !data?.signedUrl) {
+    logger.error('Error generando signed URL del PDF:', urlError?.message);
+    throw new Error(`No se pudo generar la URL del PDF: ${urlError?.message || 'sin URL'}`);
+  }
 
-  if (error) logger.warn(`No se pudo guardar pdf_url (${phase}) en inspections:`, error.message);
+  logger.debug(`PDF subido: ${path}`);
+  return { signedUrl: data.signedUrl, path };
 };

@@ -503,6 +503,17 @@ export const safeDateToDisplaySlashes = (dateStr: string): string => {
 };
 
 /**
+ * Format a YYYY-MM-DD string as a long Spanish date ("sábado, 20 de junio de 2026")
+ * without timezone shift. Used for printed documents (PDFs, etc).
+ */
+export const formatBusinessDateLong = (dateStr: string): string => {
+  if (!dateStr) return 'N/A';
+  return safeParseDateOnly(dateStr).toLocaleDateString('es-CL', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+};
+
+/**
  * Calculate days between a YYYY-MM-DD date string and a reference YYYY-MM-DD string.
  * Pure date-only arithmetic — no timezone shift possible.
  */

@@ -10,10 +10,9 @@ import { Button } from '@/components/ui/button';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { InspectionStatusCard } from './InspectionStatusCard';
 import { InspectionProgressBar } from './InspectionProgressBar';
-import { Download, FileText, CheckCircle } from 'lucide-react';
+import { Download, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
-import { useInitialInspectionPDF } from '@/hooks/inspection/useInitialInspectionPDF';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('InspectionForm');
@@ -22,29 +21,24 @@ interface InspectionFormProps {
   service: Service;
   serviceId: string;
   onSubmit: (values: InspectionFormValues, phase: 'initial' | 'final') => void;
-  onGeneratePartialPDF?: (values: InspectionFormValues) => void;
   isProcessing: boolean;
   isGeneratingPDF: boolean;
   isUpdatingStatus: boolean;
 }
 
-export const InspectionForm = ({ 
-  service, 
-  serviceId, 
-  onSubmit, 
-  onGeneratePartialPDF,
-  isProcessing, 
-  isGeneratingPDF, 
-  isUpdatingStatus 
+export const InspectionForm = ({
+  service,
+  serviceId,
+  onSubmit,
+  isProcessing,
+  isGeneratingPDF,
+  isUpdatingStatus
 }: InspectionFormProps) => {
   const { toast } = useToast();
   const [currentPhase, setCurrentPhase] = useState<'initial' | 'final'>('initial');
   const [isInitialized, setIsInitialized] = useState(false);
   const toastShownRef = useRef(false);
-  
-  // Hook para generar PDF de inspección inicial
-  const { generateInitialPDF, isGeneratingInitialPDF } = useInitialInspectionPDF();
-  
+
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
     defaultValues: {
@@ -253,49 +247,10 @@ export const InspectionForm = ({
     onSubmit(values, currentPhase);
   };
 
-  const handleGeneratePartialPDF = () => {
-    const values = form.getValues();
-    logger.debug('📄 Generating partial PDF with photos:', values.photographicSet?.length || 0);
-    
-    if (onGeneratePartialPDF) {
-      onGeneratePartialPDF(values);
-    }
-  };
-
-  const handleContinueToDelivery = () => {
-    logger.debug('🚚 Continuing to delivery phase...');
-    
-    // Obtener valores actuales y asegurar que se guarden
-    const currentValues = form.getValues();
-    logger.debug('📷 Photos before phase change:', currentValues.photographicSet?.length || 0);
-    
-    // Guardar estado actual antes del cambio de fase
-    saveFormData(currentValues, 'final');
-    setCurrentPhase('final');
-    
-    toast({ 
-      type: 'info', 
-      title: 'Fase de entrega iniciada',
-      description: 'Ahora puedes agregar la firma de recepción para completar la entrega'
-    });
-  };
-
-  const handleGenerateInitialPDF = () => {
-    const values = form.getValues();
-    logger.debug('📄 [INITIAL] Generating initial inspection PDF with photos:', values.photographicSet?.length || 0);
-    generateInitialPDF({ service, values });
-  };
-
   return (
     <Form {...form}>
       {metadata && isInitialPhaseCompleted() && currentPhase === 'initial' && (
-        <InspectionStatusCard
-          metadata={metadata}
-          onContinueToDelivery={handleContinueToDelivery}
-          onGeneratePartialPDF={handleGeneratePartialPDF}
-          onGenerateInitialPDF={handleGenerateInitialPDF}
-          isGeneratingInitialPDF={isGeneratingInitialPDF}
-        />
+        <InspectionStatusCard metadata={metadata} />
       )}
       
       <InspectionProgressBar form={form} phase={currentPhase} />

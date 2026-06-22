@@ -107,19 +107,19 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId }: Photograp
       toast.success(`Foto ${category} agregada`);
 
       // Subir a Supabase Storage en segundo plano
-      uploadInspectionPhoto(processedPhoto.name, processedPhoto.dataUrl, serviceId).then((url) => {
-        if (url) {
+      uploadInspectionPhoto(processedPhoto.name, processedPhoto.dataUrl, serviceId)
+        .then((url) => {
           logger.debug(`Foto subida a Supabase: ${processedPhoto.name}`);
-          // Actualizar el array con la storageUrl para que el PDF la use
+          // Actualizar el array con la storageUrl para que quede registrada en la inspección
           onPhotosChange(
             updatedPhotos.map(p =>
               p.fileName === processedPhoto.name ? { ...p, storageUrl: url } : p
             )
           );
-        } else {
-          logger.warn(`Foto sin backup en Supabase: ${processedPhoto.name} (se usará localStorage)`);
-        }
-      });
+        })
+        .catch((uploadErr) => {
+          logger.warn(`Foto sin backup en Supabase: ${processedPhoto.name} (se reintentará al enviar la inspección)`, uploadErr);
+        });
     } catch (error) {
       logger.error('Error processing photo:', error);
       toast.error('Error al procesar la fotografía');

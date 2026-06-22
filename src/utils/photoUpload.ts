@@ -19,30 +19,30 @@ export const uploadInspectionPhoto = async (
   fileName: string,
   dataUrl: string,
   serviceId: string
-): Promise<string | null> => {
-  try {
-    const blob = dataUrlToBlob(dataUrl);
-    const path = `${serviceId}/${fileName}`;
+): Promise<string> => {
+  const blob = dataUrlToBlob(dataUrl);
+  const path = `${serviceId}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
 
-    if (uploadError) {
-      logger.error('Error subiendo foto a storage:', uploadError.message);
-      return null;
-    }
-
-    const { data } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 días
-
-    logger.debug(`Foto subida: ${path} → ${data?.signedUrl ? 'OK' : 'sin URL'}`);
-    return data?.signedUrl ?? null;
-  } catch (err) {
-    logger.error('uploadInspectionPhoto error:', err);
-    return null;
+  if (uploadError) {
+    logger.error('Error subiendo foto a storage:', uploadError.message);
+    throw new Error(`Error al subir foto ${fileName}: ${uploadError.message}`);
   }
+
+  const { data, error: urlError } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 días
+
+  if (urlError || !data?.signedUrl) {
+    logger.error('Error generando signed URL de foto:', urlError?.message);
+    throw new Error(`No se pudo generar la URL de la foto ${fileName}: ${urlError?.message || 'sin URL'}`);
+  }
+
+  logger.debug(`Foto subida: ${path}`);
+  return data.signedUrl;
 };
 
 export const deleteInspectionPhoto = async (
