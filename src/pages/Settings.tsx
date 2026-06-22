@@ -15,7 +15,7 @@ import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings
 import { WhatsAppSettingsSection } from '@/components/settings/WhatsAppSettingsSection';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid, ClipboardList } from 'lucide-react';
+import { Building2, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock, Shield, SlidersHorizontal, LayoutGrid, ClipboardList, ArchiveRestore } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
 import { InspectionEquipmentTab } from '@/components/settings/InspectionEquipmentTab';
@@ -23,6 +23,7 @@ import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { ServiceHealthDashboard } from '@/components/dashboard/ServiceHealthDashboard';
 import { AuditTab } from '@/components/settings/AuditTab';
+import { RecoveryCenterTab } from '@/components/settings/RecoveryCenterTab';
 
 const Settings = () => {
   const {
@@ -86,6 +87,7 @@ const Settings = () => {
     ...(isAdmin ? [
       { value: 'users',      label: 'Usuarios',    icon: Users },
       { value: 'audit',      label: 'Auditoría',  icon: ClipboardList },
+      { value: 'recovery',   label: 'Recuperación', icon: ArchiveRestore },
       { value: 'integrity',  label: 'Integridad', icon: Shield },
       { value: 'liberation', label: 'Liberación', icon: Unlock },
     ] : []),
@@ -202,6 +204,12 @@ const Settings = () => {
           {isAdmin && (
             <TabsContent value="audit" className="mt-4">
               <AuditTab />
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="recovery" className="mt-4">
+              <RecoveryCenterTab />
             </TabsContent>
           )}
 

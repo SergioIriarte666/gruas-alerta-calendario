@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const companyName = companyData?.business_name || 'Grúas 5 Norte';
     const companyPhone = companyData?.phone || '';
-    const companyEmail = companyData?.email || 'contacto@gruas5norte.com';
+    const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
 
     // Formatear fecha de vencimiento
     const formattedDueDate = new Date(dueDate).toLocaleDateString('es-CL');
@@ -208,7 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <cobranzas@gruas5norte.com>`,
+      from: `${companyName} <cobranzas@gruas5norte.cl>`,
       to: [clientEmail],
       subject: `${urgencyIcon} ${isOverdue ? 'Factura Vencida' : 'Recordatorio de Pago'} - Factura ${invoiceFolio}`,
       html: emailHtml,

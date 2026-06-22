@@ -5,7 +5,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 
 const DEFAULT_TZ = "America/Santiago";
 const BUCKET = "backups-auto";
-const FROM_ADDRESS = "Grúas 5 Norte <facturacion@gruas5norte.com>";
+const FROM_ADDRESS = "Grúas 5 Norte <facturacion@gruas5norte.cl>";
 
 const getHourInTZ = (tz: string): number =>
   Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "2-digit", hour12: false }).format(new Date()));
@@ -151,6 +151,7 @@ serve(async (req: Request) => {
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
+  let generatedBackupMetadata: Record<string, unknown> | null = null;
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -260,6 +261,16 @@ serve(async (req: Request) => {
       .createSignedUrl(jsonPath, expiresSec, { download: `tms-gruas-backup-${dateKey}.json` });
     if (jsonSigErr || !jsonSigned?.signedUrl) throw new Error(`Signed URL JSON falló: ${jsonSigErr?.message}`);
 
+    generatedBackupMetadata = {
+      source: "scheduled_email",
+      recipient,
+      sql_size: sqlBackup.size,
+      json_size: jsonBackup.size,
+      sql_path: sqlPath,
+      json_path: jsonPath,
+      manual: manualTrigger,
+    };
+
     console.log(`📧 Enviando correo a ${recipient}...`);
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) throw new Error("RESEND_API_KEY no configurado");
@@ -296,14 +307,9 @@ serve(async (req: Request) => {
       status: "completed",
       file_size_bytes: sqlBackup.size + jsonBackup.size,
       metadata: {
-        source: "scheduled_email",
-        recipient,
-        sql_size: sqlBackup.size,
-        json_size: jsonBackup.size,
-        sql_path: sqlPath,
-        json_path: jsonPath,
+        ...generatedBackupMetadata,
+        email_status: "success",
         resend_id: sent?.id,
-        manual: manualTrigger,
       },
     });
 
@@ -322,11 +328,25 @@ serve(async (req: Request) => {
         last_status: "failed",
         last_error: msg.substring(0, 500),
       }).eq("id", (await supabase.from("backup_email_config").select("id").limit(1).maybeSingle()).data?.id);
-      await supabase.from("backup_logs").insert({
-        backup_type: "auto", status: "failed",
-        error_message: msg.substring(0, 500),
-        metadata: { source: "scheduled_email" },
-      });
+      await supabase.from("backup_logs").insert(generatedBackupMetadata
+        ? {
+            backup_type: "auto",
+            status: "completed",
+            file_size_bytes:
+              Number(generatedBackupMetadata.sql_size || 0) +
+              Number(generatedBackupMetadata.json_size || 0),
+            metadata: {
+              ...generatedBackupMetadata,
+              email_status: "failed",
+              email_error: msg.substring(0, 500),
+            },
+          }
+        : {
+            backup_type: "auto",
+            status: "failed",
+            error_message: msg.substring(0, 500),
+            metadata: { source: "scheduled_email", email_status: "not_attempted" },
+          });
     } catch (_) { /* ignore */ }
     return new Response(JSON.stringify({ success: false, error: msg }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },

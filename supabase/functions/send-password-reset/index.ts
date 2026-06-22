@@ -232,7 +232,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Build the redirect URL with the token
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://gruas5norte.com';
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://gruas5norte.cl';
     const tokenHash = linkData.properties?.hashed_token;
     const resetUrl = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?token=${tokenHash}&type=recovery&redirect_to=${encodeURIComponent(siteUrl + '/reset-password')}`;
 
@@ -250,7 +250,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send branded email via Resend
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <noreply@gruas5norte.com>`,
+      from: `${companyName} <noreply@gruas5norte.cl>`,
       to: [normalizedEmail],
       subject: `Recuperación de contraseña - ${companyName}`,
       html: `

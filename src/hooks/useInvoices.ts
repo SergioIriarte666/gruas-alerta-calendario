@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import { useInvoiceData, UseInvoiceDataOptions } from './invoices/useInvoiceData';
-import { useInvoiceOperations } from './invoices/useInvoiceOperations';
+import { useInvoiceOperations, type UpdateInvoiceOptions } from './invoices/useInvoiceOperations';
 import { createLogger } from "@/lib/logger";
 
 
@@ -107,9 +107,9 @@ export const useInvoices = (options?: UseInvoiceDataOptions) => {
     }
   };
 
-  const updateInvoice = async (id: string, data: any) => {
+  const updateInvoice = async (id: string, data: any, updateOptions: UpdateInvoiceOptions = {}) => {
     try {
-      const updatedInvoice = await updateInvoiceOp(id, data);
+      const updatedInvoice = await updateInvoiceOp(id, data, updateOptions);
       updateInvoiceData(id, updatedInvoice);
       return updatedInvoice;
     } catch (error) {

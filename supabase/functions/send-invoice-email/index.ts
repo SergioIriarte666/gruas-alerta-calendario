@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const companyName = companyData?.business_name || 'Grúas 5 Norte';
     const companyPhone = companyData?.phone || '';
-    const companyEmail = companyData?.email || 'contacto@gruas5norte.com';
+    const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
     const companyAddress = companyData?.address || '';
     const companyRut = companyData?.rut || '';
 
@@ -223,7 +223,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <facturacion@gruas5norte.com>`,
+      from: `${companyName} <facturacion@gruas5norte.cl>`,
       to: [clientEmail],
       subject: `📄 Factura ${folio} - ${companyName}`,
       html: emailHtml,

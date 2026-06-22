@@ -655,7 +655,7 @@ const handler = async (req: Request): Promise<Response> => {
       expiringDocs.length;
 
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <facturacion@gruas5norte.com>`,
+      from: `${companyName} <facturacion@gruas5norte.cl>`,
       to: emails,
       subject: `📋 Reporte Diario de Pendientes - ${safeDateToDisplay(todayStr)} (${totalPendientes} pendientes)`,
       html: `

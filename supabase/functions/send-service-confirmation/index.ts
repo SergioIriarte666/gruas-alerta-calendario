@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const companyName = companyData?.business_name || 'Grúas 5 Norte';
     const companyPhone = companyData?.phone || '';
-    const companyEmail = companyData?.email || 'contacto@gruas5norte.com';
+    const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
     const companyAddress = companyData?.address || '';
 
     // Formatear fecha
@@ -195,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Enviar email al cliente real
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <servicios@gruas5norte.com>`,
+      from: `${companyName} <servicios@gruas5norte.cl>`,
       to: [clientEmail],
       subject: `Confirmación de Solicitud - Folio ${folio}`,
       html: emailHtml,

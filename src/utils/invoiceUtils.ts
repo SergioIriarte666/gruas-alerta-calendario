@@ -91,8 +91,13 @@ export const formatInvoiceData = (data: any): Invoice => {
     : 'draft') as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
   const hasPendingBalance = remainingAmount > 0;
+  // Los históricos son registros declarativos: su estado se importa o se corrige
+  // manualmente y no necesariamente tiene aplicaciones de pago asociadas.
+  // Recalcularlos desde paid_amount/remaining_amount hacía que un cambio de estado
+  // correcto se revirtiera inmediatamente al volver a consultar la factura.
+  const isHistorical = data.source === 'historico' || safeString(data.folio).startsWith('HIST-');
 
-  if (status !== 'cancelled') {
+  if (!isHistorical && status !== 'cancelled') {
     if (!hasPendingBalance) {
       status = 'paid';
     } else if (shouldBeOverdue(status, dueDate, remainingAmount)) {
@@ -132,7 +137,7 @@ export const formatInvoiceData = (data: any): Invoice => {
     updatedAt: safeString(data.updated_at),
     createdBy: data.created_by || undefined,
     creatorName: data.creator?.full_name || data.creator?.email || undefined,
-    source: data.source === 'historico' ? 'historico' : 'sistema'
+    source: isHistorical ? 'historico' : 'sistema'
   };
 };
 

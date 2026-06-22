@@ -50,6 +50,14 @@ import { HistoricalPaginationControls } from './historical/HistoricalPaginationC
 
 const logger = createLogger("HistoricalSales");
 
+const STATUS_LABELS: Record<Invoice['status'], string> = {
+  paid: 'Pagada',
+  sent: 'Enviada',
+  overdue: 'Vencida',
+  draft: 'Borrador',
+  cancelled: 'Anulada',
+};
+
 export const HistoricalSales = () => {
   const { invoices, refetch, updateInvoice, deleteInvoice } = useInvoices();
   const [importHistoryOpen, setImportHistoryOpen] = useState(false);
@@ -61,11 +69,6 @@ export const HistoricalSales = () => {
   const [viewMode, setViewMode] = useState<'table' | 'grouped' | 'pipeline'>('table');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
-  // Reset selection when filters change or view changes
-  useEffect(() => {
-    setSelectedIds([]);
-  }, [viewMode]);
-
   // Real-time subscription
   useEffect(() => {
     logger.debug('Setting up real-time subscription for historical sales...');
@@ -102,6 +105,11 @@ export const HistoricalSales = () => {
     status: 'all',
     source: 'all',
   });
+
+  // Los IDs seleccionados nunca deben sobrevivir a un cambio de alcance.
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [filters, viewMode]);
 
   // Sort State
   const [sortConfig, setSortConfig] = useState<SortConfig>({
@@ -227,7 +235,11 @@ export const HistoricalSales = () => {
   );
 
   const handleUpdateInvoice = async (id: string, updates: Partial<Invoice>) => {
-    await updateInvoice(id, updates);
+    await updateInvoice(id, updates, { protectSystemStatus: true });
+  };
+
+  const handleBatchUpdateInvoice = async (id: string, updates: Partial<Invoice>) => {
+    await updateInvoice(id, updates, { silent: true, protectSystemStatus: true });
   };
 
   // Selection Handlers
@@ -252,19 +264,64 @@ export const HistoricalSales = () => {
 
   const handleBatchUpdateStatus = async (status: Invoice['status']) => {
     if (selectedIds.length === 0) return;
-    
-    const count = selectedIds.length;
-    toast.promise(
-      Promise.all(selectedIds.map((id) => updateInvoice(id, { status }))),
-      {
-        loading: `Actualizando ${count} facturas...`,
-        success: () => {
-          setSelectedIds([]);
-          return `${count} facturas actualizadas correctamente`;
-        },
-        error: 'Error al actualizar facturas',
+
+    // Defensa en profundidad: una acción desde Históricos nunca debe alcanzar
+    // facturas del sistema ni IDs que quedaron ocultos por un cambio de filtro.
+    const filteredIdSet = new Set(filteredAndSortedInvoices.map((invoice) => invoice.id));
+    const historicalIds = selectedIds.filter((id) => {
+      if (!filteredIdSet.has(id)) return false;
+      const invoice = invoices.find((candidate) => candidate.id === id);
+      return invoice?.source === 'historico' || invoice?.folio.startsWith('HIST-');
+    });
+    const protectedCount = selectedIds.length - historicalIds.length;
+
+    if (historicalIds.length === 0) {
+      toast.error('No hay facturas históricas válidas en la selección', {
+        description: 'Las facturas del sistema están protegidas contra cambios masivos desde este módulo.',
+      });
+      setSelectedIds([]);
+      return;
+    }
+
+    const count = historicalIds.length;
+    const previousStatusFilter = filters.status;
+    const toastId = toast.loading(`Actualizando ${count} facturas...`);
+
+    try {
+      await Promise.all(historicalIds.map((id) => updateInvoice(
+        id,
+        { status },
+        { silent: true, protectSystemStatus: true }
+      )));
+
+      const clearedIncompatibleFilter = previousStatusFilter !== 'all' && previousStatusFilter !== status;
+      if (clearedIncompatibleFilter) {
+        setFilters((current) => ({ ...current, status: 'all' }));
       }
-    );
+      setSelectedIds([]);
+
+      toast.success(`${count} facturas cambiadas a “${STATUS_LABELS[status]}”`, {
+        id: toastId,
+        description: protectedCount > 0
+          ? `${protectedCount} factura(s) del sistema fueron protegidas y no se modificaron.`
+          : clearedIncompatibleFilter
+            ? 'Se retiró el filtro de estado para mostrar las facturas actualizadas.'
+            : 'El nuevo estado ya se refleja en la tabla.',
+      });
+    } catch (error) {
+      logger.error('Error updating invoice status batch:', error);
+      toast.error('No se pudo completar el cambio de estado', {
+        id: toastId,
+        description: 'Revisa los registros e intenta nuevamente.',
+      });
+    }
+  };
+
+  const handleBatchComplete = ({ status }: { status?: Invoice['status']; processed: number }) => {
+    if (status && filters.status !== 'all' && filters.status !== status) {
+      setFilters((current) => ({ ...current, status: 'all' }));
+    }
+    setSelectedIds([]);
   };
 
   const confirmDelete = (id: string) => {
@@ -399,7 +456,7 @@ export const HistoricalSales = () => {
                   onDelete={confirmDelete}
                   selectedIds={selectedIds}
                   onSelectId={handleSelectId}
-                  onSelectAll={(_ids, checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
+                  onSelectAll={(_ids, checked) => handleSelectAll(paginatedInvoices.map(i => i.id), checked)}
                 />
                 <HistoricalPaginationControls
                   page={pagination.page}
@@ -512,7 +569,8 @@ export const HistoricalSales = () => {
         selectedInvoices={filteredAndSortedInvoices.filter(i => selectedIds.includes(i.id))}
         isOpen={batchEditOpen}
         onClose={() => setBatchEditOpen(false)}
-        onSave={handleUpdateInvoice}
+        onSave={handleBatchUpdateInvoice}
+        onComplete={handleBatchComplete}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

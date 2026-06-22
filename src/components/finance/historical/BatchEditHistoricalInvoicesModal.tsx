@@ -33,7 +33,16 @@ interface BatchEditHistoricalInvoicesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (id: string, updates: Partial<Invoice>) => Promise<void>;
+  onComplete?: (result: { status?: Invoice['status']; processed: number }) => void;
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  paid: 'Pagada',
+  sent: 'Enviada',
+  overdue: 'Vencida',
+  draft: 'Borrador',
+  cancelled: 'Anulada',
+};
 
 const METADATA_SEPARATOR = '\n\n--- METADATA (SISTEMA) ---\n';
 
@@ -52,6 +61,7 @@ export const BatchEditHistoricalInvoicesModal = ({
   isOpen,
   onClose,
   onSave,
+  onComplete,
 }: BatchEditHistoricalInvoicesModalProps) => {
   const [status, setStatus] = useState<string>('');
   const [shippingInfo, setShippingInfo] = useState<string>('');
@@ -204,7 +214,11 @@ export const BatchEditHistoricalInvoicesModal = ({
       });
 
       await Promise.all(promises);
-      toast.success(`${processed} facturas actualizadas correctamente`);
+      const appliedStatus = updateStatus && status ? status as Invoice['status'] : undefined;
+      toast.success(`${processed} facturas actualizadas correctamente`, {
+        description: appliedStatus ? `Nuevo estado: ${STATUS_LABELS[appliedStatus] || appliedStatus}` : undefined,
+      });
+      onComplete?.({ status: appliedStatus, processed });
       handleClose();
     } catch (error) {
       logger.error('Error updating invoices:', error);

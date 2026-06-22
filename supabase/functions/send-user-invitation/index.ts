@@ -75,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     const businessName = companyData?.business_name || 'TMS Grúas';
 
     // Build redirect URL - user will be redirected here after accepting invitation
-    const origin = req.headers.get('origin') || 'https://gruas5norte.com';
+    const origin = req.headers.get('origin') || 'https://gruas5norte.cl';
     const redirectTo = `${origin}/auth?invited=true&setup_password=true`;
 
     console.log('🔗 Inviting user via Supabase Auth Admin API with redirect:', redirectTo);

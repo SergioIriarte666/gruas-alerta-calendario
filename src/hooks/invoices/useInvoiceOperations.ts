@@ -9,6 +9,14 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useInvoiceOperations");
+
+export interface UpdateInvoiceOptions {
+  /** The caller owns the aggregate feedback (for example, a batch operation). */
+  silent?: boolean;
+  /** Prevent status mutations on invoices created by the operational system. */
+  protectSystemStatus?: boolean;
+}
+
 const INVOICE_SELECT = `
   id,
   client_id,
@@ -200,7 +208,11 @@ export const useInvoiceOperations = () => {
     }
   };
 
-  const updateInvoice = async (id: string, invoiceData: Partial<Invoice>) => {
+  const updateInvoice = async (
+    id: string,
+    invoiceData: Partial<Invoice>,
+    options: UpdateInvoiceOptions = {}
+  ) => {
     // Validate input parameters first
     if (!id || !invoiceData || Object.keys(invoiceData).length === 0) {
       throw new Error('ID de factura y datos de actualización son requeridos');
@@ -226,6 +238,20 @@ export const useInvoiceOperations = () => {
       }
 
       originalState = { ...currentInvoice };
+
+      const isHistoricalInvoice =
+        currentInvoice.source === 'historico' || currentInvoice.folio?.startsWith('HIST-');
+      if (
+        options.protectSystemStatus &&
+        invoiceData.status !== undefined &&
+        !isHistoricalInvoice
+      ) {
+        const protectedError = new Error(
+          'Las facturas del sistema no pueden cambiar de estado desde el módulo Históricos.'
+        );
+        (protectedError as any).code = 'PROTECTED_INVOICE_STATUS';
+        throw protectedError;
+      }
 
       const { data: currentClosure, error: getCurrentClosureError } = await supabase
         .from('invoice_closures')
@@ -323,7 +349,7 @@ export const useInvoiceOperations = () => {
         .from('invoices')
         .update(updateData)
         .eq('id', id)
-        .select('id, folio, numero_fiscal')
+        .select('id, folio, numero_fiscal, status')
         .single();
 
       if (updateError) {
@@ -334,6 +360,12 @@ export const useInvoiceOperations = () => {
         } else {
           throw new Error(`Error actualizando factura: ${updateError.message}`);
         }
+      }
+
+      if (invoiceData.status !== undefined && updateResult.status !== invoiceData.status) {
+        throw new Error(
+          `El estado no fue persistido. Se solicitó "${invoiceData.status}" y la base devolvió "${updateResult.status}".`
+        );
       }
 
       let finalClosureId = currentClosure?.closure_id;
@@ -461,9 +493,11 @@ export const useInvoiceOperations = () => {
       } catch (servicesError) {
         logger.error('Error updating services, but invoice update succeeded:', servicesError);
         // Don't rollback invoice here, just log the service update error
-        toast.error("Advertencia", {
-          description: "Factura actualizada pero algunos servicios pueden necesitar sincronización manual.",
-        });
+        if (!options.silent) {
+          toast.error("Advertencia", {
+            description: "Factura actualizada pero algunos servicios pueden necesitar sincronización manual.",
+          });
+        }
       }
 
       // Invalidar queries de facturación + enhanced details para sincronizar modals
@@ -473,18 +507,22 @@ export const useInvoiceOperations = () => {
       queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
       queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
 
-      toast.success("Factura actualizada", {
-        description: "La factura ha sido actualizada exitosamente.",
-      });
+      if (!options.silent) {
+        toast.success("Factura actualizada", {
+          description: "La factura ha sido actualizada exitosamente.",
+        });
+      }
 
       return { ...invoiceData, updatedAt: businessClock.nowISO() };
     } catch (error: any) {
       logger.error('❌ Invoice update transaction failed:', error);
       
       // Show specific error messages
-      toast.error("Error al actualizar factura", {
-        description: error.message || "No se pudo actualizar la factura.",
-      });
+      if (!options.silent) {
+        toast.error("Error al actualizar factura", {
+          description: error.message || "No se pudo actualizar la factura.",
+        });
+      }
       
       throw error;
     }
