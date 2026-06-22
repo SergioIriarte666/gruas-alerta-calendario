@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -31,11 +32,56 @@ export const useServiceInspection = () => {
     isGeneratingPDF,
     pdfDownloadUrl,
     generatePDF,
+    revealPDF,
     handleManualDownload,
     cleanupPDF
   } = useInspectionPDF();
   const { sendInspectionEmailMutation } = useInspectionEmail();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(serviceId);
+  const [completedInspection, setCompletedInspection] = useState<{
+    blob: Blob;
+    values: InspectionFormValues;
+    phase: 'initial' | 'final';
+    signedUrl: string;
+    emailSent: boolean;
+    whatsappSent: boolean;
+  } | null>(null);
+
+  const reportNotificationError = (channel: 'email' | 'whatsapp', error: unknown) => {
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    reportFrontendError({
+      componentName: `useServiceInspection.${channel}`,
+      errorMessage: normalizedError.message,
+      errorStack: normalizedError.stack,
+      url: window.location.href,
+    }).catch(() => {});
+  };
+
+  const sendWhatsApp = async (signedUrl: string, phase: 'initial' | 'final') => {
+    const clientPhone = service?.client?.phone || '';
+    const contactPhone = (service as any)?.contactPhone || '';
+    if (!clientPhone && !contactPhone) return false;
+
+    const { error } = await supabase.functions.invoke(
+      phase === 'initial' ? 'send-whatsapp-retiro' : 'send-whatsapp-inspection',
+      {
+        body: {
+          folio: service?.folio,
+          serviceId,
+          clientName: service?.client?.name || '',
+          clientPhone,
+          contactPhone,
+          contactPerson: (service as any)?.contactPerson || '',
+          pdfUrl: signedUrl,
+          serviceDate: service?.serviceDate,
+          operatorName: service?.operator?.name || '',
+        },
+      }
+    );
+
+    if (error) throw error;
+    return true;
+  };
 
   logger.debug('State:', {
     serviceId,
@@ -92,13 +138,14 @@ export const useServiceInspection = () => {
         } catch (emailError) {
           logger.error('Error en email:', emailError);
           toast.error('Inspección guardada correctamente, pero no se pudo enviar el correo');
+          reportNotificationError('email', emailError);
         }
       }
 
-      return { values: valuesWithPhotos, emailSent, phase, signedUrl: uploadResult.signedUrl };
+      return { blob, values: valuesWithPhotos, emailSent, phase, signedUrl: uploadResult.signedUrl };
     },
     onSuccess: async (result) => {
-      const { values, emailSent, phase, signedUrl } = result;
+      const { blob, values, emailSent, phase, signedUrl } = result;
 
       logger.debug('Procesamiento completado para fase:', phase);
 
@@ -107,30 +154,18 @@ export const useServiceInspection = () => {
         ? `${successLabel} guardada y enviada por correo exitosamente`
         : `${successLabel} guardada exitosamente`);
 
+      // El PDF queda disponible para el usuario únicamente después de completar
+      // fotos → PDF → inspección → estado. Nunca se navega al blob.
+      revealPDF(blob);
+      setCompletedInspection({ blob, values, phase, signedUrl, emailSent, whatsappSent: false });
+
       // ── Notificación por WhatsApp (best-effort, no bloquea el flujo) ──
       try {
-        const clientPhone = service?.client?.phone || '';
-        const contactPhone = (service as any)?.contactPhone || '';
-        if (clientPhone || contactPhone) {
-          await supabase.functions.invoke(
-            phase === 'initial' ? 'send-whatsapp-retiro' : 'send-whatsapp-inspection',
-            {
-              body: {
-                folio: service?.folio,
-                serviceId,
-                clientName: service?.client?.name || '',
-                clientPhone,
-                contactPhone,
-                contactPerson: (service as any)?.contactPerson || '',
-                pdfUrl: signedUrl,
-                serviceDate: service?.serviceDate,
-                operatorName: service?.operator?.name || '',
-              },
-            }
-          );
-        }
+        const whatsappSent = await sendWhatsApp(signedUrl, phase);
+        setCompletedInspection(current => current ? { ...current, whatsappSent } : current);
       } catch (waErr) {
         logger.error('Error enviando WhatsApp:', waErr);
+        reportNotificationError('whatsapp', waErr);
       }
 
       if (phase === 'final') {
@@ -147,9 +182,6 @@ export const useServiceInspection = () => {
         refetch()
       ]);
 
-      setTimeout(() => {
-        navigate('/operator');
-      }, 1500);
     },
     onError: (error: Error) => {
       logger.error('Error en procesamiento:', error);
@@ -160,11 +192,40 @@ export const useServiceInspection = () => {
         errorStack: error.stack,
         url: window.location.href,
       }).catch(() => {});
-    },
-    onSettled: () => {
       cleanupPDF();
     }
   });
+
+  const handleSendEmail = async () => {
+    if (!completedInspection || !service) return;
+    try {
+      await sendInspectionEmailMutation.mutateAsync({
+        pdfBlob: completedInspection.blob,
+        service,
+        inspection: completedInspection.values,
+      });
+      setCompletedInspection(current => current ? { ...current, emailSent: true } : current);
+    } catch (error) {
+      reportNotificationError('email', error);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!completedInspection) return;
+    try {
+      const whatsappSent = await sendWhatsApp(completedInspection.signedUrl, completedInspection.phase);
+      if (!whatsappSent) {
+        toast.error('El cliente no tiene un teléfono registrado');
+        return;
+      }
+      setCompletedInspection(current => current ? { ...current, whatsappSent: true } : current);
+      toast.success('Inspección enviada por WhatsApp');
+    } catch (error) {
+      logger.error('Error enviando WhatsApp:', error);
+      toast.error('No se pudo enviar la inspección por WhatsApp');
+      reportNotificationError('whatsapp', error);
+    }
+  };
 
   const handleRetry = async () => {
     logger.debug('Retrying service fetch...');
@@ -181,10 +242,13 @@ export const useServiceInspection = () => {
     pdfStep,
     isGeneratingPDF,
     pdfDownloadUrl,
+    completedInspection,
     processInspectionMutation,
     updateServiceStatusMutation,
     sendInspectionEmailMutation,
     handleManualDownload: () => handleManualDownload(service),
+    handleSendEmail,
+    handleSendWhatsApp,
     handleRetry,
     navigate
   };

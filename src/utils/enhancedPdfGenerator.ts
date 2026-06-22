@@ -31,7 +31,7 @@ export class EnhancedPDFGenerator {
     service: Service;
     inspection: InspectionFormValues;
     isFinal?: boolean;
-  }): Promise<{ blob: Blob; downloadUrl: string }> {
+  }): Promise<{ blob: Blob }> {
     try {
       this.updateProgress(10, 'Validando datos del formulario...');
       
@@ -64,14 +64,13 @@ export class EnhancedPDFGenerator {
       // Generar el PDF usando el generador existente
       const pdfBlob = await generateInspectionPDF(data, data.isFinal);
       
-      this.updateProgress(95, 'Preparando descarga...');
-      
-      // Crear URL de descarga
-      const downloadUrl = URL.createObjectURL(pdfBlob);
+      this.updateProgress(95, 'Finalizando documento...');
       
       this.updateProgress(100, 'PDF generado exitosamente');
       
-      return { blob: pdfBlob, downloadUrl };
+      // El blob se mantiene en memoria. La UI crea una URL descargable recién
+      // cuando la inspección, el PDF y el estado ya fueron persistidos.
+      return { blob: pdfBlob };
       
     } catch (error) {
       logger.error('Error en generación de PDF:', error);
@@ -79,37 +78,6 @@ export class EnhancedPDFGenerator {
     }
   }
 
-  async downloadPDF(
-    blob: Blob, 
-    filename: string,
-    fallbackUrl?: string
-  ): Promise<boolean> {
-    try {
-      // Intentar descarga automática
-      const link = document.createElement('a');
-      const url = fallbackUrl || URL.createObjectURL(blob);
-      
-      link.href = url;
-      link.download = filename;
-      link.style.display = 'none';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Limpiar URL después de un delay
-      setTimeout(() => {
-        if (!fallbackUrl) {
-          URL.revokeObjectURL(url);
-        }
-      }, 1000);
-      
-      return true;
-    } catch (error) {
-      logger.error('Error en descarga automática:', error);
-      return false;
-    }
-  }
 }
 
 export const createPDFGenerator = (progressCallback?: ProgressCallback) => {

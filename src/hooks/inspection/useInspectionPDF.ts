@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { getTodayLocal } from '@/utils/timezoneUtils';
@@ -11,6 +11,7 @@ export const useInspectionPDF = () => {
   const [pdfStep, setPdfStep] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
+  const pdfDownloadUrlRef = useRef<string>();
 
   const generatePDF = async (service: any, inspection: InspectionFormValues, isFinal: boolean = true) => {
     logger.debug('Iniciando generación de PDF...');
@@ -24,17 +25,13 @@ export const useInspectionPDF = () => {
         setPdfStep(step);
       });
 
-      const { blob, downloadUrl } = await pdfGenerator.generateWithProgress({
+      const { blob } = await pdfGenerator.generateWithProgress({
         service: service,
         inspection: inspection,
         isFinal: isFinal,
       });
 
-      setPdfDownloadUrl(downloadUrl);
-
       const filename = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
-      await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
-
       return { blob, filename };
     } catch (error) {
       logger.error('Error generando PDF:', error);
@@ -47,6 +44,16 @@ export const useInspectionPDF = () => {
     }
   };
 
+  const revealPDF = useCallback((blob: Blob) => {
+    if (pdfDownloadUrlRef.current) {
+      URL.revokeObjectURL(pdfDownloadUrlRef.current);
+    }
+
+    const downloadUrl = URL.createObjectURL(blob);
+    pdfDownloadUrlRef.current = downloadUrl;
+    setPdfDownloadUrl(downloadUrl);
+  }, []);
+
   const handleManualDownload = (service: any) => {
     if (pdfDownloadUrl && service) {
       const link = document.createElement('a');
@@ -56,16 +63,17 @@ export const useInspectionPDF = () => {
     }
   };
 
-  const cleanupPDF = () => {
-    setTimeout(() => {
-      setPdfProgress(0);
-      setPdfStep('');
-      if (pdfDownloadUrl) {
-        URL.revokeObjectURL(pdfDownloadUrl);
-        setPdfDownloadUrl(undefined);
-      }
-    }, 5000);
-  };
+  const cleanupPDF = useCallback(() => {
+    setPdfProgress(0);
+    setPdfStep('');
+    if (pdfDownloadUrlRef.current) {
+      URL.revokeObjectURL(pdfDownloadUrlRef.current);
+      pdfDownloadUrlRef.current = undefined;
+    }
+    setPdfDownloadUrl(undefined);
+  }, []);
+
+  useEffect(() => cleanupPDF, [cleanupPDF]);
 
   return {
     pdfProgress,
@@ -73,6 +81,7 @@ export const useInspectionPDF = () => {
     isGeneratingPDF,
     pdfDownloadUrl,
     generatePDF,
+    revealPDF,
     handleManualDownload,
     cleanupPDF,
   };

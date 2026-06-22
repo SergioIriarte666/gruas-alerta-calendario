@@ -6,6 +6,7 @@ import { InspectionHeader } from '@/components/operator/inspection/InspectionHea
 import { InspectionErrorState } from '@/components/operator/inspection/InspectionErrorState';
 import { InspectionLoadingState } from '@/components/operator/inspection/InspectionLoadingState';
 import { InspectionForm } from '@/components/operator/inspection/InspectionForm';
+import { InspectionSuccess } from '@/components/operator/inspection/InspectionSuccess';
 import { AlertTriangle } from 'lucide-react';
 import { createLogger } from '@/lib/logger';
 
@@ -21,9 +22,13 @@ const ServiceInspection = () => {
     pdfStep,
     isGeneratingPDF,
     pdfDownloadUrl,
+    completedInspection,
     processInspectionMutation,
     updateServiceStatusMutation,
+    sendInspectionEmailMutation,
     handleManualDownload,
+    handleSendEmail,
+    handleSendWhatsApp,
     handleRetry,
     navigate
   } = useServiceInspection();
@@ -78,6 +83,23 @@ const ServiceInspection = () => {
         serviceId={id}
         onRetry={handleRetry}
         onBack={handleBack}
+      />
+    );
+  }
+
+  if (completedInspection) {
+    return (
+      <InspectionSuccess
+        folio={service.folio}
+        emailAvailable={Boolean(service.client?.email?.includes('@'))}
+        phoneAvailable={Boolean(service.client?.phone || (service as any).contactPhone)}
+        emailSent={completedInspection.emailSent}
+        whatsappSent={completedInspection.whatsappSent}
+        isSendingEmail={sendInspectionEmailMutation.isPending}
+        onDownload={handleManualDownload}
+        onSendEmail={handleSendEmail}
+        onSendWhatsApp={handleSendWhatsApp}
+        onBackToList={() => navigate('/operator')}
       />
     );
   }
