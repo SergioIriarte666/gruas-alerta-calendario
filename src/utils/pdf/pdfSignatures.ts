@@ -91,7 +91,7 @@ export const addDigitalSignatures = async (
   doc.text('FIRMAS DIGITALES', MARGIN + 10, yPosition + 7);
   yPosition += 14;
 
-  const blocks: SignatureBlock[] = [
+  const initialBlocks: SignatureBlock[] = [
     {
       label: 'Firma del Operador',
       signature: data.inspection.operatorSignature,
@@ -102,12 +102,13 @@ export const addDigitalSignatures = async (
       signature: data.inspection.clientSignature,
       name: data.inspection.clientName || 'Cliente',
     },
-    {
-      label: 'Recepción del Vehículo',
-      signature: data.inspection.vehicleReceptionSignature,
-      name: data.inspection.receptionPersonName || 'Recepción',
-    },
   ];
+  const finalBlocks: SignatureBlock[] = [{
+    label: 'Recepción del Vehículo',
+    signature: data.inspection.vehicleReceptionSignature,
+    name: data.inspection.receptionPersonName || 'Recepción',
+  }];
+  const blocks = data.isFinal ? finalBlocks : initialBlocks;
 
   const gap = 5;
   const boxW = (PAGE_W - MARGIN * 2 - gap * (blocks.length - 1)) / blocks.length;

@@ -5,7 +5,7 @@ import { Service } from '@/types';
 export const validateInspectionData = (data: {
   service: Service;
   inspection: InspectionFormValues;
-}): string[] => {
+}, isFinal = false): string[] => {
   const errors: string[] = [];
   
   if (!data.service) {
@@ -16,8 +16,12 @@ export const validateInspectionData = (data: {
     errors.push('Datos de inspección no disponibles');
   }
   
-  if (!data.inspection.operatorSignature) {
+  if (!isFinal && !data.inspection.operatorSignature) {
     errors.push('Firma del operador es requerida');
+  }
+
+  if (isFinal && !data.inspection.vehicleReceptionSignature) {
+    errors.push('Firma de recepción es requerida');
   }
   
   if (!data.inspection.equipment || data.inspection.equipment.length === 0) {

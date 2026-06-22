@@ -114,6 +114,10 @@ export const persistInspection = async (
   pdfPath: string,
   phase: 'initial' | 'final',
 ): Promise<void> => {
+  if (phase === 'final' && uploadedPhotos.length === 0) {
+    throw new Error('La entrega requiere al menos una fotografía antes de guardar.');
+  }
+
   const pdfFields = phase === 'initial'
     ? { pdf_url: pdfPath, pdf_uploaded_at: businessClock.nowISO() }
     : { pdf_retiro_url: pdfPath, pdf_retiro_uploaded_at: businessClock.nowISO() };
@@ -129,7 +133,7 @@ export const persistInspection = async (
     operator_id: operatorId,
     equipment_checklist: values.equipment || [],
     vehicle_observations: values.vehicleObservations || null,
-    operator_signature: values.operatorSignature,
+    ...(phase === 'initial' ? { operator_signature: values.operatorSignature || '' } : {}),
     client_name: values.clientName || null,
     client_rut: values.clientRut || null,
     ...(phase === 'initial' ? {
@@ -156,25 +160,42 @@ export const persistInspection = async (
     throw new Error(`Error al consultar inspección: ${selectError.message}`);
   }
 
+  let persisted: { photos_before_service: string[] | null; photos_client_vehicle: string[] | null; pdf_url: string | null; pdf_retiro_url: string | null } | null = null;
+
   if (existing) {
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from('inspections')
       .update(payload)
-      .eq('id', existing.id);
+      .eq('id', existing.id)
+      .select('photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
+      .single();
 
     if (updateError) {
       logger.error('Error actualizando inspección:', updateError);
       throw new Error(`Error al actualizar inspección: ${updateError.message}`);
     }
+    persisted = updated;
   } else {
-    const { error: insertError } = await supabase
+    if (phase === 'final') {
+      throw new Error('No existe una inspección inicial donde guardar la evidencia de entrega.');
+    }
+    const { data: inserted, error: insertError } = await supabase
       .from('inspections')
-      .insert(payload);
+      .insert({ ...payload, operator_signature: values.operatorSignature || '' })
+      .select('photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
+      .single();
 
     if (insertError) {
       logger.error('Error insertando inspección:', insertError);
       throw new Error(`Error al guardar inspección: ${insertError.message}`);
     }
+    persisted = inserted;
+  }
+
+  const persistedPhotos = phase === 'initial' ? persisted?.photos_before_service : persisted?.photos_client_vehicle;
+  const persistedPdf = phase === 'initial' ? persisted?.pdf_url : persisted?.pdf_retiro_url;
+  if (!persistedPdf || !persistedPhotos || persistedPhotos.length !== uploadedPhotos.length) {
+    throw new Error(`La evidencia de ${phase === 'initial' ? 'inspección inicial' : 'entrega'} no quedó persistida completamente.`);
   }
 
   logger.debug('Inspección persistida correctamente para servicio:', serviceId);

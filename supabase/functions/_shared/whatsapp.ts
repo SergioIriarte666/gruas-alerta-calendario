@@ -291,6 +291,88 @@ export async function sendWhatsAppTemplate(
   };
 }
 
+/**
+ * Sube un PDF a Meta y lo envía como header DOCUMENT de una plantilla aprobada.
+ * Se mantiene separado del envío legacy para poder habilitarlo con un guard
+ * sin arriesgar las notificaciones mientras Meta termina la aprobación.
+ */
+export async function sendWhatsAppDocumentTemplate(
+  to: string,
+  templateName: string,
+  parameters: string[],
+  pdfUrl: string,
+  filename: string,
+  options: WhatsAppSendOptions = {},
+): Promise<WhatsAppSendResult> {
+  const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+  const token = Deno.env.get("WHATSAPP_TOKEN");
+  const normalized = normalizeChileanPhone(to);
+  const recipient = normalized.ok ? normalized.phone : to;
+  const logId = await insertLog(recipient, templateName, parameters, {
+    ...options,
+    context: { ...(options.context ?? {}), attachment: "document" },
+  });
+
+  if (!normalized.ok) {
+    await updateLog(logId, { status: "failed", error_code: "INVALID_PHONE", error_message: normalized.reason });
+    return { success: false, logId: logId ?? undefined, error: { code: "INVALID_PHONE", message: normalized.reason ?? "Teléfono inválido" } };
+  }
+  if (!phoneNumberId || !token) {
+    await updateLog(logId, { status: "failed", error_code: "MISSING_WHATSAPP_SECRETS", error_message: "Faltan credenciales de WhatsApp" });
+    return { success: false, logId: logId ?? undefined, error: { code: "MISSING_WHATSAPP_SECRETS", message: "Faltan credenciales de WhatsApp" } };
+  }
+
+  try {
+    const pdfResponse = await fetch(pdfUrl);
+    if (!pdfResponse.ok) throw new Error(`No se pudo descargar el PDF (${pdfResponse.status})`);
+    const pdfBlob = await pdfResponse.blob();
+    const mediaForm = new FormData();
+    mediaForm.append("messaging_product", "whatsapp");
+    mediaForm.append("type", "application/pdf");
+    mediaForm.append("file", pdfBlob, filename);
+
+    const mediaResponse = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/media`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: mediaForm,
+    });
+    const mediaData = await mediaResponse.json().catch(() => ({}));
+    if (!mediaResponse.ok || !(mediaData as any)?.id) {
+      throw new Error((mediaData as any)?.error?.message ?? `Meta rechazó el PDF (${mediaResponse.status})`);
+    }
+
+    const messageResponse = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: recipient,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: "es_CL" },
+          components: [
+            { type: "header", parameters: [{ type: "document", document: { id: (mediaData as any).id, filename } }] },
+            { type: "body", parameters: parameters.map((text) => ({ type: "text", text })) },
+          ],
+        },
+      }),
+    });
+    const messageData = await messageResponse.json().catch(() => ({}));
+    if (!messageResponse.ok) {
+      throw new Error((messageData as any)?.error?.message ?? `Meta rechazó el mensaje (${messageResponse.status})`);
+    }
+
+    const messageId = (messageData as any)?.messages?.[0]?.id ?? null;
+    await updateLog(logId, { status: "sent", provider_message_id: messageId, attempts: 1, error_code: null, error_message: null });
+    return { success: true, messageId: messageId ?? undefined, logId: logId ?? undefined, attempts: 1 };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await updateLog(logId, { status: "failed", attempts: 1, error_code: "DOCUMENT_SEND_FAILED", error_message: message.slice(0, 1000) });
+    return { success: false, logId: logId ?? undefined, attempts: 1, error: { code: "DOCUMENT_SEND_FAILED", message } };
+  }
+}
+
 export interface BulkSendOutcome {
   notified: number;
   failed: Array<{ phone: string; error: WhatsAppSendResult["error"] }>;

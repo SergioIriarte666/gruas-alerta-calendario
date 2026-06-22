@@ -22,7 +22,7 @@ export const generateInspectionPDF = async (data: {
     logger.debug('Iniciando generación de PDF con datos:', data);
 
     // Validar datos de entrada
-    const validationErrors = validateInspectionData(data);
+    const validationErrors = validateInspectionData(data, isFinal);
     if (validationErrors.length > 0) {
       throw new Error(`Errores de validación: ${validationErrors.join(', ')}`);
     }

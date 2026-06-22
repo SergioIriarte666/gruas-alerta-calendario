@@ -1,23 +1,18 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
-import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
+import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppDocumentTemplate, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
 import { getCorsHeaders } from "../_shared/cors.ts";
 
 const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' });
 
 const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const WEEKDAYS_ES = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
 function formatServiceDate(value: string): string {
   if (!value) return '';
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (m) {
-    const utc = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-    return `${WEEKDAYS_ES[utc.getUTCDay()]} ${Number(m[3])} de ${MONTHS_ES[utc.getUTCMonth()]} de ${m[1]}`;
+    return `${Number(m[3])} de ${MONTHS_ES[Number(m[2]) - 1]} de ${m[1]}`;
   }
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? value
-    : parsed.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return value;
 }
 
 Deno.serve(async (req: Request) => {
@@ -55,27 +50,21 @@ Deno.serve(async (req: Request) => {
     }
 
     const formattedDate = formatServiceDate(serviceDate || '');
+    const documentTemplateEnabled = Deno.env.get('WHATSAPP_INSPECTION_DOCUMENT_TEMPLATE_ENABLED') === 'true';
     const results: Array<{ target: string; phone: string; success: boolean }> = [];
 
     const sendToPhone = async (phone: string, recipientName: string, target: string) => {
       const norm = normalizeChileanPhone(phone);
       if (!norm.ok) return;
-      const result = await sendWhatsAppTemplate(
-        norm.phone,
-        'retiro_vehiculo_link',
-        [
-          recipientName,
-          folio,
-          formattedDate,
-          operatorName || '',
-          pdfUrl,
-        ],
-        {
+      const parameters = [recipientName, folio, formattedDate, operatorName || ''];
+      const options = {
           event: 'retiro_completado',
           triggeredBy: authContext.user?.id ?? null,
-          context: { folio, serviceId, target },
-        },
-      );
+          context: { folio, serviceId, target, phase: 'final' },
+      };
+      const result = documentTemplateEnabled
+        ? await sendWhatsAppDocumentTemplate(norm.phone, 'inspeccion_completada_doc', parameters, pdfUrl, `Entrega-${folio}.pdf`, options)
+        : await sendWhatsAppTemplate(norm.phone, 'retiro_vehiculo_link', [...parameters, pdfUrl], options);
       results.push({ target, phone: norm.phone, success: result.success });
     };
 

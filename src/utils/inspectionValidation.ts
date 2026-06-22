@@ -42,6 +42,10 @@ export const validateFormBeforeSubmit = (
   }
 
   if (phase === 'final') {
+    if (!values.photographicSet || values.photographicSet.length === 0) {
+      errors.push('Debe tomar al menos una fotografía de la entrega');
+    }
+
     if (!values.vehicleReceptionSignature?.trim()) {
       errors.push('La firma de recepción del vehículo es obligatoria');
     }

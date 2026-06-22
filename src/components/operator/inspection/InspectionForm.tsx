@@ -197,8 +197,8 @@ export const InspectionForm = ({
     const subscription = form.watch((data) => {
       if (data && Object.keys(data).length > 0) {
         const formData = data as InspectionFormValues;
-        // Solo guardar si hay cambios significativos
-        if (formData.photographicSet?.length || formData.operatorSignature || formData.clientSignature) {
+        // Fotos y firmas son evidencia crítica en ambas fases.
+        if (formData.photographicSet?.length || formData.operatorSignature || formData.clientSignature || formData.vehicleReceptionSignature) {
           saveFormData(formData, currentPhase);
         }
       }

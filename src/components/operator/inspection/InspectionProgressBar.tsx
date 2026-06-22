@@ -37,7 +37,6 @@ const SECTIONS: Section[] = [
     label: 'Fotos',
     icon: Camera,
     check: (v) => Array.isArray(v.photographicSet) && v.photographicSet.length > 0,
-    phaseOnly: 'initial',
   },
   {
     id: 'signatures_initial',

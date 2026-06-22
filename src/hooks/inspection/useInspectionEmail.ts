@@ -12,10 +12,11 @@ const logger = createLogger("useInspectionEmail");
 
 export const useInspectionEmail = () => {
   const sendInspectionEmailMutation = useMutation({
-    mutationFn: async ({ pdfBlob, service, inspection }: {
+    mutationFn: async ({ pdfBlob, service, inspection, phase }: {
       pdfBlob: Blob;
       service: any;
       inspection: InspectionFormValues;
+      phase: 'initial' | 'final';
     }) => {
       logger.debug('📧 [EMAIL] Enviando inspección por email...');
       
@@ -31,6 +32,7 @@ export const useInspectionEmail = () => {
           operatorName: service.operator?.name || 'Operador',
           serviceDate: service.serviceDate || businessClock.format(businessClock.now(), 'dd/MM/yyyy'),
           equipmentCount: inspection.equipment?.length || 0,
+          phase,
         },
         pdfBlob: base64,
       };

@@ -205,7 +205,7 @@ export const InspectionFormSections = ({
       {requiresDetail && <VehicleEquipmentChecklist form={form} />}
 
       {/* Sección de Set Fotográfico */}
-      {requiresPhotoSet && (
+      {(phase === 'final' || requiresPhotoSet) && (
         <FormField
           control={form.control}
           name="photographicSet"
@@ -219,6 +219,7 @@ export const InspectionFormSections = ({
                 }> || []}
                 onPhotosChange={field.onChange}
                 serviceId={serviceId}
+                phase={phase}
               />
               <FormMessage />
             </FormItem>
@@ -253,7 +254,8 @@ export const InspectionFormSections = ({
               Firmas Digitales
             </h4>
             
-            <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6">
+            <div className={phase === 'final' ? 'max-w-xl' : 'grid md:grid-cols-2 gap-6'}>
+              {phase === 'initial' && (
               <FormField
                 control={form.control}
                 name="operatorSignature"
@@ -276,7 +278,9 @@ export const InspectionFormSections = ({
                   </FormItem>
                 )}
               />
+              )}
               
+              {phase === 'initial' && (
               <FormField
                 control={form.control}
                 name="clientSignature"
@@ -299,7 +303,9 @@ export const InspectionFormSections = ({
                   </FormItem>
                 )}
               />
+              )}
 
+              {phase === 'final' && (
               <FormField
                 control={form.control}
                 name="vehicleReceptionSignature"
@@ -323,6 +329,7 @@ export const InspectionFormSections = ({
                   </FormItem>
                 )}
               />
+              )}
             </div>
           </div>
         </CardContent>

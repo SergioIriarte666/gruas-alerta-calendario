@@ -23,6 +23,7 @@ interface PhotographicSetProps {
   photos: PhotographicSetPhoto[];
   onPhotosChange: (photos: PhotographicSetPhoto[]) => void;
   serviceId: string;
+  phase?: 'initial' | 'final';
 }
 
 const PHOTO_CATEGORIES = [
@@ -34,7 +35,7 @@ const PHOTO_CATEGORIES = [
   { id: 'motor', label: 'Motor', shortLabel: 'Motor', icon: '⚙️' }
 ] as const;
 
-export const PhotographicSet = ({ photos, onPhotosChange, serviceId }: PhotographicSetProps) => {
+export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'initial' }: PhotographicSetProps) => {
   const [loadedPhotoData, setLoadedPhotoData] = useState<Record<string, PhotoData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('izquierdo');
@@ -153,9 +154,9 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId }: Photograp
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
-          <span>Set Fotográfico</span>
+          <span>{phase === 'final' ? 'Foto de entrega' : 'Set Fotográfico'}</span>
           <Badge variant="secondary">
-            {photos.length} foto(s) • {getCategoryCount()}/6 categorías
+            {photos.length} foto(s){phase === 'initial' ? ` • ${getCategoryCount()}/6 categorías` : ' • mínimo 1'}
           </Badge>
         </CardTitle>
       </CardHeader>

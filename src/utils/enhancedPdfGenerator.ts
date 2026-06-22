@@ -40,7 +40,11 @@ export class EnhancedPDFGenerator {
         throw new Error('Datos del servicio no disponibles');
       }
       
-      if (!data.inspection.operatorSignature) {
+      if (data.isFinal) {
+        if (!data.inspection.vehicleReceptionSignature) {
+          throw new Error('Firma de recepción es requerida');
+        }
+      } else if (!data.inspection.operatorSignature) {
         throw new Error('Firma del operador es requerida');
       }
 

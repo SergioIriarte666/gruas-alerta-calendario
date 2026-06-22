@@ -14,6 +14,7 @@ interface InspectionEmailRequest {
     operatorName: string;
     serviceDate: string;
     equipmentCount: number;
+    phase?: 'initial' | 'final';
   };
   pdfBlob: string; // Base64 encoded PDF
 }
@@ -110,17 +111,20 @@ const handler = async (req: Request): Promise<Response> => {
     const pdfBuffer = Uint8Array.from(atob(pdfBlob), c => c.charCodeAt(0));
     console.log("📎 PDF buffer creado, tamaño:", pdfBuffer.length, "bytes");
 
+    const isFinal = inspectionData.phase === 'final';
+    const reportLabel = isFinal ? 'Entrega del Vehículo' : 'Inspección Pre-Servicio';
+
     const emailResponse = await resend.emails.send({
       from: "Grúas 5 Norte <noreply@gruas5norte.cl>",
       to: [sanitizedEmail],
-      subject: `Reporte de Inspección Pre-Servicio - ${inspectionData.folio}`,
+      subject: `Reporte de ${reportLabel} - ${inspectionData.folio}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0e7c7b; text-align: center;">REPORTE DE INSPECCIÓN PRE-SERVICIO</h1>
+          <h1 style="color: #0e7c7b; text-align: center;">REPORTE DE ${reportLabel.toUpperCase()}</h1>
           
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h2 style="color: #333; margin-top: 0;">Estimado/a ${inspectionData.clientName},</h2>
-            <p>Se ha completado exitosamente la inspección pre-servicio para su solicitud.</p>
+            <p>Se ha completado exitosamente ${isFinal ? 'la entrega del vehículo' : 'la inspección pre-servicio'} para su solicitud.</p>
             
             <h3 style="color: #0e7c7b;">Detalles del Servicio:</h3>
             <ul style="line-height: 1.6;">
@@ -145,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
       attachments: [
         {
-          filename: `Inspeccion-${inspectionData.folio}.pdf`,
+          filename: `${isFinal ? 'Entrega' : 'Inspeccion'}-${inspectionData.folio}.pdf`,
           content: Array.from(pdfBuffer),
         },
       ],

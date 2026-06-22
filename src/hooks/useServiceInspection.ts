@@ -63,7 +63,7 @@ export const useServiceInspection = () => {
     if (!clientPhone && !contactPhone) return false;
 
     const { error } = await supabase.functions.invoke(
-      phase === 'initial' ? 'send-whatsapp-retiro' : 'send-whatsapp-inspection',
+      phase === 'initial' ? 'send-whatsapp-inspection' : 'send-whatsapp-retiro',
       {
         body: {
           folio: service?.folio,
@@ -132,7 +132,8 @@ export const useServiceInspection = () => {
           await sendInspectionEmailMutation.mutateAsync({
             pdfBlob: blob,
             service,
-            inspection: valuesWithPhotos
+            inspection: valuesWithPhotos,
+            phase,
           });
           emailSent = true;
         } catch (emailError) {
@@ -203,6 +204,7 @@ export const useServiceInspection = () => {
         pdfBlob: completedInspection.blob,
         service,
         inspection: completedInspection.values,
+        phase: completedInspection.phase,
       });
       setCompletedInspection(current => current ? { ...current, emailSent: true } : current);
     } catch (error) {
