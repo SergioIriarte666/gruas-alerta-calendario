@@ -114,11 +114,11 @@ export const useServiceInspection = () => {
       const { blob } = await generatePDF(service, valuesWithPhotos, phase === 'final');
 
       logger.debug('3/5 Subiendo PDF a Storage...');
-      const pdfFolio = phase === 'initial' ? `${service.folio}-retiro` : service.folio;
+      const pdfFolio = phase === 'initial' ? `${service.folio}-inspeccion-inicial` : `${service.folio}-retiro`;
       const uploadResult = await uploadInspectionPdf(blob, serviceId, pdfFolio);
 
       logger.debug('4/5 Guardando inspección en base de datos...');
-      await persistInspection(serviceId, operatorId, valuesWithPhotos, uploadedPhotos, uploadResult.signedUrl, phase);
+      await persistInspection(serviceId, operatorId, valuesWithPhotos, uploadedPhotos, uploadResult.path, phase);
 
       logger.debug('5/5 Actualizando estado del servicio...');
       await updateServiceStatusMutation.mutateAsync({

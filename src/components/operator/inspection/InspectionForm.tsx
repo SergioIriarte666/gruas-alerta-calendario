@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { InspectionStatusCard } from './InspectionStatusCard';
 import { InspectionProgressBar } from './InspectionProgressBar';
+import { InitialInspectionEvidenceCard } from './InitialInspectionEvidence';
 import { Download, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
+import { fetchInitialInspectionEvidence, InitialInspectionEvidence } from '@/utils/inspectionRecord';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('InspectionForm');
@@ -37,6 +39,7 @@ export const InspectionForm = ({
   const { toast } = useToast();
   const [currentPhase, setCurrentPhase] = useState<'initial' | 'final'>('initial');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [initialEvidence, setInitialEvidence] = useState<InitialInspectionEvidence | null>(null);
   const toastShownRef = useRef(false);
 
   const form = useForm<InspectionFormValues>({
@@ -130,80 +133,49 @@ export const InspectionForm = ({
         });
         toastShownRef.current = true;
       }
-    } else {
-      // Caso crítico: servicio en inspection_completed pero sin datos en memoria
-      if (service?.status === 'inspection_completed') {
-        try {
-          // Intentar recuperar datos de sessionStorage
-          const persistedData = sessionStorage.getItem(`inspection_${serviceId}`);
-          const persistedMetadata = sessionStorage.getItem(`inspection_metadata_${serviceId}`);
-          
-          if (persistedData && persistedMetadata) {
-            const parsedData = JSON.parse(persistedData);
-            const parsedMetadata = JSON.parse(persistedMetadata);
-            
-            // Validar que las fotos existen en sessionStorage
-            const validPhotos = parsedData.photographicSet?.filter((photo: any) => {
-              return sessionStorage.getItem(`photo-${photo.fileName}`) !== null;
-            }) || [];
-            
-            if (validPhotos.length > 0) {
-              // Cargar datos en el formulario
-              const dataToLoad = { ...parsedData, photographicSet: validPhotos };
-              form.reset(dataToLoad);
-              
-              // Si la fase inicial está completa, ir a fase final
-              if (parsedMetadata.signatures_status?.operator && parsedMetadata.signatures_status?.client) {
-                setCurrentPhase('final');
-                saveFormData(dataToLoad, 'final');
-                if (!toastShownRef.current) {
-                  toast({ type: 'success', title: 'Datos de inspección inicial recuperados correctamente' });
-                  toastShownRef.current = true;
-                }
-              } else {
-                setCurrentPhase('initial');
-              }
-            } else {
-              logger.debug('🚚 Service inspection completed - ready for final phase but no photos found');
-              setCurrentPhase('final');
-              if (!toastShownRef.current) {
-                toast({ 
-                  type: 'warning', 
-                  title: 'Datos de inspección encontrados pero las fotos no están disponibles'
-                });
-                toastShownRef.current = true;
-              }
+    } else if (service?.status === 'inspection_completed') {
+      // Sin cache de sesión (pestaña/dispositivo distinto, o sessionStorage vencido): la base
+      // de datos es la única fuente confiable de la evidencia de la fase inicial.
+      setCurrentPhase('final');
+      fetchInitialInspectionEvidence(serviceId)
+        .then((evidence) => {
+          if (evidence) {
+            logger.debug('🚚 Evidencia de fase inicial recuperada desde la base de datos');
+            setInitialEvidence(evidence);
+            if (!toastShownRef.current) {
+              toast({
+                type: 'success',
+                title: 'Datos de inspección inicial recuperados',
+                description: `${evidence.photos.length} fotografía(s) de la fase inicial disponibles`
+              });
+              toastShownRef.current = true;
             }
           } else {
-            logger.debug('🚚 Service inspection completed - ready for final phase but no data found');
-            logger.warn('⚠️ No hay datos de fase inicial guardados, pero el servicio está listo para entrega');
-            setCurrentPhase('final');
+            logger.warn('⚠️ La base de datos no tiene inspección inicial para este servicio');
             if (!toastShownRef.current) {
-              toast({ 
-                type: 'warning', 
+              toast({
+                type: 'warning',
                 title: 'Sin datos de inspección inicial',
                 description: 'El servicio está listo para entrega pero no se encontraron datos de la fase inicial'
               });
               toastShownRef.current = true;
             }
           }
-        } catch (error) {
-          logger.error('Error al recuperar datos persistidos:', error);
-          // Limpiar datos corruptos
-          sessionStorage.removeItem(`inspection_${serviceId}`);
-          sessionStorage.removeItem(`inspection_metadata_${serviceId}`);
-          setCurrentPhase('final');
+        })
+        .catch((error) => {
+          logger.error('Error al recuperar evidencia de inspección inicial desde la base de datos:', error);
           if (!toastShownRef.current) {
-            toast({ type: 'error', title: 'Error al cargar datos guardados. Datos limpiados.' });
+            toast({ type: 'error', title: 'Error al cargar la inspección inicial desde la base de datos' });
             toastShownRef.current = true;
           }
-        }
-      } else {
-        logger.debug('🔄 Starting initial phase');
-        setCurrentPhase('initial');
-      }
+        })
+        .finally(() => setIsInitialized(true));
+      return;
+    } else {
+      logger.debug('🔄 Starting initial phase');
+      setCurrentPhase('initial');
     }
-    
+
     setIsInitialized(true);
   }, [serviceId, service?.status]); // Dependencias optimizadas
 
@@ -252,7 +224,11 @@ export const InspectionForm = ({
       {metadata && isInitialPhaseCompleted() && currentPhase === 'initial' && (
         <InspectionStatusCard metadata={metadata} />
       )}
-      
+
+      {currentPhase === 'final' && initialEvidence && (
+        <InitialInspectionEvidenceCard evidence={initialEvidence} />
+      )}
+
       <InspectionProgressBar form={form} phase={currentPhase} />
 
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">

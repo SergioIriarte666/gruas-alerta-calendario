@@ -2,7 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('PhotoUpload');
-const BUCKET = 'inspection-photos';
+export const PHOTO_BUCKET = 'inspection-photos';
+const SIGNED_URL_SECONDS = 60 * 60 * 24 * 7; // 7 días
 
 const dataUrlToBlob = (dataUrl: string): Blob => {
   const [header, data] = dataUrl.split(',');
@@ -15,6 +16,10 @@ const dataUrlToBlob = (dataUrl: string): Blob => {
   return new Blob([bytes], { type: mime });
 };
 
+/**
+ * Sube la foto a Storage y devuelve el PATH del objeto (no una signed URL): la evidencia
+ * puede consultarse meses después de subida, mucho después de que cualquier token expire.
+ */
 export const uploadInspectionPhoto = async (
   fileName: string,
   dataUrl: string,
@@ -24,7 +29,7 @@ export const uploadInspectionPhoto = async (
   const path = `${serviceId}/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
+    .from(PHOTO_BUCKET)
     .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
 
   if (uploadError) {
@@ -32,16 +37,20 @@ export const uploadInspectionPhoto = async (
     throw new Error(`Error al subir foto ${fileName}: ${uploadError.message}`);
   }
 
-  const { data, error: urlError } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 días
+  logger.debug(`Foto subida: ${path}`);
+  return path;
+};
 
-  if (urlError || !data?.signedUrl) {
-    logger.error('Error generando signed URL de foto:', urlError?.message);
-    throw new Error(`No se pudo generar la URL de la foto ${fileName}: ${urlError?.message || 'sin URL'}`);
+export const getInspectionPhotoSignedUrl = async (path: string): Promise<string> => {
+  const { data, error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    logger.error('Error generando signed URL de foto:', error?.message);
+    throw new Error(`No se pudo generar la URL de la foto: ${error?.message || 'sin URL'}`);
   }
 
-  logger.debug(`Foto subida: ${path}`);
   return data.signedUrl;
 };
 
@@ -50,6 +59,6 @@ export const deleteInspectionPhoto = async (
   serviceId: string
 ): Promise<void> => {
   const path = `${serviceId}/${fileName}`;
-  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+  const { error } = await supabase.storage.from(PHOTO_BUCKET).remove([path]);
   if (error) logger.warn(`No se pudo eliminar foto del bucket: ${path}`, error.message);
 };

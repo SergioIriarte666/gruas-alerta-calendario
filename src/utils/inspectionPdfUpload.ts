@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('InspectionPdfUpload');
-const BUCKET = 'inspection-pdfs';
+export const PDF_BUCKET = 'inspection-pdfs';
 const SIGNED_URL_SECONDS = 60 * 60 * 24 * 7; // 7 días
 
 export interface UploadResult {
@@ -20,7 +20,7 @@ export const uploadInspectionPdf = async (
   const path = `${serviceId}/${folio}-${date}.pdf`;
 
   const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
+    .from(PDF_BUCKET)
     .upload(path, pdfBlob, { contentType: 'application/pdf', upsert: true });
 
   if (uploadError) {
@@ -29,7 +29,7 @@ export const uploadInspectionPdf = async (
   }
 
   const { data, error: urlError } = await supabase.storage
-    .from(BUCKET)
+    .from(PDF_BUCKET)
     .createSignedUrl(path, SIGNED_URL_SECONDS);
 
   if (urlError || !data?.signedUrl) {
@@ -39,4 +39,17 @@ export const uploadInspectionPdf = async (
 
   logger.debug(`PDF subido: ${path}`);
   return { signedUrl: data.signedUrl, path };
+};
+
+export const getInspectionPdfSignedUrl = async (path: string): Promise<string> => {
+  const { data, error } = await supabase.storage
+    .from(PDF_BUCKET)
+    .createSignedUrl(path, SIGNED_URL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    logger.error('Error generando signed URL del PDF:', error?.message);
+    throw new Error(`No se pudo generar la URL del PDF: ${error?.message || 'sin URL'}`);
+  }
+
+  return data.signedUrl;
 };
