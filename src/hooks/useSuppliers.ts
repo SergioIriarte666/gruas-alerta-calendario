@@ -53,6 +53,13 @@ const getSupplierCompletenessScore = (supplier: Partial<Supplier>) => {
 };
 
 const pickPreferredSupplier = (current: Supplier, incoming: Supplier): Supplier => {
+  // Active suppliers always win. This prevents a newer inactive duplicate from
+  // receiving invoices or costs instead of the canonical active supplier.
+  const currentActive = current.is_active !== false;
+  const incomingActive = incoming.is_active !== false;
+  if (currentActive && !incomingActive) return current;
+  if (!currentActive && incomingActive) return incoming;
+
   const currentScore = getSupplierCompletenessScore(current);
   const incomingScore = getSupplierCompletenessScore(incoming);
 

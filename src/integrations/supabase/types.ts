@@ -69,101 +69,6 @@ export type Database = {
         }
         Relationships: []
       }
-      recovery_audit_entries: {
-        Row: {
-          action_type: string
-          created_at: string
-          id: string
-          metadata: Json
-          module: string
-          new_data: Json | null
-          non_reversible_reason: string | null
-          old_data: Json | null
-          operation_id: string
-          organization_id: string
-          record_id: string
-          record_label: string | null
-          reversal_operation_id: string | null
-          reversible: boolean
-          reverted_at: string | null
-          reverted_by: string | null
-          source: string
-          user_id: string | null
-        }
-        Insert: {
-          action_type: string
-          created_at?: string
-          id?: string
-          metadata?: Json
-          module: string
-          new_data?: Json | null
-          non_reversible_reason?: string | null
-          old_data?: Json | null
-          operation_id?: string
-          organization_id: string
-          record_id: string
-          record_label?: string | null
-          reversal_operation_id?: string | null
-          reversible?: boolean
-          reverted_at?: string | null
-          reverted_by?: string | null
-          source?: string
-          user_id?: string | null
-        }
-        Update: {
-          action_type?: string
-          created_at?: string
-          id?: string
-          metadata?: Json
-          module?: string
-          new_data?: Json | null
-          non_reversible_reason?: string | null
-          old_data?: Json | null
-          operation_id?: string
-          organization_id?: string
-          record_id?: string
-          record_label?: string | null
-          reversal_operation_id?: string | null
-          reversible?: boolean
-          reverted_at?: string | null
-          reverted_by?: string | null
-          source?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recovery_audit_entries_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recovery_settings: {
-        Row: {
-          max_records_per_reversal: number
-          organization_id: string
-          retention_days: number
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          max_records_per_reversal?: number
-          organization_id: string
-          retention_days?: number
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          max_records_per_reversal?: number
-          organization_id?: string
-          retention_days?: number
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
       backup_email_config: {
         Row: {
           created_at: string
@@ -4005,6 +3910,116 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_audit_entries: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          metadata: Json
+          module: string
+          new_data: Json | null
+          non_reversible_reason: string | null
+          old_data: Json | null
+          operation_id: string
+          organization_id: string
+          record_id: string
+          record_label: string | null
+          reversal_operation_id: string | null
+          reversible: boolean
+          reverted_at: string | null
+          reverted_by: string | null
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          module: string
+          new_data?: Json | null
+          non_reversible_reason?: string | null
+          old_data?: Json | null
+          operation_id?: string
+          organization_id: string
+          record_id: string
+          record_label?: string | null
+          reversal_operation_id?: string | null
+          reversible?: boolean
+          reverted_at?: string | null
+          reverted_by?: string | null
+          source?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          module?: string
+          new_data?: Json | null
+          non_reversible_reason?: string | null
+          old_data?: Json | null
+          operation_id?: string
+          organization_id?: string
+          record_id?: string
+          record_label?: string | null
+          reversal_operation_id?: string | null
+          reversible?: boolean
+          reverted_at?: string | null
+          reverted_by?: string | null
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_audit_entries_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_audit_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_settings: {
+        Row: {
+          max_records_per_reversal: number
+          organization_id: string
+          retention_days: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          max_records_per_reversal?: number
+          organization_id: string
+          retention_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          max_records_per_reversal?: number
+          organization_id?: string
+          retention_days?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       route_tolls: {
         Row: {
           created_at: string
@@ -6143,14 +6158,6 @@ export type Database = {
       }
     }
     Functions: {
-      execute_recovery_operation: {
-        Args: { p_confirmation: string; p_operation_id: string }
-        Returns: Json
-      }
-      preview_recovery_operation: {
-        Args: { p_operation_id: string }
-        Returns: Json
-      }
       admin_create_user: {
         Args: {
           p_client_id?: string
@@ -6409,6 +6416,10 @@ export type Database = {
       }
       emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
       execute_readonly_query: { Args: { query_text: string }; Returns: Json }
+      execute_recovery_operation: {
+        Args: { p_confirmation: string; p_operation_id: string }
+        Returns: Json
+      }
       final_security_check: { Args: never; Returns: Json }
       find_duplicate_suppliers: {
         Args: never
@@ -6855,9 +6866,17 @@ export type Database = {
       migrate_unsync_crane_parts: { Args: never; Returns: Json }
       migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
       preview_next_invoice_folio: { Args: never; Returns: string }
+      preview_recovery_operation: {
+        Args: { p_operation_id: string }
+        Returns: Json
+      }
+      purge_expired_recovery_audit: { Args: never; Returns: number }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
       reconcile_orphan_records: { Args: never; Returns: Json }
+      recovery_assert_admin: { Args: never; Returns: undefined }
+      recovery_current_organization_id: { Args: never; Returns: string }
+      recovery_redact: { Args: { payload: Json }; Returns: Json }
       reject_pending_user: {
         Args: { target_user_id: string }
         Returns: undefined

@@ -405,8 +405,9 @@ export const processPurchaseRows = (
 
     const uniqueKey = `${rut}-${folio}`;
     
-    // Find supplier
-    const matchedSupplier = suppliers.find(s => rutMatches(s.rut || '', rut));
+    // Only active suppliers may receive new invoices. If an inactive supplier
+    // reaches this array, leave it unmatched for manual resolution instead.
+    const matchedSupplier = suppliers.find(s => s.is_active !== false && rutMatches(s.rut || '', rut));
     const supplierKey = matchedSupplier ? `${matchedSupplier.id}-${folio}` : '';
     const duplicateSources: Array<'supplier_invoices' | 'costs'> = [];
     if (
