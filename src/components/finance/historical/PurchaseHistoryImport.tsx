@@ -40,6 +40,7 @@ import {
 import { createLogger } from "@/lib/logger";
 import { formatCLP, formatDate, normalizeRut, rutCandidates, rutMatches, getInvoiceStatusBadgeClass } from '@/utils/purchase/purchaseImportHelpers';
 import { applyStatusToSelectedKeys, getImportSelectionState, toggleAllImportableKeys } from '@/utils/historicalImportSelection';
+import { extractFolioFromDescription } from '@/utils/folioExtractor';
 
 
 const logger = createLogger("PurchaseHistoryImport");
@@ -616,6 +617,35 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         }
       }
 
+      const fileFolioSet = new Set(fileFolios);
+      const COST_PAGE_SIZE = 1000;
+      for (let from = 0; ; from += COST_PAGE_SIZE) {
+        const { data: costsPage, error: costsError } = await supabase
+          .from('costs')
+          .select('id, supplier_id, date, description, amount')
+          .not('supplier_id', 'is', null)
+          .is('document_number', null)
+          .not('description', 'is', null)
+          .range(from, from + COST_PAGE_SIZE - 1);
+
+        if (costsError) throw costsError;
+        (costsPage || []).forEach((cost) => {
+          const folio = extractFolioFromDescription(cost.description);
+          if (!folio || !cost.supplier_id || !fileFolioSet.has(folio)) return;
+
+          const key = `${cost.supplier_id}-${folio}`;
+          costSupplierFolioKeys.add(key);
+          existingCostBySupplierFolioKey.set(key, {
+            id: cost.id,
+            date: cost.date,
+            description: cost.description || '',
+            amount: cost.amount,
+          });
+        });
+
+        if (!costsPage || costsPage.length < COST_PAGE_SIZE) break;
+      }
+
       const dedupData: ExistingPurchaseDedupData = {
         invoiceRutFolioKeys,
         invoiceSupplierFolioKeys,
@@ -1100,7 +1130,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     // Pre-filter: check existing invoices using RUT normalization to skip duplicates
     if (invoicesToInsert.length > 0) {
-        const { existingInvs, invSups, existingCosts } = await loadExistingDedupData();
+        const { existingInvs, invSups, existingCosts, existingCostsByDescriptionFolio } = await loadExistingDedupData();
         
         const sidToRut = new Map<string, string>();
         invSups?.forEach((s: any) => {
@@ -1121,6 +1151,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             if (c.supplier_id && c.document_number) {
                 existingSet.add(`${c.supplier_id}-${c.document_number}`);
             }
+        });
+        existingCostsByDescriptionFolio.forEach((cost) => {
+            existingSet.add(`${cost.supplier_id}-${cost.folio_extracted}`);
         });
         
         const filteredInvoices = invoicesToInsert.filter(inv => {

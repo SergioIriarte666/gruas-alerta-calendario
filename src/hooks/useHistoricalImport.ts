@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { extractFolioFromDescription } from '@/utils/folioExtractor';
 
 const logger = createLogger('useHistoricalImport');
 
@@ -70,6 +71,11 @@ export function useHistoricalImport() {
     existingInvs: Array<{ invoice_number: string; supplier_id: string }>;
     invSups: Array<{ id: string; rut: string }>;
     existingCosts: Array<{ document_number: string; supplier_id: string }>;
+    existingCostsByDescriptionFolio: Array<{
+      supplier_id: string;
+      folio_extracted: string;
+      amount: number;
+    }>;
   }> => {
     const [{ data: existingInvs }, { data: invSups }, { data: existingCosts }] = await Promise.all([
       supabase.from('supplier_invoices').select('invoice_number, supplier_id'),
@@ -81,10 +87,39 @@ export function useHistoricalImport() {
         .not('supplier_id', 'is', null),
     ]);
 
+    const PAGE_SIZE = 1000;
+    const costsWithoutDocumentNumber: Array<{
+      supplier_id: string;
+      description: string | null;
+      amount: number;
+    }> = [];
+
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: page, error } = await supabase
+        .from('costs')
+        .select('supplier_id, description, amount')
+        .not('supplier_id', 'is', null)
+        .is('document_number', null)
+        .not('description', 'is', null)
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) throw error;
+      costsWithoutDocumentNumber.push(...(page || []));
+      if (!page || page.length < PAGE_SIZE) break;
+    }
+
+    const existingCostsByDescriptionFolio = costsWithoutDocumentNumber.flatMap((cost) => {
+      const folio = extractFolioFromDescription(cost.description);
+      return folio && cost.supplier_id
+        ? [{ supplier_id: cost.supplier_id, folio_extracted: folio, amount: cost.amount }]
+        : [];
+    });
+
     return {
       existingInvs: (existingInvs || []) as Array<{ invoice_number: string; supplier_id: string }>,
       invSups: (invSups || []) as Array<{ id: string; rut: string }>,
       existingCosts: (existingCosts || []) as Array<{ document_number: string; supplier_id: string }>,
+      existingCostsByDescriptionFolio,
     };
   };
 
