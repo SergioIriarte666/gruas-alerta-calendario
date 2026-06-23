@@ -1806,8 +1806,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 {totalToImport} seleccionadas
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={resetState}>
-                  Cancelar
+                <Button variant="outline" onClick={resetState} className="gap-2">
+                  <RotateCw className="size-4" />
+                  Seleccionar otro archivo
+                </Button>
+                <Button variant="ghost" onClick={handleClose}>
+                  Cerrar
                 </Button>
                 <Button onClick={handleImport} disabled={!canImport()}>
                   Importar {totalToImport} documento{totalToImport !== 1 ? 's' : ''}

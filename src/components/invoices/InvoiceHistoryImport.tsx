@@ -1447,9 +1447,13 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               </div>
             </Tabs>
 
-            <div className="flex justify-end gap-2 pt-4 border-t mt-4 flex-none bg-background z-10">
-              <Button variant="outline" onClick={handleClose}>
-                Cancelar
+            <div className="z-10 mt-4 flex flex-none flex-col-reverse gap-2 border-t bg-background pt-4 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={resetState} className="gap-2">
+                <RotateCw className="size-4" />
+                Seleccionar otro archivo
+              </Button>
+              <Button variant="ghost" onClick={handleClose}>
+                Cerrar
               </Button>
               <Button
                 onClick={handleImport}
