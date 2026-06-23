@@ -20,6 +20,7 @@ import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { getTodayLocal, formatForDisplay } from '@/utils/timezoneUtils';
+import { extractFolioFromDescription } from '@/utils/folioExtractor';
 import { businessClock } from '@/utils/businessClock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -56,6 +57,17 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [paymentStatusWarnings, setPaymentStatusWarnings] = useState<Record<string, string>>({});
   const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const batchProgress = useBatchProgress();
+
+  // Detectar folio en notas o referencia bancaria
+  const detectedFolioInNotes = React.useMemo(
+    () => extractFolioFromDescription(formData.notes),
+    [formData.notes],
+  );
+  const detectedFolioInBankRef = React.useMemo(
+    () => extractFolioFromDescription(formData.bank_reference),
+    [formData.bank_reference],
+  );
+  const detectedPaymentFolio = detectedFolioInNotes || detectedFolioInBankRef;
 
   const clientId = formData.client_id || null;
   const { data: clientInvoices = [] } = usePendingClientInvoices(clientId);
@@ -400,6 +412,17 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
               <Label htmlFor="notes">Notas</Label>
               <Textarea id="notes" value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} placeholder="Observaciones adicionales" rows={3} />
             </div>
+
+            {detectedPaymentFolio && (
+              <Alert className="border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/40">
+                <AlertTriangle className="size-4 text-amber-600" />
+                <AlertDescription className="text-xs">
+                  Folio <strong>{detectedPaymentFolio}</strong> detectado en{' '}
+                  {detectedFolioInNotes ? 'las notas' : 'la referencia bancaria'}.
+                  {' '}Para aplicar el pago, selecciona las facturas en la lista superior.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="flex gap-2 border-t border-border/70 pt-4">
               <Button type="submit" disabled={loading} className="flex-1">

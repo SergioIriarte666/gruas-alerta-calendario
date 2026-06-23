@@ -11,12 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { X, FileText, Calendar } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { X, FileText, Calendar, AlertTriangle } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 import { getTodayLocal } from '@/utils/timezoneUtils';
+import { extractFolioFromDescription } from '@/utils/folioExtractor';
 import { createLogger } from "@/lib/logger";
 
 
@@ -104,6 +106,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
   const getTotalSelectedAmount = () => {
     return selectedInvoices.reduce((sum, sel) => sum + sel.amount, 0);
   };
+
+  // Detectar folio en notas o referencia bancaria
+  const detectedFolioInNotes = React.useMemo(
+    () => extractFolioFromDescription(formData.notes),
+    [formData.notes],
+  );
+  const detectedFolioInBankRef = React.useMemo(
+    () => extractFolioFromDescription(formData.bank_reference),
+    [formData.bank_reference],
+  );
+  const detectedPaymentFolio = detectedFolioInNotes || detectedFolioInBankRef;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -363,6 +376,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                 placeholder="Observaciones adicionales"
               />
             </div>
+
+            {detectedPaymentFolio && (
+              <Alert className="border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/40">
+                <AlertTriangle className="size-4 text-amber-600" />
+                <AlertDescription className="text-xs">
+                  Folio <strong>{detectedPaymentFolio}</strong> detectado en{' '}
+                  {detectedFolioInNotes ? 'las notas' : 'la referencia bancaria'}.
+                  {' '}Para aplicar el pago a una factura, usa <strong>"Pago a facturas específicas"</strong>.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="flex gap-2 border-t border-border/70 pt-4">
               <Button type="submit" disabled={loading} className="flex-1">

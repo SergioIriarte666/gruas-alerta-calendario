@@ -2,10 +2,10 @@
 
 ## TMS Gruas - Towing Management System
 
-- **Version del documento:** 3.6
-- **Ultima actualizacion:** 2026-05-28
+- **Version del documento:** 4.0
+- **Ultima actualizacion:** 2026-06-23
 - **Estado:** Vigente
-- **Base de actualizacion:** lectura rapida del routing real, paginas activas, componentes, hooks, servicios, `docs/modules/*` y `docs/guia-configuracion-whatsapp.md`
+- **Base de actualizacion:** lectura completa del routing, paginas, componentes, hooks, servicios, migraciones, `docs/modules/*` y features implementados en junio 2026
 
 ---
 
@@ -16,12 +16,17 @@ TMS Gruas es una plataforma web operativa y financiera para empresas de gruas en
 - solicitud o creacion del servicio
 - asignacion de grua y operador
 - ejecucion en terreno con inspeccion, fotos y firma
-- cierre operacional
+- cierre operacional (con soporte de excesos/deducibles)
 - facturacion y seguimiento de cobros
 - control de costos, proveedores e inventario
+- importacion historica de compras (SAP) y ventas (DTE SII)
+- administracion documental (biblioteca de documentos de negocio)
+- centro de recuperacion transaccional (auditoria, simulacion y reversion)
+- categorizacion de proveedores (independiente de centros de costo)
+- deteccion y prevencion de duplicados entre modulos
 - reportes, proyecciones y control administrativo
 
-El producto hoy no es solo un "sistema de servicios". Es un backoffice integral con 3 superficies principales:
+El producto tiene 3 superficies principales:
 
 1. **Backoffice administrativo** para operaciones, finanzas, activos y configuracion.
 2. **App de operador** con foco en inspeccion y evidencia en terreno.
@@ -31,15 +36,21 @@ El producto hoy no es solo un "sistema de servicios". Es un backoffice integral 
 
 | Area | Estado | Comentario |
 |---|---|---|
-| Servicios, calendario y cierres | Estable | Es el nucleo operacional del sistema. |
+| Servicios, calendario y cierres | Estable | Nucleo operacional. Soporte de excesos/deducibles en cierres. |
 | Facturas, pagos/cobros, costos y cuentas por pagar | Estable | Cobertura amplia y madura del flujo financiero. |
-| Inventario, compras y proveedores | Estable | Hay trazabilidad cruzada con costos y XML. |
+| Inventario, compras y proveedores | Estable | Con categorias propias de proveedor y producto/servicio por defecto. |
 | App operador / inspecciones | Estable | Flujo operativo real con fotos, firma y PDF. |
 | Portal cliente | Operativo | Permite solicitar servicios y revisar historial/facturas. |
-| PWA, push y offline | Operativo con consolidacion pendiente | Existen capacidades reales, pero requieren endurecer conflictos y sincronizacion. |
-| Integraciones externas | Operativas con dependencia | Email, push, OCR, mapas y peajes estan activos via Edge Functions. |
-| WhatsApp | Operativo | Integracion via Meta WhatsApp Cloud API + Supabase Edge Functions (envio, alertas diarias y webhook). |
-| Multi-tenant | Fuera de alcance actual | El producto se comporta como una implementacion single-tenant. |
+| Importadores historicos (SAP / DTE SII) | Estable | Deteccion de duplicados cross-modulo (costos, compras, glosas). |
+| Biblioteca documental (Document Library) | Operativo | Gestion documental por categoria con alertas de vencimiento. |
+| Centro de recuperacion (Recovery Center) | Operativo | Auditoria, simulacion y reversion transaccional. |
+| Categorias de proveedores | Estable | CRUD en Settings, independientes de cost_categories. |
+| Avisos preventivos "Folio detectado" | Operativo | En CostForm, PaymentForm y SmartPaymentForm. |
+| Consolidacion de proveedores duplicados | Aplicado | Migracion SQL + backfill de datos existentes. |
+| PWA, push y offline | Operativo con consolidacion pendiente | Capacidades reales, falta endurecer conflictos y sincronizacion. |
+| Integraciones externas | Operativas con dependencia | Email, push, OCR, mapas, peajes, WhatsApp via Edge Functions. |
+| WhatsApp | Operativo | Integracion via Meta WhatsApp Cloud API + Supabase Edge Functions. |
+| Multi-tenant | Fuera de alcance actual | Implementacion single-tenant. |
 
 ---
 
@@ -55,27 +66,38 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 - reducir reprocesos administrativos en facturacion, conciliacion, pagos y reporteria
 - mantener trazabilidad operativa y financiera entre documentos, movimientos y usuarios
 - habilitar decisiones gerenciales con indicadores y reportes actualizados
+- prevenir duplicados y registros huerfanos entre modulos (compras, costos, ventas, ingresos)
+- normalizar catalogos y categorias para segmentacion y reportes consistentes
 
 ### Objetivos secundarios
 
 - soportar importaciones masivas y captura asistida
 - mantener experiencia web y PWA usable en escritorio y movil
 - permitir administracion granular por rol y por modulo
+- ofrecer auditoria y reversibilidad de operaciones criticas
 
 ### Terminos clave
 
 | Termino | Significado operativo |
 |---|---|
 | Servicio | Unidad central de trabajo operativo del negocio. |
-| Cierre | Agrupacion de servicios para control y posterior facturacion. |
+| Cierre | Agrupacion de servicios para control y posterior facturacion, con soporte de covered/excess. |
 | Costo | Registro financiero vinculado o vinculable a servicio, proveedor, inventario o grua. |
 | Inventario / Bodega | Control de catalogo, stock y movimientos fisicos. |
-| Proveedor | Entidad emisora de documentos, pagos y compras. |
+| Proveedor | Entidad emisora de documentos, pagos y compras, con categoria propia. |
+| Factura (compra) | Documento de proveedor registrado en `supplier_invoices`. |
+| Factura (venta) | Documento emitido al cliente registrado en `invoices`. |
 | XML | DTE o documento estructurado usado para importacion automatizada. |
 | Quick Entry | Captura rapida desde movil para registrar evidencia o preparar un costo. |
-| Inspeccion | Evidencia formal del servicio en terreno, con fotos, formulario y firma. |
+| Inspeccion | Evidencia formal del servicio en terreno, con fotos, items y firma. |
 | Portal cliente | Superficie restringida para autoservicio del cliente. |
 | App operador | Superficie operativa simplificada para usuarios `operator`. |
+| Recovery Center | Modulo de auditoria, simulacion y reversion de operaciones. |
+| Document Library | Biblioteca documental clasificada por categoria y entidad. |
+| Supplier Category | Categoria propia del maestro de proveedores (no confundir con cost_categories). |
+| Backfill | Proceso de normalizacion retrospectiva de datos existentes. |
+| SAP | Sistema ERP origen para importacion de compras historicas. |
+| DTE SII | Documento tributario electronico origen para importacion de ventas historicas. |
 
 ---
 
@@ -85,13 +107,13 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 
 | Superficie | Rutas principales | Proposito |
 |---|---|---|
-| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, `/historical`, etc. | Operacion, finanzas, activos y administracion. |
+| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, `/historical`, `/document-library`, etc. | Operacion, finanzas, activos y administracion. |
 | Operador | `/operator`, `/operator/service/:id/inspection` | Ejecucion de inspecciones y seguimiento de servicios asignados. |
 | Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
 
 Rutas transversales:
 
-- autenticacion: `/auth`, `/reset-password`
+- autenticacion: `/auth`, `/auth/callback`, `/register`, `/pending`, `/reset-password`
 - diagnostico/QA interno: `/performance-test`, `/debug-freeze`, `/connection-test`
 
 ### Roles soportados
@@ -111,20 +133,20 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 | Modulo | Ruta principal | Roles | Dependencias principales |
 |---|---|---|---|
 | Dashboard | `/dashboard` | `admin`, `viewer` | servicios, facturas, costos, inventario, alertas |
-| Servicios | `/services` | `admin`, `viewer` | clientes, gruas, operadores, cierres, costos, inspecciones |
+| Servicios | `/services` | `admin`, `viewer` | clientes, gruas, operadores, cierres, costos, inspecciones, service_items |
 | Calendario | `/calendar` | `admin`, `viewer` | servicios, eventos, mantenciones |
-| Cierres | `/closures` | `admin`, `viewer` | servicios, clientes, facturas |
-| Clientes | `/clients` | `admin`, `viewer` | servicios, facturas, pipeline VIP |
+| Cierres | `/closures` | `admin`, `viewer` | servicios, clientes, facturas, excesos/deducibles |
+| Clientes | `/clients` | `admin`, `viewer` | servicios, facturas, pipeline VIP, RUT normalizado |
 | Gruas | `/cranes` | `admin`, `viewer` | servicios, mantenciones, repuestos, inventario, costos |
-| Vehiculos | `/vehicles` | `admin` | catalogos operativos, datos de vehiculo, formularios relacionados |
+| Vehiculos | `/vehicles` | `admin` | catalogos operativos, datos de vehiculo |
 | Operadores | `/operators` | `admin` | servicios, inspecciones, comisiones |
 | Tipos de servicio | `/service-types` | `admin` | servicios, configuracion operativa |
 | Tarifas de servicio | `/service-rates` | `admin` | servicios, proyecciones, calculos operativos |
 | Facturas | `/invoices` | `admin`, `viewer` | cierres, clientes, pagos/cobros, reportes |
-| Costos | `/costs` | `admin`, `viewer` | servicios, proveedores, inventario, XML, reportes |
-| Centros de costo | `/cost-centers` | `admin` | costos, reportes, catalogos operativos |
+| Costos | `/costs` | `admin`, `viewer` | servicios, proveedores, inventario, XML, reportes, aviso folio en glosa |
+| Centros de costo | `/cost-centers` | `admin` | costos, reportes |
 | Inventario | `/inventory` | `admin`, `viewer` | costos, proveedores, compras, gruas, movimientos |
-| Proveedores | `/suppliers` | `admin`, `viewer` | pagos, XML, costos, inventario |
+| Proveedores | `/suppliers` | `admin`, `viewer` | supplier_categories, pagos, XML, costos, inventario, producto/servicio por defecto |
 | Cuentas por pagar | `/accounts-payable` | `admin`, `viewer` | deudas, cuotas, pagos, reportes |
 | Reportes | `/reports` | `admin`, `viewer` | servicios, facturas, costos, inventario, pagos/cobros |
 | Proyecciones | `/income-projections` | `admin`, `viewer` | facturas, pagos/cobros, aging, cashflow |
@@ -132,9 +154,10 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 | Quick Entries | `/quick-entries` | `admin` | OCR, costos, evidencia movil |
 | Daily Report | `/daily-report` | `admin`, `viewer` | servicios, finanzas, alertas |
 | Trip Calculator | `/trip-calculator` | `admin`, `viewer` | mapas, peajes, tarifas operativas |
-| Settings | `/settings` | `admin` | usuarios, permisos, configuracion, notificaciones |
+| Settings | `/settings` | `admin` | usuarios, permisos, categorias (proveedores + costos), recovery center, WhatsApp |
 | Backup | `/backup` | `admin` | backups, logs, restauracion operativa |
-| Historical | `/historical` | `admin`, `viewer` | analitica financiera, historicos |
+| Historical | `/historical` | `admin`, `viewer` | analitica financiera, importacion SAP/DTE, compras/ventas historicas, batch edit, RUT normalizado |
+| Document Library | `/document-library` | `admin`, `viewer` | biblioteca documental, categorias, vencimientos |
 | App Operador | `/operator` | `operator`, `admin` | servicios asignados, inspecciones, fotos, firma |
 | Portal Cliente | `/portal/*` | `client` | servicios propios, facturas, solicitudes |
 
@@ -145,22 +168,25 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 ### Administrador / gerente
 
 - necesita vision global del negocio
-- controla configuracion, usuarios, catalogos, backups y acciones criticas
+- controla configuracion, usuarios, catalogos, backups, categorias y acciones criticas
+- administra Recovery Center, categorias de proveedores, importaciones historicas
 - revisa KPIs, cierres, facturacion, costos, pagos, inventario y reportes
 
 ### Administrativo / finanzas
 
 - registra servicios y documentos
-- genera cierres y facturas
+- genera cierres y facturas (cubierto y exceso)
 - concilia pagos
 - carga costos, XML y movimientos asociados
-- consulta reportes y estados
+- importa historicos SAP (compras) y DTE SII (ventas)
+- consulta reportes, proyecciones y estados
+- normaliza descripciones y categorias de proveedores
 
 ### Operador en terreno
 
 - ve solo servicios asignados
-- ejecuta inspecciones
-- captura fotos y firma
+- ejecuta inspecciones con items, fotos y firma
+- captura quick entries
 - opera desde movil/PWA
 
 ### Cliente B2B / aseguradora / particular
@@ -181,13 +207,22 @@ flowchart LR
     PORTAL[Portal Cliente]
     XML[Importaciones XML/CSV]
     OCR[Quick Entry + OCR]
+    SAP[Import SAP Compras]
+    DTE[Import DTE Ventas]
   end
 
   subgraph Operacion
     SVC[Servicios]
+    ITEMS[Service Items]
     CAL[Calendario]
     INS[Inspecciones]
-    CLO[Cierres]
+    CLO[Cierres + Excesos]
+  end
+
+  subgraph Prevencion
+    FOLIO[Aviso Folio detectado]
+    DEDUP[Deteccion duplicados]
+    RECOV[Recovery Center]
   end
 
   subgraph Activos
@@ -195,23 +230,30 @@ flowchart LR
     CRA[Gruas]
     OPE[Operadores]
     INV[Inventario]
-    SUP[Proveedores]
+    SUP[Proveedores + Categorias]
+  end
+
+  subgraph Admin
+    DOCLIB[Document Library]
+    SUP_CAT[Supplier Categories]
+    SET[Settings]
   end
 
   subgraph Finanzas
     INV2[Facturas]
-    COB[Pagos/Cobros (en Facturas)]
+    COB[Pagos/Cobros]
     COS[Costos]
     AP[Cuentas por pagar]
     COM[Comisiones]
     REP[Reportes]
     PROY[Proyecciones]
-    HIST[Historico financiero]
+    HIST[Historico + Batch Edit]
   end
 
   ADMIN --> SVC
   PORTAL --> SVC
   OP --> INS --> SVC
+  SVC --> ITEMS
   SVC --> CAL
   SVC --> CLO --> INV2 --> COB
   SVC --> COS
@@ -221,6 +263,8 @@ flowchart LR
   XML --> SUP
   XML --> INV
   OCR --> COS
+  SAP --> HIST
+  DTE --> HIST
   CRA --> SVC
   OPE --> SVC
   CLI --> SVC
@@ -229,6 +273,15 @@ flowchart LR
   COB --> PROY
   COS --> REP
   AP --> REP
+  FOLIO --> COS
+  DEDUP --> COS
+  DEDUP --> HIST
+  RECOV --> INV2
+  RECOV --> SVC
+  RECOV --> COS
+  RECOV --> INV
+  SUP --> SUP_CAT
+  DOCLIB --> SET
 ```
 
 ---
@@ -239,106 +292,105 @@ flowchart LR
 
 - tablero principal con metricas y alertas
 - resumen operacional y financiero
-- sirve como punto de entrada para usuarios administrativos
 
 ### 5.2 Servicios
 
 - modulo central del negocio
-- crea, edita, filtra y gestiona servicios
-- maneja folios, estados, asignacion de recursos y datos del vehiculo/cliente
+- CRUD, folios, estados, asignacion de recursos y datos del vehiculo/cliente
+- **Nuevo:** items del servicio (`service_items`): glosa, cantidad y valor unitario por linea
 - se relaciona con cierres, costos, inspecciones, calendario y comisiones
 
 ### 5.3 Calendario
 
 - vista temporal de servicios y eventos
-- soporta navegacion diaria, semanal y mensual
-- expone detalles y operacion calendarizada
+- navegacion diaria, semanal y mensual
 
 ### 5.4 Clientes
 
-- CRUD de clientes y ficha ampliada
+- CRUD y ficha ampliada
 - historial de servicios y facturacion
-- soporte a flujo VIP desde ficha de cliente
+- RUT normalizado en tablas (`xx.xxx.xxx-x`)
+- pipeline VIP desde ficha de cliente
 
 ### 5.5 Cierres
 
-- agrupa servicios por periodo para posterior facturacion
+- agrupa servicios por periodo para facturacion
+- **Nuevo:** soporte de `value_type` (covered / excess) para manejar deducibles y excesos
+- cierres independientes para parte cubierta y exceso de un mismo servicio
 - puente formal entre operacion y finanzas
 
 ### 5.6 Facturas
 
-- genera y administra facturas
+- genera y administra facturas de venta y compra
 - soporta vista tabular y pipeline
-- incluye pagos, historial y acciones de marcado/correccion
-- se integra con cierres, pagos/cobros y alertas
+- pagos, historial y acciones de marcado/correccion
+- `source` para trazabilidad de origen (manual, importacion)
 
 ### 5.7 Pagos y cobros (en Facturas)
 
-- no existe ruta dedicada `/incomes` en el routing actual
-- los cobros/pagos se gestionan dentro del modulo de Facturas
-- las vistas agregadas y proyecciones financieras se concentran en `Proyecciones` (`/income-projections`)
+- gestion dentro del modulo de Facturas
+- **Nuevo:** aviso preventivo "Folio detectado" en `PaymentForm` y `SmartPaymentForm`
+- detecta cuando el operador escribe un folio en notas/referencia bancaria en vez de vincular la factura
 
 ### 5.8 Costos
 
-- administra costos operativos y financieros
-- soporta formularios manuales, carga CSV y carga XML
-- cruza informacion con servicios, proveedores, inventario y gruas
-- incluye deteccion de duplicados y trazabilidad de costo
-- incorpora vista de detalle consolidado en modal con exportacion PDF
-- soporta actualizacion por lotes, marcado masivo de pago y eliminacion asistida
-- carga datasets amplios mediante paginacion explicita sobre Supabase para evitar truncamiento operativo
-- puede disparar asistencia de distribucion cuando el costo impacta inventario
+- CRUD de costos operativos y financieros
+- formulario manual, carga CSV y carga XML
+- cruza con servicios, proveedores, inventario y gruas
+- **Nuevo:** aviso "Folio detectado" en `CostFormStep2` para prevenir que se escriba el folio en la glosa
+- **Nuevo:** backfill de `document_number` desde description por patron "N°/Folio XXXX"
+- **Nuevo:** deteccion de duplicados contra `supplier_invoices` (compras) y limpieza correctiva
+- detalle consolidado, batch update, marcado masivo de pago
 
 ### 5.9 Inventario / Bodega
 
-- gestiona catalogo, stock, movimientos y ubicaciones
-- soporta entradas, salidas, movimientos manuales y carga XML
-- se integra con costos, proveedores, gruas y compras
-- existe sincronizacion con compras mediante `UnifiedPurchaseService`
+- catalogo, stock, movimientos y ubicaciones
+- entradas, salidas, movimientos manuales y carga XML
+- `UnifiedPurchaseService` para sincronizacion compras↔inventario
 
 ### 5.10 Proveedores
 
-- administra proveedores, pagos y documentos asociados
-- soporta importacion XML de documentos tributarios
-- comparte flujos y datos con costos e inventario
+- CRUD de proveedores, pagos y documentos asociados
+- importacion XML de documentos tributarios
+- **Nuevo:** categorias propias de proveedor (`supplier_categories`) independientes de cost_categories
+- **Nuevo:** `default_product_service` en ficha de proveedor para normalizacion de glosas
+- **Nuevo:** consolidacion de proveedores duplicados (por RUT, inactivos fusionados al activo)
+- **Nuevo:** batch edit masivo (categoria, producto/servicio por defecto)
+- modal de edicion con layout corregido (no se corta en viewports bajos)
 
 ### 5.11 Cuentas por pagar
 
-- maneja acreedores, deudas, cuotas y pagos
-- orientado al control estructurado de obligaciones financieras
-- incluye calendario de vencimientos, detalle de deuda y pagos por cuota
+- acreedores, deudas, cuotas y pagos
+- calendario de vencimientos y detalle de deuda
 
 ### 5.12 Gruas
 
-- administra activos de flota
-- registra mantenciones, piezas, documentacion y costos relacionados
+- activos de flota, mantenciones, piezas, documentacion
 - consume inventario y vincula historial operacional
 
 ### 5.13 Operadores
 
-- administra operadores, datos y tablas de soporte
-- se relaciona con servicios, comisiones e inspecciones
+- CRUD, datos y tablas de soporte
+- relacion con servicios, comisiones e inspecciones
 
 ### 5.14 Reportes
 
 - reporteria operacional y financiera
-- exportaciones a PDF y Excel
-- combina datos de servicios, costos, facturas (incluye pagos/cobros) e inventario
+- exportaciones PDF y Excel
 
 ### 5.15 Proyecciones
 
 - cashflow, aging y vistas proyectadas
-- soporte a planificacion financiera
 
 ### 5.16 Comisiones
 
 - calcula y presenta comisiones de operadores
-- depende del cierre de servicios y sincronizacion financiera
+- depende del cierre de servicios
 
 ### 5.17 Quick Entries
 
-- captura rapida de informacion desde movil
-- puede asistir carga de costos mediante OCR de boletas/comprobantes
+- captura rapida desde movil
+- OCR de boletas/comprobantes
 
 ### 5.18 Daily Report
 
@@ -346,39 +398,92 @@ flowchart LR
 
 ### 5.19 Trip Calculator
 
-- calcula rutas, peajes y estimaciones
-- usa integraciones externas para mapas y peajes
+- rutas, peajes y estimaciones
 
 ### 5.20 Settings / Catalogos / Backup
 
-- configuracion general del sistema
-- gestion de usuarios y permisos
-- catalogos administrativos
-- herramientas criticas y respaldos
-
-### 5.20.1 Catalogos administrativos activos
-
-- tipos de servicio
-- tarifas de servicio
-- centros de costo
-- configuraciones de terminos de pago, columnas y notificaciones
+- configuracion general, usuarios y permisos
+- **Nuevo:** Categorias con sub-tabs Proveedores / Costos
+  - Supplier Categories: CRUD, activar/desactivar, backfill de datos existentes
+  - Cost Categories: sin cambios, independientes
+- **Nuevo:** Recovery Center (Ver 5.24)
+- catalogos: tipos de servicio, tarifas, centros de costo, terminos de pago
+- WhatsApp Business: configuracion, switches, historial de envios
 
 ### 5.21 App de operador
 
-- dashboard de operador
-- inspeccion de servicio asignado
-- fotos, firma y generacion de evidencia/documentos
+- dashboard, inspeccion de servicio asignado
+- fotos, items, firma y generacion de evidencia
 
 ### 5.22 Portal cliente
 
-- dashboard de cliente
-- consulta de servicios y facturas
-- solicitud de nuevos servicios
+- dashboard, servicios, facturas, solicitud de servicios
 
-### 5.23 Historico financiero y pipeline VIP
+### 5.23 Historico financiero
 
-- modulo `Historical` para vistas historicas y analiticas
-- flujo VIP asociado a clientes y a importacion PDF
+- modulo `Historical` con sub-tabs Compras / Ventas
+- **Importacion de compras historicas (SAP):**
+  - parseo XLSX/CSV con deteccion automatica de columnas
+  - preview con tabs: Facturas nuevas, Proveedores nuevos (con sugerencias de match), Duplicados
+  - agrupacion normalizada de proveedores por RUT base (sin DV) para evitar splitting visual
+  - limpieza de caracteres de reemplazo (U+FFFD)
+  - progreso con rango de fechas real durante la importacion
+  - deteccion de duplicados: supplier_invoices (RUT+folio), costs (supplier+document_number)
+  - columna "Duplicado en" (Compras / Costos) con tooltip del costo existente
+  - aviso "Posible periodo ya importado" condicionado a duplicados reales
+  - reset de estado al abrir modal (permite re-subir mismo archivo)
+- **Importacion de ventas historicas (DTE SII):**
+  - deteccion de duplicados contra invoices (numero_fiscal, folio)
+  - **Nuevo:** deteccion de duplicados contra incomes y payments con folio en glosa
+  - `duplicateSource` tag (invoice, income_glosa, payment_glosa)
+- **Tablas de compras/ventas historicas:**
+  - columna RUT de cliente/proveedor con formato `xx.xxx.xxx-x`
+  - batch edit masivo (modificar descripcion de producto/servicio por lotes)
+  - filtros, paginacion, vista agrupada y pipeline
+  - `source` para trazabilidad del origen del registro
+  - boton "Recibir en Inventario" para compras con items de inventario
+
+### 5.24 Recovery Center (NUEVO)
+
+- modulo en Settings → Centro de recuperacion
+- **Auditoria transaccional:** tabla `recovery_audit_entries` con bitacora inmutable de operaciones
+  - modulos auditados: invoices, services, costs, inventory
+  - metadata completa (old_data, new_data, user_id, operation_id)
+  - solo funciones SECURITY DEFINER pueden escribir o revertir
+- **Simulacion:** preview de impacto antes de ejecutar una reversion
+- **Reversion:** rollback transaccional de operaciones con registro de quien y cuando revirtio
+- **Configuracion:** retention_days (30-3650), max_records_per_reversal (1-500)
+
+### 5.25 Document Library (NUEVO)
+
+- ruta `/document-library`
+- tabla `business_documents` con categorias:
+  - contratos, permisos, seguros, documentos_legales
+  - documentos_vehiculos, documentos_operadores
+  - proveedores, clientes, facturas_y_respaldo, otros
+- upload a Supabase Storage con metadatos (file_name, file_type, file_size)
+- tags, fechas de vencimiento, confidencialidad
+- soft delete (`deleted_at`)
+- indices para consultas por categoria activa y vencimientos proximos
+
+### 5.26 Prevencion de duplicados y registros huerfanos (Transversal)
+
+- **Aviso "Folio detectado":**
+  - `CostFormStep2`: detecta "N° XXXX" o "Folio XXXX" en description
+  - `PaymentForm`: detecta en notes y bank_reference
+  - `SmartPaymentForm`: idem, adaptado a modal de pago rapido
+- **Deteccion en importadores:**
+  - Compras (SAP): chequea `supplier_invoices` + `costs` con `document_number`
+  - Ventas (DTE SII): chequea `invoices` + `incomes` y `payments` con folio en glosa
+- **Limpiezas correctivas aplicadas:**
+  - Consolidacion de inventory_suppliers duplicados (inactivos → activo canonico)
+  - Eliminacion de supplier_invoices duplicados con su par en costs
+  - Backfill de costs.document_number desde description
+  - Eliminacion de pagos huerfanos (sin factura asociada)
+- **Prevencion DB:**
+  - `UNIQUE` en inventory_suppliers.rut
+  - indices unicos parciales en supplier_invoices y costs para bloquear duplicados futuros
+  - FK cascade y triggers de limpieza para pagos automaticos huerfanos
 
 ---
 
@@ -388,40 +493,45 @@ flowchart LR
 
 1. Cliente solicita servicio o backoffice lo crea.
 2. Administracion asigna grua y operador.
-3. Operador ejecuta inspeccion en terreno con evidencia.
+3. Operador ejecuta inspeccion en terreno con evidencia (fotos, items, firma).
 4. Servicio se cierra operacionalmente.
-5. Backoffice agrupa en cierres cuando aplica.
+5. Backoffice agrupa en cierres (cubierto + exceso cuando aplica).
 6. Se genera factura.
-7. Se registra o concilia pago.
+7. Se registra o concilia pago (con aviso si escriben folio en glosa).
 8. Impacta dashboard, reportes y proyecciones.
 
 ### 6.2 Compra o costo con proveedor
 
-1. Usuario carga costo manualmente, por CSV o por XML.
-2. El sistema valida proveedor, categoria, duplicados y sugerencias.
-3. Puede crear costo, pago a proveedor y, si corresponde, movimiento de inventario.
-4. La informacion queda enlazada con proveedor, documento y trazabilidad de compra.
+1. Usuario carga costo manual, por CSV o por XML.
+2. Sistema valida proveedor, categoria, duplicados y sugiere matches.
+3. **Si escribe folio en la glosa**, el sistema muestra aviso preventivo.
+4. Crea costo, pago a proveedor y si corresponde movimiento de inventario.
+5. Informacion queda enlazada con trazabilidad de compra.
 
-### 6.3 Inventario con trazabilidad financiera
+### 6.3 Importacion de compras historicas (SAP)
 
-1. Se registra entrada o compra.
-2. Se crea o enlaza costo asociado.
-3. Se registra movimiento de inventario.
-4. Si aplica, se descuenta o consume en grua/servicio.
-5. Reportes y valorizacion se actualizan sobre la misma base.
+1. Usuario sube archivo XLSX/CSV.
+2. Sistema parsea, normaliza RUTs, detecta proveedores existentes.
+3. Preview en tabs: Facturas nuevas, Proveedores nuevos (con sugerencias), Duplicados.
+4. Duplicados se detectan contra supplier_invoices (RUT+folio) y costs (supplier+document_number).
+5. Usuario selecciona que importar y confirma.
+6. Sistema muestra progreso con rango de fechas real.
+7. Si aplica, se muestra aviso "Posible periodo ya importado" solo si hay duplicados reales.
 
-### 6.4 Captura rapida con OCR
+### 6.4 Importacion de ventas historicas (DTE SII)
 
-1. Usuario captura foto de documento.
-2. Edge Function procesa OCR.
-3. El sistema propone datos para costo o registro posterior.
+1. Usuario sube archivo XLSX/CSV.
+2. Sistema parsea, normaliza RUTs, detecta clientes existentes.
+3. Duplicados detectados contra invoices (numero_fiscal, folio) + incomes/payments con folio en glosa.
+4. Preview y confirmacion.
 
-### 6.5 Solicitud desde portal cliente
+### 6.5 Inventario con trazabilidad financiera
 
-1. Cliente autenticado ingresa al portal.
-2. Completa formulario dinamico de solicitud.
-3. Se crea solicitud/servicio segun flujo configurado.
-4. Se notifica y se incorpora al trabajo administrativo.
+1. Registro de entrada o compra (manual o XML).
+2. Costo asociado (creado o enlazado).
+3. Movimiento de inventario.
+4. Si aplica, consumo en grua/servicio.
+5. Reportes y valorizacion actualizados.
 
 ---
 
@@ -429,24 +539,25 @@ flowchart LR
 
 - `services` es la entidad central del dominio.
 - La conciliacion de pagos es manual; no se asume matching automatico final.
-- Costos, inventario y proveedores estan fuertemente acoplados en compras y XML.
-- Las importaciones XML deben tratar duplicados y coincidencias similares antes de registrar.
-- Las inspecciones del operador son parte formal del expediente operativo del servicio.
-- Los cierres son la unidad operacional previa a la facturacion para clientes B2B.
-- Las comisiones dependen del cierre correcto del servicio y de la sincronizacion de costos/reglas.
-- El sistema usa timezone de negocio y no debe depender de la zona horaria local del dispositivo para logica critica.
+- Costos, inventario y proveedores estan acoplados en compras y XML.
+- **Categorias de proveedor y categorias de costo son dominios distintos.** No comparten maestro.
+- Las importaciones deben tratar duplicados y coincidencias antes de registrar.
+- **Los duplicados pueden existir entre modulos** (un costo y una compra con mismo folio). El sistema los detecta pero no los prohibe automaticamente; la decision es del usuario (vincular, mantener uno, eliminar otro).
+- Las inspecciones del operador son parte formal del expediente del servicio.
+- Los cierres soportan separacion entre monto cubierto y exceso/deducible.
+- Las comisiones dependen del cierre correcto del servicio.
+- El sistema usa timezone de negocio (`businessClock`).
+- Los imports historicos deben resetear estado al abrir el modal y permitir re-subir el mismo archivo.
 
-### Criterios transversales de aceptacion para cambios futuros
-
-Todo cambio relevante de producto deberia cumplir, como minimo, con estos criterios:
+### Criterios transversales de aceptacion
 
 - no romper el flujo operativo actual del modulo intervenido
 - respetar permisos por rol y visibilidad por modulo
-- mantener trazabilidad cuando afecte servicios, facturas, costos, pagos, inventario o proveedores
-- contemplar estados vacios, errores de red y feedback visible al usuario
-- validar impactos cruzados cuando el flujo toque `costos`, `inventario`, `proveedores`, `cierres` o `facturas`
-- revisar importaciones, duplicados y sincronizacion si el cambio afecta XML, CSV o OCR
-- dejar referencia actualizada en `PRD.md` o `docs/modules/*` cuando cambie el alcance funcional
+- mantener trazabilidad en servicios, facturas, costos, pagos, inventario y proveedores
+- contemplar estados vacios, errores de red y feedback visible
+- validar impactos cruzados en costos, inventario, proveedores, cierres y facturas
+- revisar importaciones, duplicados y sincronizacion si el cambio afecta XML, CSV o SAP/DTE
+- dejar referencia actualizada en `PRD.md` o `docs/modules/*`
 
 ---
 
@@ -454,35 +565,38 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 
 ### Frontend
 
-- React + TypeScript + Vite
-- React Router con lazy loading por ruta
-- React Query para acceso y cache de datos
-- UI basada en Radix/shadcn
-- precarga diferida de chunks de rutas principales despues del primer render
+- React 18 + TypeScript + Vite
+- React Router v6 con lazy loading por ruta
+- React Query (TanStack Query) para cache y acceso a datos
+- UI basada en Radix/shadcn + Tailwind CSS
+- precarga diferida de chunks despues del primer render
 
 ### Backend y datos
 
-- Supabase como backend principal
-- PostgreSQL con tablas relacionales y RPCs
-- Auth, Storage, Realtime y Edge Functions
+- Supabase como backend (PostgreSQL, Auth, Storage, Realtime, Edge Functions)
+- PostgreSQL con tablas relacionales, RPCs y triggers
+- `supabase db push --linked` para deploy de migraciones
+- `supabase gen types typescript --linked` para tipos sincronizados
 
 ### Patrones observados
 
 - hooks fachada por dominio
 - transformacion de datos al borde entre Supabase y UI
-- invalidacion de cache como mecanismo principal de sincronizacion
-- servicios utilitarios para flujos complejos de compra e inventario
+- invalidacion de cache como mecanismo de sincronizacion
+- servicios utilitarios para flujos complejos (UnifiedPurchaseService)
+- `extractFolioFromDescription` para deteccion cross-modulo de patrones de folio
 
-### Archivos fuente de referencia
+### Archivos fuente clave
 
-- `src/App.tsx`
-- `src/hooks/useServices.ts`
-- `src/hooks/services/useServiceQueries.ts`
-- `src/hooks/services/useServiceManager.ts`
-- `src/hooks/useInventory.ts`
-- `src/hooks/useUnifiedRealtimeManager.ts`
-- `src/services/UnifiedPurchaseService.ts`
-- `src/utils/businessClock.ts`
+- `src/App.tsx` — routing y superficies activas
+- `src/hooks/useServices.ts` — hook principal de servicios
+- `src/hooks/useInventory.ts` — hook de inventario
+- `src/hooks/useHistoricalImport.ts` — hook compartido de importacion historica
+- `src/services/UnifiedPurchaseService.ts` — compras unificadas
+- `src/utils/businessClock.ts` — timezone de negocio
+- `src/utils/folioExtractor.ts` — extraccion de folios desde texto
+- `src/utils/purchaseHistoryParser.ts` — parser de compras SAP
+- `src/utils/invoiceHistoryParser.ts` — parser de ventas DTE SII
 
 ---
 
@@ -496,191 +610,90 @@ Todo cambio relevante de producto deberia cumplir, como minimo, con estos criter
 - `parse-purchase-order-pdf`
 - `parse-quote-pdf`
 - `parse-receipt-image`
-- `send-user-invitation`
-- `send-password-reset`
-- `send-invoice-email`
-- `send-inspection-email`
-- `send-service-confirmation`
+- `send-user-invitation` / `send-password-reset`
+- `send-invoice-email` / `send-inspection-email` / `send-service-confirmation`
 - `send-daily-pending-report`
-- `sre-lookup`
-- `tollroutes-proxy`
-- `save-push-subscription`
-- `remove-push-subscription`
-- `send-push-notification`
+- `sre-lookup` / `tollroutes-proxy`
+- `save-push-subscription` / `remove-push-subscription` / `send-push-notification`
 - `scheduled-backup-email`
 - `send-whatsapp-admin`
 
-### Edge Functions server-side (cron/webhooks y utilidades)
+### Edge Functions server-side (cron/webhooks)
 
 - `classify-cost`
 - `generate-sql-dump`
-- `send-document-alerts`
-- `send-operator-notification`
-- `send-payment-reminder`
-- `send-whatsapp-operator`
-- `whatsapp-daily-alerts`
-- `whatsapp-webhook`
+- `send-document-alerts` / `send-operator-notification` / `send-payment-reminder`
+- `send-whatsapp-operator` / `whatsapp-daily-alerts` / `whatsapp-webhook`
 
-### Integraciones funcionales derivadas
+### Integraciones derivadas
 
 - correo transaccional
-- reporte diario programado por `pg_cron` con control por hora de negocio y anti-duplicado diario
+- reporte diario programado por `pg_cron`
 - push notifications
 - OCR server-side para comprobantes
-- importacion y parseo de PDFs (cotizaciones y ordenes de compra)
-- lookup/validacion externa de patentes
-- backups on-demand y configuracion de backup programado por email
-- mapas y rutas
-- peajes
-- busqueda/lookup externo de datos
-- backup y exportacion
-- endurecimiento progresivo de Edge Functions con validacion explicita de JWT y rol en backend
+- parseo de PDFs (cotizaciones, OC)
+- lookup de patentes
+- backups on-demand y programado por email
+- mapas, rutas y peajes
 
 ### WhatsApp Business (Meta Cloud API)
 
-Arquitectura:
-
-```
-App TMS → Supabase Edge Functions → Meta WhatsApp Cloud API → WhatsApp del destinatario
-```
-
-Funciones desplegadas:
-
-- `send-whatsapp-operator` — notifica al operador cuando se le asigna un servicio
-- `send-whatsapp-admin` — notifica a los administradores segun el evento
-- `whatsapp-daily-alerts` — alertas programadas diarias (documentos, pagos, etc.)
-- `whatsapp-webhook` — recibe confirmaciones de entrega/lectura de Meta
-
-Plantillas requeridas (Fase 1):
-
-- `servicio_asignado`
-- `admin_servicio_completado`
-- `admin_documento_vence`
-- `admin_pago_pendiente`
-- `admin_servicio_sin_cotizacion`
-- `admin_orden_compra`
-- `admin_cierre_mensual`
-- `admin_servicio_sin_operador`
-- `admin_resumen_diario`
-
-Configuracion en Supabase (Edge Functions → Secrets):
-
-- `WHATSAPP_TOKEN`
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `WHATSAPP_VERIFY_TOKEN`
-- `ADMIN_WHATSAPP_1` (fallback)
-- `ADMIN_WHATSAPP_2` (fallback)
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-
-Configuracion desde la app:
-
-- ruta: `Configuracion → Alertas → WhatsApp Business`
-- define hasta 2 numeros de administradores (formato `+56 9 XXXX XXXX`)
-- permite activar/desactivar switches por tipo de notificacion
-- incluye accion de "Enviar prueba" para validar integracion
-- incluye pestaña de historial (ultimos 50 envios) con estados `queued/sent/delivered/read/failed`
-
-Persistencia y trazabilidad:
-
-- `whatsapp_settings`: numeros admin y flags de notificaciones
-- `whatsapp_message_log`: log de envios, estado, errores y `provider_message_id`
-- `whatsapp_alert_dedupe`: deduplicacion de alertas diarias para evitar re-envios
-
-Notas operativas y restricciones:
-
-- mientras el negocio no este verificado por Meta, solo se puede enviar a numeros registrados como testers (maximo 5)
-- el webhook de Meta valida contra `WHATSAPP_VERIFY_TOKEN` y debe apuntar a la Edge Function `whatsapp-webhook`
-- es necesario agregar metodo de pago en Meta para produccion
-- datos de referencia (IDs, URLs, numero productivo) estan centralizados en `docs/guia-configuracion-whatsapp.md`
-- la planificacion de expansion futura a clientes y proveedores esta documentada en `docs/enhancements/whatsapp-messaging-expansion-plan.md`
-
-Solucion de problemas (referencia):
-
-- `[132001] Template name does not exist`: plantilla inexistente o idioma incorrecto (debe ser Spanish (CHL) en la cuenta productiva)
-- `[100] Object does not exist or missing permissions`: Phone Number ID incorrecto o token sin permisos
-- `[190] Authentication Error`: token vencido o revocado
-- `EarlyDrop` en logs Supabase: secrets faltantes (`SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`)
-
-### Integraciones no confirmadas como activas en frontend actual
-
-- multi-tenant real
+Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion via Settings → Alertas → WhatsApp Business.
 
 ---
 
 ## 10. Importaciones y automatizacion documental
 
+### SAP (Compras historicas)
+
+- archivos XLSX y CSV
+- parseo y normalizacion de RUT
+- deteccion de proveedores por RUT (con/sin DV)
+- agrupacion normalizada de proveedores no encontrados
+- limpieza de caracteres de reemplazo en nombres
+- duplicados detectados contra supplier_invoices y costs
+
+### DTE SII (Ventas historicas)
+
+- archivos XLSX y CSV
+- deteccion de duplicados contra invoices, incomes y payments
+
 ### XML
 
-El producto soporta importacion XML en al menos 4 frentes:
-
-- `Facturas` / documentos financieros
-- `Costos`
-- `Proveedores`
-- `Inventario/Bodega`
-
-Capacidades observadas:
-
-- parseo de DTE
-- deteccion de duplicados y coincidencias similares
-- clasificacion por proveedor
-- sincronizacion de glosas y defaults
-- integracion opcional con inventario
+- parseo de DTE en Costos, Proveedores e Inventario
+- deteccion de duplicados y coincidencias
 
 ### CSV
 
-- carga masiva en costos
-- carga masiva en servicios
+- carga masiva en costos y servicios
 
 ### PDF / OCR
 
 - PDF en inspecciones y reportes
 - OCR de comprobantes para captura rapida
-- importaciones PDF asociadas al pipeline VIP
+- PDF asociados al pipeline VIP
 
 ---
 
 ## 11. PWA, offline y notificaciones
 
-### Capacidades verificadas
-
-- instalacion PWA
-- Service Worker
-- push notifications
+- instalacion PWA, Service Worker, push notifications
 - almacenamiento offline via IndexedDB
-- colas de acciones offline y sincronizacion cuando vuelve conexion
+- colas de acciones offline con sincronizacion al reconectar
 - cache local de servicios y datos seleccionados
-
-### Alcance offline observado
-
-- hay infraestructura real para trabajo offline
-- el flujo parece priorizar especialmente al rol operador y ciertos datos de servicios
-- sigue siendo necesario explicitar mejor limites, conflictos y casos no soportados a nivel de producto
 
 ---
 
 ## 12. Seguridad y control de acceso
 
-- autenticacion sobre Supabase Auth
-- rutas protegidas por rol
-- roles base: `admin`, `viewer`, `operator`, `client`
-- permisos granulares por modulo para usuarios administrativos
-- separacion de superficies entre backoffice, operador y portal cliente
-- uso de RLS y helpers seguros a nivel backend documentado en el repositorio
-- recuperacion de contraseña con respuesta generica y throttling por email + IP para reducir abuso y enumeracion
-- recuperacion de contraseña reforzada con desafio anti-bot `Turnstile` en frontend y validacion `siteverify` en backend
-- Edge Functions sensibles restringidas por rol real en backend, no solo por visibilidad del frontend
-- funciones expuestas a proveedores externos deben exigir JWT en configuracion y autorizacion interna por rol
-- CSP y headers de seguridad base para reducir impacto de XSS, clickjacking y cargas inseguras
-- OCR de comprobantes restringido a orígenes de storage permitidos o payloads `base64`, con validacion de tipo/tamano y timeout
-
-### Requisito de producto
-
-Toda funcionalidad nueva debe respetar:
-
-- aislamiento por rol
-- visibilidad minima necesaria
-- trazabilidad de cambios sobre operaciones financieras y operativas
+- Supabase Auth con RLS
+- rutas protegidas por rol con `ProtectedRoute`
+- separacion de superficies (backoffice, operador, portal)
+- permisos granulares por modulo
+- recuperacion de contraseña con throttling + Turnstile anti-bot
+- Edge Functions sensibles restringidas por rol en backend
+- CSP y headers de seguridad base
+- modulo Recovery Center con politicas solo admin + SECURITY DEFINER
 
 ---
 
@@ -688,25 +701,26 @@ Toda funcionalidad nueva debe respetar:
 
 ### Rendimiento
 
-- navegacion SPA con carga diferida por rutas
-- pre-carga de chunks principales despues del render inicial
-- cache de consultas con React Query
+- SPA con lazy loading
+- pre-carga de chunks principales
+- React Query con stale-while-revalidate
 
 ### Usabilidad
 
-- interfaz responsive para escritorio y movil
+- responsive para escritorio y movil
 - experiencia diferenciada por perfil
-- patrones visuales consistentes entre modulos administrativos
+- patrones visuales consistentes
 
 ### Confiabilidad
 
 - build estable del frontend
-- soporte de sincronizacion en tiempo real
-- mecanismos de idempotencia parcial en compras/inventario
+- sincronizacion en tiempo real via Supabase Realtime
+- migraciones idempotentes con verificacion post-ejecucion
 
 ### Mantenibilidad
 
 - documentacion modular en `docs/modules/*`
+- tipos TypeScript sincronizados con Supabase
 - separacion por paginas, hooks, componentes y utilidades
 
 ---
@@ -724,20 +738,16 @@ Toda funcionalidad nueva debe respetar:
 - tiempo desde cierre a facturacion
 - porcentaje de facturas conciliadas
 - monto vencido y aging de cobranza
-- desviacion entre costos y presupuesto por periodo
 
 ### Inventario y compras
 
-- tiempo de registro de compra
-- porcentaje de compras con trazabilidad completa costo + proveedor + inventario
+- porcentaje de compras con trazabilidad completa
 - quiebres de stock y sobrestock
 
 ### Adopcion
 
 - usuarios activos por rol
-- tasa de uso del portal cliente
-- tasa de uso de app operador
-- porcentaje de documentos cargados por XML/CSV versus manual
+- tasa de uso del portal cliente / app operador
 
 ---
 
@@ -745,54 +755,50 @@ Toda funcionalidad nueva debe respetar:
 
 ### Prioridad alta
 
-1. **Endurecer producto offline/PWA**
-   - definir conflictos, reintentos, limites de almacenamiento y estados de sync visibles
-
-2. **Separar claramente entornos y datos**
-   - evitar ambiguedad entre preview, desarrollo y productivo
-
-3. **Cerrar definicion de integraciones externas criticas**
-   - mapas, peajes, OCR, email y push con fallback operativo
+1. **Endurecer producto offline/PWA** — conflictos, reintentos, sync states visibles
+2. **Normalizacion masiva de producto/servicio en historicos** usando `default_product_service` del proveedor
+3. **Separar claramente entornos** (preview vs dev vs prod)
 
 ### Prioridad media
 
-4. **Consolidar PRD y mapa de modulos con trazabilidad a codigo**
-5. **Homogeneizar UX en importadores y cargas masivas**
-6. **Fortalecer testing automatizado en flujos de negocio criticos**
+4. **Homogeneizar UX en importadores y cargas masivas**
+5. **Fortalecer testing automatizado en flujos criticos**
+6. **Consolidar documentacion modular** (`docs/modules/*`) con trazabilidad a codigo
 
 ### Prioridad baja / futura
 
-7. **Consolidar WhatsApp (hardening operacional)**
-   - monitoreo de fallas y trazabilidad de entregas/lecturas via webhook
-   - matriz oficial de eventos vs plantillas y control de opt-in/opt-out si aplica
-
-8. **Evaluar multi-tenant solo si cambia la estrategia comercial**
+7. **WhatsApp hardening operacional** — monitoreo, matriz de eventos vs plantillas
+8. **Evaluar multi-tenant** solo si cambia la estrategia comercial
+9. **Vincular costos a compras** desde el importador (accion "Vincular a compra existente")
 
 ---
 
 ## 16. Riesgos actuales
 
-| Riesgo | Impacto | Mitigacion recomendada |
+| Riesgo | Impacto | Mitigacion |
 |---|---|---|
-| Dependencia de Edge Functions e integraciones externas | Medio/Alto | Fallbacks operativos y monitoreo por integracion |
-| Ambiguedad del alcance offline | Alto | Definir matriz oficial de soporte offline por modulo |
-| Complejidad de sincronizacion entre costos, inventario y proveedores | Alto | Mantener flujos conservadores y trazabilidad transaccional |
-| Crecimiento del frontend y chunks pesados | Medio | Code splitting adicional y revision de bundles |
-| Diferencia entre documentacion historica y comportamiento actual | Medio | Mantener PRD y docs/modules sincronizados con el codigo |
+| Dependencia de Edge Functions e integraciones externas | Medio/Alto | Fallbacks operativos y monitoreo |
+| Ambiguedad del alcance offline | Alto | Matriz oficial de soporte offline por modulo |
+| Complejidad de sincronizacion costos↔inventario↔proveedores | Alto | Flujos conservadores, trazabilidad transaccional |
+| Duplicados entre modulos (costos vs compras) | Medio | Deteccion implementada, decision manual del usuario |
+| Crecimiento del frontend | Medio | Code splitting y revision de bundles |
+| Diferencia entre documentacion y codigo | Medio | PRD y docs/modules sincronizados |
 
 ### Matriz resumida de modulo, datos e integraciones criticas
 
-| Modulo | Entidades / tablas dominantes | Integraciones o dependencias criticas | Riesgo principal |
+| Modulo | Entidades / tablas dominantes | Integraciones criticas | Riesgo principal |
 |---|---|---|---|
-| Servicios | `services`, `service_resources`, relaciones con clientes, gruas y operadores | asignacion, inspecciones, calendario, cierres | inconsistencia entre estado operativo y recursos asignados |
-| Facturas y cobros/pagos | `invoices`, pagos, cierres, clientes | email, conciliacion, pipeline, reportes | desalineacion entre emision, cobro y estado financiero |
-| Costos | `costs`, clasificaciones, relaciones con servicio/proveedor | XML, CSV, inventario, proveedores | duplicados, clasificacion incorrecta o enlace incompleto |
-| Inventario | `inventory_items`, `inventory_stock`, `inventory_movements` | compras, costos, consumo en gruas, XML | quiebres de trazabilidad entre costo y movimiento fisico |
-| Proveedores | `inventory_suppliers`, pagos, documentos XML | costos, inventario, calendario de pagos | pagos o documentos sin asociacion consistente |
-| Cuentas por pagar | acreedores, deudas, cuotas, pagos | reportes financieros | divergencia entre deuda estructurada y caja real |
-| Operador / inspecciones | servicios asignados, inspecciones, adjuntos | PWA, PDF, email | perdida de evidencia o sync incompleto offline |
-| Portal cliente | servicios y facturas del cliente | auth, permisos, formularios dinamicos | exposicion indebida de datos o solicitudes incompletas |
-| Reportes y proyecciones | agregados de servicios, facturas, costos, pagos/cobros | exportadores, filtros, calculos derivados | decisiones sobre datos incompletos o no sincronizados |
+| Servicios | `services`, `service_items` | asignacion, inspecciones, cierres | inconsistencia estado ↔ recursos |
+| Facturas y pagos | `invoices`, pagos, cierres | email, conciliacion, pipeline | desalineacion emision ↔ cobro |
+| Costos | `costs`, clasificaciones | XML, CSV, inventario, proveedores | duplicados, clasificacion incorrecta |
+| Inventario | `inventory_items`, `stock`, `movements` | compras, costos, gruas | quiebres de trazabilidad |
+| Proveedores | `inventory_suppliers`, `supplier_categories` | XML, costos, inventario | categorias inconsistentes, duplicados |
+| Cuentas por pagar | acreedores, deudas, cuotas | reportes financieros | divergencia deuda ↔ caja real |
+| Operador / inspecciones | servicios, inspecciones, adjuntos | PWA, PDF, email | perdida de evidencia offline |
+| Portal cliente | servicios, facturas del cliente | auth, permisos | exposicion indebida de datos |
+| Historico financiero | `supplier_invoices`, importaciones | SAP, DTE SII | duplicados no detectados |
+| Recovery Center | `recovery_audit_entries`, `recovery_settings` | modulos auditables | reversion indebida |
+| Document Library | `business_documents` | Storage | archivos huerfanos, vencimientos |
 
 ---
 
@@ -800,33 +806,32 @@ Toda funcionalidad nueva debe respetar:
 
 - multi-tenant real
 - automatizacion completa de conciliacion contable
-- apertura del sistema como plataforma generica para multiples verticales fuera del rubro de gruas
+- apertura del sistema como plataforma generica para multiples verticales
 
 ---
 
 ## 18. Trazabilidad tecnica resumida
 
-Tabla orientada a onboarding. Lista archivos y hooks representativos, no exhaustivos.
-
-| Modulo | Pagina / entrypoint | Hooks / servicios clave | Documentacion relacionada |
+| Modulo | Pagina / entrypoint | Hooks / servicios clave | Docs |
 |---|---|---|---|
-| Servicios | `src/pages/Services.tsx` | `useServicesPage`, `useServices`, `useServiceManager`, `useServiceQueries` | `docs/modules/services.md` |
+| Servicios | `src/pages/Services.tsx` | `useServicesPage`, `useServiceManager` | `docs/modules/services.md` |
 | Facturas | `src/pages/Invoices.tsx` | `useInvoices`, `usePagedInvoices` | `docs/modules/invoices.md` |
-| Costos | `src/pages/Costs.tsx` | `useCosts`, `useDeleteCost`, `useUniversalSync`, `useInventorySyncWatcher` | `docs/modules/costs.md` |
-| Inventario | `src/pages/Inventory.tsx` | `useInventory`, `useInventoryStats`, `useInventoryMovements`, `UnifiedPurchaseService` | `docs/modules/inventory.md` |
-| Proveedores | `src/pages/Suppliers.tsx` | `useSupplierStats`, `XMLDocumentUpload` | `docs/modules/suppliers.md` |
-| Cierres | `src/pages/Closures.tsx` | hooks propios de cierres y relaciones con facturacion | `docs/modules/closures.md` |
-| Clientes | `src/pages/Clients.tsx` | hooks de clientes y formularios/ficha de cliente | `docs/modules/clients.md` |
-| Gruas | `src/pages/Cranes.tsx` | hooks de flota, mantenciones y consumo de inventario | `docs/modules/cranes.md` |
-| Vehiculos, tipos y tarifas | `src/pages/Vehicles.tsx`, `src/pages/ServiceTypes.tsx`, `src/pages/ServiceRates.tsx` | hooks y formularios catalogo para configuracion operativa | documentado transversalmente en codigo y docs relacionadas |
-| Reportes | `src/pages/Reports.tsx` | `useReports`, exportadores PDF/XLSX | `docs/modules/reports.md` |
-| Proyecciones | `src/pages/IncomeProjections.tsx` | hooks de proyeccion (aging/cashflow) | `docs/modules/projections.md` |
-| Cuentas por pagar | `src/pages/AccountsPayable.tsx` | hooks de deudas, cuotas y pagos | `docs/modules/accounts-payable.md` |
-| Comisiones | `src/pages/Commissions.tsx` | hooks y RPCs de comisiones | `docs/modules/commissions.md` |
-| Operador | `src/pages/OperatorDashboard.tsx`, `src/pages/operator/ServiceInspection.tsx` | `useServiceInspection` | `docs/modules/operator-app.md` |
-| Portal cliente | `src/pages/portal/PortalDashboard.tsx`, `src/pages/portal/PortalRequestService.tsx` | hooks del portal y formularios de solicitud | `docs/modules/portal.md` |
-| Backup y settings | `src/pages/BackupPage.tsx`, `src/pages/Settings.tsx` | `useBackupManager`, hooks de usuarios/permisos | `docs/modules/backup.md`, `docs/modules/settings-admin.md` |
-| Realtime y sincronizacion | `src/App.tsx`, capas compartidas | `useUnifiedRealtimeManager`, `useUniversalSync`, `globalDataRefresh` | documentado transversalmente en el codigo y docs modulares |
+| Costos | `src/pages/Costs.tsx` | `useCosts`, `useUniversalSync` | `docs/modules/costs.md` |
+| Inventario | `src/pages/Inventory.tsx` | `useInventory`, `UnifiedPurchaseService` | `docs/modules/inventory.md` |
+| Proveedores | `src/pages/Suppliers.tsx` | `useSuppliers`, `BatchEditSuppliersModal` | `docs/modules/suppliers.md` |
+| Cierres | `src/pages/Closures.tsx` | hooks de cierres (covered/excess) | `docs/modules/closures.md` |
+| Clientes | `src/pages/Clients.tsx` | hooks de clientes, `formatRut` | `docs/modules/clients.md` |
+| Gruas | `src/pages/Cranes.tsx` | hooks de flota y mantenciones | `docs/modules/cranes.md` |
+| Reportes | `src/pages/Reports.tsx` | `useReports` | `docs/modules/reports.md` |
+| Proyecciones | `src/pages/IncomeProjections.tsx` | hooks de aging/cashflow | `docs/modules/projections.md` |
+| Cuentas por pagar | `src/pages/AccountsPayable.tsx` | hooks de deudas | `docs/modules/accounts-payable.md` |
+| Comisiones | `src/pages/Commissions.tsx` | hooks y RPCs | `docs/modules/commissions.md` |
+| Historico | `src/pages/Historical.tsx` | `useHistoricalImport`, importers | `docs/modules/finance-historical.md` |
+| Document Library | `src/pages/DocumentLibrary.tsx` | hooks de documentos | NUEVO |
+| Operador | `src/pages/OperatorDashboard.tsx` | `useServiceInspection` | `docs/modules/operator-app.md` |
+| Portal | `src/pages/portal/*` | hooks del portal | `docs/modules/portal.md` |
+| Settings | `src/pages/Settings.tsx` | `CategoriesTab`, `RecoveryCenterTab` | `docs/modules/settings-admin.md` |
+| Backup | `src/pages/BackupPage.tsx` | `useBackupManager` | `docs/modules/backup.md` |
 
 ---
 
@@ -837,15 +842,15 @@ Este PRD debe leerse junto con:
 - `src/App.tsx` para routing y superficies activas
 - `docs/modules/README.md` para mapa tecnico por modulo
 - `docs/modules/*.md` para detalle tecnico de cada area
-- `docs/guia-configuracion-whatsapp.md` para configuracion operativa de WhatsApp Business
-- `docs/enhancements/whatsapp-messaging-expansion-plan.md` para roadmap y planificacion de expansion de mensajeria
+- `supabase/migrations/*.sql` para schema y reglas de negocio en DB
 - `src/hooks/*` y `src/services/*` para flujos funcionales reales
+- `src/utils/folioExtractor.ts` para deteccion cross-modulo de folios
 
-Cuando exista diferencia entre documentacion historica y codigo vigente, debe prevalecer el comportamiento observable en el codigo y luego actualizar esta documentacion.
+Cuando exista diferencia entre documentacion y codigo vigente, **debe prevalecer el comportamiento observable en el codigo** y luego actualizar esta documentacion.
 
-### Gobernanza recomendada del documento
+### Gobernanza del documento
 
-- actualizar este PRD cuando cambie el alcance real de rutas, modulos o integraciones
+- actualizar cuando cambie el alcance real de rutas, modulos o integraciones
 - reflejar cambios mayores de UX o negocio tambien en `docs/modules/*`
-- usar el PRD como fuente ejecutiva y las docs modulares como detalle tecnico
-- evitar registrar funcionalidades aspiracionales como si ya estuvieran operativas
+- el PRD es fuente ejecutiva; las docs modulares son detalle tecnico
+- evitar registrar funcionalidades aspiracionales como operativas

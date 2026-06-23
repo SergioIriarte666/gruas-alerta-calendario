@@ -125,10 +125,14 @@ export function useHistoricalImport() {
 
   /**
    * Obtiene todos los numero_fiscal y folio existentes para deduplicación en import de ventas.
+   * También busca folios escritos en incomes (description/notes/bank_reference) y
+   * payments (notes/bank_reference) para cubrir el patrón "folio en glosa".
    */
   const fetchExistingInvoiceRefs = async (): Promise<{
     numeros: Set<string>;
     folios: Set<string>;
+    incomeFolios: Set<string>;
+    paymentFolios: Set<string>;
   }> => {
     const { data: existingInvoices } = await supabase
       .from('invoices')
@@ -141,7 +145,58 @@ export function useHistoricalImport() {
       (existingInvoices || []).map((inv: { folio?: string | null }) => inv.folio).filter(Boolean) as string[],
     );
 
-    return { numeros, folios };
+    // Detectar folios en incomes (patrón "folio en glosa" en ventas)
+    const incomeFolios = new Set<string>();
+    const PAGE_SIZE = 1000;
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: incomePage } = await supabase
+        .from('incomes')
+        .select('description, notes, bank_reference')
+        .or('description.not.is.null,notes.not.is.null,bank_reference.not.is.null')
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (!incomePage || incomePage.length === 0) break;
+
+      for (const income of incomePage) {
+        const folio =
+          extractFolioFromDescription(income.description) ||
+          extractFolioFromDescription(income.notes) ||
+          extractFolioFromDescription(income.bank_reference);
+        if (folio) incomeFolios.add(folio);
+      }
+
+      if (incomePage.length < PAGE_SIZE) break;
+    }
+
+    // Detectar folios en payments (patrón "folio en glosa" en pagos)
+    const paymentFolios = new Set<string>();
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data: paymentPage } = await supabase
+        .from('payments')
+        .select('notes, bank_reference')
+        .or('notes.not.is.null,bank_reference.not.is.null')
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (!paymentPage || paymentPage.length === 0) break;
+
+      for (const payment of paymentPage) {
+        const folio =
+          extractFolioFromDescription(payment.notes) ||
+          extractFolioFromDescription(payment.bank_reference);
+        if (folio) paymentFolios.add(folio);
+      }
+
+      if (paymentPage.length < PAGE_SIZE) break;
+    }
+
+    if (incomeFolios.size > 0) {
+      logger.debug(`Detectados ${incomeFolios.size} folios en incomes (glosa)`);
+    }
+    if (paymentFolios.size > 0) {
+      logger.debug(`Detectados ${paymentFolios.size} folios en payments (glosa)`);
+    }
+
+    return { numeros, folios, incomeFolios, paymentFolios };
   };
 
   return {

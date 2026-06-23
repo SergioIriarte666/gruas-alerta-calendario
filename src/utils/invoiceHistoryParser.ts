@@ -51,6 +51,8 @@ export interface ProcessedInvoice {
   clientMatch?: 'exact' | 'multiple' | 'none';
   matchedClients?: Client[];
   documentType: DocumentType;
+  /** Indica si este duplicado viene de income/payment con folio en glosa */
+  duplicateSource?: 'income_glosa' | 'payment_glosa';
 }
 
 export type InvoiceImportStatus = ProcessedInvoice['status'];
@@ -493,7 +495,11 @@ export const processInvoiceRows = (
   rows: ParsedInvoiceRow[],
   clients: Client[],
   existingNumerosFiscales: Set<string>,
-  existingFolios?: Set<string>
+  existingFolios?: Set<string>,
+  /** Folios detectados en incomes.description/notes/bank_reference (patron "folio en glosa") */
+  existingIncomeFolios?: Set<string>,
+  /** Folios detectados en payments.notes/bank_reference (patron "folio en glosa") */
+  existingPaymentFolios?: Set<string>
 ): ImportPreview => {
   // If rows have documentType set (Libro de Ventas), process all of them.
   // Otherwise (old columnar format), filter to FACTURA ELECTRONICA only.
@@ -566,8 +572,15 @@ export const processInvoiceRows = (
       processed.clientMatch = 'none';
     }
 
-    // Check duplicates by numero_fiscal or by generated folio
-    if (existingNumerosFiscales.has(row.folio) || (existingFolios && existingFolios.has(processed.folio))) {
+    // Check duplicates by numero_fiscal, by generated folio, or by folio en glosa de incomes/payments
+    const isDuplicateInvoice = existingNumerosFiscales.has(row.folio) || (existingFolios && existingFolios.has(processed.folio));
+    const isDuplicateInIncome = existingIncomeFolios ? existingIncomeFolios.has(row.folio) : false;
+    const isDuplicateInPayment = existingPaymentFolios ? existingPaymentFolios.has(row.folio) : false;
+
+    if (isDuplicateInvoice || isDuplicateInIncome || isDuplicateInPayment) {
+      // Tag with source of duplication for UI
+      if (isDuplicateInIncome) processed.duplicateSource = 'income_glosa';
+      else if (isDuplicateInPayment) processed.duplicateSource = 'payment_glosa';
       duplicates.push(processed);
       continue;
     }

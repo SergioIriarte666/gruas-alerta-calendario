@@ -485,9 +485,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         return;
       }
 
-      const { numeros: existingNumeros, folios: existingFolios } = await fetchExistingInvoiceRefs();
+      const { numeros: existingNumeros, folios: existingFolios, incomeFolios, paymentFolios } = await fetchExistingInvoiceRefs();
 
-      const result = processInvoiceRows(rows, clients, existingNumeros, existingFolios);
+      const result = processInvoiceRows(rows, clients, existingNumeros, existingFolios, incomeFolios, paymentFolios);
       const savedMappings = await getMappings('sale');
       const mappingByRut = new Map(
         savedMappings.map((mapping) => [normalizeRut(mapping.source_rut), mapping])
