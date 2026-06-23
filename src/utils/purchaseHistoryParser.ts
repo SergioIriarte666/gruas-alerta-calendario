@@ -5,6 +5,7 @@ import { stringSimilarity, toTitleCase } from '@/lib/utils';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
+import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 
 export type PurchaseDocumentType = 'factura' | 'nota_credito' | 'nota_debito' | 'factura_exenta';
 
@@ -39,6 +40,15 @@ export interface ProcessedPurchase {
   matchedSuppliers?: Supplier[];
   documentType: PurchaseDocumentType;
 }
+
+/** Builds a database-safe description for historical files that omit this field. */
+export const getPurchaseImportDescription = (purchase: ProcessedPurchase): string => {
+  const original = normalizeProductServiceDescription(purchase.description);
+  if (original.length >= 10) return original;
+
+  const context = `Compra histórica — folio ${purchase.invoice_number}`;
+  return normalizeProductServiceDescription(original ? `${original} — ${context}` : context);
+};
 
 export type PurchaseImportStatus = ProcessedPurchase['status'];
 

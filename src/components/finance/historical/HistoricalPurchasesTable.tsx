@@ -242,10 +242,18 @@ export const HistoricalPurchasesTable = ({
                   </TableCell>
                 )}
 
-                <TableCell className="text-muted-foreground text-sm max-w-[320px]">
-                  <span className="block truncate" title={invoice.product_service_description || invoice.description || ''}>
-                    {invoice.product_service_description || invoice.description || ''}
-                  </span>
+                <TableCell className="max-w-[320px] text-sm text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(invoice)}
+                    className="group flex w-full items-center gap-2 rounded-md px-2 py-1 text-left transition-colors hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    title="Editar glosa"
+                  >
+                    <span className="block min-w-0 flex-1 truncate">
+                      {invoice.product_service_description || invoice.description || 'Sin glosa registrada'}
+                    </span>
+                    <Edit className="size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-70 group-focus-visible:opacity-70" />
+                  </button>
                 </TableCell>
 
                 <TableCell className="text-muted-foreground text-sm">

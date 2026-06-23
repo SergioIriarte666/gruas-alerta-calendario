@@ -12,6 +12,7 @@ import {
 } from '@/utils/invoiceHistoryParser';
 import {
   getEffectivePurchaseStatus,
+  getPurchaseImportDescription,
   getPurchaseImportKey,
   type ProcessedPurchase,
 } from '@/utils/purchaseHistoryParser';
@@ -93,5 +94,11 @@ describe('effective historical statuses and persistence fields', () => {
       paid_amount: 0,
       payment_date: '2026-06-01',
     });
+  });
+
+  it('builds valid purchase descriptions when the imported file omits or shortens them', () => {
+    expect(getPurchaseImportDescription({ ...purchase, description: '' })).toBe('Compra histórica — folio 456');
+    expect(getPurchaseImportDescription({ ...purchase, description: 'Diesel' })).toBe('Diesel — Compra histórica — folio 456');
+    expect(getPurchaseImportDescription({ ...purchase, description: 'Servicio de mantención' })).toBe('Servicio de mantención');
   });
 });

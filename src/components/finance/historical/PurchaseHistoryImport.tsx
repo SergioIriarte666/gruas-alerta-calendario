@@ -18,9 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useImportMappings, type ImportMappingResolution } from '@/hooks/useImportMappings';
 import { useImportHistoryLog, type ImportHistoryLogEntry } from '@/hooks/useImportHistoryLog';
@@ -34,8 +33,8 @@ import {
   PurchaseImportStatus,
   getPurchaseImportKey,
   getEffectivePurchaseStatus,
+  getPurchaseImportDescription,
 } from '@/utils/purchaseHistoryParser';
-import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { createLogger } from "@/lib/logger";
 import { formatCLP, formatDate, normalizeRut, rutCandidates, rutMatches, getInvoiceStatusBadgeClass } from '@/utils/purchase/purchaseImportHelpers';
 import { applyStatusToSelectedKeys, getImportSelectionState, toggleAllImportableKeys } from '@/utils/historicalImportSelection';
@@ -120,7 +119,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     email: '',
     phone: ''
   });
-  const [instructionsOpen, setInstructionsOpen] = useState(true);
   const [overlappingImportLog, setOverlappingImportLog] = useState<ImportHistoryLogEntry | null>(null);
 
   // Compute suggestions when unmatched suppliers are set
@@ -944,7 +942,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (selectedInvoices.has(key) && inv.supplierId) {
             const nRut = normalizeRut(inv.rut);
             const resolvedSupplierId = supplierRutToId.get(nRut) || inv.supplierId;
-            const psd = normalizeProductServiceDescription(inv.description);
+            const psd = getPurchaseImportDescription(inv);
             invoicesToInsert.push({
                 invoice_number: inv.invoice_number,
                 supplier_id: resolvedSupplierId,
@@ -975,7 +973,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const supplierId = supplierRutToId.get(nRut);
             
             if (supplierId) {
-                const psd = normalizeProductServiceDescription(inv.description);
+                const psd = getPurchaseImportDescription(inv);
                 invoicesToInsert.push({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
@@ -1004,7 +1002,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
              const supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
-                const psd = normalizeProductServiceDescription(inv.description);
+                const psd = getPurchaseImportDescription(inv);
                 invoicesToInsert.push({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
@@ -1160,42 +1158,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         {step === 'upload' && (
           <div className="space-y-4">
-            <Collapsible open={instructionsOpen} onOpenChange={setInstructionsOpen}>
-              <Card className="border-emerald-200/70 bg-emerald-50/40">
-                <CardHeader className="pb-3">
-                  <CollapsibleTrigger asChild>
-                    <button type="button" className="flex w-full items-center justify-between text-left">
-                      <div>
-                        <CardTitle className="text-base text-emerald-700">¿Cómo obtener este archivo?</CardTitle>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Descarga el libro de compras desde Facturacion.cl antes de importarlo.
-                        </p>
-                      </div>
-                      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-background px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                        {instructionsOpen ? 'Ocultar' : 'Mostrar'}
-                      </span>
-                    </button>
-                  </CollapsibleTrigger>
-                </CardHeader>
-                <CollapsibleContent>
-                  <CardContent className="space-y-3 pt-0">
-                    {[
-                      'Ingresa a Facturacion.cl y abre Compras > Libro de Compras.',
-                      'Selecciona el rango de fechas y haz clic en Buscar.',
-                      'Usa Exportar y descarga el archivo en formato Excel (.xlsx) o CSV.',
-                    ].map((stepText, index) => (
-                      <div key={stepText} className="flex items-start gap-3 rounded-lg border border-emerald-200/60 bg-background/90 p-3">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-semibold text-white">
-                          {index + 1}
-                        </div>
-                        <p className="text-sm text-foreground">{stepText}</p>
-                      </div>
-                    ))}
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
@@ -1776,11 +1738,21 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         {step === 'done' && importResult && (
           <div className="flex flex-col items-center justify-center p-12 text-center">
-            <CheckCircle className="size-12 text-green-500 mb-4" />
-            <h3 className="text-lg font-medium">Importación completada</h3>
+            {importResult.imported === 0 && importResult.errors > 0 ? (
+              <AlertTriangle className="mb-4 size-12 text-destructive" />
+            ) : (
+              <CheckCircle className="mb-4 size-12 text-green-500" />
+            )}
+            <h3 className="text-lg font-medium">
+              {importResult.imported === 0 && importResult.errors > 0
+                ? 'Error en la importación'
+                : 'Importación completada'}
+            </h3>
             <div className="mt-4 space-y-1">
               <p className="text-sm text-muted-foreground">
-                Se importaron {importResult.imported} facturas correctamente.
+                {importResult.imported === 0 && importResult.errors > 0
+                  ? 'No se importaron facturas.'
+                  : `Se importaron ${importResult.imported} facturas correctamente.`}
               </p>
               {importResult.errors > 0 && (
                 <p className="text-sm text-destructive">

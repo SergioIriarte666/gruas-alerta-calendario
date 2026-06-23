@@ -55,6 +55,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
       product_service_description: '',
     },
   });
+  const descriptionLength = form.watch('product_service_description')?.trim().length ?? 0;
 
   React.useEffect(() => {
     if (invoice && open) {
@@ -110,7 +111,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Editar Factura de Compra</DialogTitle>
         </DialogHeader>
@@ -266,9 +267,21 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
               name="product_service_description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descripción de Producto o Servicio</FormLabel>
+                  <div className="flex items-center justify-between gap-3">
+                    <FormLabel>Descripción de producto o servicio (glosa)</FormLabel>
+                    <span className={`text-xs ${descriptionLength > 0 && descriptionLength < 10 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {descriptionLength}/500
+                    </span>
+                  </div>
                   <FormControl>
-                    <Textarea {...field} className="resize-none" />
+                    <Textarea
+                      {...field}
+                      className="resize-none"
+                      rows={4}
+                      maxLength={500}
+                      placeholder="Ej.: Compra de combustible para operación de grúas"
+                      autoFocus
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

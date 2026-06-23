@@ -59,6 +59,7 @@ export const HistoricalPurchases = () => {
   const [editingInvoice, setEditingInvoice] = useState<SupplierInvoiceWithDetails | null>(null);
   const [receivingInventoryInvoice, setReceivingInventoryInvoice] = useState<SupplierInvoiceWithDetails | null>(null);
   const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
+  const [batchEditMode, setBatchEditMode] = useState<'general' | 'description'>('general');
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -493,10 +494,26 @@ export const HistoricalPurchases = () => {
               variant="secondary" 
               size="sm" 
               className="h-8 gap-2"
-              onClick={() => setIsBatchEditOpen(true)}
+              onClick={() => {
+                setBatchEditMode('general');
+                setIsBatchEditOpen(true);
+              }}
             >
               <Edit className="size-4" />
               Editar Lote
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 gap-2"
+              onClick={() => {
+                setBatchEditMode('description');
+                setIsBatchEditOpen(true);
+              }}
+            >
+              <FileText className="size-4" />
+              Editar glosa
             </Button>
 
             <Button
@@ -587,6 +604,8 @@ export const HistoricalPurchases = () => {
         open={isBatchEditOpen}
         onOpenChange={setIsBatchEditOpen}
         onSuccess={() => setSelectedIds([])}
+        initialAction={batchEditMode === 'description' ? 'update_description' : 'update_status'}
+        lockAction={batchEditMode === 'description'}
       />
 
       <PurchaseHistoryImport

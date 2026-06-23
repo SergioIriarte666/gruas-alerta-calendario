@@ -16,6 +16,8 @@ interface BatchEditHistoricalPurchasesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  initialAction?: 'update_status' | 'update_description';
+  lockAction?: boolean;
 }
 
 export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurchasesModalProps> = ({
@@ -23,12 +25,20 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
   open,
   onOpenChange,
   onSuccess,
+  initialAction = 'update_status',
+  lockAction = false,
 }) => {
   const { deleteInvoice, updateInvoice } = usePurchaseInvoices();
   const [action, setAction] = React.useState<'delete' | 'update_status' | 'update_description'>('update_status');
   const [newStatus, setNewStatus] = React.useState<string>('pending');
   const [newDescription, setNewDescription] = React.useState('');
   const [isProcessing, setIsProcessing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setAction(initialAction);
+    setNewDescription('');
+  }, [initialAction, open]);
 
   const handleSubmit = async () => {
     if (selectedIds.length === 0) return;
@@ -79,29 +89,33 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edición Masiva</DialogTitle>
+          <DialogTitle>{lockAction ? 'Editar glosa' : 'Edición Masiva'}</DialogTitle>
           <DialogDescription>
-            Acción para {selectedIds.length} facturas seleccionadas.
+            {lockAction
+              ? `La misma glosa se aplicará a ${selectedIds.length} facturas seleccionadas.`
+              : `Acción para ${selectedIds.length} facturas seleccionadas.`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label>Acción</Label>
-            <Select 
-                value={action} 
-                onValueChange={(val: 'delete' | 'update_status' | 'update_description') => setAction(val)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="update_status">Cambiar Estado</SelectItem>
-                <SelectItem value="update_description">Cambiar Descripción</SelectItem>
-                <SelectItem value="delete">Eliminar</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!lockAction && (
+            <div className="grid gap-2">
+              <Label>Acción</Label>
+              <Select
+                  value={action}
+                  onValueChange={(val: 'delete' | 'update_status' | 'update_description') => setAction(val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="update_status">Cambiar Estado</SelectItem>
+                  <SelectItem value="update_description">Editar glosa</SelectItem>
+                  <SelectItem value="delete">Eliminar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {action === 'update_status' && (
             <div className="grid gap-2">
@@ -128,14 +142,23 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
 
           {action === 'update_description' && (
             <div className="grid gap-2">
-              <Label>Descripción de Producto o Servicio</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="batch-purchase-description">Descripción de producto o servicio</Label>
+                <span className={`text-xs ${newDescription.trim().length > 0 && newDescription.trim().length < 10 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {newDescription.trim().length}/500
+                </span>
+              </div>
               <Textarea
+                id="batch-purchase-description"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="Describe el motivo o razón que originó la creación del documento..."
+                placeholder="Ej.: Compra de combustible para operación de grúas"
                 className="resize-none"
                 rows={4}
+                maxLength={500}
+                autoFocus={lockAction}
               />
+              <p className="text-xs text-muted-foreground">Debe contener entre 10 y 500 caracteres.</p>
             </div>
           )}
         </div>
@@ -146,10 +169,10 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isProcessing}
+            disabled={isProcessing || (action === 'update_description' && newDescription.trim().length < 10)}
             variant={action === 'delete' ? 'destructive' : 'default'}
           >
-            {isProcessing ? 'Procesando...' : 'Confirmar'}
+            {isProcessing ? 'Procesando...' : action === 'update_description' ? 'Guardar glosa' : 'Confirmar'}
           </Button>
         </DialogFooter>
       </DialogContent>
