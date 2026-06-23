@@ -53,6 +53,24 @@ export interface ProcessedInvoice {
   documentType: DocumentType;
 }
 
+export type InvoiceImportStatus = ProcessedInvoice['status'];
+
+/** Stable across tabs and re-renders; used by preview selection and manual status overrides. */
+export const getInvoiceImportKey = (invoice: ProcessedInvoice): string =>
+  [invoice.documentType, invoice.folio, normalizeRut(invoice.rut), invoice.issueDate, invoice.total].join('|');
+
+export const getEffectiveInvoiceStatus = (
+  invoice: ProcessedInvoice,
+  statusOverrides: ReadonlyMap<string, InvoiceImportStatus>,
+): InvoiceImportStatus => statusOverrides.get(getInvoiceImportKey(invoice)) ?? invoice.status;
+
+export const getInvoicePaymentFields = (invoice: ProcessedInvoice, status: InvoiceImportStatus) => ({
+  // Credit notes carry a negative total, but invoices.paid_amount is constrained
+  // to be non-negative. Their financial effect is already represented by total.
+  paid_amount: status === 'paid' ? Math.max(invoice.total, 0) : 0,
+  payment_date: status === 'paid' ? invoice.issueDate : null,
+});
+
 export interface UnmatchedClient {
   rut: string;
   razonSocial: string;

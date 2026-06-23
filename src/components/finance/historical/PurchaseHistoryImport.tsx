@@ -31,10 +31,14 @@ import {
   processPurchaseRows,
   PurchaseImportPreview,
   UnmatchedSupplier,
+  PurchaseImportStatus,
+  getPurchaseImportKey,
+  getEffectivePurchaseStatus,
 } from '@/utils/purchaseHistoryParser';
 import { normalizeProductServiceDescription } from '@/utils/validationUtils';
 import { createLogger } from "@/lib/logger";
 import { formatCLP, formatDate, normalizeRut, rutCandidates, rutMatches, getInvoiceStatusBadgeClass } from '@/utils/purchase/purchaseImportHelpers';
+import { applyStatusToSelectedKeys, getImportSelectionState, toggleAllImportableKeys } from '@/utils/historicalImportSelection';
 
 
 const logger = createLogger("PurchaseHistoryImport");
@@ -84,8 +88,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const [lastError, setLastError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [statusOverrides, setStatusOverrides] = useState<Map<string, PurchaseImportStatus>>(new Map());
+  const [bulkStatus, setBulkStatus] = useState<PurchaseImportStatus | ''>('');
   const [selectedUnmatchedSupplierIndices, setSelectedUnmatchedSupplierIndices] = useState<Set<number>>(new Set());
-  const [markAllAsPaid, setMarkAllAsPaid] = useState(false);
   const [editingSupplierIndex, setEditingSupplierIndex] = useState<number | null>(null);
   const [bulkAssignDialogOpen, setBulkAssignDialogOpen] = useState(false);
   const [bulkAssignSupplierId, setBulkAssignSupplierId] = useState<string>('');
@@ -169,9 +174,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   useEffect(() => {
     if (preview) {
       const allKeys = new Set<string>();
-      preview.matched.forEach((inv, i) => allKeys.add(`matched-${inv.invoice_number}-${i}`));
-      preview.duplicates.forEach((inv, i) => allKeys.add(`duplicate-${inv.invoice_number}-${i}`));
+      preview.matched.forEach((inv) => allKeys.add(getPurchaseImportKey(inv)));
+      preview.unmatched.forEach((inv) => allKeys.add(getPurchaseImportKey(inv)));
+      preview.duplicates.forEach((inv) => allKeys.add(getPurchaseImportKey(inv)));
       setSelectedInvoices(allKeys);
+      setStatusOverrides(new Map());
+      setBulkStatus('');
     }
   }, [preview]);
 
@@ -329,7 +337,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
            // Find if this invoice belongs to one of the resolved suppliers
            const supplierIndex = unmatchedSuppliers.findIndex(s => rutMatches(s.rut, nRut));
            if (selectedUnmatchedSupplierIndices.has(supplierIndex)) {
-               indicesToSelect.push(`unmatched-${inv.invoice_number}-${i}`);
+               indicesToSelect.push(getPurchaseImportKey(inv));
            }
        });
        
@@ -448,7 +456,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const indicesToSelect: string[] = [];
         preview.unmatched.forEach((inv, i) => {
             if (normalizeRut(inv.rut) === nRut) {
-                indicesToSelect.push(`unmatched-${inv.invoice_number}-${i}`);
+                indicesToSelect.push(getPurchaseImportKey(inv));
             }
         });
         setSelectedInvoices(prev => {
@@ -470,11 +478,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setLastError(null);
     setFileName('');
     setSelectedInvoices(new Set());
+    setStatusOverrides(new Map());
+    setBulkStatus('');
     setActiveTab('matched');
     setIsCreatingSupplier(false);
     setSelectedUnmatchedSupplierIndices(new Set());
     setEditingSupplierIndex(null);
-    setMarkAllAsPaid(false);
     setProgressCurrent(0);
     setProgressTotal(0);
     setProgressStage('');
@@ -492,6 +501,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     if (!file) return;
 
     setFileName(file.name);
+    setSelectedInvoices(new Set());
+    setStatusOverrides(new Map());
+    setBulkStatus('');
 
     try {
       const isCSV = file.name.toLowerCase().endsWith('.csv');
@@ -608,7 +620,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setSelectedInvoices(prev => {
       const next = new Set(prev);
       preview?.matched.forEach((inv, i) => {
-        const key = `matched-${inv.invoice_number}-${i}`;
+        const key = getPurchaseImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
       });
@@ -625,7 +637,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         
         // Only select if resolved (created or assigned)
         if (uc && (uc.resolution === 'create' || uc.resolution === 'assign')) {
-           const key = `unmatched-${inv.invoice_number}-${i}`;
+           const key = getPurchaseImportKey(inv);
            if (checked) next.add(key);
            else next.delete(key);
         }
@@ -638,7 +650,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setSelectedInvoices(prev => {
       const next = new Set(prev);
       preview?.duplicates.forEach((inv, i) => {
-        const key = `duplicate-${inv.invoice_number}-${i}`;
+        const key = getPurchaseImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
       });
@@ -648,13 +660,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
   const getSelectedMatchedCount = () => {
     if (!preview) return 0;
-    return preview.matched.filter((inv, i) => selectedInvoices.has(`matched-${inv.invoice_number}-${i}`)).length;
+    return preview.matched.filter((inv) => selectedInvoices.has(getPurchaseImportKey(inv))).length;
   };
 
   const getSelectedUnmatchedCount = () => {
     if (!preview) return 0;
     return preview.unmatched.filter((inv, i) => {
-      const key = `unmatched-${inv.invoice_number}-${i}`;
+      const key = getPurchaseImportKey(inv);
       if (!selectedInvoices.has(key)) return false;
       const nRut = normalizeRut(inv.rut);
       const us = unmatchedSuppliers.find(s => rutMatches(s.rut, nRut));
@@ -664,12 +676,37 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
   const getSelectedDuplicatesCount = () => {
     if (!preview) return 0;
-    return preview.duplicates.filter((inv, i) => selectedInvoices.has(`duplicate-${inv.invoice_number}-${i}`)).length;
+    return preview.duplicates.filter((inv) => selectedInvoices.has(getPurchaseImportKey(inv))).length;
   };
 
   const canImport = () => {
     if (!preview) return false;
     return (getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount()) > 0;
+  };
+
+  const importableInvoices = useMemo(() => {
+    if (!preview) return [];
+    const resolvedUnmatched = preview.unmatched.filter((invoice) => {
+      const supplier = unmatchedSuppliers.find((item) => rutMatches(item.rut, invoice.rut));
+      return supplier && (supplier.resolution === 'create' || supplier.resolution === 'assign');
+    });
+    return [...preview.matched, ...resolvedUnmatched, ...preview.duplicates];
+  }, [preview, unmatchedSuppliers]);
+
+  const importableKeys = useMemo(
+    () => importableInvoices.map(getPurchaseImportKey),
+    [importableInvoices],
+  );
+  const { selectedCount: selectedImportableCount, allSelected: allImportableSelected, indeterminate: someImportableSelected } =
+    getImportSelectionState(importableKeys, selectedInvoices);
+
+  const toggleAllImportable = (checked: boolean) => {
+    setSelectedInvoices((previous) => toggleAllImportableKeys(previous, importableKeys, checked));
+  };
+
+  const applyBulkStatus = () => {
+    if (!bulkStatus || selectedImportableCount === 0) return;
+    setStatusOverrides((previous) => applyStatusToSelectedKeys(previous, importableKeys, selectedInvoices, bulkStatus));
   };
 
   const handleCreateSupplier = async () => {
@@ -697,7 +734,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const indicesToSelect: string[] = [];
         preview.unmatched.forEach((inv, i) => {
             if (rutMatches(inv.rut, nRut)) {
-                indicesToSelect.push(`unmatched-${inv.invoice_number}-${i}`);
+                indicesToSelect.push(getPurchaseImportKey(inv));
             }
         });
         
@@ -901,22 +938,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     // 3. Prepare invoices to insert
     setProgressStage('Preparando documentos...');
     const invoicesToInsert: any[] = [];
-    const withPaidOverride = (payload: any, status: string) => {
-        if (!markAllAsPaid) return { ...payload, status };
-        return {
-            ...payload,
-            status: 'paid',
-        };
-    };
-    
     // Matched invoices
     preview.matched.forEach((inv, i) => {
-        const key = `matched-${inv.invoice_number}-${i}`;
+        const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key) && inv.supplierId) {
             const nRut = normalizeRut(inv.rut);
             const resolvedSupplierId = supplierRutToId.get(nRut) || inv.supplierId;
             const psd = normalizeProductServiceDescription(inv.description);
-            invoicesToInsert.push(withPaidOverride({
+            invoicesToInsert.push({
                 invoice_number: inv.invoice_number,
                 supplier_id: resolvedSupplierId,
                 issue_date: inv.issueDate,
@@ -927,13 +956,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 description: psd,
                 product_service_description: psd,
                 source: 'historico',
-            }, inv.status));
+                status: getEffectivePurchaseStatus(inv, statusOverrides),
+            });
         }
     });
 
     // Unmatched invoices (now resolved)
     preview.unmatched.forEach((inv, i) => {
-        const key = `unmatched-${inv.invoice_number}-${i}`;
+        const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key)) {
             const nRut = normalizeRut(inv.rut);
             
@@ -946,7 +976,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             
             if (supplierId) {
                 const psd = normalizeProductServiceDescription(inv.description);
-                invoicesToInsert.push(withPaidOverride({
+                invoicesToInsert.push({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
                     issue_date: inv.issueDate,
@@ -957,7 +987,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     description: psd,
                     product_service_description: psd,
                     source: 'historico',
-                }, inv.status));
+                    status: getEffectivePurchaseStatus(inv, statusOverrides),
+                });
             } else {
                 logger.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
                 errors++;
@@ -967,14 +998,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     
     // Duplicate invoices
     preview.duplicates.forEach((inv, i) => {
-        const key = `duplicate-${inv.invoice_number}-${i}`;
+        const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key)) {
              const nRut = normalizeRut(inv.rut);
              const supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
                 const psd = normalizeProductServiceDescription(inv.description);
-                invoicesToInsert.push(withPaidOverride({
+                invoicesToInsert.push({
                     invoice_number: inv.invoice_number,
                     supplier_id: supplierId,
                     issue_date: inv.issueDate,
@@ -985,7 +1016,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     description: psd,
                     product_service_description: psd,
                     source: 'historico',
-                }, inv.status));
+                    status: getEffectivePurchaseStatus(inv, statusOverrides),
+                });
              } else {
                  errors++;
              }
@@ -1241,6 +1273,34 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               </div>
             </div>
 
+            <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-end">
+              <label className="flex min-h-9 items-center gap-2 text-sm font-medium cursor-pointer">
+                <Checkbox
+                  aria-label="Seleccionar todos los documentos importables"
+                  checked={allImportableSelected ? true : someImportableSelected ? 'indeterminate' : false}
+                  onCheckedChange={(checked) => toggleAllImportable(checked === true)}
+                />
+                Seleccionar todos
+                <span className="text-xs font-normal text-muted-foreground">({selectedImportableCount} seleccionados)</span>
+              </label>
+              <div className="flex flex-1 flex-col gap-1 sm:ml-auto sm:max-w-[230px]">
+                <Label htmlFor="purchase-document-status" className="text-xs">Estado de documentos</Label>
+                <Select value={bulkStatus} onValueChange={(value) => setBulkStatus(value as PurchaseImportStatus)}>
+                  <SelectTrigger id="purchase-document-status" aria-label="Estado de documentos de compra" className="h-9">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pendiente</SelectItem>
+                    <SelectItem value="paid">Pagada</SelectItem>
+                    <SelectItem value="overdue">Vencida</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button className="h-9" onClick={applyBulkStatus} disabled={!bulkStatus || selectedImportableCount === 0}>
+                Aplicar estado
+              </Button>
+            </div>
+
             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
               <div className="px-1 space-y-2">
                 <TabsList className="w-full justify-start">
@@ -1257,15 +1317,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     Duplicados ({preview.duplicates.length})
                   </TabsTrigger>
                 </TabsList>
-                <div className="flex justify-end">
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-                    <Checkbox
-                      checked={markAllAsPaid}
-                      onCheckedChange={(checked) => setMarkAllAsPaid(!!checked)}
-                    />
-                    Marcar todas como pagadas
-                  </label>
-                </div>
               </div>
 
               <div className="flex-1 min-h-0 mt-2 border rounded-md relative">
@@ -1279,7 +1330,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                               <Checkbox
-                                checked={preview.matched.length > 0 && getSelectedMatchedCount() === preview.matched.length}
+                                aria-label="Seleccionar todas las facturas listas"
+                                checked={preview.matched.length > 0 && getSelectedMatchedCount() === preview.matched.length ? true : getSelectedMatchedCount() > 0 ? 'indeterminate' : false}
                                 onCheckedChange={toggleAllMatched}
                               />
                               Seleccionar todas
@@ -1298,13 +1350,15 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             </TableHeader>
                             <TableBody>
                                 {preview.matched.map((inv, i) => {
-                                    const effectiveStatus = markAllAsPaid ? 'paid' : inv.status;
+                                    const invoiceKey = getPurchaseImportKey(inv);
+                                    const effectiveStatus = getEffectivePurchaseStatus(inv, statusOverrides);
                                     return (
                                     <TableRow key={i}>
                                         <TableCell>
                                             <Checkbox
-                                                checked={selectedInvoices.has(`matched-${inv.invoice_number}-${i}`)}
-                                                onCheckedChange={() => toggleInvoice(`matched-${inv.invoice_number}-${i}`)}
+                                                aria-label={`Seleccionar documento ${inv.invoice_number}`}
+                                                checked={selectedInvoices.has(invoiceKey)}
+                                                onCheckedChange={() => toggleInvoice(invoiceKey)}
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
@@ -1571,11 +1625,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                               <Checkbox
+                                aria-label="Seleccionar todas las facturas con proveedor resuelto"
                                 checked={preview.unmatched.length > 0 && getSelectedUnmatchedCount() === preview.unmatched.filter(inv => {
                                     const nRut = normalizeRut(inv.rut);
                                     const us = unmatchedSuppliers.find(s => normalizeRut(s.rut) === nRut);
                                     return !!us && (us.resolution === 'create' || us.resolution === 'assign');
-                                }).length}
+                                }).length ? true : getSelectedUnmatchedCount() > 0 ? 'indeterminate' : false}
                                 onCheckedChange={toggleAllUnmatched}
                               />
                               Seleccionar disponibles
@@ -1590,6 +1645,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                     <TableHead>Proveedor (RUT)</TableHead>
                                     <TableHead>Fecha</TableHead>
                                     <TableHead className="text-right">Monto</TableHead>
+                                    <TableHead>Estado</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -1597,13 +1653,16 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                     const nRut = normalizeRut(inv.rut);
                                     const us = unmatchedSuppliers.find(s => normalizeRut(s.rut) === nRut);
                                     const isResolvable = us && (us.resolution === 'create' || us.resolution === 'assign');
+                                    const invoiceKey = getPurchaseImportKey(inv);
+                                    const effectiveStatus = getEffectivePurchaseStatus(inv, statusOverrides);
                                     
                                     return (
                                     <TableRow key={i} className={!isResolvable ? 'opacity-50 bg-muted/50' : ''}>
                                         <TableCell>
                                             <Checkbox
-                                                checked={selectedInvoices.has(`unmatched-${inv.invoice_number}-${i}`)}
-                                                onCheckedChange={() => toggleInvoice(`unmatched-${inv.invoice_number}-${i}`)}
+                                                aria-label={`Seleccionar documento ${inv.invoice_number}`}
+                                                checked={selectedInvoices.has(invoiceKey)}
+                                                onCheckedChange={() => toggleInvoice(invoiceKey)}
                                                 disabled={!isResolvable}
                                             />
                                         </TableCell>
@@ -1614,6 +1673,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                         </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
+                                        <TableCell>
+                                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getInvoiceStatusBadgeClass(effectiveStatus)}`}>
+                                            {effectiveStatus === 'paid' ? 'Pagada' : effectiveStatus === 'overdue' ? 'Vencida' : 'Pendiente'}
+                                          </span>
+                                        </TableCell>
                                     </TableRow>
                                 )})}
                             </TableBody>
@@ -1632,7 +1696,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                             </h3>
                             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                               <Checkbox
-                                checked={preview.duplicates.length > 0 && getSelectedDuplicatesCount() === preview.duplicates.length}
+                                aria-label="Seleccionar todos los duplicados"
+                                checked={preview.duplicates.length > 0 && getSelectedDuplicatesCount() === preview.duplicates.length ? true : getSelectedDuplicatesCount() > 0 ? 'indeterminate' : false}
                                 onCheckedChange={toggleAllDuplicates}
                               />
                               Seleccionar todos
@@ -1646,23 +1711,34 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                     <TableHead>Proveedor</TableHead>
                                     <TableHead>Fecha</TableHead>
                                     <TableHead className="text-right">Monto</TableHead>
+                                    <TableHead>Estado</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {preview.duplicates.map((inv, i) => (
-                                    <TableRow key={i}>
+                                {preview.duplicates.map((inv) => {
+                                  const invoiceKey = getPurchaseImportKey(inv);
+                                  const effectiveStatus = getEffectivePurchaseStatus(inv, statusOverrides);
+                                  return (
+                                    <TableRow key={invoiceKey}>
                                         <TableCell>
                                             <Checkbox
-                                                checked={selectedInvoices.has(`duplicate-${inv.invoice_number}-${i}`)}
-                                                onCheckedChange={() => toggleInvoice(`duplicate-${inv.invoice_number}-${i}`)}
+                                                aria-label={`Seleccionar documento duplicado ${inv.invoice_number}`}
+                                                checked={selectedInvoices.has(invoiceKey)}
+                                                onCheckedChange={() => toggleInvoice(invoiceKey)}
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
                                         <TableCell>{toTitleCase(inv.razonSocial)}</TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
+                                        <TableCell>
+                                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getInvoiceStatusBadgeClass(effectiveStatus)}`}>
+                                            {effectiveStatus === 'paid' ? 'Pagada' : effectiveStatus === 'overdue' ? 'Vencida' : 'Pendiente'}
+                                          </span>
+                                        </TableCell>
                                     </TableRow>
-                                ))}
+                                  );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
@@ -1723,7 +1799,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
           </div>
         )}
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-4 flex-none border-t pt-4">
           {step === 'preview' && (
             <div className="flex justify-between w-full items-center">
               <div className="text-sm text-muted-foreground">
@@ -1734,7 +1810,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                   Cancelar
                 </Button>
                 <Button onClick={handleImport} disabled={!canImport()}>
-                  Importar Selección
+                  Importar {totalToImport} documento{totalToImport !== 1 ? 's' : ''}
                 </Button>
               </div>
             </div>

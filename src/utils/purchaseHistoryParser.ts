@@ -40,6 +40,17 @@ export interface ProcessedPurchase {
   documentType: PurchaseDocumentType;
 }
 
+export type PurchaseImportStatus = ProcessedPurchase['status'];
+
+/** Stable across tabs and re-renders; used by preview selection and manual status overrides. */
+export const getPurchaseImportKey = (invoice: ProcessedPurchase): string =>
+  [invoice.documentType, invoice.invoice_number, normalizeRut(invoice.rut), invoice.issueDate, invoice.amount].join('|');
+
+export const getEffectivePurchaseStatus = (
+  invoice: ProcessedPurchase,
+  statusOverrides: ReadonlyMap<string, PurchaseImportStatus>,
+): PurchaseImportStatus => statusOverrides.get(getPurchaseImportKey(invoice)) ?? invoice.status;
+
 export interface UnmatchedSupplier {
   rut: string;
   razonSocial: string;
