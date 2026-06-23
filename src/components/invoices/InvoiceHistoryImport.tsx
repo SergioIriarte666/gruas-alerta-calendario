@@ -684,7 +684,12 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setLastError(null);
     setProgressCurrent(0);
     setProgressTotal(0);
-    setProgressStage('Preparando importación...');
+    const importDateRange = getPreviewDateRange(preview);
+    const importDateLabel =
+      importDateRange.start && importDateRange.end
+        ? `${formatDate(importDateRange.start)} - ${formatDate(importDateRange.end)}`
+        : '';
+    setProgressStage(importDateLabel ? `Preparando importación (${importDateLabel})...` : 'Preparando importación...');
 
     let imported = 0;
     let errors = 0;
@@ -876,12 +881,19 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
       setProgressTotal(invoicesToInsert.length);
       setProgressCurrent(0);
-      setProgressStage(invoicesToInsert.length > 0 ? 'Insertando facturas...' : 'Sin facturas para importar');
+      setProgressStage(
+        invoicesToInsert.length > 0
+          ? (importDateLabel ? `Insertando facturas (${importDateLabel})...` : 'Insertando facturas...')
+          : 'Sin facturas para importar'
+      );
 
       const batchSize = 50;
       for (let i = 0; i < invoicesToInsert.length; i += batchSize) {
         const batch = invoicesToInsert.slice(i, i + batchSize);
-        setProgressStage(`Insertando facturas (${Math.min(i + batch.length, invoicesToInsert.length)}/${invoicesToInsert.length})...`);
+        const batchExampleDate = batch[0]?.issue_date ? formatDate(batch[0].issue_date) : '';
+        const labelPrefix = importDateLabel ? `Insertando facturas (${importDateLabel})` : 'Insertando facturas';
+        const labelSuffix = batchExampleDate ? ` — Ej: ${batchExampleDate}` : '';
+        setProgressStage(`${labelPrefix} (${Math.min(i + batch.length, invoicesToInsert.length)}/${invoicesToInsert.length})${labelSuffix}...`);
         const result = await insertInvoiceBatch(batch as Record<string, unknown>[]);
         
         if (result.error) {

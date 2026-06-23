@@ -768,7 +768,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setLastError(null);
     setProgressCurrent(0);
     setProgressTotal(0);
-    setProgressStage('Preparando importación...');
+    const importDateRange = getPreviewDateRange(preview);
+    const importDateLabel =
+      importDateRange.start && importDateRange.end
+        ? `${formatDate(importDateRange.start)} - ${formatDate(importDateRange.end)}`
+        : '';
+    setProgressStage(importDateLabel ? `Preparando importación (${importDateLabel})...` : 'Preparando importación...');
 
     let imported = 0;
     let errors = 0;
@@ -1068,7 +1073,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
         setProgressTotal(filteredInvoices.length);
         setProgressCurrent(0);
-        setProgressStage(filteredInvoices.length > 0 ? 'Insertando facturas...' : 'Sin facturas para importar');
+        setProgressStage(
+          filteredInvoices.length > 0
+            ? (importDateLabel ? `Insertando facturas (${importDateLabel})...` : 'Insertando facturas...')
+            : 'Sin facturas para importar'
+        );
 
         const isMissingProductServiceDescriptionColumn = (message: string | null | undefined) => {
             const m = (message || '').toLowerCase();
@@ -1085,7 +1094,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const batchSize = 50;
         for (let i = 0; i < filteredInvoices.length; i += batchSize) {
             const batch = filteredInvoices.slice(i, i + batchSize);
-            setProgressStage(`Insertando facturas (${Math.min(i + batch.length, filteredInvoices.length)}/${filteredInvoices.length})...`);
+            const batchExampleDate = batch[0]?.issue_date ? formatDate(batch[0].issue_date) : '';
+            const labelPrefix = importDateLabel ? `Insertando facturas (${importDateLabel})` : 'Insertando facturas';
+            const labelSuffix = batchExampleDate ? ` — Ej: ${batchExampleDate}` : '';
+            setProgressStage(`${labelPrefix} (${Math.min(i + batch.length, filteredInvoices.length)}/${filteredInvoices.length})${labelSuffix}...`);
             
             const { error } = await supabase
                 .from('supplier_invoices')
