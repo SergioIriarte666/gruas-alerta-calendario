@@ -33,15 +33,22 @@ const findCategoryByNormalizedName = (
     return normalizedName === normalizedValue || normalizedLabel === normalizedValue;
   });
 
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
 export const resolveSupplierCategoryValue = (
   categories: SupplierCategoryOption[],
   categoryValue?: string | null,
 ): string => {
-  if (!categoryValue) return '';
+  if (!categoryValue) return findCategoryByNormalizedName(categories, 'otros')?.id || '';
 
   const trimmedValue = categoryValue.trim();
   const byId = categories.find((category) => category.id === trimmedValue);
   if (byId) return byId.id;
+
+  if (isUuid(trimmedValue)) {
+    return findCategoryByNormalizedName(categories, 'otros')?.id || '';
+  }
 
   const normalizedValue = normalizeCategoryText(trimmedValue);
   const byName = findCategoryByNormalizedName(categories, normalizedValue);
@@ -52,7 +59,7 @@ export const resolveSupplierCategoryValue = (
     if (fallbackCategory) return fallbackCategory.id;
   }
 
-  return '';
+  return findCategoryByNormalizedName(categories, 'otros')?.id || '';
 };
 
 export const buildSupplierFormValues = (

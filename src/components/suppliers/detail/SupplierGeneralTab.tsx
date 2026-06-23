@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Mail, Phone, MapPin, User, Calendar, FileText } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
-import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierCategories } from '@/hooks/useSupplierCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,7 +26,8 @@ const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label
 };
 
 export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier }) => {
-  const { data: activeCategories = [] } = useCostCategories();
+  const { data: supplierCategoriesData = [] } = useSupplierCategories();
+  const activeCategories = supplierCategoriesData.filter(c => c.is_active).map(c => ({ id: c.id, name: c.label || c.name }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

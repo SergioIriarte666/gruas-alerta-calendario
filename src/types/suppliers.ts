@@ -22,6 +22,17 @@ export interface Supplier {
   updated_by?: string | null;
 }
 
+export interface SupplierCategory {
+  id: string;
+  name: string;
+  label: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
 // SupplierPaymentStatus - definir antes de usarlo
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 

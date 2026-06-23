@@ -1,5 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,7 +8,6 @@ import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCar
 import { Tag, FileText, Power, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 
 interface Category {
   id: string;
@@ -53,13 +53,8 @@ export const SupplierFormStep3 = ({
   onIsActiveChange,
   errors 
 }: SupplierFormStep3Props) => {
-
-  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(category || undefined);
-
   const validCategoryIds = categories.map((cat) => cat.id);
-  const validSubcategoryNames = subcategories.map((sub) => sub.name);
   const safeCategoryValue = validCategoryIds.includes(category) ? category : undefined;
-  const safeSubcategoryValue = validSubcategoryNames.includes(subcategory) ? subcategory : undefined;
 
   const handleCategoryChange = (value: string) => {
     if (!value || value === 'loading') return;
@@ -133,36 +128,15 @@ export const SupplierFormStep3 = ({
             )}
           </div>
 
-          {/* Subcategoría - solo visible si hay subcategorías disponibles */}
-          {category && subcategories.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-foreground">Subcategoría</Label>
-              <Select
-                key={`supplier-subcategory-${safeCategoryValue ?? 'no-category'}-${safeSubcategoryValue ?? 'empty'}-${subcategories.length}`}
-                value={safeSubcategoryValue}
-                onValueChange={(value) => {
-                  if (!value || value === 'loading') return;
-                  onSubcategoryChange(value);
-                }}
-                disabled={subcategoriesLoading || subcategories.length === 0}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder={subcategoriesLoading ? 'Cargando...' : 'Seleccionar subcategoría'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategoriesLoading ? (
-                    <SelectItem value="loading" disabled>Cargando...</SelectItem>
-                  ) : (
-                    subcategories.map((sub) => (
-                      <SelectItem key={sub.id} value={sub.name}>
-                        {sub.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label className="text-foreground">Subcategoría</Label>
+            <Input
+              value={subcategory}
+              onChange={(e) => onSubcategoryChange(e.target.value)}
+              placeholder="Ej: Lubricantes, Repuestos hidráulicos, etc."
+              className="bg-background"
+            />
+          </div>
         </div>
       </ColoredSectionCard>
 

@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Save, X, Loader2, Building2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ChevronLeft, ChevronRight, Save, Loader2, Building2 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierCategories } from '@/hooks/useSupplierCategories';
 import { SupplierFormData, Supplier } from '@/types/suppliers';
 import { SupplierFormStepNavigation, getSupplierFormSteps, SupplierFormStep } from './form/SupplierFormStepNavigation';
 import { SupplierSummaryPanel } from './form/SupplierSummaryPanel';
@@ -43,10 +43,10 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
-  const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const { data: supplierCategoriesData = [], isLoading: categoriesLoading } = useSupplierCategories();
   const activeCategories = useMemo(
-    () => costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name })),
-    [costCategoriesData]
+    () => supplierCategoriesData.filter(c => c.is_active).map(c => ({ id: c.id, label: c.label, name: c.name })),
+    [supplierCategoriesData]
   );
   const isEditing = !!supplier;
 
@@ -72,9 +72,8 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   );
 
   useEffect(() => {
-    if (supplier && categoriesLoading) return;
     form.reset(normalizedSupplierValues);
-  }, [form, normalizedSupplierValues, supplier, categoriesLoading]);
+  }, [form, normalizedSupplierValues]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
@@ -215,121 +214,107 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-foreground/40 p-4 sm:p-6">
-      <div className="flex size-full items-center justify-center">
-        <Card className="flex h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden border bg-card shadow-xl sm:h-[calc(100dvh-3rem)] lg:max-h-[95vh]">
-          <CardHeader className="flex-shrink-0 rounded-t-lg bg-primary text-primary-foreground">
-            <div className="flex items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-2 text-primary-foreground">
-                <Building2 className="size-5" />
-                {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-              </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onClose}
-                className="text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <p className="mt-1 text-sm text-primary-foreground/80">
-              {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
-            </p>
-          </CardHeader>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-6xl overflow-hidden flex flex-col gap-0 border-border/70 bg-card p-0">
+        <DialogHeader className="border-b border-border/70 bg-muted/20 px-6 py-4">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Building2 className="size-6 text-primary" />
+            {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
+          </DialogDescription>
+        </DialogHeader>
 
-          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:gap-8 xl:p-8">
-                  <div className="space-y-4 xl:sticky xl:top-0 xl:self-start">
-                    <SupplierFormStepNavigation
-                      steps={steps}
-                      currentStep={currentStep}
-                      onStepClick={setCurrentStep}
-                    />
-                    
-                    <SupplierSummaryPanel
-                      name={formValues.name}
-                      rut={formValues.rut}
-                      phone={formValues.phone}
-                      email={formValues.email || ''}
-                      address={formValues.address}
-                      contactName={formValues.contact_name}
-                      category={formValues.category}
-                      categoryLabel={getCategoryLabel(formValues.category)}
-                      notes={formValues.notes || ''}
-                      isActive={formValues.is_active}
-                      isEditing={isEditing}
-                    />
-                  </div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:gap-8 xl:p-8">
+              <div className="space-y-4 xl:sticky xl:top-0 xl:self-start">
+                <SupplierFormStepNavigation
+                  steps={steps}
+                  currentStep={currentStep}
+                  onStepClick={setCurrentStep}
+                />
 
-                  <div className="min-h-0">
-                    {renderStepContent()}
-                  </div>
-                </div>
+                <SupplierSummaryPanel
+                  name={formValues.name}
+                  rut={formValues.rut}
+                  phone={formValues.phone}
+                  email={formValues.email || ''}
+                  address={formValues.address}
+                  contactName={formValues.contact_name}
+                  category={formValues.category}
+                  categoryLabel={getCategoryLabel(formValues.category)}
+                  notes={formValues.notes || ''}
+                  isActive={formValues.is_active}
+                  isEditing={isEditing}
+                />
               </div>
 
-              <div className="flex-shrink-0 border-t bg-muted/30 p-4 sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-h-0">
+                {renderStepContent()}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-shrink-0 border-t bg-muted/30 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goToPreviousStep}
+                disabled={currentStep === 1 || isSubmitting}
+                className="gap-2"
+              >
+                <ChevronLeft className="size-4" />
+                Anterior
+              </Button>
+
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+
+                {currentStep < 3 ? (
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={goToPreviousStep}
-                    disabled={currentStep === 1 || isSubmitting}
-                    className="gap-2"
+                    onClick={goToNextStep}
+                    disabled={!canGoNext || isSubmitting}
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
-                    <ChevronLeft className="size-4" />
-                    Anterior
+                    Siguiente
+                    <ChevronRight className="size-4" />
                   </Button>
-
-                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onClose}
-                      disabled={isSubmitting}
-                    >
-                      Cancelar
-                    </Button>
-
-                    {currentStep < 3 ? (
-                      <Button
-                        type="button"
-                        onClick={goToNextStep}
-                        disabled={!canGoNext || isSubmitting}
-                        className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        Siguiente
-                        <ChevronRight className="size-4" />
-                      </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={form.handleSubmit(onSubmit)}
+                    disabled={!canSubmit || isSubmitting}
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        {isEditing ? 'Actualizando...' : 'Creando...'}
+                      </>
                     ) : (
-                      <Button
-                        type="button"
-                        onClick={form.handleSubmit(onSubmit)}
-                        disabled={!canSubmit || isSubmitting}
-                        className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="size-4 animate-spin" />
-                            {isEditing ? 'Actualizando...' : 'Creando...'}
-                          </>
-                        ) : (
-                          <>
-                            <Save className="size-4" />
-                            {isEditing ? 'Actualizar' : 'Crear'}
-                          </>
-                        )}
-                      </Button>
+                      <>
+                        <Save className="size-4" />
+                        {isEditing ? 'Actualizar' : 'Crear'}
+                      </>
                     )}
-                  </div>
-                </div>
+                  </Button>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

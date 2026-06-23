@@ -21,7 +21,7 @@ import {
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
-import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierCategories } from '@/hooks/useSupplierCategories';
 import { createLogger } from "@/lib/logger";
 
 
@@ -40,8 +40,8 @@ export const BatchEditSuppliersModal = ({
   onSuccess,
 }: BatchEditSuppliersModalProps) => {
   const queryClient = useQueryClient();
-  const { data: costCategoriesData = [] } = useCostCategories();
-  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const { data: supplierCategoriesData = [] } = useSupplierCategories();
+  const activeCategories = supplierCategoriesData.filter(c => c.is_active).map(c => ({ id: c.id, name: c.label || c.name }));
 
   const [category, setCategory] = useState<string>('no_change');
   const [status, setStatus] = useState<string>('no_change');
@@ -51,20 +51,9 @@ export const BatchEditSuppliersModal = ({
       const updates: any = {};
       
       if (category !== 'no_change') {
-        // Find the category name corresponding to the ID if needed, 
-        // but based on Supplier type, category is a string (name or id depending on implementation).
-        // Looking at SupplierList, it seems to store the category name directly in some places 
-        // or the ID. Let's assume ID is correct as per schema, but if it stores name, we might need to change.
-        // In SupplierList: value={category.name}, so it seems to store the name?
-        // Let's check the SelectItem in this file: value={cat.id}.
-        // If the DB expects name, we should send name. If it expects UUID, send UUID.
-        // Given `activeCategories` map: id -> id, label -> name, name -> name.
-        // Let's assume we should send the name if the previous implementation used names.
-        // Checking SupplierList again: value={category.name}. So it stores names.
-        
         const selectedCat = activeCategories.find(c => c.id === category);
         if (selectedCat) {
-            updates.category = selectedCat.name; 
+            updates.category = selectedCat.id; 
         } else {
             updates.category = category; // Fallback
         }

@@ -15,7 +15,7 @@ import {
   Eye, X, AlertTriangle
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierCategories } from '@/hooks/useSupplierCategories';
 import { useSupplierPaymentStats } from '@/hooks/useSupplierPaymentStats';
 import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
@@ -54,9 +54,11 @@ export const SupplierList: React.FC = () => {
     toggleSupplierStatus
   } = useSuppliers();
 
-  const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const { data: supplierCategoriesData = [], isLoading: categoriesLoading } = useSupplierCategories();
   const { data: paymentStats = {} } = useSupplierPaymentStats();
-  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const activeCategories = supplierCategoriesData
+    .filter(c => c.is_active)
+    .map(c => ({ id: c.id, name: c.label || c.name, label: c.label || c.name }));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -273,7 +275,7 @@ export const SupplierList: React.FC = () => {
                     activeCategories?.map((category) => (
                       <SelectItem 
                         key={category.id} 
-                        value={category.name}
+                        value={category.id}
                       >
                         {category.label}
                       </SelectItem>

@@ -2947,6 +2947,7 @@ export type Database = {
           created_by: string | null
           credit_date: string | null
           default_payment_term_id: string | null
+          default_product_service: string | null
           delivery_time_days: number | null
           email: string | null
           id: string
@@ -2968,6 +2969,7 @@ export type Database = {
           created_by?: string | null
           credit_date?: string | null
           default_payment_term_id?: string | null
+          default_product_service?: string | null
           delivery_time_days?: number | null
           email?: string | null
           id?: string
@@ -2989,6 +2991,7 @@ export type Database = {
           created_by?: string | null
           credit_date?: string | null
           default_payment_term_id?: string | null
+          default_product_service?: string | null
           delivery_time_days?: number | null
           email?: string | null
           id?: string
