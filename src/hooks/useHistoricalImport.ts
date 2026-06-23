@@ -69,15 +69,22 @@ export function useHistoricalImport() {
   const loadExistingDedupData = async (): Promise<{
     existingInvs: Array<{ invoice_number: string; supplier_id: string }>;
     invSups: Array<{ id: string; rut: string }>;
+    existingCosts: Array<{ document_number: string; supplier_id: string }>;
   }> => {
-    const [{ data: existingInvs }, { data: invSups }] = await Promise.all([
+    const [{ data: existingInvs }, { data: invSups }, { data: existingCosts }] = await Promise.all([
       supabase.from('supplier_invoices').select('invoice_number, supplier_id'),
       supabase.from('inventory_suppliers').select('id, rut'),
+      supabase
+        .from('costs')
+        .select('document_number, supplier_id')
+        .not('document_number', 'is', null)
+        .not('supplier_id', 'is', null),
     ]);
 
     return {
       existingInvs: (existingInvs || []) as Array<{ invoice_number: string; supplier_id: string }>,
       invSups: (invSups || []) as Array<{ id: string; rut: string }>,
+      existingCosts: (existingCosts || []) as Array<{ document_number: string; supplier_id: string }>,
     };
   };
 

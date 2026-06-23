@@ -39,6 +39,13 @@ export interface ProcessedPurchase {
   supplierMatch?: 'exact' | 'multiple' | 'none';
   matchedSuppliers?: Supplier[];
   documentType: PurchaseDocumentType;
+  duplicateSources?: Array<'supplier_invoices' | 'costs'>;
+  existingCost?: {
+    id: string;
+    date: string;
+    description: string;
+    amount: number;
+  };
 }
 
 /** Builds a database-safe description for historical files that omit this field. */
@@ -88,6 +95,16 @@ export interface PurchaseImportPreview {
   facturaCount: number;
 }
 
+export interface ExistingPurchaseDedupData {
+  invoiceRutFolioKeys: ReadonlySet<string>;
+  invoiceSupplierFolioKeys: ReadonlySet<string>;
+  costSupplierFolioKeys: ReadonlySet<string>;
+  existingCostBySupplierFolioKey?: ReadonlyMap<
+    string,
+    { id: string; date: string; description: string; amount: number }
+  >;
+}
+
 // Normalize RUT for comparison (keep only digits and K)
 const normalizeRut = (rut: string): string => {
   return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
@@ -105,6 +122,13 @@ const rutMatches = (a: string, b: string): boolean => {
   const aC = rutCandidates(a);
   const bC = new Set(rutCandidates(b));
   return aC.some((c) => bC.has(c));
+};
+
+const rutBaseKey = (rut: string): string => {
+  const n = normalizeRut(rut);
+  if (!n) return '';
+  if (n.length === 1) return n;
+  return n.slice(0, -1);
 };
 
 // Parse number handling Chilean format and parenthesized negatives
@@ -341,7 +365,7 @@ export const parseXLSXFile = (file: File): Promise<ParsedPurchaseRow[]> => {
 export const processPurchaseRows = (
   rows: ParsedPurchaseRow[],
   suppliers: Supplier[],
-  existingInvoiceKeys: Set<string> // Changed from existingInvoiceNumbers
+  existing: ExistingPurchaseDedupData
 ): PurchaseImportPreview => {
   const matched: ProcessedPurchase[] = [];
   const unmatched: ProcessedPurchase[] = [];
@@ -372,6 +396,7 @@ export const processPurchaseRows = (
 
     // Clean data
     const rut = normalizeRut(row.rut);
+    const rutKey = rutBaseKey(rut);
     const issueDate = parseDate(row.fecha) || getTodayLocal();
     const dueDate = parseDate(row.fechaVencimiento) || issueDate;
     const folio = row.folio.trim();
@@ -379,10 +404,21 @@ export const processPurchaseRows = (
     if (!folio || !rut) continue;
 
     const uniqueKey = `${rut}-${folio}`;
-    const isDuplicate = existingInvoiceKeys.has(uniqueKey);
     
     // Find supplier
     const matchedSupplier = suppliers.find(s => rutMatches(s.rut || '', rut));
+    const supplierKey = matchedSupplier ? `${matchedSupplier.id}-${folio}` : '';
+    const duplicateSources: Array<'supplier_invoices' | 'costs'> = [];
+    if (
+      rutCandidates(rut).some((candidate) => existing.invoiceRutFolioKeys.has(`${candidate}-${folio}`)) ||
+      (supplierKey && existing.invoiceSupplierFolioKeys.has(supplierKey))
+    ) {
+      duplicateSources.push('supplier_invoices');
+    }
+    if (supplierKey && existing.costSupplierFolioKeys.has(supplierKey)) {
+      duplicateSources.push('costs');
+    }
+    const isDuplicate = duplicateSources.length > 0;
     
     // Status
     const status = determineStatus(row.pagado, row.fechaVencimiento);
@@ -401,7 +437,12 @@ export const processPurchaseRows = (
       supplierId: matchedSupplier?.id,
       supplierMatch: matchedSupplier ? 'exact' : 'none',
       matchedSuppliers: matchedSupplier ? [matchedSupplier] : [],
-      documentType: docType
+      documentType: docType,
+      duplicateSources: isDuplicate ? duplicateSources : undefined,
+      existingCost:
+        supplierKey && existing.existingCostBySupplierFolioKey?.get(supplierKey)
+          ? existing.existingCostBySupplierFolioKey.get(supplierKey)
+          : undefined,
     };
 
     if (isDuplicate) {
@@ -412,8 +453,8 @@ export const processPurchaseRows = (
         unmatched.push(processed);
         
         // Track unmatched suppliers
-        if (!unmatchedSuppliersMap.has(rut)) {
-            unmatchedSuppliersMap.set(rut, {
+        if (!unmatchedSuppliersMap.has(rutKey)) {
+            unmatchedSuppliersMap.set(rutKey, {
                 rut,
                 razonSocial: processed.razonSocial,
                 invoiceCount: 0,
@@ -421,7 +462,10 @@ export const processPurchaseRows = (
                 resolution: 'pending'
             });
         }
-        const us = unmatchedSuppliersMap.get(rut)!;
+        const us = unmatchedSuppliersMap.get(rutKey)!;
+        if (us.rut.length < rut.length) {
+            us.rut = rut;
+        }
         us.invoiceCount++;
         us.totalAmount += processed.amount;
     }

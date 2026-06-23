@@ -16,6 +16,7 @@ import { formatRut } from '@/utils/rutFormatter';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stringSimilarity, toTitleCase } from '@/lib/utils';
+import { toTitleCaseEs } from '@/utils/textNormalization';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +30,7 @@ import {
   parseXLSXFile,
   processPurchaseRows,
   PurchaseImportPreview,
+  ExistingPurchaseDedupData,
   UnmatchedSupplier,
   PurchaseImportStatus,
   getPurchaseImportKey,
@@ -79,9 +81,18 @@ const getPreviewDateRange = (preview: PurchaseImportPreview | null) => {
   };
 };
 
+const cleanDisplayText = (value?: string | null) =>
+  (value || '')
+    .replace(/\uFFFD+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const formatSupplierDisplayName = (value?: string | null) => toTitleCaseEs(cleanDisplayText(value));
+
 const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { suppliers } = useSuppliers();
   const queryClient = useQueryClient();
+  const suppliersById = useMemo(() => new Map(suppliers.map((supplier) => [supplier.id, supplier])), [suppliers]);
   const { getMappings, saveMapping } = useImportMappings('purchase');
   const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('purchase', 5);
   const { getCurrentUserId, insertInvoiceBatch, insertSupplier, loadExistingDedupData } = useHistoricalImport();
@@ -126,6 +137,14 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     phone: ''
   });
   const [overlappingImportLog, setOverlappingImportLog] = useState<ImportHistoryLogEntry | null>(null);
+
+  const getInvoiceSupplierLabel = useCallback(
+    (invoice: { supplierId?: string; razonSocial: string }) => {
+      const supplierName = invoice.supplierId ? suppliersById.get(invoice.supplierId)?.name : null;
+      return formatSupplierDisplayName(supplierName || invoice.razonSocial);
+    },
+    [suppliersById]
+  );
 
   // Compute suggestions when unmatched suppliers are set
   useEffect(() => {
@@ -556,15 +575,55 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (s.rut) supplierIdToRut.set(s.id, normalizeRut(s.rut));
       });
 
-      const existingKeys = new Set<string>();
+      const invoiceRutFolioKeys = new Set<string>();
+      const invoiceSupplierFolioKeys = new Set<string>();
       existingInvoices.forEach((inv: any) => {
         const nRut = supplierIdToRut.get(inv.supplier_id);
         if (nRut && inv.invoice_number) {
-          existingKeys.add(`${nRut}-${inv.invoice_number}`);
+          invoiceRutFolioKeys.add(`${nRut}-${inv.invoice_number}`);
+        }
+        if (inv.supplier_id && inv.invoice_number) {
+          invoiceSupplierFolioKeys.add(`${inv.supplier_id}-${inv.invoice_number}`);
         }
       });
 
-      const result = processPurchaseRows(rows, suppliers, existingKeys);
+      const costSupplierFolioKeys = new Set<string>();
+      const existingCostBySupplierFolioKey = new Map<string, { id: string; date: string; description: string; amount: number }>();
+      const fileFolios = Array.from(new Set(rows.map((r) => String(r.folio || '').trim()).filter(Boolean)));
+      if (fileFolios.length > 0) {
+        const chunkSize = 500;
+        for (let i = 0; i < fileFolios.length; i += chunkSize) {
+          const chunk = fileFolios.slice(i, i + chunkSize);
+          const { data: costsChunk, error: costsError } = await supabase
+            .from('costs')
+            .select('id, supplier_id, document_number, date, description, amount')
+            .in('document_number', chunk)
+            .not('supplier_id', 'is', null);
+
+          if (costsError) throw costsError;
+          (costsChunk || []).forEach((c: any) => {
+            if (c?.supplier_id && c?.document_number) {
+              const key = `${c.supplier_id}-${String(c.document_number).trim()}`;
+              costSupplierFolioKeys.add(key);
+              existingCostBySupplierFolioKey.set(key, {
+                id: c.id,
+                date: c.date,
+                description: c.description,
+                amount: c.amount,
+              });
+            }
+          });
+        }
+      }
+
+      const dedupData: ExistingPurchaseDedupData = {
+        invoiceRutFolioKeys,
+        invoiceSupplierFolioKeys,
+        costSupplierFolioKeys,
+        existingCostBySupplierFolioKey,
+      };
+
+      const result = processPurchaseRows(rows, suppliers, dedupData);
       const savedMappings = await getMappings('purchase');
       const mappingByRut = new Map(
         savedMappings.map((mapping) => [normalizeRut(mapping.source_rut), mapping])
@@ -1041,7 +1100,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
     // Pre-filter: check existing invoices using RUT normalization to skip duplicates
     if (invoicesToInsert.length > 0) {
-        const { existingInvs, invSups } = await loadExistingDedupData();
+        const { existingInvs, invSups, existingCosts } = await loadExistingDedupData();
         
         const sidToRut = new Map<string, string>();
         invSups?.forEach((s: any) => {
@@ -1054,12 +1113,21 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             if (nRut && inv.invoice_number) {
                 existingSet.add(`${nRut}-${inv.invoice_number}`);
             }
+            if (inv.supplier_id && inv.invoice_number) {
+                existingSet.add(`${inv.supplier_id}-${inv.invoice_number}`);
+            }
+        });
+        existingCosts?.forEach((c: any) => {
+            if (c.supplier_id && c.document_number) {
+                existingSet.add(`${c.supplier_id}-${c.document_number}`);
+            }
         });
         
         const filteredInvoices = invoicesToInsert.filter(inv => {
             const nRut = sidToRut.get(inv.supplier_id) || '';
             const key = `${nRut}-${inv.invoice_number}`;
-            if (existingSet.has(key)) {
+            const sidKey = `${inv.supplier_id}-${inv.invoice_number}`;
+            if (existingSet.has(key) || existingSet.has(sidKey)) {
                 logger.debug(`Omitiendo factura existente: ${inv.invoice_number}`);
                 return false;
             }
@@ -1354,7 +1422,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
-                                        <TableCell>{inv.razonSocial}</TableCell>
+                                        <TableCell className="max-w-[340px] whitespace-nowrap truncate">
+                                          <span title={formatSupplierDisplayName(inv.razonSocial)}>{getInvoiceSupplierLabel(inv)}</span>
+                                        </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
                                         <TableCell>
@@ -1441,7 +1511,18 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                 </div>
 
                                 <div className="grid gap-3">
-                                    {unmatchedSuppliers.map((us, i) => (
+                                    {unmatchedSuppliers.map((us, i) => {
+                                        const assignedSupplier = us.assignedSupplierId ? suppliersById.get(us.assignedSupplierId) : null;
+                                        const fileSupplierName = formatSupplierDisplayName(us.razonSocial);
+                                        const systemSupplierName = assignedSupplier
+                                          ? formatSupplierDisplayName(assignedSupplier.name)
+                                          : us.suggestion?.name
+                                            ? formatSupplierDisplayName(us.suggestion.name)
+                                            : '';
+                                        const titleSupplierName = assignedSupplier ? systemSupplierName : fileSupplierName;
+                                        const showFileSubline = !!assignedSupplier && !!fileSupplierName && fileSupplierName !== systemSupplierName;
+
+                                        return (
                                         <div
                                           key={us.rut}
                                           className={`flex flex-col rounded-lg border bg-card p-4 transition-colors ${
@@ -1478,8 +1559,10 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                     </Button>
                                                                 </div>
                                                             ) : (
-                                                                <div className="flex items-center gap-2 flex-wrap group">
-                                                                    <span className="font-medium text-lg">{toTitleCase(us.razonSocial)}</span>
+                                                                <div className="flex items-center gap-2 min-w-0 group">
+                                                                    <span className="min-w-0 flex-1 truncate font-medium text-lg" title={titleSupplierName}>
+                                                                      {titleSupplierName}
+                                                                    </span>
                                                                     {us.autoResolvedByMapping && (
                                                                       <TooltipProvider>
                                                                         <Tooltip>
@@ -1494,18 +1577,29 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                                         </Tooltip>
                                                                       </TooltipProvider>
                                                                     )}
+                                                                    {!!assignedSupplier && (
+                                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                                        Asignado
+                                                                      </span>
+                                                                    )}
                                                                     <Button 
                                                                         size="icon" 
                                                                         variant="ghost" 
                                                                         className="size-6 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                         onClick={() => openQuickEdit(i)}
+                                                                        disabled={!!assignedSupplier}
                                                                     >
                                                                         <Edit2 className="size-3.5 text-muted-foreground" />
                                                                     </Button>
                                                                 </div>
                                                             )}
+                                                            {showFileSubline && (
+                                                              <div className="text-xs text-muted-foreground truncate" title={fileSupplierName}>
+                                                                En archivo: {fileSupplierName}
+                                                              </div>
+                                                            )}
                                                             <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-                                                                <span>RUT: {us.rut}</span>
+                                                                <span className="whitespace-nowrap">RUT: <span className="font-mono">{formatRut(us.rut)}</span></span>
                                                                 <span>—</span>
                                                                 <span>{us.invoiceCount} facturas</span>
                                                                 <span>—</span>
@@ -1518,11 +1612,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                         </div>
                                                     </div>
 
-                                                    {us.suggestion && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId && (
-                                                      <div className="ml-8 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                                                    {us.suggestion && !assignedSupplier && us.suggestion.score > 0.75 && us.assignedSupplierId === us.suggestion.supplierId && (
+                                                      <div className="ml-8 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800">
                                                         <span className="inline-flex items-center gap-2">
                                                           <Sparkles className="size-3.5" />
-                                                          Sugerencia preseleccionada: <strong>{us.suggestion.name}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
+                                                          En sistema: <strong>{formatSupplierDisplayName(us.suggestion.name)}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
                                                         </span>
                                                       </div>
                                                     )}
@@ -1532,7 +1626,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                         <div className="flex items-center gap-2 text-xs text-amber-800">
                                                           <Sparkles className="size-3.5" />
                                                           <span>
-                                                            Sugerencia: <strong>{us.suggestion.name}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
+                                                            En sistema: <strong>{formatSupplierDisplayName(us.suggestion.name)}</strong> ({(us.suggestion.score * 100).toFixed(0)}%)
                                                           </span>
                                                         </div>
                                                         <Button
@@ -1603,7 +1697,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
+                                    );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -1702,6 +1797,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                     <TableHead>Folio</TableHead>
                                     <TableHead>Proveedor</TableHead>
                                     <TableHead>Fecha</TableHead>
+                                    <TableHead>Duplicado en</TableHead>
                                     <TableHead className="text-right">Monto</TableHead>
                                     <TableHead>Estado</TableHead>
                                 </TableRow>
@@ -1710,6 +1806,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                 {preview.duplicates.map((inv) => {
                                   const invoiceKey = getPurchaseImportKey(inv);
                                   const effectiveStatus = getEffectivePurchaseStatus(inv, statusOverrides);
+                                  const sources = inv.duplicateSources || [];
                                   return (
                                     <TableRow key={invoiceKey}>
                                         <TableCell>
@@ -1720,8 +1817,47 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                                             />
                                         </TableCell>
                                         <TableCell>{inv.invoice_number}</TableCell>
-                                        <TableCell>{toTitleCase(inv.razonSocial)}</TableCell>
+                                        <TableCell className="max-w-[340px] whitespace-nowrap truncate">
+                                          <span title={formatSupplierDisplayName(inv.razonSocial)}>{getInvoiceSupplierLabel(inv)}</span>
+                                        </TableCell>
                                         <TableCell>{inv.issueDate}</TableCell>
+                                        <TableCell>
+                                          <div className="flex flex-col gap-1">
+                                            <div className="flex flex-wrap gap-1">
+                                              {sources.includes('supplier_invoices') && (
+                                                <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                  Compras
+                                                </span>
+                                              )}
+                                              {sources.includes('costs') && (
+                                                <TooltipProvider>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <span className="inline-flex items-center rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                                        Costos
+                                                      </span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <div className="space-y-1 text-xs">
+                                                        <div className="font-medium">Costo existente</div>
+                                                        {inv.existingCost?.date && <div>Fecha: {inv.existingCost.date}</div>}
+                                                        {typeof inv.existingCost?.amount === 'number' && (
+                                                          <div>Monto: {formatCLP(inv.existingCost.amount)}</div>
+                                                        )}
+                                                        {inv.existingCost?.description && (
+                                                          <div className="max-w-[320px] whitespace-pre-wrap">{inv.existingCost.description}</div>
+                                                        )}
+                                                      </div>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                              )}
+                                            </div>
+                                            {sources.length === 0 && (
+                                              <span className="text-xs text-muted-foreground">—</span>
+                                            )}
+                                          </div>
+                                        </TableCell>
                                         <TableCell className="text-right">{formatCLP(inv.amount)}</TableCell>
                                         <TableCell>
                                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getInvoiceStatusBadgeClass(effectiveStatus)}`}>

@@ -9,11 +9,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
-import { formatCurrency, toTitleCase } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toTitleCaseEs } from '@/utils/textNormalization';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { normalizeSupplierRut } from '@/utils/supplierIdentity';
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +26,27 @@ import {
 } from '@/components/ui/tooltip';
 import { SourceBadge } from './SourceBadge';
 import { formatRut } from '@/utils/rutFormatter';
+
+const cleanDisplayText = (value?: string | null) =>
+  (value || '')
+    .replace(/\uFFFD+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const formatSupplierDisplayName = (value?: string | null) => toTitleCaseEs(cleanDisplayText(value));
+
+const scoreSupplierName = (value?: string | null) => {
+  const clean = cleanDisplayText(value);
+  if (!clean) return -1000;
+
+  let score = 0;
+  if (/[áéíóúñÁÉÍÓÚÑ]/.test(clean)) score += 20;
+  if (/\uFFFD/.test(value || '')) score -= 40;
+  if (/\?/.test(clean)) score -= 10;
+  if (clean === clean.toUpperCase()) score -= 2;
+  score += Math.min(clean.length, 60) / 5;
+  return score;
+};
 
 export type PurchaseSortKey = 'invoice_number' | 'supplier' | 'issue_date' | 'due_date' | 'amount' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -72,6 +97,25 @@ export const HistoricalPurchasesTable = ({
   onSelectId,
   onSelectAll,
 }: HistoricalPurchasesTableProps) => {
+  const { suppliers } = useSuppliers();
+  const bestSupplierByRut = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; rut: string | null }>();
+    const scoreMap = new Map<string, number>();
+
+    for (const supplier of suppliers) {
+      const key = normalizeSupplierRut(supplier.rut);
+      if (!key) continue;
+      const score = scoreSupplierName(supplier.name);
+      const prevScore = scoreMap.get(key);
+      if (prevScore == null || score > prevScore) {
+        scoreMap.set(key, score);
+        map.set(key, supplier);
+      }
+    }
+
+    return map;
+  }, [suppliers]);
+
   const emptyColSpan = hideSupplierColumn ? 8 : 10;
   const SortIcon = ({ columnKey }: { columnKey: PurchaseSortKey }) => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 size-3 opacity-30" />;
@@ -240,8 +284,18 @@ export const HistoricalPurchasesTable = ({
                 </TableCell>
                 
                 {!hideSupplierColumn && (
-                  <TableCell className="font-medium text-foreground/80">
-                    {toTitleCase(invoice.supplier?.name || 'Proveedor Desconocido')}
+                  <TableCell className="font-medium text-foreground/80 max-w-[320px] whitespace-nowrap truncate">
+                    {(() => {
+                      const invoiceSupplierName = invoice.supplier?.name || 'Proveedor Desconocido';
+                      const rutKey = normalizeSupplierRut(invoice.supplier?.rut);
+                      const canonical = rutKey ? bestSupplierByRut.get(rutKey) : null;
+                      const displayName = formatSupplierDisplayName(canonical?.name || invoiceSupplierName);
+                      return (
+                        <span title={displayName}>
+                          {displayName}
+                        </span>
+                      );
+                    })()}
                   </TableCell>
                 )}
 
