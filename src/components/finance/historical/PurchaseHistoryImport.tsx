@@ -586,7 +586,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
       setPreview(result);
       setUnmatchedSuppliers(resolvedUnmatchedSuppliers);
-      setOverlappingImportLog(sameFileOverlappingLog);
+      setOverlappingImportLog(result.duplicates.length > 0 ? sameFileOverlappingLog : null);
       setStep('preview');
       
       if (resolvedUnmatchedSuppliers.some((supplier) => supplier.resolution === 'pending')) {

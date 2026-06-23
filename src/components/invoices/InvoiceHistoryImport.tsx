@@ -508,7 +508,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       const normalizedCurrentFileName = normalizeImportFileName(file.name);
       const sameFileOverlappingLog =
         overlappingLogs.find((log) => normalizeImportFileName(log.file_name) === normalizedCurrentFileName) ?? null;
-      setOverlappingImportLog(sameFileOverlappingLog);
+      setOverlappingImportLog(result.duplicates.length > 0 ? sameFileOverlappingLog : null);
       setStep('preview');
       
       const hasPendingClients = resolvedUnmatchedClients.some((client) => client.resolution === 'pending');
