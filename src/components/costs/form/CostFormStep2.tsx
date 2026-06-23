@@ -4,7 +4,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, Tag, Package, Phone, Hash, Gauge } from 'lucide-react';
+import { DollarSign, Tag, Package, Phone, Hash, Gauge, Sparkles } from 'lucide-react';
 import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
 import { CostAmountSection } from './CostAmountSection';
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentCostLocations } from '@/hooks/useFrequentFormData';
+import { extractFolioFromDescription } from '@/utils/folioExtractor';
 
 interface CostFormStep2Props {
   form: UseFormReturn<CostFormValues>;
@@ -55,6 +56,16 @@ export const CostFormStep2 = ({
   const hasSubcategories = subcategories.length > 0;
   const selectedSubcategoryRow = subcategories.find(s => s.name === selectedSubcategory);
   const costLocationSuggestions = useFrequentCostLocations();
+  const watchedDescription = form.watch('description');
+  const watchedDocumentNumber = form.watch('document_number');
+  const detectedFolio = React.useMemo(
+    () => extractFolioFromDescription(watchedDescription),
+    [watchedDescription],
+  );
+  const shouldOfferAutofill =
+    !!detectedFolio &&
+    !watchedDocumentNumber?.trim() &&
+    selectedSubcategoryRow?.requires_document === true;
 
   const [isCreateSubcategoryOpen, setIsCreateSubcategoryOpen] = React.useState(false);
   const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
@@ -116,6 +127,14 @@ export const CostFormStep2 = ({
         },
       }
     );
+  };
+
+  const handleApplyDetectedFolio = () => {
+    if (!detectedFolio) return;
+    form.setValue('document_number', detectedFolio, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
@@ -320,6 +339,28 @@ export const CostFormStep2 = ({
                     placeholder="Ej: 243232"
                   />
                 </FormControl>
+                {shouldOfferAutofill && (
+                  <div
+                    role="status"
+                    className="mt-2 flex flex-col gap-2 rounded-md border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800 sm:flex-row sm:items-center sm:justify-between dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <Sparkles className="size-3.5 shrink-0" aria-hidden="true" />
+                      <span>
+                        Folio detectado en la descripción: <strong>{detectedFolio}</strong>
+                      </span>
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 self-start px-2 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 sm:self-auto dark:text-emerald-300 dark:hover:bg-emerald-900 dark:hover:text-emerald-100"
+                      onClick={handleApplyDetectedFolio}
+                    >
+                      Usar folio
+                    </Button>
+                  </div>
+                )}
                 <FormMessage />
               </FormItem>
             )} />

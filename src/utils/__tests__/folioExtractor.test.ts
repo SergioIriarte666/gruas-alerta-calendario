@@ -18,4 +18,14 @@ describe('extractFolioFromDescription', () => {
       expect(extractFolioFromDescription(description)).toBeNull();
     },
   );
+
+  it('returns the first folio when the description contains more than one', () => {
+    expect(extractFolioFromDescription('N° 111 y también N° 222')).toBe('111');
+  });
+
+  it('requires at least three digits to avoid short item-number false positives', () => {
+    expect(extractFolioFromDescription('Item N° 1 del listado')).toBeNull();
+    expect(extractFolioFromDescription('Item N° 99 del listado')).toBeNull();
+    expect(extractFolioFromDescription('Item N° 100 del listado')).toBe('100');
+  });
 });
