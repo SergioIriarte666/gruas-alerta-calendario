@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import DatePickerInput from '@/components/common/DatePickerInput';
@@ -162,12 +163,11 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
           <div className="space-y-2">
             <Label htmlFor="phone">Teléfono</Label>
-            <Input
+            <PhoneInput
               id="phone"
-              type="tel"
               value={formData.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              placeholder="+56 9 XXXX XXXX"
+              onChange={(v) => handleChange('phone', v)}
+              placeholder="9 XXXX XXXX"
             />
           </div>
 

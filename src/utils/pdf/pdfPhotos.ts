@@ -14,8 +14,10 @@ export const addPhotographicSetSection = async (
     fileName: string;
     category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
     storageUrl?: string;
+    dataUrl?: string;
   }>,
-  yPosition: number
+  yPosition: number,
+  title: string = 'SET FOTOGRÁFICO'
 ): Promise<number> => {
   if (!photographicSet || photographicSet.length === 0) {
     logger.debug('No hay fotos en el set fotográfico');
@@ -35,7 +37,7 @@ export const addPhotographicSetSection = async (
     // Título principal
     doc.setFontSize(14);
     doc.setTextColor(0, 150, 136);
-    doc.text('SET FOTOGRÁFICO', 20, yPosition);
+    doc.text(title, 20, yPosition);
     yPosition += 15;
 
     // Organizar fotos por categoría
@@ -87,7 +89,7 @@ export const addPhotographicSetSection = async (
         doc.text(item.label, xPos, yPosition);
         
         try {
-          const photoData = getPhotoFromStorage(item.photo!.fileName, item.photo!.storageUrl);
+          const photoData = getPhotoFromStorage(item.photo!.fileName, item.photo!.storageUrl, item.photo!.dataUrl);
           
           if (photoData) {
             try {

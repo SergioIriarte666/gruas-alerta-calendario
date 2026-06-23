@@ -6,6 +6,7 @@ import { ArrowLeft, User, Lock, Save, Camera, Loader2, ShieldCheck, Mail } from 
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -241,11 +242,10 @@ const Profile = () => {
                       <FormItem>
                         <FormLabel>Teléfono</FormLabel>
                         <FormControl>
-                          <Input
-                            type="tel"
+                          <PhoneInput
                             value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            placeholder="+56 9 XXXX XXXX"
+                            onChange={(v) => field.onChange(v)}
+                            placeholder="9 XXXX XXXX"
                           />
                         </FormControl>
                         <FormMessage />

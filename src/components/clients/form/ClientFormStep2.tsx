@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Mail, MapPin, User, Phone } from 'lucide-react';
@@ -33,12 +34,11 @@ export const ClientFormStep2 = ({
               <Phone className="size-4" />
               Teléfono
             </Label>
-            <Input
+            <PhoneInput
               id="phone"
-              type="tel"
               value={phone ?? ''}
-              onChange={(e) => onChange('phone', e.target.value)}
-              placeholder="+56 9 XXXX XXXX"
+              onChange={(v) => onChange('phone', v)}
+              placeholder="9 XXXX XXXX"
               className="bg-background"
             />
           </div>

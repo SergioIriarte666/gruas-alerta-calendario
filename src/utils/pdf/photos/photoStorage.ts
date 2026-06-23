@@ -10,8 +10,11 @@ const logger = createLogger('PdfPhotoStorage');
  */
 export const getPhotoFromStorage = (
   photoName: string,
-  storageUrl?: string
+  storageUrl?: string,
+  dataUrl?: string
 ): string | null => {
+  if (dataUrl?.startsWith('data:image')) return dataUrl;
+
   if (photoName && typeof photoName === 'string') {
     const localData =
       localStorage.getItem(`photo-${photoName}`) ??

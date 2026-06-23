@@ -9,7 +9,7 @@ import { useInspectionEmail } from '@/hooks/inspection/useInspectionEmail';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 import { uploadInspectionPdf } from '@/utils/inspectionPdfUpload';
-import { ensurePhotosUploaded, persistInspection } from '@/utils/inspectionRecord';
+import { ensurePhotosUploaded, persistInspection, fetchInitialPhotosForPdf } from '@/utils/inspectionRecord';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
@@ -111,7 +111,14 @@ export const useServiceInspection = () => {
       const valuesWithPhotos: InspectionFormValues = { ...values, photographicSet: uploadedPhotos };
 
       logger.debug('2/5 Generando PDF...');
-      const { blob } = await generatePDF(service, valuesWithPhotos, phase === 'final');
+      const initialPhotos = phase === 'final'
+        ? await fetchInitialPhotosForPdf(serviceId).catch((e) => {
+            logger.error('No se pudieron cargar fotos iniciales para el PDF de entrega:', e);
+            reportNotificationError('email', e);
+            return [];
+          })
+        : undefined;
+      const { blob } = await generatePDF(service, valuesWithPhotos, phase === 'final', initialPhotos);
 
       logger.debug('3/5 Subiendo PDF a Storage...');
       const pdfFolio = phase === 'initial' ? `${service.folio}-inspeccion-inicial` : `${service.folio}-retiro`;

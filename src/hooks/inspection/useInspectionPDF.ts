@@ -13,7 +13,12 @@ export const useInspectionPDF = () => {
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
   const pdfDownloadUrlRef = useRef<string>();
 
-  const generatePDF = async (service: any, inspection: InspectionFormValues, isFinal: boolean = true) => {
+  const generatePDF = async (
+    service: any,
+    inspection: InspectionFormValues,
+    isFinal: boolean = true,
+    initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>
+  ) => {
     logger.debug('Iniciando generación de PDF...');
     setIsGeneratingPDF(true);
     setPdfProgress(0);
@@ -29,6 +34,7 @@ export const useInspectionPDF = () => {
         service: service,
         inspection: inspection,
         isFinal: isFinal,
+        initialPhotos,
       });
 
       const filename = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
@@ -54,13 +60,33 @@ export const useInspectionPDF = () => {
     setPdfDownloadUrl(downloadUrl);
   }, []);
 
-  const handleManualDownload = (service: any) => {
-    if (pdfDownloadUrl && service) {
-      const link = document.createElement('a');
-      link.href = pdfDownloadUrl;
-      link.download = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
-      link.click();
+  const handleManualDownload = async (service: any) => {
+    if (!pdfDownloadUrl || !service) return;
+    const filename = `Inspeccion-${service.folio}-${getTodayLocal()}.pdf`;
+    // En PWA iOS, <a download> con blob: navega el webview y al cerrar el visor la PWA se
+    // recarga (se pierde el estado de la pantalla de éxito). El share sheet nativo se presenta
+    // ENCIMA de la PWA sin recargarla, así que es la vía correcta en móvil.
+    try {
+      const resp = await fetch(pdfDownloadUrl);
+      const blob = await resp.blob();
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      }
+    } catch (err) {
+      // AbortError = el usuario canceló el share; no hacer fallback (evita doble acción).
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      logger.warn('Share no disponible, usando descarga por enlace:', err);
     }
+    const link = document.createElement('a');
+    link.href = pdfDownloadUrl;
+    link.download = filename;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const cleanupPDF = useCallback(() => {

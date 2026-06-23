@@ -17,6 +17,7 @@ const logger = createLogger("inspectionPdfGenerator");
 export const generateInspectionPDF = async (data: {
   service: Service;
   inspection: InspectionFormValues;
+  initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>;
 }, isFinal: boolean = true): Promise<Blob> => {
   try {
     logger.debug('Iniciando generación de PDF con datos:', data);
@@ -70,13 +71,24 @@ export const generateInspectionPDF = async (data: {
 
     // Add photographic set section
     try {
+      const { addPhotographicSetSection } = await import('./pdf/pdfPhotos');
+      if (isFinal && data.initialPhotos?.length) {
+        logger.debug('Procesando set fotográfico de origen:', data.initialPhotos);
+        yPosition = await addPhotographicSetSection(
+          doc,
+          data.initialPhotos,
+          yPosition,
+          'REGISTRO FOTOGRÁFICO — ORIGEN (CARGA)'
+        );
+        logger.debug('Set fotográfico de origen agregado, yPosition:', yPosition);
+      }
       if (validPhotos.length > 0) {
         logger.debug('Procesando set fotográfico:', validPhotos);
-        const { addPhotographicSetSection } = await import('./pdf/pdfPhotos');
         yPosition = await addPhotographicSetSection(
-          doc, 
-          validPhotos, 
-          yPosition
+          doc,
+          validPhotos,
+          yPosition,
+          isFinal ? 'REGISTRO FOTOGRÁFICO — ENTREGA (DESTINO)' : 'SET FOTOGRÁFICO'
         );
         logger.debug('Set fotográfico agregado, yPosition:', yPosition);
       }

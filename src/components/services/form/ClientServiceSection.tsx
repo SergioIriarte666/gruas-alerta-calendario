@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client, ServiceType } from '@/types';
@@ -126,12 +127,11 @@ export const ClientServiceSection = ({
       {/* Teléfono Persona en el Lugar */}
       <div className="space-y-2">
         <Label htmlFor="contactPhone">Teléfono Persona en el Lugar <span className="text-muted-foreground text-xs">(Opcional)</span></Label>
-        <Input
+        <PhoneInput
           id="contactPhone"
-          type="tel"
           value={contactPhone ?? ''}
-          onChange={(e) => onContactPhoneChange?.(e.target.value)}
-          placeholder="+56 9 XXXX XXXX"
+          onChange={(v) => onContactPhoneChange?.(v)}
+          placeholder="9 XXXX XXXX"
           disabled={disabled}
         />
       </div>

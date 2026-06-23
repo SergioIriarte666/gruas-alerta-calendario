@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/hooks/useSettings';
@@ -184,12 +185,11 @@ export const CompanySettingsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="phone">Teléfono</Label>
-              <Input
+              <PhoneInput
                 id="phone"
-                type="tel"
                 value={localSettings.phone ?? ''}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+56 9 XXXX XXXX"
+                onChange={(v) => handleInputChange('phone', v)}
+                placeholder="9 XXXX XXXX"
                 className={inputClassName}
               />
             </div>
@@ -313,11 +313,10 @@ export const CompanySettingsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Teléfono</Label>
-              <Input
-                type="tel"
+              <PhoneInput
                 value={profileForm.phone}
-                onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="+56 9 XXXX XXXX"
+                onChange={(v) => setProfileForm(prev => ({ ...prev, phone: v }))}
+                placeholder="9 XXXX XXXX"
                 className={inputClassName}
               />
             </div>

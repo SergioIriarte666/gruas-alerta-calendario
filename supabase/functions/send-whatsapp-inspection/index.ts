@@ -74,13 +74,15 @@ Deno.serve(async (req: Request) => {
       results.push({ target, phone: norm.phone, success: result.success });
     };
 
-    if (clientPhone) {
-      await sendToPhone(clientPhone, clientName || 'Cliente', 'client');
-    }
+    // Prioridad: la persona EN EL LUGAR (contacto del servicio). Si el servicio no trae contacto,
+    // recién entonces se usa el teléfono del maestro de clientes. Un solo destinatario, no ambos.
+    const recipientPhone = contactPhone || clientPhone;
+    const recipientName = contactPhone
+      ? (contactPerson || clientName || 'Receptor')
+      : (clientName || 'Cliente');
 
-    // Receptor final solo si existe y es distinto del cliente
-    if (contactPhone && contactPhone !== clientPhone) {
-      await sendToPhone(contactPhone, contactPerson || clientName || 'Receptor', 'contact');
+    if (recipientPhone) {
+      await sendToPhone(recipientPhone, recipientName, contactPhone ? 'contact' : 'client');
     }
 
     const allSuccess = results.length === 0 || results.every(r => r.success);

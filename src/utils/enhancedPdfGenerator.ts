@@ -31,6 +31,7 @@ export class EnhancedPDFGenerator {
     service: Service;
     inspection: InspectionFormValues;
     isFinal?: boolean;
+    initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>;
   }): Promise<{ blob: Blob }> {
     try {
       this.updateProgress(10, 'Validando datos del formulario...');

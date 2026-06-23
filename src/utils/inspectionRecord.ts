@@ -200,3 +200,60 @@ export const persistInspection = async (
 
   logger.debug('Inspección persistida correctamente para servicio:', serviceId);
 };
+
+const PDF_PHOTO_CATEGORIES = ['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'] as const;
+type PdfPhotoCategory = typeof PDF_PHOTO_CATEGORIES[number];
+
+const categoryFromPath = (path: string, index: number): PdfPhotoCategory => {
+  const base = (path.split('/').pop() || '').toLowerCase();
+  const token = base.replace('set_fotografico_', '').split('-')[0];
+  return (PDF_PHOTO_CATEGORIES as readonly string[]).includes(token)
+    ? (token as PdfPhotoCategory)
+    : PDF_PHOTO_CATEGORIES[index % PDF_PHOTO_CATEGORIES.length];
+};
+
+const urlToDataUrl = async (url: string): Promise<string> => {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`No se pudo descargar la foto inicial (${resp.status})`);
+  const blob = await resp.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+};
+
+/**
+ * Carga las fotos de la inspección INICIAL (photos_before_service) como data URLs, listas para
+ * embeber en el PDF de entrega. Devuelve [] si no hay (nunca lanza hacia arriba: la entrega no
+ * debe bloquearse si las iniciales no cargan; el PDF inicial sigue existiendo aparte).
+ */
+export const fetchInitialPhotosForPdf = async (
+  serviceId: string,
+): Promise<Array<{ fileName: string; category: PdfPhotoCategory; dataUrl: string }>> => {
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('photos_before_service')
+    .eq('service_id', serviceId)
+    .maybeSingle();
+  if (error || !data?.photos_before_service?.length) {
+    if (error) logger.error('Error consultando fotos iniciales para PDF:', error);
+    return [];
+  }
+  const paths = data.photos_before_service
+    .map((p) => extractStoragePath(p, PHOTO_BUCKET))
+    .filter((p): p is string => !!p);
+
+  const results = await Promise.all(paths.map(async (path, index) => {
+    try {
+      const signedUrl = await getInspectionPhotoSignedUrl(path);
+      const dataUrl = await urlToDataUrl(signedUrl);
+      return { fileName: path.split('/').pop() || `inicial-${index}`, category: categoryFromPath(path, index), dataUrl };
+    } catch (e) {
+      logger.warn(`No se pudo cargar foto inicial ${path} para el PDF:`, e);
+      return null;
+    }
+  }));
+  return results.filter((r): r is { fileName: string; category: PdfPhotoCategory; dataUrl: string } => !!r);
+};
