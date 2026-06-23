@@ -275,7 +275,7 @@ export const HistoricalPurchases = () => {
 
   const handleBatchSave = async (id: string, updates: any) => {
     // This is called for each invoice in the batch
-    await updateInvoice({ id, data: updates });
+    await updateInvoice({ id, data: updates, suppressToast: true });
   };
 
   const handleDelete = async () => {
@@ -326,7 +326,7 @@ export const HistoricalPurchases = () => {
     if (selectedIds.length === 0) return;
     
     try {
-      const promises = selectedIds.map(id => updateInvoice({ id, data: { status } }));
+      const promises = selectedIds.map(id => updateInvoice({ id, data: { status }, suppressToast: true }));
       await Promise.all(promises);
       toast.success(`${selectedIds.length} facturas actualizadas correctamente`);
       setSelectedIds([]);
@@ -477,21 +477,24 @@ export const HistoricalPurchases = () => {
 
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] max-w-[95vw] animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 flex-wrap border border-border/10">
-            <div className="flex items-center gap-2 px-2">
-              <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
+        <div className="fixed left-1/2 top-1/2 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-violet-400 bg-violet-200/95 px-3 py-2.5 text-slate-950 shadow-2xl shadow-violet-300/50 backdrop-blur-sm sm:gap-3">
+            <div className="flex items-center gap-2 px-1">
+              <span className="min-w-[1.5rem] rounded-full bg-violet-600 px-2 py-0.5 text-center text-xs font-bold text-white">
                 {selectedIds.length}
               </span>
-              <span className="font-medium text-sm whitespace-nowrap">
-                seleccionados ({selectedIds.length} de {filteredAndSortedInvoices.length} filtrados, no solo la página visible)
+              <span className="whitespace-nowrap text-sm font-medium">
+                seleccionados
+              </span>
+              <span className="hidden whitespace-nowrap text-xs text-black/70 lg:inline">
+                de {filteredAndSortedInvoices.length} registros filtrados
               </span>
             </div>
             
-            <div className="h-4 w-px bg-background/20" />
+            <div className="hidden h-5 w-px bg-black/20 sm:block" />
             
             <Button 
-              variant="secondary" 
+              variant="outline"
               size="sm" 
               className="h-8 gap-2"
               onClick={() => {
@@ -504,7 +507,7 @@ export const HistoricalPurchases = () => {
             </Button>
 
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
               className="h-8 gap-2"
               onClick={() => {
@@ -528,7 +531,7 @@ export const HistoricalPurchases = () => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="sm" className="h-8 gap-2">
+                <Button variant="outline" size="sm" className="h-8 gap-2">
                   <MoreHorizontal className="size-4" />
                   Estado
                 </Button>
@@ -551,7 +554,7 @@ export const HistoricalPurchases = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="size-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              className="ml-1 size-8 rounded-full text-black/70 hover:bg-black/10 hover:text-black"
               onClick={() => setSelectedIds([])}
               title="Cancelar selección"
             >

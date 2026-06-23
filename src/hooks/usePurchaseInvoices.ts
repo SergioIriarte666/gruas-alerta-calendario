@@ -9,6 +9,11 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("usePurchaseInvoices");
 type CreateSupplierInvoice = Database['public']['Tables']['supplier_invoices']['Insert'];
 type UpdateSupplierInvoice = Database['public']['Tables']['supplier_invoices']['Update'];
+type UpdateInvoiceVariables = {
+  id: string;
+  data: UpdateSupplierInvoice;
+  suppressToast?: boolean;
+};
 
 export const usePurchaseInvoices = () => {
   const queryClient = useQueryClient();
@@ -135,7 +140,7 @@ export const usePurchaseInvoices = () => {
   });
 
   const updateInvoiceMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateSupplierInvoice }) => {
+    mutationFn: async ({ id, data }: UpdateInvoiceVariables) => {
       const { data: result, error } = await supabase
         .from('supplier_invoices')
         .update(data)
@@ -146,17 +151,21 @@ export const usePurchaseInvoices = () => {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
-      toast.success('Factura de compra actualizada exitosamente');
+      if (!variables.suppressToast) {
+        toast.success('Factura de compra actualizada exitosamente');
+      }
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       logger.error('Error updating purchase invoice:', error);
-      toast.error('Error al actualizar la factura de compra');
+      if (!variables.suppressToast) {
+        toast.error('Error al actualizar la factura de compra');
+      }
     },
   });
 

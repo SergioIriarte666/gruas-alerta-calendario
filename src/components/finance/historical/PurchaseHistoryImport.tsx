@@ -163,11 +163,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     }
   }, [unmatchedSuppliers.length, suppliers.length]);
 
-  useEffect(() => {
-    if (!open) return;
-    setInstructionsOpen(importLogs.length === 0);
-  }, [open, importLogs.length]);
-
   // Initialize selection when preview changes
   useEffect(() => {
     if (preview) {
@@ -485,7 +480,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setProgressCurrent(0);
     setProgressTotal(0);
     setProgressStage('');
-    setInstructionsOpen(importLogs.length === 0);
     setOverlappingImportLog(null);
   };
 

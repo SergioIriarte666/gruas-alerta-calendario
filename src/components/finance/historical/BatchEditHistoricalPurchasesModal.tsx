@@ -53,7 +53,8 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
             selectedIds.map(id => 
                 updateInvoice({
                     id,
-                    data: { status: newStatus }
+                    data: { status: newStatus },
+                    suppressToast: true,
                 })
             )
         );
@@ -68,7 +69,8 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
           selectedIds.map(id =>
             updateInvoice({
               id,
-              data: { product_service_description: trimmed, description: trimmed }
+              data: { product_service_description: trimmed, description: trimmed },
+              suppressToast: true,
             })
           )
         );

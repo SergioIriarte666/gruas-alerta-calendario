@@ -50,6 +50,7 @@ describe('BatchEditHistoricalPurchasesModal', () => {
         product_service_description: 'Compra de combustible para grúas',
         description: 'Compra de combustible para grúas',
       },
+      suppressToast: true,
     });
     expect(updateInvoice).toHaveBeenNthCalledWith(2, {
       id: 'purchase-2',
@@ -57,6 +58,7 @@ describe('BatchEditHistoricalPurchasesModal', () => {
         product_service_description: 'Compra de combustible para grúas',
         description: 'Compra de combustible para grúas',
       },
+      suppressToast: true,
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onSuccess).toHaveBeenCalledOnce();
