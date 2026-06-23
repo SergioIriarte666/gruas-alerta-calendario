@@ -57,6 +57,12 @@ type ResolvedUnmatchedSupplier = UnmatchedSupplier & {
 const sortUnmatchedSuppliers = (items: ResolvedUnmatchedSupplier[]) =>
   [...items].sort((a, b) => b.invoiceCount - a.invoiceCount || a.razonSocial.localeCompare(b.razonSocial, 'es'));
 
+const normalizeImportFileName = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/ \(\d+\)(?=\.[^.]+$)/, '');
+
 const getPreviewDateRange = (preview: PurchaseImportPreview | null) => {
   if (!preview) {
     return { start: null as string | null, end: null as string | null };
@@ -483,6 +489,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setOverlappingImportLog(null);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    resetState();
+  }, [open]);
+
   const handleClose = () => {
     resetState();
     onOpenChange(false);
@@ -496,6 +507,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setSelectedInvoices(new Set());
     setStatusOverrides(new Map());
     setBulkStatus('');
+    setLastError(null);
+    setImportResult(null);
+    setOverlappingImportLog(null);
 
     try {
       const isCSV = file.name.toLowerCase().endsWith('.csv');
@@ -566,9 +580,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
           ? await getOverlappingLogs('purchase', previewDateRange.start, previewDateRange.end)
           : [];
 
+      const normalizedCurrentFileName = normalizeImportFileName(file.name);
+      const sameFileOverlappingLog =
+        overlappingLogs.find((log) => normalizeImportFileName(log.file_name) === normalizedCurrentFileName) ?? null;
+
       setPreview(result);
       setUnmatchedSuppliers(resolvedUnmatchedSuppliers);
-      setOverlappingImportLog(overlappingLogs[0] ?? null);
+      setOverlappingImportLog(sameFileOverlappingLog);
       setStep('preview');
       
       if (resolvedUnmatchedSuppliers.some((supplier) => supplier.resolution === 'pending')) {
@@ -1157,7 +1175,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
                 ${isDragActive ? 'border-emerald-600 bg-emerald-600/5' : 'border-muted-foreground/30 hover:border-emerald-600/50'}`}
             >
-              <input {...getInputProps()} />
+              <input
+                {...getInputProps({
+                  onClick: (event) => {
+                    (event.currentTarget as HTMLInputElement).value = '';
+                  },
+                })}
+              />
               <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium text-foreground">
                 {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}

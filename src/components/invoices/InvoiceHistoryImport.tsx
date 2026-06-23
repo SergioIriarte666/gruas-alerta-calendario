@@ -95,6 +95,12 @@ const formatClientWithDepartment = (client: Client): string => {
 const sortUnmatchedClients = (items: ResolvedUnmatchedClient[]) =>
   [...items].sort((a, b) => b.invoiceCount - a.invoiceCount || a.razonSocial.localeCompare(b.razonSocial, 'es'));
 
+const normalizeImportFileName = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/ \(\d+\)(?=\.[^.]+$)/, '');
+
 const getPreviewDateRange = (preview: ImportPreview | null) => {
   if (!preview) {
     return { start: null as string | null, end: null as string | null };
@@ -160,6 +166,11 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setInstructionsOpen(importLogs.length === 0);
     setOverlappingImportLog(null);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    resetState();
+  }, [open]);
 
   // Initialize selection when preview changes
   useEffect(() => {
@@ -461,6 +472,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setSelectedInvoices(new Set());
     setStatusOverrides(new Map());
     setBulkStatus('');
+    setLastError(null);
+    setImportResult(null);
+    setOverlappingImportLog(null);
 
     try {
       const isCSV = file.name.toLowerCase().endsWith('.csv');
@@ -491,7 +505,10 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
       setPreview(result);
       setUnmatchedClients(resolvedUnmatchedClients);
-      setOverlappingImportLog(overlappingLogs[0] ?? null);
+      const normalizedCurrentFileName = normalizeImportFileName(file.name);
+      const sameFileOverlappingLog =
+        overlappingLogs.find((log) => normalizeImportFileName(log.file_name) === normalizedCurrentFileName) ?? null;
+      setOverlappingImportLog(sameFileOverlappingLog);
       setStep('preview');
       
       const hasPendingClients = resolvedUnmatchedClients.some((client) => client.resolution === 'pending');
@@ -981,7 +998,13 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
                 ${isDragActive ? 'border-violet-600 bg-violet-600/5' : 'border-muted-foreground/30 hover:border-violet-600/50'}`}
             >
-              <input {...getInputProps()} />
+              <input
+                {...getInputProps({
+                  onClick: (event) => {
+                    (event.currentTarget as HTMLInputElement).value = '';
+                  },
+                })}
+              />
               <Upload className="size-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg font-medium text-foreground">
                 {isDragActive ? 'Suelta el archivo aquí...' : 'Arrastra tu archivo CSV o XLSX'}
