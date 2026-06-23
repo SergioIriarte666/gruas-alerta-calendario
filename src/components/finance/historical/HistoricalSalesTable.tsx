@@ -21,6 +21,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SourceBadge } from './SourceBadge';
+import { formatRut } from '@/utils/rutFormatter';
 
 export type SortKey = 'issueDate' | 'total' | 'client' | 'status' | 'folio';
 export type SortDirection = 'asc' | 'desc';
@@ -128,6 +129,8 @@ export const HistoricalSalesTable = ({
               </TableHead>
             )}
 
+            {!hideClientColumn && <TableHead className="w-[140px]">RUT</TableHead>}
+
             <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
               <Button
                 variant="ghost"
@@ -183,7 +186,7 @@ export const HistoricalSalesTable = ({
         <TableBody>
           {invoices.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={hideClientColumn ? 7 : 8} className="h-32 text-center text-muted-foreground">
+              <TableCell colSpan={hideClientColumn ? 7 : 9} className="h-32 text-center text-muted-foreground">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <FileText className="size-8 text-muted-foreground/30" />
                   <p>No se encontraron registros.</p>
@@ -228,6 +231,12 @@ export const HistoricalSalesTable = ({
                 {!hideClientColumn && (
                   <TableCell className="font-medium text-foreground/80">
                       {toTitleCase(invoice.client?.name || 'Cliente Desconocido')}
+                  </TableCell>
+                )}
+
+                {!hideClientColumn && (
+                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
+                    {invoice.client?.rut ? formatRut(invoice.client.rut) : '—'}
                   </TableCell>
                 )}
 

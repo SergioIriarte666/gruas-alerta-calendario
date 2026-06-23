@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { SourceBadge } from './SourceBadge';
+import { formatRut } from '@/utils/rutFormatter';
 
 export type PurchaseSortKey = 'invoice_number' | 'supplier' | 'issue_date' | 'due_date' | 'amount' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -71,7 +72,7 @@ export const HistoricalPurchasesTable = ({
   onSelectId,
   onSelectAll,
 }: HistoricalPurchasesTableProps) => {
-  const emptyColSpan = hideSupplierColumn ? 8 : 9;
+  const emptyColSpan = hideSupplierColumn ? 8 : 10;
   const SortIcon = ({ columnKey }: { columnKey: PurchaseSortKey }) => {
     if (sortConfig.key !== columnKey) return <ArrowUpDown className="ml-2 size-3 opacity-30" />;
     return sortConfig.direction === 'asc' ? 
@@ -116,6 +117,8 @@ export const HistoricalPurchasesTable = ({
                 </Button>
               </TableHead>
             )}
+
+            {!hideSupplierColumn && <TableHead className="w-[140px]">RUT</TableHead>}
 
             <TableHead className="min-w-[260px] max-w-[360px] whitespace-nowrap">
               <Button
@@ -239,6 +242,12 @@ export const HistoricalPurchasesTable = ({
                 {!hideSupplierColumn && (
                   <TableCell className="font-medium text-foreground/80">
                     {toTitleCase(invoice.supplier?.name || 'Proveedor Desconocido')}
+                  </TableCell>
+                )}
+
+                {!hideSupplierColumn && (
+                  <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
+                    {invoice.supplier?.rut ? formatRut(invoice.supplier.rut) : '—'}
                   </TableCell>
                 )}
 
