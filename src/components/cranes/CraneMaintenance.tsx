@@ -21,12 +21,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 interface CraneMaintenanceProps {
   crane: Crane;
 }
 
 export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
+  const isLocked = isCranePermanentlyLocked(crane);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -132,7 +134,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
           <h3 className="text-lg font-semibold text-foreground">Mantenimiento de la Grúa</h3>
           <p className="text-muted-foreground">Gestión de mantenimientos para {crane.licensePlate}</p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
+        <Button onClick={() => setIsFormOpen(true)} disabled={isLocked} title={isLocked ? 'Grúa con bloqueo permanente' : undefined}>
           <Plus className="size-4 mr-2" />
           Programar Mantenimiento
         </Button>
@@ -147,7 +149,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
             <p className="mb-6 text-center text-muted-foreground">
               Comienza agregando el primer mantenimiento para esta grúa.
             </p>
-            <Button onClick={() => setIsFormOpen(true)}>
+            <Button onClick={() => setIsFormOpen(true)} disabled={isLocked}>
               <Plus className="size-4 mr-2" />
               Programar Primer Mantenimiento
             </Button>
@@ -264,7 +266,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                                     isPaid: !!checked,
                                   });
                                 }}
-                                disabled={togglePayment.isPending}
+                                disabled={togglePayment.isPending || isLocked}
                               />
                               <label
                                 htmlFor={`paid-${record.id}`}
@@ -292,6 +294,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(record)}
+                      disabled={isLocked}
                       className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
                     >
                       <Edit className="size-4" />
@@ -300,6 +303,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(record)}
+                      disabled={isLocked}
                       className="border-danger/30 bg-danger/10 text-danger hover:bg-danger/15"
                     >
                       <Trash2 className="size-4" />
@@ -313,12 +317,14 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
       )}
 
       {/* Form Dialog */}
-      <MaintenanceForm
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        craneId={crane.id}
-        editingRecord={editingRecord}
-      />
+      {!isLocked && (
+        <MaintenanceForm
+          isOpen={isFormOpen}
+          onClose={handleCloseForm}
+          craneId={crane.id}
+          editingRecord={editingRecord}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

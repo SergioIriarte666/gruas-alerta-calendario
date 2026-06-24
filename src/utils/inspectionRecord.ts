@@ -14,8 +14,25 @@ type PhotographicSetItem = NonNullable<InspectionFormValues['photographicSet']>[
 export interface InitialInspectionEvidence {
   pdfUrl: string | null;
   photos: string[];
+  storageTier: 'hot' | 'cold' | 'deleted';
+  deletedAt: string | null;
   initialState: Pick<InspectionFormValues, 'equipment' | 'kilometraje' | 'combustible' | 'llaves' | 'documentacion'>;
 }
+
+interface ArchivedFilesResponse {
+  tier: 'hot' | 'cold' | 'deleted';
+  deletedAt?: string | null;
+  pdfUrl?: string | null;
+  photos?: { beforeService?: Array<string | null> };
+}
+
+const getArchivedFiles = async (serviceId: string): Promise<ArchivedFilesResponse> => {
+  const { data, error } = await supabase.functions.invoke('get-archived-inspection-files', {
+    body: { serviceId },
+  });
+  if (error) throw new Error(`No se pudo recuperar el archivo R2: ${error.message}`);
+  return data as ArchivedFilesResponse;
+};
 
 /**
  * La entrega no puede depender de sessionStorage (efímero, por pestaña) para mostrar la
@@ -32,7 +49,7 @@ export const fetchInitialInspectionEvidence = async (
 ): Promise<InitialInspectionEvidence | null> => {
   const { data, error } = await supabase
     .from('inspections')
-    .select('pdf_url, photos_before_service, equipment_checklist, initial_vehicle_state')
+    .select('pdf_url, photos_before_service, equipment_checklist, initial_vehicle_state, storage_tier, deleted_at')
     .eq('service_id', serviceId)
     .maybeSingle();
 
@@ -44,16 +61,25 @@ export const fetchInitialInspectionEvidence = async (
   if (!data) {
     return null;
   }
+  const storageTier: InitialInspectionEvidence['storageTier'] =
+    data.storage_tier === 'cold' || data.storage_tier === 'deleted' ? data.storage_tier : 'hot';
 
-  const pdfPath = data.pdf_url ? extractStoragePath(data.pdf_url, PDF_BUCKET) : null;
-  const photoPaths = (data.photos_before_service || [])
-    .map((photo) => extractStoragePath(photo, PHOTO_BUCKET))
-    .filter((path): path is string => !!path);
-
-  const [pdfUrl, photos] = await Promise.all([
-    pdfPath ? getInspectionPdfSignedUrl(pdfPath) : Promise.resolve(null),
-    Promise.all(photoPaths.map((path) => getInspectionPhotoSignedUrl(path))),
-  ]);
+  let pdfUrl: string | null = null;
+  let photos: string[] = [];
+  if (storageTier === 'cold') {
+    const archived = await getArchivedFiles(serviceId);
+    pdfUrl = archived.pdfUrl || null;
+    photos = (archived.photos?.beforeService || []).filter((url): url is string => !!url);
+  } else if (storageTier !== 'deleted') {
+    const pdfPath = data.pdf_url ? extractStoragePath(data.pdf_url, PDF_BUCKET) : null;
+    const photoPaths = (data.photos_before_service || [])
+      .map((photo) => extractStoragePath(photo, PHOTO_BUCKET))
+      .filter((path): path is string => !!path);
+    [pdfUrl, photos] = await Promise.all([
+      pdfPath ? getInspectionPdfSignedUrl(pdfPath) : Promise.resolve(null),
+      Promise.all(photoPaths.map((path) => getInspectionPhotoSignedUrl(path))),
+    ]);
+  }
 
   const storedState = data.initial_vehicle_state && typeof data.initial_vehicle_state === 'object'
     ? data.initial_vehicle_state as Record<string, unknown>
@@ -62,6 +88,8 @@ export const fetchInitialInspectionEvidence = async (
   return {
     pdfUrl,
     photos,
+    storageTier,
+    deletedAt: data.deleted_at,
     initialState: {
       equipment: Array.isArray(storedState.equipment)
         ? storedState.equipment.filter((item): item is string => typeof item === 'string')
@@ -234,24 +262,41 @@ export const fetchInitialPhotosForPdf = async (
 ): Promise<Array<{ fileName: string; category: PdfPhotoCategory; dataUrl: string }>> => {
   const { data, error } = await supabase
     .from('inspections')
-    .select('photos_before_service')
+    .select('photos_before_service, storage_tier')
     .eq('service_id', serviceId)
     .maybeSingle();
-  if (error || !data?.photos_before_service?.length) {
+  if (error) {
     if (error) logger.error('Error consultando fotos iniciales para PDF:', error);
     return [];
   }
-  const paths = data.photos_before_service
-    .map((p) => extractStoragePath(p, PHOTO_BUCKET))
-    .filter((p): p is string => !!p);
 
-  const results = await Promise.all(paths.map(async (path, index) => {
+  let signedPhotos: Array<{ url: string; fileName: string }> = [];
+  if (data?.storage_tier === 'cold') {
     try {
-      const signedUrl = await getInspectionPhotoSignedUrl(path);
-      const dataUrl = await urlToDataUrl(signedUrl);
-      return { fileName: path.split('/').pop() || `inicial-${index}`, category: categoryFromPath(path, index), dataUrl };
+      const archived = await getArchivedFiles(serviceId);
+      signedPhotos = (archived.photos?.beforeService || [])
+        .filter((url): url is string => !!url)
+        .map((url, index) => ({ url, fileName: `inicial-${index}` }));
+    } catch (cause) {
+      logger.warn('No se pudieron recuperar fotos iniciales desde R2:', cause);
+      return [];
+    }
+  } else {
+    const paths = (data?.photos_before_service || [])
+      .map((p) => extractStoragePath(p, PHOTO_BUCKET))
+      .filter((p): p is string => !!p);
+    signedPhotos = await Promise.all(paths.map(async (path) => ({
+      url: await getInspectionPhotoSignedUrl(path),
+      fileName: path.split('/').pop() || path,
+    })));
+  }
+
+  const results = await Promise.all(signedPhotos.map(async ({ url, fileName }, index) => {
+    try {
+      const dataUrl = await urlToDataUrl(url);
+      return { fileName, category: categoryFromPath(fileName, index), dataUrl };
     } catch (e) {
-      logger.warn(`No se pudo cargar foto inicial ${path} para el PDF:`, e);
+      logger.warn(`No se pudo cargar foto inicial ${fileName} para el PDF:`, e);
       return null;
     }
   }));

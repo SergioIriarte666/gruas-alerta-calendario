@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
+import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 interface CranesMobileViewProps {
   cranes: Crane[];
@@ -133,7 +134,7 @@ export const CranesMobileView = ({
                   : "bg-muted text-muted-foreground"
                 }
               >
-                {crane.isActive ? 'Activa' : 'Inactiva'}
+                {getCraneStatusLabel(crane.status)}
               </Badge>
             </div>
 
@@ -178,6 +179,7 @@ export const CranesMobileView = ({
                 variant="ghost"
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onEdit(crane)}
+                disabled={isCranePermanentlyLocked(crane)}
                 className={cn(
                   "border border-primary/30 text-primary hover:bg-primary-soft hover:text-primary touch-target",
                   isMobile ? "w-full" : "flex-1"
@@ -191,6 +193,7 @@ export const CranesMobileView = ({
                 variant="ghost"
                 size={isMobile ? "default" : "sm"}
                 onClick={() => onDelete(crane)}
+                disabled={isCranePermanentlyLocked(crane)}
                 className={cn(
                   "border border-danger/30 text-danger hover:bg-danger-soft/70 hover:text-danger touch-target",
                   isMobile ? "w-full" : "px-3"

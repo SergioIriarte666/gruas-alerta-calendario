@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Crane } from '@/types';
 import { CraneTabsWithCounters } from './CraneTabsWithCounters';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { CraneLockedNotice } from './CraneLockedNotice';
 
 interface CraneDetailsModalProps {
   crane: Crane | null;
@@ -18,6 +20,7 @@ export const CraneDetailsModal = ({
   onEdit 
 }: CraneDetailsModalProps) => {
   if (!crane) return null;
+  const isLocked = isCranePermanentlyLocked(crane);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,12 +36,16 @@ export const CraneDetailsModal = ({
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => onEdit(crane)} variant="outline" className="border-border/70 bg-background/60">
-                Editar Grúa
-              </Button>
+              {!isLocked && (
+                <Button onClick={() => onEdit(crane)} variant="outline" className="border-border/70 bg-background/60">
+                  Editar Grúa
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
+
+        {isLocked && <CraneLockedNotice crane={crane} />}
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <CraneTabsWithCounters crane={crane} />

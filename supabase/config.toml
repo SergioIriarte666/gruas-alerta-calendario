@@ -143,3 +143,12 @@ verify_jwt = false
 
 [functions.vehicle-api]
 verify_jwt = false
+
+[functions.archive-inspections-to-r2]
+verify_jwt = false
+
+[functions.purge-cold-inspections]
+verify_jwt = false
+
+[functions.get-archived-inspection-files]
+verify_jwt = true

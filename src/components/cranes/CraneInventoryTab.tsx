@@ -36,12 +36,14 @@ import { MetricCard } from '@/components/ui/metric-card';
 import { SectionCard } from '@/components/ui/section-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { businessClock } from '@/utils/businessClock';
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 interface CraneInventoryTabProps {
   crane: Crane;
 }
 
 export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
+  const isLocked = isCranePermanentlyLocked(crane);
   // Activar watcher de sincronización en tiempo real
   useInventorySyncWatcher(crane.id);
   
@@ -627,7 +629,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
               {(metrics?.syncStatus?.unsyncedParts || 0) > 0 && (
                 <Button
                   onClick={() => migrateMutation.mutate()}
-                  disabled={migrateMutation.isPending}
+                  disabled={migrateMutation.isPending || isLocked}
                   size="sm"
                   variant="outline"
                   className="ml-2"

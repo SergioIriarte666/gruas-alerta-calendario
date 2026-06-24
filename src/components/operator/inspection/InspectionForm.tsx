@@ -124,11 +124,19 @@ export const InspectionForm = ({
             photographicSet: [],
           });
           saveFormData(form.getValues(), 'final');
-          toast({
-            type: 'success',
-            title: 'Inspección inicial recuperada',
-            description: `${evidence.photos.length} fotografía(s) disponibles; estado inicial precargado para comparar`
-          });
+          if (evidence.storageTier === 'deleted') {
+            toast({
+              type: 'warning',
+              title: 'Respaldo histórico eliminado',
+              description: 'Los archivos cumplieron el plazo de retención de 2 años; el registro de la inspección se conserva.'
+            });
+          } else {
+            toast({
+              type: 'success',
+              title: evidence.storageTier === 'cold' ? 'Respaldo histórico recuperado' : 'Inspección inicial recuperada',
+              description: `${evidence.photos.length} fotografía(s) disponibles; estado inicial precargado para comparar`
+            });
+          }
         })
         .catch((error) => {
           logger.error('Error al recuperar evidencia de inspección inicial desde la base de datos:', error);

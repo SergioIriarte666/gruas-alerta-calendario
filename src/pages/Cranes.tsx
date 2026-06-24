@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CheckCircle2, Shield, Truck, TriangleAlert } from 'lucide-react';
 import { businessClock } from '@/utils/businessClock';
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { toast } from 'sonner';
 
 
 const Cranes = () => {
@@ -136,6 +138,12 @@ const Cranes = () => {
   };
 
   const handleEdit = (crane: Crane) => {
+    if (isCranePermanentlyLocked(crane)) {
+      toast.error('Grúa bloqueada permanentemente', {
+        description: 'Una grúa vendida o dada de baja no admite modificaciones.',
+      });
+      return;
+    }
     setEditingCrane(crane);
     setIsDialogOpen(true);
   };
@@ -151,10 +159,12 @@ const Cranes = () => {
   };
 
   const handleDelete = (crane: Crane) => {
+    if (isCranePermanentlyLocked(crane)) return;
     setPendingAction({ type: 'delete', crane });
   };
 
   const handleToggleStatus = (crane: Crane) => {
+    if (isCranePermanentlyLocked(crane)) return;
     setPendingAction({ type: 'toggle', crane });
   };
 
@@ -169,6 +179,7 @@ const Cranes = () => {
   };
 
   const handleEditFromDetails = (crane: Crane) => {
+    if (isCranePermanentlyLocked(crane)) return;
     setIsDetailsModalOpen(false);
     setEditingCrane(crane);
     setIsDialogOpen(true);
@@ -211,7 +222,7 @@ const Cranes = () => {
                 onChange={(e) => setIntakeCraneId(e.target.value)}
               >
                 <option value="">Seleccionar</option>
-                {cranes.map(c => (
+                {cranes.filter(c => !isCranePermanentlyLocked(c)).map(c => (
                   <option key={c.id} value={c.id}>{c.licensePlate || `${c.brand} ${c.model}`}</option>
                 ))}
               </select>

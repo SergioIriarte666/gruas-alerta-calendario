@@ -2163,6 +2163,8 @@ export type Database = {
       }
       inspections: {
         Row: {
+          archive_manifest: Json
+          archived_at: string | null
           client_name: string | null
           client_rut: string | null
           created_at: string
@@ -2178,10 +2180,17 @@ export type Database = {
           photos_before_service: string[] | null
           photos_client_vehicle: string[] | null
           photos_equipment_used: string[] | null
+          r2_pdf_path: string | null
+          r2_pdf_retiro_path: string | null
+          r2_photos: Json
           service_id: string
+          storage_tier: string
+          deleted_at: string | null
           vehicle_observations: string | null
         }
         Insert: {
+          archive_manifest?: Json
+          archived_at?: string | null
           client_name?: string | null
           client_rut?: string | null
           created_at?: string
@@ -2197,10 +2206,17 @@ export type Database = {
           photos_before_service?: string[] | null
           photos_client_vehicle?: string[] | null
           photos_equipment_used?: string[] | null
+          r2_pdf_path?: string | null
+          r2_pdf_retiro_path?: string | null
+          r2_photos?: Json
           service_id: string
+          storage_tier?: string
+          deleted_at?: string | null
           vehicle_observations?: string | null
         }
         Update: {
+          archive_manifest?: Json
+          archived_at?: string | null
           client_name?: string | null
           client_rut?: string | null
           created_at?: string
@@ -2216,7 +2232,12 @@ export type Database = {
           photos_before_service?: string[] | null
           photos_client_vehicle?: string[] | null
           photos_equipment_used?: string[] | null
+          r2_pdf_path?: string | null
+          r2_pdf_retiro_path?: string | null
+          r2_photos?: Json
           service_id?: string
+          storage_tier?: string
+          deleted_at?: string | null
           vehicle_observations?: string | null
         }
         Relationships: [

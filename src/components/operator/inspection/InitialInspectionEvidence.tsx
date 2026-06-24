@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, ImageIcon } from 'lucide-react';
+import { AlertTriangle, FileText, ImageIcon } from 'lucide-react';
 import { InitialInspectionEvidence as InitialInspectionEvidenceData } from '@/utils/inspectionRecord';
 
 interface InitialInspectionEvidenceProps {
@@ -17,6 +17,20 @@ export const InitialInspectionEvidenceCard = ({ evidence }: InitialInspectionEvi
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {evidence.storageTier === 'deleted' && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>
+              Respaldo eliminado por política de retención (&gt;2 años)
+              {evidence.deletedAt ? ` el ${new Date(evidence.deletedAt).toLocaleDateString('es-CL')}` : ''}.
+            </span>
+          </div>
+        )}
+
+        {evidence.storageTier === 'cold' && (
+          <p className="text-xs text-muted-foreground">Respaldo histórico recuperado desde archivo seguro.</p>
+        )}
+
         {evidence.pdfUrl && (
           <Button variant="outline" size="sm" asChild>
             <a href={evidence.pdfUrl} target="_blank" rel="noopener noreferrer">

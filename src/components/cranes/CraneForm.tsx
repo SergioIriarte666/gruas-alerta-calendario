@@ -246,9 +246,12 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             </p>
           )}
           {(formData.status === 'sold' || formData.status === 'written_off') && (
-            <p className="text-sm text-destructive">
-              Este equipo no generará alertas de documentos.
-            </p>
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p className="font-semibold">Este estado aplica un bloqueo permanente.</p>
+              <p className="mt-0.5 text-xs text-destructive/80">
+                La grúa quedará solo para consulta: no podrá reactivarse ni recibir cambios, servicios, costos, mantenciones o movimientos.
+              </p>
+            </div>
           )}
         </div>
 

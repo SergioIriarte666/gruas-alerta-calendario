@@ -7,6 +7,7 @@ import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { CranesMobileView } from './CranesMobileView';
+import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 export type CraneSortField = 'licensePlate' | 'ownerCompanyRut' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -222,7 +223,7 @@ export const CranesTable = ({
                         : "bg-muted text-muted-foreground"
                       }
                     >
-                      {crane.isActive ? 'Activa' : 'Inactiva'}
+                      {getCraneStatusLabel(crane.status)}
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
@@ -240,6 +241,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(crane)}
+                        disabled={isCranePermanentlyLocked(crane)}
                         className="border border-primary/30 text-primary hover:bg-primary-soft hover:text-primary"
                         title="Editar grúa"
                       >
@@ -249,6 +251,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onToggleStatus(crane)}
+                        disabled={isCranePermanentlyLocked(crane)}
                         className={crane.isActive ? "border border-warning/30 text-warning hover:bg-warning/10 hover:text-warning" : "border border-success/30 text-success hover:bg-success/10 hover:text-success"}
                         title={crane.isActive ? 'Desactivar grúa' : 'Activar grúa'}
                       >
@@ -258,6 +261,7 @@ export const CranesTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(crane)}
+                        disabled={isCranePermanentlyLocked(crane)}
                         className="border border-danger/30 text-danger hover:bg-danger-soft/70 hover:text-danger"
                         title="Eliminar grúa"
                       >

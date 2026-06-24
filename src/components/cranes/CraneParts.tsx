@@ -18,12 +18,14 @@ import {
 } from '@/hooks/useChangeHistory';
 import { cn } from '@/lib/utils';
 import { businessClock } from '@/utils/businessClock';
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 interface CranePartsProps {
   crane: Crane;
 }
 
 export const CraneParts = ({ crane }: CranePartsProps) => {
+  const isLocked = isCranePermanentlyLocked(crane);
   const [isExitOpen, setIsExitOpen] = useState(false);
   const [historyTarget, setHistoryTarget] = useState<{ movementId: string; cranePartId: string | null; itemName: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'month' | '3months'>('all');
@@ -186,7 +188,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
             <p className="mb-6 text-center text-muted-foreground">
               Comienza registrando el primer consumo de inventario para esta grúa.
             </p>
-            <Button onClick={() => setIsExitOpen(true)}>
+            <Button onClick={() => setIsExitOpen(true)} disabled={isLocked}>
               <Plus className="size-4 mr-2" />
               Registrar Primer Consumo
             </Button>
@@ -212,7 +214,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                 </button>
               ))}
             </div>
-            <Button onClick={() => setIsExitOpen(true)} size="sm">
+            <Button onClick={() => setIsExitOpen(true)} size="sm" disabled={isLocked}>
               <Plus className="size-4 mr-1.5" />
               Registrar Consumo
             </Button>
@@ -324,7 +326,7 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
         </>
       )}
 
-      <Dialog open={isExitOpen} onOpenChange={setIsExitOpen}>
+      <Dialog open={!isLocked && isExitOpen} onOpenChange={setIsExitOpen}>
         <DialogContent className="max-h-[90vh] max-w-3xl w-[95vw] border-border/70 bg-card overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar Consumo - {crane.licensePlate}</DialogTitle>
