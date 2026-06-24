@@ -1,3 +1,4 @@
+Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -2161,6 +2162,68 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_retention_audit: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json
+          error_message: string | null
+          id: number
+          inspection_id: string
+          service_id: string
+          status: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json
+          error_message?: string | null
+          id?: number
+          inspection_id: string
+          service_id: string
+          status: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json
+          error_message?: string | null
+          id?: number
+          inspection_id?: string
+          service_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_retention_audit_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_retention_cron_jobs: {
+        Row: {
+          created_at: string
+          job_id: number
+          job_name: string
+          schedule: string
+        }
+        Insert: {
+          created_at?: string
+          job_id: number
+          job_name: string
+          schedule: string
+        }
+        Update: {
+          created_at?: string
+          job_id?: number
+          job_name?: string
+          schedule?: string
+        }
+        Relationships: []
+      }
       inspections: {
         Row: {
           archive_manifest: Json
@@ -2168,6 +2231,7 @@ export type Database = {
           client_name: string | null
           client_rut: string | null
           created_at: string
+          deleted_at: string | null
           equipment_checklist: string[]
           id: string
           initial_vehicle_state: Json | null
@@ -2185,7 +2249,6 @@ export type Database = {
           r2_photos: Json
           service_id: string
           storage_tier: string
-          deleted_at: string | null
           vehicle_observations: string | null
         }
         Insert: {
@@ -2194,6 +2257,7 @@ export type Database = {
           client_name?: string | null
           client_rut?: string | null
           created_at?: string
+          deleted_at?: string | null
           equipment_checklist: string[]
           id?: string
           initial_vehicle_state?: Json | null
@@ -2211,7 +2275,6 @@ export type Database = {
           r2_photos?: Json
           service_id: string
           storage_tier?: string
-          deleted_at?: string | null
           vehicle_observations?: string | null
         }
         Update: {
@@ -2220,6 +2283,7 @@ export type Database = {
           client_name?: string | null
           client_rut?: string | null
           created_at?: string
+          deleted_at?: string | null
           equipment_checklist?: string[]
           id?: string
           initial_vehicle_state?: Json | null
@@ -2237,7 +2301,6 @@ export type Database = {
           r2_photos?: Json
           service_id?: string
           storage_tier?: string
-          deleted_at?: string | null
           vehicle_observations?: string | null
         }
         Relationships: [
@@ -7287,5 +7350,5 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.107.0 (currently installed v2.26.9)
+A new version of Supabase CLI is available: v2.107.0 (currently installed v2.33.9)
 We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

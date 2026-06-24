@@ -19,12 +19,11 @@ const notifications: { key: NotificationKey; label: string; desc: string }[] = [
   { key: 'notifyOperatorAssigned', label: 'Operador asignado a servicio', desc: 'WhatsApp al operador cuando se le asigna un servicio' },
   { key: 'notifyServiceCompleted', label: 'Servicio completado', desc: 'WhatsApp a admins cuando un servicio cambia a completado' },
   { key: 'notifyVehiclePickup', label: 'Retiro de vehículo', desc: 'WhatsApp al cliente cuando el operador completa la inspección de retiro' },
-  { key: 'notifyDocumentExpiry', label: 'Documento próximo a vencer', desc: 'WhatsApp a admins sobre licencias, seguros y revisiones' },
-  { key: 'notifyPaymentPending', label: 'Pago pendiente de cliente', desc: 'WhatsApp a admins cuando hay pagos vencidos' },
-  { key: 'notifyServiceNoQuote', label: 'Servicio creado sin cotización', desc: 'WhatsApp a admins cuando se crea un servicio sin precio' },
-  { key: 'notifyServiceNoOperator', label: 'Servicio sin operador (2+ horas)', desc: 'WhatsApp a admins si un servicio queda sin asignar' },
-  { key: 'notifyInvoiceOverdue', label: 'Factura vencida sin pago (7+ días)', desc: 'WhatsApp a admins sobre facturas impagas vencidas' },
-  { key: 'notifyDailyReminder', label: 'Recordatorio día anterior al operador', desc: 'WhatsApp al operador la noche anterior a su servicio' },
+  { key: 'notifyDocumentExpiry', label: 'Documento próximo a vencer', desc: 'WhatsApp a admins (lun-vie 08:00) sobre licencias, seguros y revisiones próximas a vencer en 30 días' },
+  { key: 'notifyServiceNoQuote', label: 'Servicio creado sin cotización', desc: 'WhatsApp a admins al crear un servicio sin precio asignado' },
+  { key: 'notifyServiceNoOperator', label: 'Servicio programado sin operador', desc: 'WhatsApp a admins (lun-vie 08:00) si hay servicios programados hoy o mañana sin operador asignado' },
+  { key: 'notifyInvoiceOverdue', label: 'Factura vencida sin pago', desc: 'WhatsApp a admins (lun-vie 08:00) sobre facturas con due_date pasada y saldo pendiente' },
+  { key: 'notifyDailyReminder', label: 'Resumen diario a admins', desc: 'WhatsApp a admins (lun-vie 08:00) con cantidad de servicios del día y facturas pendientes' },
 ];
 
 // Validación visual de teléfono chileno (móvil)
