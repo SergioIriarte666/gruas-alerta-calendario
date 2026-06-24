@@ -3,8 +3,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoricalSales } from '@/components/finance/HistoricalSales';
 import { HistoricalPurchases } from '@/components/finance/HistoricalPurchases';
 import { HistoricalResults } from '@/components/finance/historical/HistoricalResults';
+import { LegacyServicesSection } from '@/components/finance/historical/LegacyServicesSection';
+import { useUser } from '@/contexts/UserContext';
 
 const Historical = () => {
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
@@ -34,6 +39,14 @@ const Historical = () => {
           >
             Resultados
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger
+              value="legacy"
+              className="data-[state=active]:bg-amber-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
+              Servicios Legacy
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="sales" className="space-y-4">
@@ -47,6 +60,12 @@ const Historical = () => {
         <TabsContent value="results" className="space-y-4">
           <HistoricalResults />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="legacy" className="space-y-4">
+            <LegacyServicesSection />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

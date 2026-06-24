@@ -1,4 +1,3 @@
-Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -3298,6 +3297,128 @@ export type Database = {
             columns: ["payment_term_id"]
             isOneToOne: false
             referencedRelation: "payment_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_service_imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          filename: string
+          id: string
+          inserted_rows: number
+          notes: string | null
+          period_from: string | null
+          period_to: string | null
+          skipped_rows: number
+          total_rows: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          filename: string
+          id?: string
+          inserted_rows?: number
+          notes?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          skipped_rows?: number
+          total_rows?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          filename?: string
+          id?: string
+          inserted_rows?: number
+          notes?: string | null
+          period_from?: string | null
+          period_to?: string | null
+          skipped_rows?: number
+          total_rows?: number
+        }
+        Relationships: []
+      }
+      legacy_services: {
+        Row: {
+          adjuster: string | null
+          crane_label: string | null
+          created_at: string
+          destination: string | null
+          expediente: string | null
+          id: string
+          import_id: string | null
+          insurer: string | null
+          license_plate: string | null
+          manual_folio: string | null
+          observations: string | null
+          operator_label: string | null
+          origin: string | null
+          received_at: string
+          reference: string | null
+          service_type: string | null
+          subtotal_clp: number
+          total_clp: number
+          vehicle_brand: string | null
+          vehicle_type: string | null
+          vin: string | null
+          year_month: string | null
+        }
+        Insert: {
+          adjuster?: string | null
+          crane_label?: string | null
+          created_at?: string
+          destination?: string | null
+          expediente?: string | null
+          id?: string
+          import_id?: string | null
+          insurer?: string | null
+          license_plate?: string | null
+          manual_folio?: string | null
+          observations?: string | null
+          operator_label?: string | null
+          origin?: string | null
+          received_at: string
+          reference?: string | null
+          service_type?: string | null
+          subtotal_clp?: number
+          total_clp?: number
+          vehicle_brand?: string | null
+          vehicle_type?: string | null
+          vin?: string | null
+          year_month?: string | null
+        }
+        Update: {
+          adjuster?: string | null
+          crane_label?: string | null
+          created_at?: string
+          destination?: string | null
+          expediente?: string | null
+          id?: string
+          import_id?: string | null
+          insurer?: string | null
+          license_plate?: string | null
+          manual_folio?: string | null
+          observations?: string | null
+          operator_label?: string | null
+          origin?: string | null
+          received_at?: string
+          reference?: string | null
+          service_type?: string | null
+          subtotal_clp?: number
+          total_clp?: number
+          vehicle_brand?: string | null
+          vehicle_type?: string | null
+          vin?: string | null
+          year_month?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_services_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_service_imports"
             referencedColumns: ["id"]
           },
         ]
@@ -7350,5 +7471,3 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.107.0 (currently installed v2.33.9)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
