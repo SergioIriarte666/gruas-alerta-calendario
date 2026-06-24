@@ -21,7 +21,7 @@ import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { useVehicleHistory } from '@/hooks/useVehicleHistory';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
 import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb, CheckCircle2, ShieldAlert, Info } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { differenceInCalendarDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseFromDatabase, getBusinessTodayDate } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
@@ -32,6 +32,7 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("VehicleSection");
+const RECENT_SERVICE_WINDOW_DAYS = 30;
 // --- Normalization utilities ---
 const normalizeText = (text: string): string =>
   text
@@ -140,6 +141,21 @@ export const VehicleSection = ({
   const { history } = useVehicleHistory(
     debouncedPlate.length >= 4 ? debouncedPlate : ''
   );
+
+  const today = getBusinessTodayDate();
+  const recentHistory = history.filter(entry => {
+    const daysAgo = differenceInCalendarDays(today, parseFromDatabase(entry.serviceDate));
+    return daysAgo >= 0 && daysAgo <= RECENT_SERVICE_WINDOW_DAYS;
+  });
+  const latestRecentService = recentHistory[0];
+  const latestServiceDaysAgo = latestRecentService
+    ? differenceInCalendarDays(today, parseFromDatabase(latestRecentService.serviceDate))
+    : null;
+  const recentServiceHeadline = latestServiceDaysAgo === 0
+    ? 'Hoy tiene registrado un servicio'
+    : latestServiceDaysAgo === 1
+      ? 'Hace 1 día tiene registrado un servicio'
+      : `Hace ${latestServiceDaysAgo} días tiene registrado un servicio`;
 
   // Debounce license plate input
   useEffect(() => {
@@ -287,15 +303,14 @@ export const VehicleSection = ({
   useEffect(() => {
     if (
       !isEditing &&
-      history &&
-      history.length > 0 &&
+      recentHistory.length > 0 &&
       debouncedPlate === licensePlate.toUpperCase() &&
       !historyConfirmed &&
       !confirmedPlatesRef.current.has(debouncedPlate)
     ) {
       setShowHistoryDialog(true);
     }
-  }, [history, debouncedPlate, licensePlate, isEditing, historyConfirmed]);
+  }, [recentHistory.length, debouncedPlate, licensePlate, isEditing, historyConfirmed]);
 
   // Reset confirmation and mismatch warning when plate/brand/model changes
   useEffect(() => {
@@ -835,67 +850,72 @@ export const VehicleSection = ({
               Vehículo con Historial
             </DialogTitle>
             <DialogDescription>
-              El vehículo <span className="font-semibold">{licensePlate}</span> ya tiene servicios registrados en el sistema.
+              Detectamos actividad reciente para el vehículo <span className="font-semibold">{licensePlate}</span>.
             </DialogDescription>
           </DialogHeader>
           
-          {history && history.length > 0 && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">
-                Último servicio registrado:
-              </p>
+          {latestRecentService && (
+            <div className="space-y-3">
+              <div className="relative overflow-hidden rounded-xl border border-warning/30 bg-warning/10 px-4 py-4">
+                <div className="absolute inset-y-0 left-0 w-1 bg-warning" />
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
+                    <Clock className="size-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-warning">Aviso reciente · últimos 30 días</p>
+                    <p className="mt-0.5 text-lg font-bold text-foreground">{recentServiceHeadline}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-lg bg-muted/50 p-4">
+                <p className="text-sm font-medium text-muted-foreground">Detalle del servicio más reciente</p>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-muted-foreground" />
                   <span>
-                    {format(parseFromDatabase(history[0].serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
-                    {history[0].startTime && (
+                    {format(parseFromDatabase(latestRecentService.serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                    {latestRecentService.startTime && (
                       <span className="text-muted-foreground ml-1">
-                        a las {history[0].startTime.substring(0, 5)}
+                        a las {latestRecentService.startTime.substring(0, 5)}
                       </span>
                     )}
                   </span>
                 </div>
-                {history[0].createdAt && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="size-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Registrado {formatDistanceToNow(new Date(history[0].createdAt), { addSuffix: true, locale: es })}
-                    </span>
-                  </div>
-                )}
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4 text-green-600" />
                   <span className="text-muted-foreground">Origen:</span>
-                  <span>{history[0].origin || 'No especificado'}</span>
+                  <span>{latestRecentService.origin || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4 text-red-600" />
                   <span className="text-muted-foreground">Destino:</span>
-                  <span>{history[0].destination || 'No especificado'}</span>
+                  <span>{latestRecentService.destination || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Cliente:</span>
-                  <span>{history[0].client?.name || 'No especificado'}</span>
+                  <span>{latestRecentService.client?.name || 'No especificado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FileText className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Folio:</span>
-                  <span className="font-mono">{history[0].folio}</span>
+                  <span className="font-mono">{latestRecentService.folio}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Car className="size-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Tipo:</span>
-                  <span>{history[0].serviceType?.name || 'No especificado'}</span>
+                  <span>{latestRecentService.serviceType?.name || 'No especificado'}</span>
                 </div>
               </div>
               
-              {history.length > 1 && (
+              {recentHistory.length > 1 && (
                 <p className="text-xs text-muted-foreground pt-2 border-t">
-                  Este vehículo tiene {history.length} servicios en total.
+                  Este vehículo tiene {recentHistory.length} servicios registrados durante los últimos 30 días.
                 </p>
               )}
+              </div>
             </div>
           )}
           
