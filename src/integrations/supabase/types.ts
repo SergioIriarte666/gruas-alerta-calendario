@@ -3342,7 +3342,6 @@ export type Database = {
       }
       legacy_services: {
         Row: {
-          adjuster: string | null
           crane_label: string | null
           created_at: string
           destination: string | null
@@ -3356,7 +3355,6 @@ export type Database = {
           operator_label: string | null
           origin: string | null
           received_at: string
-          reference: string | null
           service_type: string | null
           subtotal_clp: number
           total_clp: number
@@ -3366,7 +3364,6 @@ export type Database = {
           year_month: string | null
         }
         Insert: {
-          adjuster?: string | null
           crane_label?: string | null
           created_at?: string
           destination?: string | null
@@ -3380,7 +3377,6 @@ export type Database = {
           operator_label?: string | null
           origin?: string | null
           received_at: string
-          reference?: string | null
           service_type?: string | null
           subtotal_clp?: number
           total_clp?: number
@@ -3390,7 +3386,6 @@ export type Database = {
           year_month?: string | null
         }
         Update: {
-          adjuster?: string | null
           crane_label?: string | null
           created_at?: string
           destination?: string | null
@@ -3404,7 +3399,6 @@ export type Database = {
           operator_label?: string | null
           origin?: string | null
           received_at?: string
-          reference?: string | null
           service_type?: string | null
           subtotal_clp?: number
           total_clp?: number

@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { AlertTriangle, CheckCircle2, FileSpreadsheet, Loader2, RotateCcw, Upload } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, Loader2, RotateCcw, Sparkles, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useLegacyServicesImport } from '@/hooks/useLegacyServicesImport';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import type { LegacyRow, PreviewStats } from '@/utils/legacyServicesParser';
 
 type Step = 'upload' | 'preview' | 'importing' | 'done';
@@ -35,6 +38,28 @@ const MiniRanking = ({ title, items }: { title: string; items: { name: string; c
         </div>
       ))}
     </div>
+  </div>
+);
+
+const NormalizationGroup = ({ title, items }: { title: string; items: { before: string[]; after: string }[] }) => (
+  <div className="space-y-2 rounded-lg border bg-background/60 p-3">
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+    {items.length > 0 ? (
+      <div className="space-y-2">
+        {items.map((item) => (
+          <div key={`${title}-${item.after}`} className="rounded-md bg-muted/40 p-3 text-sm">
+            <p className="font-medium">{item.before.length} variaciones consolidadas en “{item.after}”</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {item.before.map((value) => `“${value}”`).join(' · ')}
+              {' '}
+              → {item.after}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-sm text-muted-foreground">Sin variaciones agrupadas para este campo.</p>
+    )}
   </div>
 );
 
@@ -106,8 +131,13 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
               <p className="font-semibold">{parsing ? 'Leyendo y validando archivo…' : 'Arrastre aquí el respaldo XLSX'}</p>
               <p className="mt-2 text-sm text-muted-foreground">o haga clic para seleccionarlo</p>
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
-              Solo Excel del reporte “ReporteMemoriasDescriptivas” de la plataforma anterior. Hoja “Reporte”, encabezados en fila 4.
+            <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+              <p>Puede usar la plantilla nueva (hoja “Servicios Legacy”) o el reporte original “ReporteMemoriasDescriptivas” sin reformatear.</p>
+              <Button variant="outline" size="sm" className="shrink-0 bg-background/80" asChild>
+                <a href="/templates/plantilla_servicios_legacy.xlsx" download="plantilla_servicios_legacy.xlsx">
+                  <Download className="mr-2 size-4" />Descargar plantilla
+                </a>
+              </Button>
             </div>
           </div>
         )}
@@ -122,6 +152,52 @@ export function LegacyServicesImportDialog({ open, onOpenChange, onImportComplet
               {[['Filas detectadas', stats.total_rows.toLocaleString('es-CL')], ['Filas válidas', stats.valid_rows.toLocaleString('es-CL')], ['Subtotal', formatCLP(stats.total_subtotal_clp)], ['Total con IVA', formatCLP(stats.total_total_clp)]].map(([label, value]) => <div key={label} className="rounded-lg border p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold">{value}</p></div>)}
             </div>
             {stats.invalid_rows > 0 && <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4"><div className="mb-2 flex items-center gap-2 font-semibold text-destructive"><AlertTriangle className="size-4" /> Fechas no parseables</div><ScrollArea className="h-24"><div className="flex flex-wrap gap-2">{stats.invalid_row_numbers.map((row) => <Badge key={row} variant="outline">Fila {row}: Fecha no parseable</Badge>)}</div></ScrollArea></div>}
+            {stats.overlap_stats.total_overlapping > 0 && (
+              <Alert variant="warning">
+                <AlertTriangle className="size-4" />
+                <AlertTitle>Posible solape con importaciones previas</AlertTitle>
+                <AlertDescription>
+                  <p>
+                    Se detectaron {stats.overlap_stats.total_overlapping.toLocaleString('es-CL')} filas con la misma fecha y placa que ya existen en otra importación previa. Esto puede indicar solape entre archivos exportados de distintos rangos. Igual puede continuar — el sistema no bloquea el import.
+                  </p>
+                  <Accordion type="single" collapsible className="mt-3 rounded-lg border border-amber-200/70 bg-background/60 px-3 dark:border-amber-900/60">
+                    <AccordionItem value="overlap-detail" className="border-b-0">
+                      <AccordionTrigger className="py-2 text-sm hover:no-underline">Ver detalle de coincidencias</AccordionTrigger>
+                      <AccordionContent className="pb-3">
+                        <div className="space-y-2">
+                          {stats.overlap_stats.overlap_samples.map((sample, index) => (
+                            <div key={`${sample.received_at}-${sample.license_plate}-${index}`} className="grid gap-1 rounded-md bg-muted/40 p-3 text-xs sm:grid-cols-[1.3fr_0.8fr_0.8fr_1.4fr]">
+                              <span>{formatForDisplayWithTime(sample.received_at)}</span>
+                              <span className="font-mono font-semibold">{sample.license_plate || 'Sin placa'}</span>
+                              <span>{sample.manual_folio || 'Sin folio'}</span>
+                              <span className="truncate" title={sample.existing_filename}>{sample.existing_filename}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </AlertDescription>
+              </Alert>
+            )}
+            {stats.normalization_applied.total_normalizations > 0 && (
+              <Accordion type="single" collapsible className="rounded-xl border border-amber-200 bg-amber-50/50 px-4 dark:border-amber-900 dark:bg-amber-950/20">
+                <AccordionItem value="normalization" className="border-b-0">
+                  <AccordionTrigger className="hover:no-underline">
+                    <span className="flex items-center gap-2 text-left">
+                      <Sparkles className="size-4 text-amber-600" />
+                      Normalización aplicada ({stats.normalization_applied.total_normalizations} variaciones consolidadas)
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <NormalizationGroup title="Operadores unificados" items={stats.normalization_applied.operators_unified} />
+                      <NormalizationGroup title="Aseguradoras unificadas" items={stats.normalization_applied.insurers_unified} />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
             <div className="grid gap-3 md:grid-cols-3"><MiniRanking title="Top aseguradoras" items={stats.top_insurers} /><MiniRanking title="Top operadores" items={stats.top_operators} /><MiniRanking title="Top tipos de servicio" items={stats.top_service_types} /></div>
             <div className="space-y-2"><Label htmlFor="legacy-notes">Notas del lote (opcional)</Label><Textarea id="legacy-notes" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: respaldo septiembre–diciembre 2020" /></div>
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={reset}>Cancelar</Button><AlertDialog><AlertDialogTrigger asChild><Button className="bg-amber-600 text-white hover:bg-amber-700">Confirmar e importar</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Importar este respaldo?</AlertDialogTitle><AlertDialogDescription>Se importarán {stats.valid_rows} filas válidas. Las {stats.invalid_rows} filas inválidas serán omitidas. ¿Continuar?</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={confirmImport} className="bg-amber-600 hover:bg-amber-700">Continuar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>

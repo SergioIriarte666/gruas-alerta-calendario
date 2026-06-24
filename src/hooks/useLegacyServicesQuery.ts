@@ -16,8 +16,6 @@ export type LegacyServiceRecord = {
   id: string;
   import_id: string | null;
   received_at: string;
-  adjuster: string | null;
-  reference: string | null;
   manual_folio: string | null;
   expediente: string | null;
   insurer: string | null;
@@ -50,7 +48,7 @@ const applyFilters = (query: any, filters: LegacyServicesFilters) => {
   if (filters.serviceTypes?.length) next = next.in('service_type', filters.serviceTypes);
   const search = cleanSearch(filters.search);
   if (search) {
-    next = next.or(`license_plate.ilike.%${search}%,manual_folio.ilike.%${search}%,origin.ilike.%${search}%,destination.ilike.%${search}%`);
+    next = next.or(`license_plate.ilike.%${search}%,manual_folio.ilike.%${search}%,expediente.ilike.%${search}%,origin.ilike.%${search}%,destination.ilike.%${search}%`);
   }
   return next;
 };

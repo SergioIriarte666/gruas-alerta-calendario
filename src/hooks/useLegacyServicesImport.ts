@@ -7,15 +7,84 @@ import {
   computeLegacyPreviewStats,
   parseLegacyServicesXLSX,
   type LegacyRow,
+  type OverlapStats,
   type PreviewStats,
 } from '@/utils/legacyServicesParser';
 
 const logger = createLogger('LegacyServices');
 const BATCH_SIZE = 200;
+const OVERLAP_QUERY_CHUNK_SIZE = 500;
+
+type ExistingOverlapRecord = {
+  received_at: string;
+  license_plate: string | null;
+  manual_folio: string | null;
+  expediente: string | null;
+  import_id: string | null;
+  legacy_service_imports?: { filename: string | null } | null;
+};
 
 const toDatabaseRow = (row: LegacyRow, importId: string) => {
-  const { _rowIndex: _ignoredRowIndex, _invalidDate: _ignoredInvalidDate, ...databaseRow } = row;
+  const {
+    _rowIndex: _ignoredRowIndex,
+    _invalidDate: _ignoredInvalidDate,
+    _isTemplateExample: _ignoredTemplateExample,
+    _normalizations: _ignoredNormalizations,
+    _normalizationChangeCount: _ignoredNormalizationChangeCount,
+    ...databaseRow
+  } = row;
   return { ...databaseRow, received_at: row.received_at!, import_id: importId };
+};
+
+const tupleKey = (receivedAt: string, licensePlate: string | null | undefined) =>
+  `${new Date(receivedAt).toISOString()}__${licensePlate ?? ''}`;
+
+const fetchOverlapStats = async (rows: LegacyRow[]): Promise<OverlapStats> => {
+  const validRows = rows.filter((row) => !row._invalidDate && row.received_at);
+  if (!validRows.length) return { total_overlapping: 0, overlap_samples: [] };
+
+  const incomingTuples = new Map<string, LegacyRow>();
+  validRows.forEach((row) => {
+    incomingTuples.set(tupleKey(row.received_at!, row.license_plate), row);
+  });
+
+  const incomingKeys = new Set(incomingTuples.keys());
+  const overlappingKeys = new Set<string>();
+  const samples: OverlapStats['overlap_samples'] = [];
+
+  for (let start = 0; start < validRows.length; start += OVERLAP_QUERY_CHUNK_SIZE) {
+    const chunk = validRows.slice(start, start + OVERLAP_QUERY_CHUNK_SIZE);
+    const receivedAtValues = [...new Set(chunk.map((row) => row.received_at!).filter(Boolean))];
+    if (!receivedAtValues.length) continue;
+
+    const { data, error } = await supabase
+      .from('legacy_services')
+      .select('received_at, license_plate, manual_folio, expediente, import_id, legacy_service_imports(filename)')
+      .in('received_at', receivedAtValues);
+
+    if (error) throw new Error(`No fue posible revisar solapes con importaciones previas: ${error.message}`);
+
+    const existingRows = (data ?? []) as unknown as ExistingOverlapRecord[];
+    existingRows.forEach((existing) => {
+      const key = tupleKey(existing.received_at, existing.license_plate);
+      if (!incomingKeys.has(key)) return;
+      overlappingKeys.add(key);
+      if (samples.length >= 10) return;
+      const incoming = incomingTuples.get(key);
+      samples.push({
+        received_at: existing.received_at,
+        license_plate: existing.license_plate ?? '',
+        manual_folio: incoming?.manual_folio || existing.manual_folio || '',
+        existing_filename: existing.legacy_service_imports?.filename ?? 'Importación previa',
+      });
+    });
+  }
+
+  const totalOverlappingRows = validRows.filter((row) => overlappingKeys.has(tupleKey(row.received_at!, row.license_plate))).length;
+  return {
+    total_overlapping: totalOverlappingRows,
+    overlap_samples: samples,
+  };
 };
 
 export function useLegacyServicesImport() {
@@ -24,7 +93,9 @@ export function useLegacyServicesImport() {
 
   const parseFile = async (file: File): Promise<{ rows: LegacyRow[]; stats: PreviewStats }> => {
     const rows = await parseLegacyServicesXLSX(file);
-    return { rows, stats: computeLegacyPreviewStats(rows) };
+    const stats = computeLegacyPreviewStats(rows);
+    stats.overlap_stats = await fetchOverlapStats(rows);
+    return { rows, stats };
   };
 
   const runImport = async (

@@ -1,11 +1,16 @@
 import * as XLSX from 'xlsx';
 import { fromZonedTime } from 'date-fns-tz';
 import { businessClock } from '@/utils/businessClock';
+import { createLogger } from '@/lib/logger';
+import { toTitleCaseEs } from '@/utils/textNormalization';
+
+const logger = createLogger('LegacyServicesParser');
+
+type NormalizationField = 'operator_label' | 'insurer';
+type NormalizationTrace = { field: NormalizationField; before: string; after: string };
 
 export type LegacyRow = {
   received_at: string | null;
-  adjuster: string;
-  reference: string;
   manual_folio: string;
   expediente: string;
   insurer: string;
@@ -23,6 +28,19 @@ export type LegacyRow = {
   observations: string;
   _rowIndex: number;
   _invalidDate: boolean;
+  _isTemplateExample: boolean;
+  _normalizations?: NormalizationTrace[];
+  _normalizationChangeCount?: number;
+};
+
+export type OverlapStats = {
+  total_overlapping: number;
+  overlap_samples: {
+    received_at: string;
+    license_plate: string;
+    manual_folio: string;
+    existing_filename: string;
+  }[];
 };
 
 export type PreviewStats = {
@@ -38,9 +56,15 @@ export type PreviewStats = {
   top_operators: { name: string; count: number }[];
   top_service_types: { name: string; count: number }[];
   top_cranes: { name: string; count: number }[];
+  normalization_applied: {
+    total_normalizations: number;
+    operators_unified: { before: string[]; after: string }[];
+    insurers_unified: { before: string[]; after: string }[];
+  };
+  overlap_stats: OverlapStats;
 };
 
-const EXPECTED_HEADERS = [
+const LEGACY_HEADERS = [
   'Fecha/hora de recepción',
   'Ajustador',
   'Referencia',
@@ -61,8 +85,140 @@ const EXPECTED_HEADERS = [
   'Total',
 ] as const;
 
+const TEMPLATE_HEADERS = [
+  'Fecha/hora de recepción',
+  'Folio (Manual)',
+  'EXPEDIENTE',
+  'Aseguradora',
+  'Tipo de servicio',
+  'Marca del vehículo',
+  'Tipo de vehículo',
+  'Placas del vehículo',
+  'No. serie del vehículo',
+  'Origen',
+  'Destino',
+  'Grúa',
+  'Operador',
+  'Subtotal',
+  'Observaciones internas',
+  'Total',
+] as const;
+
+export const LEGACY_SERVICE_TYPE_SYNONYMS: Record<string, string> = {
+  'grua livianos': 'Grua Liviano',
+  'grua liviano': 'Grua Liviano',
+  'grua pesado': 'Grua Pesados',
+  'grua pesados': 'Grua Pesados',
+  'apertura puertas': 'Apertura de Puertas',
+  'cambio neumaticos': 'Cambio de Neumáticos',
+  'revision tecnica': 'Revisión Técnica',
+  'revision previaje': 'Revisión Previaje',
+};
+
 const cleanText = (value: unknown): string =>
   value == null ? '' : String(value).replace(/\xa0/g, ' ').replace(/\s+/g, ' ').trim();
+
+const toTitleCaseAlwaysEs = (value: string): string => {
+  const cleaned = cleanText(value);
+  return cleaned ? toTitleCaseEs(cleaned.toLocaleUpperCase('es-CL')) : '';
+};
+
+const normalizeInsurer = (value: string) => {
+  const cleaned = cleanText(value);
+  if (/^[A-Z]{2,}(\s|$)/.test(cleaned)) return cleaned;
+  return toTitleCaseAlwaysEs(cleaned);
+};
+
+const normalizeServiceType = (value: string) => {
+  const cleaned = cleanText(value);
+  const mapped = LEGACY_SERVICE_TYPE_SYNONYMS[cleaned.toLocaleLowerCase('es-CL')];
+  return mapped ?? toTitleCaseAlwaysEs(cleaned);
+};
+
+const normalizeVehicleBrand = (value: string) => {
+  const titleCased = toTitleCaseAlwaysEs(value);
+  return titleCased === 'Bmw' ? 'BMW' : titleCased;
+};
+
+const normalizePlateLikeValue = (value: string) => cleanText(value).replace(/\s+/g, '').toUpperCase();
+
+const normalizeCraneLabel = (value: string) => {
+  const cleaned = cleanText(value);
+  if (/^[A-Z]{4}-\d{2}$/i.test(cleaned.replace(/\s+/g, ''))) {
+    return normalizePlateLikeValue(cleaned);
+  }
+  return toTitleCaseAlwaysEs(cleaned);
+};
+
+const appendTrace = (traces: NormalizationTrace[], field: NormalizationField, before: string, after: string) => {
+  if (before !== after) traces.push({ field, before, after });
+};
+
+export function normalizeLegacyRow(raw: LegacyRow): LegacyRow {
+  const originalOperator = cleanText(raw.operator_label);
+  const originalInsurer = cleanText(raw.insurer);
+  const normalizations: NormalizationTrace[] = [];
+
+  const normalized: LegacyRow = {
+    ...raw,
+    manual_folio: cleanText(raw.manual_folio),
+    expediente: cleanText(raw.expediente),
+    insurer: normalizeInsurer(raw.insurer),
+    service_type: normalizeServiceType(raw.service_type),
+    vehicle_brand: normalizeVehicleBrand(raw.vehicle_brand),
+    vehicle_type: toTitleCaseAlwaysEs(raw.vehicle_type),
+    license_plate: normalizePlateLikeValue(raw.license_plate),
+    vin: normalizePlateLikeValue(raw.vin),
+    origin: cleanText(raw.origin),
+    destination: cleanText(raw.destination),
+    crane_label: normalizeCraneLabel(raw.crane_label),
+    operator_label: toTitleCaseAlwaysEs(raw.operator_label),
+    observations: cleanText(raw.observations),
+  };
+
+  appendTrace(normalizations, 'operator_label', originalOperator, normalized.operator_label);
+  appendTrace(normalizations, 'insurer', originalInsurer, normalized.insurer);
+
+  const stringFields: (keyof Pick<LegacyRow,
+    'manual_folio'
+    | 'expediente'
+    | 'insurer'
+    | 'service_type'
+    | 'vehicle_brand'
+    | 'vehicle_type'
+    | 'license_plate'
+    | 'vin'
+    | 'origin'
+    | 'destination'
+    | 'crane_label'
+    | 'operator_label'
+    | 'observations'
+  >)[] = [
+    'manual_folio',
+    'expediente',
+    'insurer',
+    'service_type',
+    'vehicle_brand',
+    'vehicle_type',
+    'license_plate',
+    'vin',
+    'origin',
+    'destination',
+    'crane_label',
+    'operator_label',
+    'observations',
+  ];
+
+  const changeCount = stringFields.reduce((count, field) => {
+    return count + (cleanText(raw[field]) !== normalized[field] ? 1 : 0);
+  }, 0);
+
+  return {
+    ...normalized,
+    _normalizations: normalizations,
+    _normalizationChangeCount: changeCount,
+  };
+}
 
 const parseAmount = (value: unknown): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
@@ -109,56 +265,87 @@ const parseReceivedAt = (value: unknown): string | null => {
   return fromZonedTime(localTimestamp, businessClock.timezone()).toISOString();
 };
 
+const isTemplateExample = (row: LegacyRow, rawReceivedAt: unknown): boolean => {
+  const normalizedDate = cleanText(rawReceivedAt)
+    .replace(/a\.\s*m\./i, 'AM')
+    .replace(/p\.\s*m\./i, 'PM')
+    .toUpperCase();
+
+  return row.manual_folio === '2150'
+    && row.license_plate.toUpperCase() === 'JVWP-22'
+    && normalizedDate === '01/09/2020 12:08:00 PM'
+    && row.subtotal_clp === 30000;
+};
+
 export async function parseLegacyServicesXLSX(file: File): Promise<LegacyRow[]> {
   const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
-  const worksheet = workbook.Sheets.Reporte;
+  const isTemplateFormat = Boolean(workbook.Sheets['Servicios Legacy']);
+  const worksheet = workbook.Sheets['Servicios Legacy'] ?? workbook.Sheets.Reporte;
   if (!worksheet) {
-    throw new Error("El archivo no contiene la hoja obligatoria 'Reporte'.");
+    throw new Error("No se encontró la hoja 'Servicios Legacy' ni 'Reporte' en el archivo.");
+  }
+  if (!isTemplateFormat) {
+    logger.info("Archivo en formato legacy detectado (hoja 'Reporte'). Las columnas Ajustador y Referencia se omitirán automáticamente.");
   }
 
+  const headerRowIndex = isTemplateFormat ? 0 : 3;
+  const firstColumnIndex = isTemplateFormat ? 0 : 1;
+  const headerExcelRow = headerRowIndex + 1;
+  const expectedHeaders = isTemplateFormat ? TEMPLATE_HEADERS : LEGACY_HEADERS;
   const rows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
-    range: 3,
+    range: headerRowIndex,
     header: 1,
     defval: '',
     raw: false,
   });
   const headerRow = rows[0] ?? [];
-  const actualHeaders = headerRow.slice(1, 19).map(cleanText);
-  const headerMismatch = EXPECTED_HEADERS.findIndex((header, index) => actualHeaders[index] !== header);
-  if (headerMismatch !== -1 || actualHeaders.length !== EXPECTED_HEADERS.length) {
-    const position = headerMismatch === -1 ? EXPECTED_HEADERS.length : headerMismatch;
+  const actualHeaders = headerRow.slice(firstColumnIndex, firstColumnIndex + expectedHeaders.length).map(cleanText);
+  const headerMismatch = expectedHeaders.findIndex((header, index) => actualHeaders[index] !== header);
+  if (headerMismatch !== -1 || actualHeaders.length !== expectedHeaders.length) {
+    const position = headerMismatch === -1 ? expectedHeaders.length : headerMismatch;
+    const excelColumn = String.fromCharCode(65 + firstColumnIndex + position);
     throw new Error(
-      `Formato inválido en la fila 4, columna ${String.fromCharCode(66 + position)}. Se esperaba "${EXPECTED_HEADERS[position] ?? 'sin columnas adicionales'}" y se encontró "${actualHeaders[position] ?? ''}".`,
+      `Formato inválido en la hoja '${isTemplateFormat ? 'Servicios Legacy' : 'Reporte'}', fila ${headerExcelRow}, columna ${excelColumn}. Se esperaba "${expectedHeaders[position] ?? 'sin columnas adicionales'}" y se encontró "${actualHeaders[position] ?? ''}".`,
     );
   }
 
-  return rows.slice(1).flatMap((rawRow, index) => {
-    const cells = rawRow.slice(1, 19);
+  const parsedRows = rows.slice(1).flatMap((rawRow, index) => {
+    const sourceCells = rawRow.slice(firstColumnIndex, firstColumnIndex + expectedHeaders.length);
+    const cells = isTemplateFormat
+      ? sourceCells
+      : [sourceCells[0], ...sourceCells.slice(3)];
     if (cells.every((cell) => cleanText(cell) === '')) return [];
     const receivedAt = parseReceivedAt(cells[0]);
-    return [{
+    const parsedRow: LegacyRow = {
       received_at: receivedAt,
-      adjuster: cleanText(cells[1]),
-      reference: cleanText(cells[2]),
-      manual_folio: cleanText(cells[3]),
-      expediente: cleanText(cells[4]),
-      insurer: cleanText(cells[5]),
-      service_type: cleanText(cells[6]),
-      vehicle_brand: cleanText(cells[7]),
-      vehicle_type: cleanText(cells[8]),
-      license_plate: cleanText(cells[9]),
-      vin: cleanText(cells[10]),
-      origin: cleanText(cells[11]),
-      destination: cleanText(cells[12]),
-      crane_label: cleanText(cells[13]),
-      operator_label: cleanText(cells[14]),
-      subtotal_clp: parseAmount(cells[15]),
-      observations: cleanText(cells[16]),
-      total_clp: parseAmount(cells[17]),
-      _rowIndex: index + 5,
+      manual_folio: cleanText(cells[1]),
+      expediente: cleanText(cells[2]),
+      insurer: cleanText(cells[3]),
+      service_type: cleanText(cells[4]),
+      vehicle_brand: cleanText(cells[5]),
+      vehicle_type: cleanText(cells[6]),
+      license_plate: cleanText(cells[7]),
+      vin: cleanText(cells[8]),
+      origin: cleanText(cells[9]),
+      destination: cleanText(cells[10]),
+      crane_label: cleanText(cells[11]),
+      operator_label: cleanText(cells[12]),
+      subtotal_clp: parseAmount(cells[13]),
+      observations: cleanText(cells[14]),
+      total_clp: parseAmount(cells[15]),
+      _rowIndex: index + headerExcelRow + 1,
       _invalidDate: receivedAt === null,
-    } satisfies LegacyRow];
+      _isTemplateExample: false,
+    };
+    const normalizedRow = normalizeLegacyRow(parsedRow);
+    if (index === 0) normalizedRow._isTemplateExample = isTemplateExample(normalizedRow, cells[0]);
+    return [normalizedRow];
   });
+
+  const importedRows = parsedRows.filter((row) => !row._isTemplateExample);
+  const normalizationChanges = importedRows.reduce((sum, row) => sum + (row._normalizationChangeCount ?? 0), 0);
+  logger.info(`Normalización aplicada: ${normalizationChanges} cambios sobre ${importedRows.length} filas`);
+  return importedRows;
 }
 
 const topWithOthers = (values: string[], limit = 8) => {
@@ -173,9 +360,31 @@ const topWithOthers = (values: string[], limit = 8) => {
   return others > 0 ? [...top, { name: 'Otras', count: others }] : top;
 };
 
+const unifiedNormalizations = (rows: LegacyRow[], field: NormalizationField) => {
+  const grouped = new Map<string, Set<string>>();
+  rows.forEach((row) => {
+    row._normalizations
+      ?.filter((trace) => trace.field === field)
+      .forEach((trace) => {
+        const originals = grouped.get(trace.after) ?? new Set<string>();
+        originals.add(trace.before);
+        originals.add(trace.after);
+        grouped.set(trace.after, originals);
+      });
+  });
+
+  return [...grouped]
+    .map(([after, originals]) => ({ before: [...originals].sort((a, b) => a.localeCompare(b, 'es')), after }))
+    .filter((item) => item.before.length >= 2)
+    .sort((a, b) => b.before.length - a.before.length || a.after.localeCompare(b.after, 'es'))
+    .slice(0, 10);
+};
+
 export function computeLegacyPreviewStats(rows: LegacyRow[]): PreviewStats {
   const validRows = rows.filter((row) => !row._invalidDate && row.received_at);
   const dates = validRows.map((row) => row.received_at!.slice(0, 10)).sort();
+  const operatorsUnified = unifiedNormalizations(validRows, 'operator_label');
+  const insurersUnified = unifiedNormalizations(validRows, 'insurer');
   return {
     total_rows: rows.length,
     valid_rows: validRows.length,
@@ -189,5 +398,14 @@ export function computeLegacyPreviewStats(rows: LegacyRow[]): PreviewStats {
     top_operators: topWithOthers(validRows.map((row) => row.operator_label)),
     top_service_types: topWithOthers(validRows.map((row) => row.service_type)),
     top_cranes: topWithOthers(validRows.map((row) => row.crane_label)),
+    normalization_applied: {
+      total_normalizations: validRows.reduce((sum, row) => sum + (row._normalizationChangeCount ?? 0), 0),
+      operators_unified: operatorsUnified,
+      insurers_unified: insurersUnified,
+    },
+    overlap_stats: {
+      total_overlapping: 0,
+      overlap_samples: [],
+    },
   };
 }
