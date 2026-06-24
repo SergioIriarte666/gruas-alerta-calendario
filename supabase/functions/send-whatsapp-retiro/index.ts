@@ -1,5 +1,5 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
-import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppDocumentTemplate, sendWhatsAppTemplate } from '../_shared/whatsapp.ts';
+import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppDocumentTemplate } from '../_shared/whatsapp.ts';
 import { getCorsHeaders } from "../_shared/cors.ts";
 
 const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' });
@@ -50,7 +50,6 @@ Deno.serve(async (req: Request) => {
     }
 
     const formattedDate = formatServiceDate(serviceDate || '');
-    const documentTemplateEnabled = Deno.env.get('WHATSAPP_INSPECTION_DOCUMENT_TEMPLATE_ENABLED') === 'true';
     const results: Array<{ target: string; phone: string; success: boolean }> = [];
 
     const sendToPhone = async (phone: string, recipientName: string, target: string) => {
@@ -62,9 +61,9 @@ Deno.serve(async (req: Request) => {
           triggeredBy: authContext.user?.id ?? null,
           context: { folio, serviceId, target, phase: 'final' },
       };
-      const result = documentTemplateEnabled
-        ? await sendWhatsAppDocumentTemplate(norm.phone, 'inspeccion_completada_doc', parameters, pdfUrl, `Entrega-${folio}.pdf`, options)
-        : await sendWhatsAppTemplate(norm.phone, 'retiro_vehiculo_link', [...parameters, pdfUrl], options);
+      const result = await sendWhatsAppDocumentTemplate(
+        norm.phone, 'inspeccion_completada_doc', parameters, pdfUrl, `Entrega-${folio}.pdf`, options,
+      );
       results.push({ target, phone: norm.phone, success: result.success });
     };
 
