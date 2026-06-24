@@ -50,6 +50,55 @@ export const extractDocumentSimilarityText = (doc: XMLDocumentData) => {
     .trim();
 };
 
+const removeLeadingRut = (value: string, supplierRut?: string) => {
+  let result = value.trim();
+  if (supplierRut?.trim()) {
+    const escapedRut = supplierRut.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`^${escapedRut}\\s*[-–—:|]?\\s*`, 'i'), '');
+  }
+
+  return result.replace(/^\d{1,2}(?:\.\d{3}){2}-[\dkK]\s*[-–—:|]?\s*/, '').trim();
+};
+
+const truncateDescription = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) return value;
+  const shortened = value.slice(0, maxLength - 1).replace(/\s+\S*$/, '').trimEnd();
+  return `${shortened}…`;
+};
+
+/**
+ * Genera una glosa breve para la vista previa y el registro del importador.
+ * Montos, cantidades, RUT y folio ya se almacenan en campos dedicados.
+ */
+export const buildCompactXmlDescription = (doc: XMLDocumentData) => {
+  const uniqueConcepts = new Map<string, string>();
+
+  for (const item of doc.items || []) {
+    const rawConcept = item.product_name?.trim() || item.description?.trim() || '';
+    const concept = removeLeadingRut(rawConcept, doc.supplier_rut)
+      .replace(/\s+/g, ' ')
+      .replace(/\s*[-–—:|]+\s*$/, '')
+      .trim();
+    if (!concept) continue;
+
+    const normalized = normalizeGlosaText(concept);
+    if (normalized && !uniqueConcepts.has(normalized)) uniqueConcepts.set(normalized, concept);
+  }
+
+  const concepts = Array.from(uniqueConcepts.values());
+  if (concepts.length > 0) {
+    const visibleConcepts = concepts.slice(0, 2);
+    const remaining = concepts.length - visibleConcepts.length;
+    const summary = visibleConcepts.join(' · ') + (remaining > 0 ? ` · y ${remaining} concepto${remaining === 1 ? '' : 's'} más` : '');
+    return truncateDescription(summary, 180);
+  }
+
+  const documentDescription = removeLeadingRut(doc.description || '', doc.supplier_rut).replace(/\s+/g, ' ').trim();
+  if (documentDescription) return truncateDescription(documentDescription, 180);
+
+  return (doc.document_type || 'Documento XML').trim() || 'Documento XML';
+};
+
 export const isSimilarAmount = (left?: number | null, right?: number | null) => {
   if (!left || !right || !isFinite(left) || !isFinite(right) || left <= 0 || right <= 0) return false;
   const ratio = Math.abs(left - right) / Math.max(left, right);

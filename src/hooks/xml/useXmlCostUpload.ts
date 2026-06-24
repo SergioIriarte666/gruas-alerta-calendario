@@ -17,6 +17,7 @@ import { createLogger } from '@/lib/logger';
 import {
   HistoricalGlosaCandidate,
   HistoricalGlosaSuggestion,
+  buildCompactXmlDescription,
   buildHistoricalGlosaSuggestion,
   getDocumentStateKey,
 } from '@/utils/xml/xmlGlosaHelpers';
@@ -74,33 +75,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
   const getSupplierCondition = (rut: string) => supplierPaymentCondition[rut] ?? 'none';
 
-  const buildSuggestedGlosa = (doc: XMLDocumentData) => {
-    if (doc.items && doc.items.length > 0) {
-      const lines = doc.items
-        .map(it => {
-          const desc = (it.description || '').trim();
-          if (!desc) return '';
-          const qty = typeof it.quantity === 'number' && isFinite(it.quantity) && it.quantity > 0 ? it.quantity : null;
-          const unit = typeof it.unit_price === 'number' && isFinite(it.unit_price) && it.unit_price > 0 ? it.unit_price : null;
-          const tot = typeof it.total === 'number' && isFinite(it.total) && it.total > 0 ? it.total : null;
-          const parts: string[] = [desc];
-          if (qty && unit && tot) parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })} = $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-          else if (qty && unit) parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-          else if (qty) parts.push(`— ${qty} u.`);
-          else if (tot) parts.push(`— $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-          return parts.join(' ');
-        })
-        .filter(t => t.length > 0);
-      if (lines.length > 0) {
-        const body = lines.join('\n');
-        const folioLine = doc.folio ? `Folio ${doc.folio}` : '';
-        return [body, folioLine].filter(Boolean).join('\n').trim();
-      }
-    }
-    const typeLabel = (doc.document_type || 'Factura').trim();
-    if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
-    return typeLabel || 'Factura';
-  };
+  const buildSuggestedGlosa = buildCompactXmlDescription;
 
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
     const key = getDocumentStateKey(doc);
@@ -415,6 +390,15 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setIsUploading(true);
     batchProgress.start('Cargando Gastos desde XML', docsToImport.length);
     let successCount = 0, errorCount = 0, skippedDuplicatesCount = 0;
+    const failureMessages: string[] = [];
+
+    const getErrorMessage = (error: unknown) => {
+      if (error instanceof Error && error.message.trim()) return error.message;
+      if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+        return error.message;
+      }
+      return 'Error desconocido al guardar el gasto';
+    };
 
     try {
       const supplierIdByRut = new Map<string, string>();
@@ -492,6 +476,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
             const supplierId = supplierIdByRut.get(doc.supplier_rut);
             if (!supplierId) {
               logger.warn(`[useXmlCostUpload] Proveedor ${doc.supplier_rut} no encontrado en cache, omitiendo documento`);
+              failureMessages.push(`Folio ${doc.folio}: no se pudo resolver el proveedor`);
               errorCount++;
               continue;
             }
@@ -507,6 +492,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           const supplierId = supplierIdByRut.get(doc.supplier_rut);
           if (!supplierId) {
             logger.warn(`[useXmlCostUpload] Proveedor ${doc.supplier_rut} no encontrado en cache, omitiendo documento`);
+            failureMessages.push(`Folio ${doc.folio}: no se pudo resolver el proveedor`);
             errorCount++;
             continue;
           }
@@ -523,7 +509,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
             amount: doc.total_amount,
             category_id: categoryId,
             subcategory: subcatName,
-            notes: [supplier?.name ? `Proveedor: ${supplier.name}` : '', doc.folio ? `Factura: ${doc.folio}` : '', doc.supplier_rut ? `RUT: ${doc.supplier_rut}` : ''].filter(Boolean).join(' | ') || null,
+            notes: [supplierNameByRut.get(doc.supplier_rut) ? `Proveedor: ${supplierNameByRut.get(doc.supplier_rut)}` : '', doc.folio ? `Factura: ${doc.folio}` : '', doc.supplier_rut ? `RUT: ${doc.supplier_rut}` : ''].filter(Boolean).join(' | ') || null,
             service_folio: doc.folio || null,
             payment_date: paymentDate,
             supplier_id: supplierId,
@@ -542,7 +528,12 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                 }
                 resolve();
               },
-              onError: error => { logger.error(`Error cargando gasto ${doc.folio}:`, error); errorCount++; resolve(); },
+              onError: error => {
+                logger.error(`Error cargando gasto ${doc.folio}:`, error);
+                failureMessages.push(`Folio ${doc.folio}: ${getErrorMessage(error)}`);
+                errorCount++;
+                resolve();
+              },
             });
           });
 
@@ -550,6 +541,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         } catch (docError) {
           logger.error(`Error importando gasto ${doc.folio}:`, docError);
           try { if (createdCostId) await supabase.from('costs').delete().eq('id', createdCostId); } catch (rollbackError) { logger.error(`Error rollback gasto ${doc.folio}:`, rollbackError); }
+          failureMessages.push(`Folio ${doc.folio}: ${getErrorMessage(docError)}`);
           errorCount++;
         }
       }
@@ -559,15 +551,16 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
         setTimeout(() => {
           onSuccess?.(successCount);
           if (skippedDuplicatesCount > 0) toast.info(`Se omitieron ${skippedDuplicatesCount} duplicados`);
+          reset();
           onClose();
           batchProgress.close();
         }, 1500);
       } else {
-        batchProgress.error(`${errorCount} de ${docsToImport.length} con error`);
+        batchProgress.error(failureMessages[0] || `${errorCount} de ${docsToImport.length} con error`);
       }
     } catch (error) {
       logger.error('Upload error:', error);
-      batchProgress.error('Error durante la carga');
+      batchProgress.error(getErrorMessage(error));
     } finally {
       setIsUploading(false);
     }
@@ -602,10 +595,20 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setSupplierSubcategoryMapping(prev => ({ ...prev, [supplierRut]: subcategory }));
 
   const toggleSupplierSelection = (rut: string) =>
-    setSelectedSuppliers(prev => { const s = new Set(prev); s.has(rut) ? s.delete(rut) : s.add(rut); return s; });
+    setSelectedSuppliers(prev => {
+      const s = new Set(prev);
+      if (s.has(rut)) s.delete(rut);
+      else s.add(rut);
+      return s;
+    });
 
   const toggleDocumentSelection = (key: string) =>
-    setSelectedDocuments(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+    setSelectedDocuments(prev => {
+      const s = new Set(prev);
+      if (s.has(key)) s.delete(key);
+      else s.add(key);
+      return s;
+    });
 
   const reset = () => {
     resetParsing();
@@ -619,6 +622,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setSupplierCreditDate({});
     setPaidOverrides({});
     setPaidDateOverrides({});
+    setDocumentDescriptionOverrides({});
+    setExpandedDocumentDetails({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
     setMatchedCosts({});

@@ -42,21 +42,21 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
       <div
         {...getRootProps()}
         className={cn(
-          'relative overflow-hidden border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
+          'group relative overflow-hidden rounded-2xl border-2 border-dashed px-4 py-8 text-center cursor-pointer transition-[border-color,background-color,box-shadow] sm:p-10',
           isDragActive
             ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
             : 'border-border/80 bg-background/80 hover:border-primary/50 hover:bg-primary/5'
         )}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_45%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--primary)/0.12),_transparent_52%)]" />
         <input {...getInputProps()} />
-        <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-          <Upload className="size-8" />
+        <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition-transform duration-200 group-hover:-translate-y-0.5">
+          <Upload className="size-7" aria-hidden="true" />
         </div>
         <p className="relative font-semibold text-base">
           {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML o haz clic para seleccionarlo'}
         </p>
-        <p className="relative mt-1 text-sm text-muted-foreground">o haz clic para seleccionar un archivo</p>
+        <p className="relative mt-1 text-sm text-muted-foreground">Formato XML · selección segura desde tu equipo</p>
         <div className="relative mt-4 flex flex-wrap justify-center gap-2">
           {badges.map(label => (
             <Badge key={label} variant="secondary" className="bg-background/80">{label}</Badge>
@@ -68,18 +68,20 @@ export const XMLDropzoneArea: React.FC<XMLDropzoneAreaProps> = ({
 
   if (!parseResult) {
     return (
-      <Card className="bg-card border">
+      <Card className="overflow-hidden border border-primary/20 bg-card shadow-sm">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-x-3">
-              <FileText className="size-8 text-primary" />
-              <div>
-                <p className="text-foreground font-medium">{selectedFile.name}</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-x-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <FileText className="size-6" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-foreground">{selectedFile.name}</p>
                 <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
               </div>
             </div>
-            <div className="flex gap-x-2">
-              <Button onClick={onAnalyze} disabled={isAnalyzing} variant="default">
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <Button onClick={onAnalyze} disabled={isAnalyzing} variant="default" className="shadow-sm">
                 {isAnalyzing
                   ? <Loader2 className="size-4 mr-2 animate-spin" />
                   : <FileText className="size-4 mr-2" />}

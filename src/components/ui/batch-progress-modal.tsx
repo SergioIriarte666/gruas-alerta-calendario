@@ -90,7 +90,7 @@ export const BatchProgressModal = ({ state, onClose }: BatchProgressModalProps) 
 
             {/* Error message */}
             {hasError && errorMessage && (
-              <p className="text-xs text-red-400 font-mono max-w-[280px] mx-auto">
+              <p className="mx-auto max-w-[360px] break-words rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-left font-mono text-xs leading-relaxed text-red-300">
                 {errorMessage}
               </p>
             )}

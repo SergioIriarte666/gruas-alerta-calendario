@@ -47,17 +47,17 @@ export const CostSupplierRow: React.FC<CostSupplierRowProps> = ({
   onCategoryChange, onSubcategoryChange, activeCategories, paymentTerms,
   loadingTerms, applyCondition,
 }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border/70 border-l-4 border-l-primary bg-muted/30 p-3 shadow-sm">
-    <div className="flex items-center gap-x-3">
+  <div className="grid gap-4 rounded-xl border border-border/70 border-l-4 border-l-primary bg-card p-4 shadow-sm xl:grid-cols-[minmax(220px,0.75fr)_minmax(0,2fr)]">
+    <div className="flex min-w-0 items-start gap-x-3">
       <Checkbox checked={isSelected} onCheckedChange={onToggle} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="text-foreground font-medium truncate">{supplier.name}</p>
           <Badge variant="outline" className="text-xs">{supplier.rut}</Badge>
         </div>
       </div>
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
+    <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <div>
         <Label className="text-xs text-muted-foreground mb-1.5 block">Forma de pago por defecto</Label>
         <Select

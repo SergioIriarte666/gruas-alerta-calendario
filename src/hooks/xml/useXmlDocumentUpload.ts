@@ -17,6 +17,7 @@ import { createLogger } from '@/lib/logger';
 import {
   HistoricalGlosaCandidate,
   HistoricalGlosaSuggestion,
+  buildCompactXmlDescription,
   buildHistoricalGlosaSuggestion,
   getDocumentStateKey,
 } from '@/utils/xml/xmlGlosaHelpers';
@@ -106,31 +107,7 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
   };
 
-  const buildSuggestedGlosa = (doc: XMLDocumentData) => {
-    if (doc.items && doc.items.length > 0) {
-      const lines = doc.items.map(it => {
-        const desc = (it.description || '').trim();
-        if (!desc) return '';
-        const qty = typeof it.quantity === 'number' && isFinite(it.quantity) && it.quantity > 0 ? it.quantity : null;
-        const unit = typeof it.unit_price === 'number' && isFinite(it.unit_price) && it.unit_price > 0 ? it.unit_price : null;
-        const tot = typeof it.total === 'number' && isFinite(it.total) && it.total > 0 ? it.total : null;
-        const parts: string[] = [desc];
-        if (qty && unit && tot) parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })} = $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-        else if (qty && unit) parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-        else if (qty) parts.push(`— ${qty} u.`);
-        else if (tot) parts.push(`— $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
-        return parts.join(' ');
-      }).filter(t => t.length > 0);
-      if (lines.length > 0) {
-        const body = lines.join('\n');
-        const folioLine = doc.folio ? `Folio ${doc.folio}` : '';
-        return [body, folioLine].filter(Boolean).join('\n').trim();
-      }
-    }
-    const typeLabel = (doc.document_type || 'Factura').trim();
-    if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
-    return typeLabel || 'Factura';
-  };
+  const buildSuggestedGlosa = buildCompactXmlDescription;
 
   const getEffectiveGlosa = (doc: XMLDocumentData) => {
     const key = getDocumentStateKey(doc);
@@ -497,8 +474,17 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
       const totalSuccesses = (suppliersCreated + suppliersReused) + paymentsCreated;
       const totalFailures = suppliersFailed + paymentsFailed;
       if (totalFailures > 0 && totalSuccesses === 0) toast.error('Importación fallida.');
-      else if (totalFailures > 0) { toast.warning(`Importación parcial: ${paymentsCreated} pago(s) creado(s), ${totalFailures} error(es)`); onSuccess(); onClose(); }
-      else { toast.success(`Importación completada: ${suppliersCreated > 0 ? `${suppliersCreated} proveedor(es) creado(s), ` : ''}${suppliersReused > 0 ? `${suppliersReused} existente(s), ` : ''}${paymentsCreated > 0 ? `${paymentsCreated} pago(s) registrado(s)` : 'sin pagos nuevos'}`); onSuccess(); onClose(); }
+      else if (totalFailures > 0) {
+        toast.warning(`Importación parcial: ${paymentsCreated} pago(s) creado(s), ${totalFailures} error(es)`);
+        onSuccess();
+        reset();
+        onClose();
+      } else {
+        toast.success(`Importación completada: ${suppliersCreated > 0 ? `${suppliersCreated} proveedor(es) creado(s), ` : ''}${suppliersReused > 0 ? `${suppliersReused} existente(s), ` : ''}${paymentsCreated > 0 ? `${paymentsCreated} pago(s) registrado(s)` : 'sin pagos nuevos'}`);
+        onSuccess();
+        reset();
+        onClose();
+      }
     } catch (error) {
       logger.error('Error uploading data:', error);
       toast.error('Error durante la importación');
@@ -532,8 +518,18 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     setSupplierSubcategoryMapping(prev => ({ ...prev, [rut]: '' }));
   };
   const handleSubcategoryChange = (rut: string, subcategory: string) => setSupplierSubcategoryMapping(prev => ({ ...prev, [rut]: subcategory }));
-  const toggleSupplierSelection = (rut: string) => setSelectedSuppliers(prev => { const s = new Set(prev); s.has(rut) ? s.delete(rut) : s.add(rut); return s; });
-  const toggleDocumentSelection = (key: string) => setSelectedDocuments(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+  const toggleSupplierSelection = (rut: string) => setSelectedSuppliers(prev => {
+    const s = new Set(prev);
+    if (s.has(rut)) s.delete(rut);
+    else s.add(rut);
+    return s;
+  });
+  const toggleDocumentSelection = (key: string) => setSelectedDocuments(prev => {
+    const s = new Set(prev);
+    if (s.has(key)) s.delete(key);
+    else s.add(key);
+    return s;
+  });
 
   const reset = () => {
     resetParsing();
@@ -549,6 +545,8 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     setBulkDueDate('');
     setPaidDateOverrides({});
     setStatusOverrides({});
+    setDocumentDescriptionOverrides({});
+    setExpandedDocumentDetails({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
     setMatchedCosts({});

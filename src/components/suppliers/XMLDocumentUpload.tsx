@@ -2,7 +2,7 @@ import React from 'react';
 import { useXmlDocumentUpload } from '@/hooks/xml/useXmlDocumentUpload';
 import { XMLDropzoneArea } from '@/components/common/XMLDropzoneArea';
 import { BatchProgressModal } from '@/components/ui/batch-progress-modal';
-import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid } from '@/components/common/XMLImportShared';
+import { XMLImportDialogHeader, XMLImportProgressCard, XMLImportStatsGrid, XMLImportStepGuide } from '@/components/common/XMLImportShared';
 import { CostSupplierRow } from '@/components/costs/CostSupplierRow';
 import { SupplierImportDocumentRow } from '@/components/suppliers/SupplierImportDocumentRow';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -51,14 +51,21 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
     toggleSupplierSelection, toggleDocumentSelection,
   } = useXmlDocumentUpload({ onSuccess, onClose });
 
+  const handleClose = () => {
+    if (isUploading) return;
+    reset();
+    batchProgress.close();
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[95vh] w-[min(99vw,1600px)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl">
+    <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
+      <DialogContent className="flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,1600px)]">
         <XMLImportDialogHeader icon={FileSpreadsheet} title="Importar Documentos XML"
           description="Analiza documentos XML, detecta duplicados y registra pagos a proveedores."
           fileName={selectedFile?.name} documentCount={parseResult?.totalDocuments} />
 
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-6 pt-4">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-muted/20 px-3 pb-5 pt-4 sm:px-6 sm:pb-6">
           <XMLDropzoneArea selectedFile={selectedFile} parseResult={parseResult} isAnalyzing={isAnalyzing}
             isDragActive={isDragActive} getRootProps={getRootProps} getInputProps={getInputProps}
             onAnalyze={triggerAnalyze} onReset={reset}
@@ -75,8 +82,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                 { title: 'Total Montos', value: `$${selectedTotalAmount.toLocaleString('es-CL')}`, icon: DollarSign, tone: 'info' },
               ]} />
 
-              <Card className="border bg-card">
-                <CardHeader><CardTitle className="text-foreground">Opciones de Importación</CardTitle></CardHeader>
+              <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
+                <CardHeader className="border-b border-border/60 bg-muted/30 py-4"><CardTitle className="text-base text-foreground">Opciones de importación</CardTitle></CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-x-2">
                     <Checkbox id="create-payments" checked={createPayments} onCheckedChange={checked => setCreatePayments(checked === true)} />
@@ -117,7 +124,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                 </div>
               )}
 
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 1</p><p className="mt-1 font-medium text-foreground">Revisa proveedor y configuración base</p><p className="mt-1 text-sm text-muted-foreground">Ajusta la forma de pago y la categoría solo si necesitas cambiar cómo se registrarán los documentos de este proveedor.</p></div>
+              <XMLImportStepGuide step={1} title="Revisa proveedor y configuración base" description="Ajusta la forma de pago y la categoría solo si necesitas cambiar cómo se registrarán los documentos de este proveedor." />
 
               {parseResult.suppliers.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -144,7 +151,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                 </Card>
               )}
 
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 2</p><p className="mt-1 font-medium text-foreground">Revisa cada documento</p><p className="mt-1 text-sm text-muted-foreground">Primero valida el estado del documento. Luego, solo si hace falta, abre los detalles para editar la descripción o el vencimiento.</p></div>
+              <XMLImportStepGuide step={2} title="Revisa cada documento" description="Primero valida el estado del documento. Luego, solo si hace falta, abre los detalles para editar la descripción o el vencimiento." />
 
               {parseResult.documents.length > 0 && (
                 <Card className="overflow-hidden border-border/70 shadow-sm">
@@ -194,9 +201,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                 </Card>
               )}
 
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-primary">Paso 3</p><p className="mt-1 font-medium text-foreground">Confirma la importación</p><p className="mt-1 text-sm text-muted-foreground">Revisa el resumen y luego confirma. Los documentos ya registrados no necesitan cambios salvo que quieras revisar sus detalles.</p></div>
+              <XMLImportStepGuide step={3} title="Confirma la importación" description="Revisa el resumen y luego confirma. Los documentos ya registrados no necesitan cambios salvo que quieras revisar sus detalles." />
 
-              <div className="flex items-center justify-between border-t border-border/70 pt-4">
+              <div className="sticky bottom-0 z-10 -mx-3 flex flex-col gap-4 border-t border-border/70 bg-card/95 px-3 py-4 shadow-[0_-10px_30px_-20px_rgba(15,23,42,0.35)] backdrop-blur sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="text-sm text-muted-foreground">
                   {selectedSuppliers.size > 0 && (
                     <div className="space-y-1">
@@ -205,8 +212,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={reset} disabled={isUploading}>Cancelar</Button>
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  <Button variant="outline" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
                   <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0}>
                     {isUploading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <CheckCircle className="mr-2 size-4" />}
                     Confirmar importación{createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
