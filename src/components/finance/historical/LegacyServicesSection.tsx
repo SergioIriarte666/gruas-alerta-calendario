@@ -62,8 +62,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function HeaderTooltip({ label, description }: { label?: string; description: string }) {
   return (
-    <div className="flex items-center gap-1.5">
-      <span>{label}</span>
+    <div className="flex items-center">
       <Tooltip>
         <TooltipTrigger asChild>
           <button type="button" className="rounded-full text-muted-foreground transition-colors hover:text-amber-600" aria-label={label ? `Información sobre ${label}` : 'Más información'}>
