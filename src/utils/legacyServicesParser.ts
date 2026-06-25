@@ -23,7 +23,6 @@ export type LegacyRow = {
   destination: string;
   crane_label: string;
   operator_label: string;
-  subtotal_clp: number;
   total_clp: number;
   observations: string;
   _rowIndex: number;
@@ -50,8 +49,7 @@ export type PreviewStats = {
   invalid_row_numbers: number[];
   period_from: string | null;
   period_to: string | null;
-  total_subtotal_clp: number;
-  total_total_clp: number;
+  total_clp: number;
   top_insurers: { name: string; count: number }[];
   top_operators: { name: string; count: number }[];
   top_service_types: { name: string; count: number }[];
@@ -99,9 +97,39 @@ const TEMPLATE_HEADERS = [
   'Destino',
   'Grúa',
   'Operador',
-  'Subtotal',
-  'Observaciones internas',
   'Total',
+  'Observaciones internas',
+] as const;
+
+export const LEGACY_SERVICE_TYPE_OPTIONS = [
+  'Grua Liviano',
+  'Grua Pesados',
+  'Grua Horquilla',
+  'Revisión Técnica',
+  'Movimientos Internos',
+  'Apertura de Puertas',
+  'Lavado',
+  'Preparacion Venta',
+  'Taxi',
+  'Rescate',
+  'Revisión Previaje',
+  'Cambio de Neumáticos',
+  'Puente de Bateria',
+  'Limpieza Sala de Venta',
+  'Remover / Instalar Accesorios',
+] as const;
+
+export const LEGACY_VEHICLE_TYPE_OPTIONS = [
+  'Automóvil',
+  'Camioneta',
+  'Camión',
+  'Furgón',
+  'SUV',
+  'Bus',
+  'Tractor',
+  'Grua Horquilla',
+  'Moto',
+  'Otro',
 ] as const;
 
 export const LEGACY_SERVICE_TYPE_SYNONYMS: Record<string, string> = {
@@ -274,7 +302,7 @@ const isTemplateExample = (row: LegacyRow, rawReceivedAt: unknown): boolean => {
   return row.manual_folio === '2150'
     && row.license_plate.toUpperCase() === 'JVWP-22'
     && normalizedDate === '01/09/2020 12:08:00 PM'
-    && row.subtotal_clp === 30000;
+    && row.total_clp === 30000;
 };
 
 export async function parseLegacyServicesXLSX(file: File): Promise<LegacyRow[]> {
@@ -310,10 +338,29 @@ export async function parseLegacyServicesXLSX(file: File): Promise<LegacyRow[]> 
   }
 
   const parsedRows = rows.slice(1).flatMap((rawRow, index) => {
-    const sourceCells = rawRow.slice(firstColumnIndex, firstColumnIndex + expectedHeaders.length);
+    const sourceCells = rawRow.slice(
+      firstColumnIndex,
+      firstColumnIndex + (isTemplateFormat ? TEMPLATE_HEADERS.length : LEGACY_HEADERS.length),
+    );
     const cells = isTemplateFormat
       ? sourceCells
-      : [sourceCells[0], ...sourceCells.slice(3)];
+      : [
+          sourceCells[0],
+          sourceCells[3],
+          sourceCells[4],
+          sourceCells[5],
+          sourceCells[6],
+          sourceCells[7],
+          sourceCells[8],
+          sourceCells[9],
+          sourceCells[10],
+          sourceCells[11],
+          sourceCells[12],
+          sourceCells[13],
+          sourceCells[14],
+          sourceCells[15],
+          sourceCells[16],
+        ];
     if (cells.every((cell) => cleanText(cell) === '')) return [];
     const receivedAt = parseReceivedAt(cells[0]);
     const parsedRow: LegacyRow = {
@@ -330,9 +377,8 @@ export async function parseLegacyServicesXLSX(file: File): Promise<LegacyRow[]> 
       destination: cleanText(cells[10]),
       crane_label: cleanText(cells[11]),
       operator_label: cleanText(cells[12]),
-      subtotal_clp: parseAmount(cells[13]),
+      total_clp: parseAmount(cells[13]),
       observations: cleanText(cells[14]),
-      total_clp: parseAmount(cells[15]),
       _rowIndex: index + headerExcelRow + 1,
       _invalidDate: receivedAt === null,
       _isTemplateExample: false,
@@ -392,8 +438,7 @@ export function computeLegacyPreviewStats(rows: LegacyRow[]): PreviewStats {
     invalid_row_numbers: rows.filter((row) => row._invalidDate).map((row) => row._rowIndex),
     period_from: dates[0] ?? null,
     period_to: dates[dates.length - 1] ?? null,
-    total_subtotal_clp: validRows.reduce((sum, row) => sum + row.subtotal_clp, 0),
-    total_total_clp: validRows.reduce((sum, row) => sum + row.total_clp, 0),
+    total_clp: validRows.reduce((sum, row) => sum + row.total_clp, 0),
     top_insurers: topWithOthers(validRows.map((row) => row.insurer)),
     top_operators: topWithOthers(validRows.map((row) => row.operator_label)),
     top_service_types: topWithOthers(validRows.map((row) => row.service_type)),

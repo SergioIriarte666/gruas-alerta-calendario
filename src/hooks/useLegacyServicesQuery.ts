@@ -12,6 +12,28 @@ export type LegacyServicesFilters = {
   limit?: number;
 };
 
+export type LegacyServicesSortColumn =
+  | 'received_at'
+  | 'manual_folio'
+  | 'expediente'
+  | 'insurer'
+  | 'service_type'
+  | 'vehicle_brand'
+  | 'license_plate'
+  | 'crane_label'
+  | 'operator_label'
+  | 'total_clp';
+
+export type LegacyServicesSort = {
+  column: LegacyServicesSortColumn;
+  direction: 'asc' | 'desc';
+};
+
+export const DEFAULT_LEGACY_SERVICES_SORT: LegacyServicesSort = {
+  column: 'received_at',
+  direction: 'desc',
+};
+
 export type LegacyServiceRecord = {
   id: string;
   import_id: string | null;
@@ -28,7 +50,6 @@ export type LegacyServiceRecord = {
   destination: string | null;
   crane_label: string | null;
   operator_label: string | null;
-  subtotal_clp: number;
   total_clp: number;
   observations: string | null;
   year_month: string | null;
@@ -53,13 +74,22 @@ const applyFilters = (query: any, filters: LegacyServicesFilters) => {
   return next;
 };
 
-export async function fetchAllLegacyServices(filters: LegacyServicesFilters): Promise<LegacyServiceRecord[]> {
+const applySort = (query: any, sortBy: LegacyServicesSort = DEFAULT_LEGACY_SERVICES_SORT) =>
+  query.order(sortBy.column, { ascending: sortBy.direction === 'asc' });
+
+export async function fetchAllLegacyServices(
+  filters: LegacyServicesFilters,
+  sortBy: LegacyServicesSort = DEFAULT_LEGACY_SERVICES_SORT,
+): Promise<LegacyServiceRecord[]> {
   const pageSize = 1000;
   const rows: LegacyServiceRecord[] = [];
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await applyFilters(
-      supabase.from('legacy_services').select('*').order('received_at', { ascending: true }),
-      filters,
+    const { data, error } = await applySort(
+      applyFilters(
+        supabase.from('legacy_services').select('*'),
+        filters,
+      ),
+      sortBy,
     ).range(offset, offset + pageSize - 1);
     if (error) throw error;
     rows.push(...((data ?? []) as LegacyServiceRecord[]));
@@ -68,17 +98,23 @@ export async function fetchAllLegacyServices(filters: LegacyServicesFilters): Pr
   return rows;
 }
 
-export function useLegacyServicesList(filters: LegacyServicesFilters) {
+export function useLegacyServicesList(
+  filters: LegacyServicesFilters,
+  sortBy: LegacyServicesSort = DEFAULT_LEGACY_SERVICES_SORT,
+) {
+  const page = Math.max(1, filters.page ?? 1);
   return useQuery({
-    queryKey: ['legacy-services-list', filters],
+    queryKey: ['legacy-services-list', filters, sortBy, page],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const limit = filters.limit ?? 50;
-      const page = Math.max(1, filters.page ?? 1);
       const offset = (page - 1) * limit;
-      const { data, error, count } = await applyFilters(
-        supabase.from('legacy_services').select('*', { count: 'exact' }).order('received_at', { ascending: false }),
-        filters,
+      const { data, error, count } = await applySort(
+        applyFilters(
+          supabase.from('legacy_services').select('*', { count: 'exact' }),
+          filters,
+        ),
+        sortBy,
       ).range(offset, offset + limit - 1);
       if (error) throw error;
       const totalCount = count ?? 0;
@@ -92,12 +128,12 @@ export function useLegacyServicesList(filters: LegacyServicesFilters) {
 }
 
 const groupTop = (rows: LegacyServiceRecord[], key: keyof LegacyServiceRecord, limit?: number) => {
-  const counts = new Map<string, { count: number; subtotal_clp: number }>();
+  const counts = new Map<string, { count: number; total_clp: number }>();
   rows.forEach((row) => {
     const name = String(row[key] || 'Sin información');
-    const current = counts.get(name) ?? { count: 0, subtotal_clp: 0 };
+    const current = counts.get(name) ?? { count: 0, total_clp: 0 };
     current.count += 1;
-    current.subtotal_clp += Number(row.subtotal_clp || 0);
+    current.total_clp += Number(row.total_clp || 0);
     counts.set(name, current);
   });
   const sorted = [...counts].map(([name, values]) => ({ name, ...values })).sort((a, b) => b.count - a.count);
@@ -108,7 +144,7 @@ const groupPie = (rows: LegacyServiceRecord[], key: keyof LegacyServiceRecord, l
   const sorted = groupTop(rows, key);
   const top = sorted.slice(0, limit);
   const others = sorted.slice(limit).reduce((sum, item) => sum + item.count, 0);
-  return others ? [...top, { name: 'Otras', count: others, subtotal_clp: 0 }] : top;
+  return others ? [...top, { name: 'Otras', count: others, total_clp: 0 }] : top;
 };
 
 export function useLegacyServicesAnalytics(filters: LegacyServicesFilters) {
@@ -118,23 +154,23 @@ export function useLegacyServicesAnalytics(filters: LegacyServicesFilters) {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const rows = await fetchAllLegacyServices(analyticsFilters);
-      const totalSubtotal = rows.reduce((sum, row) => sum + Number(row.subtotal_clp || 0), 0);
+      const totalAmount = rows.reduce((sum, row) => sum + Number(row.total_clp || 0), 0);
       const byInsurerFull = groupTop(rows, 'insurer');
       const topInsurer = byInsurerFull[0];
-      const monthMap = new Map<string, { count: number; subtotal_clp: number }>();
+      const monthMap = new Map<string, { count: number; total_clp: number }>();
       rows.forEach((row) => {
         const month = row.year_month || row.received_at.slice(0, 7);
-        const current = monthMap.get(month) ?? { count: 0, subtotal_clp: 0 };
+        const current = monthMap.get(month) ?? { count: 0, total_clp: 0 };
         current.count += 1;
-        current.subtotal_clp += Number(row.subtotal_clp || 0);
+        current.total_clp += Number(row.total_clp || 0);
         monthMap.set(month, current);
       });
       const byMonth = [...monthMap].map(([month, values]) => ({ month, ...values })).sort((a, b) => a.month.localeCompare(b.month));
       return {
         kpis: {
           total_count: rows.length,
-          total_subtotal_clp: totalSubtotal,
-          avg_clp: rows.length ? Math.round(totalSubtotal / rows.length) : 0,
+          total_clp: totalAmount,
+          avg_clp: rows.length ? Math.round(totalAmount / rows.length) : 0,
           top_insurer_name: topInsurer?.name ?? 'Sin datos',
           top_insurer_pct: rows.length && topInsurer ? (topInsurer.count / rows.length) * 100 : 0,
         },

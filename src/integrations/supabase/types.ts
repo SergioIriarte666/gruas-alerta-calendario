@@ -3356,7 +3356,6 @@ export type Database = {
           origin: string | null
           received_at: string
           service_type: string | null
-          subtotal_clp: number
           total_clp: number
           vehicle_brand: string | null
           vehicle_type: string | null
@@ -3378,7 +3377,6 @@ export type Database = {
           origin?: string | null
           received_at: string
           service_type?: string | null
-          subtotal_clp?: number
           total_clp?: number
           vehicle_brand?: string | null
           vehicle_type?: string | null
@@ -3400,7 +3398,6 @@ export type Database = {
           origin?: string | null
           received_at?: string
           service_type?: string | null
-          subtotal_clp?: number
           total_clp?: number
           vehicle_brand?: string | null
           vehicle_type?: string | null

@@ -9,9 +9,23 @@ const legacyHeaders = [
   'Operador', 'Subtotal', 'Observaciones internas', 'Total',
 ];
 
-const templateHeaders = legacyHeaders
-  .filter((_, index) => index !== 1 && index !== 2)
-  .map((header) => header === 'No. serie del vehículo (VIN)' ? 'No. serie del vehículo' : header);
+const templateHeaders = [
+  'Fecha/hora de recepción',
+  'Folio (Manual)',
+  'EXPEDIENTE',
+  'Aseguradora',
+  'Tipo de servicio',
+  'Marca del vehículo',
+  'Tipo de vehículo',
+  'Placas del vehículo',
+  'No. serie del vehículo',
+  'Origen',
+  'Destino',
+  'Grúa',
+  'Operador',
+  'Total',
+  'Observaciones internas',
+];
 
 const createLegacyFile = (dataRows: unknown[][], sheetName = 'Reporte') => {
   const workbook = XLSX.utils.book_new();
@@ -29,7 +43,7 @@ const createLegacyFile = (dataRows: unknown[][], sheetName = 'Reporte') => {
 
 const createTemplateFile = (dataRows: unknown[][]) => {
   const workbook = XLSX.utils.book_new();
-  const templateRows = dataRows.map((row) => row.filter((_, index) => index !== 1 && index !== 2));
+  const templateRows = dataRows.map((row) => row.filter((_, index) => ![1, 2, 17].includes(index)));
   const worksheet = XLSX.utils.aoa_to_sheet([templateHeaders, ...templateRows]);
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Servicios Legacy');
   const bytes = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' });
@@ -51,14 +65,14 @@ describe('legacyServicesParser', () => {
     expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("Archivo en formato legacy detectado (hoja 'Reporte'). Las columnas Ajustador y Referencia se omitirán automáticamente."));
     infoSpy.mockRestore();
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toMatchObject({ _rowIndex: 5, _invalidDate: false, manual_folio: 'F-1', subtotal_clp: 30000, total_clp: 35700 });
+    expect(rows[0]).toMatchObject({ _rowIndex: 5, _invalidDate: false, manual_folio: 'F-1', total_clp: 30000, observations: 'Observación' });
     expect(rows[0]).not.toHaveProperty('adjuster');
     expect(rows[0]).not.toHaveProperty('reference');
     expect(rows[0].received_at).toContain('2020-09-01T13:15:30');
     expect(rows[1]).toMatchObject({ _rowIndex: 6, _invalidDate: true, received_at: null });
 
     const stats = computeLegacyPreviewStats(rows);
-    expect(stats).toMatchObject({ total_rows: 2, valid_rows: 1, invalid_rows: 1, invalid_row_numbers: [6], period_from: '2020-09-01', period_to: '2020-09-01', total_subtotal_clp: 30000, total_total_clp: 35700 });
+    expect(stats).toMatchObject({ total_rows: 2, valid_rows: 1, invalid_rows: 1, invalid_row_numbers: [6], period_from: '2020-09-01', period_to: '2020-09-01', total_clp: 30000 });
   });
 
   it('parses the new Servicios Legacy template from row 1', async () => {
