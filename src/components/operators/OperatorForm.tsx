@@ -14,6 +14,8 @@ import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
 import { Operator } from '@/types';
 import { createLogger } from "@/lib/logger";
+import { isTestUserEmail } from '@/lib/userValidation';
+import { useOperatorLinkedProfile } from '@/hooks/operators/useOperatorLinkedProfile';
 
 
 const logger = createLogger("OperatorForm");
@@ -81,6 +83,8 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
   const handleChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const { data: linkedProfile, isLoading: loadingLinkedProfile } = useOperatorLinkedProfile(operator?.userId);
 
   const handleDiscardPersistedData = () => {
     clearFormData();
@@ -253,6 +257,33 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             </div>
           </div>
         </div>
+
+        {operator?.userId && (
+          <div className="rounded-md border border-border/70 p-3 space-y-1 bg-muted/30">
+            <p className="text-sm font-medium">Usuario vinculado</p>
+            {loadingLinkedProfile ? (
+              <p className="text-xs text-muted-foreground">Cargando...</p>
+            ) : linkedProfile ? (
+              <>
+                <p className="text-sm">{linkedProfile.email}</p>
+                <div className="flex gap-2 text-xs text-muted-foreground">
+                  <span>Rol: {linkedProfile.role}</span>
+                  <span>·</span>
+                  <span>Estado: {linkedProfile.status}</span>
+                </div>
+                {isTestUserEmail(linkedProfile.email) && (
+                  <p className="text-xs text-destructive font-medium">
+                    ⚠ Este es un email de pruebas. Reasigna el operador a una cuenta productiva desde Configuración → Gestión de Usuarios.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-destructive">
+                ⚠ user_id apunta a un profile que no existe.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-end gap-x-3 pt-4 border-t border-border">
           <Button

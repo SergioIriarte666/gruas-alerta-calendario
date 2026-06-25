@@ -266,6 +266,7 @@ export interface Operator {
   updatedAt: string;
   createdBy?: string;
   creatorName?: string;
+  userId?: string | null;
 }
 
 // ── Desglose de ítems por servicio ───────────────────────────────────────────

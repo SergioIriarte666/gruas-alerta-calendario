@@ -35,7 +35,8 @@ const fetchOperators = async (): Promise<Operator[]> => {
     createdAt: operator.created_at,
     updatedAt: operator.updated_at,
     createdBy: operator.created_by,
-    creatorName: operator.creator?.full_name || operator.creator?.email || undefined
+    creatorName: operator.creator?.full_name || operator.creator?.email || undefined,
+    userId: operator.user_id || null
   }));
 };
 
