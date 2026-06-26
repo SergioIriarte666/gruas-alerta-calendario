@@ -17,25 +17,69 @@ CREATE INDEX IF NOT EXISTS idx_user_dismissed_notices_user
 
 ALTER TABLE public.user_dismissed_notices ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "users_select_own_dismissed_notices"
-  ON public.user_dismissed_notices
-  FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'user_dismissed_notices'
+      AND policyname = 'users_select_own_dismissed_notices'
+  ) THEN
+    CREATE POLICY "users_select_own_dismissed_notices"
+      ON public.user_dismissed_notices
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-CREATE POLICY "users_insert_own_dismissed_notices"
-  ON public.user_dismissed_notices
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'user_dismissed_notices'
+      AND policyname = 'users_insert_own_dismissed_notices'
+  ) THEN
+    CREATE POLICY "users_insert_own_dismissed_notices"
+      ON public.user_dismissed_notices
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-CREATE POLICY "users_update_own_dismissed_notices"
-  ON public.user_dismissed_notices
-  FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'user_dismissed_notices'
+      AND policyname = 'users_update_own_dismissed_notices'
+  ) THEN
+    CREATE POLICY "users_update_own_dismissed_notices"
+      ON public.user_dismissed_notices
+      FOR UPDATE
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-CREATE POLICY "users_delete_own_dismissed_notices"
-  ON public.user_dismissed_notices
-  FOR DELETE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'user_dismissed_notices'
+      AND policyname = 'users_delete_own_dismissed_notices'
+  ) THEN
+    CREATE POLICY "users_delete_own_dismissed_notices"
+      ON public.user_dismissed_notices
+      FOR DELETE
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
 COMMIT;
