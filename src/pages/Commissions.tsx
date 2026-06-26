@@ -12,6 +12,8 @@ import { CommissionExportButton } from '@/components/commissions/CommissionExpor
 import { CommissionFiltersComponent } from '@/components/commissions/CommissionFilters';
 import { CommissionTable, SortField, SortDirection } from '@/components/commissions/CommissionTable';
 import { EditPaymentDateDialog } from '@/components/commissions/EditPaymentDateDialog';
+import { ComisionManualForm } from '@/components/commissions/ComisionManualForm';
+import { useUser } from '@/contexts/UserContext';
 
 import { Commission, CommissionFilters } from '@/types/commissions';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,6 +46,8 @@ const Commissions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (isError && error) {
@@ -512,6 +516,7 @@ const Commissions = () => {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Todas las Comisiones</CardTitle>
                <div className="flex items-center gap-2">
+                {isAdmin && <ComisionManualForm />}
                 <CommissionExportButton
                   commissions={filteredCommissions}
                   filters={filters}

@@ -889,6 +889,7 @@ export type Database = {
           id: string
           immediate_consumption: boolean | null
           inventory_movement_id: string | null
+          is_manual_adjustment: boolean
           location_text: string | null
           maintenance_id: string | null
           notes: string | null
@@ -921,6 +922,7 @@ export type Database = {
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
+          is_manual_adjustment?: boolean
           location_text?: string | null
           maintenance_id?: string | null
           notes?: string | null
@@ -953,6 +955,7 @@ export type Database = {
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
+          is_manual_adjustment?: boolean
           location_text?: string | null
           maintenance_id?: string | null
           notes?: string | null
@@ -6479,7 +6482,6 @@ export type Database = {
         Args: { target_client_id?: string; target_user_id: string }
         Returns: undefined
       }
-      audit_commission_system: { Args: never; Returns: Json }
       backfill_maintenance_costs: { Args: never; Returns: Json }
       backfill_supplier_payments_from_costs: { Args: never; Returns: number }
       build_import_batch_summary: {
@@ -6640,6 +6642,18 @@ export type Database = {
           invoice_id: string
         }[]
       }
+      create_manual_commission: {
+        Args: {
+          p_amount: number
+          p_crane_id?: string
+          p_date: string
+          p_description: string
+          p_notes?: string
+          p_operator_id: string
+          p_service_folio?: string
+        }
+        Returns: string
+      }
       create_notification: {
         Args: {
           p_action_data?: Json
@@ -6778,10 +6792,6 @@ export type Database = {
       }
       fix_unlinked_maintenance_costs: { Args: never; Returns: Json }
       force_close_service_bypass_triggers: {
-        Args: { p_service_id: string }
-        Returns: Json
-      }
-      force_commission_sync_for_service: {
         Args: { p_service_id: string }
         Returns: Json
       }
@@ -7162,7 +7172,6 @@ export type Database = {
         Returns: Json
       }
       migrate_existing_consumption_movements: { Args: never; Returns: Json }
-      migrate_existing_operator_commissions: { Args: never; Returns: undefined }
       migrate_legacy_crane_parts_data: {
         Args: { p_crane_id?: string }
         Returns: Json
@@ -7177,7 +7186,6 @@ export type Database = {
       purge_expired_recovery_audit: { Args: never; Returns: number }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
-      reconcile_orphan_records: { Args: never; Returns: Json }
       recovery_assert_admin: { Args: never; Returns: undefined }
       recovery_current_organization_id: { Args: never; Returns: string }
       recovery_redact: { Args: { payload: Json }; Returns: Json }
@@ -7186,13 +7194,8 @@ export type Database = {
         Returns: undefined
       }
       remove_duplicate_payment_applications: { Args: never; Returns: Json }
-      repair_commission_system: { Args: never; Returns: Json }
       repair_payment_application: {
         Args: { p_invoice_id: string; p_payment_id: string }
-        Returns: Json
-      }
-      resolve_commission_conflicts: {
-        Args: { p_service_id: string }
         Returns: Json
       }
       resolve_payment_application_conflicts: {
@@ -7570,3 +7573,5 @@ export const Constants = {
     },
   },
 } as const
+A new version of Supabase CLI is available: v2.108.0 (currently installed v2.26.9)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
