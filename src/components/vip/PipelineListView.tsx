@@ -871,13 +871,30 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             {poSubGroups.map(subGroup => {
                               const poKey = `${group.status}-${subGroup.poNumber}`;
                               const isExpanded = isPOExpanded(poKey);
+                              const subGroupSelectedCount = subGroup.services.filter(s => selectedServices.has(s.id)).length;
+                              const subGroupAllSelected = subGroupSelectedCount === subGroup.services.length;
+                              const subGroupSomeSelected = subGroupSelectedCount > 0 && !subGroupAllSelected;
+                              const subGroupCheckedState: boolean | 'indeterminate' = subGroupAllSelected
+                                ? true
+                                : (subGroupSomeSelected ? 'indeterminate' : false);
+
                               return (
                                 <React.Fragment key={subGroup.poNumber}>
                                   <TableRow 
                                     className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-muted"
                                     onClick={() => togglePO(poKey)}
                                   >
-                                    <TableCell colSpan={11}>
+                                    <TableCell
+                                      className="w-12 cursor-default"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Checkbox
+                                        checked={subGroupCheckedState}
+                                        onCheckedChange={(checked) => handleSelectAll(subGroup.services, checked === true)}
+                                        aria-label={`Seleccionar todos los servicios de ${subGroup.poNumber}`}
+                                      />
+                                    </TableCell>
+                                    <TableCell colSpan={10}>
                                       <div className="flex items-center justify-between py-0.5">
                                         <div className="flex items-center gap-2">
                                           {isExpanded ? (
@@ -891,6 +908,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                             <code className={`text-sm font-bold ${subGroupConfig.badgeColor} ${subGroupConfig.badgeBg} px-2 py-0.5 rounded`}>
                                               {subGroupConfig.prefix}{subGroup.poNumber}
                                             </code>
+                                          )}
+                                          {subGroupSelectedCount > 0 && (
+                                            <Badge variant="outline" className="text-xs text-violet-600 border-violet-600/30">
+                                              {subGroupSelectedCount}/{subGroup.services.length} seleccionados
+                                            </Badge>
                                           )}
                                         </div>
                                         <div className="flex items-center gap-4 text-sm">
