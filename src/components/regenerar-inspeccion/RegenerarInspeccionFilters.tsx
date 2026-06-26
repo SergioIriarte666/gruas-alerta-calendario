@@ -1,0 +1,44 @@
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RegenerarInspeccionFilters as Filters } from '@/types/regenerar-inspeccion';
+
+interface RegenerarInspeccionFiltersProps {
+  filters: Filters;
+  onChange: (filters: Filters) => void;
+}
+
+export const RegenerarInspeccionFilters = ({ filters, onChange }: RegenerarInspeccionFiltersProps) => {
+  const update = (key: keyof Filters, value: string) => onChange({ ...filters, [key]: value });
+
+  return (
+    <div className="grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-3">
+      <div className="space-y-2">
+        <Label htmlFor="filtro-folio">Folio</Label>
+        <Input
+          id="filtro-folio"
+          value={filters.folio}
+          onChange={(event) => update('folio', event.target.value)}
+          placeholder="Buscar folio"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="filtro-fecha">Fecha</Label>
+        <Input
+          id="filtro-fecha"
+          type="date"
+          value={filters.fecha}
+          onChange={(event) => update('fecha', event.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="filtro-cliente">Cliente</Label>
+        <Input
+          id="filtro-cliente"
+          value={filters.cliente}
+          onChange={(event) => update('cliente', event.target.value)}
+          placeholder="Buscar cliente"
+        />
+      </div>
+    </div>
+  );
+};

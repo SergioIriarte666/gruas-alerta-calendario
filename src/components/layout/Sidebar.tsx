@@ -15,7 +15,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive, FileClock
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -75,6 +75,7 @@ export const Sidebar = ({
     '/quick-entries': 'settings',
     '/backup': 'backup',
     '/settings': 'settings',
+    '/admin/inspecciones/regenerar': 'settings',
     '/trip-calculator': 'trip-calculator',
   };
 
@@ -165,6 +166,7 @@ export const Sidebar = ({
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
         { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
+        { name: 'Regenerar Inspección', href: '/admin/inspecciones/regenerar', icon: FileClock, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
         { name: 'Usuarios pendientes', href: '/admin/usuarios-pendientes', icon: UserCheck, adminOnly: true },
       ]
