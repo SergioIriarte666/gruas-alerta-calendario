@@ -243,11 +243,19 @@ const buildInspectionValues = (
     llaves: storedState.llaves === 'si' || storedState.llaves === 'no' ? storedState.llaves : undefined,
     documentacion: storedState.documentacion === 'si' || storedState.documentacion === 'no' ? storedState.documentacion : undefined,
     operatorName: service.operator?.name || 'Operador',
-    operatorSignature: rawInspection?.operator_signature || BLANK_SIGNATURE,
+    // operator_signature es NOT NULL en BD: una regeneración previa sin row
+    // original pudo haber persistido BLANK_SIGNATURE como placeholder. Nunca
+    // tratarlo como firma real al regenerar de nuevo.
+    operatorSignature: rawInspection?.operator_signature && rawInspection.operator_signature !== BLANK_SIGNATURE
+      ? rawInspection.operator_signature
+      : undefined,
     clientName: rawInspection?.client_name || service.client.name || '',
     clientRut: rawInspection?.client_rut || service.client.rut || '',
-    clientSignature: rawInspection?.client_signature || BLANK_SIGNATURE,
-    vehicleReceptionSignature: isFinal ? BLANK_SIGNATURE : undefined,
+    // La firma del cliente y la de recepción de vehículo nunca se persisten en
+    // inspections (solo viven en el PDF original al momento de la captura) —
+    // no hay forma de recuperarlas administrativamente, ni con row existente.
+    clientSignature: undefined,
+    vehicleReceptionSignature: undefined,
     receptionPersonName: service.client.name || 'Recepción',
     photographicSet: photos.map((photo) => ({
       fileName: photo.fileName,
