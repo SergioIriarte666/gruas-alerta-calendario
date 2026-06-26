@@ -2223,6 +2223,64 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_storage_orphans: {
+        Row: {
+          bucket_id: string
+          cleanup_attempted: boolean
+          cleanup_succeeded: boolean | null
+          detected_at: string
+          error_message: string | null
+          id: string
+          resolved_at: string | null
+          service_id: string | null
+          storage_path: string
+        }
+        Insert: {
+          bucket_id: string
+          cleanup_attempted?: boolean
+          cleanup_succeeded?: boolean | null
+          detected_at?: string
+          error_message?: string | null
+          id?: string
+          resolved_at?: string | null
+          service_id?: string | null
+          storage_path: string
+        }
+        Update: {
+          bucket_id?: string
+          cleanup_attempted?: boolean
+          cleanup_succeeded?: boolean | null
+          detected_at?: string
+          error_message?: string | null
+          id?: string
+          resolved_at?: string | null
+          service_id?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_storage_orphans_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_storage_orphans_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_storage_orphans_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       inspections: {
         Row: {
           archive_manifest: Json
@@ -5879,6 +5937,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dismissed_notices: {
+        Row: {
+          dismissed_at: string
+          id: string
+          notice_key: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          dismissed_at?: string
+          id?: string
+          notice_key: string
+          user_id: string
+          version?: string
+        }
+        Update: {
+          dismissed_at?: string
+          id?: string
+          notice_key?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
@@ -6822,6 +6904,16 @@ export type Database = {
         }[]
       }
       get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
+      get_operator_linked_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+          role: string
+          status: string
+        }[]
+      }
       get_or_create_inventory_supplier: {
         Args: {
           p_address: string
@@ -6891,6 +6983,21 @@ export type Database = {
       }
       get_pending_users_count: { Args: never; Returns: number }
       get_purchase_void_impact: { Args: { p_cost_id: string }; Returns: Json }
+      get_regenerar_inspeccion_elegibles: {
+        Args: never
+        Returns: {
+          client_name: string
+          folio: string
+          n_fotos_disponibles: number
+          operator_name: string
+          pdf_retiro_url_actual: string
+          pdf_url_actual: string
+          service_date: string
+          service_id: string
+          tiene_row_inspection: boolean
+          ultimo_envio_whatsapp_at: string
+        }[]
+      }
       get_supplier_payment_stats: {
         Args: { p_supplier_id: string }
         Returns: {
@@ -6978,6 +7085,7 @@ export type Database = {
       }
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
+      is_test_user_email: { Args: { p_email: string }; Returns: boolean }
       list_operators_config: {
         Args: never
         Returns: {

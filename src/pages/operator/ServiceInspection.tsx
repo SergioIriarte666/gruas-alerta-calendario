@@ -125,6 +125,7 @@ const ServiceInspection = () => {
         isProcessing={processInspectionMutation.isPending}
         isGeneratingPDF={isGeneratingPDF}
         isUpdatingStatus={updateServiceStatusMutation.isPending}
+        onCancelExisting={handleBack}
       />
     </div>
   );

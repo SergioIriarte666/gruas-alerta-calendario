@@ -18,6 +18,7 @@ export const generateInspectionPDF = async (data: {
   service: Service;
   inspection: InspectionFormValues;
   initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>;
+  regenerationFooter?: string;
 }, isFinal: boolean = true): Promise<Blob> => {
   try {
     logger.debug('Iniciando generación de PDF con datos:', data);
@@ -103,6 +104,16 @@ export const generateInspectionPDF = async (data: {
     // Add observations and signatures (texto)
     addObservationsAndSignatures(doc, pdfData, yPosition);
     logger.debug('Observaciones agregadas');
+
+    if (data.regenerationFooter) {
+      const pageCount = doc.getNumberOfPages();
+      for (let page = 1; page <= pageCount; page++) {
+        doc.setPage(page);
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text(data.regenerationFooter, 14, doc.internal.pageSize.height - 8);
+      }
+    }
 
     logger.debug('PDF generado exitosamente');
     return doc.output('blob');

@@ -8,8 +8,15 @@ import { useInspectionPDF } from '@/hooks/inspection/useInspectionPDF';
 import { useInspectionEmail } from '@/hooks/inspection/useInspectionEmail';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
-import { uploadInspectionPdf } from '@/utils/inspectionPdfUpload';
-import { ensurePhotosUploaded, persistInspection, fetchInitialPhotosForPdf } from '@/utils/inspectionRecord';
+import { deleteInspectionPdf, PDF_BUCKET, uploadInspectionPdf } from '@/utils/inspectionPdfUpload';
+import {
+  clearFinalInspectionFields,
+  deleteInspectionRow,
+  ensurePhotosUploaded,
+  persistInspection,
+  fetchInitialPhotosForPdf,
+  recordInspectionStorageOrphan,
+} from '@/utils/inspectionRecord';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
@@ -55,6 +62,42 @@ export const useServiceInspection = () => {
       errorStack: normalizedError.stack,
       url: window.location.href,
     }).catch(() => {});
+  };
+
+  const reportRollbackError = (step: string, error: unknown, context: Record<string, unknown>) => {
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    logger.error(`Error en rollback ${step}:`, { ...context, error: normalizedError.message });
+    reportFrontendError({
+      componentName: `useServiceInspection.rollback.${step}`,
+      errorMessage: `${normalizedError.message} | ${JSON.stringify(context)}`,
+      errorStack: normalizedError.stack,
+      url: window.location.href,
+    }).catch(() => {});
+  };
+
+  const cleanupPdfAfterFailure = async (path: string) => {
+    try {
+      await deleteInspectionPdf(path);
+      await recordInspectionStorageOrphan({
+        serviceId: serviceId || null,
+        storagePath: path,
+        bucketId: PDF_BUCKET,
+        cleanupAttempted: true,
+        cleanupSucceeded: true,
+      });
+    } catch (cleanupError) {
+      reportRollbackError('deletePdf', cleanupError, { path, serviceId });
+      await recordInspectionStorageOrphan({
+        serviceId: serviceId || null,
+        storagePath: path,
+        bucketId: PDF_BUCKET,
+        cleanupAttempted: true,
+        cleanupSucceeded: false,
+        errorMessage: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+      });
+      toast.error(`Error guardando la inspección y no se pudo limpiar ${path}. Contacte al administrador con este código: ${path}.`);
+      throw cleanupError;
+    }
   };
 
   const sendWhatsApp = async (signedUrl: string, phase: 'initial' | 'final') => {
@@ -121,17 +164,59 @@ export const useServiceInspection = () => {
       const { blob } = await generatePDF(service, valuesWithPhotos, phase === 'final', initialPhotos);
 
       logger.debug('3/5 Subiendo PDF a Storage...');
-      const pdfFolio = phase === 'initial' ? `${service.folio}-inspeccion-inicial` : `${service.folio}-retiro`;
-      const uploadResult = await uploadInspectionPdf(blob, serviceId, pdfFolio);
+      const uploadResult = await uploadInspectionPdf(
+        blob,
+        serviceId,
+        service.folio,
+        phase === 'initial' ? 'inicial' : 'entrega',
+      );
 
       logger.debug('4/5 Guardando inspección en base de datos...');
-      await persistInspection(serviceId, operatorId, valuesWithPhotos, uploadedPhotos, uploadResult.path, phase);
+      let persistedInspection: Awaited<ReturnType<typeof persistInspection>> | null = null;
+      try {
+        persistedInspection = await persistInspection(serviceId, operatorId, valuesWithPhotos, uploadedPhotos, uploadResult.path, phase);
+      } catch (persistError) {
+        reportRollbackError('persistInspection', persistError, { path: uploadResult.path, serviceId, phase });
+        await cleanupPdfAfterFailure(uploadResult.path);
+        throw persistError;
+      }
 
       logger.debug('5/5 Actualizando estado del servicio...');
-      await updateServiceStatusMutation.mutateAsync({
-        id: serviceId,
-        targetStatus: phase === 'initial' ? 'inspection_completed' : 'completed',
-      });
+      try {
+        await updateServiceStatusMutation.mutateAsync({
+          id: serviceId,
+          targetStatus: phase === 'initial' ? 'inspection_completed' : 'completed',
+        });
+      } catch (statusError) {
+        reportRollbackError('serviceStatus', statusError, {
+          path: uploadResult.path,
+          inspectionId: persistedInspection.id,
+          serviceId,
+          phase,
+        });
+
+        try {
+          if (persistedInspection.wasInserted) {
+            await deleteInspectionRow(persistedInspection.id);
+          } else if (phase === 'final') {
+            await clearFinalInspectionFields(persistedInspection.id);
+          } else {
+            await deleteInspectionRow(persistedInspection.id);
+          }
+        } catch (rowCleanupError) {
+          reportRollbackError('inspectionRow', rowCleanupError, {
+            path: uploadResult.path,
+            inspectionId: persistedInspection.id,
+            serviceId,
+            phase,
+          });
+          toast.error(`Error guardando la inspección y no se pudo limpiar ${uploadResult.path}. Contacte al administrador con este código: ${uploadResult.path}.`);
+          throw rowCleanupError;
+        }
+
+        await cleanupPdfAfterFailure(uploadResult.path);
+        throw statusError;
+      }
 
       let emailSent = false;
       if (service.client?.email && service.client.email.includes('@')) {

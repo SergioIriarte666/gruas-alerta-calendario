@@ -7,16 +7,45 @@ import { inspectionFormSchema, InspectionFormValues } from '@/schemas/inspection
 import { validateFormBeforeSubmit } from '@/utils/inspectionValidation';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { InspectionStatusCard } from './InspectionStatusCard';
 import { InspectionProgressBar } from './InspectionProgressBar';
 import { InitialInspectionEvidenceCard } from './InitialInspectionEvidence';
-import { Download, CheckCircle } from 'lucide-react';
+import { Download, CheckCircle, Eye, RotateCcw } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
+import { toast as sonnerToast } from 'sonner';
 import { Service } from '@/types';
-import { fetchInitialInspectionEvidence, InitialInspectionEvidence } from '@/utils/inspectionRecord';
+import {
+  ExistingInspectionConflict,
+  fetchExistingInspectionConflict,
+  fetchInitialInspectionEvidence,
+  InitialInspectionEvidence,
+  overwriteExistingInspectionPhase,
+} from '@/utils/inspectionRecord';
+import { getInspectionPdfSignedUrl } from '@/utils/inspectionPdfUpload';
+import { extractStoragePath } from '@/utils/storagePath';
+import { formatDateForDisplay } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { reportFrontendError } from '@/utils/reportFrontendError';
+import { useUser } from '@/contexts/UserContext';
 
 const logger = createLogger('InspectionForm');
 
@@ -27,6 +56,7 @@ interface InspectionFormProps {
   isProcessing: boolean;
   isGeneratingPDF: boolean;
   isUpdatingStatus: boolean;
+  onCancelExisting?: () => void;
 }
 
 export const InspectionForm = ({
@@ -35,13 +65,20 @@ export const InspectionForm = ({
   onSubmit,
   isProcessing,
   isGeneratingPDF,
-  isUpdatingStatus
+  isUpdatingStatus,
+  onCancelExisting,
 }: InspectionFormProps) => {
   const { toast } = useToast();
+  const { user } = useUser();
   const [currentPhase, setCurrentPhase] = useState<'initial' | 'final'>('initial');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isCheckingExisting, setIsCheckingExisting] = useState(true);
+  const [existingConflict, setExistingConflict] = useState<ExistingInspectionConflict | null>(null);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const [isOverwriting, setIsOverwriting] = useState(false);
   const [initialEvidence, setInitialEvidence] = useState<InitialInspectionEvidence | null>(null);
   const toastShownRef = useRef(false);
+  const isAdmin = user?.role === 'admin';
 
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
@@ -80,6 +117,21 @@ export const InspectionForm = ({
     logger.debug('📋 Saved data exists:', !!savedData);
     logger.debug('📊 Metadata exists:', !!metadata);
     
+    const expectedPhase: 'initial' | 'final' = service?.status === 'inspection_completed' ? 'final' : 'initial';
+
+    fetchExistingInspectionConflict(serviceId, expectedPhase)
+      .then((conflict) => {
+        if (conflict) {
+          setCurrentPhase(expectedPhase);
+          setExistingConflict(conflict);
+          setIsInitialized(true);
+          return true;
+        }
+        return false;
+      })
+      .then((blockedByExisting) => {
+        if (blockedByExisting) return;
+
     // Si el servicio está en estado "pending", comenzar limpio
     if (service?.status === 'pending') {
       logger.debug('🧹 Service is pending - starting fresh');
@@ -196,6 +248,19 @@ export const InspectionForm = ({
     }
 
     setIsInitialized(true);
+      })
+      .catch((error) => {
+        logger.error('Error verificando inspección existente:', error);
+        toast({ type: 'error', title: 'No se pudo verificar si ya existe una inspección' });
+        reportFrontendError({
+          componentName: 'InspectionForm.fetchExistingInspectionConflict',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined,
+          url: window.location.href,
+        }).catch(() => {});
+        setIsInitialized(true);
+      })
+      .finally(() => setIsCheckingExisting(false));
   }, [serviceId, service?.status]); // Dependencias optimizadas
 
   // Auto-save form data - solo después de inicialización
@@ -218,6 +283,49 @@ export const InspectionForm = ({
   const requiresDetail  = service.serviceType?.requiresDetail  ?? true;
   const requiresPhotoSet = service.serviceType?.requiresPhotoSet ?? true;
 
+  const handleViewExisting = async () => {
+    if (!existingConflict) return;
+    try {
+      const pdfPath = extractStoragePath(existingConflict.pdfPath, 'inspection-pdfs') || existingConflict.pdfPath;
+      const signedUrl = await getInspectionPdfSignedUrl(pdfPath);
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      logger.error('Error abriendo inspección existente:', error);
+      sonnerToast.error('No se pudo abrir la inspección existente');
+      reportFrontendError({
+        componentName: 'InspectionForm.handleViewExisting',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        url: window.location.href,
+      }).catch(() => {});
+    }
+  };
+
+  const handleConfirmOverwrite = async () => {
+    if (!existingConflict || !isAdmin) return;
+    setIsOverwriting(true);
+    try {
+      await overwriteExistingInspectionPhase(existingConflict, currentPhase);
+      clearPersistedData();
+      setExistingConflict(null);
+      setShowOverwriteConfirm(false);
+      setIsInitialized(true);
+      setIsCheckingExisting(false);
+      sonnerToast.success('Inspección existente eliminada. Puede capturar nuevamente.');
+    } catch (error) {
+      logger.error('Error sobrescribiendo inspección existente:', error);
+      sonnerToast.error(error instanceof Error ? error.message : 'No se pudo sobrescribir la inspección existente');
+      reportFrontendError({
+        componentName: 'InspectionForm.handleConfirmOverwrite',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        url: window.location.href,
+      }).catch(() => {});
+    } finally {
+      setIsOverwriting(false);
+    }
+  };
+
   const handleSubmit = (values: InspectionFormValues) => {
     logger.debug('📤 Submitting inspection form:', {
       phase: currentPhase,
@@ -237,6 +345,67 @@ export const InspectionForm = ({
     saveFormData(values, currentPhase);
     onSubmit(values, currentPhase);
   };
+
+  if (isCheckingExisting) {
+    return (
+      <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+        Verificando inspecciones existentes...
+      </div>
+    );
+  }
+
+  if (existingConflict) {
+    const phaseLabel = currentPhase === 'initial' ? 'inspección inicial' : 'inspección de entrega';
+    const operatorLabel = existingConflict.operatorName || 'operador no identificado';
+    const createdAtLabel = formatDateForDisplay(existingConflict.createdAt);
+
+    return (
+      <>
+        <Dialog open onOpenChange={(open) => { if (!open) onCancelExisting?.(); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ya existe una inspección</DialogTitle>
+              <DialogDescription>
+                Ya existe una inspección para este servicio (fecha {createdAtLabel}, operador {operatorLabel}). ¿Qué desea hacer?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={onCancelExisting}>
+                Cancelar
+              </Button>
+              {isAdmin && (
+                <Button type="button" variant="destructive" onClick={() => setShowOverwriteConfirm(true)}>
+                  <RotateCcw className="size-4 mr-2" />
+                  Sobrescribir
+                </Button>
+              )}
+              <Button type="button" onClick={handleViewExisting}>
+                <Eye className="size-4 mr-2" />
+                Ver inspección existente
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar sobrescritura</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará la {phaseLabel} existente y su PDF asociado. Solo continúe si un administrador confirmó que debe recapturarse.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isOverwriting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction disabled={isOverwriting} onClick={handleConfirmOverwrite}>
+                {isOverwriting ? 'Limpiando...' : 'Confirmar sobrescritura'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
 
   return (
     <Form {...form}>

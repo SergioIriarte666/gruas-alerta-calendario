@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { PhotoStorage } from '@/utils/photoStorage';
 import { uploadInspectionPhoto, getInspectionPhotoSignedUrl, PHOTO_BUCKET } from '@/utils/photoUpload';
-import { getInspectionPdfSignedUrl, PDF_BUCKET } from '@/utils/inspectionPdfUpload';
+import { deleteInspectionPdf, getInspectionPdfSignedUrl, PDF_BUCKET } from '@/utils/inspectionPdfUpload';
 import { extractStoragePath } from '@/utils/storagePath';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
@@ -17,6 +17,18 @@ export interface InitialInspectionEvidence {
   storageTier: 'hot' | 'cold' | 'deleted';
   deletedAt: string | null;
   initialState: Pick<InspectionFormValues, 'equipment' | 'kilometraje' | 'combustible' | 'llaves' | 'documentacion'>;
+}
+
+export interface ExistingInspectionConflict {
+  id: string;
+  createdAt: string;
+  operatorName: string | null;
+  pdfPath: string;
+}
+
+export interface PersistInspectionResult {
+  id: string;
+  wasInserted: boolean;
 }
 
 interface ArchivedFilesResponse {
@@ -106,6 +118,81 @@ export const fetchInitialInspectionEvidence = async (
   };
 };
 
+export const fetchExistingInspectionConflict = async (
+  serviceId: string,
+  phase: 'initial' | 'final',
+): Promise<ExistingInspectionConflict | null> => {
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('id, created_at, operator_id, pdf_url, pdf_retiro_url, operators(name)')
+    .eq('service_id', serviceId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error('Error consultando inspección existente:', error);
+    throw new Error(`Error al verificar inspección existente: ${error.message}`);
+  }
+
+  const pdfPath = phase === 'initial' ? data?.pdf_url : data?.pdf_retiro_url;
+  if (!data || !pdfPath) return null;
+
+  const operatorRelation = (data as { operators?: { name?: string | null } | null }).operators;
+  return {
+    id: data.id,
+    createdAt: data.created_at,
+    operatorName: operatorRelation?.name || null,
+    pdfPath,
+  };
+};
+
+export const overwriteExistingInspectionPhase = async (
+  conflict: ExistingInspectionConflict,
+  phase: 'initial' | 'final',
+): Promise<void> => {
+  if (phase === 'initial') {
+    const { data: current, error: selectError } = await supabase
+      .from('inspections')
+      .select('pdf_url, pdf_retiro_url')
+      .eq('id', conflict.id)
+      .single();
+
+    if (selectError) {
+      logger.error('Error cargando inspección para sobrescritura:', selectError);
+      throw new Error(`No se pudo cargar la inspección existente: ${selectError.message}`);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('inspections')
+      .delete()
+      .eq('id', conflict.id);
+
+    if (deleteError) {
+      logger.error('Error eliminando inspección existente:', deleteError);
+      throw new Error(`No se pudo eliminar la inspección existente: ${deleteError.message}`);
+    }
+
+    const pdfPaths = [current?.pdf_url, current?.pdf_retiro_url].filter((path): path is string => !!path);
+    await Promise.all(pdfPaths.map((path) => deleteInspectionPdf(path)));
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from('inspections')
+    .update({
+      pdf_retiro_url: null,
+      pdf_retiro_uploaded_at: null,
+      photos_client_vehicle: [],
+    })
+    .eq('id', conflict.id);
+
+  if (updateError) {
+    logger.error('Error limpiando entrega existente:', updateError);
+    throw new Error(`No se pudo limpiar la entrega existente: ${updateError.message}`);
+  }
+
+  await deleteInspectionPdf(conflict.pdfPath);
+};
+
 /**
  * Garantiza que todas las fotos del set fotográfico estén en Supabase Storage.
  * Lanza si falta una foto en caché local o si la subida falla — nunca devuelve
@@ -141,7 +228,7 @@ export const persistInspection = async (
   uploadedPhotos: (PhotographicSetItem & { storageUrl: string })[],
   pdfPath: string,
   phase: 'initial' | 'final',
-): Promise<void> => {
+): Promise<PersistInspectionResult> => {
   if (phase === 'final' && uploadedPhotos.length === 0) {
     throw new Error('La entrega requiere al menos una fotografía antes de guardar.');
   }
@@ -188,14 +275,15 @@ export const persistInspection = async (
     throw new Error(`Error al consultar inspección: ${selectError.message}`);
   }
 
-  let persisted: { photos_before_service: string[] | null; photos_client_vehicle: string[] | null; pdf_url: string | null; pdf_retiro_url: string | null } | null = null;
+  let persisted: { id: string; photos_before_service: string[] | null; photos_client_vehicle: string[] | null; pdf_url: string | null; pdf_retiro_url: string | null } | null = null;
+  let wasInserted = false;
 
   if (existing) {
     const { data: updated, error: updateError } = await supabase
       .from('inspections')
       .update(payload)
       .eq('id', existing.id)
-      .select('photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
+      .select('id, photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
       .single();
 
     if (updateError) {
@@ -210,7 +298,7 @@ export const persistInspection = async (
     const { data: inserted, error: insertError } = await supabase
       .from('inspections')
       .insert({ ...payload, operator_signature: values.operatorSignature || '' })
-      .select('photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
+      .select('id, photos_before_service, photos_client_vehicle, pdf_url, pdf_retiro_url')
       .single();
 
     if (insertError) {
@@ -218,6 +306,7 @@ export const persistInspection = async (
       throw new Error(`Error al guardar inspección: ${insertError.message}`);
     }
     persisted = inserted;
+    wasInserted = true;
   }
 
   const persistedPhotos = phase === 'initial' ? persisted?.photos_before_service : persisted?.photos_client_vehicle;
@@ -227,6 +316,60 @@ export const persistInspection = async (
   }
 
   logger.debug('Inspección persistida correctamente para servicio:', serviceId);
+  return { id: persisted.id, wasInserted };
+};
+
+export const deleteInspectionRow = async (inspectionId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('inspections')
+    .delete()
+    .eq('id', inspectionId);
+
+  if (error) {
+    logger.error('Error eliminando row de inspección:', { inspectionId, error });
+    throw new Error(`No se pudo eliminar la inspección ${inspectionId}: ${error.message}`);
+  }
+};
+
+export const clearFinalInspectionFields = async (inspectionId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('inspections')
+    .update({
+      pdf_retiro_url: null,
+      pdf_retiro_uploaded_at: null,
+      photos_client_vehicle: [],
+    })
+    .eq('id', inspectionId);
+
+  if (error) {
+    logger.error('Error limpiando campos de entrega:', { inspectionId, error });
+    throw new Error(`No se pudo limpiar la entrega ${inspectionId}: ${error.message}`);
+  }
+};
+
+export const recordInspectionStorageOrphan = async (params: {
+  serviceId: string | null;
+  storagePath: string;
+  bucketId: string;
+  cleanupAttempted: boolean;
+  cleanupSucceeded: boolean;
+  errorMessage?: string;
+}): Promise<void> => {
+  const { error } = await supabase
+    .from('inspection_storage_orphans')
+    .insert({
+      service_id: params.serviceId,
+      storage_path: params.storagePath,
+      bucket_id: params.bucketId,
+      cleanup_attempted: params.cleanupAttempted,
+      cleanup_succeeded: params.cleanupSucceeded,
+      error_message: params.errorMessage || null,
+      resolved_at: params.cleanupSucceeded ? businessClock.nowISO() : null,
+    });
+
+  if (error) {
+    logger.warn('No se pudo registrar auditoría de limpieza de Storage:', error);
+  }
 };
 
 const PDF_PHOTO_CATEGORIES = ['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'] as const;
