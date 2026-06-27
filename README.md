@@ -113,6 +113,7 @@ npm run preview
 - [docs/modules/backup.md](./docs/modules/backup.md): respaldos y utilidades administrativas
 - [docs/guia-configuracion-whatsapp.md](./docs/guia-configuracion-whatsapp.md): integracion WhatsApp
 - [docs/technical/operator-offline-test-plan.md](./docs/technical/operator-offline-test-plan.md): pauta y resultado de validacion offline del portal operador
+- [docs/technical/supabase-security-hardening.md](./docs/technical/supabase-security-hardening.md): endurecimiento de funciones, storage y auth en Supabase
 
 ## Notas de mantenimiento
 
