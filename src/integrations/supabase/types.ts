@@ -1,3 +1,4 @@
+Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -4959,6 +4960,7 @@ export type Database = {
           purchase_order_required: boolean
           requires_detail: boolean
           requires_photo_set: boolean
+          service_category: string
           updated_at: string | null
           vehicle_brand_required: boolean
           vehicle_info_optional: boolean
@@ -4981,6 +4983,7 @@ export type Database = {
           purchase_order_required?: boolean
           requires_detail?: boolean
           requires_photo_set?: boolean
+          service_category?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
@@ -5003,6 +5006,7 @@ export type Database = {
           purchase_order_required?: boolean
           requires_detail?: boolean
           requires_photo_set?: boolean
+          service_category?: string
           updated_at?: string | null
           vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
@@ -6585,6 +6589,10 @@ export type Database = {
       cleanup_duplicate_inventory_costs: { Args: never; Returns: Json }
       cleanup_duplicate_payments: { Args: never; Returns: Json }
       cleanup_duplicate_profiles: { Args: never; Returns: undefined }
+      cleanup_expired_quick_entry_photos: {
+        Args: { p_retention?: string }
+        Returns: Json
+      }
       cleanup_orphaned_supplier_costs: { Args: never; Returns: number }
       cleanup_payment_duplicates: { Args: never; Returns: Json }
       close_service_status_only: {
@@ -6711,6 +6719,10 @@ export type Database = {
       execute_recovery_operation: {
         Args: { p_confirmation: string; p_operation_id: string }
         Returns: Json
+      }
+      extract_quick_entry_photo_path: {
+        Args: { raw_value: string }
+        Returns: string
       }
       final_security_check: { Args: never; Returns: Json }
       find_duplicate_suppliers: {
@@ -7230,8 +7242,6 @@ export type Database = {
           supplier_payment_id: string
         }[]
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       smart_apply_payment: {
         Args: { p_auto_apply?: boolean; p_payment_id: string }
         Returns: {
@@ -7266,7 +7276,6 @@ export type Database = {
         Returns: undefined
       }
       trigger_global_data_refresh: { Args: never; Returns: undefined }
-      unaccent: { Args: { "": string }; Returns: string }
       update_closure_status_on_invoice: {
         Args: { p_closure_id: string }
         Returns: undefined
@@ -7573,5 +7582,5 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.108.0 (currently installed v2.26.9)
+A new version of Supabase CLI is available: v2.108.0 (currently installed v2.33.9)
 We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

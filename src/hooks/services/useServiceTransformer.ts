@@ -78,6 +78,7 @@ export const useServiceTransformer = () => {
           licensePlateRequired: item.service_types.license_plate_required !== false,
           requiresDetail: item.service_types.requires_detail ?? true,
           requiresPhotoSet: item.service_types.requires_photo_set ?? true,
+          serviceCategory: (item.service_types.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') ?? 'traslado',
           createdAt: item.service_types.created_at || businessClock.nowISO(),
           updatedAt: item.service_types.updated_at || businessClock.nowISO()
         } : {
@@ -97,6 +98,7 @@ export const useServiceTransformer = () => {
           licensePlateRequired: true,
           requiresDetail: true,
           requiresPhotoSet: true,
+          serviceCategory: 'traslado' as const,
           createdAt: businessClock.nowISO(),
           updatedAt: businessClock.nowISO()
         },

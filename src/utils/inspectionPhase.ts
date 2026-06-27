@@ -1,16 +1,17 @@
 import type { Service } from '@/types';
 
 /**
- * Servicio "in-situ": no requiere detalle de inventario ni set fotográfico
- * obligatorio. Se trabaja en un solo lugar sin recogida ni entrega.
- * Una sola fase de inspección, pasa directo a 'completed'.
+ * Servicio "in-situ": una sola fase de inspección. No hay recogida ni
+ * entrega. El servicio se completa en una sola visita y pasa directo a
+ * status='completed'.
  *
- * Hoy: Apertura de Vehículos, Cambio de Neumáticos, Taxi, Puente de
- * Batería, Carga de Combustible, Apoyo Mecánico, etc.
+ * El criterio se basa en la columna service_types.service_category.
+ * NO derivar desde requires_detail/requires_photo_set: hay tipos
+ * (Lavado, Revisión Técnica) que requieren detalle/fotos pero NO son
+ * in-situ; tienen flujo de dos fases.
  */
-export const isInSituService = (service: Pick<Service, 'serviceType'> | undefined | null): boolean => {
-  if (!service?.serviceType) return false;
-  const requiresDetail = service.serviceType.requiresDetail ?? true;
-  const requiresPhotoSet = service.serviceType.requiresPhotoSet ?? true;
-  return !requiresDetail && !requiresPhotoSet;
+export const isInSituService = (
+  service: Pick<Service, 'serviceType'> | undefined | null,
+): boolean => {
+  return service?.serviceType?.serviceCategory === 'in_situ';
 };

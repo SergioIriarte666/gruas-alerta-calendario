@@ -1,4 +1,3 @@
-
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 
 interface InspectionFlags {
@@ -20,9 +19,8 @@ export const validateFormBeforeSubmit = (
       errors.push('La firma del operador es obligatoria');
     }
 
-    // Servicios in-situ: la inspección inicial es la única fase, por lo que
-    // la firma y el nombre del cliente son obligatorios (es la única evidencia
-    // que queda del cliente recibiendo el servicio).
+    // Servicios in-situ: una sola fase. La firma y el nombre del cliente
+    // son obligatorios (única evidencia del cliente recibiendo el servicio).
     if (isInSitu) {
       if (!values.clientSignature?.trim()) {
         errors.push('La firma del cliente es obligatoria');
@@ -36,11 +34,9 @@ export const validateFormBeforeSubmit = (
       if (!values.equipment || values.equipment.length === 0) {
         errors.push('Debe seleccionar al menos un elemento del inventario');
       }
-
       if (!values.kilometraje?.trim()) {
         errors.push('El kilometraje es obligatorio');
       }
-
       if (!values.combustible?.trim()) {
         errors.push('El nivel de combustible es obligatorio');
       }
@@ -55,19 +51,16 @@ export const validateFormBeforeSubmit = (
   }
 
   if (phase === 'final') {
-    // Solo se exige foto de entrega si el tipo de servicio requiere set
-    // fotográfico (defensive: hoy solo llegan a 'final' los tipos con
-    // requires_photo_set=true, pero protege ante tipos mixtos futuros).
+    // Defensive: respetar el flag (hoy solo llegan a 'final' los traslados
+    // con requires_photo_set=true).
     if (requiresPhotoSet) {
       if (!values.photographicSet || values.photographicSet.length === 0) {
         errors.push('Debe tomar al menos una fotografía de la entrega');
       }
     }
-
     if (!values.vehicleReceptionSignature?.trim()) {
       errors.push('La firma de recepción del vehículo es obligatoria');
     }
-
     if (!values.receptionPersonName?.trim()) {
       errors.push('El nombre de quien recibe el vehículo es obligatorio');
     }

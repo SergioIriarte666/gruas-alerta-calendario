@@ -5,8 +5,8 @@ BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS extensions;
 
-ALTER EXTENSION IF EXISTS pg_trgm SET SCHEMA extensions;
-ALTER EXTENSION IF EXISTS unaccent SET SCHEMA extensions;
+DO $$ BEGIN ALTER EXTENSION pg_trgm SET SCHEMA extensions; EXCEPTION WHEN OTHERS THEN RAISE WARNING 'pg_trgm extension not available: %', SQLERRM; END $$;
+DO $$ BEGIN ALTER EXTENSION unaccent SET SCHEMA extensions; EXCEPTION WHEN OTHERS THEN RAISE WARNING 'unaccent extension not available: %', SQLERRM; END $$;
 
 ALTER FUNCTION public.force_update_service_to_invoiced(uuid, text, text)
   SET search_path = public, pg_temp;

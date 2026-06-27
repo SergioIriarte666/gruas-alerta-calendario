@@ -361,6 +361,8 @@ export interface ServiceType {
   // Flags de inspección
   requiresDetail?: boolean;
   requiresPhotoSet?: boolean;
+  // Categoría operacional: define el flujo de inspección.
+  serviceCategory?: 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente';
   createdAt: string;
   updatedAt: string;
 }
