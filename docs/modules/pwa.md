@@ -12,7 +12,6 @@ Módulo PWA que habilita:
 - Manifest: [public/manifest.json](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/public/manifest.json)
 - Componentes: [src/components/pwa](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/pwa)
 - Docs existentes:
-  - [pwa-configuration.md](../technical/pwa-configuration.md)
   - [notifications.md](./notifications.md)
 
 ## Arquitectura y componentes

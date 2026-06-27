@@ -626,12 +626,13 @@ Aspectos visibles para el usuario:
 
 Referencia adicional:
 
-- [Troubleshooting](./technical/troubleshooting.md)
+- [Configuracion tecnica](./technical/configuration.md)
 
 ## Documentos relacionados
 
 - [PRD](../PRD.md)
 - [Documentacion por modulos](./modules/README.md)
 - [Configuracion tecnica](./technical/configuration.md)
-- [Guia de administrador](./technical/system-admin-guide.md)
+- [Settings admin](./modules/settings-admin.md)
+- [Backup](./modules/backup.md)
 - [Guia de configuracion WhatsApp](./guia-configuracion-whatsapp.md)

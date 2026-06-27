@@ -119,8 +119,9 @@ flowchart TD
 - Fuente ejecutiva de producto: [PRD.md](../../PRD.md)
 - Documentación general: [docs/README.md](../README.md)
 - Configuración técnica: [docs/technical/configuration.md](../technical/configuration.md)
-- PWA: [docs/technical/pwa-configuration.md](../technical/pwa-configuration.md)
-- Guía admin: [docs/technical/system-admin-guide.md](../technical/system-admin-guide.md)
+- PWA: [docs/modules/pwa.md](./pwa.md)
+- Settings admin: [docs/modules/settings-admin.md](./settings-admin.md)
+- Backup: [docs/modules/backup.md](./backup.md)
 
 ## Notas de mantenimiento
 

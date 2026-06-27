@@ -2,8 +2,8 @@
 
 ## TMS Gruas - Towing Management System
 
-- **Version del documento:** 4.0
-- **Ultima actualizacion:** 2026-06-23
+- **Version del documento:** 4.1
+- **Ultima actualizacion:** 2026-06-27
 - **Estado:** Vigente
 - **Base de actualizacion:** lectura completa del routing, paginas, componentes, hooks, servicios, migraciones, `docs/modules/*` y features implementados en junio 2026
 
@@ -109,7 +109,7 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 |---|---|---|
 | Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, `/historical`, `/document-library`, etc. | Operacion, finanzas, activos y administracion. |
 | Operador | `/operator`, `/operator/service/:id/inspection` | Ejecucion de inspecciones y seguimiento de servicios asignados. |
-| Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
+| Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/purchase-orders`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
 
 Rutas transversales:
 
@@ -417,7 +417,7 @@ flowchart LR
 
 ### 5.22 Portal cliente
 
-- dashboard, servicios, facturas, solicitud de servicios
+- dashboard, servicios, facturas, solicitud de servicios y ordenes de compra
 
 ### 5.23 Historico financiero
 

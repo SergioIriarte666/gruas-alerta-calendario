@@ -237,7 +237,7 @@ Esto se ejecuta a nivel **base de datos** mediante triggers de Postgres, garanti
 - [`docs/modules/closures.md`](../modules/closures.md)
 - [`docs/technical/payment-system.md`](../technical/payment-system.md)
 - [`docs/modules/supabase-integration.md`](../modules/supabase-integration.md)
-- [`docs/architecture/overview.md`](./overview.md)
+- [`docs/modules/core-app.md`](../modules/core-app.md)
 
 ---
 

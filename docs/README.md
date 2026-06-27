@@ -16,13 +16,14 @@ Este directorio reúne documentación operativa y técnica del sistema. La inten
 - [Manual de usuario vigente](user-manual-vigente.md): guia funcional actual del sistema.
 - [Guía de configuración WhatsApp](guia-configuracion-whatsapp.md): configuración operativa de WhatsApp Business.
 - [Configuración técnica](technical/configuration.md): variables, parámetros globales y puesta en marcha.
-- [Resolución de problemas](technical/troubleshooting.md): troubleshooting operativo y técnico.
-- [Guía de administrador](technical/system-admin-guide.md): tareas administrativas y criterios de operación.
+- [Settings admin](modules/settings-admin.md): configuracion administrativa, usuarios, alertas y herramientas criticas.
+- [Backup](modules/backup.md): respaldos, auditoria y utilidades administrativas.
+- [Turnstile](technical/turnstile-configuration.md): configuracion opcional de captcha para recuperacion de contrasena.
 
 ### Arquitectura y capas transversales
 
-- [Overview de arquitectura](architecture/overview.md): visión general del sistema.
 - [Integración cruzada entre módulos](architecture/cross-module-integration.md): relaciones y sincronización entre áreas.
+- [Core app](modules/core-app.md): bootstrap, providers globales y routing.
 - [Integración Supabase](modules/supabase-integration.md): acceso a datos, cliente tipado y patrones de uso.
 - [Notificaciones](modules/notifications.md): notificaciones UI, push y mensajería relacionada.
 - [PWA](modules/pwa.md): capacidades offline, service worker y sincronización.
@@ -31,8 +32,8 @@ Este directorio reúne documentación operativa y técnica del sistema. La inten
 
 - `PRD.md` define el alcance funcional real.
 - `docs/modules/*` detalla la implementación por módulo.
-- `docs/technical/*` mezcla documentación transversal vigente con notas puntuales de soporte/corrección; priorizar `configuration.md`, `troubleshooting.md` y `system-admin-guide.md`.
-- `docs/architecture/*` resume estructura y relaciones entre capas.
+- `docs/technical/*` mezcla documentación transversal vigente con notas puntuales de soporte/corrección; priorizar `configuration.md`, `turnstile-configuration.md`, `manual-cost-xml-import.md`, `inspection-retention-r2.md` y `payment-system.md`.
+- `docs/modules/*` y `docs/architecture/cross-module-integration.md` resumen la arquitectura vigente mejor que documentos generales antiguos.
 
 ## Material no canónico
 
