@@ -10,6 +10,9 @@ Aplicacion web para gestionar la operacion y las finanzas de una empresa de grua
   - Backoffice administrativo
   - App de operador (`/operator`)
   - Portal cliente (`/portal`)
+- Estado offline validado al 27 de junio de 2026:
+  - App de operador con inspeccion inicial offline, persistencia local y sincronizacion posterior
+  - Modulos administrativos offline fuera de alcance actual
 - Documentacion funcional vigente en [PRD.md](./PRD.md) y [docs/README.md](./docs/README.md)
 
 ## Modulos principales
@@ -109,6 +112,7 @@ npm run preview
 - [docs/modules/settings-admin.md](./docs/modules/settings-admin.md): configuracion administrativa vigente
 - [docs/modules/backup.md](./docs/modules/backup.md): respaldos y utilidades administrativas
 - [docs/guia-configuracion-whatsapp.md](./docs/guia-configuracion-whatsapp.md): integracion WhatsApp
+- [docs/technical/operator-offline-test-plan.md](./docs/technical/operator-offline-test-plan.md): pauta y resultado de validacion offline del portal operador
 
 ## Notas de mantenimiento
 

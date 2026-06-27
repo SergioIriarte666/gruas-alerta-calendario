@@ -5,6 +5,7 @@ import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { operatorServiceKeys } from './operatorServicesQueryKeys';
 import { createLogger } from "@/lib/logger";
+import { getCachedOperatorServiceById } from '@/utils/operatorOffline';
 
 
 const logger = createLogger("useOperatorService");
@@ -63,12 +64,28 @@ export const useOperatorService = (serviceId: string) => {
         logger.debug('❌ No valid service ID provided');
         return null;
       }
-      
-      const rawData = await fetchOperatorService(serviceId);
+
+      let rawData: any = null;
+      try {
+        rawData = await fetchOperatorService(serviceId);
+      } catch (error) {
+        if (!navigator.onLine) {
+          const cachedService = await getCachedOperatorServiceById(serviceId);
+          if (cachedService) {
+            logger.warn(`Using cached service ${serviceId} while offline`);
+            return cachedService;
+          }
+        }
+        throw error;
+      }
       
       if (!rawData) {
         logger.debug('📭 No raw data found');
         return null;
+      }
+
+      if ('serviceDate' in (rawData as Record<string, unknown>)) {
+        return rawData;
       }
       
       logger.debug('🔄 Transforming service data...');

@@ -46,6 +46,7 @@ import { formatDateForDisplay } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { useUser } from '@/contexts/UserContext';
+import { getPendingInspectionByServicePhase } from '@/utils/operatorOffline';
 
 const logger = createLogger('InspectionForm');
 
@@ -210,10 +211,10 @@ export const InspectionForm = ({
       logger.debug('📷 Photos count:', savedData.photographicSet?.length || 0);
       logger.debug('🔄 Loading phase:', metadata.inspection_phase);
       
-      // Verificar que las fotos existen en sessionStorage
+      // Verificar que las fotos existen en almacenamiento local durable
       if (savedData.photographicSet && savedData.photographicSet.length > 0) {
         const validPhotos = savedData.photographicSet.filter(photo => {
-          const photoExists = sessionStorage.getItem(`photo-${photo.fileName}`) !== null;
+          const photoExists = localStorage.getItem(`photo-${photo.fileName}`) !== null;
           if (!photoExists) {
             logger.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
           }
@@ -249,8 +250,30 @@ export const InspectionForm = ({
 
     setIsInitialized(true);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         logger.error('Error verificando inspección existente:', error);
+
+        if (!navigator.onLine) {
+          const pendingInitialInspection = await getPendingInspectionByServicePhase(serviceId, 'initial');
+
+          if (expectedPhase === 'final' && pendingInitialInspection) {
+            toast({
+              type: 'warning',
+              title: 'Entrega en espera de sincronización',
+              description: 'La inspección inicial quedó guardada en este dispositivo y aún no llega a la base de datos. La entrega se habilitará cuando vuelva la conexión.',
+            });
+          } else {
+            toast({
+              type: 'info',
+              title: 'Modo sin conexión',
+              description: 'No fue posible validar inspecciones existentes en la base de datos. Puede continuar con la información local disponible.',
+            });
+          }
+
+          setIsInitialized(true);
+          return;
+        }
+
         toast({ type: 'error', title: 'No se pudo verificar si ya existe una inspección' });
         reportFrontendError({
           componentName: 'InspectionForm.fetchExistingInspectionConflict',
@@ -270,8 +293,23 @@ export const InspectionForm = ({
     const subscription = form.watch((data) => {
       if (data && Object.keys(data).length > 0) {
         const formData = data as InspectionFormValues;
-        // Fotos y firmas son evidencia crítica en ambas fases.
-        if (formData.photographicSet?.length || formData.operatorSignature || formData.clientSignature || formData.vehicleReceptionSignature) {
+        const hasMeaningfulContent = Boolean(
+          formData.photographicSet?.length ||
+          formData.operatorSignature ||
+          formData.clientSignature ||
+          formData.vehicleReceptionSignature ||
+          formData.vehicleObservations ||
+          formData.kilometraje ||
+          formData.equipment?.length ||
+          formData.combustible ||
+          formData.llaves ||
+          formData.documentacion ||
+          formData.clientName ||
+          formData.clientRut ||
+          formData.receptionPersonName
+        );
+
+        if (hasMeaningfulContent) {
           saveFormData(formData, currentPhase);
         }
       }

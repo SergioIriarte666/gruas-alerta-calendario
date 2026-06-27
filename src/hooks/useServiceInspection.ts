@@ -8,18 +8,12 @@ import { useInspectionPDF } from '@/hooks/inspection/useInspectionPDF';
 import { useInspectionEmail } from '@/hooks/inspection/useInspectionEmail';
 import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
-import { deleteInspectionPdf, PDF_BUCKET, uploadInspectionPdf } from '@/utils/inspectionPdfUpload';
-import {
-  clearFinalInspectionFields,
-  deleteInspectionRow,
-  ensurePhotosUploaded,
-  persistInspection,
-  fetchInitialPhotosForPdf,
-  recordInspectionStorageOrphan,
-} from '@/utils/inspectionRecord';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { submitInspectionPipeline } from '@/utils/inspectionSubmission';
+import { queuePendingInspection, updateCachedOperatorService } from '@/utils/operatorOffline';
+import type { Service } from '@/types';
 
 const logger = createLogger('useServiceInspection');
 
@@ -38,20 +32,23 @@ export const useServiceInspection = () => {
     pdfStep,
     isGeneratingPDF,
     pdfDownloadUrl,
-    generatePDF,
     revealPDF,
     handleManualDownload,
-    cleanupPDF
+    cleanupPDF,
+    beginPdfGeneration,
+    updatePdfGeneration,
+    finishPdfGeneration,
   } = useInspectionPDF();
   const { sendInspectionEmailMutation } = useInspectionEmail();
   const { updateServiceStatusMutation } = useServiceStatusUpdate(serviceId);
   const [completedInspection, setCompletedInspection] = useState<{
-    blob: Blob;
+    blob?: Blob;
     values: InspectionFormValues;
     phase: 'initial' | 'final';
-    signedUrl: string;
+    signedUrl?: string;
     emailSent: boolean;
     whatsappSent: boolean;
+    queuedOffline?: boolean;
   } | null>(null);
 
   const reportNotificationError = (channel: 'email' | 'whatsapp', error: unknown) => {
@@ -62,42 +59,6 @@ export const useServiceInspection = () => {
       errorStack: normalizedError.stack,
       url: window.location.href,
     }).catch(() => {});
-  };
-
-  const reportRollbackError = (step: string, error: unknown, context: Record<string, unknown>) => {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    logger.error(`Error en rollback ${step}:`, { ...context, error: normalizedError.message });
-    reportFrontendError({
-      componentName: `useServiceInspection.rollback.${step}`,
-      errorMessage: `${normalizedError.message} | ${JSON.stringify(context)}`,
-      errorStack: normalizedError.stack,
-      url: window.location.href,
-    }).catch(() => {});
-  };
-
-  const cleanupPdfAfterFailure = async (path: string) => {
-    try {
-      await deleteInspectionPdf(path);
-      await recordInspectionStorageOrphan({
-        serviceId: serviceId || null,
-        storagePath: path,
-        bucketId: PDF_BUCKET,
-        cleanupAttempted: true,
-        cleanupSucceeded: true,
-      });
-    } catch (cleanupError) {
-      reportRollbackError('deletePdf', cleanupError, { path, serviceId });
-      await recordInspectionStorageOrphan({
-        serviceId: serviceId || null,
-        storagePath: path,
-        bucketId: PDF_BUCKET,
-        cleanupAttempted: true,
-        cleanupSucceeded: false,
-        errorMessage: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
-      });
-      toast.error(`Error guardando la inspección y no se pudo limpiar ${path}. Contacte al administrador con este código: ${path}.`);
-      throw cleanupError;
-    }
   };
 
   const sendWhatsApp = async (signedUrl: string, phase: 'initial' | 'final') => {
@@ -135,9 +96,6 @@ export const useServiceInspection = () => {
     error: error?.message
   });
 
-  // Pipeline atómico: cada paso solo avanza si el anterior tuvo éxito, y el
-  // estado del servicio (inspection_completed/completed) es CONSECUENCIA de
-  // haber guardado la inspección, nunca un paso independiente.
   const processInspectionMutation = useMutation({
     mutationFn: async ({ values, phase }: { values: InspectionFormValues; phase: 'initial' | 'final' }) => {
       if (!service || !serviceId) {
@@ -149,74 +107,35 @@ export const useServiceInspection = () => {
         throw new Error('El servicio no tiene un operador asignado; no se puede registrar la inspección.');
       }
 
-      logger.debug('1/5 Subiendo fotos a Storage...', service.folio, phase);
-      const uploadedPhotos = await ensurePhotosUploaded(values.photographicSet, serviceId);
-      const valuesWithPhotos: InspectionFormValues = { ...values, photographicSet: uploadedPhotos };
-
-      logger.debug('2/5 Generando PDF...');
-      const initialPhotos = phase === 'final'
-        ? await fetchInitialPhotosForPdf(serviceId).catch((e) => {
-            logger.error('No se pudieron cargar fotos iniciales para el PDF de entrega:', e);
-            reportNotificationError('email', e);
-            return [];
-          })
-        : undefined;
-      const { blob } = await generatePDF(service, valuesWithPhotos, phase === 'final', initialPhotos);
-
-      logger.debug('3/5 Subiendo PDF a Storage...');
-      const uploadResult = await uploadInspectionPdf(
-        blob,
-        serviceId,
-        service.folio,
-        phase === 'initial' ? 'inicial' : 'entrega',
-      );
-
-      logger.debug('4/5 Guardando inspección en base de datos...');
-      let persistedInspection: Awaited<ReturnType<typeof persistInspection>> | null = null;
-      try {
-        persistedInspection = await persistInspection(serviceId, operatorId, valuesWithPhotos, uploadedPhotos, uploadResult.path, phase);
-      } catch (persistError) {
-        reportRollbackError('persistInspection', persistError, { path: uploadResult.path, serviceId, phase });
-        await cleanupPdfAfterFailure(uploadResult.path);
-        throw persistError;
-      }
-
-      logger.debug('5/5 Actualizando estado del servicio...');
-      try {
-        await updateServiceStatusMutation.mutateAsync({
-          id: serviceId,
-          targetStatus: phase === 'initial' ? 'inspection_completed' : 'completed',
-        });
-      } catch (statusError) {
-        reportRollbackError('serviceStatus', statusError, {
-          path: uploadResult.path,
-          inspectionId: persistedInspection.id,
+      if (!navigator.onLine) {
+        const queued = await queuePendingInspection({
           serviceId,
+          userId: service.operator?.id || null,
           phase,
+          serviceSnapshot: service,
+          values,
         });
 
-        try {
-          if (persistedInspection.wasInserted) {
-            await deleteInspectionRow(persistedInspection.id);
-          } else if (phase === 'final') {
-            await clearFinalInspectionFields(persistedInspection.id);
-          } else {
-            await deleteInspectionRow(persistedInspection.id);
-          }
-        } catch (rowCleanupError) {
-          reportRollbackError('inspectionRow', rowCleanupError, {
-            path: uploadResult.path,
-            inspectionId: persistedInspection.id,
-            serviceId,
-            phase,
-          });
-          toast.error(`Error guardando la inspección y no se pudo limpiar ${uploadResult.path}. Contacte al administrador con este código: ${uploadResult.path}.`);
-          throw rowCleanupError;
-        }
-
-        await cleanupPdfAfterFailure(uploadResult.path);
-        throw statusError;
+        return {
+          queuedOffline: true,
+          values,
+          emailSent: false,
+          phase,
+          queueId: queued.id,
+        } as const;
       }
+
+      beginPdfGeneration();
+
+      const { blob, signedUrl, valuesWithPhotos } = await submitInspectionPipeline({
+        service,
+        serviceId,
+        values,
+        phase,
+        onPdfProgress: updatePdfGeneration,
+      });
+
+      finishPdfGeneration();
 
       let emailSent = false;
       if (service.client?.email && service.client.email.includes('@')) {
@@ -235,33 +154,55 @@ export const useServiceInspection = () => {
         }
       }
 
-      return { blob, values: valuesWithPhotos, emailSent, phase, signedUrl: uploadResult.signedUrl };
+      return { blob, values: valuesWithPhotos, emailSent, phase, signedUrl, queuedOffline: false } as const;
     },
     onSuccess: async (result) => {
-      const { blob, values, emailSent, phase, signedUrl } = result;
+      const { blob, values, emailSent, phase, signedUrl, queuedOffline } = result;
 
       logger.debug('Procesamiento completado para fase:', phase);
 
       const successLabel = phase === 'initial' ? 'Inspección inicial' : 'Servicio';
-      toast.success(emailSent
-        ? `${successLabel} guardada y enviada por correo exitosamente`
-        : `${successLabel} guardada exitosamente`);
+      if (queuedOffline) {
+        const optimisticStatus = phase === 'initial' ? 'inspection_completed' : 'completed';
+        const patch = { status: optimisticStatus } as Partial<Service>;
+        queryClient.setQueryData(operatorServiceKeys.detail(serviceId), (current: Service | null | undefined) =>
+          current ? { ...current, ...patch } : current,
+        );
+        queryClient.setQueriesData(
+          { queryKey: operatorServicesKeys.all },
+          (current: Service[] | undefined) =>
+            current?.map((item) => item.id === serviceId ? { ...item, ...patch } : item) ?? current,
+        );
+        updateCachedOperatorService(serviceId, patch).catch((error) => {
+          logger.warn('Could not update cached operator service status', error);
+        });
 
-      // El PDF queda disponible para el usuario únicamente después de completar
-      // fotos → PDF → inspección → estado. Nunca se navega al blob.
-      revealPDF(blob);
-      setCompletedInspection({ blob, values, phase, signedUrl, emailSent, whatsappSent: false });
+        toast.success(`${successLabel} guardada en este dispositivo. Se sincronizará automáticamente al volver la conexión.`);
+        setCompletedInspection({
+          values,
+          phase,
+          emailSent: false,
+          whatsappSent: false,
+          queuedOffline: true,
+        });
+      } else {
+        toast.success(emailSent
+          ? `${successLabel} guardada y enviada por correo exitosamente`
+          : `${successLabel} guardada exitosamente`);
 
-      // ── Notificación por WhatsApp (best-effort, no bloquea el flujo) ──
-      try {
-        const whatsappSent = await sendWhatsApp(signedUrl, phase);
-        setCompletedInspection(current => current ? { ...current, whatsappSent } : current);
-      } catch (waErr) {
-        logger.error('Error enviando WhatsApp:', waErr);
-        reportNotificationError('whatsapp', waErr);
+        revealPDF(blob!);
+        setCompletedInspection({ blob, values, phase, signedUrl, emailSent, whatsappSent: false, queuedOffline: false });
+
+        try {
+          const whatsappSent = await sendWhatsApp(signedUrl!, phase);
+          setCompletedInspection(current => current ? { ...current, whatsappSent } : current);
+        } catch (waErr) {
+          logger.error('Error enviando WhatsApp:', waErr);
+          reportNotificationError('whatsapp', waErr);
+        }
       }
 
-      if (phase === 'final') {
+      if (phase === 'final' && !queuedOffline) {
         values.photographicSet?.forEach(photo => {
           localStorage.removeItem(`photo-${photo.fileName}`);
         });
@@ -269,14 +210,22 @@ export const useServiceInspection = () => {
         localStorage.removeItem(`inspection_metadata_${serviceId}`);
       }
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) }),
-        queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
-        refetch()
-      ]);
+      if (queuedOffline) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) }),
+          queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+        ]);
+      } else {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: operatorServiceKeys.detail(serviceId) }),
+          queryClient.invalidateQueries({ queryKey: operatorServicesKeys.all }),
+          refetch(),
+        ]);
+      }
 
     },
     onError: (error: Error) => {
+      finishPdfGeneration();
       logger.error('Error en procesamiento:', error);
       toast.error(`Error al procesar la inspección: ${error.message}`);
       reportFrontendError({
@@ -290,7 +239,7 @@ export const useServiceInspection = () => {
   });
 
   const handleSendEmail = async () => {
-    if (!completedInspection || !service) return;
+    if (!completedInspection || !service || !completedInspection.blob) return;
     try {
       await sendInspectionEmailMutation.mutateAsync({
         pdfBlob: completedInspection.blob,
@@ -305,7 +254,7 @@ export const useServiceInspection = () => {
   };
 
   const handleSendWhatsApp = async () => {
-    if (!completedInspection) return;
+    if (!completedInspection || !completedInspection.signedUrl) return;
     try {
       const whatsappSent = await sendWhatsApp(completedInspection.signedUrl, completedInspection.phase);
       if (!whatsappSent) {

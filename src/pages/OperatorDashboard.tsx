@@ -8,6 +8,7 @@ import { useLocation } from 'react-router-dom';
 import { NextServiceCard } from '@/components/operator/NextServiceCard';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
+import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspections';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -16,6 +17,7 @@ type TabKey = 'asignados' | 'activos' | 'pendientes_entrega' | 'completados';
 const OperatorDashboard = () => {
   const { user } = useUser();
   const { serviceTabs, isLoading, error, refreshAllData } = useOperatorServicesTabs();
+  const { pendingCount } = usePendingOfflineInspections();
   const { search } = useLocation();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -115,6 +117,17 @@ const OperatorDashboard = () => {
               <p className="text-[10px] text-zinc-500 mt-0.5">{label}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {pendingCount > 0 && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
+          <p className="text-sm font-medium text-amber-300">
+            {pendingCount} inspección(es) pendiente(s) de sincronización
+          </p>
+          <p className="mt-1 text-xs text-amber-200/80">
+            Se enviarán automáticamente cuando el equipo recupere conexión.
+          </p>
         </div>
       )}
 

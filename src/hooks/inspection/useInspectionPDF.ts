@@ -101,6 +101,21 @@ export const useInspectionPDF = () => {
 
   useEffect(() => cleanupPDF, [cleanupPDF]);
 
+  const beginPdfGeneration = useCallback((initialStep: string = 'Iniciando generación...') => {
+    setIsGeneratingPDF(true);
+    setPdfProgress(0);
+    setPdfStep(initialStep);
+  }, []);
+
+  const updatePdfGeneration = useCallback((progress: number, step: string) => {
+    setPdfProgress(progress);
+    setPdfStep(step);
+  }, []);
+
+  const finishPdfGeneration = useCallback(() => {
+    setIsGeneratingPDF(false);
+  }, []);
+
   return {
     pdfProgress,
     pdfStep,
@@ -110,5 +125,8 @@ export const useInspectionPDF = () => {
     revealPDF,
     handleManualDownload,
     cleanupPDF,
+    beginPdfGeneration,
+    updatePdfGeneration,
+    finishPdfGeneration,
   };
 };

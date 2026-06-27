@@ -10,6 +10,7 @@ La implementacion actual es mas rica que una lista simple con formulario: el das
 - Dashboard operador: [OperatorDashboard](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/OperatorDashboard.tsx)
 - Inspeccion: [ServiceInspection](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/operator/ServiceInspection.tsx)
 - Componentes: [src/components/operator](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/operator)
+- Pauta de prueba offline: [operator-offline-test-plan.md](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/docs/technical/operator-offline-test-plan.md)
 
 ## Rutas
 - `/operator`

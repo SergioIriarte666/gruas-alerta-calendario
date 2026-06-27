@@ -21,7 +21,7 @@ if (import.meta.env.DEV && (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY)) {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: sessionStorage,
+    storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
   }

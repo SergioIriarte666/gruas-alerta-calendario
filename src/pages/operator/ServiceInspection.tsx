@@ -96,6 +96,7 @@ const ServiceInspection = () => {
         emailSent={completedInspection.emailSent}
         whatsappSent={completedInspection.whatsappSent}
         isSendingEmail={sendInspectionEmailMutation.isPending}
+        queuedOffline={completedInspection.queuedOffline}
         onDownload={handleManualDownload}
         onSendEmail={handleSendEmail}
         onSendWhatsApp={handleSendWhatsApp}

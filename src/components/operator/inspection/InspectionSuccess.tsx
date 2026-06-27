@@ -9,6 +9,7 @@ interface InspectionSuccessProps {
   emailSent: boolean;
   whatsappSent: boolean;
   isSendingEmail: boolean;
+  queuedOffline?: boolean;
   onDownload: () => void;
   onSendEmail: () => void;
   onSendWhatsApp: () => void;
@@ -22,6 +23,7 @@ export const InspectionSuccess = ({
   emailSent,
   whatsappSent,
   isSendingEmail,
+  queuedOffline = false,
   onDownload,
   onSendEmail,
   onSendWhatsApp,
@@ -36,35 +38,45 @@ export const InspectionSuccess = ({
         </div>
         <CardTitle>Inspección guardada</CardTitle>
         <p className="text-sm text-muted-foreground">
-          El servicio {folio} quedó listo para entrega y ya salió de las inspecciones disponibles.
+          {queuedOffline
+            ? `El servicio ${folio} quedó guardado en este dispositivo y se sincronizará cuando vuelva la conexión.`
+            : `El servicio ${folio} quedó listo para entrega y ya salió de las inspecciones disponibles.`}
         </p>
         <div className="rounded-full border border-emerald-500/25 bg-background/70 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-          Fotos · PDF · registro · estado sincronizados
+          {queuedOffline
+            ? 'Fotos · firmas · formulario guardados localmente'
+            : 'Fotos · PDF · registro · estado sincronizados'}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <Button className="w-full" onClick={onDownload}>
+        <Button className="w-full" onClick={onDownload} disabled={queuedOffline}>
           <Download className="mr-2 size-4" />
-          Descargar PDF
+          {queuedOffline ? 'PDF disponible al sincronizar' : 'Descargar PDF'}
         </Button>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Button
             variant="outline"
             onClick={onSendEmail}
-            disabled={!emailAvailable || isSendingEmail}
+            disabled={queuedOffline || !emailAvailable || isSendingEmail}
           >
             <Mail className="mr-2 size-4" />
             {isSendingEmail ? 'Enviando…' : emailSent ? 'Reenviar correo' : 'Enviar por correo'}
           </Button>
-          <Button variant="outline" onClick={onSendWhatsApp} disabled={!phoneAvailable}>
+          <Button variant="outline" onClick={onSendWhatsApp} disabled={queuedOffline || !phoneAvailable}>
             <MessageCircle className="mr-2 size-4" />
             {whatsappSent ? 'Reenviar WhatsApp' : 'Enviar por WhatsApp'}
           </Button>
         </div>
 
-        {!emailAvailable && !phoneAvailable && (
+        {queuedOffline && (
+          <p className="text-center text-xs text-muted-foreground">
+            La app enviará automáticamente la inspección apenas vuelva la señal.
+          </p>
+        )}
+
+        {!queuedOffline && !emailAvailable && !phoneAvailable && (
           <p className="text-center text-xs text-muted-foreground">
             El cliente no tiene correo ni teléfono registrados.
           </p>

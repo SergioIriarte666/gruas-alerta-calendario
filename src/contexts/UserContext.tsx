@@ -6,6 +6,7 @@ import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('UserContext');
+const PROFILE_CACHE_KEY = 'offline-user-profile-cache-v1';
 
 interface UserProfile {
   id: string;
@@ -27,11 +28,31 @@ interface UserContextType {
   forceRefreshProfile: () => Promise<void>;
 }
 
+const readCachedProfile = (): { profile: UserProfile; userId: string } | null => {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as { profile: UserProfile; userId: string };
+  } catch (error) {
+    logger.warn('UserContext - Could not parse cached profile', error);
+    return null;
+  }
+};
+
+const writeCachedProfile = (value: { profile: UserProfile; userId: string } | null) => {
+  if (!value) {
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+    return;
+  }
+
+  localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(value));
+};
+
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: authUser, loading: authLoading, signOut } = useAuth();
-  const profileCacheRef = useRef<{ profile: UserProfile; userId: string } | null>(null);
+  const profileCacheRef = useRef<{ profile: UserProfile; userId: string } | null>(readCachedProfile());
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef(false);
@@ -54,6 +75,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (retryCount = 0) => {
     if (!authUser || fetchingRef.current) {
+      if (!authUser && !navigator.onLine && profileCacheRef.current?.profile?.role === 'operator') {
+        setUser(profileCacheRef.current.profile);
+      }
       setLoading(false);
       return;
     }
@@ -76,6 +100,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         logger.error('UserContext - Error fetching profile:', error);
+
+        if (!navigator.onLine && profileCacheRef.current?.userId === authUser.id && profileCacheRef.current.profile) {
+          logger.warn('UserContext - Falling back to cached profile while offline');
+          setUser(profileCacheRef.current.profile);
+          return;
+        }
 
         if (error.code === 'PGRST116') {
           if (retryCount < 2) {
@@ -147,10 +177,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           operator_name,
         };
         profileCacheRef.current = { profile: userProfile, userId: authUser.id };
+        writeCachedProfile(profileCacheRef.current);
         setUser(userProfile);
       }
     } catch (error) {
       logger.error('UserContext - Exception:', error);
+      if (!navigator.onLine && authUser && profileCacheRef.current?.userId === authUser.id && profileCacheRef.current.profile) {
+        logger.warn('UserContext - Using cached profile after exception while offline');
+        setUser(profileCacheRef.current.profile);
+        setLoading(false);
+        fetchingRef.current = false;
+        return;
+      }
       if (retryCount < 2) {
         fetchingRef.current = false;
         setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
@@ -188,6 +226,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!error) {
       const updatedUser = { ...user, ...updates };
       profileCacheRef.current = { profile: updatedUser, userId: user.id };
+      writeCachedProfile(profileCacheRef.current);
       setUser(updatedUser);
     }
   };
@@ -195,6 +234,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       profileCacheRef.current = null;
+      writeCachedProfile(null);
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -202,6 +242,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       logger.error('UserContext - Logout error:', error);
       profileCacheRef.current = null;
+      writeCachedProfile(null);
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -212,7 +253,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (authLoading) return;
 
     if (!authUser) {
+      if (!navigator.onLine && profileCacheRef.current?.profile?.role === 'operator') {
+        setUser(profileCacheRef.current.profile);
+        setLoading(false);
+        fetchingRef.current = false;
+        return;
+      }
       profileCacheRef.current = null;
+      writeCachedProfile(null);
       attemptedPendingRepairRef.current = null;
       setUser(null);
       setLoading(false);

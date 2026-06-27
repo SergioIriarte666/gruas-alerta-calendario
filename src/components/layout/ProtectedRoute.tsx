@@ -21,6 +21,17 @@ const LoadingScreen = ({ message }: { message: string }) => (
   </div>
 );
 
+const getOfflineCachedRole = (): string | null => {
+  try {
+    const raw = localStorage.getItem('offline-user-profile-cache-v1');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { profile?: { role?: string } };
+    return parsed.profile?.role || null;
+  } catch {
+    return null;
+  }
+};
+
 const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
@@ -68,6 +79,10 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   if (!authUser) {
+    const cachedRole = !navigator.onLine ? getOfflineCachedRole() : null;
+    if (!navigator.onLine && cachedRole && effectiveAllowedRolesIncludes(allowedRoles, requireRole, cachedRole)) {
+      return <>{children}</>;
+    }
     return <Navigate to="/auth" replace />;
   }
 
@@ -126,6 +141,15 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   return <>{children}</>;
+};
+
+const effectiveAllowedRolesIncludes = (
+  allowedRoles: string[] | undefined,
+  requireRole: string | undefined,
+  role: string,
+) => {
+  const effectiveAllowedRoles = allowedRoles || (requireRole ? [requireRole] : []);
+  return effectiveAllowedRoles.includes(role);
 };
 
 export default ProtectedRoute;

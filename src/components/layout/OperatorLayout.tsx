@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { RefreshCw, LogOut, Truck } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
@@ -9,13 +9,13 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OperatorThemeForcer } from '@/components/operator/OperatorThemeForcer';
 import { OperatorBottomNav } from '@/components/operator/OperatorBottomNav';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOperatorOfflineSync } from '@/hooks/useOperatorOfflineSync';
 
 export const OperatorLayout = () => {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  useOperatorOfflineSync();
 
   const { data: companyData } = useQuery({
     queryKey: ['company-data-operator'],

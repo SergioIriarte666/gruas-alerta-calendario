@@ -47,7 +47,7 @@ El producto tiene 3 superficies principales:
 | Categorias de proveedores | Estable | CRUD en Settings, independientes de cost_categories. |
 | Avisos preventivos "Folio detectado" | Operativo | En CostForm, PaymentForm y SmartPaymentForm. |
 | Consolidacion de proveedores duplicados | Aplicado | Migracion SQL + backfill de datos existentes. |
-| PWA, push y offline | Operativo con consolidacion pendiente | Capacidades reales, falta endurecer conflictos y sincronizacion. |
+| PWA, push y offline | Operativo con alcance acotado validado | Flujo operador offline validado para inspeccion inicial y sincronizacion posterior; backoffice offline sigue fuera de foco. |
 | Integraciones externas | Operativas con dependencia | Email, push, OCR, mapas, peajes, WhatsApp via Edge Functions. |
 | WhatsApp | Operativo | Integracion via Meta WhatsApp Cloud API + Supabase Edge Functions. |
 | Multi-tenant | Fuera de alcance actual | Implementacion single-tenant. |
@@ -414,6 +414,9 @@ flowchart LR
 
 - dashboard, inspeccion de servicio asignado
 - fotos, items, firma y generacion de evidencia
+- soporte offline validado para inspeccion inicial en terreno
+- guardado local de formulario, fotos y firmas con sincronizacion al reconectar
+- la fase de entrega puede depender de que la inspeccion inicial ya este sincronizada en base de datos
 
 ### 5.22 Portal cliente
 
@@ -681,6 +684,14 @@ Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion v
 - almacenamiento offline via IndexedDB
 - colas de acciones offline con sincronizacion al reconectar
 - cache local de servicios y datos seleccionados
+- validacion manual realizada el 27 de junio de 2026:
+  - app operador puede precargarse online y continuar inspeccion inicial offline
+  - formulario, fotos y firmas quedan persistidos localmente
+  - la cola pendiente sincroniza al recuperar conectividad
+  - la recuperacion del flujo de entrega queda habilitada despues de sincronizar
+- alcance offline prioritario vigente:
+  - obligatorio: operaciones en terreno del operador
+  - no prioritario por ahora: modulos administrativos de escritorio
 
 ---
 
@@ -755,7 +766,7 @@ Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion v
 
 ### Prioridad alta
 
-1. **Endurecer producto offline/PWA** — conflictos, reintentos, sync states visibles
+1. **Endurecer producto offline/PWA** — mejorar reapertura offline en origen estable, reintentos y estados de sync mas visibles
 2. **Normalizacion masiva de producto/servicio en historicos** usando `default_product_service` del proveedor
 3. **Separar claramente entornos** (preview vs dev vs prod)
 
@@ -778,7 +789,7 @@ Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion v
 | Riesgo | Impacto | Mitigacion |
 |---|---|---|
 | Dependencia de Edge Functions e integraciones externas | Medio/Alto | Fallbacks operativos y monitoreo |
-| Ambiguedad del alcance offline | Alto | Matriz oficial de soporte offline por modulo |
+| Ambiguedad del alcance offline | Medio | Alcance operador ya validado; mantener matriz oficial de soporte offline por modulo |
 | Complejidad de sincronizacion costos↔inventario↔proveedores | Alto | Flujos conservadores, trazabilidad transaccional |
 | Duplicados entre modulos (costos vs compras) | Medio | Deteccion implementada, decision manual del usuario |
 | Crecimiento del frontend | Medio | Code splitting y revision de bundles |
@@ -794,7 +805,7 @@ Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion v
 | Inventario | `inventory_items`, `stock`, `movements` | compras, costos, gruas | quiebres de trazabilidad |
 | Proveedores | `inventory_suppliers`, `supplier_categories` | XML, costos, inventario | categorias inconsistentes, duplicados |
 | Cuentas por pagar | acreedores, deudas, cuotas | reportes financieros | divergencia deuda ↔ caja real |
-| Operador / inspecciones | servicios, inspecciones, adjuntos | PWA, PDF, email | perdida de evidencia offline |
+| Operador / inspecciones | servicios, inspecciones, adjuntos | PWA, PDF, email | sincronizacion diferida entre inspeccion inicial y entrega |
 | Portal cliente | servicios, facturas del cliente | auth, permisos | exposicion indebida de datos |
 | Historico financiero | `supplier_invoices`, importaciones | SAP, DTE SII | duplicados no detectados |
 | Recovery Center | `recovery_audit_entries`, `recovery_settings` | modulos auditables | reversion indebida |

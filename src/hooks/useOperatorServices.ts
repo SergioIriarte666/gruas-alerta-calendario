@@ -6,6 +6,7 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
 import { operatorServicesKeys } from './operatorServicesQueryKeys';
+import { cacheOperatorServices, getCachedOperatorServices } from '@/utils/operatorOffline';
 
 const logger = createLogger('useOperatorServices');
 
@@ -177,11 +178,32 @@ export const useOperatorServices = (userId?: string) => {
   return useQuery<Service[], Error>({
     // NOTE: include a minor version tag to avoid stale selected-cache issues when the transformer changes.
     queryKey: operatorServicesKeys.byUser(userId),
-    queryFn: () => fetchOperatorServices(userId!),
+    queryFn: async () => {
+      try {
+        return await fetchOperatorServices(userId!);
+      } catch (error) {
+        if (userId && !navigator.onLine) {
+          const cached = await getCachedOperatorServices(userId);
+          if (cached.length > 0) {
+            logger.warn('Using cached operator services while offline');
+            return cached;
+          }
+        }
+        throw error;
+      }
+    },
     enabled: !!userId,
     select: (data) => {
       try {
-        return transformRawServiceData(data).filter(Boolean) as Service[];
+        const services = data.length > 0 && 'serviceDate' in (data[0] as Record<string, unknown>)
+          ? data as Service[]
+          : transformRawServiceData(data as any[]).filter(Boolean) as Service[];
+        if (userId && navigator.onLine) {
+          cacheOperatorServices(userId, services).catch((error) => {
+            logger.warn('Could not cache operator services', error);
+          });
+        }
+        return services;
       } catch (error) {
         logger.error('Error transforming operator services:', error);
         return [];
