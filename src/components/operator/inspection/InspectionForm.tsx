@@ -47,6 +47,7 @@ import { createLogger } from '@/lib/logger';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { useUser } from '@/contexts/UserContext';
 import { getPendingInspectionByServicePhase } from '@/utils/operatorOffline';
+import { isInSituService } from '@/utils/inspectionPhase';
 
 const logger = createLogger('InspectionForm');
 
@@ -320,6 +321,7 @@ export const InspectionForm = ({
 
   const requiresDetail  = service.serviceType?.requiresDetail  ?? true;
   const requiresPhotoSet = service.serviceType?.requiresPhotoSet ?? true;
+  const isInSitu = isInSituService(service);
 
   const handleViewExisting = async () => {
     if (!existingConflict) return;
@@ -373,7 +375,7 @@ export const InspectionForm = ({
       hasReceptionSignature: !!values.vehicleReceptionSignature
     });
 
-    const validationErrors = validateFormBeforeSubmit(values, currentPhase, { requiresDetail, requiresPhotoSet });
+    const validationErrors = validateFormBeforeSubmit(values, currentPhase, { requiresDetail, requiresPhotoSet, isInSitu });
     if (validationErrors.length > 0) {
       validationErrors.forEach(error => toast({ type: 'error', title: error }));
       return;
@@ -465,6 +467,7 @@ export const InspectionForm = ({
           serviceId={serviceId}
           requiresDetail={requiresDetail}
           requiresPhotoSet={requiresPhotoSet}
+          isInSitu={isInSitu}
           clientName={service.client?.name || ''}
           operatorName={service.operator?.name || ''}
         />
@@ -476,10 +479,10 @@ export const InspectionForm = ({
               disabled={isProcessing || isUpdatingStatus || isGeneratingPDF}
             >
               <Download className="size-4 mr-2" />
-              {isGeneratingPDF ? 'Generando PDF...' : 
-               isProcessing ? 'Procesando...' : 
-               isUpdatingStatus ? 'Iniciando Servicio...' : 
-               'Completar Inspección Inicial'}
+              {isGeneratingPDF ? 'Generando PDF...' :
+               isProcessing ? 'Procesando...' :
+               isUpdatingStatus ? 'Iniciando Servicio...' :
+               isInSitu ? 'Completar Servicio' : 'Completar Inspección Inicial'}
             </Button>
           )}
           

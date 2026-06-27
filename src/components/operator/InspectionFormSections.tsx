@@ -20,6 +20,7 @@ interface InspectionFormSectionsProps {
   serviceId: string;
   requiresDetail?: boolean;
   requiresPhotoSet?: boolean;
+  isInSitu?: boolean;
   clientName?: string;
   operatorName?: string;
 }
@@ -31,6 +32,7 @@ export const InspectionFormSections = ({
   serviceId,
   requiresDetail = true,
   requiresPhotoSet = true,
+  isInSitu = false,
   clientName = '',
   operatorName = '',
 }: InspectionFormSectionsProps) => {
@@ -204,8 +206,10 @@ export const InspectionFormSections = ({
 
       {requiresDetail && <VehicleEquipmentChecklist form={form} />}
 
-      {/* Sección de Set Fotográfico */}
-      {(phase === 'final' || requiresPhotoSet) && (
+      {/* Sección de Set Fotográfico: visible siempre en final y cuando
+          requiresPhotoSet=true. En servicios in-situ también se muestra,
+          pero como opcional. */}
+      {(phase === 'final' || requiresPhotoSet || isInSitu) && (
         <FormField
           control={form.control}
           name="photographicSet"
@@ -220,6 +224,7 @@ export const InspectionFormSections = ({
                 onPhotosChange={field.onChange}
                 serviceId={serviceId}
                 phase={phase}
+                isOptional={isInSitu && phase === 'initial'}
               />
               <FormMessage />
             </FormItem>

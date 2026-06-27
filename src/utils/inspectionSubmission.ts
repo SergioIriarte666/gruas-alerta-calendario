@@ -1,6 +1,7 @@
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 import type { InspectionFormValues } from '@/schemas/inspectionSchema';
 import type { Service } from '@/types';
+import { isInSituService } from '@/utils/inspectionPhase';
 import {
   clearFinalInspectionFields,
   deleteInspectionRow,
@@ -120,10 +121,13 @@ export const submitInspectionPipeline = async ({
   }
 
   try {
-    await updateServiceStatusDirect(
-      serviceId,
-      phase === 'initial' ? 'inspection_completed' : 'completed',
-    );
+    // Servicios in-situ: una sola fase, pasan directo a 'completed'
+    // en lugar de quedar colgados en 'inspection_completed'.
+    const targetStatus: 'inspection_completed' | 'completed' =
+      phase === 'final' || isInSituService(service)
+        ? 'completed'
+        : 'inspection_completed';
+    await updateServiceStatusDirect(serviceId, targetStatus);
   } catch (statusError) {
     if (persistedInspection) {
       if (persistedInspection.wasInserted || phase === 'initial') {

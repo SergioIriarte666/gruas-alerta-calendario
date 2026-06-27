@@ -10,6 +10,7 @@ import { fetchCompanyData } from './pdf/companyDataFetcher';
 import { validateInspectionData } from './pdf/pdfValidation';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
+import { isInSituService } from '@/utils/inspectionPhase';
 import { createLogger } from "@/lib/logger";
 
 
@@ -25,6 +26,7 @@ export const generateInspectionPDF = async (data: {
 
     // Derivar flag de detalle desde el tipo de servicio (default true)
     const requiresDetail = data.service?.serviceType?.requiresDetail ?? true;
+    const isInSitu = isInSituService(data.service);
 
     // Validar datos de entrada respetando el flag del tipo de servicio
     const validationErrors = validateInspectionData(data, isFinal, { requiresDetail });
@@ -51,7 +53,8 @@ export const generateInspectionPDF = async (data: {
         photographicSet: validPhotos
       },
       companyData,
-      isFinal
+      isFinal,
+      isInSitu
     };
 
     logger.debug('Generando PDF con datos completos:', {

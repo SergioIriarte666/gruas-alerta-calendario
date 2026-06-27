@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { submitInspectionPipeline } from '@/utils/inspectionSubmission';
 import { queuePendingInspection, updateCachedOperatorService } from '@/utils/operatorOffline';
+import { isInSituService } from '@/utils/inspectionPhase';
 import type { Service } from '@/types';
 
 const logger = createLogger('useServiceInspection');
@@ -163,7 +164,10 @@ export const useServiceInspection = () => {
 
       const successLabel = phase === 'initial' ? 'Inspección inicial' : 'Servicio';
       if (queuedOffline) {
-        const optimisticStatus = phase === 'initial' ? 'inspection_completed' : 'completed';
+        const optimisticStatus: 'inspection_completed' | 'completed' =
+          phase === 'final' || isInSituService(service)
+            ? 'completed'
+            : 'inspection_completed';
         const patch = { status: optimisticStatus } as Partial<Service>;
         queryClient.setQueryData(operatorServiceKeys.detail(serviceId), (current: Service | null | undefined) =>
           current ? { ...current, ...patch } : current,

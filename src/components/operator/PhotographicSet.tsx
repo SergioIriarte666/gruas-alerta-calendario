@@ -24,6 +24,7 @@ interface PhotographicSetProps {
   onPhotosChange: (photos: PhotographicSetPhoto[]) => void;
   serviceId: string;
   phase?: 'initial' | 'final';
+  isOptional?: boolean;
 }
 
 const PHOTO_CATEGORIES = [
@@ -35,7 +36,7 @@ const PHOTO_CATEGORIES = [
   { id: 'motor', label: 'Motor', shortLabel: 'Motor', icon: '⚙️' }
 ] as const;
 
-export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'initial' }: PhotographicSetProps) => {
+export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'initial', isOptional = false }: PhotographicSetProps) => {
   const [loadedPhotoData, setLoadedPhotoData] = useState<Record<string, PhotoData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('izquierdo');
@@ -154,9 +155,20 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
     <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
-          <span>{phase === 'final' ? 'Foto de entrega' : 'Set Fotográfico'}</span>
+          <span>
+            {isOptional
+              ? 'Fotografías del Servicio (opcional)'
+              : phase === 'final'
+                ? 'Foto de entrega'
+                : 'Set Fotográfico'}
+          </span>
           <Badge variant="secondary">
-            {photos.length} foto(s){phase === 'initial' ? ` • ${getCategoryCount()}/6 categorías` : ' • mínimo 1'}
+            {photos.length} foto(s)
+            {isOptional
+              ? ' • opcional'
+              : phase === 'initial'
+                ? ` • ${getCategoryCount()}/6 categorías`
+                : ' • mínimo 1'}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -276,7 +288,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
           })}
         </Tabs>
 
-        {photos.length === 0 && (
+        {photos.length === 0 && !isOptional && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-600 text-sm">
               ⚠️ Debes tomar al menos 1 fotografía para completar el set fotográfico

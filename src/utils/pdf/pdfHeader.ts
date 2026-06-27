@@ -41,6 +41,7 @@ const getImageDimensions = (base64: string): Promise<{ width: number; height: nu
 
 export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
   const isFinal = data.isFinal ?? false;
+  const isInSitu = data.isInSitu ?? false;
 
   // ── Banda superior de color ───────────────────────────────────────────────
   doc.setFillColor(...C.green);
@@ -73,7 +74,11 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   );
 
   // ── Tipo de documento (esquina derecha) ───────────────────────────────────
-  const docLabel = isFinal ? 'INFORME FINAL DE SERVICIO' : 'REPORTE DE INSPECCIÓN PRE-SERVICIO';
+  const docLabel = isInSitu
+    ? 'ACTA DE SERVICIO'
+    : isFinal
+      ? 'INFORME FINAL DE SERVICIO'
+      : 'REPORTE DE INSPECCIÓN PRE-SERVICIO';
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.white);
@@ -97,8 +102,8 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   doc.setFont('helvetica', 'normal');
   doc.text(`Generado: ${now}`, PAGE_W / 2, y + 6.5, { align: 'center' });
 
-  const badgeLabel = isFinal ? 'DOCUMENTO FINAL' : 'PRE-SERVICIO';
-  const badgeColor: [number, number, number] = isFinal ? [0, 130, 100] : [180, 100, 0];
+  const badgeLabel = isInSitu ? 'SERVICIO COMPLETADO' : isFinal ? 'DOCUMENTO FINAL' : 'PRE-SERVICIO';
+  const badgeColor: [number, number, number] = isInSitu ? [0, 130, 100] : isFinal ? [0, 130, 100] : [180, 100, 0];
   doc.setFillColor(...badgeColor);
   doc.roundedRect(PAGE_W - MARGIN - 38, y + 1.5, 36, 7, 2, 2, 'F');
   doc.setTextColor(...C.white);
