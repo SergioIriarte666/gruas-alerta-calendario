@@ -23,8 +23,11 @@ export const generateInspectionPDF = async (data: {
   try {
     logger.debug('Iniciando generación de PDF con datos:', data);
 
-    // Validar datos de entrada
-    const validationErrors = validateInspectionData(data, isFinal);
+    // Derivar flag de detalle desde el tipo de servicio (default true)
+    const requiresDetail = data.service?.serviceType?.requiresDetail ?? true;
+
+    // Validar datos de entrada respetando el flag del tipo de servicio
+    const validationErrors = validateInspectionData(data, isFinal, { requiresDetail });
     if (validationErrors.length > 0) {
       throw new Error(`Errores de validación: ${validationErrors.join(', ')}`);
     }
@@ -66,9 +69,13 @@ export const generateInspectionPDF = async (data: {
     yPosition = addServiceInfo(doc, pdfData, yPosition);
     logger.debug('Información de servicio agregada, yPosition:', yPosition);
 
-    // Add equipment checklist
-    yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
-    logger.debug('Checklist agregado, yPosition:', yPosition);
+    // Add equipment checklist solo si el servicio requiere detalle
+    if (requiresDetail) {
+      yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
+      logger.debug('Checklist agregado, yPosition:', yPosition);
+    } else {
+      logger.debug('Checklist omitido: servicio no requiere detalle');
+    }
 
     // Add photographic set section
     try {
