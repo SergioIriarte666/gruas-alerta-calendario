@@ -136,10 +136,10 @@ export const useCloseExternalService = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No autenticado');
 
-      // 1. Insert closure
+      // 1. Upsert closure (permite re-intentar si un cierre anterior falló parcialmente)
       const { data: closureRow, error: closureError } = await supabase
         .from('service_external_closures')
-        .insert({
+        .upsert({
           service_id: input.serviceId,
           admin_user_id: user.id,
           admin_name: input.adminName,
@@ -148,7 +148,7 @@ export const useCloseExternalService = () => {
           third_party_provider_rut: input.thirdPartyProviderRut ?? null,
           third_party_service_summary: input.thirdPartyServiceSummary,
           closure_notes: input.closureNotes ?? null,
-        })
+        }, { onConflict: 'service_id' })
         .select('*')
         .single();
       if (closureError) throw closureError;
