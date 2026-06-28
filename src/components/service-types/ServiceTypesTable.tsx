@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceTypeConfig } from '@/types/serviceTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { getServiceCategoryLabel, getServiceCategoryBadgeClasses } from '@/utils/serviceCategoryLabels';
 import {
   Table,
   TableBody,
@@ -69,9 +71,17 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{serviceType.description}</p>
                   )}
                 </div>
-                <Badge variant={serviceType.isActive ? "default" : "secondary"} className="ml-2 flex-shrink-0 text-xs">
-                  {serviceType.isActive ? 'Activo' : 'Inactivo'}
-                </Badge>
+                <div className="flex flex-col gap-1 items-end ml-2 flex-shrink-0">
+                  <Badge variant={serviceType.isActive ? "default" : "secondary"} className="text-xs">
+                    {serviceType.isActive ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn('text-xs font-normal', getServiceCategoryBadgeClasses(serviceType.serviceCategory))}
+                  >
+                    {getServiceCategoryLabel(serviceType.serviceCategory)}
+                  </Badge>
+                </div>
               </div>
               
               <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
@@ -110,6 +120,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
         <TableHeader>
           <TableRow className="border-border hover:bg-muted/50">
             <TableHead className="text-foreground">Nombre</TableHead>
+            <TableHead className="text-foreground">Categoría</TableHead>
             <TableHead className="text-foreground">Descripción</TableHead>
             <TableHead className="text-foreground">Precio Base</TableHead>
             <TableHead className="text-foreground">Estado</TableHead>
@@ -123,6 +134,14 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
             <TableRow key={serviceType.id} className="border-border hover:bg-muted/50">
               <TableCell className="text-foreground font-medium">
                 {serviceType.name}
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={cn('text-xs font-normal', getServiceCategoryBadgeClasses(serviceType.serviceCategory))}
+                >
+                  {getServiceCategoryLabel(serviceType.serviceCategory)}
+                </Badge>
               </TableCell>
               <TableCell className="text-foreground">
                 {serviceType.description || '-'}

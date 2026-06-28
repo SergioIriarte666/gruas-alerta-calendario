@@ -15,6 +15,7 @@ interface CreateServiceTypeData {
   is_active?: boolean;
   vehicle_info_optional?: boolean;
   is_outsourced?: boolean;
+  service_category?: 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente';
   purchase_order_required?: boolean;
   origin_required?: boolean;
   destination_required?: boolean;
@@ -33,6 +34,7 @@ const SERVICE_TYPE_SELECT = `
   is_active,
   vehicle_info_optional,
   is_outsourced,
+  service_category,
   purchase_order_required,
   origin_required,
   destination_required,
@@ -54,6 +56,7 @@ const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData =
     is_active: data.isActive,
     vehicle_info_optional: data.vehicleInfoOptional,
     is_outsourced: data.isOutsourced,
+    service_category: data.serviceCategory,
     purchase_order_required: data.purchaseOrderRequired,
     origin_required: data.originRequired,
     destination_required: data.destinationRequired,
@@ -89,6 +92,7 @@ export const useServiceTypesManagement = () => {
         isActive: item.is_active,
         vehicleInfoOptional: item.vehicle_info_optional || false,
         isOutsourced: item.is_outsourced || false,
+        serviceCategory: (item.service_category as 'in_situ' | 'traslado' | 'externo_tercero' | 'excedente') || 'traslado',
         purchaseOrderRequired: item.purchase_order_required || false,
         originRequired: item.origin_required !== false,
         destinationRequired: item.destination_required !== false,

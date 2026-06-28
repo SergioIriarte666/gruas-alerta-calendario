@@ -1,3 +1,4 @@
+import type { ServiceCategory } from '@/utils/serviceCategoryLabels';
 
 export interface ServiceTypeRequirements {
   purchaseOrderRequired: boolean;
@@ -18,6 +19,7 @@ export interface ServiceTypeConfig extends ServiceTypeRequirements {
   isActive: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
+  serviceCategory: ServiceCategory;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +31,7 @@ export interface ServiceTypeFormData {
   isActive: boolean;
   vehicleInfoOptional: boolean;
   isOutsourced: boolean;
+  serviceCategory: ServiceCategory;
   purchaseOrderRequired: boolean;
   originRequired: boolean;
   destinationRequired: boolean;

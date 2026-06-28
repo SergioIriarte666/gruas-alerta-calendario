@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { getServiceCategoryLabel, getServiceCategoryBadgeClasses } from "@/utils/serviceCategoryLabels";
 
 interface ServiceTypeDetailsModalProps {
   serviceType: ServiceTypeConfig | null;
@@ -101,11 +103,21 @@ export function ServiceTypeDetailsModal({
                     </div>
                   )}
 
-                  <div>
+                  <div className="mb-3">
                     <label className="text-sm font-medium text-muted-foreground">Precio Base</label>
                     <p className="mt-1 text-lg font-semibold text-primary">
                       {formatPrice(serviceType.basePrice)}
                     </p>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-muted-foreground">Categoría operacional</span>
+                    <Badge
+                      variant="outline"
+                      className={cn('text-xs font-normal', getServiceCategoryBadgeClasses(serviceType.serviceCategory))}
+                    >
+                      {getServiceCategoryLabel(serviceType.serviceCategory)}
+                    </Badge>
                   </div>
                 </div>
 

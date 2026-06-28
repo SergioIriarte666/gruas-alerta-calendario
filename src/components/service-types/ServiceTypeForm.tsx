@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SERVICE_CATEGORY_OPTIONS, type ServiceCategory } from '@/utils/serviceCategoryLabels';
 
 interface ServiceTypeFormProps {
   serviceType?: ServiceTypeConfig | null;
@@ -22,6 +24,7 @@ const defaultFormData: ServiceTypeFormData = {
   isActive: true,
   vehicleInfoOptional: false,
   isOutsourced: false,
+  serviceCategory: 'traslado',
   purchaseOrderRequired: false,
   originRequired: true,
   destinationRequired: true,
@@ -45,6 +48,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         isActive: serviceType.isActive,
         vehicleInfoOptional: serviceType.vehicleInfoOptional,
         isOutsourced: serviceType.isOutsourced || false,
+        serviceCategory: serviceType.serviceCategory || 'traslado',
         purchaseOrderRequired: serviceType.purchaseOrderRequired,
         originRequired: serviceType.originRequired,
         destinationRequired: serviceType.destinationRequired,
@@ -157,6 +161,41 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                     Indica que este tipo de servicio es ejecutado por un proveedor externo
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-foreground text-lg">Categoría Operacional</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-sm font-medium">
+                  Categoría del servicio
+                </Label>
+                <Select
+                  value={formData.serviceCategory}
+                  onValueChange={(value: ServiceCategory) => updateField('serviceCategory', value)}
+                >
+                  <SelectTrigger className="focus:border-primary">
+                    <SelectValue placeholder="Selecciona una categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERVICE_CATEGORY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{opt.label}</span>
+                          <span className="text-xs text-muted-foreground">{opt.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Define el flujo de inspección del servicio. Cambia el comportamiento del portal
+                  operador y del PDF de inspección.
+                </p>
               </div>
             </CardContent>
           </Card>
