@@ -77,6 +77,7 @@ export const Sidebar = ({
     '/backup': 'backup',
     '/settings': 'settings',
     '/admin/inspecciones/regenerar': 'settings',
+    '/admin/peajes': 'settings',
     '/trip-calculator': 'trip-calculator',
   };
 
@@ -165,6 +166,7 @@ export const Sidebar = ({
       items: [
         { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: false },
         { name: 'Tarifas de Servicio', href: '/service-rates', icon: DollarSign, adminOnly: false },
+        { name: 'Tarifas de Peajes', href: '/admin/peajes', icon: DollarSign, adminOnly: true },
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
         { name: 'Respaldos', href: '/settings#respaldos', icon: Database, adminOnly: true },
