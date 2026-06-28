@@ -62,6 +62,17 @@ const ExternalServices = () => {
             <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
               Cargando servicios...
             </div>
+          ) : query.isError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+              <p className="font-medium">Error al cargar servicios</p>
+              <p className="mt-1">{(query.error as Error)?.message || 'Error desconocido'}</p>
+              <button
+                className="mt-3 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+                onClick={() => query.refetch()}
+              >
+                Reintentar
+              </button>
+            </div>
           ) : (query.data?.length ?? 0) === 0 ? (
             <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
               No hay servicios externos pendientes de cierre.
@@ -77,6 +88,17 @@ const ExternalServices = () => {
           {query.isLoading ? (
             <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
               Cargando servicios...
+            </div>
+          ) : query.isError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+              <p className="font-medium">Error al cargar servicios</p>
+              <p className="mt-1">{(query.error as Error)?.message || 'Error desconocido'}</p>
+              <button
+                className="mt-3 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+                onClick={() => query.refetch()}
+              >
+                Reintentar
+              </button>
             </div>
           ) : (query.data?.length ?? 0) === 0 ? (
             <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">

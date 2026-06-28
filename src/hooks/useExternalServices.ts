@@ -38,7 +38,7 @@ const SELECT = `
   outsourced_provider_id,
   outsourced_cost,
   created_at,
-  service_types!inner(name, service_category),
+  service_types(name, service_category),
   clients(name),
   service_external_closures(id, closed_at)
 `;
@@ -47,10 +47,24 @@ export const useExternalServices = (filter: ExternalServiceStatus = 'pending') =
   return useQuery({
     queryKey: ['external-services', filter],
     queryFn: async (): Promise<ExternalServiceListItem[]> => {
+      // Obtener IDs de tipos de servicio 'externo_tercero'
+      const { data: extTypes, error: typeError } = await supabase
+        .from('service_types')
+        .select('id')
+        .eq('service_category', 'externo_tercero');
+
+      if (typeError) {
+        logger.error('Error loading external service types:', typeError);
+        throw new Error('Error al cargar tipos de servicios externos');
+      }
+
+      const extTypeIds = (extTypes || []).map((t: any) => t.id);
+      if (extTypeIds.length === 0) return [];
+
       const { data, error } = await supabase
         .from('services')
         .select(SELECT)
-        .eq('service_types.service_category', 'externo_tercero')
+        .in('service_type_id', extTypeIds)
         .order('service_date', { ascending: false });
 
       if (error) {
