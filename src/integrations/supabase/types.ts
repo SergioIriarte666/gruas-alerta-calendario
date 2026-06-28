@@ -4356,6 +4356,13 @@ export type Database = {
             foreignKeyName: "route_tolls_toll_station_id_fkey"
             columns: ["toll_station_id"]
             isOneToOne: false
+            referencedRelation: "toll_rates_current"
+            referencedColumns: ["station_id"]
+          },
+          {
+            foreignKeyName: "route_tolls_toll_station_id_fkey"
+            columns: ["toll_station_id"]
+            isOneToOne: false
             referencedRelation: "toll_stations"
             referencedColumns: ["id"]
           },
@@ -5999,6 +6006,54 @@ export type Database = {
         }
         Relationships: []
       }
+      toll_concessions: {
+        Row: {
+          created_at: string
+          direction: string
+          id: string
+          is_active: boolean
+          km_end: number | null
+          km_start: number | null
+          name: string
+          notes: string | null
+          pdf_url: string | null
+          route: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          direction?: string
+          id?: string
+          is_active?: boolean
+          km_end?: number | null
+          km_start?: number | null
+          name: string
+          notes?: string | null
+          pdf_url?: string | null
+          route: string
+          updated_at?: string
+          valid_from: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          id?: string
+          is_active?: boolean
+          km_end?: number | null
+          km_start?: number | null
+          name?: string
+          notes?: string | null
+          pdf_url?: string | null
+          route?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       toll_rates: {
         Row: {
           created_at: string
@@ -6041,6 +6096,13 @@ export type Database = {
             foreignKeyName: "toll_rates_toll_station_id_fkey"
             columns: ["toll_station_id"]
             isOneToOne: false
+            referencedRelation: "toll_rates_current"
+            referencedColumns: ["station_id"]
+          },
+          {
+            foreignKeyName: "toll_rates_toll_station_id_fkey"
+            columns: ["toll_station_id"]
+            isOneToOne: false
             referencedRelation: "toll_stations"
             referencedColumns: ["id"]
           },
@@ -6048,42 +6110,72 @@ export type Database = {
       }
       toll_stations: {
         Row: {
+          concession_id: string | null
           created_at: string
+          direction_bound: string | null
           highway: string | null
           id: string
           is_active: boolean
           km_marker: number | null
+          latitude: number | null
           location: string
+          longitude: number | null
           name: string
           operator_company: string | null
           payment_methods: string[] | null
+          station_type: string
           updated_at: string
         }
         Insert: {
+          concession_id?: string | null
           created_at?: string
+          direction_bound?: string | null
           highway?: string | null
           id?: string
           is_active?: boolean
           km_marker?: number | null
+          latitude?: number | null
           location: string
+          longitude?: number | null
           name: string
           operator_company?: string | null
           payment_methods?: string[] | null
+          station_type?: string
           updated_at?: string
         }
         Update: {
+          concession_id?: string | null
           created_at?: string
+          direction_bound?: string | null
           highway?: string | null
           id?: string
           is_active?: boolean
           km_marker?: number | null
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           name?: string
           operator_company?: string | null
           payment_methods?: string[] | null
+          station_type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "toll_stations_concession_id_fkey"
+            columns: ["concession_id"]
+            isOneToOne: false
+            referencedRelation: "toll_concessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "toll_stations_concession_id_fkey"
+            columns: ["concession_id"]
+            isOneToOne: false
+            referencedRelation: "toll_rates_current"
+            referencedColumns: ["concession_id"]
+          },
+        ]
       }
       trip_estimates: {
         Row: {
@@ -6842,6 +6934,26 @@ export type Database = {
             referencedColumns: ["related_service_id_actual"]
           },
         ]
+      }
+      toll_rates_current: {
+        Row: {
+          concession_id: string | null
+          concession_name: string | null
+          concession_valid_from: string | null
+          concession_valid_until: string | null
+          highway: string | null
+          km_marker: number | null
+          rate_amount: number | null
+          rate_id: string | null
+          rate_valid_from: string | null
+          rate_valid_until: string | null
+          route: string | null
+          station_id: string | null
+          station_name: string | null
+          station_type: string | null
+          vehicle_category: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
