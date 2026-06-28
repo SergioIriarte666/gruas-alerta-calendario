@@ -235,13 +235,75 @@ export const getEvidenceSignedUrl = async (path: string, expiresIn = 3600): Prom
 
 /**
  * Descarga el Acta PDF del cierre externo y la abre en una nueva pestaña.
+ * Si el PDF no existe en storage, intenta regenerarlo desde los datos disponibles.
  */
 export const downloadExternalActa = async (pdfPath: string): Promise<void> => {
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(pdfPath, 300);
-  if (error || !data) throw new Error('No se pudo obtener el PDF');
+  if (error || !data) {
+    throw new Error(`No se pudo obtener el PDF: ${error?.message || 'archivo no encontrado'}`);
+  }
   window.open(data.signedUrl, '_blank');
+};
+
+/**
+ * Regenera el PDF del Acta y lo sube al storage.
+ * Útil cuando el cierre quedó registrado pero el PDF no se generó.
+ */
+export const regenerateActaPdf = async (serviceId: string): Promise<string> => {
+  const { data: closure, error: clErr } = await supabase
+    .from('service_external_closures')
+    .select('*')
+    .eq('service_id', serviceId)
+    .single();
+  if (clErr || !closure) throw new Error('No se encontró el cierre del servicio');
+
+  const { data: svc, error: svcErr } = await supabase
+    .from('services')
+    .select(`
+      folio, service_date, origin, destination,
+      vehicle_brand, vehicle_model, license_plate, outsourced_cost,
+      clients!services_client_id_fkey(name)
+    `)
+    .eq('id', serviceId)
+    .single();
+  if (svcErr || !svc) throw new Error('No se encontró el servicio');
+
+  const { data: evidenceRows } = await supabase
+    .from('service_external_evidence')
+    .select('*')
+    .eq('service_id', serviceId)
+    .order('uploaded_at', { ascending: false });
+
+  const pdfBlob = await generateExternalServiceActaPdf({
+    service: {
+      folio: (svc as any).folio,
+      serviceDate: (svc as any).service_date,
+      clientName: (svc as any).clients?.name ?? null,
+      vehicleBrand: (svc as any).vehicle_brand,
+      vehicleModel: (svc as any).vehicle_model,
+      licensePlate: (svc as any).license_plate,
+      origin: (svc as any).origin,
+      destination: (svc as any).destination,
+      outsourcedCost: (svc as any).outsourced_cost,
+    },
+    closure: mapClosureRow(closure),
+    evidences: (evidenceRows || []).map(mapEvidenceRow),
+  });
+
+  const pdfPath = `actas/${(svc as any).folio}.pdf`;
+  const { error: uploadErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true });
+  if (uploadErr) throw new Error(`Error al subir PDF: ${uploadErr.message}`);
+
+  await supabase
+    .from('service_external_closures')
+    .update({ pdf_path: pdfPath })
+    .eq('id', closure.id);
+
+  return pdfPath;
 };
 
 export interface SendActaEmailInput {

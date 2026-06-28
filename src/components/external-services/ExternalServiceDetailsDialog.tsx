@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Building2, Download, Mail } from 'lucide-react';
 import { EvidenceUploadCard } from './EvidenceUploadCard';
 import { SendExternalActaDialog } from './SendExternalActaDialog';
-import { useServiceClosure, downloadExternalActa } from '@/hooks/useExternalServiceClosure';
+import { useServiceClosure, downloadExternalActa, regenerateActaPdf } from '@/hooks/useExternalServiceClosure';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import type { ExternalServiceListItem } from '@/hooks/useExternalServices';
@@ -124,8 +124,23 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
                       variant="outline"
                       size="sm"
                       onClick={async () => {
-                        try { await downloadExternalActa(closure.pdfPath!); }
-                        catch (e: any) { toast.error('Error al descargar', { description: e.message }); }
+                        try {
+                          await downloadExternalActa(closure.pdfPath!);
+                        } catch (e: any) {
+                          // Si el archivo no existe, intentar regenerar
+                          if (e.message?.includes('no encontrado') || e.message?.includes('404')) {
+                            toast.info('PDF no encontrado, regenerando...');
+                            try {
+                              const newPath = await regenerateActaPdf(service.id);
+                              await downloadExternalActa(newPath);
+                              toast.success('Acta regenerada y descargada');
+                            } catch (re: any) {
+                              toast.error('Error al regenerar', { description: re.message });
+                            }
+                          } else {
+                            toast.error('Error al descargar', { description: e.message });
+                          }
+                        }
                       }}
                       className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800"
                     >
