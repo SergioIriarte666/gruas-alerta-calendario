@@ -44,14 +44,25 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
       ['Operador', data.service.operator?.name || 'N/A'],
     ];
 
-    const rightData = [
+    // En servicios in-situ (una sola fase, sin recogida/entrega) los campos
+    // de kilometraje, combustible, llaves y documentación no se solicitan
+    // en el formulario, por lo que mostrarlos en el PDF con valores fallback
+    // ("N/A", "No presentes", "Incompleta") es ruido. Se omiten.
+    const isInSitu = data.isInSitu ?? false;
+
+    const rightData: string[][] = [
       ['Vehículo', vehiculo],
       ['Patente', patente],
-      ['Kilometraje', data.inspection.kilometraje ? `${Number(data.inspection.kilometraje).toLocaleString('es-CL')} km` : 'N/A'],
-      ['Combustible', combustibleMap[data.inspection.combustible || ''] || data.inspection.combustible || 'N/A'],
-      ['Llaves', data.inspection.llaves === 'si' ? 'Presentes' : 'No presentes'],
-      ['Documentación', data.inspection.documentacion === 'si' ? 'Completa' : 'Incompleta'],
     ];
+
+    if (!isInSitu) {
+      rightData.push(
+        ['Kilometraje', data.inspection.kilometraje ? `${Number(data.inspection.kilometraje).toLocaleString('es-CL')} km` : 'N/A'],
+        ['Combustible', combustibleMap[data.inspection.combustible || ''] || data.inspection.combustible || 'N/A'],
+        ['Llaves', data.inspection.llaves === 'si' ? 'Presentes' : 'No presentes'],
+        ['Documentación', data.inspection.documentacion === 'si' ? 'Completa' : 'Incompleta'],
+      );
+    }
 
     const colW = (PAGE_W - MARGIN * 2 - 4) / 2;
 
