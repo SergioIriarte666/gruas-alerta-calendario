@@ -1,12 +1,188 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useInspectionEquipment, EquipmentItem } from '@/hooks/useInspectionEquipment';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ClipboardList, Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle, Pencil, Check, X } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { ClipboardList, Plus, Trash2, AlertTriangle, Pencil, Check, X, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableEquipmentRowProps {
+  item: EquipmentItem;
+  index: number;
+  isOnlyActive: boolean;
+  editingId: string | null;
+  editingName: string;
+  setEditingName: (name: string) => void;
+  onEditStart: (item: EquipmentItem) => void;
+  onEditSave: (id: string) => void;
+  onEditCancel: () => void;
+  onToggleActive: (item: EquipmentItem) => void;
+  onDelete: (id: string) => void;
+  isUpdating: boolean;
+  isReordering: boolean;
+}
+
+const SortableEquipmentRow = ({
+  item,
+  index,
+  isOnlyActive,
+  editingId,
+  editingName,
+  setEditingName,
+  onEditStart,
+  onEditSave,
+  onEditCancel,
+  onToggleActive,
+  onDelete,
+  isUpdating,
+  isReordering,
+}: SortableEquipmentRowProps) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
+        item.is_active
+          ? 'border-border bg-card hover:bg-muted/50'
+          : 'border-border/50 bg-muted/30 opacity-60'
+      } ${isDragging ? 'border-primary shadow-lg' : ''}`}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        disabled={isReordering}
+        className="touch-none cursor-grab rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-30"
+        aria-label={`Arrastrar ${item.name} para reordenar`}
+      >
+        <GripVertical className="size-4" />
+      </button>
+
+      <div className="min-w-0 flex-1">
+        {editingId === item.id ? (
+          <div className="flex items-center gap-1">
+            <Input
+              autoFocus
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onEditSave(item.id);
+                if (e.key === 'Escape') onEditCancel();
+              }}
+              className="h-7 bg-background text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => onEditSave(item.id)}
+              className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+            >
+              <Check className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onEditCancel}
+              className="rounded p-1 text-muted-foreground hover:bg-muted"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm font-medium text-foreground">{item.name}</span>
+        )}
+      </div>
+
+      <span className="w-6 text-center font-mono text-xs text-muted-foreground">{index + 1}</span>
+
+      {editingId !== item.id && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground hover:text-foreground"
+          onClick={() => onEditStart(item)}
+        >
+          <Pencil className="size-3.5" />
+        </Button>
+      )}
+
+      <div className="flex items-center gap-1.5">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
+          {item.is_active ? 'Activo' : 'Inactivo'}
+        </span>
+        <Switch
+          checked={item.is_active}
+          onCheckedChange={() => onToggleActive(item)}
+          disabled={isUpdating || isOnlyActive}
+        />
+      </div>
+
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar elemento</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Eliminar <strong>{item.name}</strong> del inventario? Esta acción no se puede deshacer.
+              Las inspecciones ya completadas no se ven afectadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onDelete(item.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
 
 export const InspectionEquipmentTab = () => {
   const { items, activeItems, isLoading, addItem, updateItem, deleteItem, reorderItems } = useInspectionEquipment();
@@ -43,17 +219,18 @@ export const InspectionEquipmentTab = () => {
     updateItem.mutate({ id: item.id, is_active: !item.is_active });
   };
 
-  const handleMoveUp = (index: number) => {
-    if (index === 0) return;
-    const reordered = [...items];
-    [reordered[index - 1], reordered[index]] = [reordered[index], reordered[index - 1]];
-    reorderItems.mutate(reordered);
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
-  const handleMoveDown = (index: number) => {
-    if (index === items.length - 1) return;
-    const reordered = [...items];
-    [reordered[index], reordered[index + 1]] = [reordered[index + 1], reordered[index]];
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(items, oldIndex, newIndex);
     reorderItems.mutate(reordered);
   };
 
@@ -124,132 +301,34 @@ export const InspectionEquipmentTab = () => {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Cargando inventario...</div>
           ) : (
-            <div className="space-y-1">
-              {items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors ${
-                    item.is_active
-                      ? 'border-border bg-card hover:bg-muted/50'
-                      : 'border-border/50 bg-muted/30 opacity-60'
-                  }`}
-                >
-                  {/* Botones de reordenamiento */}
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0 || reorderItems.isPending}
-                      className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                    >
-                      <ChevronUp className="size-3" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === items.length - 1 || reorderItems.isPending}
-                      className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                    >
-                      <ChevronDown className="size-3" />
-                    </button>
-                  </div>
-
-                  {/* Nombre con edición inline */}
-                  <div className="flex-1 min-w-0">
-                    {editingId === item.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          autoFocus
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleEditSave(item.id);
-                            if (e.key === 'Escape') setEditingId(null);
-                          }}
-                          className="h-7 bg-background text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleEditSave(item.id)}
-                          className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
-                        >
-                          <Check className="size-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(null)}
-                          className="rounded p-1 text-muted-foreground hover:bg-muted"
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-medium text-foreground">{item.name}</span>
-                    )}
-                  </div>
-
-                  {/* Número de orden */}
-                  <span className="text-xs text-muted-foreground w-6 text-center">{index + 1}</span>
-
-                  {/* Botón editar */}
-                  {editingId !== item.id && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 text-muted-foreground hover:text-foreground"
-                      onClick={() => handleEditStart(item)}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                  )}
-
-                  {/* Toggle activo/inactivo */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
-                      {item.is_active ? 'Activo' : 'Inactivo'}
-                    </span>
-                    <Switch
-                      checked={item.is_active}
-                      onCheckedChange={() => handleToggleActive(item)}
-                      disabled={updateItem.isPending}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {items.map((item, index) => (
+                    <SortableEquipmentRow
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      isOnlyActive={activeItems.length === 1 && item.is_active}
+                      editingId={editingId}
+                      editingName={editingName}
+                      setEditingName={setEditingName}
+                      onEditStart={handleEditStart}
+                      onEditSave={handleEditSave}
+                      onEditCancel={() => setEditingId(null)}
+                      onToggleActive={handleToggleActive}
+                      onDelete={(id) => deleteItem.mutate(id)}
+                      isUpdating={updateItem.isPending}
+                      isReordering={reorderItems.isPending}
                     />
-                  </div>
-
-                  {/* Eliminar */}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Eliminar elemento</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          ¿Eliminar <strong>{item.name}</strong> del inventario? Esta acción no se puede deshacer.
-                          Las inspecciones ya completadas no se ven afectadas.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteItem.mutate(item.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
