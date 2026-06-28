@@ -77,7 +77,6 @@ export const Sidebar = ({
     '/backup': 'backup',
     '/settings': 'settings',
     '/admin/inspecciones/regenerar': 'settings',
-    '/admin/peajes': 'finanzas',
     '/trip-calculator': 'trip-calculator',
   };
 
@@ -148,7 +147,6 @@ export const Sidebar = ({
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
         { name: 'Históricos', href: '/historical', icon: Briefcase, adminOnly: false },
         { name: 'Cálculo de Viajes', href: '/trip-calculator', icon: MapPin, adminOnly: false },
-        { name: 'Tarifas de Peajes', href: '/admin/peajes', icon: DollarSign, adminOnly: true },
       ]
     },
     {

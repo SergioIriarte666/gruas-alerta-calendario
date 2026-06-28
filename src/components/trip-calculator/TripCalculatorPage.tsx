@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calculator, History, Fuel, Settings2 } from 'lucide-react';
+import { Calculator, History, Fuel, Settings2, DollarSign } from 'lucide-react';
 import { TripCalculatorForm } from './TripCalculatorForm';
 import { TripEstimateHistory } from './TripEstimateHistory';
 import { FuelPricesManager } from './FuelPricesManager';
 import { ConsumptionRatesManager } from './ConsumptionRatesManager';
 import { SavedLocationsManager } from './SavedLocationsManager';
+import TollManagement from '@/pages/admin/TollManagement';
 
 export const TripCalculatorPage = () => {
   const [activeTab, setActiveTab] = useState('calculator');
@@ -24,7 +25,7 @@ export const TripCalculatorPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 md:w-auto md:inline-grid">
           <TabsTrigger value="calculator" className="gap-2">
             <Calculator className="size-4" />
             <span className="hidden md:inline">Calculadora</span>
@@ -40,6 +41,10 @@ export const TripCalculatorPage = () => {
           <TabsTrigger value="consumption" className="gap-2">
             <Settings2 className="size-4" />
             <span className="hidden md:inline">Consumos</span>
+          </TabsTrigger>
+          <TabsTrigger value="tolls" className="gap-2">
+            <DollarSign className="size-4" />
+            <span className="hidden md:inline">Peajes</span>
           </TabsTrigger>
         </TabsList>
 
@@ -57,6 +62,10 @@ export const TripCalculatorPage = () => {
 
         <TabsContent value="consumption" className="mt-6">
           <ConsumptionRatesManager />
+        </TabsContent>
+
+        <TabsContent value="tolls" className="mt-6">
+          <TollManagement />
         </TabsContent>
       </Tabs>
     </div>
