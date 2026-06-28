@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import { generateExternalServiceActaPdf } from '@/utils/pdf/externalServicePdfGenerator';
 import type {
   ExternalEvidence,
   ExternalClosure,
@@ -135,6 +136,7 @@ export const useCloseExternalService = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No autenticado');
 
+      // 1. Insert closure
       const { data: closureRow, error: closureError } = await supabase
         .from('service_external_closures')
         .insert({
@@ -151,18 +153,70 @@ export const useCloseExternalService = () => {
         .single();
       if (closureError) throw closureError;
 
+      // 2. Update service status
       const { error: serviceError } = await supabase
         .from('services')
         .update({ status: 'completed' })
         .eq('id', input.serviceId);
       if (serviceError) throw serviceError;
 
-      return mapClosureRow(closureRow);
+      // 3. Fetch datos para el PDF
+      const { data: svc, error: svcError } = await supabase
+        .from('services')
+        .select(`
+          folio, service_date, origin, destination,
+          vehicle_brand, vehicle_model, license_plate, outsourced_cost,
+          clients(name)
+        `)
+        .eq('id', input.serviceId)
+        .single();
+      if (svcError) throw svcError;
+
+      const { data: evidenceRows } = await supabase
+        .from('service_external_evidence')
+        .select('*')
+        .eq('service_id', input.serviceId)
+        .order('uploaded_at', { ascending: false });
+
+      // 4. Generar PDF
+      const closure = mapClosureRow(closureRow);
+      const evidences = (evidenceRows || []).map(mapEvidenceRow);
+      const pdfBlob = await generateExternalServiceActaPdf({
+        service: {
+          folio: (svc as any).folio,
+          serviceDate: (svc as any).service_date,
+          clientName: (svc as any).clients?.name ?? null,
+          vehicleBrand: (svc as any).vehicle_brand,
+          vehicleModel: (svc as any).vehicle_model,
+          licensePlate: (svc as any).license_plate,
+          origin: (svc as any).origin,
+          destination: (svc as any).destination,
+          outsourcedCost: (svc as any).outsourced_cost,
+        },
+        closure,
+        evidences,
+      });
+
+      // 5. Upload PDF
+      const pdfPath = `actas/${(svc as any).folio}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true });
+      if (uploadError) {
+        logger.error('Error subiendo Acta PDF:', uploadError);
+      } else {
+        await supabase
+          .from('service_external_closures')
+          .update({ pdf_path: pdfPath })
+          .eq('id', closure.id);
+      }
+
+      return { ...closure, pdfPath };
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['external-services'] });
       queryClient.invalidateQueries({ queryKey: ['external-closure', vars.serviceId] });
-      toast.success('Servicio externo cerrado correctamente');
+      toast.success('Servicio cerrado y Acta generada');
     },
     onError: (e: any) => {
       logger.error('Error cerrando servicio externo:', e);
@@ -177,4 +231,49 @@ export const getEvidenceSignedUrl = async (path: string, expiresIn = 3600): Prom
     .createSignedUrl(path, expiresIn);
   if (error) throw error;
   return data.signedUrl;
+};
+
+/**
+ * Descarga el Acta PDF del cierre externo y la abre en una nueva pestaña.
+ */
+export const downloadExternalActa = async (pdfPath: string): Promise<void> => {
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(pdfPath, 300);
+  if (error || !data) throw new Error('No se pudo obtener el PDF');
+  window.open(data.signedUrl, '_blank');
+};
+
+export interface SendActaEmailInput {
+  serviceId: string;
+  recipientEmail: string;
+  recipientName?: string;
+}
+
+export const useSendExternalActaEmail = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: SendActaEmailInput): Promise<void> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No autenticado');
+
+      const { data, error } = await supabase.functions.invoke('send-external-service-email', {
+        body: {
+          serviceId: input.serviceId,
+          recipientEmail: input.recipientEmail.trim(),
+          recipientName: input.recipientName?.trim() ?? null,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['external-closure', vars.serviceId] });
+      toast.success(`Acta enviada a ${vars.recipientEmail}`);
+    },
+    onError: (e: any) => {
+      logger.error('Error enviando Acta:', e);
+      toast.error('Error al enviar email', { description: e.message });
+    },
+  });
 };

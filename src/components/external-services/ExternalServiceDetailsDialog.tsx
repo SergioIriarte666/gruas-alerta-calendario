@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Building2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, Download, Mail } from 'lucide-react';
 import { EvidenceUploadCard } from './EvidenceUploadCard';
-import { useServiceClosure } from '@/hooks/useExternalServiceClosure';
+import { SendExternalActaDialog } from './SendExternalActaDialog';
+import { useServiceClosure, downloadExternalActa } from '@/hooks/useExternalServiceClosure';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
+import { toast } from 'sonner';
 import type { ExternalServiceListItem } from '@/hooks/useExternalServices';
 
 interface Props {
@@ -17,6 +21,7 @@ interface Props {
 
 export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Props) => {
   const { data: closure } = useServiceClosure(service?.id);
+  const [sendOpen, setSendOpen] = useState(false);
 
   if (!service) return null;
 
@@ -102,10 +107,60 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
               </Card>
             )}
 
+            {closure && closure.pdfPath && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Acta de Servicio Externo</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    El PDF del Acta ya está generado y disponible.
+                    {closure.emailSendCount > 0 && (
+                      <> Se ha enviado <strong>{closure.emailSendCount}</strong> vez(es) por email.</>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try { await downloadExternalActa(closure.pdfPath!); }
+                        catch (e: any) { toast.error('Error al descargar', { description: e.message }); }
+                      }}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800"
+                    >
+                      <Download className="size-4 mr-2" />
+                      Descargar Acta PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setSendOpen(true)}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Mail className="size-4 mr-2" />
+                      {closure.emailSendCount > 0 ? 'Reenviar por email' : 'Enviar por email'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <EvidenceUploadCard serviceId={service.id} readOnly />
           </div>
         </ScrollArea>
       </DialogContent>
+
+      {closure && (
+        <SendExternalActaDialog
+          serviceId={service.id}
+          folio={service.folio}
+          emailSentTo={closure.emailSentTo}
+          emailSentAt={closure.emailSentAt}
+          emailSendCount={closure.emailSendCount}
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+        />
+      )}
     </Dialog>
   );
 };
