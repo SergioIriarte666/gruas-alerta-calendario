@@ -49,13 +49,19 @@ const SERVICE_TYPE_SELECT = `
 
 // Función para transformar datos del frontend al formato de la DB
 const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData => {
+  // Auto-derivar isOutsourced desde serviceCategory: si el tipo es 'externo_tercero',
+  // el flag isOutsourced también debe quedar en true, ya que el código del módulo
+  // de servicios (EnhancedServiceForm, useServiceManager) lo usa para activar los
+  // campos de proveedor/costo subcontratado al crear un servicio.
+  const isOutsourced = data.serviceCategory === 'externo_tercero';
+
   return {
     name: data.name,
     description: data.description || undefined,
     base_price: data.basePrice || undefined,
     is_active: data.isActive,
     vehicle_info_optional: data.vehicleInfoOptional,
-    is_outsourced: data.isOutsourced,
+    is_outsourced: isOutsourced,
     service_category: data.serviceCategory,
     purchase_order_required: data.purchaseOrderRequired,
     origin_required: data.originRequired,

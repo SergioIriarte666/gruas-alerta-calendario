@@ -129,38 +129,21 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 <Label htmlFor="isActive" className="text-muted-foreground text-sm">Tipo de servicio activo</Label>
               </div>
 
-              <div className="flex items-center gap-x-3 py-2">
+              <div className="flex items-center justify-between gap-4 py-2">
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor="vehicleInfoOptional" className="text-foreground text-sm font-medium cursor-pointer">
+                    Información del vehículo opcional
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Activar para servicios donde los datos del vehículo (marca, modelo, patente) no son obligatorios.
+                    Ej: Trámites Administrativos, Carga de Combustible.
+                  </p>
+                </div>
                 <Switch
                   id="vehicleInfoOptional"
                   checked={formData.vehicleInfoOptional}
                   onCheckedChange={(checked) => updateField('vehicleInfoOptional', checked)}
                 />
-                <Label htmlFor="vehicleInfoOptional" className="text-muted-foreground text-sm">
-                  Información de vehículo opcional (campo legacy)
-                </Label>
-              </div>
-
-              <div className="flex items-center gap-x-3 py-2 bg-amber-500/10 rounded-lg px-3 border border-amber-500/20">
-                <Switch
-                  id="isOutsourced"
-                  checked={formData.isOutsourced}
-                  onCheckedChange={(checked) => {
-                    updateField('isOutsourced', checked);
-                    // Si es tercerizado, desactivar grúa y operador requeridos
-                    if (checked) {
-                      updateField('craneRequired', false);
-                      updateField('operatorRequired', false);
-                    }
-                  }}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="isOutsourced" className="text-foreground text-sm font-medium">
-                    Servicio Subcontratado (Tercero)
-                  </Label>
-                  <p className="text-muted-foreground text-xs">
-                    Indica que este tipo de servicio es ejecutado por un proveedor externo
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -197,6 +180,18 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                   operador y del PDF de inspección.
                 </p>
               </div>
+
+              {formData.serviceCategory === 'externo_tercero' && (
+                <div className="flex items-start gap-3 rounded-md border border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800 p-3 text-sm">
+                  <div className="text-purple-700 dark:text-purple-300">
+                    <p className="font-medium">Servicio ejecutado por proveedor externo</p>
+                    <p className="text-xs mt-1 opacity-90">
+                      Al crear servicios de este tipo se solicitarán automáticamente
+                      los datos del proveedor subcontratado y el costo asociado.
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

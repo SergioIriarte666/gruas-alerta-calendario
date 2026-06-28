@@ -6,6 +6,7 @@ import { ServiceTypeConfig } from '@/types/serviceTypes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { getServiceCategoryLabel, getServiceCategoryBadgeClasses } from '@/utils/serviceCategoryLabels';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -97,13 +98,28 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
               </div>
 
               <div className="flex gap-2 mt-3 pt-3 border-t">
-                <Button variant="ghost" size="sm" onClick={() => onView(serviceType)} className="flex-1 text-xs h-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onView(serviceType)}
+                  className="flex-1 text-xs h-8 text-blue-600 border-blue-200 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-950"
+                >
                   <Eye className="size-3.5 mr-1" /> Ver
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => onEdit(serviceType)} className="flex-1 text-xs h-8">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(serviceType)}
+                  className="flex-1 text-xs h-8 text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950"
+                >
                   <Edit className="size-3.5 mr-1" /> Editar
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => onDelete(serviceType)} className="text-destructive text-xs h-8 px-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDelete(serviceType)}
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs h-8 px-2"
+                >
                   <Trash2 className="size-3.5" />
                 </Button>
               </div>
@@ -169,17 +185,52 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex gap-2 justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => onView(serviceType)} className="text-secondary hover:text-secondary hover:bg-muted">
-                    <Eye className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onEdit(serviceType)} className="text-accent hover:text-accent hover:bg-muted">
-                    <Edit className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onDelete(serviceType)} className="text-destructive hover:text-destructive hover:bg-muted">
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+                <TooltipProvider delayDuration={300}>
+                  <div className="flex gap-1 justify-end">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onView(serviceType)}
+                          className="size-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950"
+                          aria-label="Ver detalles"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Ver detalles</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(serviceType)}
+                          className="size-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-950"
+                          aria-label="Editar"
+                        >
+                          <Edit className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Editar</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete(serviceType)}
+                          className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          aria-label="Eliminar"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Eliminar</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </TableCell>
             </TableRow>
           ))}
