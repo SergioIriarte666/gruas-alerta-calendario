@@ -166,7 +166,7 @@ export const useCloseExternalService = () => {
         .select(`
           folio, service_date, origin, destination,
           vehicle_brand, vehicle_model, license_plate, outsourced_cost,
-          clients(name)
+          clients!services_client_id_fkey(name)
         `)
         .eq('id', input.serviceId)
         .single();
