@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { supabase } from '@/integrations/supabase/client';
 import { formatBusinessDateLong } from '@/utils/timezoneUtils';
 import { EVIDENCE_TYPE_LABELS } from '@/types/externalServices';
 import type { ExternalClosure, ExternalEvidence } from '@/types/externalServices';
@@ -11,6 +12,12 @@ const GREEN: [number, number, number] = [0, 130, 100];
 const PURPLE: [number, number, number] = [120, 60, 180];
 const DARK: [number, number, number] = [20, 20, 20];
 const GRAY: [number, number, number] = [110, 110, 110];
+const BUCKET = 'external-evidence';
+
+const IMAGE_MIME_TYPES = [
+  'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+  'image/heic', 'image/heif',
+];
 
 interface ExternalActaInput {
   service: {
@@ -28,9 +35,44 @@ interface ExternalActaInput {
   evidences: ExternalEvidence[];
 }
 
+const isImage = (mimeType: string): boolean =>
+  IMAGE_MIME_TYPES.some((t) => mimeType.toLowerCase().startsWith(t));
+
 const formatCLP = (n: number | null): string => {
   if (!n) return 'No definido';
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n);
+};
+
+/**
+ * Descarga una imagen desde Storage y la convierte a data URL base64.
+ * Retorna null si falla (no interrumpe la generación del PDF).
+ */
+const downloadImageAsBase64 = async (filePath: string): Promise<{ data: string; format: string } | null> => {
+  try {
+    const { data: blob, error } = await supabase.storage
+      .from(BUCKET)
+      .download(filePath);
+    if (error || !blob) return null;
+
+    const arrayBuffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const base64 = btoa(binary);
+
+    const ext = filePath.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const format = ext === 'jpg' || ext === 'jpeg' ? 'JPEG'
+      : ext === 'png' ? 'PNG'
+      : ext === 'webp' ? 'WEBP'
+      : 'JPEG';
+
+    return { data: `data:image/${ext};base64,${base64}`, format };
+  } catch (e) {
+    logger.warn('No se pudo descargar imagen para PDF:', filePath, e);
+    return null;
+  }
 };
 
 export const generateExternalServiceActaPdf = async (input: ExternalActaInput): Promise<Blob> => {
@@ -160,7 +202,7 @@ export const generateExternalServiceActaPdf = async (input: ExternalActaInput): 
       y += notesLines.length * 4 + 6;
     }
 
-    // Evidencia adjunta (lista, sin embeber)
+    // Evidencia adjunta: imágenes embebidas + tabla para el resto
     if (evidences.length > 0) {
       doc.setFillColor(...PURPLE);
       doc.rect(MARGIN, y, 5, 8, 'F');
@@ -170,33 +212,105 @@ export const generateExternalServiceActaPdf = async (input: ExternalActaInput): 
       doc.text(`EVIDENCIA ADJUNTA (${evidences.length})`, MARGIN + 9, y + 5.5);
       y += 12;
 
-      autoTable(doc, {
-        startY: y,
-        head: [['#', 'Tipo', 'Archivo', 'Fecha']],
-        body: evidences.map((ev, i) => [
-          String(i + 1),
-          EVIDENCE_TYPE_LABELS[ev.evidenceType],
-          ev.fileName.length > 50 ? ev.fileName.slice(0, 47) + '...' : ev.fileName,
-          formatBusinessDateLong(ev.uploadedAt),
-        ]),
-        theme: 'grid',
-        headStyles: { fillColor: PURPLE, textColor: [255, 255, 255], fontSize: 8.5, fontStyle: 'bold' },
-        styles: { fontSize: 8, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, textColor: DARK },
-        columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 42 },
-          2: { cellWidth: 'auto' },
-          3: { cellWidth: 40 },
-        },
-        alternateRowStyles: { fillColor: [248, 248, 248] },
-        margin: { left: MARGIN, right: MARGIN },
-      });
-      y = (doc as any).lastAutoTable.finalY + 4;
+      const imageEvidences = evidences.filter((ev) => isImage(ev.mimeType));
+      const otherEvidences = evidences.filter((ev) => !isImage(ev.mimeType));
+
+      if (imageEvidences.length > 0) {
+        const downloads = await Promise.all(
+          imageEvidences.map((ev) => downloadImageAsBase64(ev.filePath))
+        );
+
+        const IMG_W = (PAGE_W - MARGIN * 2 - 4) / 2;
+        const IMG_H = 55;
+
+        for (let i = 0; i < imageEvidences.length; i++) {
+          const ev = imageEvidences[i];
+          const imgData = downloads[i];
+          const col = i % 2;
+          const x = MARGIN + col * (IMG_W + 4);
+
+          if (col === 0 && y + IMG_H + 16 > 270) {
+            doc.addPage();
+            y = 20;
+          }
+
+          if (imgData) {
+            doc.setDrawColor(...GRAY);
+            doc.setLineWidth(0.2);
+            doc.rect(x, y, IMG_W, IMG_H);
+            try {
+              doc.addImage(imgData.data, imgData.format, x + 0.5, y + 0.5, IMG_W - 1, IMG_H - 1);
+            } catch (imgErr) {
+              logger.warn('No se pudo embeber imagen:', ev.fileName, imgErr);
+              doc.setFillColor(245, 245, 245);
+              doc.rect(x, y, IMG_W, IMG_H, 'F');
+              doc.setTextColor(...GRAY);
+              doc.setFontSize(7);
+              doc.text('Imagen no disponible', x + IMG_W / 2, y + IMG_H / 2, { align: 'center' });
+            }
+          } else {
+            doc.setFillColor(245, 245, 245);
+            doc.rect(x, y, IMG_W, IMG_H, 'F');
+            doc.setDrawColor(...GRAY);
+            doc.setLineWidth(0.2);
+            doc.rect(x, y, IMG_W, IMG_H);
+            doc.setTextColor(...GRAY);
+            doc.setFontSize(7);
+            doc.text('No disponible', x + IMG_W / 2, y + IMG_H / 2, { align: 'center' });
+          }
+
+          doc.setTextColor(...GRAY);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(6.5);
+          const label = `${EVIDENCE_TYPE_LABELS[ev.evidenceType]} · ${ev.fileName.length > 35 ? ev.fileName.slice(0, 32) + '...' : ev.fileName}`;
+          doc.text(label, x + IMG_W / 2, y + IMG_H + 4, { align: 'center' });
+
+          if (col === 1 || i === imageEvidences.length - 1) {
+            y += IMG_H + 10;
+          }
+        }
+      }
+
+      if (otherEvidences.length > 0) {
+        if (imageEvidences.length > 0) {
+          doc.setTextColor(...GRAY);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8);
+          doc.text('Otros documentos adjuntos:', MARGIN, y);
+          y += 6;
+        }
+
+        autoTable(doc, {
+          startY: y,
+          head: [['#', 'Tipo', 'Archivo', 'Fecha']],
+          body: otherEvidences.map((ev, i) => [
+            String(i + 1),
+            EVIDENCE_TYPE_LABELS[ev.evidenceType],
+            ev.fileName.length > 50 ? ev.fileName.slice(0, 47) + '...' : ev.fileName,
+            formatBusinessDateLong(ev.uploadedAt),
+          ]),
+          theme: 'grid',
+          headStyles: { fillColor: PURPLE, textColor: [255, 255, 255], fontSize: 8.5, fontStyle: 'bold' },
+          styles: { fontSize: 8, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, textColor: DARK },
+          columnStyles: {
+            0: { cellWidth: 8 },
+            1: { cellWidth: 42 },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 40 },
+          },
+          alternateRowStyles: { fillColor: [248, 248, 248] },
+          margin: { left: MARGIN, right: MARGIN },
+        });
+        y = (doc as any).lastAutoTable.finalY + 4;
+      }
 
       doc.setTextColor(...GRAY);
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(7);
-      doc.text('La evidencia original está disponible en el sistema bajo el folio del servicio.', MARGIN, y);
+      doc.text(
+        'Los archivos originales están disponibles en el sistema bajo el folio del servicio.',
+        MARGIN, y
+      );
       y += 8;
     }
 

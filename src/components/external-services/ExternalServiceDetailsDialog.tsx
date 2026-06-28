@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Building2, Download, Mail } from 'lucide-react';
+import { Building2, Download, Mail, RefreshCcw } from 'lucide-react';
 import { EvidenceUploadCard } from './EvidenceUploadCard';
 import { SendExternalActaDialog } from './SendExternalActaDialog';
 import { useServiceClosure, downloadExternalActa, regenerateActaPdf } from '@/hooks/useExternalServiceClosure';
@@ -125,14 +125,14 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
                       size="sm"
                       onClick={async () => {
                         try {
-                          await downloadExternalActa(closure.pdfPath!);
+                          await downloadExternalActa(closure.pdfPath!, service.folio);
                         } catch (e: any) {
                           // Si el archivo no existe, intentar regenerar
                           if (e.message?.includes('no encontrado') || e.message?.includes('404')) {
                             toast.info('PDF no encontrado, regenerando...');
                             try {
                               const newPath = await regenerateActaPdf(service.id);
-                              await downloadExternalActa(newPath);
+                              await downloadExternalActa(newPath, service.folio);
                               toast.success('Acta regenerada y descargada');
                             } catch (re: any) {
                               toast.error('Error al regenerar', { description: re.message });
@@ -146,6 +146,23 @@ export const ExternalServiceDetailsDialog = ({ service, open, onOpenChange }: Pr
                     >
                       <Download className="size-4 mr-2" />
                       Descargar Acta PDF
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:text-foreground text-xs"
+                      onClick={async () => {
+                        try {
+                          toast.info('Regenerando Acta con evidencia actualizada...');
+                          await regenerateActaPdf(service.id);
+                          toast.success('Acta regenerada correctamente');
+                        } catch (e: any) {
+                          toast.error('Error al regenerar', { description: e.message });
+                        }
+                      }}
+                    >
+                      <RefreshCcw className="size-4 mr-2" />
+                      Regenerar Acta
                     </Button>
                     <Button
                       size="sm"

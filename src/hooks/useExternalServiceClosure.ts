@@ -234,17 +234,25 @@ export const getEvidenceSignedUrl = async (path: string, expiresIn = 3600): Prom
 };
 
 /**
- * Descarga el Acta PDF del cierre externo y la abre en una nueva pestaña.
+ * Descarga el Acta PDF del cierre externo directamente al equipo del usuario.
  * Si el PDF no existe en storage, intenta regenerarlo desde los datos disponibles.
  */
-export const downloadExternalActa = async (pdfPath: string): Promise<void> => {
+export const downloadExternalActa = async (pdfPath: string, folio: string): Promise<void> => {
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(pdfPath, 300);
+    .download(pdfPath);
   if (error || !data) {
     throw new Error(`No se pudo obtener el PDF: ${error?.message || 'archivo no encontrado'}`);
   }
-  window.open(data.signedUrl, '_blank');
+
+  const url = URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Acta-Servicio-Externo-${folio}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 /**
