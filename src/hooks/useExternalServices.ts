@@ -39,8 +39,7 @@ const SELECT = `
   outsourced_cost,
   created_at,
   service_types(name, service_category),
-  clients!services_client_id_fkey(name),
-  service_external_closures(id, closed_at)
+  clients!services_client_id_fkey(name)
 `;
 
 export const useExternalServices = (filter: ExternalServiceStatus = 'pending') => {
@@ -72,7 +71,22 @@ export const useExternalServices = (filter: ExternalServiceStatus = 'pending') =
         throw new Error('Error al cargar servicios externos');
       }
 
-      const mapped: ExternalServiceListItem[] = (data || []).map((s: any) => ({
+      const servicesArr = (data || []) as any[];
+
+      // Obtener cierres por separado (el embed con RLS admin-only falla en PostgREST)
+      const serviceIds = servicesArr.map((s) => s.id);
+      let closuresMap: Record<string, string | null> = {};
+      if (serviceIds.length > 0) {
+        const { data: closures } = await supabase
+          .from('service_external_closures')
+          .select('service_id, closed_at')
+          .in('service_id', serviceIds);
+        for (const c of (closures || [])) {
+          closuresMap[c.service_id] = c.closed_at;
+        }
+      }
+
+      const mapped: ExternalServiceListItem[] = servicesArr.map((s) => ({
         id: s.id,
         folio: s.folio,
         serviceTypeName: s.service_types?.name ?? 'N/A',
@@ -86,8 +100,8 @@ export const useExternalServices = (filter: ExternalServiceStatus = 'pending') =
         status: s.status,
         outsourcedProviderId: s.outsourced_provider_id,
         outsourcedCost: s.outsourced_cost,
-        hasClosure: Array.isArray(s.service_external_closures) && s.service_external_closures.length > 0,
-        closedAt: s.service_external_closures?.[0]?.closed_at ?? null,
+        hasClosure: s.id in closuresMap,
+        closedAt: closuresMap[s.id] ?? null,
         createdAt: s.created_at,
       }));
 
