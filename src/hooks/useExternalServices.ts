@@ -39,7 +39,7 @@ const SELECT = `
   outsourced_cost,
   created_at,
   service_types(name, service_category),
-  clients(name),
+  clients!services_client_id_fkey(name),
   service_external_closures(id, closed_at)
 `;
 
