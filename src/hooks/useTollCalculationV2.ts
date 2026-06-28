@@ -18,7 +18,7 @@ export interface TollResultV2 {
   totalCost: number;
   breakdown: TollBreakdown[];
   category: string;
-  source: 'getapi_matched' | 'fallback_range' | 'manual';
+  source: 'getapi_matched' | 'fallback_range';
   warning?: string;
 }
 
@@ -41,46 +41,36 @@ export const effectiveTollCategory = (
   return craneCategory;
 };
 
-const estimateKmFromName = (
+const KNOWN_KM: Record<string, number> = {
+  santiago: 0,
+  lampa: 37,
+  'los vilos': 229,
+  ovalle: 310,
+  'la serena': 472,
+  vallenar: 653,
+  copiapo: 841,
+  caldera: 900,
+  antofagasta: 1360,
+  iquique: 1850,
+};
+
+const estimateKm = (
   cityName: string,
   stations: Array<{ stationName: string; kmMarker: number | null; concessionName: string }>,
 ): number | null => {
   const normalized = norm(cityName);
 
   for (const station of stations) {
+    if (station.kmMarker === null) continue;
     if (
       norm(station.stationName).includes(normalized) ||
       normalized.includes(norm(station.stationName))
     ) {
       return station.kmMarker;
     }
-
-    const parts = station.concessionName.split(/[-–]/);
-    for (const part of parts) {
-      const normalizedPart = norm(part.trim());
-      if (normalizedPart.includes(normalized) || normalized.includes(normalizedPart)) {
-        return station.kmMarker;
-      }
-    }
   }
 
-  const known: Record<string, number> = {
-    santiago: 0,
-    lampa: 37,
-    'las vegas': 104,
-    pichidangui: 185,
-    'el melon': 209,
-    'los vilos': 229,
-    ovalle: 310,
-    'la serena': 472,
-    vallenar: 653,
-    copiapo: 806,
-    caldera: 840,
-    antofagasta: 1360,
-    iquique: 1850,
-  };
-
-  for (const [key, km] of Object.entries(known)) {
+  for (const [key, km] of Object.entries(KNOWN_KM)) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return km;
     }
@@ -209,8 +199,8 @@ export function useTollCalculationV2() {
         }
 
         if (breakdown.length === 0) {
-          const kmOrigin = estimateKmFromName(originName, stationIndex);
-          const kmDest = estimateKmFromName(destName, stationIndex);
+          const kmOrigin = estimateKm(originName, stationIndex);
+          const kmDest = estimateKm(destName, stationIndex);
 
           logger.debug('Fallback km range', { kmOrigin, kmDest });
 

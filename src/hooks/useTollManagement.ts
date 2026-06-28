@@ -288,6 +288,34 @@ export const useUpdateTollRate = () => {
   });
 };
 
+export const useUpdateTollStationKm = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      stationId,
+      kmMarker,
+    }: {
+      stationId: string;
+      kmMarker: number | null;
+    }) => {
+      const { error } = await supabase
+        .from('toll_stations')
+        .update({ km_marker: kmMarker })
+        .eq('id', stationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['toll-rates-current'] });
+      toast.success('Km del peaje actualizado');
+    },
+    onError: (error: any) => {
+      toast.error('Error al actualizar km', { description: error.message });
+    },
+  });
+};
+
 export interface ParsedTollRate {
   stationName: string;
   vehicleCategory: string;

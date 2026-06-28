@@ -41,6 +41,7 @@ import {
   useCreateTollStation,
   useTollConcessions,
   useTollRatesCurrent,
+  useUpdateTollStationKm,
   useUpdateTollRate,
 } from '@/hooks/useTollManagement';
 import { formatBusinessDateLong, getCurrentChileDateString } from '@/utils/timezoneUtils';
@@ -71,9 +72,16 @@ const groupRatesByConcession = (rates: TollRateCurrent[]) =>
 const TollRatesTable = () => {
   const { data: rates = [], isLoading, refetch, isFetching } = useTollRatesCurrent();
   const updateRate = useUpdateTollRate();
+  const updateKm = useUpdateTollStationKm();
   const [editingRate, setEditingRate] = useState<TollRateCurrent | null>(null);
+  const [editingKm, setEditingKm] = useState<{
+    stationId: string;
+    stationName: string;
+    currentKm: number | null;
+  } | null>(null);
   const [newAmount, setNewAmount] = useState('');
   const [newValidFrom, setNewValidFrom] = useState(getCurrentChileDateString());
+  const [newKm, setNewKm] = useState('');
 
   const groupedRates = useMemo(() => groupRatesByConcession(rates), [rates]);
 
@@ -93,6 +101,18 @@ const TollRatesTable = () => {
     });
 
     setEditingRate(null);
+  };
+
+  const handleSaveKm = async () => {
+    if (!editingKm) return;
+
+    const parsedKm = newKm.trim() === '' ? null : Number(newKm);
+    await updateKm.mutateAsync({
+      stationId: editingKm.stationId,
+      kmMarker: parsedKm,
+    });
+
+    setEditingKm(null);
   };
 
   return (
@@ -167,7 +187,32 @@ const TollRatesTable = () => {
                   <TableBody>
                     {Object.entries(byStation).map(([stationName, stationRates]) => (
                       <TableRow key={stationName}>
-                        <TableCell className="font-medium">{stationName}</TableCell>
+                        <TableCell className="font-medium text-sm">
+                          <div className="flex items-center gap-2">
+                            <span>{stationName}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const firstRate = stationRates[0];
+                                setEditingKm({
+                                  stationId: firstRate.stationId,
+                                  stationName,
+                                  currentKm: firstRate.kmMarker,
+                                });
+                                setNewKm(String(firstRate.kmMarker ?? ''));
+                              }}
+                              className="text-muted-foreground hover:text-foreground"
+                              title="Editar km"
+                            >
+                              <Edit2 className="size-3 opacity-50 hover:opacity-100" />
+                            </button>
+                            {stationRates[0]?.kmMarker !== null && (
+                              <span className="font-mono text-xs text-muted-foreground">
+                                km {stationRates[0]?.kmMarker}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-[11px]">
                             {stationRates[0]?.stationType || 'N/D'}
@@ -252,6 +297,41 @@ const TollRatesTable = () => {
             </Button>
             <Button onClick={handleSave} disabled={updateRate.isPending}>
               {updateRate.isPending ? 'Guardando...' : 'Guardar vigencia'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingKm} onOpenChange={(open) => !open && setEditingKm(null)}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Editar km</DialogTitle>
+          </DialogHeader>
+          {editingKm && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-md bg-muted/40 p-3 text-sm">
+                <span className="text-muted-foreground">Peaje: </span>
+                <strong>{editingKm.stationName}</strong>
+              </div>
+              <div>
+                <Label htmlFor="station-km-edit">Km marker</Label>
+                <Input
+                  id="station-km-edit"
+                  type="number"
+                  min="0"
+                  value={newKm}
+                  onChange={(event) => setNewKm(event.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingKm(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveKm} disabled={updateKm.isPending}>
+              {updateKm.isPending ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>
         </DialogContent>
