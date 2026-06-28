@@ -29,7 +29,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { action, origin, destination, category } = await req.json();
+    const body = await req.json();
+    const { action, origin, destination, category } = body;
     const apiHeaders = { "X-Api-Key": API_KEY };
 
     // List available locations
@@ -112,10 +113,64 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    if (action === "route-cost-by-coords") {
+      const { origin, destination, categoryCode } = body;
+
+      if (
+        origin?.lat === undefined ||
+        origin?.lng === undefined ||
+        destination?.lat === undefined ||
+        destination?.lng === undefined
+      ) {
+        return new Response(
+          JSON.stringify({ error: "origin y destination deben incluir lat y lng" }),
+          {
+            status: 400,
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const payload: Record<string, unknown> = {
+        origin: { lat: Number(origin.lat), lng: Number(origin.lng) },
+        destination: { lat: Number(destination.lat), lng: Number(destination.lng) },
+        categoryCode: categoryCode ?? "LIVIANO",
+      };
+
+      console.log("Toll route-cost-by-coords:", JSON.stringify(payload));
+
+      const res = await fetch(`${GETAPI_BASE}/route-cost-by-coords`, {
+        method: "POST",
+        headers: { ...apiHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log("Toll API error (coords):", res.status, JSON.stringify(data));
+        return new Response(
+          JSON.stringify({
+            error: data?.message || "Toll API error",
+            details: data,
+            apiStatus: res.status,
+          }),
+          {
+            status: 200,
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log("Toll route-cost-by-coords response:", JSON.stringify(data));
+      return new Response(JSON.stringify(data), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({
         error:
-          "Invalid action. Use 'route-cost', 'locations', 'categories', or 'highways'",
+          "Invalid action. Use 'route-cost', 'route-cost-by-coords', 'locations', 'categories', or 'highways'",
       }),
       {
         status: 400,

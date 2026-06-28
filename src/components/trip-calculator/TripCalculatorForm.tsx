@@ -11,8 +11,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
 import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
-import { useTollCalculation, useTollLocations, matchTollLocation } from '@/hooks/useTollCalculation';
+import { useTollCalculationV2 } from '@/hooks/useTollCalculationV2';
 import { TripCostBreakdown } from './TripCostBreakdown';
+import { TollBreakdownCard } from './TollBreakdownCard';
 import { TripRouteMap } from './TripRouteMap';
 import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
 import { createLogger } from "@/lib/logger";
@@ -169,11 +170,10 @@ export const TripCalculatorForm = () => {
   const [showManualToll, setShowManualToll] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState('');
 
-  const { data: rates = [] } = useConsumptionRates();
+  useConsumptionRates();
   const { cranes } = useCranes();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
-  const { calculateTolls, tollResult, tollError, isCalculating: tollLoading, resetTolls } = useTollCalculation();
-  const { data: tollLocations = [] } = useTollLocations();
+  const { calculate: calculateTollV2, result: tollV2Result, isCalculating: tollV2Loading, reset: resetTollV2 } = useTollCalculationV2();
   const { locations: savedLocations } = useSavedLocations();
 
   const activeCranes = cranes.filter(c => c.isActive);
@@ -184,47 +184,34 @@ export const TripCalculatorForm = () => {
     if (!originCoords || !destCoords || !craneType) return;
 
     setShowManualToll(false);
+    const craneCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
 
-    // Match location parts, prioritizing city-like tokens (without street numbers)
-    const findBestTollMatch = (fullName: string): string => {
-      const parts = fullName.split(',').map(p => p.trim()).filter(Boolean);
+    logger.debug('Toll lookup V2:', { originName, destName, craneCategory, twoVehicles });
 
-      const withoutNumbers = parts.filter(part => !/\d/.test(part));
-      const candidates = withoutNumbers.length > 0 ? withoutNumbers : parts;
+    const tollV2 = await calculateTollV2({
+      originName,
+      destName,
+      originCoords,
+      destCoords,
+      craneCategory,
+      twoVehicles,
+    });
 
-      for (const part of candidates) {
-        const match = matchTollLocation(part, tollLocations);
-        if (match) return match;
-      }
-
-      return candidates[0] || fullName;
-    };
-
-    const originCity = findBestTollMatch(originName);
-    const destCity = findBestTollMatch(destName);
-    const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
-
-    // If we have toll locations, check matching; otherwise try anyway with city names
-    const hasLocations = tollLocations.length > 0;
-    const originMatched = hasLocations ? !!matchTollLocation(originCity, tollLocations) : true;
-    const destMatched = hasLocations ? !!matchTollLocation(destCity, tollLocations) : true;
-    const shouldAttemptTolls = originMatched && destMatched;
-
-    logger.debug('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched, hasLocations });
-
-    let tollData = null;
-    if (shouldAttemptTolls) {
-      tollData = await calculateTolls(originCity, destCity, tollCategory);
-      // Show manual fallback if API failed
-      if (!tollData) {
-        setShowManualToll(true);
-      }
-    } else {
-      // No toll locations matched — route has no tolls, proceed with 0
-      resetTolls();
+    if (!tollV2) {
+      setShowManualToll(true);
     }
 
-    const tollCost = tollData?.total_cost ?? (manualToll ? Number(manualToll) : 0);
+    const tollCost = tollV2?.totalCost ?? (manualToll ? Number(manualToll) : 0);
+    const tollData = tollV2
+      ? {
+          total_cost: tollV2.totalCost,
+          tolls: tollV2.breakdown.map((item) => ({
+            name: item.stationName,
+            cost: item.rateAmount,
+            highway: item.highway ?? undefined,
+          })),
+        }
+      : null;
 
     const input: TripCalculationInput = {
       originCoords,
@@ -244,6 +231,8 @@ export const TripCalculatorForm = () => {
 
   const handleRecalculateWithManualToll = async () => {
     if (!originCoords || !destCoords || !craneType) return;
+
+    resetTollV2();
 
     const input: TripCalculationInput = {
       originCoords,
@@ -279,7 +268,7 @@ export const TripCalculatorForm = () => {
                 setOriginName(name);
                 setOriginCoords(coords);
                 reset();
-                resetTolls();
+                resetTollV2();
                 setShowManualToll(false);
               }}
             />
@@ -292,7 +281,7 @@ export const TripCalculatorForm = () => {
                 setDestName(name);
                 setDestCoords(coords);
                 reset();
-                resetTolls();
+                resetTollV2();
                 setShowManualToll(false);
               }}
             />
@@ -301,7 +290,7 @@ export const TripCalculatorForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-1.5 block">Grúa</Label>
-              <Select value={selectedCraneId} onValueChange={(v) => { setSelectedCraneId(v); reset(); }}>
+              <Select value={selectedCraneId} onValueChange={(v) => { setSelectedCraneId(v); reset(); resetTollV2(); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar grúa..." />
                 </SelectTrigger>
@@ -329,7 +318,7 @@ export const TripCalculatorForm = () => {
           <div className="flex items-center gap-3">
             <Switch
               checked={twoVehicles}
-              onCheckedChange={(v) => { setTwoVehicles(v); reset(); }}
+              onCheckedChange={(v) => { setTwoVehicles(v); reset(); resetTollV2(); }}
             />
             <Label className="cursor-pointer">
               {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
@@ -338,7 +327,7 @@ export const TripCalculatorForm = () => {
 
           <div>
             <Label className="mb-1.5 block">Configuración de Vuelta</Label>
-            <Select value={returnConfig} onValueChange={(v) => { setReturnConfig(v as ReturnTripConfig); reset(); }}>
+            <Select value={returnConfig} onValueChange={(v) => { setReturnConfig(v as ReturnTripConfig); reset(); resetTollV2(); }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -353,11 +342,11 @@ export const TripCalculatorForm = () => {
           <Button
             type="button"
             onClick={handleCalculate}
-            disabled={!canCalculate || isCalculating || tollLoading}
+            disabled={!canCalculate || isCalculating || tollV2Loading}
             className="w-full md:w-auto bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8"
             size="lg"
           >
-            {isCalculating || tollLoading ? (
+            {isCalculating || tollV2Loading ? (
               <>
                 <Loader2 className="size-4 mr-2 animate-spin" />
                 Calculando...
@@ -415,6 +404,9 @@ export const TripCalculatorForm = () => {
               distanceKm={result.distance_km}
               estimatedTimeHours={result.estimated_time_hours}
             />
+          )}
+          {tollV2Result && tollV2Result.totalCost > 0 && (
+            <TollBreakdownCard result={tollV2Result} />
           )}
           <TripCostBreakdown
             result={result}
