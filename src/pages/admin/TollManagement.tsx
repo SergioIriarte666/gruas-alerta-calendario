@@ -155,9 +155,12 @@ const TollRatesTable = () => {
               <CardHeader className="border-b bg-muted/25 pb-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <MapPin className="size-4 text-amber-600" />
-                      {concessionName}
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MapPin className="size-4 text-purple-600 shrink-0" />
+                      <span className="truncate">{concessionName}</span>
+                      <Badge variant="outline" className="text-xs font-normal ml-auto shrink-0">
+                        {Object.keys(byStation).length} peajes
+                      </Badge>
                     </CardTitle>
                     <CardDescription>
                       {concessionMeta.route} · {Object.keys(byStation).length} peajes con tarifa vigente
@@ -173,41 +176,41 @@ const TollRatesTable = () => {
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Peaje</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Km</TableHead>
-                      {TOLL_VEHICLE_CATEGORIES.map((category) => (
-                        <TableHead key={category.value} className="text-right">
-                          {category.value}
-                        </TableHead>
-                      ))}
+                    <TableRow className="border-border hover:bg-muted/50">
+                      <TableHead className="w-[220px]">Peaje</TableHead>
+                      <TableHead className="w-[90px]">Tipo</TableHead>
+                      <TableHead className="w-[70px] text-center">Km</TableHead>
+                      <TableHead className="text-right w-[120px]">Liviano</TableHead>
+                      <TableHead className="text-right w-[130px]">Camión 2 Ejes</TableHead>
+                      <TableHead className="text-right w-[130px]">Camión Pesado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {Object.entries(byStation).map(([stationName, stationRates]) => (
                       <TableRow key={stationName}>
-                        <TableCell className="font-medium text-sm">
-                          <div className="flex items-center gap-2">
-                            <span>{stationName}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const firstRate = stationRates[0];
-                                setEditingKm({
-                                  stationId: firstRate.stationId,
-                                  stationName,
-                                  currentKm: firstRate.kmMarker,
-                                });
-                                setNewKm(String(firstRate.kmMarker ?? ''));
-                              }}
-                              className="text-muted-foreground hover:text-foreground"
-                              title="Editar km"
-                            >
-                              <Edit2 className="size-3 opacity-50 hover:opacity-100" />
-                            </button>
+                        <TableCell className="w-[220px]">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-sm">{stationName}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const firstRate = stationRates[0];
+                                  setEditingKm({
+                                    stationId: firstRate.stationId,
+                                    stationName,
+                                    currentKm: firstRate.kmMarker,
+                                  });
+                                  setNewKm(String(firstRate.kmMarker ?? ''));
+                                }}
+                                className="text-muted-foreground hover:text-foreground shrink-0"
+                                title="Editar km"
+                              >
+                                <Edit2 className="size-3 opacity-40 hover:opacity-100" />
+                              </button>
+                            </div>
                             {stationRates[0]?.kmMarker !== null && (
-                              <span className="font-mono text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground font-mono">
                                 km {stationRates[0]?.kmMarker}
                               </span>
                             )}
@@ -223,22 +226,25 @@ const TollRatesTable = () => {
                         </TableCell>
                         {TOLL_VEHICLE_CATEGORIES.map((category) => {
                           const rate = stationRates.find((item) => item.vehicleCategory === category.value);
+                          const widthCls = category.value === 'LIVIANO'
+                            ? 'w-[120px]'
+                            : 'w-[130px]';
                           return (
-                            <TableCell key={category.value} className="text-right">
+                            <TableCell key={category.value} className={`text-right ${widthCls}`}>
                               {rate ? (
                                 <div className="flex items-center justify-end gap-1">
-                                  <span className="font-mono text-sm">{formatClp(rate.rateAmount)}</span>
+                                  <span className="text-sm font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="size-7 text-muted-foreground hover:text-foreground"
+                                    className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
                                     onClick={() => handleEdit(rate)}
                                   >
-                                    <Edit2 className="size-3.5" />
+                                    <Edit2 className="size-3" />
                                   </Button>
                                 </div>
                               ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
+                                <span className="text-muted-foreground text-xs">—</span>
                               )}
                             </TableCell>
                           );
