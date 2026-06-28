@@ -54,6 +54,7 @@ export const Sidebar = ({
     '/dashboard': 'dashboard',
     '/daily-report': 'reports',
     '/services': 'services',
+    '/admin/external-services': 'services',
     '/clients': 'clients',
     '/document-library': 'document-library',
     '/calendar': 'calendar',
@@ -102,6 +103,7 @@ export const Sidebar = ({
         { name: 'Portal Operador', href: '/operator', icon: HardHat, adminOnly: false, requiresOperator: true },
         { name: 'Informe Diario', href: '/daily-report', icon: ClipboardList, adminOnly: false },
         { name: 'Servicios', href: '/services', icon: Truck, adminOnly: false },
+        { name: 'Servicios Externos', href: '/admin/external-services', icon: Briefcase, adminOnly: true },
       ]
     },
     {

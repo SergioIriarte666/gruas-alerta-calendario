@@ -1,0 +1,180 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+import type {
+  ExternalEvidence,
+  ExternalClosure,
+  ExternalClosureInput,
+  EvidenceUploadInput,
+} from '@/types/externalServices';
+
+const logger = createLogger('useExternalServiceClosure');
+const BUCKET = 'external-evidence';
+
+const mapEvidenceRow = (row: any): ExternalEvidence => ({
+  id: row.id,
+  serviceId: row.service_id,
+  fileName: row.file_name,
+  filePath: row.file_path,
+  fileSize: row.file_size,
+  mimeType: row.mime_type,
+  evidenceType: row.evidence_type,
+  notes: row.notes,
+  uploadedBy: row.uploaded_by,
+  uploadedAt: row.uploaded_at,
+  createdAt: row.created_at,
+});
+
+const mapClosureRow = (row: any): ExternalClosure => ({
+  id: row.id,
+  serviceId: row.service_id,
+  adminUserId: row.admin_user_id,
+  adminName: row.admin_name,
+  adminSignature: row.admin_signature,
+  thirdPartyProviderName: row.third_party_provider_name,
+  thirdPartyProviderRut: row.third_party_provider_rut,
+  thirdPartyServiceSummary: row.third_party_service_summary,
+  closureNotes: row.closure_notes,
+  pdfPath: row.pdf_path,
+  emailSentTo: row.email_sent_to || [],
+  emailSentAt: row.email_sent_at,
+  emailSendCount: row.email_send_count ?? 0,
+  closedAt: row.closed_at,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+export const useServiceEvidence = (serviceId: string | undefined) => {
+  return useQuery({
+    queryKey: ['external-evidence', serviceId],
+    queryFn: async (): Promise<ExternalEvidence[]> => {
+      if (!serviceId) return [];
+      const { data, error } = await supabase
+        .from('service_external_evidence')
+        .select('*')
+        .eq('service_id', serviceId)
+        .order('uploaded_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(mapEvidenceRow);
+    },
+    enabled: !!serviceId,
+  });
+};
+
+export const useServiceClosure = (serviceId: string | undefined) => {
+  return useQuery({
+    queryKey: ['external-closure', serviceId],
+    queryFn: async (): Promise<ExternalClosure | null> => {
+      if (!serviceId) return null;
+      const { data, error } = await supabase
+        .from('service_external_closures')
+        .select('*')
+        .eq('service_id', serviceId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? mapClosureRow(data) : null;
+    },
+    enabled: !!serviceId,
+  });
+};
+
+export const useUploadEvidence = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: EvidenceUploadInput): Promise<ExternalEvidence> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No autenticado');
+
+      const ext = input.file.name.split('.').pop() ?? 'bin';
+      const uuid = crypto.randomUUID();
+      const path = `evidence/${input.serviceId}/${uuid}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, input.file, { contentType: input.file.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: row, error: insertError } = await supabase
+        .from('service_external_evidence')
+        .insert({
+          service_id: input.serviceId,
+          file_name: input.file.name,
+          file_path: path,
+          file_size: input.file.size,
+          mime_type: input.file.type,
+          evidence_type: input.evidenceType,
+          notes: input.notes ?? null,
+          uploaded_by: user.id,
+        })
+        .select('*')
+        .single();
+
+      if (insertError) {
+        await supabase.storage.from(BUCKET).remove([path]);
+        throw insertError;
+      }
+
+      return mapEvidenceRow(row);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['external-evidence', vars.serviceId] });
+      toast.success('Evidencia subida correctamente');
+    },
+    onError: (e: any) => {
+      logger.error('Error subiendo evidencia:', e);
+      toast.error('Error al subir evidencia', { description: e.message });
+    },
+  });
+};
+
+export const useCloseExternalService = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: ExternalClosureInput): Promise<ExternalClosure> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No autenticado');
+
+      const { data: closureRow, error: closureError } = await supabase
+        .from('service_external_closures')
+        .insert({
+          service_id: input.serviceId,
+          admin_user_id: user.id,
+          admin_name: input.adminName,
+          admin_signature: input.adminSignature,
+          third_party_provider_name: input.thirdPartyProviderName,
+          third_party_provider_rut: input.thirdPartyProviderRut ?? null,
+          third_party_service_summary: input.thirdPartyServiceSummary,
+          closure_notes: input.closureNotes ?? null,
+        })
+        .select('*')
+        .single();
+      if (closureError) throw closureError;
+
+      const { error: serviceError } = await supabase
+        .from('services')
+        .update({ status: 'completed' })
+        .eq('id', input.serviceId);
+      if (serviceError) throw serviceError;
+
+      return mapClosureRow(closureRow);
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['external-services'] });
+      queryClient.invalidateQueries({ queryKey: ['external-closure', vars.serviceId] });
+      toast.success('Servicio externo cerrado correctamente');
+    },
+    onError: (e: any) => {
+      logger.error('Error cerrando servicio externo:', e);
+      toast.error('Error al cerrar servicio', { description: e.message });
+    },
+  });
+};
+
+export const getEvidenceSignedUrl = async (path: string, expiresIn = 3600): Promise<string> => {
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(path, expiresIn);
+  if (error) throw error;
+  return data.signedUrl;
+};

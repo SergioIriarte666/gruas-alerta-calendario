@@ -805,12 +805,16 @@ export const EnhancedServiceForm = React.memo(({
 
       logger.debug('🔄 Form submission started:', { folio: finalFolio, serviceType: formData.serviceType });
       
-      const finalData = {
+      const finalData: typeof formData & { folio: string; operator_id?: string | null } = {
         ...formData,
         folio: finalFolio,
-        operators: formData.operators || [],
+        operators: selectedServiceType?.serviceCategory === 'externo_tercero' ? [] : (formData.operators || []),
         costDetails: formData.costDetails || []
       };
+
+      if (selectedServiceType?.serviceCategory === 'externo_tercero') {
+        finalData.operator_id = null;
+      }
 
       logger.debug('📤 Final data prepared:', finalData);
 
@@ -1215,7 +1219,7 @@ export const EnhancedServiceForm = React.memo(({
                 )}
 
                 {/* Operadores - Solo para servicios NO subcontratados */}
-                {!selectedServiceType?.isOutsourced && (
+                {selectedServiceType?.serviceCategory !== 'externo_tercero' && (
                   <ColoredSectionCard
                     title="Operadores"
                     icon={<Users className="size-5" />}

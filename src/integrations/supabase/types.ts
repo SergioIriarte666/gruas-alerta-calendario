@@ -1,4 +1,3 @@
-Initialising cli_login_postgres role...
 export type Json =
   | string
   | number
@@ -304,6 +303,13 @@ export type Database = {
             foreignKeyName: "calendar_events_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -426,6 +432,13 @@ export type Database = {
             columns: ["closure_id"]
             isOneToOne: false
             referencedRelation: "service_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -1023,6 +1036,13 @@ export type Database = {
             columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -2266,6 +2286,13 @@ export type Database = {
             foreignKeyName: "inspection_storage_orphans_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_storage_orphans_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -2370,6 +2397,13 @@ export type Database = {
             columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -3247,6 +3281,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -4500,6 +4541,13 @@ export type Database = {
             foreignKeyName: "service_cash_receipts_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: true
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_cash_receipts_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -4565,6 +4613,13 @@ export type Database = {
             columns: ["changed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_change_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -4722,6 +4777,13 @@ export type Database = {
             foreignKeyName: "service_costs_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -4734,6 +4796,163 @@ export type Database = {
           },
           {
             foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
+      service_external_closures: {
+        Row: {
+          admin_name: string
+          admin_signature: string
+          admin_user_id: string
+          closed_at: string
+          closure_notes: string | null
+          created_at: string
+          email_send_count: number
+          email_sent_at: string | null
+          email_sent_to: string[]
+          id: string
+          pdf_path: string | null
+          service_id: string
+          third_party_provider_name: string
+          third_party_provider_rut: string | null
+          third_party_service_summary: string
+          updated_at: string
+        }
+        Insert: {
+          admin_name: string
+          admin_signature: string
+          admin_user_id: string
+          closed_at?: string
+          closure_notes?: string | null
+          created_at?: string
+          email_send_count?: number
+          email_sent_at?: string | null
+          email_sent_to?: string[]
+          id?: string
+          pdf_path?: string | null
+          service_id: string
+          third_party_provider_name: string
+          third_party_provider_rut?: string | null
+          third_party_service_summary: string
+          updated_at?: string
+        }
+        Update: {
+          admin_name?: string
+          admin_signature?: string
+          admin_user_id?: string
+          closed_at?: string
+          closure_notes?: string | null
+          created_at?: string
+          email_send_count?: number
+          email_sent_at?: string | null
+          email_sent_to?: string[]
+          id?: string
+          pdf_path?: string | null
+          service_id?: string
+          third_party_provider_name?: string
+          third_party_provider_rut?: string | null
+          third_party_service_summary?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_external_closures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_closures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_closures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_closures_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
+      service_external_evidence: {
+        Row: {
+          created_at: string
+          evidence_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          notes: string | null
+          service_id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          notes?: string | null
+          service_id: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          evidence_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          notes?: string | null
+          service_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_external_evidence_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_evidence_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_evidence_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_external_evidence_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
@@ -4770,6 +4989,13 @@ export type Database = {
           valor_unitario?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "service_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_items_service_id_fkey"
             columns: ["service_id"]
@@ -4923,6 +5149,13 @@ export type Database = {
             foreignKeyName: "service_resources_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -5054,6 +5287,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_update_error_logs_service_id_fkey"
             columns: ["service_id"]
@@ -5286,6 +5526,13 @@ export type Database = {
             columns: ["outsourced_provider_id"]
             isOneToOne: false
             referencedRelation: "inventory_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -5898,6 +6145,13 @@ export type Database = {
             foreignKeyName: "trip_estimates_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_estimates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
@@ -6352,6 +6606,147 @@ export type Database = {
       }
     }
     Views: {
+      external_services_pending: {
+        Row: {
+          client_covered_amount: number | null
+          client_id: string | null
+          company_name: string | null
+          company_rut: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          crane_id: string | null
+          crane_mileage: number | null
+          created_at: string | null
+          created_by: string | null
+          custody_daily_rate: number | null
+          custody_days: number | null
+          custody_discount_percentage: number | null
+          custody_end_date: string | null
+          custody_mode: string | null
+          custody_notes: string | null
+          custody_rate_type: string | null
+          custody_start_date: string | null
+          custody_total_amount: number | null
+          custody_vehicle_type: string | null
+          destination: string | null
+          end_time: string | null
+          excess_amount: number | null
+          folio: string | null
+          has_excess: boolean | null
+          id: string | null
+          insured_name: string | null
+          invoice_folio: string | null
+          invoice_numero_fiscal: string | null
+          license_plate: string | null
+          observations: string | null
+          operator_commission: number | null
+          operator_id: string | null
+          operator_notified_at: string | null
+          operator_notified_for: string | null
+          origin: string | null
+          outsourced_cost: number | null
+          outsourced_notes: string | null
+          outsourced_provider_id: string | null
+          preferred_time: string | null
+          purchase_order: string | null
+          purchase_order_number: string | null
+          quote_number: string | null
+          related_service_id: string | null
+          request_date: string | null
+          service_category: string | null
+          service_date: string | null
+          service_relationship_type: string | null
+          service_type_id: string | null
+          service_type_name: string | null
+          start_time: string | null
+          status: Database["public"]["Enums"]["service_status"] | null
+          third_party_client_id: string | null
+          updated_at: string | null
+          urgency: string | null
+          value: number | null
+          vehicle_brand: string | null
+          vehicle_model: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_outsourced_provider_id_fkey"
+            columns: ["outsourced_provider_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "services_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_third_party_client_id_fkey"
+            columns: ["third_party_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orphan_crane_parts_candidates: {
         Row: {
           candidate_cost_id: string | null
@@ -6406,16 +6801,23 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["client_id"]
+            columns: ["related_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["related_client_id"]
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -7582,5 +7984,3 @@ export const Constants = {
     },
   },
 } as const
-A new version of Supabase CLI is available: v2.108.0 (currently installed v2.33.9)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

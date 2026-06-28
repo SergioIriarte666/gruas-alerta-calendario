@@ -49,6 +49,7 @@ const OPERATOR_SERVICES_SELECT = `
   service_types!services_service_type_id_fkey (
     id,
     name,
+    service_category,
     description,
     base_price,
     is_active,
@@ -163,7 +164,9 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
     for (const s of (directServices || [])) mergedById.set((s as any).id, s);
     for (const s of resourceServices) mergedById.set((s as any).id, s);
 
-    const merged = Array.from(mergedById.values());
+    const merged = Array.from(mergedById.values()).filter(
+      (s: any) => s.service_types?.service_category !== 'externo_tercero'
+    );
     logger.debug('Operator services fetched successfully:', merged.length, 'services');
     return merged;
   } catch (error: any) {
