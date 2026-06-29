@@ -1,15 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toLocalDateString } from '@/utils/timezoneUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Fuel, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Fuel, Pencil, Trash2, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import {
   useCurrentFuelPrices,
   useFuelPriceHistory,
   useDeleteFuelPrice,
   getFuelTypeLabel,
   FUEL_TYPES,
+  REFERENCE_FUEL_STATION,
+  REFERENCE_FUEL_STATION_LABEL,
+  REFERENCE_FUEL_SOURCE,
+  useSyncReferenceFuelPrices,
   type FuelPrice,
 } from '@/hooks/useFuelPrices';
 import { FuelPriceForm } from './FuelPriceForm';
@@ -99,11 +103,24 @@ function buildWeeklyPivot(history: FuelPrice[]): WeeklyPivot {
 export const FuelPricesManager = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState<FuelPrice | null>(null);
+  const hasAutoSyncedRef = useRef(false);
   const { data: currentPrices = [], isLoading: loadingCurrent } = useCurrentFuelPrices();
   const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory();
   const { mutate: deletePrice } = useDeleteFuelPrice();
+  const { mutate: syncReferencePrices, isPending: isSyncing } = useSyncReferenceFuelPrices();
 
   const pivot = useMemo(() => buildWeeklyPivot(history), [history]);
+
+  useEffect(() => {
+    if (hasAutoSyncedRef.current || loadingCurrent) return;
+
+    hasAutoSyncedRef.current = true;
+    syncReferencePrices(undefined, {
+      onError: (error) => {
+        console.error('No se pudo sincronizar precios de combustible automáticamente', error);
+      },
+    });
+  }, [loadingCurrent, syncReferencePrices]);
 
   const handleEdit = (price: FuelPrice) => {
     setEditingPrice(price);
@@ -113,6 +130,20 @@ export const FuelPricesManager = () => {
   const handleClose = () => {
     setIsFormOpen(false);
     setEditingPrice(null);
+  };
+
+  const handleManualSync = () => {
+    syncReferencePrices(undefined, {
+      onSuccess: (result) => {
+        if (result.synced > 0) {
+          toast.success(`Se actualizaron ${result.synced} precios desde ${result.stationLabel}`);
+          return;
+        }
+
+        toast.success(`Los precios de ${result.stationLabel} ya estaban al día`);
+      },
+      onError: () => toast.error('No se pudo actualizar desde la estación de referencia'),
+    });
   };
 
   if (loadingCurrent) {
@@ -131,15 +162,28 @@ export const FuelPricesManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Precios de Combustible</h2>
-          <p className="text-sm text-muted-foreground">Registro semanal de precios (actualización cada jueves)</p>
+          <p className="text-sm text-muted-foreground">
+            Referencia automática: {REFERENCE_FUEL_STATION_LABEL}, {REFERENCE_FUEL_STATION.address}, {REFERENCE_FUEL_STATION.region}
+          </p>
         </div>
-        <Button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-violet-600 hover:bg-violet-700 text-white"
-        >
-          <Plus className="size-4 mr-2" />
-          Nuevo Precio
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleManualSync}
+            disabled={isSyncing}
+          >
+            <RefreshCw className={`size-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            Actualizar desde COPEC
+          </Button>
+          <Button
+            onClick={() => setIsFormOpen(true)}
+            className="bg-violet-600 hover:bg-violet-700 text-white"
+          >
+            <Plus className="size-4 mr-2" />
+            Nuevo Precio
+          </Button>
+        </div>
       </div>
 
       {/* Current prices cards */}
@@ -168,6 +212,11 @@ export const FuelPricesManager = () => {
                       Desde {new Date(`${price.price_date}T12:00:00Z`).toLocaleDateString('es-CL')}
                       {price.source && ` • ${price.source}`}
                     </p>
+                    {price.source === REFERENCE_FUEL_SOURCE && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Estación: {REFERENCE_FUEL_STATION.address}, {REFERENCE_FUEL_STATION.comuna}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground py-3">Sin precio registrado</p>

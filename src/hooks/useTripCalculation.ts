@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCurrentFuelPrices } from './useFuelPrices';
 import { useConsumptionRates, type ConsumptionRate } from './useConsumptionRates';
 import { createLogger } from '@/lib/logger';
+import type { Crane } from '@/types';
 
 const logger = createLogger('useTripCalculation');
 
@@ -14,9 +15,11 @@ export interface TripCalculationInput {
   originName: string;
   destinationName: string;
   craneType: string;
+  crane?: Crane | null;
   vehicleConfig: '1_vehicle' | '2_vehicles';
   returnConfig: ReturnTripConfig;
   manualTollCost?: number;
+  tollCostAlreadyRoundTrip?: boolean;
   tollDetails?: Array<{ name: string; cost: number; highway?: string }>;
   additionalCosts?: number;
 }
@@ -51,6 +54,54 @@ export interface TripCalculationResult {
   };
   additional_costs: number;
   total_estimate: number;
+}
+
+export interface EffectiveConsumptionRate extends ConsumptionRate {
+  source: 'type_default' | 'crane_override';
+}
+
+export function resolveRoundTripTollCost(
+  tollCost: number,
+  alreadyRoundTrip = false,
+): number {
+  return alreadyRoundTrip ? tollCost : tollCost * 2;
+}
+
+export function resolveEffectiveConsumptionRate(
+  rates: ConsumptionRate[] | undefined,
+  craneType: string,
+  crane?: Crane | null,
+): EffectiveConsumptionRate | null {
+  const baseRate = rates?.find((rate) => rate.crane_type === craneType);
+
+  if (!baseRate) {
+    return null;
+  }
+
+  const hasOverride =
+    crane?.fuelTypeOverride !== undefined ||
+    crane?.baseConsumptionPerKmOverride !== undefined ||
+    crane?.loadedConsumptionFactorOverride !== undefined ||
+    crane?.towingConsumptionFactorOverride !== undefined;
+
+  if (!hasOverride) {
+    return {
+      ...baseRate,
+      source: 'type_default',
+    };
+  }
+
+  return {
+    ...baseRate,
+    fuel_type: crane?.fuelTypeOverride || baseRate.fuel_type,
+    base_consumption_per_km:
+      crane?.baseConsumptionPerKmOverride ?? baseRate.base_consumption_per_km,
+    loaded_consumption_factor:
+      crane?.loadedConsumptionFactorOverride ?? baseRate.loaded_consumption_factor,
+    towing_consumption_factor:
+      crane?.towingConsumptionFactorOverride ?? baseRate.towing_consumption_factor,
+    source: 'crane_override',
+  };
 }
 
 export function useTripCalculation() {
@@ -88,8 +139,10 @@ export function useTripCalculation() {
         const estimated_time_hours = routeData.estimated_time_hours;
 
         // 2. Find consumption rate for crane type
-        const rate = consumptionRates?.find(
-          (r: ConsumptionRate) => r.crane_type === input.craneType
+        const rate = resolveEffectiveConsumptionRate(
+          consumptionRates,
+          input.craneType,
+          input.crane,
         );
 
         if (!rate) {
@@ -132,8 +185,11 @@ export function useTripCalculation() {
         const totalFuelCost = idaCost + vueltaCost;
 
         // 4. Tolls (round trip = x2)
-        const oneWayTollCost = input.manualTollCost ?? 0;
-        const tollCost = oneWayTollCost * 2;
+        const tollBaseCost = input.manualTollCost ?? 0;
+        const tollCost = resolveRoundTripTollCost(
+          tollBaseCost,
+          input.tollCostAlreadyRoundTrip ?? false,
+        );
 
         // 5. Additional costs
         const additionalCosts = input.additionalCosts ?? 0;

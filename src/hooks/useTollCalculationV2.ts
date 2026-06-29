@@ -74,6 +74,12 @@ const KNOWN_KM: Record<string, number> = {
   'iquique': 1850,
 };
 
+const DUPLICATE_KM_MARKERS = new Set(
+  Object.values(KNOWN_KM).filter(
+    (km, index, values) => values.indexOf(km) !== index,
+  ),
+);
+
 const estimateKm = (
   cityName: string,
   stations: Array<{ stationName: string; kmMarker: number | null; concessionName: string }>,
@@ -98,6 +104,73 @@ const estimateKm = (
 
   return null;
 };
+
+const normalizeRouteName = (value: string) => norm(value);
+
+const resolveKnownKmReference = (cityName: string): number | null => {
+  const normalized = norm(cityName);
+
+  for (const [key, km] of Object.entries(KNOWN_KM)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return km;
+    }
+  }
+
+  return null;
+};
+
+export function hasAmbiguousKmReference(cityName: string): boolean {
+  const km = resolveKnownKmReference(cityName);
+  return km !== null && DUPLICATE_KM_MARKERS.has(km);
+}
+
+export function canUseFallbackRange(
+  originName: string,
+  destName: string,
+  kmOrigin: number | null,
+  kmDest: number | null,
+): boolean {
+  if (kmOrigin === null || kmDest === null) {
+    return false;
+  }
+
+  if (kmOrigin === kmDest) {
+    return false;
+  }
+
+  if (hasAmbiguousKmReference(originName) || hasAmbiguousKmReference(destName)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function shouldExcludeFallbackStation(
+  stationName: string,
+  originName: string,
+  destName: string,
+): boolean {
+  const normalizedStation = normalizeRouteName(stationName);
+  const normalizedOrigin = normalizeRouteName(originName);
+  const normalizedDest = normalizeRouteName(destName);
+
+  const routeTouchesCopiapo =
+    normalizedOrigin.includes('copiapo') || normalizedDest.includes('copiapo');
+  const routeTouchesCaldera =
+    normalizedOrigin.includes('caldera') || normalizedDest.includes('caldera');
+
+  // Puerto Viejo corresponde al tramo hacia Caldera; no debe incluirse
+  // cuando la ruta usa Copiapó pero no entra a Caldera.
+  if (
+    normalizedStation.includes('puerto viejo') &&
+    routeTouchesCopiapo &&
+    !routeTouchesCaldera
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 export function useTollCalculationV2() {
   const [isCalculating, setIsCalculating] = useState(false);
@@ -153,6 +226,8 @@ export function useTollCalculationV2() {
         }));
 
         let getApiStations: string[] = [];
+        let exactLookupStatus: 'matched' | 'no_results' | 'unmatched' | 'failed' = 'failed';
+        let exactLookupReturnedZero = false;
 
         try {
           const { data: apiData, error: apiInvokeError } = await supabase.functions.invoke(
@@ -175,15 +250,35 @@ export function useTollCalculationV2() {
             throw apiInvokeError;
           }
 
-          if (apiData?.data?.details?.length > 0) {
-            getApiStations = apiData.data.details.map((detail: any) => detail.peaje as string);
+          if (apiData?.error) {
+            throw new Error(apiData.error);
+          }
+
+          const apiDetails = Array.isArray(apiData?.data?.details)
+            ? apiData.data.details
+            : Array.isArray(apiData?.details)
+              ? apiData.details
+              : [];
+
+          const apiTotal =
+            typeof apiData?.data?.total === 'number'
+              ? Number(apiData.data.total)
+              : typeof apiData?.total === 'number'
+                ? Number(apiData.total)
+                : null;
+
+          exactLookupReturnedZero = apiTotal === 0;
+
+          if (apiDetails.length > 0) {
+            getApiStations = apiDetails.map((detail: any) => detail.peaje as string);
             logger.debug('GetAPI peajes detectados', getApiStations);
-          } else if (apiData?.details?.length > 0) {
-            getApiStations = apiData.details.map((detail: any) => detail.peaje as string);
-            logger.debug('GetAPI peajes detectados', getApiStations);
+            exactLookupStatus = 'matched';
+          } else {
+            exactLookupStatus = 'no_results';
           }
         } catch (apiError) {
           logger.warn('GetAPI no disponible, usando fallback por rango km', apiError);
+          exactLookupStatus = 'failed';
         }
 
         let breakdown: TollBreakdown[] = [];
@@ -219,16 +314,43 @@ export function useTollCalculationV2() {
 
           if (breakdown.length > 0) {
             source = 'getapi_matched';
+          } else {
+            exactLookupStatus = 'unmatched';
           }
         }
 
         if (breakdown.length === 0) {
+          if (exactLookupStatus === 'no_results' && exactLookupReturnedZero) {
+            const noTollsExactResult: TollResultV2 = {
+              totalCost: 0,
+              idaCost: 0,
+              vueltaCost: 0,
+              breakdown: [],
+              category,
+              returnCategory: category,
+              source: 'getapi_matched',
+            };
+
+            setResult(noTollsExactResult);
+            return noTollsExactResult;
+          }
+
+          if (exactLookupStatus === 'unmatched') {
+            setError(
+              'La ruta fue identificada, pero faltan equivalencias de peajes en la base. Ingresa el monto manualmente para evitar cobros incorrectos.',
+            );
+            return null;
+          }
+
           const kmOrigin = estimateKm(originName, stationIndex);
           const kmDest = estimateKm(destName, stationIndex);
 
           logger.debug('Fallback km range', { kmOrigin, kmDest });
 
-          if (kmOrigin !== null && kmDest !== null) {
+          if (
+            exactLookupStatus === 'failed' &&
+            canUseFallbackRange(originName, destName, kmOrigin, kmDest)
+          ) {
             const kmMin = Math.min(kmOrigin, kmDest);
             const kmMax = Math.max(kmOrigin, kmDest);
 
@@ -238,7 +360,8 @@ export function useTollCalculationV2() {
                   station.stationType === 'TRONCAL' &&
                   station.kmMarker !== null &&
                   station.kmMarker >= kmMin &&
-                  station.kmMarker <= kmMax,
+                  station.kmMarker <= kmMax &&
+                  !shouldExcludeFallbackStation(station.stationName, originName, destName),
               )
               .sort((a, b) => (a.kmMarker ?? 0) - (b.kmMarker ?? 0))
               .map((station) => ({
@@ -257,19 +380,12 @@ export function useTollCalculationV2() {
         }
 
         if (breakdown.length === 0) {
-          const noTollsResult: TollResultV2 = {
-            totalCost: 0,
-            idaCost: 0,
-            vueltaCost: 0,
-            breakdown: [],
-            category,
-            returnCategory: category,
-            source: 'fallback_range',
-            warning: 'No se encontraron peajes en este tramo. Verifica el origen y destino.',
-          };
-
-          setResult(noTollsResult);
-          return noTollsResult;
+          setError(
+            exactLookupStatus === 'failed'
+              ? 'No se pudo validar la ruta exacta de peajes. Ingresa el monto manualmente para evitar incluir peajes fuera de trayecto.'
+              : 'No se pudo determinar con certeza los peajes de esta ruta. Ingresa el monto manualmente para evitar cobros incorrectos.',
+          );
+          return null;
         }
 
         // Costo de ida

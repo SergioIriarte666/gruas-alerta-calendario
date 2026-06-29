@@ -1408,56 +1408,68 @@ export type Database = {
       }
       cranes: {
         Row: {
+          base_consumption_per_km_override: number | null
           brand: string
           circulation_permit_expiry: string
           created_at: string | null
           created_by: string | null
+          fuel_type_override: string | null
           id: string
           insurance_expiry: string
           is_active: boolean | null
           license_plate: string
+          loaded_consumption_factor_override: number | null
           model: string
           owner_company_name: string | null
           owner_company_rut: string | null
           status: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry: string
           toll_vehicle_category: string
+          towing_consumption_factor_override: number | null
           type: Database["public"]["Enums"]["crane_type"]
           updated_at: string | null
         }
         Insert: {
+          base_consumption_per_km_override?: number | null
           brand: string
           circulation_permit_expiry: string
           created_at?: string | null
           created_by?: string | null
+          fuel_type_override?: string | null
           id?: string
           insurance_expiry: string
           is_active?: boolean | null
           license_plate: string
+          loaded_consumption_factor_override?: number | null
           model: string
           owner_company_name?: string | null
           owner_company_rut?: string | null
           status?: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry: string
           toll_vehicle_category?: string
+          towing_consumption_factor_override?: number | null
           type: Database["public"]["Enums"]["crane_type"]
           updated_at?: string | null
         }
         Update: {
+          base_consumption_per_km_override?: number | null
           brand?: string
           circulation_permit_expiry?: string
           created_at?: string | null
           created_by?: string | null
+          fuel_type_override?: string | null
           id?: string
           insurance_expiry?: string
           is_active?: boolean | null
           license_plate?: string
+          loaded_consumption_factor_override?: number | null
           model?: string
           owner_company_name?: string | null
           owner_company_rut?: string | null
           status?: Database["public"]["Enums"]["crane_status"]
           technical_review_expiry?: string
           toll_vehicle_category?: string
+          towing_consumption_factor_override?: number | null
           type?: Database["public"]["Enums"]["crane_type"]
           updated_at?: string | null
         }

@@ -220,9 +220,11 @@ export const TripCalculatorForm = () => {
       originName,
       destinationName: destName,
       craneType,
+      crane: selectedCrane,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
       returnConfig,
       manualTollCost: tollCost,
+      tollCostAlreadyRoundTrip: Boolean(tollV2),
       tollDetails: tollData?.tolls,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
     };
@@ -241,9 +243,11 @@ export const TripCalculatorForm = () => {
       originName,
       destinationName: destName,
       craneType,
+      crane: selectedCrane,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
       returnConfig,
       manualTollCost: manualToll ? Number(manualToll) : 0,
+      tollCostAlreadyRoundTrip: false,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
     };
 

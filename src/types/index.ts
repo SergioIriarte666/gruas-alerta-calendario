@@ -237,6 +237,10 @@ export interface Crane {
   model: string;
   type: CraneType;
   tollVehicleCategory?: string;
+  fuelTypeOverride?: string;
+  baseConsumptionPerKmOverride?: number;
+  loadedConsumptionFactorOverride?: number;
+  towingConsumptionFactorOverride?: number;
   ownerCompanyRut?: string;
   ownerCompanyName?: string;
   circulationPermitExpiry: string;

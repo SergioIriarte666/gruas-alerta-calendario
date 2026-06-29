@@ -14,6 +14,10 @@ const CRANES_SELECT = `
   model,
   type,
   toll_vehicle_category,
+  fuel_type_override,
+  base_consumption_per_km_override,
+  loaded_consumption_factor_override,
+  towing_consumption_factor_override,
   owner_company_rut,
   owner_company_name,
   circulation_permit_expiry,
@@ -38,6 +42,10 @@ const CRANES_ROW_SELECT = `
   model,
   type,
   toll_vehicle_category,
+  fuel_type_override,
+  base_consumption_per_km_override,
+  loaded_consumption_factor_override,
+  towing_consumption_factor_override,
   owner_company_rut,
   owner_company_name,
   circulation_permit_expiry,
@@ -71,6 +79,10 @@ const fetchCranes = async (activeOnly = false): Promise<Crane[]> => {
     model: crane.model,
     type: crane.type as Crane['type'],
     tollVehicleCategory: crane.toll_vehicle_category || '2',
+    fuelTypeOverride: crane.fuel_type_override ?? undefined,
+    baseConsumptionPerKmOverride: crane.base_consumption_per_km_override ?? undefined,
+    loadedConsumptionFactorOverride: crane.loaded_consumption_factor_override ?? undefined,
+    towingConsumptionFactorOverride: crane.towing_consumption_factor_override ?? undefined,
     ownerCompanyRut: crane.owner_company_rut ?? undefined,
     ownerCompanyName: crane.owner_company_name ?? undefined,
     circulationPermitExpiry: crane.circulation_permit_expiry,
@@ -108,6 +120,10 @@ export const useCranes = (activeOnly = false) => {
           model: craneData.model,
           type: craneData.type,
           toll_vehicle_category: craneData.tollVehicleCategory || '2',
+          fuel_type_override: craneData.fuelTypeOverride || null,
+          base_consumption_per_km_override: craneData.baseConsumptionPerKmOverride ?? null,
+          loaded_consumption_factor_override: craneData.loadedConsumptionFactorOverride ?? null,
+          towing_consumption_factor_override: craneData.towingConsumptionFactorOverride ?? null,
           owner_company_rut: craneData.ownerCompanyRut || null,
           owner_company_name: craneData.ownerCompanyName || null,
           circulation_permit_expiry: craneData.circulationPermitExpiry,
@@ -127,6 +143,10 @@ export const useCranes = (activeOnly = false) => {
         model: data.model,
         type: data.type as Crane['type'],
         tollVehicleCategory: data.toll_vehicle_category || '2',
+        fuelTypeOverride: data.fuel_type_override ?? undefined,
+        baseConsumptionPerKmOverride: data.base_consumption_per_km_override ?? undefined,
+        loadedConsumptionFactorOverride: data.loaded_consumption_factor_override ?? undefined,
+        towingConsumptionFactorOverride: data.towing_consumption_factor_override ?? undefined,
         ownerCompanyRut: data.owner_company_rut ?? undefined,
         ownerCompanyName: data.owner_company_name ?? undefined,
         circulationPermitExpiry: data.circulation_permit_expiry,
@@ -190,6 +210,10 @@ export const useCranes = (activeOnly = false) => {
         updateData.is_active = craneData.status === 'active';
       }
       if (craneData.tollVehicleCategory !== undefined) updateData.toll_vehicle_category = craneData.tollVehicleCategory;
+      if (craneData.fuelTypeOverride !== undefined) updateData.fuel_type_override = craneData.fuelTypeOverride || null;
+      if (craneData.baseConsumptionPerKmOverride !== undefined) updateData.base_consumption_per_km_override = craneData.baseConsumptionPerKmOverride ?? null;
+      if (craneData.loadedConsumptionFactorOverride !== undefined) updateData.loaded_consumption_factor_override = craneData.loadedConsumptionFactorOverride ?? null;
+      if (craneData.towingConsumptionFactorOverride !== undefined) updateData.towing_consumption_factor_override = craneData.towingConsumptionFactorOverride ?? null;
 
       // Realizar la actualización
       const { data: updatedData, error: updateError } = await supabase

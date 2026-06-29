@@ -140,7 +140,7 @@ export const TripCostBreakdown = ({
           <CardContent>
             <p className="text-2xl font-bold text-foreground">{formatCurrency(result.tolls.total_cost)}</p>
             {result.tolls.is_round_trip && (
-              <p className="text-xs text-muted-foreground mt-1">Peaje ida y vuelta (×2)</p>
+              <p className="text-xs text-muted-foreground mt-1">Peaje ida y vuelta</p>
             )}
             <div className="mt-2 text-xs text-muted-foreground space-y-1">
               {result.tolls.is_manual ? (
