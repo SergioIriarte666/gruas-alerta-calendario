@@ -29,6 +29,8 @@ export interface TollStation {
   concessionId: string | null;
   concessionName?: string;
   kmMarker: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   isActive: boolean;
 }
 
@@ -50,6 +52,8 @@ export interface TollRateCurrent {
   highway: string | null;
   stationType: string;
   kmMarker: number | null;
+  latitude: number | null;
+  longitude: number | null;
   vehicleCategory: string;
   rateAmount: number;
   rateValidFrom: string;
@@ -112,6 +116,8 @@ export const useTollRatesCurrent = () =>
         highway: row.highway,
         stationType: row.station_type ?? '',
         kmMarker: row.km_marker,
+        latitude: row.latitude,
+        longitude: row.longitude,
         vehicleCategory: row.vehicle_category ?? '',
         rateAmount: Number(row.rate_amount ?? 0),
         rateValidFrom: row.rate_valid_from ?? '',
@@ -131,6 +137,8 @@ export interface NewStationInput {
   stationType: 'TRONCAL' | 'LATERAL' | 'ACCESO';
   concessionId: string;
   kmMarker?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface NewRateInput {
@@ -190,6 +198,8 @@ export const useCreateTollStation = () => {
           station_type: input.stationType,
           concession_id: input.concessionId,
           km_marker: input.kmMarker ?? null,
+          latitude: input.latitude ?? null,
+          longitude: input.longitude ?? null,
           is_active: true,
         })
         .select('id')

@@ -6955,6 +6955,8 @@ export type Database = {
           concession_valid_until: string | null
           highway: string | null
           km_marker: number | null
+          latitude: number | null
+          longitude: number | null
           rate_amount: number | null
           rate_id: string | null
           rate_valid_from: string | null

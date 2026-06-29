@@ -303,6 +303,19 @@ export function useSyncReferenceFuelPrices() {
 
   return useMutation({
     mutationFn: async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      if (!session?.user) {
+        throw new Error('Debes iniciar sesión para actualizar los precios de combustible.');
+      }
+
       const fetchedPrices = await fetchReferenceStationFuelPrices();
 
       if (fetchedPrices.length === 0) {

@@ -17,6 +17,7 @@ import { TollBreakdownCard } from './TollBreakdownCard';
 import { TripRouteMap } from './TripRouteMap';
 import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
 import { createLogger } from "@/lib/logger";
+import { fetchRouteDirections } from '@/lib/routeDirections';
 
 
 const logger = createLogger("TripCalculatorForm");
@@ -183,75 +184,88 @@ export const TripCalculatorForm = () => {
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
 
-    setShowManualToll(false);
-    const craneCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
+    try {
+      setShowManualToll(false);
+      const craneCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
+      const route = await fetchRouteDirections(originCoords, destCoords);
 
-    logger.debug('Toll lookup V2:', { originName, destName, craneCategory, twoVehicles });
+      logger.debug('Toll lookup V2:', { originName, destName, craneCategory, twoVehicles });
 
-    const tollV2 = await calculateTollV2({
-      originName,
-      destName,
-      originCoords,
-      destCoords,
-      craneCategory,
-      twoVehicles,
-      returnConfig,
-    });
+      const tollV2 = await calculateTollV2({
+        originName,
+        destName,
+        originCoords,
+        destCoords,
+        routeGeometry: route.geometry,
+        craneCategory,
+        twoVehicles,
+        returnConfig,
+      });
 
-    if (!tollV2) {
-      setShowManualToll(true);
+      if (!tollV2) {
+        setShowManualToll(true);
+      }
+
+      const tollCost = tollV2?.totalCost ?? (manualToll ? Number(manualToll) : 0);
+      const tollData = tollV2
+        ? {
+            total_cost: tollV2.totalCost,
+            tolls: tollV2.breakdown.map((item) => ({
+              name: item.stationName,
+              cost: item.rateAmount,
+              highway: item.highway ?? undefined,
+            })),
+          }
+        : null;
+
+      const input: TripCalculationInput = {
+        originCoords,
+        destinationCoords: destCoords,
+        originName,
+        destinationName: destName,
+        prefetchedRoute: route,
+        craneType,
+        crane: selectedCrane,
+        vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+        returnConfig,
+        manualTollCost: tollCost,
+        tollCostAlreadyRoundTrip: Boolean(tollV2),
+        tollDetails: tollData?.tolls,
+        additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+      };
+
+      await calculate(input);
+    } catch (routeError) {
+      logger.error('No se pudo preparar la ruta para el calculo del viaje', routeError);
     }
-
-    const tollCost = tollV2?.totalCost ?? (manualToll ? Number(manualToll) : 0);
-    const tollData = tollV2
-      ? {
-          total_cost: tollV2.totalCost,
-          tolls: tollV2.breakdown.map((item) => ({
-            name: item.stationName,
-            cost: item.rateAmount,
-            highway: item.highway ?? undefined,
-          })),
-        }
-      : null;
-
-    const input: TripCalculationInput = {
-      originCoords,
-      destinationCoords: destCoords,
-      originName,
-      destinationName: destName,
-      craneType,
-      crane: selectedCrane,
-      vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
-      returnConfig,
-      manualTollCost: tollCost,
-      tollCostAlreadyRoundTrip: Boolean(tollV2),
-      tollDetails: tollData?.tolls,
-      additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
-    };
-
-    await calculate(input);
   };
 
   const handleRecalculateWithManualToll = async () => {
     if (!originCoords || !destCoords || !craneType) return;
 
-    resetTollV2();
+    try {
+      resetTollV2();
+      const route = await fetchRouteDirections(originCoords, destCoords);
 
-    const input: TripCalculationInput = {
-      originCoords,
-      destinationCoords: destCoords,
-      originName,
-      destinationName: destName,
-      craneType,
-      crane: selectedCrane,
-      vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
-      returnConfig,
-      manualTollCost: manualToll ? Number(manualToll) : 0,
-      tollCostAlreadyRoundTrip: false,
-      additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
-    };
+      const input: TripCalculationInput = {
+        originCoords,
+        destinationCoords: destCoords,
+        originName,
+        destinationName: destName,
+        prefetchedRoute: route,
+        craneType,
+        crane: selectedCrane,
+        vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+        returnConfig,
+        manualTollCost: manualToll ? Number(manualToll) : 0,
+        tollCostAlreadyRoundTrip: false,
+        additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+      };
 
-    await calculate(input);
+      await calculate(input);
+    } catch (routeError) {
+      logger.error('No se pudo recalcular la ruta con peaje manual', routeError);
+    }
   };
 
   const canCalculate = originCoords && destCoords && craneType;

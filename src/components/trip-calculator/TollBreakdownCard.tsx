@@ -18,6 +18,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const SOURCE_LABELS: Record<string, { label: string; color: string }> = {
+  route_geometry: {
+    label: 'Ruta real + coordenadas',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  },
   getapi_matched: {
     label: 'Ruta exacta verificada',
     color: 'bg-green-100 text-green-800 border-green-300',

@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useCurrentFuelPrices } from './useFuelPrices';
 import { useConsumptionRates, type ConsumptionRate } from './useConsumptionRates';
 import { createLogger } from '@/lib/logger';
 import type { Crane } from '@/types';
+import type { RouteDirectionsResult } from '@/lib/routeDirections';
+import { fetchRouteDirections } from '@/lib/routeDirections';
 
 const logger = createLogger('useTripCalculation');
 
@@ -14,6 +15,7 @@ export interface TripCalculationInput {
   destinationCoords: [number, number];
   originName: string;
   destinationName: string;
+  prefetchedRoute?: RouteDirectionsResult;
   craneType: string;
   crane?: Crane | null;
   vehicleConfig: '1_vehicle' | '2_vehicles';
@@ -118,22 +120,9 @@ export function useTripCalculation() {
       setResult(null);
 
       try {
-        // 1. Get distance via Mapbox
-        const { data: routeData, error: routeError } = await supabase.functions.invoke(
-          'mapbox-proxy',
-          {
-            body: {
-              action: 'directions',
-              origin: input.originCoords,
-              destination: input.destinationCoords,
-            },
-          }
-        );
-
-        if (routeError || !routeData?.distance_km) {
-          setError('No se pudo calcular la ruta. Verifique las ubicaciones.');
-          return null;
-        }
+        const routeData =
+          input.prefetchedRoute ??
+          await fetchRouteDirections(input.originCoords, input.destinationCoords);
 
         const distance_km = routeData.distance_km;
         const estimated_time_hours = routeData.estimated_time_hours;

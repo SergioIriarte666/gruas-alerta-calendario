@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import type { RouteGeometry } from '@/lib/routeDirections';
 
 const logger = createLogger('useTollCalculationV2');
 
@@ -12,7 +13,7 @@ export interface TollBreakdown {
   stationType: string;
   rateAmount: number;
   vehicleCategory: string;
-  source: 'getapi' | 'fallback';
+  source: 'route_geometry' | 'getapi' | 'fallback';
 }
 
 export interface TollResultV2 {
@@ -22,8 +23,20 @@ export interface TollResultV2 {
   breakdown: TollBreakdown[];
   category: string;
   returnCategory: string;
-  source: 'getapi_matched' | 'fallback_range';
+  source: 'route_geometry' | 'getapi_matched' | 'fallback_range';
   warning?: string;
+}
+
+interface StationRateIndexEntry {
+  stationId: string;
+  stationName: string;
+  concessionName: string;
+  highway: string | null;
+  stationType: string;
+  rateAmount: number;
+  kmMarker: number | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 const norm = (value: string) =>
@@ -106,6 +119,9 @@ const estimateKm = (
 };
 
 const normalizeRouteName = (value: string) => norm(value);
+const EARTH_RADIUS_METERS = 6371000;
+const ROUTE_MATCH_MAX_DISTANCE_METERS = 1800;
+const LATERAL_MATCH_MAX_DISTANCE_METERS = 350;
 
 const resolveKnownKmReference = (cityName: string): number | null => {
   const normalized = norm(cityName);
@@ -172,6 +188,146 @@ export function shouldExcludeFallbackStation(
   return false;
 }
 
+function toProjectedMeters(
+  coordinate: [number, number],
+  referenceLatitude: number,
+): [number, number] {
+  const [lng, lat] = coordinate;
+  const lngRad = (lng * Math.PI) / 180;
+  const latRad = (lat * Math.PI) / 180;
+  const refLatRad = (referenceLatitude * Math.PI) / 180;
+
+  return [
+    EARTH_RADIUS_METERS * lngRad * Math.cos(refLatRad),
+    EARTH_RADIUS_METERS * latRad,
+  ];
+}
+
+interface RouteMatchCandidate {
+  station: StationRateIndexEntry;
+  distanceMeters: number;
+  progressMeters: number;
+}
+
+function projectStationOntoRoute(
+  station: StationRateIndexEntry,
+  routeCoordinates: [number, number][],
+): RouteMatchCandidate | null {
+  if (
+    !routeCoordinates.length ||
+    station.latitude === null ||
+    station.longitude === null
+  ) {
+    return null;
+  }
+
+  const stationCoordinate: [number, number] = [station.longitude, station.latitude];
+  const referenceLatitude =
+    routeCoordinates.reduce((sum, [, lat]) => sum + lat, 0) / routeCoordinates.length;
+  const stationPoint = toProjectedMeters(stationCoordinate, referenceLatitude);
+
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestProgress = 0;
+  let cumulativeDistance = 0;
+
+  for (let i = 1; i < routeCoordinates.length; i += 1) {
+    const segmentStart = routeCoordinates[i - 1];
+    const segmentEnd = routeCoordinates[i];
+    const startPoint = toProjectedMeters(segmentStart, referenceLatitude);
+    const endPoint = toProjectedMeters(segmentEnd, referenceLatitude);
+    const segmentVector: [number, number] = [
+      endPoint[0] - startPoint[0],
+      endPoint[1] - startPoint[1],
+    ];
+    const pointVector: [number, number] = [
+      stationPoint[0] - startPoint[0],
+      stationPoint[1] - startPoint[1],
+    ];
+    const segmentLengthSquared =
+      segmentVector[0] * segmentVector[0] + segmentVector[1] * segmentVector[1];
+
+    if (segmentLengthSquared === 0) {
+      continue;
+    }
+
+    const rawProjection =
+      (pointVector[0] * segmentVector[0] + pointVector[1] * segmentVector[1]) /
+      segmentLengthSquared;
+    const clampedProjection = Math.min(1, Math.max(0, rawProjection));
+    const projectedPoint: [number, number] = [
+      startPoint[0] + segmentVector[0] * clampedProjection,
+      startPoint[1] + segmentVector[1] * clampedProjection,
+    ];
+    const distanceMeters = Math.hypot(
+      stationPoint[0] - projectedPoint[0],
+      stationPoint[1] - projectedPoint[1],
+    );
+    const segmentLength = Math.sqrt(segmentLengthSquared);
+    const progressMeters = cumulativeDistance + segmentLength * clampedProjection;
+
+    if (distanceMeters < bestDistance) {
+      bestDistance = distanceMeters;
+      bestProgress = progressMeters;
+    }
+
+    cumulativeDistance += segmentLength;
+  }
+
+  if (!Number.isFinite(bestDistance)) {
+    return null;
+  }
+
+  return {
+    station,
+    distanceMeters: bestDistance,
+    progressMeters: bestProgress,
+  };
+}
+
+export function matchStationsByRouteGeometry(
+  routeGeometry: RouteGeometry | null | undefined,
+  stations: StationRateIndexEntry[],
+): TollBreakdown[] {
+  if (!routeGeometry?.coordinates?.length) {
+    return [];
+  }
+
+  const matched = stations
+    .filter((station) => station.stationType !== 'LATERAL')
+    .map((station) => projectStationOntoRoute(station, routeGeometry.coordinates))
+    .filter((candidate): candidate is RouteMatchCandidate => Boolean(candidate))
+    .filter((candidate) => {
+      const maxDistance =
+        candidate.station.stationType === 'TRONCAL'
+          ? ROUTE_MATCH_MAX_DISTANCE_METERS
+          : LATERAL_MATCH_MAX_DISTANCE_METERS;
+
+      return candidate.distanceMeters <= maxDistance;
+    })
+    .sort((a, b) => a.progressMeters - b.progressMeters);
+
+  const deduped = new Map<string, TollBreakdown>();
+
+  for (const candidate of matched) {
+    if (deduped.has(candidate.station.stationId)) {
+      continue;
+    }
+
+    deduped.set(candidate.station.stationId, {
+      stationId: candidate.station.stationId,
+      stationName: candidate.station.stationName,
+      concessionName: candidate.station.concessionName,
+      highway: candidate.station.highway,
+      stationType: candidate.station.stationType,
+      rateAmount: candidate.station.rateAmount,
+      vehicleCategory: '',
+      source: 'route_geometry',
+    });
+  }
+
+  return Array.from(deduped.values());
+}
+
 export function useTollCalculationV2() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<TollResultV2 | null>(null);
@@ -183,6 +339,7 @@ export function useTollCalculationV2() {
       destName,
       originCoords,
       destCoords,
+      routeGeometry,
       craneCategory,
       twoVehicles,
       returnConfig = 'empty',
@@ -191,6 +348,7 @@ export function useTollCalculationV2() {
       destName: string;
       originCoords: [number, number] | null;
       destCoords: [number, number] | null;
+      routeGeometry?: RouteGeometry | null;
       craneCategory: string;
       twoVehicles: boolean;
       returnConfig?: 'empty' | '1_vehicle' | '2_vehicles';
@@ -223,68 +381,76 @@ export function useTollCalculationV2() {
           stationType: rate.station_type as string,
           rateAmount: Number(rate.rate_amount),
           kmMarker: rate.km_marker ? Number(rate.km_marker) : null,
-        }));
+          latitude: rate.latitude ? Number(rate.latitude) : null,
+          longitude: rate.longitude ? Number(rate.longitude) : null,
+        })) satisfies StationRateIndexEntry[];
 
         let getApiStations: string[] = [];
         let exactLookupStatus: 'matched' | 'no_results' | 'unmatched' | 'failed' = 'failed';
         let exactLookupReturnedZero = false;
+        let breakdown: TollBreakdown[] = matchStationsByRouteGeometry(routeGeometry, stationIndex).map(
+          (item) => ({
+            ...item,
+            vehicleCategory: category,
+          }),
+        );
+        let source: TollResultV2['source'] = breakdown.length > 0 ? 'route_geometry' : 'fallback_range';
 
-        try {
-          const { data: apiData, error: apiInvokeError } = await supabase.functions.invoke(
-            'tollroutes-proxy',
-            {
-              body: {
-                action: 'route-cost-by-coords',
-                origin: originCoords
-                  ? { lat: originCoords[1], lng: originCoords[0] }
-                  : undefined,
-                destination: destCoords
-                  ? { lat: destCoords[1], lng: destCoords[0] }
-                  : undefined,
-                categoryCode: category === 'LIVIANO' ? 'LIVIANO' : 'PESADO',
+        if (breakdown.length === 0) {
+          try {
+            const { data: apiData, error: apiInvokeError } = await supabase.functions.invoke(
+              'tollroutes-proxy',
+              {
+                body: {
+                  action: 'route-cost-by-coords',
+                  origin: originCoords
+                    ? { lat: originCoords[1], lng: originCoords[0] }
+                    : undefined,
+                  destination: destCoords
+                    ? { lat: destCoords[1], lng: destCoords[0] }
+                    : undefined,
+                  categoryCode: category === 'LIVIANO' ? 'LIVIANO' : 'PESADO',
+                },
               },
-            },
-          );
+            );
 
-          if (apiInvokeError) {
-            throw apiInvokeError;
+            if (apiInvokeError) {
+              throw apiInvokeError;
+            }
+
+            if (apiData?.error) {
+              throw new Error(apiData.error);
+            }
+
+            const apiDetails = Array.isArray(apiData?.data?.details)
+              ? apiData.data.details
+              : Array.isArray(apiData?.details)
+                ? apiData.details
+                : [];
+
+            const apiTotal =
+              typeof apiData?.data?.total === 'number'
+                ? Number(apiData.data.total)
+                : typeof apiData?.total === 'number'
+                  ? Number(apiData.total)
+                  : null;
+
+            exactLookupReturnedZero = apiTotal === 0;
+
+            if (apiDetails.length > 0) {
+              getApiStations = apiDetails.map((detail: any) => detail.peaje as string);
+              logger.debug('GetAPI peajes detectados', getApiStations);
+              exactLookupStatus = 'matched';
+            } else {
+              exactLookupStatus = 'no_results';
+            }
+          } catch (apiError) {
+            logger.warn('GetAPI no disponible, usando fallback por rango km', apiError);
+            exactLookupStatus = 'failed';
           }
-
-          if (apiData?.error) {
-            throw new Error(apiData.error);
-          }
-
-          const apiDetails = Array.isArray(apiData?.data?.details)
-            ? apiData.data.details
-            : Array.isArray(apiData?.details)
-              ? apiData.details
-              : [];
-
-          const apiTotal =
-            typeof apiData?.data?.total === 'number'
-              ? Number(apiData.data.total)
-              : typeof apiData?.total === 'number'
-                ? Number(apiData.total)
-                : null;
-
-          exactLookupReturnedZero = apiTotal === 0;
-
-          if (apiDetails.length > 0) {
-            getApiStations = apiDetails.map((detail: any) => detail.peaje as string);
-            logger.debug('GetAPI peajes detectados', getApiStations);
-            exactLookupStatus = 'matched';
-          } else {
-            exactLookupStatus = 'no_results';
-          }
-        } catch (apiError) {
-          logger.warn('GetAPI no disponible, usando fallback por rango km', apiError);
-          exactLookupStatus = 'failed';
         }
 
-        let breakdown: TollBreakdown[] = [];
-        let source: TollResultV2['source'] = 'fallback_range';
-
-        if (getApiStations.length > 0) {
+        if (breakdown.length === 0 && getApiStations.length > 0) {
           for (const apiStation of getApiStations) {
             const normalizedApiStation = norm(apiStation);
             const firstWord = normalizedApiStation.split(' ')[0] ?? '';
@@ -417,7 +583,11 @@ export function useTollCalculationV2() {
 
         const totalCost = idaCost + vueltaCost;
         const warning =
-          source === 'fallback_range'
+          source === 'route_geometry'
+            ? twoVehicles
+              ? 'Peajes calculados sobre la ruta real y categoría ajustada por llevar 2 vehículos.'
+              : 'Peajes calculados sobre la ruta real usando coordenadas de peajes.'
+            : source === 'fallback_range'
             ? 'Estimación basada en rango de km. Los peajes laterales no están incluidos.'
             : twoVehicles
               ? 'Categoría ajustada a Camión Pesado por llevar 2 vehículos.'

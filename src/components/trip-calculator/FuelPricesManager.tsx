@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
@@ -104,6 +105,7 @@ export const FuelPricesManager = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState<FuelPrice | null>(null);
   const hasAutoSyncedRef = useRef(false);
+  const { user, loading: authLoading } = useAuth();
   const { data: currentPrices = [], isLoading: loadingCurrent } = useCurrentFuelPrices();
   const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory();
   const { mutate: deletePrice } = useDeleteFuelPrice();
@@ -112,7 +114,7 @@ export const FuelPricesManager = () => {
   const pivot = useMemo(() => buildWeeklyPivot(history), [history]);
 
   useEffect(() => {
-    if (hasAutoSyncedRef.current || loadingCurrent) return;
+    if (hasAutoSyncedRef.current || loadingCurrent || authLoading || !user) return;
 
     hasAutoSyncedRef.current = true;
     syncReferencePrices(undefined, {
@@ -120,7 +122,7 @@ export const FuelPricesManager = () => {
         console.error('No se pudo sincronizar precios de combustible automáticamente', error);
       },
     });
-  }, [loadingCurrent, syncReferencePrices]);
+  }, [authLoading, loadingCurrent, syncReferencePrices, user]);
 
   const handleEdit = (price: FuelPrice) => {
     setEditingPrice(price);

@@ -4,6 +4,7 @@ import { resolveRoundTripTollCost } from '@/hooks/useTripCalculation';
 import {
   canUseFallbackRange,
   hasAmbiguousKmReference,
+  matchStationsByRouteGeometry,
   shouldExcludeFallbackStation,
 } from '@/hooks/useTollCalculationV2';
 
@@ -70,5 +71,50 @@ describe('canUseFallbackRange', () => {
         0,
       ),
     ).toBe(true);
+  });
+});
+
+describe('matchStationsByRouteGeometry', () => {
+  it('matches only trunk tolls that sit on the actual route geometry', () => {
+    const routeGeometry = {
+      type: 'LineString',
+      coordinates: [
+        [-70.75, -33.25],
+        [-70.99, -32.84],
+        [-71.23, -32.64],
+      ] as [number, number][],
+    };
+
+    const matched = matchStationsByRouteGeometry(routeGeometry, [
+      {
+        stationId: 'lampa',
+        stationName: 'Lampa',
+        concessionName: 'Ruta 5 Santiago - Los Vilos',
+        highway: 'Ruta 5 Norte',
+        stationType: 'TRONCAL',
+        rateAmount: 1600,
+        kmMarker: 26,
+        latitude: -33.2355983,
+        longitude: -70.7590362,
+      },
+      {
+        stationId: 'lateral',
+        stationName: 'Enlace Tongoy',
+        concessionName: 'Ruta del Elqui',
+        highway: 'Ruta 5 Norte',
+        stationType: 'LATERAL',
+        rateAmount: 2000,
+        kmMarker: 440,
+        latitude: -30.351581,
+        longitude: -71.4294403,
+      },
+    ]);
+
+    expect(matched).toHaveLength(1);
+    expect(matched[0]).toMatchObject({
+      stationId: 'lampa',
+      stationName: 'Lampa',
+      source: 'route_geometry',
+    });
   });
 });
