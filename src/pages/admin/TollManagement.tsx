@@ -187,11 +187,11 @@ const TollRatesTable = () => {
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground font-medium">
                         <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
-                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
-                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Km</th>
-                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
-                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
-                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
+                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Km</th>
+                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -223,20 +223,22 @@ const TollRatesTable = () => {
                               </button>
                             </div>
                           </td>
-                          <td className="py-2.5 px-3">
+                          <td className="py-2.5 px-3 text-right">
                             <Badge variant="outline" className="text-xs font-normal">
                               {stationRates[0]?.stationType || 'N/D'}
                             </Badge>
                           </td>
-                          <td className="py-2.5 px-3 font-mono text-muted-foreground">
+                          <td className="py-2.5 px-3 text-center font-mono text-muted-foreground">
                             {stationRates[0]?.kmMarker ?? '—'}
                           </td>
                           {TOLL_VEHICLE_CATEGORIES.map((category) => {
                             const rate = stationRates.find((item) => item.vehicleCategory === category.value);
+                            const alignCls = category.value === 'LIVIANO' ? 'text-left' : 'text-center';
+                            const justifyCls = category.value === 'LIVIANO' ? 'justify-start' : 'justify-center';
                             return (
-                              <td key={category.value} className="py-2.5 px-3 text-right">
+                              <td key={category.value} className={`py-2.5 px-3 ${alignCls}`}>
                                 {rate ? (
-                                  <div className="flex items-center justify-end gap-1">
+                                  <div className={`flex items-center gap-1 ${justifyCls}`}>
                                     <span className="font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
                                     <Button
                                       variant="ghost"
