@@ -37,6 +37,7 @@ import {
   TOLL_VEHICLE_CATEGORIES,
   TollRateCurrent,
   useApplyParsedRates,
+  useCreateConcession,
   useCreateTollRatesBatch,
   useCreateTollStation,
   useTollConcessions,
@@ -348,6 +349,142 @@ const TollRatesTable = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+const NewConcessionDialog = () => {
+  const [open, setOpen] = useState(false);
+  const createConcession = useCreateConcession();
+
+  const [form, setForm] = useState({
+    name: '',
+    route: 'Ruta 5 Norte',
+    direction: 'BOTH',
+    kmStart: '',
+    kmEnd: '',
+    validFrom: getCurrentChileDateString(),
+    notes: '',
+  });
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!form.name || !form.route || !form.validFrom) {
+      toast.error('Completa los campos obligatorios');
+      return;
+    }
+
+    await createConcession.mutateAsync({
+      name: form.name.trim(),
+      route: form.route.trim(),
+      direction: form.direction,
+      kmStart: form.kmStart ? Number(form.kmStart) : null,
+      kmEnd: form.kmEnd ? Number(form.kmEnd) : null,
+      pdfUrl: null,
+      validFrom: form.validFrom,
+      validUntil: null,
+      notes: form.notes.trim() || null,
+    });
+
+    setForm({
+      name: '',
+      route: 'Ruta 5 Norte',
+      direction: 'BOTH',
+      kmStart: '',
+      kmEnd: '',
+      validFrom: getCurrentChileDateString(),
+      notes: '',
+    });
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-2">
+        <PlusCircle className="size-4" />
+        Nueva concesión
+      </Button>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nueva concesión</DialogTitle>
+        </DialogHeader>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="concession-name">Nombre *</Label>
+              <Input
+                id="concession-name"
+                value={form.name}
+                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="Ej. Caldera - Antofagasta"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="concession-route">Ruta *</Label>
+              <Input
+                id="concession-route"
+                value={form.route}
+                onChange={(event) => setForm((current) => ({ ...current, route: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="concession-direction">Sentido</Label>
+              <Input
+                id="concession-direction"
+                value={form.direction}
+                onChange={(event) => setForm((current) => ({ ...current, direction: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="concession-km-start">Km inicio</Label>
+              <Input
+                id="concession-km-start"
+                type="number"
+                min="0"
+                value={form.kmStart}
+                onChange={(event) => setForm((current) => ({ ...current, kmStart: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="concession-km-end">Km fin</Label>
+              <Input
+                id="concession-km-end"
+                type="number"
+                min="0"
+                value={form.kmEnd}
+                onChange={(event) => setForm((current) => ({ ...current, kmEnd: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="concession-valid-from">Vigente desde *</Label>
+              <Input
+                id="concession-valid-from"
+                type="date"
+                value={form.validFrom}
+                onChange={(event) => setForm((current) => ({ ...current, validFrom: event.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="concession-notes">Notas</Label>
+              <Textarea
+                id="concession-notes"
+                value={form.notes}
+                onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))}
+                placeholder="Opcional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={createConcession.isPending}>
+              {createConcession.isPending ? 'Creando...' : 'Crear concesión'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -856,7 +993,8 @@ const TollManagement = () => {
           </>
         }
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <NewConcessionDialog />
             <Badge variant="secondary" className="gap-1 bg-muted px-3 py-2 text-xs font-medium">
               <DollarSign className="size-3.5" />
               {rates.length} tarifas vigentes
