@@ -175,23 +175,15 @@ const TollRatesTable = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full table-fixed text-sm">
-                    <colgroup>
-                      <col className="w-[35%]" />
-                      <col className="w-[10%]" />
-                      <col className="w-[8%]" />
-                      <col className="w-[15%]" />
-                      <col className="w-[16%]" />
-                      <col className="w-[16%]" />
-                    </colgroup>
+                  <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground font-medium">
-                        <th className="text-left py-2 px-3 font-medium">Peaje</th>
-                        <th className="text-left py-2 px-3 font-medium">Tipo</th>
-                        <th className="text-left py-2 px-3 font-medium">Km</th>
-                        <th className="text-right py-2 px-3 font-medium">Liviano</th>
-                        <th className="text-right py-2 px-3 font-medium">Camión 2 Ejes</th>
-                        <th className="text-right py-2 px-3 font-medium">Camión Pesado</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Km</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
