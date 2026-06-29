@@ -178,12 +178,12 @@ const TollRatesTable = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground font-medium">
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Km</th>
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
-                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
+                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
+                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
+                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Km</th>
+                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
+                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
+                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
