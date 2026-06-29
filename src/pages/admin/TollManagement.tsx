@@ -179,7 +179,7 @@ const TollRatesTable = () => {
                     <TableRow className="border-border hover:bg-muted/50">
                       <TableHead className="w-[220px]">Peaje</TableHead>
                       <TableHead className="w-[90px]">Tipo</TableHead>
-                      <TableHead className="w-[70px] text-center">Km</TableHead>
+                      <TableHead className="w-[70px]">Km</TableHead>
                       <TableHead className="text-right w-[120px]">Liviano</TableHead>
                       <TableHead className="text-right w-[130px]">Camión 2 Ejes</TableHead>
                       <TableHead className="text-right w-[130px]">Camión Pesado</TableHead>
@@ -219,7 +219,7 @@ const TollRatesTable = () => {
                             {stationRates[0]?.stationType || 'N/D'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground align-middle">
+                        <TableCell className="w-[70px] text-sm text-muted-foreground font-mono align-middle">
                           {stationRates[0]?.kmMarker ?? '—'}
                         </TableCell>
                         {TOLL_VEHICLE_CATEGORIES.map((category) => {
