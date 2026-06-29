@@ -195,6 +195,7 @@ export const TripCalculatorForm = () => {
       destCoords,
       craneCategory,
       twoVehicles,
+      returnConfig,
     });
 
     if (!tollV2) {

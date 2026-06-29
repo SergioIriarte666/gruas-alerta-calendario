@@ -87,12 +87,22 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
           ))}
         </div>
 
-        <div className="flex items-center justify-between border-t-2 pt-1">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <CheckCircle2 className="size-4 text-green-600" />
-            Total peajes
+        <div className="space-y-1 border-t-2 pt-1.5">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Ida ({CATEGORY_LABELS[result.category] ?? result.category})</span>
+            <span className="font-mono">{formatClp(result.idaCost)}</span>
           </div>
-          <span className="font-mono text-base font-bold">{formatClp(result.totalCost)}</span>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>Vuelta ({CATEGORY_LABELS[result.returnCategory] ?? result.returnCategory})</span>
+            <span className="font-mono">{formatClp(result.vueltaCost)}</span>
+          </div>
+          <div className="flex items-center justify-between border-t pt-1">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <CheckCircle2 className="size-4 text-green-600" />
+              Total peajes (ida + vuelta)
+            </div>
+            <span className="font-mono text-base font-bold">{formatClp(result.totalCost)}</span>
+          </div>
         </div>
       </CardContent>
     </Card>

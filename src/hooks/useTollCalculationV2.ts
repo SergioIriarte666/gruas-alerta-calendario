@@ -5,6 +5,7 @@ import { createLogger } from '@/lib/logger';
 const logger = createLogger('useTollCalculationV2');
 
 export interface TollBreakdown {
+  stationId?: string;
   stationName: string;
   concessionName: string;
   highway: string | null;
@@ -16,8 +17,11 @@ export interface TollBreakdown {
 
 export interface TollResultV2 {
   totalCost: number;
+  idaCost: number;
+  vueltaCost: number;
   breakdown: TollBreakdown[];
   category: string;
+  returnCategory: string;
   source: 'getapi_matched' | 'fallback_range';
   warning?: string;
 }
@@ -108,6 +112,7 @@ export function useTollCalculationV2() {
       destCoords,
       craneCategory,
       twoVehicles,
+      returnConfig = 'empty',
     }: {
       originName: string;
       destName: string;
@@ -115,6 +120,7 @@ export function useTollCalculationV2() {
       destCoords: [number, number] | null;
       craneCategory: string;
       twoVehicles: boolean;
+      returnConfig?: 'empty' | '1_vehicle' | '2_vehicles';
     }): Promise<TollResultV2 | null> => {
       setIsCalculating(true);
       setError(null);
@@ -137,6 +143,7 @@ export function useTollCalculationV2() {
         }
 
         const stationIndex = allRates.map((rate) => ({
+          stationId: rate.station_id as string,
           stationName: rate.station_name as string,
           concessionName: rate.concession_name as string,
           highway: rate.highway as string | null,
@@ -196,6 +203,7 @@ export function useTollCalculationV2() {
 
             if (match) {
               breakdown.push({
+                stationId: match.stationId,
                 stationName: match.stationName,
                 concessionName: match.concessionName,
                 highway: match.highway,
@@ -232,7 +240,9 @@ export function useTollCalculationV2() {
                   station.kmMarker >= kmMin &&
                   station.kmMarker <= kmMax,
               )
+              .sort((a, b) => (a.kmMarker ?? 0) - (b.kmMarker ?? 0))
               .map((station) => ({
+                stationId: station.stationId,
                 stationName: station.stationName,
                 concessionName: station.concessionName,
                 highway: station.highway,
@@ -249,8 +259,11 @@ export function useTollCalculationV2() {
         if (breakdown.length === 0) {
           const noTollsResult: TollResultV2 = {
             totalCost: 0,
+            idaCost: 0,
+            vueltaCost: 0,
             breakdown: [],
             category,
+            returnCategory: category,
             source: 'fallback_range',
             warning: 'No se encontraron peajes en este tramo. Verifica el origen y destino.',
           };
@@ -259,7 +272,34 @@ export function useTollCalculationV2() {
           return noTollsResult;
         }
 
-        const totalCost = breakdown.reduce((sum, item) => sum + item.rateAmount, 0);
+        // Costo de ida
+        const idaCost = breakdown.reduce((sum, item) => sum + item.rateAmount, 0);
+
+        // La grúa siempre vuelve a la base en Copiapó, por lo que los peajes
+        // se pagan dos veces. La categoría de vuelta solo sube a CAMION_PESADO
+        // si retorna con 2 vehículos; vuelta vacía conserva la categoría de ida.
+        const returnTwoVehicles = returnConfig === '2_vehicles';
+        const returnCategory = effectiveTollCategory(craneCategory, returnTwoVehicles);
+
+        let vueltaCost = idaCost;
+        if (returnCategory !== category) {
+          const { data: returnRates } = await supabase
+            .from('toll_rates_current')
+            .select('station_id, rate_amount')
+            .eq('vehicle_category', returnCategory);
+
+          if (returnRates && returnRates.length > 0) {
+            const returnRateMap = new Map(
+              returnRates.map((rate: any) => [rate.station_id as string, Number(rate.rate_amount)]),
+            );
+            vueltaCost = breakdown.reduce(
+              (sum, item) => sum + (returnRateMap.get(item.stationId ?? '') ?? item.rateAmount),
+              0,
+            );
+          }
+        }
+
+        const totalCost = idaCost + vueltaCost;
         const warning =
           source === 'fallback_range'
             ? 'Estimación basada en rango de km. Los peajes laterales no están incluidos.'
@@ -269,8 +309,11 @@ export function useTollCalculationV2() {
 
         const tollResult: TollResultV2 = {
           totalCost,
+          idaCost,
+          vueltaCost,
           breakdown,
           category,
+          returnCategory,
           source,
           warning,
         };

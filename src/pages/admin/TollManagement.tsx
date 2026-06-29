@@ -187,41 +187,39 @@ const TollRatesTable = () => {
                   </TableHeader>
                   <TableBody>
                     {Object.entries(byStation).map(([stationName, stationRates]) => (
-                      <TableRow key={stationName}>
-                        <TableCell className="w-[220px]">
-                          <div className="flex flex-col gap-0.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-sm">{stationName}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const firstRate = stationRates[0];
-                                  setEditingKm({
-                                    stationId: firstRate.stationId,
-                                    stationName,
-                                    currentKm: firstRate.kmMarker,
-                                  });
-                                  setNewKm(String(firstRate.kmMarker ?? ''));
-                                }}
-                                className="text-muted-foreground hover:text-foreground shrink-0"
-                                title="Editar km"
-                              >
-                                <Edit2 className="size-3 opacity-40 hover:opacity-100" />
-                              </button>
-                            </div>
+                      <TableRow key={stationName} className="border-border hover:bg-muted/50 align-middle">
+                        <TableCell className="w-[220px] align-middle">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm">{stationName}</span>
                             {stationRates[0]?.kmMarker !== null && (
-                              <span className="text-xs text-muted-foreground font-mono">
+                              <span className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
                                 km {stationRates[0]?.kmMarker}
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const firstRate = stationRates[0];
+                                setEditingKm({
+                                  stationId: firstRate.stationId,
+                                  stationName,
+                                  currentKm: firstRate.kmMarker,
+                                });
+                                setNewKm(String(firstRate.kmMarker ?? ''));
+                              }}
+                              className="text-muted-foreground hover:text-foreground opacity-40 hover:opacity-100 transition-opacity"
+                              title="Editar km"
+                            >
+                              <Edit2 className="size-3" />
+                            </button>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Badge variant="outline" className="text-[11px]">
                             {stationRates[0]?.stationType || 'N/D'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="text-muted-foreground align-middle">
                           {stationRates[0]?.kmMarker ?? '—'}
                         </TableCell>
                         {TOLL_VEHICLE_CATEGORIES.map((category) => {
@@ -230,7 +228,7 @@ const TollRatesTable = () => {
                             ? 'w-[120px]'
                             : 'w-[130px]';
                           return (
-                            <TableCell key={category.value} className={`text-right ${widthCls}`}>
+                            <TableCell key={category.value} className={`text-right align-middle ${widthCls}`}>
                               {rate ? (
                                 <div className="flex items-center justify-end gap-1">
                                   <span className="text-sm font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
