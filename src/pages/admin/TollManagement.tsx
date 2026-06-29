@@ -174,83 +174,90 @@ const TollRatesTable = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-muted/50">
-                      <TableHead className="w-[220px]">Peaje</TableHead>
-                      <TableHead className="w-[90px]">Tipo</TableHead>
-                      <TableHead className="w-[70px]">Km</TableHead>
-                      <TableHead className="text-right w-[120px]">Liviano</TableHead>
-                      <TableHead className="text-right w-[130px]">Camión 2 Ejes</TableHead>
-                      <TableHead className="text-right w-[130px]">Camión Pesado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(byStation).map(([stationName, stationRates]) => (
-                      <TableRow key={stationName} className="border-border hover:bg-muted/50 align-middle">
-                        <TableCell className="w-[220px] align-middle">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm">{stationName}</span>
-                            {stationRates[0]?.kmMarker !== null && (
-                              <span className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                                km {stationRates[0]?.kmMarker}
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const firstRate = stationRates[0];
-                                setEditingKm({
-                                  stationId: firstRate.stationId,
-                                  stationName,
-                                  currentKm: firstRate.kmMarker,
-                                });
-                                setNewKm(String(firstRate.kmMarker ?? ''));
-                              }}
-                              className="text-muted-foreground hover:text-foreground opacity-40 hover:opacity-100 transition-opacity"
-                              title="Editar km"
-                            >
-                              <Edit2 className="size-3" />
-                            </button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="align-middle">
-                          <Badge variant="outline" className="text-[11px]">
-                            {stationRates[0]?.stationType || 'N/D'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="w-[70px] text-sm text-muted-foreground font-mono align-middle">
-                          {stationRates[0]?.kmMarker ?? '—'}
-                        </TableCell>
-                        {TOLL_VEHICLE_CATEGORIES.map((category) => {
-                          const rate = stationRates.find((item) => item.vehicleCategory === category.value);
-                          const widthCls = category.value === 'LIVIANO'
-                            ? 'w-[120px]'
-                            : 'w-[130px]';
-                          return (
-                            <TableCell key={category.value} className={`text-right align-middle ${widthCls}`}>
-                              {rate ? (
-                                <div className="flex items-center justify-end gap-1">
-                                  <span className="text-sm font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
-                                    onClick={() => handleEdit(rate)}
-                                  >
-                                    <Edit2 className="size-3" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[35%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[8%]" />
+                      <col className="w-[15%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[16%]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="border-b text-xs text-muted-foreground font-medium">
+                        <th className="text-left py-2 px-3 font-medium">Peaje</th>
+                        <th className="text-left py-2 px-3 font-medium">Tipo</th>
+                        <th className="text-left py-2 px-3 font-medium">Km</th>
+                        <th className="text-right py-2 px-3 font-medium">Liviano</th>
+                        <th className="text-right py-2 px-3 font-medium">Camión 2 Ejes</th>
+                        <th className="text-right py-2 px-3 font-medium">Camión Pesado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {Object.entries(byStation).map(([stationName, stationRates]) => (
+                        <tr key={stationName} className="hover:bg-muted/30">
+                          <td className="py-2.5 px-3">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-medium">{stationName}</span>
+                              {stationRates[0]?.kmMarker !== null && (
+                                <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1 py-0.5 rounded">
+                                  km {stationRates[0]?.kmMarker}
+                                </span>
                               )}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const firstRate = stationRates[0];
+                                  setEditingKm({
+                                    stationId: firstRate.stationId,
+                                    stationName,
+                                    currentKm: firstRate.kmMarker,
+                                  });
+                                  setNewKm(String(firstRate.kmMarker ?? ''));
+                                }}
+                                className="text-muted-foreground hover:text-foreground opacity-30 hover:opacity-100 transition-opacity"
+                                title="Editar km"
+                              >
+                                <Edit2 className="size-3" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {stationRates[0]?.stationType || 'N/D'}
+                            </Badge>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-muted-foreground">
+                            {stationRates[0]?.kmMarker ?? '—'}
+                          </td>
+                          {TOLL_VEHICLE_CATEGORIES.map((category) => {
+                            const rate = stationRates.find((item) => item.vehicleCategory === category.value);
+                            return (
+                              <td key={category.value} className="py-2.5 px-3 text-right">
+                                {rate ? (
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span className="font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-5 text-muted-foreground hover:text-foreground shrink-0"
+                                      onClick={() => handleEdit(rate)}
+                                    >
+                                      <Edit2 className="size-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           );
