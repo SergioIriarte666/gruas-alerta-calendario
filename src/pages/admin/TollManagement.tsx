@@ -175,7 +175,15 @@ const TollRatesTable = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[35%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[8%]" />
+                      <col className="w-[15%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[16%]" />
+                    </colgroup>
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground font-medium">
                         <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
