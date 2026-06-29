@@ -187,9 +187,9 @@ const TollRatesTable = () => {
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground font-medium">
                         <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Peaje</th>
-                        <th className="text-right py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Tipo</th>
                         <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Km</th>
-                        <th className="text-left py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
+                        <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Liviano</th>
                         <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión 2 Ejes</th>
                         <th className="text-center py-2 px-3 font-medium whitespace-nowrap">Camión Pesado</th>
                       </tr>
@@ -223,7 +223,7 @@ const TollRatesTable = () => {
                               </button>
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 text-right">
+                          <td className="py-2.5 px-3 text-center">
                             <Badge variant="outline" className="text-xs font-normal">
                               {stationRates[0]?.stationType || 'N/D'}
                             </Badge>
@@ -233,12 +233,10 @@ const TollRatesTable = () => {
                           </td>
                           {TOLL_VEHICLE_CATEGORIES.map((category) => {
                             const rate = stationRates.find((item) => item.vehicleCategory === category.value);
-                            const alignCls = category.value === 'LIVIANO' ? 'text-left' : 'text-center';
-                            const justifyCls = category.value === 'LIVIANO' ? 'justify-start' : 'justify-center';
                             return (
-                              <td key={category.value} className={`py-2.5 px-3 ${alignCls}`}>
+                              <td key={category.value} className="py-2.5 px-3 text-center">
                                 {rate ? (
-                                  <div className={`flex items-center gap-1 ${justifyCls}`}>
+                                  <div className="flex items-center justify-center gap-1">
                                     <span className="font-mono tabular-nums">{formatClp(rate.rateAmount)}</span>
                                     <Button
                                       variant="ghost"
