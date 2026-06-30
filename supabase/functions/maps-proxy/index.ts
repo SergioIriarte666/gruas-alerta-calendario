@@ -6,6 +6,7 @@ const allowedRoles = ["admin", "viewer", "operator", "client"] as const;
 const PLACES_BASE = "https://places.googleapis.com/v1";
 const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GEOCODING_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
+const STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap";
 
 // Copiapó center — biases autocomplete results toward Norte Chico / Atacama
 const LOCATION_BIAS_CENTER = { latitude: -27.3668, longitude: -70.3322 };
@@ -43,6 +44,50 @@ function decodePolyline(encoded: string): [number, number][] {
   }
 
   return coords;
+}
+
+/** Encode GeoJSON [lng, lat] pairs into a Google polyline string. */
+function encodePolyline(coordinates: [number, number][]): string {
+  let encoded = "";
+  let prevLat = 0;
+  let prevLng = 0;
+
+  for (const [lng, lat] of coordinates) {
+    const latE5 = Math.round(lat * 1e5);
+    const lngE5 = Math.round(lng * 1e5);
+    encoded += encodeSignedNumber(latE5 - prevLat);
+    encoded += encodeSignedNumber(lngE5 - prevLng);
+    prevLat = latE5;
+    prevLng = lngE5;
+  }
+
+  return encoded;
+}
+
+function encodeSignedNumber(num: number): string {
+  let value = num << 1;
+  if (num < 0) value = ~value;
+
+  let encoded = "";
+  while (value >= 0x20) {
+    encoded += String.fromCharCode((0x20 | (value & 0x1f)) + 63);
+    value >>= 5;
+  }
+  encoded += String.fromCharCode(value + 63);
+  return encoded;
+}
+
+function simplifyCoords(coords: [number, number][], maxPoints: number): [number, number][] {
+  if (coords.length <= maxPoints) return coords;
+
+  const step = Math.ceil(coords.length / maxPoints);
+  const simplified = coords.filter((_, index) => index % step === 0);
+
+  if (simplified[simplified.length - 1] !== coords[coords.length - 1]) {
+    simplified.push(coords[coords.length - 1]);
+  }
+
+  return simplified;
 }
 
 Deno.serve(async (req: Request) => {
@@ -229,6 +274,61 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── STATIC MAP (Maps Static API) ────────────────────────────────────────
+    if (action === "static_map") {
+      const { geometry, origin, destination, mode = "preview" } = body;
+      if (
+        !geometry?.coordinates?.length ||
+        !Array.isArray(origin) ||
+        !Array.isArray(destination)
+      ) {
+        return new Response(
+          JSON.stringify({ error: "geometry, origin and destination are required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const coords: [number, number][] = geometry.coordinates;
+      const simplified = simplifyCoords(coords, mode === "full" ? 180 : 90);
+      const encodedPath = encodePolyline(simplified);
+
+      const size = mode === "full" ? "640x640" : "600x280";
+      const params = new URLSearchParams({
+        size,
+        scale: "2",
+        maptype: "hybrid",
+        language: "es",
+        region: "CL",
+        path: `weight:5|color:0x7c3aedcc|enc:${encodedPath}`,
+        markers: `color:green|label:A|${origin[1]},${origin[0]}`,
+      });
+
+      params.append("markers", `color:red|label:B|${destination[1]},${destination[0]}`);
+      params.append("key", API_KEY);
+
+      const imageRes = await fetch(`${STATIC_MAPS_BASE}?${params.toString()}`);
+      const durationMs = Date.now() - t0;
+      console.log(JSON.stringify({ action: "static_map", durationMs, ok: imageRes.ok, status: imageRes.status }));
+
+      if (!imageRes.ok) {
+        const errorText = await imageRes.text();
+        return new Response(
+          JSON.stringify({ error: "Google Static Maps API error", details: errorText }),
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const imageData = await imageRes.arrayBuffer();
+      const contentType = imageRes.headers.get("Content-Type") ?? "image/png";
+      return new Response(imageData, {
+        headers: {
+          ...getCorsHeaders(req),
+          "Content-Type": contentType,
+          "Cache-Control": "private, max-age=300",
+        },
+      });
+    }
+
     // ── GEOCODE (Geocoding API) ──────────────────────────────────────────────
     if (action === "geocode") {
       const { address, query } = body;
@@ -275,7 +375,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use autocomplete | place_details | route | geocode" }),
+      JSON.stringify({ error: "Invalid action. Use autocomplete | place_details | route | static_map | geocode" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   } catch (err) {

@@ -101,17 +101,23 @@ se expande a otras regiones.
 | `src/hooks/useGoogleMaps.ts` | Nuevo | Hook: autocomplete, getPlaceDetails, computeRoute, geocode |
 | `src/components/shared/AddressAutocomplete.tsx` | Nuevo | Componente reutilizable de búsqueda de direcciones |
 | `src/lib/routeDirections.ts` | Modificado | Ahora llama `maps-proxy` (Routes API) en vez de `mapbox-proxy` |
+| `src/components/trip-calculator/TripRouteMap.tsx` | Modificado | Ahora llama `maps-proxy` para mapa estático vía Google Maps Static API |
 | `src/components/trip-calculator/TripCalculatorForm.tsx` | Modificado | Reemplaza LocationInput/useGeocode por AddressAutocomplete |
 | `src/components/services/form/EnhancedLocationSection.tsx` | Modificado | Reemplaza LocationCombobox por AddressAutocomplete |
 | `src/hooks/useTollManagement.ts` | Modificado | Geocoding de peajes via maps-proxy en vez de mapbox-proxy |
 
 ---
 
-## Qué sigue usando Mapbox
+## Estado actual
 
-El render de mapa estático en la calculadora de viajes (`TripRouteMap.tsx`) sigue usando `mapbox-proxy`
-(acción `static_map`) para generar la imagen de la ruta. Migrar este componente a Google Maps Static API
-queda pendiente para una segunda iteración, ya que requiere un componente de rendering diferente.
+La integración de la calculadora de viajes ya usa Google para:
+- autocomplete de direcciones
+- place details
+- cálculo de ruta
+- geocoding administrativo
+- mapa estático de la ruta
+
+`mapbox-proxy` ya no es requerido por `TripRouteMap.tsx`.
 
 ---
 

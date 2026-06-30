@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { type ReturnTripConfig } from '@/hooks/useTripCalculation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,13 +30,18 @@ export const TripCalculatorForm = () => {
   const [twoVehicles, setTwoVehicles] = useState(false);
   const [returnConfig, setReturnConfig] = useState<ReturnTripConfig>('empty');
   const [manualToll, setManualToll] = useState('');
-  const [showManualToll, setShowManualToll] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState('');
 
   useConsumptionRates();
   const { cranes } = useCranes();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
-  const { calculate: calculateTollV2, result: tollV2Result, isCalculating: tollV2Loading, reset: resetTollV2 } = useTollCalculationV2();
+  const {
+    calculate: calculateTollV2,
+    result: tollV2Result,
+    isCalculating: tollV2Loading,
+    requiresManualEntry,
+    reset: resetTollV2,
+  } = useTollCalculationV2();
   const { locations: savedLocations } = useSavedLocations();
 
   const activeCranes = cranes.filter((c) => c.isActive);
@@ -44,6 +49,11 @@ export const TripCalculatorForm = () => {
   const craneType = selectedCrane?.type || '';
 
   const savedNames = savedLocations.map((l) => l.name);
+
+  const showManualToll = useMemo(
+    () => requiresManualEntry && !tollV2Result,
+    [requiresManualEntry, tollV2Result],
+  );
 
   const handleOriginChange = (text: string) => {
     setOriginName(text);
@@ -56,7 +66,6 @@ export const TripCalculatorForm = () => {
     }
     reset();
     resetTollV2();
-    setShowManualToll(false);
   };
 
   const handleOriginPlaceSelected = (place: PlaceResult) => {
@@ -64,7 +73,6 @@ export const TripCalculatorForm = () => {
     setOriginCoords([place.lng, place.lat]); // [lng, lat] — GeoJSON / Mapbox convention
     reset();
     resetTollV2();
-    setShowManualToll(false);
   };
 
   const handleDestChange = (text: string) => {
@@ -77,7 +85,6 @@ export const TripCalculatorForm = () => {
     }
     reset();
     resetTollV2();
-    setShowManualToll(false);
   };
 
   const handleDestPlaceSelected = (place: PlaceResult) => {
@@ -85,14 +92,12 @@ export const TripCalculatorForm = () => {
     setDestCoords([place.lng, place.lat]);
     reset();
     resetTollV2();
-    setShowManualToll(false);
   };
 
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
 
     try {
-      setShowManualToll(false);
       const craneCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
       const route = await fetchRouteDirections(originCoords, destCoords);
 
@@ -108,10 +113,6 @@ export const TripCalculatorForm = () => {
         twoVehicles,
         returnConfig,
       });
-
-      if (!tollV2) {
-        setShowManualToll(true);
-      }
 
       const tollCost = tollV2?.totalCost ?? (manualToll ? Number(manualToll) : 0);
       const tollData = tollV2

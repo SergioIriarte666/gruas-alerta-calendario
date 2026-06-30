@@ -27,7 +27,11 @@ export async function fetchRouteDirections(
     },
   );
 
-  if (routeError || !routeData?.distance_km || !routeData?.geometry?.coordinates?.length) {
+  if (
+    routeError ||
+    typeof routeData?.distance_km !== 'number' ||
+    !routeData?.geometry?.coordinates?.length
+  ) {
     throw new Error('No se pudo calcular la ruta. Verifique las ubicaciones.');
   }
 

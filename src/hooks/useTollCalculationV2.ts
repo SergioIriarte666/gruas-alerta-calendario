@@ -332,6 +332,7 @@ export function useTollCalculationV2() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [result, setResult] = useState<TollResultV2 | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [requiresManualEntry, setRequiresManualEntry] = useState(false);
 
   const calculate = useCallback(
     async ({
@@ -356,6 +357,7 @@ export function useTollCalculationV2() {
       setIsCalculating(true);
       setError(null);
       setResult(null);
+      setRequiresManualEntry(false);
 
       const category = effectiveTollCategory(craneCategory, twoVehicles);
       logger.debug('Calculando peajes', { originName, destName, category, twoVehicles });
@@ -369,6 +371,7 @@ export function useTollCalculationV2() {
         if (dbError) throw dbError;
 
         if (!allRates || allRates.length === 0) {
+          setRequiresManualEntry(true);
           setError('No hay tarifas cargadas en el sistema. Ve a Admin → Tarifas de Peajes.');
           return null;
         }
@@ -494,11 +497,34 @@ export function useTollCalculationV2() {
               source: 'getapi_matched',
             };
 
+            setRequiresManualEntry(false);
+            setError(null);
             setResult(noTollsExactResult);
             return noTollsExactResult;
           }
 
+          if (exactLookupStatus === 'failed' && routeGeometry?.coordinates?.length) {
+            const noTollsGeometryResult: TollResultV2 = {
+              totalCost: 0,
+              idaCost: 0,
+              vueltaCost: 0,
+              breakdown: [],
+              category,
+              returnCategory: effectiveTollCategory(
+                craneCategory,
+                returnConfig === '2_vehicles',
+              ),
+              source: 'route_geometry',
+            };
+
+            setRequiresManualEntry(false);
+            setError(null);
+            setResult(noTollsGeometryResult);
+            return noTollsGeometryResult;
+          }
+
           if (exactLookupStatus === 'unmatched') {
+            setRequiresManualEntry(true);
             setError(
               'La ruta fue identificada, pero faltan equivalencias de peajes en la base. Ingresa el monto manualmente para evitar cobros incorrectos.',
             );
@@ -543,6 +569,7 @@ export function useTollCalculationV2() {
         }
 
         if (breakdown.length === 0) {
+          setRequiresManualEntry(true);
           setError(
             exactLookupStatus === 'failed'
               ? 'No se pudo validar la ruta exacta de peajes. Ingresa el monto manualmente para evitar incluir peajes fuera de trayecto.'
@@ -601,11 +628,13 @@ export function useTollCalculationV2() {
           warning,
         };
 
+        setRequiresManualEntry(false);
         setResult(tollResult);
         logger.debug('Resultado peajes', tollResult);
         return tollResult;
       } catch (calcError: any) {
         logger.error('Error calculando peajes', calcError);
+        setRequiresManualEntry(true);
         setError('Error al calcular peajes. Puedes ingresar el monto manualmente.');
         return null;
       } finally {
@@ -618,7 +647,8 @@ export function useTollCalculationV2() {
   const reset = useCallback(() => {
     setResult(null);
     setError(null);
+    setRequiresManualEntry(false);
   }, []);
 
-  return { calculate, result, error, isCalculating, reset };
+  return { calculate, result, error, isCalculating, requiresManualEntry, reset };
 }

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Map as MapIcon, Loader2, ExternalLink, Maximize2 } from 'lucide-react';
+import { Map as MapIcon, ExternalLink, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +22,128 @@ interface TripRouteMapProps {
   estimatedTimeHours: number;
 }
 
+interface RouteLeafletMapProps {
+  coordinates: [number, number][];
+  originCoords: [number, number];
+  destinationCoords: [number, number];
+  className?: string;
+}
+
+const originIcon = L.divIcon({
+  className: 'trip-route-marker trip-route-marker--origin',
+  html: '<span class="trip-route-marker__dot"></span>',
+  iconSize: [26, 26],
+  iconAnchor: [13, 13],
+});
+
+const destinationIcon = L.divIcon({
+  className: 'trip-route-marker trip-route-marker--destination',
+  html: '<span class="trip-route-marker__dot"></span>',
+  iconSize: [26, 26],
+  iconAnchor: [13, 13],
+});
+
+function RouteLeafletMap({
+  coordinates,
+  originCoords,
+  destinationCoords,
+  className,
+}: RouteLeafletMapProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  const latLngs = useMemo(
+    () => coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
+    [coordinates],
+  );
+
+  useEffect(() => {
+    if (!containerRef.current || latLngs.length === 0) return;
+
+    const map = L.map(containerRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+      dragging: true,
+      scrollWheelZoom: false,
+      doubleClickZoom: true,
+      boxZoom: false,
+      keyboard: false,
+      tap: false,
+    });
+
+    mapRef.current = map;
+
+    map.zoomControl.setPosition('topright');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(map);
+
+    L.polyline(latLngs, {
+      color: '#5b21b6',
+      weight: 7,
+      opacity: 0.95,
+      lineJoin: 'round',
+    }).addTo(map);
+
+    L.polyline(latLngs, {
+      color: '#a78bfa',
+      weight: 12,
+      opacity: 0.28,
+      lineJoin: 'round',
+    }).addTo(map);
+
+    L.marker([originCoords[1], originCoords[0]], { icon: originIcon }).addTo(map);
+    L.marker([destinationCoords[1], destinationCoords[0]], { icon: destinationIcon }).addTo(map);
+
+    const bounds = L.latLngBounds(latLngs);
+    bounds.extend([originCoords[1], originCoords[0]]);
+    bounds.extend([destinationCoords[1], destinationCoords[0]]);
+    map.fitBounds(bounds, { padding: [24, 24] });
+
+    const resizeTimer = window.setTimeout(() => {
+      map.invalidateSize();
+      map.fitBounds(bounds, { padding: [24, 24] });
+    }, 150);
+
+    return () => {
+      window.clearTimeout(resizeTimer);
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [latLngs, originCoords, destinationCoords]);
+
+  return (
+    <div className={className}>
+      <div ref={containerRef} className="h-full w-full" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/10 to-transparent" />
+      <style>{`
+        .trip-route-marker {
+          display: grid;
+          place-items: center;
+          border-radius: 9999px;
+          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
+        }
+        .trip-route-marker__dot {
+          display: block;
+          width: 10px;
+          height: 10px;
+          border-radius: 9999px;
+          background: white;
+        }
+        .trip-route-marker--origin {
+          background: #16a34a;
+          border: 4px solid rgba(255, 255, 255, 0.95);
+        }
+        .trip-route-marker--destination {
+          background: #ef4444;
+          border: 4px solid rgba(255, 255, 255, 0.95);
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export const TripRouteMap = ({
   geometry,
   originCoords,
@@ -30,93 +153,19 @@ export const TripRouteMap = ({
   distanceKm,
   estimatedTimeHours,
 }: TripRouteMapProps) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [fullUrl, setFullUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fullLoading, setFullLoading] = useState(false);
-  const [error, setError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-
-  const fetchMapImage = async (mode: 'preview' | 'full'): Promise<string | null> => {
-    const { data, error: fnError } = await supabase.functions.invoke('mapbox-proxy', {
-      body: {
-        action: 'static_map',
-        geometry,
-        origin: originCoords,
-        destination: destinationCoords,
-        mode,
-      },
-    });
-    if (fnError || !data) return null;
-    // Edge function returns binary image data — wrap as a Blob URL
-    const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: 'image/png' });
-    return URL.createObjectURL(blob);
-  };
-
-  // Load preview map
-  useEffect(() => {
-    if (!geometry?.coordinates?.length) return;
-    let cancelled = false;
-
-    const loadMap = async () => {
-      try {
-        const url = await fetchMapImage('preview');
-        if (cancelled) return;
-        if (!url) {
-          setError(true);
-          setLoading(false);
-          return;
-        }
-        setPreviewUrl(url);
-        setLoading(false);
-      } catch {
-        setError(true);
-        setLoading(false);
-      }
-    };
-
-    loadMap();
-    return () => { cancelled = true; };
-  }, [geometry, originCoords, destinationCoords]);
-
-  // Load full map on modal open
-  useEffect(() => {
-    if (!modalOpen || fullUrl || !geometry?.coordinates?.length) return;
-
-    let cancelled = false;
-    setFullLoading(true);
-
-    const loadFull = async () => {
-      try {
-        const url = await fetchMapImage('full');
-        if (cancelled) return;
-        if (!url) {
-          setFullLoading(false);
-          return;
-        }
-        setFullUrl(url);
-        setFullLoading(false);
-      } catch {
-        setFullLoading(false);
-      }
-    };
-
-    loadFull();
-    return () => { cancelled = true; };
-  }, [modalOpen, fullUrl, geometry, originCoords, destinationCoords]);
 
   const hours = Math.floor(estimatedTimeHours);
   const minutes = Math.round((estimatedTimeHours - hours) * 60);
 
   const googleMapsUrl = `https://www.google.com/maps/dir/${originCoords[1]},${originCoords[0]}/${destinationCoords[1]},${destinationCoords[0]}`;
-
-  if (error) return null;
+  const googleTerrainUrl = `${googleMapsUrl}/data=!5m1!1e4`;
 
   return (
     <>
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <MapIcon className="size-5 text-violet-600" />
@@ -149,66 +198,50 @@ export const TripRouteMap = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative rounded-lg overflow-hidden border bg-muted" style={{ height: 280 }}>
-            {loading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center">
-                <Loader2 className="size-6 animate-spin text-violet-600" />
-              </div>
-            )}
-            {previewUrl && (
-              <img
-                src={previewUrl}
-                alt={`Ruta de ${originName} a ${destinationName}`}
-                className="size-full object-contain cursor-pointer"
-                onClick={() => setModalOpen(true)}
-                onLoad={() => setLoading(false)}
-                onError={() => { setError(true); }}
-              />
-            )}
-          </div>
+          <RouteLeafletMap
+            coordinates={geometry.coordinates}
+            originCoords={originCoords}
+            destinationCoords={destinationCoords}
+            className="relative h-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+          />
         </CardContent>
       </Card>
 
-      {/* Full map modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DlgTitle className="flex items-center gap-2 text-lg">
-              <MapIcon className="size-5 text-violet-600" />
-              Mapa de Ruta Completo
-            </DlgTitle>
-            <DialogDescription>
-              {originName} → {destinationName} · {distanceKm.toFixed(1)} km · {hours}h {minutes}min
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto">
-            {fullLoading && (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="size-8 animate-spin text-violet-600" />
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DlgTitle className="flex items-center gap-2 text-lg">
+                  <MapIcon className="size-5 text-violet-600" />
+                  Mapa de Ruta Completo
+                </DlgTitle>
+                <DialogDescription>
+                  {originName} → {destinationName} · {distanceKm.toFixed(1)} km · {hours}h {minutes}min
+                </DialogDescription>
               </div>
-            )}
-            {fullUrl && (
-              <img
-                src={fullUrl}
-                alt={`Ruta completa de ${originName} a ${destinationName}`}
-                className="w-full h-auto max-h-[75vh] object-contain rounded-lg"
-              />
-            )}
-            {!fullLoading && !fullUrl && (
-              <div className="text-center py-10 text-muted-foreground">
-                <p>No se pudo cargar el mapa completo.</p>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-3 gap-1.5"
-                  onClick={() => window.open(googleMapsUrl, '_blank')}
+                  className="gap-1.5"
+                  onClick={() => window.open(googleTerrainUrl, '_blank')}
                 >
                   <ExternalLink className="size-3.5" />
-                  Ver en Google Maps
+                  Vista terreno
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          </DialogHeader>
+          {modalOpen && (
+            <RouteLeafletMap
+              key="route-map-modal"
+              coordinates={geometry.coordinates}
+              originCoords={originCoords}
+              destinationCoords={destinationCoords}
+              className="relative h-[68vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>
