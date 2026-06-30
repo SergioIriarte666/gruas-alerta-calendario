@@ -327,7 +327,15 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   };
 
   const toggleSelectedDocument = (folio: string, checked: boolean) => {
-    setSelectedDocuments(prev => { const next = new Set(prev); checked ? next.add(folio) : next.delete(folio); return next; });
+    setSelectedDocuments((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(folio);
+      } else {
+        next.delete(folio);
+      }
+      return next;
+    });
   };
 
   const updateLineDescription = (folio: string, lineNumber: number, description: string) => {

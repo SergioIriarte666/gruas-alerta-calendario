@@ -936,8 +936,8 @@ const upsertSupplierInvoiceForCost = async (params: {
     }
   }
 
-  let baseInvoiceSnapshot = await fetchLinkedInvoiceSnapshot(currentCost.supplier_invoice_id);
-  let targetInvoiceId = currentCost.supplier_invoice_id || existingInvoiceByFolio?.id || null;
+  const baseInvoiceSnapshot = await fetchLinkedInvoiceSnapshot(currentCost.supplier_invoice_id);
+  const targetInvoiceId = currentCost.supplier_invoice_id || existingInvoiceByFolio?.id || null;
 
   if (currentCost.supplier_invoice_id && baseInvoiceSnapshot && baseInvoiceSnapshot.invoice_number !== preview.document.folio) {
     const linkedUsage = await countOtherInvoiceLinks(baseInvoiceSnapshot.id, currentCost.id, params.paymentSnapshot?.id || null);

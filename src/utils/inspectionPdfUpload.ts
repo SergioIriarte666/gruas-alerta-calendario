@@ -13,7 +13,7 @@ export interface UploadResult {
 }
 
 const sanitizePathSegment = (value: string): string =>
-  value.trim().replace(/[\/\\?#%]+/g, '-').replace(/\s+/g, '-');
+  value.trim().replace(/[\\/?#%]+/g, '-').replace(/\s+/g, '-');
 
 const buildInspectionPdfPath = (
   serviceId: string,

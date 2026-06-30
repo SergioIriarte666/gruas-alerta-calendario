@@ -75,7 +75,7 @@ export const useExternalServices = (filter: ExternalServiceStatus = 'pending') =
 
       // Obtener cierres por separado (el embed con RLS admin-only falla en PostgREST)
       const serviceIds = servicesArr.map((s) => s.id);
-      let closuresMap: Record<string, string | null> = {};
+      const closuresMap: Record<string, string | null> = {};
       if (serviceIds.length > 0) {
         const { data: closures } = await supabase
           .from('service_external_closures')

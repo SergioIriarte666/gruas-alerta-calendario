@@ -92,11 +92,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchingRef.current = true;
 
     try {
-      let { data: profileData, error } = await supabase
+      const { data: initialProfileData, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, role, client_id, avatar_url, status')
         .eq('id', authUser.id)
         .single();
+      let profileData = initialProfileData;
 
       if (error) {
         logger.error('UserContext - Error fetching profile:', error);

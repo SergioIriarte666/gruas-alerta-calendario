@@ -171,7 +171,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       // Un servicio con excedente puede estar usado como 'covered' en un cierre y seguir
       // disponible como 'excess' para otro (y viceversa).
       const currentBillableIds = billableServices.map(service => service.id);
-      let usedServiceIds = new Set<string>();
+      const usedServiceIds = new Set<string>();
       const usedKeys = new Set<string>();
 
       if (currentBillableIds.length > 0) {

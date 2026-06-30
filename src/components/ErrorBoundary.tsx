@@ -43,7 +43,9 @@ export class ErrorBoundary extends Component<Props, State> {
           errorStack: error.stack || errorInfo.componentStack || undefined,
           url: window.location.href || '',
         }).catch(() => {});
-      } catch { }
+      } catch (reportError) {
+        logger.warn('Failed to report frontend error:', reportError);
+      }
     }
   }
 

@@ -2,11 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getWhatsAppGate, sendWhatsAppTemplateBulk, normalizeChileanPhone } from "../_shared/whatsapp.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 
-const corsHdrs(req) = {
-  ..._cors,
+const corsHdrs = (req: Request) => ({
+  ...getCorsHeaders(req),
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+});
 
 const TZ = "America/Santiago";
 

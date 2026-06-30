@@ -20,7 +20,6 @@ export function useHistoricalImport() {
    * reintenta sin esa columna (schema mismatch entre entornos).
    */
   const insertInvoiceBatch = async (batch: Record<string, unknown>[]): Promise<{ error: boolean; message?: string }> => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase.from('invoices') as any).insert(batch);
 
     if (!error) return { error: false };
@@ -34,7 +33,6 @@ export function useHistoricalImport() {
         const { product_service_description: _ignored, ...rest } = row;
         return rest;
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: retryError } = await (supabase.from('invoices') as any).insert(sanitizedBatch);
       if (!retryError) return { error: false };
     }

@@ -14,7 +14,7 @@ function sanitizeText(text: string): string {
     .replace(/’/g, "'")
     .replace(/…/g, '...')
     .replace(/•/g, '-')
-    .replace(/ /g, ' ');
+    .replace(/\u00A0/g, ' ');
 }
 
 const hexToRgb = (hex: string) => ({
@@ -41,7 +41,7 @@ export function generateUserManualPDF(): void {
     if (y + needed > pageHeight - 20) addPage();
   };
 
-  // ── Portada ──────────────────────────────────────────────────────────────
+  // Portada
   doc.setFillColor(30, 30, 30);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
