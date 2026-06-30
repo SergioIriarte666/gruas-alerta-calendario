@@ -1,7 +1,8 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { LocationCombobox } from './LocationCombobox';
 import { AlertTriangle } from 'lucide-react';
+import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
+import { useFrequentLocations } from '@/hooks/services/useFrequentLocations';
 
 interface EnhancedLocationSectionProps {
   origin: string;
@@ -24,8 +25,10 @@ export const EnhancedLocationSection = ({
   destinationRequired = false,
   disabled = false,
   originError = false,
-  destinationError = false
+  destinationError = false,
 }: EnhancedLocationSectionProps) => {
+  const { frequentOrigins, frequentDestinations } = useFrequentLocations();
+
   return (
     <div className="space-y-6">
       {/* Origen */}
@@ -40,13 +43,14 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <LocationCombobox
+        <AddressAutocomplete
+          id="origin"
           value={origin}
-          onValueChange={onOriginChange}
+          onChange={onOriginChange}
           placeholder="Dirección de origen del servicio"
-          type="origin"
           disabled={disabled}
-          className={originError ? 'border-destructive' : ''}
+          error={originError}
+          historySuggestions={frequentOrigins.map((l) => l.location)}
         />
       </div>
 
@@ -62,13 +66,14 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <LocationCombobox
+        <AddressAutocomplete
+          id="destination"
           value={destination}
-          onValueChange={onDestinationChange}
+          onChange={onDestinationChange}
           placeholder="Dirección de destino del servicio"
-          type="destination"
           disabled={disabled}
-          className={destinationError ? 'border-destructive' : ''}
+          error={destinationError}
+          historySuggestions={frequentDestinations.map((l) => l.location)}
         />
       </div>
     </div>

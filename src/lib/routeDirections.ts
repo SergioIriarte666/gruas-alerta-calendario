@@ -16,12 +16,13 @@ export async function fetchRouteDirections(
   destinationCoords: [number, number],
 ): Promise<RouteDirectionsResult> {
   const { data: routeData, error: routeError } = await supabase.functions.invoke(
-    'mapbox-proxy',
+    'maps-proxy',
     {
       body: {
-        action: 'directions',
-        origin: originCoords,
-        destination: destinationCoords,
+        action: 'route',
+        // originCoords/destinationCoords are [lng, lat]; maps-proxy expects { lat, lng }
+        origin: { lat: originCoords[1], lng: originCoords[0] },
+        destination: { lat: destinationCoords[1], lng: destinationCoords[0] },
       },
     },
   );

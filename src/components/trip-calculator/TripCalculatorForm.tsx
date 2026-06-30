@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { type ReturnTripConfig } from '@/hooks/useTripCalculation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Navigation, Loader2, Star } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
 import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
@@ -15,149 +14,12 @@ import { useTollCalculationV2 } from '@/hooks/useTollCalculationV2';
 import { TripCostBreakdown } from './TripCostBreakdown';
 import { TollBreakdownCard } from './TollBreakdownCard';
 import { TripRouteMap } from './TripRouteMap';
-import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
-import { createLogger } from "@/lib/logger";
+import { useSavedLocations } from '@/hooks/useSavedLocations';
+import { createLogger } from '@/lib/logger';
 import { fetchRouteDirections } from '@/lib/routeDirections';
+import { AddressAutocomplete, type PlaceResult } from '@/components/shared/AddressAutocomplete';
 
-
-const logger = createLogger("TripCalculatorForm");
-interface GeoResult {
-  name: string;
-  coordinates: [number, number];
-}
-
-function useGeocode() {
-  const [results, setResults] = useState<GeoResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  const search = useCallback((query: string) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (!query || query.length < 3) {
-      setResults([]);
-      return;
-    }
-    timeoutRef.current = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('mapbox-proxy', {
-          body: { action: 'geocode', query },
-        });
-        if (!error && data?.results) setResults(data.results);
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    }, 400);
-  }, []);
-
-  return { results, loading, search, setResults };
-}
-
-interface LocationInputProps {
-  label: string;
-  icon: React.ReactNode;
-  value: string;
-  onSelect: (name: string, coords: [number, number]) => void;
-  savedLocations: SavedLocation[];
-}
-
-const LocationInput = ({ label, icon, value, onSelect, savedLocations }: LocationInputProps) => {
-  const { results, loading, search, setResults } = useGeocode();
-  const [inputValue, setInputValue] = useState(value);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
-
-  // Filter saved locations by input text
-  const filteredSaved = inputValue.length >= 2
-    ? savedLocations.filter((l) => l.name.toLowerCase().includes(inputValue.toLowerCase())).slice(0, 5)
-    : savedLocations.slice(0, 5);
-
-  const hasResults = filteredSaved.length > 0 || results.length > 0;
-
-  return (
-    <div className="relative">
-      <Label className="flex items-center gap-2 mb-1.5">
-        {icon}
-        {label}
-      </Label>
-      <Input
-        value={inputValue}
-        placeholder="Buscar ciudad o dirección..."
-        onChange={(e) => {
-          setInputValue(e.target.value);
-          search(e.target.value);
-          setShowDropdown(true);
-        }}
-        onFocus={() => setShowDropdown(true)}
-        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-      />
-      {loading && (
-        <Loader2 className="absolute right-3 top-9 size-4 animate-spin text-muted-foreground" />
-      )}
-      {showDropdown && hasResults && (
-        <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
-          {/* Saved locations section */}
-          {filteredSaved.length > 0 && (
-            <>
-              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b">
-                <Star className="size-3" />
-                Guardadas
-              </div>
-              {filteredSaved.map((loc) => (
-                <button
-                  key={loc.id}
-                  type="button"
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
-                  onMouseDown={() => {
-                    // Coordinates: [longitude, latitude] for Mapbox format
-                    onSelect(loc.name, [loc.longitude, loc.latitude]);
-                    setInputValue(loc.name);
-                    setResults([]);
-                    setShowDropdown(false);
-                  }}
-                >
-                  <Star className="size-3 shrink-0 text-amber-500" />
-                  <span className="truncate">{loc.name}</span>
-                </button>
-              ))}
-            </>
-          )}
-          {/* Mapbox results section */}
-          {results.length > 0 && (
-            <>
-              {filteredSaved.length > 0 && (
-                <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b border-t">
-                  <MapPin className="size-3" />
-                  Mapa
-                </div>
-              )}
-              {results.slice(0, 5).map((r, i) => (
-                <button
-                  key={`mapbox-${i}`}
-                  type="button"
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent truncate"
-                  onMouseDown={() => {
-                    onSelect(r.name, r.coordinates);
-                    setInputValue(r.name);
-                    setResults([]);
-                    setShowDropdown(false);
-                  }}
-                >
-                  {r.name}
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
+const logger = createLogger('TripCalculatorForm');
 
 export const TripCalculatorForm = () => {
   const [originName, setOriginName] = useState('');
@@ -177,9 +39,54 @@ export const TripCalculatorForm = () => {
   const { calculate: calculateTollV2, result: tollV2Result, isCalculating: tollV2Loading, reset: resetTollV2 } = useTollCalculationV2();
   const { locations: savedLocations } = useSavedLocations();
 
-  const activeCranes = cranes.filter(c => c.isActive);
-  const selectedCrane = activeCranes.find(c => c.id === selectedCraneId);
+  const activeCranes = cranes.filter((c) => c.isActive);
+  const selectedCrane = activeCranes.find((c) => c.id === selectedCraneId);
   const craneType = selectedCrane?.type || '';
+
+  const savedNames = savedLocations.map((l) => l.name);
+
+  const handleOriginChange = (text: string) => {
+    setOriginName(text);
+    // Match against saved locations for instant coord resolution
+    const saved = savedLocations.find((l) => l.name === text);
+    if (saved) {
+      setOriginCoords([saved.longitude, saved.latitude]);
+    } else {
+      setOriginCoords(null);
+    }
+    reset();
+    resetTollV2();
+    setShowManualToll(false);
+  };
+
+  const handleOriginPlaceSelected = (place: PlaceResult) => {
+    setOriginName(place.formattedAddress);
+    setOriginCoords([place.lng, place.lat]); // [lng, lat] — GeoJSON / Mapbox convention
+    reset();
+    resetTollV2();
+    setShowManualToll(false);
+  };
+
+  const handleDestChange = (text: string) => {
+    setDestName(text);
+    const saved = savedLocations.find((l) => l.name === text);
+    if (saved) {
+      setDestCoords([saved.longitude, saved.latitude]);
+    } else {
+      setDestCoords(null);
+    }
+    reset();
+    resetTollV2();
+    setShowManualToll(false);
+  };
+
+  const handleDestPlaceSelected = (place: PlaceResult) => {
+    setDestName(place.formattedAddress);
+    setDestCoords([place.lng, place.lat]);
+    reset();
+    resetTollV2();
+    setShowManualToll(false);
+  };
 
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
@@ -278,38 +185,35 @@ export const TripCalculatorForm = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LocationInput
+            <AddressAutocomplete
               label="Origen"
-              icon={<MapPin className="size-4 text-green-600" />}
               value={originName}
-              savedLocations={savedLocations}
-              onSelect={(name, coords) => {
-                setOriginName(name);
-                setOriginCoords(coords);
-                reset();
-                resetTollV2();
-                setShowManualToll(false);
-              }}
+              onChange={handleOriginChange}
+              onPlaceSelected={handleOriginPlaceSelected}
+              historySuggestions={savedNames}
+              placeholder="Buscar ciudad o dirección..."
             />
-            <LocationInput
+            <AddressAutocomplete
               label="Destino"
-              icon={<Navigation className="size-4 text-red-600" />}
               value={destName}
-              savedLocations={savedLocations}
-              onSelect={(name, coords) => {
-                setDestName(name);
-                setDestCoords(coords);
-                reset();
-                resetTollV2();
-                setShowManualToll(false);
-              }}
+              onChange={handleDestChange}
+              onPlaceSelected={handleDestPlaceSelected}
+              historySuggestions={savedNames}
+              placeholder="Buscar ciudad o dirección..."
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-1.5 block">Grúa</Label>
-              <Select value={selectedCraneId} onValueChange={(v) => { setSelectedCraneId(v); reset(); resetTollV2(); }}>
+              <Select
+                value={selectedCraneId}
+                onValueChange={(v) => {
+                  setSelectedCraneId(v);
+                  reset();
+                  resetTollV2();
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar grúa..." />
                 </SelectTrigger>
@@ -337,7 +241,11 @@ export const TripCalculatorForm = () => {
           <div className="flex items-center gap-3">
             <Switch
               checked={twoVehicles}
-              onCheckedChange={(v) => { setTwoVehicles(v); reset(); resetTollV2(); }}
+              onCheckedChange={(v) => {
+                setTwoVehicles(v);
+                reset();
+                resetTollV2();
+              }}
             />
             <Label className="cursor-pointer">
               {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
@@ -346,7 +254,14 @@ export const TripCalculatorForm = () => {
 
           <div>
             <Label className="mb-1.5 block">Configuración de Vuelta</Label>
-            <Select value={returnConfig} onValueChange={(v) => { setReturnConfig(v as ReturnTripConfig); reset(); resetTollV2(); }}>
+            <Select
+              value={returnConfig}
+              onValueChange={(v) => {
+                setReturnConfig(v as ReturnTripConfig);
+                reset();
+                resetTollV2();
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -375,7 +290,7 @@ export const TripCalculatorForm = () => {
             )}
           </Button>
 
-          {/* Manual toll fallback - only shown when API fails */}
+          {/* Manual toll fallback — shown when automatic calculation fails */}
           {showManualToll && (
             <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 space-y-3">
               <p className="text-sm text-amber-700 dark:text-amber-400">

@@ -141,6 +141,45 @@ export interface NewStationInput {
   longitude?: number;
 }
 
+async function resolveStationCoordinates(input: NewStationInput) {
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    return {
+      latitude: input.latitude,
+      longitude: input.longitude,
+    };
+  }
+
+  const query = [input.name, input.location, input.highway, 'Chile']
+    .filter(Boolean)
+    .join(', ');
+
+  const { data, error } = await supabase.functions.invoke('maps-proxy', {
+    body: { action: 'geocode', address: query },
+  });
+
+  if (error) {
+    logger.warn('No se pudieron geocodificar coordenadas del peaje', error);
+    return {
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+    };
+  }
+
+  const firstResult = Array.isArray(data?.results) ? data.results[0] : null;
+
+  if (!firstResult?.coordinates || firstResult.coordinates.length !== 2) {
+    return {
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+    };
+  }
+
+  return {
+    latitude: firstResult.coordinates[1],
+    longitude: firstResult.coordinates[0],
+  };
+}
+
 export interface NewRateInput {
   stationId: string;
   vehicleCategory: string;
@@ -189,6 +228,8 @@ export const useCreateTollStation = () => {
 
   return useMutation({
     mutationFn: async (input: NewStationInput) => {
+      const coordinates = await resolveStationCoordinates(input);
+
       const { data, error } = await supabase
         .from('toll_stations')
         .insert({
@@ -198,8 +239,8 @@ export const useCreateTollStation = () => {
           station_type: input.stationType,
           concession_id: input.concessionId,
           km_marker: input.kmMarker ?? null,
-          latitude: input.latitude ?? null,
-          longitude: input.longitude ?? null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           is_active: true,
         })
         .select('id')
@@ -214,6 +255,36 @@ export const useCreateTollStation = () => {
     },
     onError: (error: any) => {
       toast.error('Error al crear peaje', { description: error.message });
+    },
+  });
+};
+
+export const useUpdateTollStationCoordinates = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      stationId,
+      latitude,
+      longitude,
+    }: {
+      stationId: string;
+      latitude: number | null;
+      longitude: number | null;
+    }) => {
+      const { error } = await supabase
+        .from('toll_stations')
+        .update({ latitude, longitude })
+        .eq('id', stationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['toll-rates-current'] });
+      toast.success('Coordenadas del peaje actualizadas');
+    },
+    onError: (error: any) => {
+      toast.error('Error al actualizar coordenadas', { description: error.message });
     },
   });
 };
