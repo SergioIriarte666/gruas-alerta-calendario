@@ -7,8 +7,8 @@ const logger = createLogger("useSavedLocations");
 export interface SavedLocation {
   id: string;
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   created_by: string | null;
   created_at: string;
 }

@@ -17,7 +17,10 @@ import { TripRouteMap } from './TripRouteMap';
 import { useSavedLocations } from '@/hooks/useSavedLocations';
 import { createLogger } from '@/lib/logger';
 import { fetchRouteDirections } from '@/lib/routeDirections';
-import { AddressAutocomplete, type PlaceResult } from '@/components/shared/AddressAutocomplete';
+import {
+  LocationAutocomplete,
+  type SelectedLocation,
+} from './LocationAutocomplete';
 
 const logger = createLogger('TripCalculatorForm');
 
@@ -48,18 +51,15 @@ export const TripCalculatorForm = () => {
   const selectedCrane = activeCranes.find((c) => c.id === selectedCraneId);
   const craneType = selectedCrane?.type || '';
 
-  const savedNames = savedLocations.map((l) => l.name);
-
-  const showManualToll = useMemo(
-    () => requiresManualEntry && !tollV2Result,
-    [requiresManualEntry, tollV2Result],
-  );
-
   const handleOriginChange = (text: string) => {
     setOriginName(text);
-    // Match against saved locations for instant coord resolution
-    const saved = savedLocations.find((l) => l.name === text);
-    if (saved) {
+    const saved = savedLocations.find(
+      (location) =>
+        location.name === text &&
+        location.latitude != null &&
+        location.longitude != null,
+    );
+    if (saved?.latitude != null && saved.longitude != null) {
       setOriginCoords([saved.longitude, saved.latitude]);
     } else {
       setOriginCoords(null);
@@ -68,17 +68,22 @@ export const TripCalculatorForm = () => {
     resetTollV2();
   };
 
-  const handleOriginPlaceSelected = (place: PlaceResult) => {
-    setOriginName(place.formattedAddress);
-    setOriginCoords([place.lng, place.lat]); // [lng, lat] — GeoJSON / Mapbox convention
+  const handleOriginPlaceSelected = (location: SelectedLocation) => {
+    setOriginName(location.name);
+    setOriginCoords([location.longitude, location.latitude]);
     reset();
     resetTollV2();
   };
 
   const handleDestChange = (text: string) => {
     setDestName(text);
-    const saved = savedLocations.find((l) => l.name === text);
-    if (saved) {
+    const saved = savedLocations.find(
+      (location) =>
+        location.name === text &&
+        location.latitude != null &&
+        location.longitude != null,
+    );
+    if (saved?.latitude != null && saved.longitude != null) {
       setDestCoords([saved.longitude, saved.latitude]);
     } else {
       setDestCoords(null);
@@ -87,12 +92,17 @@ export const TripCalculatorForm = () => {
     resetTollV2();
   };
 
-  const handleDestPlaceSelected = (place: PlaceResult) => {
-    setDestName(place.formattedAddress);
-    setDestCoords([place.lng, place.lat]);
+  const handleDestPlaceSelected = (location: SelectedLocation) => {
+    setDestName(location.name);
+    setDestCoords([location.longitude, location.latitude]);
     reset();
     resetTollV2();
   };
+
+  const showManualToll = useMemo(
+    () => requiresManualEntry && !tollV2Result,
+    [requiresManualEntry, tollV2Result],
+  );
 
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
@@ -188,20 +198,18 @@ export const TripCalculatorForm = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AddressAutocomplete
+            <LocationAutocomplete
               label="Origen"
               value={originName}
-              onChange={handleOriginChange}
-              onPlaceSelected={handleOriginPlaceSelected}
-              historySuggestions={savedNames}
+              onValueChange={handleOriginChange}
+              onSelect={handleOriginPlaceSelected}
               placeholder="Buscar ciudad o dirección..."
             />
-            <AddressAutocomplete
+            <LocationAutocomplete
               label="Destino"
               value={destName}
-              onChange={handleDestChange}
-              onPlaceSelected={handleDestPlaceSelected}
-              historySuggestions={savedNames}
+              onValueChange={handleDestChange}
+              onSelect={handleDestPlaceSelected}
               placeholder="Buscar ciudad o dirección..."
             />
           </div>

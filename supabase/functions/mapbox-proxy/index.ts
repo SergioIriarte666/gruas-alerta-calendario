@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, origin, destination, query, geometry, mode = 'preview' } = body;
+    const { action, origin, destination, query, geometry, mode = 'preview', proximity } = body;
 
     // Static map image with route
     if (action === "static_map") {
@@ -150,7 +150,17 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=cl&language=es&limit=5`;
+      let proximityParam = "";
+      if (
+        Array.isArray(proximity) &&
+        proximity.length === 2 &&
+        typeof proximity[0] === "number" &&
+        typeof proximity[1] === "number"
+      ) {
+        proximityParam = `&proximity=${proximity[0]},${proximity[1]}`;
+      }
+
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=cl&language=es&limit=5${proximityParam}`;
       const res = await fetch(url);
       const data = await res.json();
 

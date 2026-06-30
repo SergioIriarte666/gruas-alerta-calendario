@@ -1,8 +1,8 @@
-import React, { useId } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle } from 'lucide-react';
 import { useFrequentLocations } from '@/hooks/services/useFrequentLocations';
+import { MapboxAddressInput, type QuickAddress } from '@/components/services/MapboxAddressInput';
 
 interface EnhancedLocationSectionProps {
   origin: string;
@@ -28,8 +28,26 @@ export const EnhancedLocationSection = ({
   destinationError = false,
 }: EnhancedLocationSectionProps) => {
   const { frequentOrigins, frequentDestinations } = useFrequentLocations();
-  const originListId = useId();
-  const destListId = useId();
+
+  const originSuggestions = useMemo<QuickAddress[]>(
+    () =>
+      frequentOrigins.map((location) => ({
+        label: location.location,
+        address: location.location,
+        usageCount: location.count,
+      })),
+    [frequentOrigins],
+  );
+
+  const destinationSuggestions = useMemo<QuickAddress[]>(
+    () =>
+      frequentDestinations.map((location) => ({
+        label: location.location,
+        address: location.location,
+        usageCount: location.count,
+      })),
+    [frequentDestinations],
+  );
 
   return (
     <div className="space-y-6">
@@ -45,20 +63,15 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <Input
+        <MapboxAddressInput
           id="origin"
           value={origin}
-          onChange={(e) => onOriginChange(e.target.value)}
-          placeholder="Dirección de origen del servicio"
+          onChange={(value) => onOriginChange(value)}
+          placeholder="Direccion de origen del servicio"
           disabled={disabled}
-          autoComplete="off"
-          list={originListId}
+          error={originError}
+          quickSuggestions={originSuggestions}
         />
-        <datalist id={originListId}>
-          {frequentOrigins.map((l) => (
-            <option key={l.location} value={l.location} />
-          ))}
-        </datalist>
       </div>
 
       {/* Destino */}
@@ -73,20 +86,15 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <Input
+        <MapboxAddressInput
           id="destination"
           value={destination}
-          onChange={(e) => onDestinationChange(e.target.value)}
-          placeholder="Dirección de destino del servicio"
+          onChange={(value) => onDestinationChange(value)}
+          placeholder="Direccion de destino del servicio"
           disabled={disabled}
-          autoComplete="off"
-          list={destListId}
+          error={destinationError}
+          quickSuggestions={destinationSuggestions}
         />
-        <datalist id={destListId}>
-          {frequentDestinations.map((l) => (
-            <option key={l.location} value={l.location} />
-          ))}
-        </datalist>
       </div>
     </div>
   );

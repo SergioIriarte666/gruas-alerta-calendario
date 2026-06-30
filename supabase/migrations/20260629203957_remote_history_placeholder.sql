@@ -1,0 +1,2 @@
+-- Placeholder to reconcile remote migration history with the local repository.
+-- The actual migration was already applied remotely before this checkout.

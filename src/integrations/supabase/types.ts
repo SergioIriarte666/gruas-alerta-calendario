@@ -4433,28 +4433,46 @@ export type Database = {
       }
       saved_locations: {
         Row: {
+          address: string | null
+          aliases: string[] | null
+          category: string | null
           created_at: string
           created_by: string | null
           id: string
-          latitude: number
-          longitude: number
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
           name: string
+          updated_at: string
+          usage_count: number
         }
         Insert: {
+          address?: string | null
+          aliases?: string[] | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          latitude: number
-          longitude: number
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          updated_at?: string
+          usage_count?: number
         }
         Update: {
+          address?: string | null
+          aliases?: string[] | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
-          latitude?: number
-          longitude?: number
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          updated_at?: string
+          usage_count?: number
         }
         Relationships: []
       }
