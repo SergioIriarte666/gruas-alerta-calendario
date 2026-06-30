@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useId } from 'react';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertTriangle } from 'lucide-react';
-import { AddressAutocomplete } from '@/components/shared/AddressAutocomplete';
 import { useFrequentLocations } from '@/hooks/services/useFrequentLocations';
 
 interface EnhancedLocationSectionProps {
@@ -28,6 +28,8 @@ export const EnhancedLocationSection = ({
   destinationError = false,
 }: EnhancedLocationSectionProps) => {
   const { frequentOrigins, frequentDestinations } = useFrequentLocations();
+  const originListId = useId();
+  const destListId = useId();
 
   return (
     <div className="space-y-6">
@@ -43,15 +45,20 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <AddressAutocomplete
+        <Input
           id="origin"
           value={origin}
-          onChange={onOriginChange}
+          onChange={(e) => onOriginChange(e.target.value)}
           placeholder="Dirección de origen del servicio"
           disabled={disabled}
-          error={originError}
-          historySuggestions={frequentOrigins.map((l) => l.location)}
+          autoComplete="off"
+          list={originListId}
         />
+        <datalist id={originListId}>
+          {frequentOrigins.map((l) => (
+            <option key={l.location} value={l.location} />
+          ))}
+        </datalist>
       </div>
 
       {/* Destino */}
@@ -66,15 +73,20 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <AddressAutocomplete
+        <Input
           id="destination"
           value={destination}
-          onChange={onDestinationChange}
+          onChange={(e) => onDestinationChange(e.target.value)}
           placeholder="Dirección de destino del servicio"
           disabled={disabled}
-          error={destinationError}
-          historySuggestions={frequentDestinations.map((l) => l.location)}
+          autoComplete="off"
+          list={destListId}
         />
+        <datalist id={destListId}>
+          {frequentDestinations.map((l) => (
+            <option key={l.location} value={l.location} />
+          ))}
+        </datalist>
       </div>
     </div>
   );
