@@ -1,6 +1,6 @@
 import { requireUserRoles, withHeaders } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
-const allowedRoles = ["admin", "viewer"] as const;
+const allowedRoles = ["admin", "viewer", "operator", "client"] as const;
 
 function encodePolyline(coordinates: [number, number][]): string {
   let encoded = '';

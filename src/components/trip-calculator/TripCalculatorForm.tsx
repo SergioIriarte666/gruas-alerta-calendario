@@ -139,6 +139,7 @@ export const TripCalculatorForm = () => {
         tollCostAlreadyRoundTrip: Boolean(tollV2),
         tollDetails: tollData?.tolls,
         additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+        tollWasManual: false,
       };
 
       await calculate(input);
@@ -167,6 +168,7 @@ export const TripCalculatorForm = () => {
         manualTollCost: manualToll ? Number(manualToll) : 0,
         tollCostAlreadyRoundTrip: false,
         additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+        tollWasManual: true,
       };
 
       await calculate(input);

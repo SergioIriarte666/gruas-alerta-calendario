@@ -387,7 +387,6 @@ export function useTollCalculationV2() {
 
         let getApiStations: string[] = [];
         let exactLookupStatus: 'matched' | 'no_results' | 'unmatched' | 'failed' = 'failed';
-        let exactLookupReturnedZero = false;
         let breakdown: TollBreakdown[] = matchStationsByRouteGeometry(routeGeometry, stationIndex).map(
           (item) => ({
             ...item,
@@ -434,8 +433,6 @@ export function useTollCalculationV2() {
                 : typeof apiData?.total === 'number'
                   ? Number(apiData.total)
                   : null;
-
-            exactLookupReturnedZero = apiTotal === 0;
 
             if (apiDetails.length > 0) {
               getApiStations = apiDetails.map((detail: any) => detail.peaje as string);
@@ -486,7 +483,7 @@ export function useTollCalculationV2() {
         }
 
         if (breakdown.length === 0) {
-          if (exactLookupStatus === 'no_results' && exactLookupReturnedZero) {
+          if (exactLookupStatus === 'no_results') {
             const noTollsExactResult: TollResultV2 = {
               totalCost: 0,
               idaCost: 0,

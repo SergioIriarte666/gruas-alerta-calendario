@@ -83,7 +83,6 @@ Deno.serve(async (req: Request) => {
         languageCode: "es-CL",
         regionCode: "CL",
         includedRegionCodes: ["cl"],
-        includedPrimaryTypes: ["street_address", "route", "premise", "subpremise", "locality"],
         locationBias: {
           circle: {
             center: LOCATION_BIAS_CENTER,

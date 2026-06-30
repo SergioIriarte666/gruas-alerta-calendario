@@ -24,6 +24,7 @@ export interface TripCalculationInput {
   tollCostAlreadyRoundTrip?: boolean;
   tollDetails?: Array<{ name: string; cost: number; highway?: string }>;
   additionalCosts?: number;
+  tollWasManual?: boolean;
 }
 
 export interface FuelLegDetail {
@@ -205,7 +206,7 @@ export function useTripCalculation() {
           },
           tolls: {
             total_cost: tollCost,
-            is_manual: !input.tollDetails?.length,
+            is_manual: input.tollWasManual ?? false,
             details: input.tollDetails,
             is_round_trip: true,
           },

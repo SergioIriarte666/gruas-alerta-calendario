@@ -98,6 +98,20 @@ export function AddressAutocomplete({
 
     if (!onPlaceSelected) return;
 
+    if (suggestion.source === 'geocode' && suggestion.coordinates) {
+      onPlaceSelected({
+        placeId: suggestion.text,
+        formattedAddress: suggestion.text,
+        lat: suggestion.coordinates[1],
+        lng: suggestion.coordinates[0],
+        comuna: null,
+        region: null,
+      });
+      return;
+    }
+
+    if (!suggestion.placeId) return;
+
     setFetchingDetails(true);
     try {
       const place = await getPlaceDetails(suggestion.placeId);
@@ -214,8 +228,8 @@ export function AddressAutocomplete({
                 <CommandGroup heading="Sugerencias de Google">
                   {suggestions.map((s) => (
                     <CommandItem
-                      key={s.placeId}
-                      value={s.placeId}
+                      key={s.placeId ?? `${s.source}-${s.text}`}
+                      value={s.placeId ?? `${s.source}-${s.text}`}
                       onSelect={() => handleSelectSuggestion(s)}
                       className="gap-2"
                     >
