@@ -42,6 +42,7 @@ import {
   useCreateTollStation,
   useTollConcessions,
   useTollRatesCurrent,
+  useUpdateTollStationCoordinates,
   useUpdateTollStationKm,
   useUpdateTollRate,
 } from '@/hooks/useTollManagement';
@@ -74,15 +75,24 @@ const TollRatesTable = () => {
   const { data: rates = [], isLoading, refetch, isFetching } = useTollRatesCurrent();
   const updateRate = useUpdateTollRate();
   const updateKm = useUpdateTollStationKm();
+  const updateCoordinates = useUpdateTollStationCoordinates();
   const [editingRate, setEditingRate] = useState<TollRateCurrent | null>(null);
   const [editingKm, setEditingKm] = useState<{
     stationId: string;
     stationName: string;
     currentKm: number | null;
   } | null>(null);
+  const [editingCoordinates, setEditingCoordinates] = useState<{
+    stationId: string;
+    stationName: string;
+    currentLatitude: number | null;
+    currentLongitude: number | null;
+  } | null>(null);
   const [newAmount, setNewAmount] = useState('');
   const [newValidFrom, setNewValidFrom] = useState(getCurrentChileDateString());
   const [newKm, setNewKm] = useState('');
+  const [newLatitude, setNewLatitude] = useState('');
+  const [newLongitude, setNewLongitude] = useState('');
 
   const groupedRates = useMemo(() => groupRatesByConcession(rates), [rates]);
 
@@ -114,6 +124,21 @@ const TollRatesTable = () => {
     });
 
     setEditingKm(null);
+  };
+
+  const handleSaveCoordinates = async () => {
+    if (!editingCoordinates) return;
+
+    const parsedLatitude = newLatitude.trim() === '' ? null : Number(newLatitude);
+    const parsedLongitude = newLongitude.trim() === '' ? null : Number(newLongitude);
+
+    await updateCoordinates.mutateAsync({
+      stationId: editingCoordinates.stationId,
+      latitude: parsedLatitude,
+      longitude: parsedLongitude,
+    });
+
+    setEditingCoordinates(null);
   };
 
   return (
@@ -222,6 +247,29 @@ const TollRatesTable = () => {
                               >
                                 <Edit2 className="size-3" />
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const firstRate = stationRates[0];
+                                  setEditingCoordinates({
+                                    stationId: firstRate.stationId,
+                                    stationName,
+                                    currentLatitude: firstRate.latitude,
+                                    currentLongitude: firstRate.longitude,
+                                  });
+                                  setNewLatitude(String(firstRate.latitude ?? ''));
+                                  setNewLongitude(String(firstRate.longitude ?? ''));
+                                }}
+                                className="text-muted-foreground hover:text-foreground opacity-30 hover:opacity-100 transition-opacity"
+                                title="Editar coordenadas"
+                              >
+                                <MapPin className="size-3" />
+                              </button>
+                              {stationRates[0]?.latitude === null || stationRates[0]?.longitude === null ? (
+                                <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-100/70 text-amber-900">
+                                  Sin coordenadas
+                                </Badge>
+                              ) : null}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 text-center">
@@ -344,6 +392,54 @@ const TollRatesTable = () => {
             </Button>
             <Button onClick={handleSaveKm} disabled={updateKm.isPending}>
               {updateKm.isPending ? 'Guardando...' : 'Guardar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingCoordinates} onOpenChange={(open) => !open && setEditingCoordinates(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar coordenadas</DialogTitle>
+          </DialogHeader>
+          {editingCoordinates && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-md bg-muted/40 p-3 text-sm">
+                <span className="text-muted-foreground">Peaje: </span>
+                <strong>{editingCoordinates.stationName}</strong>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="station-lat-edit">Latitud</Label>
+                  <Input
+                    id="station-lat-edit"
+                    type="number"
+                    step="0.000001"
+                    value={newLatitude}
+                    onChange={(event) => setNewLatitude(event.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="station-lng-edit">Longitud</Label>
+                  <Input
+                    id="station-lng-edit"
+                    type="number"
+                    step="0.000001"
+                    value={newLongitude}
+                    onChange={(event) => setNewLongitude(event.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCoordinates(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveCoordinates} disabled={updateCoordinates.isPending}>
+              {updateCoordinates.isPending ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -500,6 +596,8 @@ const ManualTollForm = () => {
     highway: 'Ruta 5 Norte',
     stationType: 'TRONCAL' as 'TRONCAL' | 'LATERAL' | 'ACCESO',
     kmMarker: '',
+    latitude: '',
+    longitude: '',
     validFrom: getCurrentChileDateString(),
     liviano: '',
     camion2Ejes: '',
@@ -521,6 +619,8 @@ const ManualTollForm = () => {
       highway: form.highway.trim() || undefined,
       stationType: form.stationType,
       kmMarker: form.kmMarker ? Number(form.kmMarker) : undefined,
+      latitude: form.latitude ? Number(form.latitude) : undefined,
+      longitude: form.longitude ? Number(form.longitude) : undefined,
     });
 
     const rateRows = [
@@ -545,6 +645,8 @@ const ManualTollForm = () => {
       highway: 'Ruta 5 Norte',
       stationType: 'TRONCAL',
       kmMarker: '',
+      latitude: '',
+      longitude: '',
       validFrom: getCurrentChileDateString(),
       liviano: '',
       camion2Ejes: '',
@@ -639,6 +741,28 @@ const ManualTollForm = () => {
                 value={form.kmMarker}
                 onChange={(event) => setForm((current) => ({ ...current, kmMarker: event.target.value }))}
                 placeholder="Ej. 653"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="station-lat">Latitud</Label>
+              <Input
+                id="station-lat"
+                type="number"
+                step="0.000001"
+                value={form.latitude}
+                onChange={(event) => setForm((current) => ({ ...current, latitude: event.target.value }))}
+                placeholder="Opcional, se intenta completar sola"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="station-lng">Longitud</Label>
+              <Input
+                id="station-lng"
+                type="number"
+                step="0.000001"
+                value={form.longitude}
+                onChange={(event) => setForm((current) => ({ ...current, longitude: event.target.value }))}
+                placeholder="Opcional, se intenta completar sola"
               />
             </div>
           </div>
