@@ -12,8 +12,11 @@ export const useServiceClosures = () => {
     queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
   };
 
-  const createClosure = async (closureData: Parameters<typeof createClosureOp>[0]) => {
-    const newClosure = await createClosureOp(closureData);
+  const createClosure = async (
+    closureData: Parameters<typeof createClosureOp>[0],
+    options?: Parameters<typeof createClosureOp>[1]
+  ) => {
+    const newClosure = await createClosureOp(closureData, options);
     addClosure(newClosure);
     invalidateClosureQueries();
     return newClosure;

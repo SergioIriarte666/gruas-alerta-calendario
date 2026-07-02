@@ -144,6 +144,13 @@ const ClosureForm = ({
     setFormData(prev => {
       // Un cierre debe ser homogéneo: solo montos cubiertos o solo excedentes
       if (checked) {
+        const disputedService = services.find(s => s.id === serviceId);
+        if ((disputedService as any)?._disputeReason) {
+          toast.error('No se puede incluir un servicio en disputa', {
+            description: `En disputa: ${(disputedService as any)._disputeReason}`,
+          });
+          return prev;
+        }
         if (prev.serviceIds.includes(serviceId)) {
           toast.error('Este servicio ya está incluido en este cierre con el mismo tipo de monto');
           return prev;

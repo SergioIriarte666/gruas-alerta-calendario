@@ -462,6 +462,27 @@ export interface ServiceClosure {
 
 // Updated to match database enums - Added new states for special client workflow (Fase 1)
 export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'partially_invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
+
+// Disputa de servicio: condición ortogonal al estado del servicio (no es un ServiceStatus).
+export type DisputeType = 'item_faltante_oc' | 'patente_incorrecta' | 'monto_distinto' | 'documento_faltante' | 'otro';
+export type DisputeStatus = 'open' | 'resolved';
+
+export interface ServiceDispute {
+  id: string;
+  serviceId: string;
+  disputeType: DisputeType;
+  description: string;
+  disputedAmount?: number | null;
+  referenceDoc?: string | null;
+  status: DisputeStatus;
+  resolutionNotes?: string | null;
+  createdBy?: string | null;
+  createdByName?: string | null;
+  createdAt: string;
+  resolvedBy?: string | null;
+  resolvedByName?: string | null;
+  resolvedAt?: string | null;
+}
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla';
 

@@ -60,6 +60,10 @@ export default function VipClientPipeline() {
     toast.success('Servicio actualizado correctamente');
   };
 
+  const handleClosureCreated = async () => {
+    await Promise.all([forceGlobalRefresh(), refetch()]);
+  };
+
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     if (getVipPipelineDisplayStatus(service) === 'purchase_order_pending' && !service.purchaseOrderNumber) {
@@ -287,6 +291,7 @@ export default function VipClientPipeline() {
               onServiceSelect={handleServiceSelect}
               onServiceEdit={handleServiceEdit}
               onBatchUpdate={handleBatchUpdate}
+              onClosureCreated={handleClosureCreated}
             />
           </div>
         </TabsContent>

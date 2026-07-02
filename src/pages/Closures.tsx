@@ -46,7 +46,7 @@ const Closures = () => {
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
   
-  const [sortField, setSortField] = useState<ClosureSortField>('dateFrom');
+  const [sortField, setSortField] = useState<ClosureSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
   const [closureToDelete, setClosureToDelete] = useState<ServiceClosure | null>(null);
@@ -55,13 +55,25 @@ const Closures = () => {
 
   
 
+  // Alterna asc -> desc -> sin orden (vuelve al orden por defecto: Período descendente)
   const handleSort = (field: ClosureSortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
+  };
+
+  // Fija directamente un campo/dirección de orden (usado por el Select en vista móvil)
+  const handleSortSelect = (field: ClosureSortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
   };
 
   const getClientName = (clientId?: string) => {
@@ -81,13 +93,20 @@ const Closures = () => {
       return matchesSearch && matchesStatus && matchesClient;
     });
 
+    // Sin ordenamiento explícito: orden por defecto = Período descendente (más reciente primero)
+    const effectiveField = sortField ?? 'dateFrom';
+    const effectiveDirection = sortField ? sortDirection : 'desc';
+
     return [...filtered].sort((a, b) => {
       let comparison = 0;
-      
-      switch (sortField) {
-        case 'folio':
-          comparison = a.folio.localeCompare(b.folio);
+
+      switch (effectiveField) {
+        case 'folio': {
+          const numA = parseInt(a.folio.replace('CIE-', ''), 10);
+          const numB = parseInt(b.folio.replace('CIE-', ''), 10);
+          comparison = (Number.isNaN(numA) ? 0 : numA) - (Number.isNaN(numB) ? 0 : numB);
           break;
+        }
         case 'dateFrom':
           comparison = parseFromDatabase(a.dateRange.from).getTime() - parseFromDatabase(b.dateRange.from).getTime();
           break;
@@ -109,8 +128,8 @@ const Closures = () => {
           break;
         }
       }
-      
-      return sortDirection === 'asc' ? comparison : -comparison;
+
+      return effectiveDirection === 'asc' ? comparison : -comparison;
     });
   }, [closures, searchTerm, statusFilter, clientFilter, sortField, sortDirection, clients]);
 
@@ -277,6 +296,7 @@ const Closures = () => {
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
+          onSortSelect={handleSortSelect}
         />
       </ErrorBoundary>
 

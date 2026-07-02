@@ -29,7 +29,9 @@ import {
   ChevronsUpDown,
   Filter,
   X,
-  Download
+  Download,
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { AdvancedServiceFilters } from '@/components/services/AdvancedServiceFilters';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
@@ -39,11 +41,18 @@ import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { PipelineExportModal } from './PipelineExportModal';
 import { PipelineBatchActionBar } from './PipelineBatchActionBar';
+import { PipelineClosureActionBar } from '@/components/pipeline/PipelineClosureActionBar';
+import { CreateClosureFromPipelineModal } from '@/components/pipeline/CreateClosureFromPipelineModal';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 import { toTitleCase } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useOpenServiceDisputes } from '@/hooks/services/useServiceDisputes';
+import { MarkServiceDisputeModal } from '@/components/services/disputes/MarkServiceDisputeModal';
+import { ResolveServiceDisputeModal } from '@/components/services/disputes/ResolveServiceDisputeModal';
+import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
 
 interface SubGroupConfig {
   fieldExtractor: (s: Service) => string;
@@ -136,8 +145,12 @@ const groupByField = (services: Service[], config: SubGroupConfig, sortField?: S
   });
 };
 
+// 'disputed' es un grupo 100% de UI: no existe como estado en la base ni en ServiceStatus.
+const DISPUTED_GROUP_STATUS = 'disputed' as const;
+type PipelineGroupStatus = ServiceStatus | typeof DISPUTED_GROUP_STATUS;
+
 interface ServiceGroup {
-  status: ServiceStatus;
+  status: PipelineGroupStatus;
   title: string;
   services: Service[];
   totalValue: number;
@@ -157,6 +170,7 @@ interface PipelineListViewProps {
   onServiceSelect?: (service: Service) => void;
   onServiceEdit?: (service: Service) => void;
   onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
+  onClosureCreated?: () => void;
 }
 
 type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder' | 'invoiceNumeroFiscal';
@@ -237,16 +251,23 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   onServiceUpdate,
   onServiceSelect,
   onServiceEdit,
-  onBatchUpdate
+  onBatchUpdate,
+  onClosureCreated
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<PipelineGroupStatus>>(new Set([DISPUTED_GROUP_STATUS]));
   const [expandedPOs, setExpandedPOs] = useState<Set<string>>(new Set(['__all__']));
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showCreateClosureModal, setShowCreateClosureModal] = useState(false);
   const [sortField, setSortField] = useState<SortField>('serviceDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [disputeModalService, setDisputeModalService] = useState<Service | null>(null);
+  const [resolveModalService, setResolveModalService] = useState<Service | null>(null);
+
+  const serviceIds = useMemo(() => services.map(s => s.id), [services]);
+  const { openDisputesByServiceId } = useOpenServiceDisputes(serviceIds);
 
   // Hook para filtros avanzados
   const {
@@ -319,8 +340,13 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const serviceGroups = useMemo(() => {
     // Aplicar filtros avanzados primero
     const filteredServices = applyAdvancedFilters(services, { searchTerm, statusFilter: 'all' });
-    
-    const groupedServices = filteredServices.reduce((groups, service) => {
+
+    // Los servicios con disputa abierta se excluyen de su grupo de estado real
+    // y se reagrupan en el grupo virtual "En Disputa" (100% de UI).
+    const disputedServices = filteredServices.filter(s => openDisputesByServiceId.has(s.id));
+    const nonDisputedServices = filteredServices.filter(s => !openDisputesByServiceId.has(s.id));
+
+    const groupedServices = nonDisputedServices.reduce((groups, service) => {
       const status = getVipPipelineDisplayStatus(service);
       if (!groups[status]) {
         groups[status] = [];
@@ -329,7 +355,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       return groups;
     }, {} as Record<ServiceStatus, Service[]>);
 
-    return PIPELINE_STATUSES
+    const statusGroups = PIPELINE_STATUSES
       .map(statusConfig => {
         const statusServices = groupedServices[statusConfig.id] || [];
         const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s, clientId), 0);
@@ -390,7 +416,31 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         } as ServiceGroup;
       })
       .filter(group => group.services.length > 0);
-  }, [services, searchTerm, sortField, sortDirection, advancedFilters, applyAdvancedFilters, clientId]);
+
+    if (disputedServices.length === 0) {
+      return statusGroups;
+    }
+
+    const disputedTotalValue = disputedServices.reduce((sum, s) => {
+      const dispute = openDisputesByServiceId.get(s.id);
+      const amount = dispute?.disputedAmount ?? getDisplayServiceValue(s, clientId);
+      return sum + amount;
+    }, 0);
+
+    const disputedGroup: ServiceGroup = {
+      status: DISPUTED_GROUP_STATUS,
+      title: 'En Disputa',
+      services: sortServices(disputedServices),
+      totalValue: disputedTotalValue,
+      averageDays: 0,
+      color: 'bg-amber-500/15 text-amber-800',
+      textColor: 'text-amber-800',
+      sortingDate: null,
+      sortingDateLabel: ''
+    };
+
+    return [disputedGroup, ...statusGroups];
+  }, [services, searchTerm, sortField, sortDirection, advancedFilters, applyAdvancedFilters, clientId, openDisputesByServiceId]);
 
   const toggleGroup = (status: ServiceStatus) => {
     const newExpanded = new Set(expandedGroups);
@@ -411,6 +461,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   };
 
   const handleServiceSelection = (serviceId: string, checked: boolean) => {
+    // Servicios en disputa no son seleccionables para batch ni para crear cierre
+    if (checked && openDisputesByServiceId.has(serviceId)) return;
     const newSelected = new Set(selectedServices);
     if (checked) {
       newSelected.add(serviceId);
@@ -424,6 +476,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     const newSelected = new Set(selectedServices);
     groupServices.forEach(service => {
       if (checked) {
+        if (openDisputesByServiceId.has(service.id)) return;
         newSelected.add(service.id);
       } else {
         newSelected.delete(service.id);
@@ -658,13 +711,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             </CardContent>
           </Card>
         ) : (
-          serviceGroups.map((group) => (
+          serviceGroups.map((group) => {
+            const isDisputedGroup = group.status === DISPUTED_GROUP_STATUS;
+
+            return (
             <Collapsible
               key={group.status}
               open={expandedGroups.has(group.status)}
               onOpenChange={() => toggleGroup(group.status)}
             >
-              <Card className="bg-card border">
+              <Card className={isDisputedGroup ? 'bg-card border-amber-500/40' : 'bg-card border'}>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/5 transition-colors">
                     <div className="flex items-center justify-between">
@@ -675,28 +731,34 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                           <ChevronRight className="size-4 text-foreground" />
                         )}
                         <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={group.services.every(s => selectedServices.has(s.id))}
-                            onCheckedChange={(checked) => handleSelectAll(group.services, checked as boolean)}
-                          />
+                          {isDisputedGroup ? (
+                            <AlertTriangle className="size-4 text-amber-600" />
+                          ) : (
+                            <Checkbox
+                              checked={group.services.every(s => selectedServices.has(s.id))}
+                              onCheckedChange={(checked) => handleSelectAll(group.services, checked as boolean)}
+                            />
+                          )}
                           <div>
                             <div className="flex items-center gap-2">
                               <Badge className={`${group.color} ${group.textColor} border-0`}>
                                 {group.title}
                               </Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
-                              <span className="flex items-center gap-1">
-                                <Clock className="size-3" />
-                                Promedio: {group.averageDays} días
-                              </span>
-                              {group.sortingDate && (
+                            {!isDisputedGroup && (
+                              <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
                                 <span className="flex items-center gap-1">
-                                  <Calendar className="size-3" />
-                                  {group.sortingDateLabel}: {formatForDisplay(group.sortingDate)}
+                                  <Clock className="size-3" />
+                                  Promedio: {group.averageDays} días
                                 </span>
-                              )}
-                            </div>
+                                {group.sortingDate && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="size-3" />
+                                    {group.sortingDateLabel}: {formatForDisplay(group.sortingDate)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -714,8 +776,97 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    {(() => {
-                      const subGroupConfig = getSubGroupConfig(group.status);
+                    {isDisputedGroup ? (
+                      <TooltipProvider>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-muted-foreground w-12">
+                                <CheckSquare className="size-4 opacity-40" />
+                              </TableHead>
+                              <TableHead className="text-muted-foreground">Folio</TableHead>
+                              <TableHead className="text-muted-foreground">Tipo de Servicio</TableHead>
+                              <TableHead className="text-muted-foreground">Estado Real</TableHead>
+                              <TableHead className="text-muted-foreground">Fecha</TableHead>
+                              <TableHead className="text-muted-foreground">Valor</TableHead>
+                              <TableHead className="text-muted-foreground">Acciones</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.services.map(service => {
+                              const dispute = openDisputesByServiceId.get(service.id);
+                              const realStatus = getVipPipelineDisplayStatus(service);
+                              return (
+                                <TableRow key={service.id} className="border-muted">
+                                  <TableCell>
+                                    <Checkbox checked={false} disabled />
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="font-medium text-foreground">{service.folio}</div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="text-foreground">{service.serviceType.name}</div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-2 cursor-help">
+                                          {getStatusBadge(realStatus)}
+                                          <AlertTriangle className="size-3.5 text-amber-600" />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="max-w-xs">
+                                        <p className="font-medium">
+                                          {dispute ? DISPUTE_TYPE_LABELS[dispute.disputeType] : 'En disputa'}
+                                        </p>
+                                        {dispute?.description && <p>{dispute.description}</p>}
+                                        {dispute?.referenceDoc && <p>Referencia: {dispute.referenceDoc}</p>}
+                                        {dispute?.disputedAmount != null && (
+                                          <p>Monto en disputa: ${dispute.disputedAmount.toLocaleString('es-CL')}</p>
+                                        )}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="text-sm text-muted-foreground">
+                                      {formatForDisplay(parseFromDatabase(service.serviceDate))}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="font-medium text-foreground">
+                                      ${getDisplayServiceValue(service, clientId).toLocaleString()}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onServiceSelect?.(service)}
+                                        className="size-8 p-0 text-blue-400 hover:text-blue-300"
+                                        title="Ver detalles del servicio"
+                                      >
+                                        <Eye className="size-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setResolveModalService(service)}
+                                        className="size-8 p-0 text-emerald-500 hover:text-emerald-400"
+                                        title="Resolver disputa"
+                                      >
+                                        <CheckCircle2 className="size-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </TooltipProvider>
+                    ) : (() => {
+                      const subGroupConfig = getSubGroupConfig(group.status as ServiceStatus);
                       const poSubGroups = groupByField(group.services, subGroupConfig, sortField, sortDirection, clientId);
                       const hasMultiplePOs = poSubGroups.length > 1;
 
@@ -804,6 +955,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   title="Editar servicio"
                                 >
                                   <Edit className="size-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDisputeModalService(service)}
+                                  className="size-8 p-0 text-amber-500 hover:text-amber-400"
+                                  title="Marcar en disputa"
+                                >
+                                  <AlertTriangle className="size-3" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -938,9 +1098,32 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 </CollapsibleContent>
               </Card>
             </Collapsible>
-          ))
+            );
+          })
           )}
       </div>
+
+      {/* Barra de acciones para crear cierre desde la selección */}
+      {selectedServices.size > 0 && (
+        <PipelineClosureActionBar
+          selectedCount={selectedServices.size}
+          totalAmount={selectedTotalValue}
+          onCreateClosure={() => setShowCreateClosureModal(true)}
+          onClearSelection={() => setSelectedServices(new Set())}
+        />
+      )}
+
+      {/* Modal de creación de cierre desde el Pipeline */}
+      <CreateClosureFromPipelineModal
+        open={showCreateClosureModal}
+        onOpenChange={setShowCreateClosureModal}
+        services={selectedServicesArray}
+        clientId={clientId}
+        onCreated={() => {
+          setSelectedServices(new Set());
+          onClosureCreated?.();
+        }}
+      />
 
       {/* Batch Update Modal */}
       <BatchUpdateModal
@@ -966,13 +1149,33 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
         onExport={handleExport}
-        availableStatuses={serviceGroups.map(group => ({
-          status: group.status,
-          title: group.title,
-          count: group.services.length,
-          totalValue: group.totalValue
-        }))}
+        availableStatuses={serviceGroups
+          .filter((group): group is ServiceGroup & { status: ServiceStatus } => group.status !== DISPUTED_GROUP_STATUS)
+          .map(group => ({
+            status: group.status,
+            title: group.title,
+            count: group.services.length,
+            totalValue: group.totalValue
+          }))}
         totalServices={services.length}
+      />
+
+      {/* Modal para marcar un servicio en disputa */}
+      <MarkServiceDisputeModal
+        open={!!disputeModalService}
+        onOpenChange={(open) => !open && setDisputeModalService(null)}
+        serviceId={disputeModalService?.id || ''}
+        serviceFolio={disputeModalService?.folio}
+        onMarked={() => setDisputeModalService(null)}
+      />
+
+      {/* Modal para resolver una disputa desde el grupo virtual */}
+      <ResolveServiceDisputeModal
+        open={!!resolveModalService}
+        onOpenChange={(open) => !open && setResolveModalService(null)}
+        dispute={resolveModalService ? openDisputesByServiceId.get(resolveModalService.id) || null : null}
+        serviceFolio={resolveModalService?.folio}
+        onResolved={() => setResolveModalService(null)}
       />
     </div>
   );

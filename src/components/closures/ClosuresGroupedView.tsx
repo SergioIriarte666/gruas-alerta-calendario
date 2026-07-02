@@ -9,6 +9,7 @@ import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
 import { ClosureStatusBadge } from './ClosureStatusBadge';
+import { ClosureSortField, SortDirection, SortIcon } from './closureSort';
 
 interface ClosuresGroupedViewProps {
   groups: [string, ServiceClosure[]][];
@@ -17,9 +18,12 @@ interface ClosuresGroupedViewProps {
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
   onViewDetails: (closure: ServiceClosure) => void;
+  sortField?: ClosureSortField | null;
+  sortDirection?: SortDirection;
+  onSort?: (field: ClosureSortField) => void;
 }
 
-const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onViewDetails }: ClosuresGroupedViewProps) => {
+const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresGroupedViewProps) => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = (key: string) => {
@@ -79,11 +83,51 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border">
-                      <TableHead className="text-foreground">Folio</TableHead>
-                      <TableHead className="text-foreground">Período</TableHead>
-                      <TableHead className="text-foreground">Servicios</TableHead>
-                      <TableHead className="text-foreground">Total</TableHead>
-                      <TableHead className="text-foreground">Estado</TableHead>
+                      <TableHead
+                        className="text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onSort?.('folio')}
+                      >
+                        <div className="flex items-center">
+                          Folio
+                          <SortIcon field="folio" currentSortField={sortField} sortDirection={sortDirection} />
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onSort?.('dateFrom')}
+                      >
+                        <div className="flex items-center">
+                          Período
+                          <SortIcon field="dateFrom" currentSortField={sortField} sortDirection={sortDirection} />
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onSort?.('serviceCount')}
+                      >
+                        <div className="flex items-center">
+                          Servicios
+                          <SortIcon field="serviceCount" currentSortField={sortField} sortDirection={sortDirection} />
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onSort?.('total')}
+                      >
+                        <div className="flex items-center">
+                          Total
+                          <SortIcon field="total" currentSortField={sortField} sortDirection={sortDirection} />
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="text-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onSort?.('status')}
+                      >
+                        <div className="flex items-center">
+                          Estado
+                          <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
+                        </div>
+                      </TableHead>
                       <TableHead className="text-foreground text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>

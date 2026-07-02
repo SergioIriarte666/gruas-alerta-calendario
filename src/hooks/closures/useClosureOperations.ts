@@ -23,9 +23,17 @@ export const parseClosureServiceIds = (serviceIds: string[]): ClosureServiceEntr
       valueType: isExcess ? 'excess' : 'covered',
     };
   });
+interface CreateClosureOptions {
+  // El caller muestra su propio toast de éxito (p.ej. con acción "Facturar ahora")
+  silent?: boolean;
+}
+
 export const useClosureOperations = () => {
 
-  const createClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+  const createClosure = async (
+    closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>,
+    options?: CreateClosureOptions
+  ) => {
     try {
       
       
@@ -56,6 +64,30 @@ export const useClosureOperations = () => {
       // Resolver entradas (covered/excess) y montos por servicio desde BD
       const entries = parseClosureServiceIds(closureData.serviceIds);
       const uniqueServiceIds = [...new Set(entries.map(e => e.serviceId))];
+
+      // Bloqueo duro: no se puede cerrar un servicio con una disputa abierta.
+      // No confiar solo en la UI — se valida aquí también, en el punto de escritura.
+      if (uniqueServiceIds.length > 0) {
+        const { data: openDisputes, error: disputesError } = await supabase
+          .from('service_disputes')
+          .select('service_id, description, services(folio)')
+          .eq('status', 'open')
+          .in('service_id', uniqueServiceIds);
+
+        if (disputesError) {
+          logger.error('Error checking open disputes before closure creation:', disputesError);
+          throw disputesError;
+        }
+
+        if (openDisputes && openDisputes.length > 0) {
+          const folios = openDisputes
+            .map((d: any) => d.services?.folio || d.service_id)
+            .join(', ');
+          const message = `No se puede crear el cierre: los siguientes servicios tienen una disputa abierta: ${folios}`;
+          toast.error('Servicios en disputa', { description: message });
+          throw new Error(message);
+        }
+      }
 
       const servicesById = new Map<string, any>();
       if (uniqueServiceIds.length > 0) {
@@ -159,10 +191,12 @@ export const useClosureOperations = () => {
 
       const newClosure: ServiceClosure = formatClosureData(data);
       newClosure.serviceIds = closureData.serviceIds;
-      
-      toast.success("Cierre creado", {
-        description: `Cierre ${folio} creado exitosamente.`,
-      });
+
+      if (!options?.silent) {
+        toast.success("Cierre creado", {
+          description: `Cierre ${folio} creado exitosamente.`,
+        });
+      }
 
       return newClosure;
     } catch (error: any) {

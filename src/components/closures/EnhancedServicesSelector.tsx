@@ -649,23 +649,28 @@ const EnhancedServicesSelector = ({
             </div>
           ) : (
             <div className="space-y-1">
-              {visibleServices.map(service => (
+              {visibleServices.map(service => {
+                const disputeReason = (service as any)._disputeReason as string | undefined;
+                return (
                 <div
                   key={service.id}
                   className={`flex items-center gap-x-2 py-2 px-1 rounded transition-colors ${
-                    selectedServiceIds.includes(service.id) 
-                      ? 'bg-primary/10 border border-primary/30' 
-                      : 'hover:bg-background'
+                    disputeReason
+                      ? 'opacity-60 bg-destructive/5'
+                      : selectedServiceIds.includes(service.id)
+                        ? 'bg-primary/10 border border-primary/30'
+                        : 'hover:bg-background'
                   }`}
                 >
                   <input
                     type="checkbox"
                     id={service.id}
                     checked={selectedServiceIds.includes(service.id)}
+                    disabled={!!disputeReason}
                     onChange={(e) => onServiceToggle(service.id, e.target.checked)}
-                    className="text-primary rounded"
+                    className="text-primary rounded disabled:cursor-not-allowed"
                   />
-                  <label htmlFor={service.id} className="text-sm text-foreground flex-1 cursor-pointer">
+                  <label htmlFor={service.id} className={`text-sm text-foreground flex-1 ${disputeReason ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                     <div className="flex justify-between items-center">
                       <span className="flex items-center gap-1.5">
                         {service.folio} - {toTitleCase(service.client.name)}
@@ -702,10 +707,19 @@ const EnhancedServicesSelector = ({
                           </Badge>
                         </>
                       )}
+                      {disputeReason && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="destructive" className="text-[10px] h-4 px-1">
+                            En disputa: {disputeReason.slice(0, 30)}{disputeReason.length > 30 ? '…' : ''}
+                          </Badge>
+                        </>
+                      )}
                     </div>
                   </label>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -51,6 +51,11 @@ import { generateWorkOrderPDF } from '@/utils/pdf/workOrderPdfGenerator';
 import { useSettings } from '@/hooks/useSettings';
 import { createLogger } from "@/lib/logger";
 import { ServiceItemsTab } from './ServiceItemsTab';
+import { useOpenServiceDisputes, useServiceDisputeHistory } from '@/hooks/services/useServiceDisputes';
+import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
+import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
+import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
+import { CheckCircle2 } from 'lucide-react';
 
 
 const logger = createLogger("ServiceDetailsModal");
@@ -379,6 +384,13 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const { settings } = useSettings();
   const { isGenerating: isGeneratingDoc, generateAndDownload } = usePDFGeneration();
 
+  const disputeServiceIds = React.useMemo(() => (service?.id ? [service.id] : []), [service?.id]);
+  const { openDisputesByServiceId } = useOpenServiceDisputes(disputeServiceIds);
+  const { disputes: disputeHistory } = useServiceDisputeHistory(service?.id);
+  const currentDispute = service?.id ? openDisputesByServiceId.get(service.id) : undefined;
+  const [showMarkDispute, setShowMarkDispute] = React.useState(false);
+  const [showResolveDispute, setShowResolveDispute] = React.useState(false);
+
   if (!isOpen || !serviceData) return null;
   
   // Calcular totales usando datos mejorados si están disponibles
@@ -576,16 +588,45 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 <FileText className="size-4" />
                 Orden de Trabajo
               </Button>
+              {currentDispute ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowResolveDispute(true)}
+                  className="flex items-center gap-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                >
+                  <CheckCircle2 className="size-4" />
+                  Resolver Disputa
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMarkDispute(true)}
+                  className="flex items-center gap-2 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                >
+                  <AlertTriangle className="size-4" />
+                  Marcar en Disputa
+                </Button>
+              )}
           </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6">
           <Tabs defaultValue="general" className="w-full py-6">
-            <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
+            <TabsList className={`mb-6 w-full border border-border/70 bg-muted/30 sm:grid ${showItemsTab ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="details">Detalles</TabsTrigger>
               {showItemsTab && <TabsTrigger value="items">Desglose</TabsTrigger>}
               <TabsTrigger value="costs">Costos</TabsTrigger>
+              <TabsTrigger value="disputes">
+                Disputas
+                {disputeHistory.length > 0 && (
+                  <Badge variant={currentDispute ? 'destructive' : 'secondary'} className="ml-1.5 h-4 px-1 text-[10px]">
+                    {disputeHistory.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="history">Historial</TabsTrigger>
               <TabsTrigger value="changes">Cambios</TabsTrigger>
             </TabsList>
@@ -827,6 +868,52 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
               <ServiceCostsSection serviceId={serviceData.id} enhancedService={enhancedService} />
             </TabsContent>
 
+            <TabsContent value="disputes" className="mt-0">
+              {disputeHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">
+                  Este servicio no tiene disputas registradas.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {disputeHistory.map(dispute => (
+                    <div
+                      key={dispute.id}
+                      className={`rounded-lg border p-3 text-sm space-y-1.5 ${
+                        dispute.status === 'open' ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-muted/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-foreground">{DISPUTE_TYPE_LABELS[dispute.disputeType]}</span>
+                        <Badge variant={dispute.status === 'open' ? 'destructive' : 'secondary'}>
+                          {dispute.status === 'open' ? 'Abierta' : 'Resuelta'}
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground">{dispute.description}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        {dispute.referenceDoc && <span>Referencia: {dispute.referenceDoc}</span>}
+                        {dispute.disputedAmount != null && (
+                          <span>Monto: {formatCurrency(dispute.disputedAmount)}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground pt-1 border-t border-border/60">
+                        Marcada {formatForDisplayWithTime(dispute.createdAt)}
+                        {dispute.createdByName && ` por ${dispute.createdByName}`}
+                      </div>
+                      {dispute.status === 'resolved' && (
+                        <div className="text-xs text-muted-foreground">
+                          Resuelta {dispute.resolvedAt ? formatForDisplayWithTime(dispute.resolvedAt) : ''}
+                          {dispute.resolvedByName && ` por ${dispute.resolvedByName}`}
+                          {dispute.resolutionNotes && (
+                            <p className="mt-1 text-foreground">Notas: {dispute.resolutionNotes}</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="history" className="mt-0">
                <VehicleHistory 
                  licensePlate={serviceData.licensePlate} 
@@ -850,6 +937,19 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           </div>
         </div>
       </DialogContent>
+
+      <MarkServiceDisputeModal
+        open={showMarkDispute}
+        onOpenChange={setShowMarkDispute}
+        serviceId={serviceData.id}
+        serviceFolio={serviceData.folio}
+      />
+      <ResolveServiceDisputeModal
+        open={showResolveDispute}
+        onOpenChange={setShowResolveDispute}
+        dispute={currentDispute || null}
+        serviceFolio={serviceData.folio}
+      />
     </Dialog>
   );
 };

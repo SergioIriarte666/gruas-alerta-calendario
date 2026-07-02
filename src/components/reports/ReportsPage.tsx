@@ -23,8 +23,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn, toTitleCase } from '@/lib/utils';
 import {
   BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
-  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Trophy,
+  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Trophy, AlertTriangle,
 } from 'lucide-react';
+import { DisputesReportView } from './disputes/DisputesReportView';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
   DropdownMenuLabel,
@@ -44,6 +45,7 @@ const tabs = [
   { id: 'flota', label: 'Flota', icon: Truck },
   { id: 'finanzas', label: 'Finanzas', icon: DollarSign },
   { id: 'costos', label: 'Costos', icon: Receipt },
+  { id: 'disputas', label: 'Disputas', icon: AlertTriangle },
 ] as const;
 
 type TabId = typeof tabs[number]['id'];
@@ -262,11 +264,17 @@ const ReportsPage = () => {
             <ReportMetricCard title="Categorías" value={m.costsByCategory.length} />
           </div>
         );
+      case 'disputas':
+        // El reporte de Disputas renderiza sus propias cards de resumen (filtros propios)
+        return null;
     }
   };
 
   const renderExportMenu = () => {
     switch (activeTab) {
+      case 'disputas':
+        // El reporte de Disputas tiene su propio botón de exportación (respeta sus filtros propios)
+        return null;
       case 'servicios':
         return (
           <>
@@ -528,6 +536,8 @@ const ReportsPage = () => {
         return (
           <CostAnalysisReports metrics={m} costsByCategoryConfig={costsByCategoryConfig} />
         );
+      case 'disputas':
+        return <DisputesReportView />;
     }
   };
 
@@ -541,7 +551,7 @@ const ReportsPage = () => {
         className="border-border/70 bg-card/80 shadow-sm"
         contentClassName="space-y-4 p-4"
       >
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -565,7 +575,8 @@ const ReportsPage = () => {
         })}
       </div>
 
-      {/* Inline Filter Bar */}
+      {/* Inline Filter Bar — el reporte de Disputas tiene sus propios filtros autocontenidos */}
+      {activeTab !== 'disputas' && (
       <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
           <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-background/70 border-border/70">
@@ -742,6 +753,7 @@ const ReportsPage = () => {
           </DropdownMenu>
         </div>
       </div>
+      )}
       </SectionCard>
 
       {/* Contextual KPIs */}

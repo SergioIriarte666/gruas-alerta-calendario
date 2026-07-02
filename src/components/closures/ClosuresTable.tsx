@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
+import { Edit, Trash2, FileText, Eye, Users, List, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
@@ -11,9 +12,9 @@ import { ClosuresMobileView } from './ClosuresMobileView';
 import ClosuresGroupedView from './ClosuresGroupedView';
 import { ClosureStatusBadge } from './ClosureStatusBadge';
 import { toTitleCase } from '@/lib/utils';
+import { ClosureSortField, SortDirection, GroupSortBy, SortIcon } from './closureSort';
 
-export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
-export type SortDirection = 'asc' | 'desc';
+export type { ClosureSortField, SortDirection, GroupSortBy };
 
 interface ClosuresTableProps {
   closures: ServiceClosure[];
@@ -22,30 +23,19 @@ interface ClosuresTableProps {
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
   onViewDetails: (closure: ServiceClosure) => void;
-  sortField?: ClosureSortField;
+  sortField?: ClosureSortField | null;
   sortDirection?: SortDirection;
   onSort?: (field: ClosureSortField) => void;
+  onSortSelect?: (field: ClosureSortField, direction: SortDirection) => void;
 }
-
-const SortIcon = ({ field, currentSortField, sortDirection }: { 
-  field: ClosureSortField; 
-  currentSortField?: ClosureSortField; 
-  sortDirection?: SortDirection 
-}) => {
-  if (currentSortField !== field) {
-    return <ArrowUpDown className="ml-2 size-4 text-muted-foreground" />;
-  }
-  return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 size-4 text-primary" /> : 
-    <ArrowDown className="ml-2 size-4 text-primary" />;
-};
 
 const ITEMS_PER_PAGE = 50;
 
-const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
+const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort, onSortSelect }: ClosuresTableProps) => {
   const { isMobile } = useDeviceType();
   const [groupByClient, setGroupByClient] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [groupSortBy, setGroupSortBy] = useState<GroupSortBy>('name');
 
   const clientMap = useMemo(() => {
     return clients.reduce((acc, client) => {
@@ -65,21 +55,32 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
 
   const groupedClosures = useMemo(() => {
     if (!groupByClient) return [];
-    
+
     const map = new Map<string, ServiceClosure[]>();
     closures.forEach(c => {
       const key = c.clientId || '__none__';
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(c);
     });
-    
-    // Sort groups alphabetically by client name
-    return Array.from(map.entries()).sort((a, b) => {
-      const nameA = getClientName(a[0] === '__none__' ? undefined : a[0]);
-      const nameB = getClientName(b[0] === '__none__' ? undefined : b[0]);
-      return nameA.localeCompare(nameB);
-    });
-  }, [closures, getClientName, groupByClient]);
+
+    const entries = Array.from(map.entries());
+
+    switch (groupSortBy) {
+      case 'count':
+        return entries.sort((a, b) => b[1].length - a[1].length);
+      case 'total': {
+        const totalOf = (group: ServiceClosure[]) => group.reduce((sum, c) => sum + c.total, 0);
+        return entries.sort((a, b) => totalOf(b[1]) - totalOf(a[1]));
+      }
+      case 'name':
+      default:
+        return entries.sort((a, b) => {
+          const nameA = getClientName(a[0] === '__none__' ? undefined : a[0]);
+          const nameB = getClientName(b[0] === '__none__' ? undefined : b[0]);
+          return nameA.localeCompare(nameB);
+        });
+    }
+  }, [closures, getClientName, groupByClient, groupSortBy]);
 
   // Reset page when grouping changes or closures change
   useEffect(() => {
@@ -117,6 +118,9 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
         onDelete={onDelete}
         onClose={onClose}
         onViewDetails={onViewDetails}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSortSelect={onSortSelect}
       />
     );
   }
@@ -143,6 +147,18 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
           Lista de Cierres ({closures.length})
         </CardTitle>
         <div className="flex items-center gap-4">
+          {groupByClient && (
+            <Select value={groupSortBy} onValueChange={(value) => setGroupSortBy(value as GroupSortBy)}>
+              <SelectTrigger className="h-9 w-[190px] border-border/70 bg-background/70 text-foreground">
+                <SelectValue placeholder="Ordenar grupos" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="name" className="text-foreground hover:bg-muted">Cliente (A-Z)</SelectItem>
+                <SelectItem value="count" className="text-foreground hover:bg-muted">Cantidad de cierres</SelectItem>
+                <SelectItem value="total" className="text-foreground hover:bg-muted">Monto total</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {!groupByClient && totalPages > 1 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Página {currentPage} de {totalPages}</span>
@@ -189,6 +205,9 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             onDelete={onDelete}
             onClose={onClose}
             onViewDetails={onViewDetails}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
         ) : (
           <>

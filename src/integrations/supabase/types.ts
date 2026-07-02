@@ -4840,6 +4840,94 @@ export type Database = {
           },
         ]
       }
+      service_disputes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          dispute_type: string
+          disputed_amount: number | null
+          id: string
+          reference_doc: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          service_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          dispute_type: string
+          disputed_amount?: number | null
+          id?: string
+          reference_doc?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          service_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          dispute_type?: string
+          disputed_amount?: number | null
+          id?: string
+          reference_doc?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          service_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_disputes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_disputes_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_disputes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_disputes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_disputes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_disputes_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_external_closures: {
         Row: {
           admin_name: string
@@ -7388,6 +7476,13 @@ export type Database = {
       get_client_payment_history: {
         Args: { p_client_id: string }
         Returns: Json
+      }
+      get_closure_service_counts: {
+        Args: never
+        Returns: {
+          closure_id: string
+          service_count: number
+        }[]
       }
       get_commissions_with_details: {
         Args: never

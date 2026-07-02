@@ -25,6 +25,8 @@ export const EXCESS_ROW_SUFFIX = '::excess';
 export interface ClosureServiceRow extends Service {
   _closureType?: ClosureValueType;
   _closureAmount?: number;
+  // Presente si el servicio tiene una disputa abierta: no debe ser seleccionable para cierre.
+  _disputeReason?: string;
 }
 
 interface ServicesForClosuresData {
@@ -190,6 +192,23 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         });
       }
 
+      // Servicios con disputa abierta: se muestran deshabilitados con aviso, no se excluyen
+      // de la lista (a diferencia de usedKeys) para que el usuario vea por qué no puede elegirlos.
+      const disputedByServiceId = new Map<string, string>();
+      if (currentBillableIds.length > 0) {
+        const { data: openDisputes, error: disputesError } = await supabase
+          .from('service_disputes')
+          .select('service_id, description')
+          .eq('status', 'open')
+          .in('service_id', currentBillableIds);
+
+        if (disputesError) {
+          logger.warn('Error fetching open disputes for closures:', disputesError);
+        } else {
+          (openDisputes || []).forEach((d: any) => disputedByServiceId.set(d.service_id, d.description));
+        }
+      }
+
       const nowIso = businessClock.nowISO();
       const mapServiceForClosure = (item: any): Service => ({
         id: item.id,
@@ -261,9 +280,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         const base = mapServiceForClosure(item) as ClosureServiceRow;
         const excessAmount = Number(item.excess_amount || 0);
         const canSplit = Boolean(item.has_excess && item.third_party_client_id && excessAmount > 0);
+        const disputeReason = disputedByServiceId.get(item.id);
 
         if (!canSplit) {
-          return [{ key: `${item.id}:covered`, service: base }];
+          return [{ key: `${item.id}:covered`, service: { ...base, _disputeReason: disputeReason } }];
         }
 
         const coveredRow: ClosureServiceRow = {
@@ -276,6 +296,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           },
           _closureType: 'covered',
           _closureAmount: Number(item.client_covered_amount || 0),
+          _disputeReason: disputeReason,
         };
 
         const excessRow: ClosureServiceRow = {
@@ -296,6 +317,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           custodyTotalAmount: 0,
           _closureType: 'excess',
           _closureAmount: excessAmount,
+          _disputeReason: disputeReason,
         };
 
         return [
