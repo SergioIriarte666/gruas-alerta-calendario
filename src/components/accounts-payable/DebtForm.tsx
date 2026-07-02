@@ -111,11 +111,12 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-clip">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-foreground">Nueva Deuda</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+        <div className="flex-1 overflow-y-auto pr-1 -mr-1 space-y-4">
           <div className="space-y-2">
             <Label>Acreedor</Label>
             <div className="flex gap-2">
@@ -317,8 +318,9 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
               </div>
             </div>
           </div>
+        </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={isPending || !canSubmit}>
               {isPending ? 'Creando...' : 'Crear Deuda'}
