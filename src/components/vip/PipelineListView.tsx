@@ -1,5 +1,6 @@
 import { businessClock } from '@/utils/businessClock';
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,6 @@ import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { PipelineExportModal } from './PipelineExportModal';
 import { PipelineBatchActionBar } from './PipelineBatchActionBar';
 import { PipelineClosureActionBar } from '@/components/pipeline/PipelineClosureActionBar';
-import { CreateClosureFromPipelineModal } from '@/components/pipeline/CreateClosureFromPipelineModal';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
@@ -170,7 +170,6 @@ interface PipelineListViewProps {
   onServiceSelect?: (service: Service) => void;
   onServiceEdit?: (service: Service) => void;
   onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
-  onClosureCreated?: () => void;
 }
 
 type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder' | 'invoiceNumeroFiscal';
@@ -251,16 +250,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   onServiceUpdate,
   onServiceSelect,
   onServiceEdit,
-  onBatchUpdate,
-  onClosureCreated
+  onBatchUpdate
 }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<PipelineGroupStatus>>(new Set([DISPUTED_GROUP_STATUS]));
   const [expandedPOs, setExpandedPOs] = useState<Set<string>>(new Set(['__all__']));
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showCreateClosureModal, setShowCreateClosureModal] = useState(false);
   const [sortField, setSortField] = useState<SortField>('serviceDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [disputeModalService, setDisputeModalService] = useState<Service | null>(null);
@@ -1103,27 +1101,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           )}
       </div>
 
-      {/* Barra de acciones para crear cierre desde la selección */}
+      {/* Barra de acciones para ir a crear el cierre en el módulo Cierres */}
       {selectedServices.size > 0 && (
         <PipelineClosureActionBar
           selectedCount={selectedServices.size}
           totalAmount={selectedTotalValue}
-          onCreateClosure={() => setShowCreateClosureModal(true)}
+          onCreateClosure={() => navigate('/closures')}
           onClearSelection={() => setSelectedServices(new Set())}
         />
       )}
-
-      {/* Modal de creación de cierre desde el Pipeline */}
-      <CreateClosureFromPipelineModal
-        open={showCreateClosureModal}
-        onOpenChange={setShowCreateClosureModal}
-        services={selectedServicesArray}
-        clientId={clientId}
-        onCreated={() => {
-          setSelectedServices(new Set());
-          onClosureCreated?.();
-        }}
-      />
 
       {/* Batch Update Modal */}
       <BatchUpdateModal
