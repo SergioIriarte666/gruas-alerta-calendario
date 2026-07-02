@@ -6,6 +6,7 @@ import { Trash2, Eye, History } from 'lucide-react';
 import { useTripEstimates, useDeleteTripEstimate } from '@/hooks/useTripEstimates';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { getCraneTypeLabel } from '@/utils/craneType';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,7 +59,7 @@ export const TripEstimateHistory = () => {
                   {est.route_name || `${est.origin} → ${est.destination}`}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1.5">
-                  {est.crane_type && <Badge variant="outline">{est.crane_type}</Badge>}
+                  {est.crane_type && <Badge variant="outline">{getCraneTypeLabel(est.crane_type)}</Badge>}
                   {est.distance_km && (
                     <Badge variant="secondary">{est.distance_km} km</Badge>
                   )}

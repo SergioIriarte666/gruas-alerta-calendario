@@ -484,7 +484,7 @@ export interface ServiceDispute {
   resolvedAt?: string | null;
 }
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
-export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla';
+export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla' | 'remolque';
 
 export type CraneStatus = 'active' | 'inactive' | 'sold' | 'written_off';
 

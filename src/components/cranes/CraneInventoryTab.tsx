@@ -37,6 +37,7 @@ import { SectionCard } from '@/components/ui/section-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { businessClock } from '@/utils/businessClock';
 import { isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 interface CraneInventoryTabProps {
   crane: Crane;
@@ -260,7 +261,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
       const logoFormat = getLogoFormat(logoUrl);
       const generatedAtLabel = businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm');
       const rangeLabel = `${format(reportRange.start, 'dd/MM/yyyy', { locale: es })} - ${format(reportRange.end, 'dd/MM/yyyy', { locale: es })}`;
-      const craneLabel = `Grúa ${crane.licensePlate}${crane.brand || crane.model ? ` • ${crane.brand} ${crane.model}` : ''}${crane.type ? ` • ${crane.type}` : ''}`;
+      const craneLabel = `Grúa ${crane.licensePlate}${crane.brand || crane.model ? ` • ${crane.brand} ${crane.model}` : ''}${crane.type ? ` • ${getCraneTypeLabel(crane.type)}` : ''}`;
 
       const drawHeader = () => {
         doc.setFillColor(248, 250, 252);

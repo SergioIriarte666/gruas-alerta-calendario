@@ -10,6 +10,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 interface CranesMobileViewProps {
   cranes: Crane[];
@@ -125,7 +126,7 @@ export const CranesMobileView = ({
                 <p className="text-muted-foreground text-sm">
                   Empresa: {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
                 </p>
-                <p className="text-muted-foreground text-sm">Tipo: {crane.type}</p>
+                <p className="text-muted-foreground text-sm">Tipo: {getCraneTypeLabel(crane.type)}</p>
               </div>
               <Badge 
                 variant={crane.isActive ? "default" : "secondary"}

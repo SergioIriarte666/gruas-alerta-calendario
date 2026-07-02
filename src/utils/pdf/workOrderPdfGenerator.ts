@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import { getCraneTypeLabel } from '@/utils/craneType';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
@@ -123,7 +124,7 @@ export const generateWorkOrderPDF = async (
   if (service.crane)
     assignRows.push([
       'Grúa',
-      `${service.crane.licensePlate || ''} · ${service.crane.brand || ''} ${service.crane.model || ''} · ${service.crane.type || ''}`,
+      `${service.crane.licensePlate || ''} · ${service.crane.brand || ''} ${service.crane.model || ''} · ${getCraneTypeLabel(service.crane.type)}`,
     ]);
   if (service.operator)
     assignRows.push(['Operador', toTitleCase(service.operator.name || '—')]);

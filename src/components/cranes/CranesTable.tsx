@@ -8,6 +8,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { CranesMobileView } from './CranesMobileView';
 import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 export type CraneSortField = 'licensePlate' | 'ownerCompanyRut' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -205,7 +206,7 @@ export const CranesTable = ({
                     {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
                   </td>
                   <td className="py-3 px-4 text-foreground">{crane.brand} {crane.model}</td>
-                  <td className="py-3 px-4 text-foreground">{crane.type}</td>
+                  <td className="py-3 px-4 text-foreground">{getCraneTypeLabel(crane.type)}</td>
                   <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(crane.technicalReviewExpiry)}
                   </td>

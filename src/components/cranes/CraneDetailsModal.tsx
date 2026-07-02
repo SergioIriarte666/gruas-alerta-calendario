@@ -5,6 +5,7 @@ import { CraneTabsWithCounters } from './CraneTabsWithCounters';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 import { CraneLockedNotice } from './CraneLockedNotice';
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 interface CraneDetailsModalProps {
   crane: Crane | null;
@@ -32,7 +33,7 @@ export const CraneDetailsModal = ({
                 {crane.licensePlate}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground mt-1">
-                {crane.brand} {crane.model} • {crane.type}
+                {crane.brand} {crane.model} • {getCraneTypeLabel(crane.type)}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">

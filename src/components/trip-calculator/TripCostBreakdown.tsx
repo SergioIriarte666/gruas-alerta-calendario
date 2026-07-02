@@ -9,6 +9,7 @@ import { getFuelTypeLabel } from '@/hooks/useFuelPrices';
 import { useAddTripEstimate } from '@/hooks/useTripEstimates';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 
 const logger = createLogger("TripCostBreakdown");
@@ -89,7 +90,7 @@ export const TripCostBreakdown = ({
           <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
             <span>{result.distance_km} km (ida) · <span className="font-semibold text-foreground">{result.distance_km * 2} km total</span></span>
             <span>~{result.estimated_time_hours} hrs (ida)</span>
-            <Badge variant="outline">{craneType}</Badge>
+            <Badge variant="outline">{getCraneTypeLabel(craneType)}</Badge>
             <Badge variant="outline">
               {vehicleConfig === '2_vehicles' ? '2 Vehículos' : '1 Vehículo'}
             </Badge>

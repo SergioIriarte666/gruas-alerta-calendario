@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import { getCraneTypeLabel } from '@/utils/craneType';
 import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
@@ -118,7 +119,7 @@ export const generateQuotePDF = async (
   if (service.crane)
     serviceRows.push([
       'Grúa asignada',
-      `${service.crane.licensePlate || ''} - ${service.crane.type || ''}`.trim(),
+      `${service.crane.licensePlate || ''} - ${getCraneTypeLabel(service.crane.type)}`.trim(),
     ]);
   if (service.observations) serviceRows.push(['Observaciones', service.observations]);
 

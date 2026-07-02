@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Crane, CraneType, CraneStatus } from '@/types';
 import { formatRut } from '@/utils/rutFormatter';
+import { CRANE_TYPE_OPTIONS } from '@/utils/craneType';
 
 interface CraneFormProps {
   crane?: Crane;
@@ -80,15 +81,6 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const craneTypes = [
-    { value: 'light', label: 'Liviana' },
-    { value: 'medium', label: 'Mediana' },
-    { value: 'heavy', label: 'Pesada' },
-    { value: 'taxi', label: 'Taxi' },
-    { value: 'horquilla', label: 'Horquilla' },
-    { value: 'other', label: 'Otros' }
-  ];
-
   return (
     <DialogContent className="cranes-modal cranes-modal--form border-border/70 bg-card sm:max-w-[600px]">
       <DialogHeader className="cranes-modal__header -mx-6 -mt-6 rounded-t-lg border-b border-border/70 bg-muted/20 px-6 py-4">
@@ -131,7 +123,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {craneTypes.map((type) => (
+                {CRANE_TYPE_OPTIONS.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>

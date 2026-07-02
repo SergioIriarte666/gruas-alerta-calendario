@@ -8013,7 +8013,14 @@ export type Database = {
         | "quoted"
         | "purchase_order_pending"
       crane_status: "active" | "inactive" | "sold" | "written_off"
-      crane_type: "light" | "medium" | "heavy" | "taxi" | "other" | "horquilla"
+      crane_type:
+        | "light"
+        | "medium"
+        | "heavy"
+        | "taxi"
+        | "other"
+        | "horquilla"
+        | "remolque"
       invoice_status:
         | "draft"
         | "sent"
@@ -8185,7 +8192,15 @@ export const Constants = {
         "purchase_order_pending",
       ],
       crane_status: ["active", "inactive", "sold", "written_off"],
-      crane_type: ["light", "medium", "heavy", "taxi", "other", "horquilla"],
+      crane_type: [
+        "light",
+        "medium",
+        "heavy",
+        "taxi",
+        "other",
+        "horquilla",
+        "remolque",
+      ],
       invoice_status: [
         "draft",
         "sent",

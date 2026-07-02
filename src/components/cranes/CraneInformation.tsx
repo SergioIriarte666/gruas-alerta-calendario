@@ -4,6 +4,7 @@ import { Calendar, Truck, FileText, Shield } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
+import { getCraneTypeLabel } from '@/utils/craneType';
 
 interface CraneInformationProps {
   crane: Crane;
@@ -66,7 +67,7 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
             <div className="space-y-3">
               <div>
                 <label className="text-gray-300 text-sm">Tipo</label>
-                <p className="text-white capitalize">{crane.type}</p>
+                <p className="text-white">{getCraneTypeLabel(crane.type)}</p>
               </div>
               <div>
                 <label className="text-gray-300 text-sm">Estado</label>

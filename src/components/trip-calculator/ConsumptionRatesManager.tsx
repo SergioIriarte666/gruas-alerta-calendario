@@ -22,6 +22,7 @@ import {
 import { FUEL_TYPES } from '@/hooks/useFuelPrices';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { CRANE_TYPE_OPTIONS, getCraneTypeLabel } from '@/utils/craneType';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,17 +35,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-const CRANE_TYPE_OPTIONS = [
-  { value: 'light', label: 'Light (Liviana)' },
-  { value: 'medium', label: 'Medium (Mediana)' },
-  { value: 'heavy', label: 'Heavy (Pesada)' },
-  { value: 'taxi', label: 'Taxi' },
-  { value: 'horquilla', label: 'Horquilla' },
-];
-
-/** Capitaliza el tipo de grúa para mostrar en tablas */
-const formatCraneType = (type: string) =>
-  type.charAt(0).toUpperCase() + type.slice(1);
+const RATE_CRANE_TYPE_OPTIONS = CRANE_TYPE_OPTIONS.map(({ value, label }) => ({
+  value,
+  label: value === 'light' || value === 'medium' || value === 'heavy'
+    ? `${value.charAt(0).toUpperCase() + value.slice(1)} (${label})`
+    : label,
+}));
 
 export const ConsumptionRatesManager = () => {
   const { data: rates = [], isLoading } = useConsumptionRates();
@@ -154,7 +150,7 @@ export const ConsumptionRatesManager = () => {
                 <tbody>
                   {rates.map((rate) => (
                     <tr key={rate.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2.5 font-medium">{formatCraneType(rate.crane_type)}</td>
+                      <td className="py-2.5 font-medium">{getCraneTypeLabel(rate.crane_type)}</td>
                       <td className="text-right">{rate.base_consumption_per_km > 0 ? (1 / rate.base_consumption_per_km).toFixed(1) : '—'}</td>
                       <td className="text-right">{rate.loaded_consumption_factor}x</td>
                       <td className="text-right">{rate.towing_consumption_factor}x</td>
@@ -220,7 +216,7 @@ export const ConsumptionRatesManager = () => {
                   <SelectValue placeholder="Seleccionar..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {CRANE_TYPE_OPTIONS.map((type) => (
+                  {RATE_CRANE_TYPE_OPTIONS.map((type) => (
                     <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                   ))}
                 </SelectContent>
