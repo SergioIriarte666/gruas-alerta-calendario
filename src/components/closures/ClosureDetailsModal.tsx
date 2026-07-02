@@ -21,6 +21,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+import { ClosureStatusBadge } from './ClosureStatusBadge';
+
+const logger = createLogger('ClosureDetailsModal');
 
 interface ClosureDetailsModalProps {
   closure: ServiceClosure | null;
@@ -132,12 +136,26 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
     setLoading(true);
 
     const fetchData = async () => {
-      // Fetch services
-      if (closure.serviceIds.length > 0) {
+      // Fetch service IDs directamente por closure.id, sin depender de
+      // closure.serviceIds (ese arreglo solo viene poblado para los 50 cierres
+      // más recientes en la vista de lista — ver MAX_CLOSURES_WITH_SERVICE_LINKS
+      // en useClosureData.ts, que NO se toca acá por razones de performance).
+      const { data: closureServicesData, error: closureServicesError } = await supabase
+        .from('closure_services')
+        .select('service_id')
+        .eq('closure_id', closure.id);
+
+      if (closureServicesError) {
+        logger.error('Error fetching closure_services:', closureServicesError);
+      }
+
+      const realServiceIds = (closureServicesData || []).map((cs: any) => cs.service_id);
+
+      if (realServiceIds.length > 0) {
         const { data: svcData } = await supabase
           .from('services')
           .select('id, folio, service_date, status, value, license_plate, vehicle_brand, vehicle_model, origin, destination')
-          .in('id', closure.serviceIds);
+          .in('id', realServiceIds);
         setServices((svcData as ServiceRow[]) || []);
       } else {
         setServices([]);
@@ -180,21 +198,20 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
 
   if (!closure) return null;
 
-  const statusConfig = getStatusConfig(closure.status);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-clip p-3 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="p-3 sm:p-6 pb-4 border-b border-border/70">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Package className="size-5" />
               Cierre {closure.folio}
             </span>
-            <Badge className={statusConfig.className}>{statusConfig.label}</Badge>
+            <ClosureStatusBadge status={closure.status} />
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6">
         <Tabs defaultValue="general" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general">General</TabsTrigger>
@@ -207,7 +224,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
             <div className="space-y-6">
               <DetailSection title="Identificación" icon={Package}>
                 <DetailItem icon={Package} label="Folio" value={closure.folio} />
-                <DetailItem icon={Hash} label="Servicios Incluidos" value={`${closure.serviceIds.length} servicio${closure.serviceIds.length !== 1 ? 's' : ''}`} />
+                <DetailItem icon={Hash} label="Servicios Incluidos" value={`${services.length} servicio${services.length !== 1 ? 's' : ''}`} />
               </DetailSection>
 
               <Separator className="border-border" />
@@ -374,6 +391,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
             {closure.creatorName && ` por ${closure.creatorName}`}
           </span>
           <span className="truncate">Actualizado: {formatForDisplayWithTime(closure.updatedAt)}</span>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

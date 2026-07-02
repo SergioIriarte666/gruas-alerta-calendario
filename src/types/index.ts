@@ -441,6 +441,11 @@ export interface ServiceClosure {
   id: string;
   folio: string;
   serviceIds: string[];
+  /** Conteo real de servicios del cierre, calculado para TODOS los cierres
+   *  (a diferencia de serviceIds, que en la lista global solo viene poblado
+   *  para los cierres más recientes por performance). Preferir este campo
+   *  al mostrar/ordenar por cantidad de servicios en listados. */
+  serviceCount?: number;
   dateRange: {
     from: string;
     to: string;

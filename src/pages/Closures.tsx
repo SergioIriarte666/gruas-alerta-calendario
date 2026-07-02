@@ -17,14 +17,6 @@ import { ClosureDetailsModal } from '@/components/closures/ClosureDetailsModal';
 import { ClosureDeleteConfirmDialog } from '@/components/closures/ClosureDeleteConfirmDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import ClosureReportForm from '@/components/closures/ClosureReportForm';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,7 +42,6 @@ const Closures = () => {
   const [clientFilter, setClientFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showReportSheet, setShowReportSheet] = useState(false);
   const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
@@ -107,7 +98,7 @@ const Closures = () => {
           break;
         }
         case 'serviceCount':
-          comparison = a.serviceIds.length - b.serviceIds.length;
+          comparison = (a.serviceCount ?? a.serviceIds.length) - (b.serviceCount ?? b.serviceIds.length);
           break;
         case 'total':
           comparison = a.total - b.total;
@@ -224,12 +215,8 @@ const Closures = () => {
   };
 
   const handleShowCreateModal = () => {
-    
+
     setShowCreateModal(true);
-  };
-  
-  const handleShowReportSheet = () => {
-    setShowReportSheet(true);
   };
 
   if (loading) {
@@ -262,9 +249,8 @@ const Closures = () => {
 
   return (
     <div className="space-y-6">
-      <ClosuresHeader 
+      <ClosuresHeader
         onCreateClosure={handleShowCreateModal}
-        onOpenReport={handleShowReportSheet}
       />
       
       
@@ -315,18 +301,6 @@ const Closures = () => {
           </CardContent>
         </Card>
       )}
-
-      <Sheet open={showReportSheet} onOpenChange={setShowReportSheet}>
-        <SheetContent className="bg-background border-border text-foreground w-full sm:w-3/4 md:w-1/2 lg:w-1/3">
-          <SheetHeader>
-            <SheetTitle>Generar Informe de Servicios</SheetTitle>
-            <SheetDescription className="text-muted-foreground">
-              Selecciona el rango de fechas y un cliente para generar el informe.
-            </SheetDescription>
-          </SheetHeader>
-          <ClosureReportForm closures={closures} onClose={() => setShowReportSheet(false)} />
-        </SheetContent>
-      </Sheet>
 
       <ClosureForm
         open={showCreateModal}

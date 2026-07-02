@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, Eye, Edit, Trash2, FileText } from 'lucide-react';
+import { ChevronRight, Eye, Edit, Trash2, FileText, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +8,7 @@ import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { toTitleCase } from '@/lib/utils';
+import { ClosureStatusBadge } from './ClosureStatusBadge';
 
 interface ClosuresGroupedViewProps {
   groups: [string, ServiceClosure[]][];
@@ -37,19 +38,6 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
     const dept = client.department;
     if (!dept || dept === 'General') return toTitleCase(client.name);
     return `${toTitleCase(client.name)} - ${dept}`;
-  };
-
-  const getStatusBadge = (status: ServiceClosure['status']) => {
-    switch (status) {
-      case 'open':
-        return <Badge className="status-pending">Abierto</Badge>;
-      case 'closed':
-        return <Badge className="status-closed">Cerrado</Badge>;
-      case 'invoiced':
-        return <Badge className="status-active">Facturado</Badge>;
-      default:
-        return <Badge className="bg-gray-500">Desconocido</Badge>;
-    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -108,9 +96,9 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
                       >
                         <TableCell className="text-foreground font-medium">{closure.folio}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDateRange(closure.dateRange)}</TableCell>
-                        <TableCell className="text-muted-foreground">{closure.serviceIds.length} servicios</TableCell>
+                        <TableCell className="text-muted-foreground">{closure.serviceCount ?? closure.serviceIds.length} servicios</TableCell>
                         <TableCell className="text-foreground font-medium">{formatCurrency(closure.total)}</TableCell>
-                        <TableCell>{getStatusBadge(closure.status)}</TableCell>
+                        <TableCell><ClosureStatusBadge status={closure.status} /></TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-x-2">
                             <Button variant="outline" size="sm" onClick={() => onViewDetails(closure)} title="Ver detalles">
@@ -145,8 +133,10 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
         );
       })}
       {groups.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No se encontraron cierres</p>
+        <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+          <FolderOpen className="size-10 text-muted-foreground/60" />
+          <p className="font-medium text-foreground">No se encontraron cierres</p>
+          <p className="text-sm text-muted-foreground">Ajusta los filtros o crea un nuevo cierre.</p>
         </div>
       )}
     </div>

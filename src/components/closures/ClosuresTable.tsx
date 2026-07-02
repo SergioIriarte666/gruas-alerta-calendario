@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceClosure } from '@/types';
@@ -10,6 +9,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ClosuresMobileView } from './ClosuresMobileView';
 import ClosuresGroupedView from './ClosuresGroupedView';
+import { ClosureStatusBadge } from './ClosureStatusBadge';
 import { toTitleCase } from '@/lib/utils';
 
 export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
@@ -120,19 +120,6 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
       />
     );
   }
-
-  const getStatusBadge = (status: ServiceClosure['status']) => {
-    switch (status) {
-      case 'open':
-        return <Badge className="status-pending">Abierto</Badge>;
-      case 'closed':
-        return <Badge className="status-closed">Cerrado</Badge>;
-      case 'invoiced':
-        return <Badge className="status-active">Facturado</Badge>;
-      default:
-        return <Badge className="bg-gray-500">Desconocido</Badge>;
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -284,13 +271,13 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                       {getClientName(closure.clientId)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {closure.serviceIds.length} servicios
+                      {closure.serviceCount ?? closure.serviceIds.length} servicios
                     </TableCell>
                     <TableCell className="text-foreground font-medium">
                       {formatCurrency(closure.total)}
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(closure.status)}
+                      <ClosureStatusBadge status={closure.status} />
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-x-2">
@@ -337,7 +324,15 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
                 ))}
               </TableBody>
             </Table>
-            
+
+            {paginatedClosures.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                <FolderOpen className="size-10 text-muted-foreground/60" />
+                <p className="font-medium text-foreground">No se encontraron cierres</p>
+                <p className="text-sm text-muted-foreground">Ajusta los filtros o crea un nuevo cierre.</p>
+              </div>
+            )}
+
             {/* Bottom Pagination Controls */}
             {totalPages > 1 && (
               <div className="flex items-center justify-end gap-x-2 py-4">

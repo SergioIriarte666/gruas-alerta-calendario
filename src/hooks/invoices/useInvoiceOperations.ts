@@ -136,19 +136,18 @@ export const useInvoiceOperations = () => {
         throw new Error('Error al relacionar factura con cierre');
       }
 
-      // NUEVO: Actualizar estado del cierre a 'invoiced'
+      // Actualizar estado del cierre a 'invoiced' vía RPC SECURITY DEFINER.
+      // El UPDATE directo anterior quedaba sujeto a RLS y fallaba silenciosamente
+      // (~22% de los casos en producción), dejando cierres en 'closed' pese a
+      // estar facturados. Esta función bypassa RLS de forma consistente.
       const { error: closureUpdateError } = await supabase
-        .from('service_closures')
-        .update({ 
-          status: 'invoiced',
-          updated_at: businessClock.nowISO()
-        })
-        .eq('id', invoiceData.closureId);
+        .rpc('update_closure_status_on_invoice', { p_closure_id: invoiceData.closureId });
 
       if (closureUpdateError) {
         logger.error('❌ Error al actualizar estado del cierre:', closureUpdateError);
-        toast.warning("Advertencia", {
-          description: "La factura se creó correctamente, pero no se pudo actualizar el estado del cierre.",
+        toast.error("Error crítico", {
+          description: `La factura ${result.invoice_folio} se creó, pero el cierre no pudo marcarse como facturado. Revisar manualmente el cierre ${invoiceData.closureId}.`,
+          duration: Infinity,
         });
       }
 

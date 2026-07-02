@@ -59,6 +59,19 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
     }
   }
 
+  // Conteo real de servicios por cierre, agregado en la base de datos.
+  const serviceCountByClosureId = new Map<string, number>();
+  const { data: closureCounts, error: countError } = await supabase
+    .rpc('get_closure_service_counts');
+
+  if (countError) {
+    logger.warn('Error fetching closure service counts:', countError);
+  } else {
+    (closureCounts || []).forEach((row: { closure_id: string; service_count: number }) => {
+      serviceCountByClosureId.set(row.closure_id, Number(row.service_count) || 0);
+    });
+  }
+
   const closuresWithServices = allClosures.map(closure => ({
     ...closure,
     closure_services: servicesByClosureId.get(closure.id) || []
@@ -66,12 +79,16 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
 
   return closuresWithServices.map((closure) => {
     try {
-      return formatClosureData(closure);
+      return {
+        ...formatClosureData(closure),
+        serviceCount: serviceCountByClosureId.get(closure.id) ?? 0,
+      };
     } catch (formatError) {
       return {
         id: closure.id,
         folio: closure.folio || 'N/A',
         serviceIds: [],
+        serviceCount: serviceCountByClosureId.get(closure.id) ?? 0,
         dateRange: {
           from: closure.date_from,
           to: closure.date_to

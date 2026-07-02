@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Eye, FileText, Calendar, DollarSign, FolderOpen } from 'lucide-react';
+import { ClosureStatusBadge } from './ClosureStatusBadge';
 import { ServiceClosure, Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { cn, toTitleCase } from '@/lib/utils';
@@ -30,19 +30,6 @@ export const ClosuresMobileView = ({
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
     return client ? toTitleCase(client.name) : 'Cliente desconocido';
-  };
-
-  const getStatusBadge = (status: ServiceClosure['status']) => {
-    switch (status) {
-      case 'open':
-        return <Badge className="bg-yellow-500 text-white">Abierto</Badge>;
-      case 'closed':
-        return <Badge className="bg-blue-500 text-white">Cerrado</Badge>;
-      case 'invoiced':
-        return <Badge className="bg-green-500 text-white">Facturado</Badge>;
-      default:
-        return <Badge className="bg-muted text-muted-foreground">Desconocido</Badge>;
-    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -82,7 +69,7 @@ export const ClosuresMobileView = ({
                 <h4 className="font-semibold text-foreground text-lg">{closure.folio}</h4>
                 <p className="text-primary text-sm font-medium">{getClientName(closure.clientId)}</p>
               </div>
-              {getStatusBadge(closure.status)}
+              <ClosureStatusBadge status={closure.status} />
             </div>
 
             <div className="space-y-2 mb-4">
@@ -95,7 +82,7 @@ export const ClosuresMobileView = ({
 
               <div className="flex items-center text-foreground text-sm">
                 <FileText className="size-4 mr-2 text-muted-foreground flex-shrink-0" />
-                <span>{closure.serviceIds.length} servicios</span>
+                <span>{closure.serviceCount ?? closure.serviceIds.length} servicios</span>
               </div>
 
               <div className="flex items-center text-foreground text-sm font-medium">
