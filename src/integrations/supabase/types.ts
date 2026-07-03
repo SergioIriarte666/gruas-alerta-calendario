@@ -4611,12 +4611,13 @@ export type Database = {
           change_type: string
           changed_at: string
           changed_by: string | null
+          event_id: string
           field_name: string
           id: string
           new_value: string | null
           old_value: string | null
           service_folio: string
-          service_id: string
+          service_id: string | null
         }
         Insert: {
           change_context?: string | null
@@ -4624,12 +4625,13 @@ export type Database = {
           change_type: string
           changed_at?: string
           changed_by?: string | null
+          event_id: string
           field_name: string
           id?: string
           new_value?: string | null
           old_value?: string | null
           service_folio: string
-          service_id: string
+          service_id?: string | null
         }
         Update: {
           change_context?: string | null
@@ -4637,12 +4639,13 @@ export type Database = {
           change_type?: string
           changed_at?: string
           changed_by?: string | null
+          event_id?: string
           field_name?: string
           id?: string
           new_value?: string | null
           old_value?: string | null
           service_folio?: string
-          service_id?: string
+          service_id?: string | null
         }
         Relationships: [
           {
@@ -7451,6 +7454,7 @@ export type Database = {
         }
         Returns: Json
       }
+      format_clp_amount: { Args: { p_value: number }; Returns: string }
       full_payment_cleanup_and_sync: { Args: never; Returns: Json }
       generate_database_backup: { Args: never; Returns: string }
       generate_excess_folio: { Args: never; Returns: string }

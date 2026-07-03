@@ -22,6 +22,18 @@ const FIELD_LABELS: Record<string, string> = {
   client_id: 'Cliente',
   operator_id: 'Operador',
   crane_id: 'Grúa',
+  has_excess: 'Tiene excedente',
+  outsourced_cost: 'Costo tercerización',
+  custody_mode: 'Modo de custodia',
+  custody_days: 'Días de custodia',
+  custody_daily_rate: 'Tarifa diaria de custodia',
+  custody_start_date: 'Fecha inicio custodia',
+  custody_end_date: 'Fecha término custodia',
+  custody_vehicle_type: 'Tipo de vehículo (custodia)',
+  custody_discount_percentage: 'Descuento custodia (%)',
+  custody_total_amount: 'Total custodia',
+  custody_notes: 'Notas de custodia',
+  custody_rate_type: 'Tipo de tarifa custodia',
   event_type: 'Tipo de evento',
   path: 'Ruta',
 };
@@ -58,7 +70,12 @@ export function formatFieldValue(fieldName: string | null | undefined, value: un
   const stringValue =
     typeof value === 'string' ? value : typeof value === 'number' || typeof value === 'boolean' ? String(value) : null;
 
-  if (fieldName && ['value', 'operator_commission', 'client_covered_amount', 'excess_amount'].includes(fieldName)) {
+  if (
+    fieldName &&
+    ['value', 'operator_commission', 'client_covered_amount', 'excess_amount', 'outsourced_cost', 'custody_daily_rate', 'custody_total_amount'].includes(
+      fieldName,
+    )
+  ) {
     const numValue = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
     if (!Number.isNaN(numValue)) {
       return `$${numValue.toLocaleString('es-CL')}`;
