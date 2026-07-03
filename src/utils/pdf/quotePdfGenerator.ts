@@ -8,6 +8,7 @@ import { getCraneTypeLabel } from '@/utils/craneType';
 import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 import { toTitleCase } from '@/lib/utils';
+import { fetchServiceItemsBreakdown, ITEMS_SERVICE_TYPES } from './serviceItemsData';
 
 const VIOLET: [number, number, number] = [139, 92, 246];
 const MUTED: [number, number, number] = [100, 100, 100];
@@ -159,6 +160,44 @@ export const generateQuotePDF = async (
       margin: { left: marginX, right: marginX },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
+  }
+
+  // Desglose de ítems (Glosa/Cantidad/Valor unitario) — solo para tipos de servicio con desglose habilitado
+  const serviceTypeName = service.serviceType?.name || '';
+  if (ITEMS_SERVICE_TYPES.includes(serviceTypeName)) {
+    const breakdown = await fetchServiceItemsBreakdown(service.id);
+    if (breakdown) {
+      const itemRows = breakdown.items.map((item) => [
+        item.glosa || '',
+        Number(item.cantidad).toString(),
+        formatCLP(Number(item.valor_unitario)),
+        formatCLP(Number(item.cantidad) * Number(item.valor_unitario)),
+      ]);
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Desglose de Ítems', 'Cant.', 'Valor unit.', 'Total neto']],
+        body: itemRows,
+        foot: [['', '', 'Subtotal ítems', formatCLP(breakdown.subtotal)]],
+        theme: 'grid',
+        headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9 },
+        styles: { fontSize: 9, cellPadding: 2.5 },
+        columnStyles: {
+          0: { cellWidth: contentWidth - 18 - 35 - 32, textColor: 60 },
+          1: { cellWidth: 18, halign: 'right' },
+          2: { cellWidth: 35, halign: 'right' },
+          3: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
+        },
+        margin: { left: marginX, right: marginX },
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
+
+      // TODO: breakdown.subtotal (~$672.000 en SRV-6743) no coincide con service.value
+      // ($960.000, usado como "Servicio base" más abajo). Definir con negocio si el
+      // desglose debe reemplazar el valor del servicio o mantenerse como referencia
+      // informativa antes de unificar ambos montos.
+    }
   }
 
   // Tabla de valores (totales)

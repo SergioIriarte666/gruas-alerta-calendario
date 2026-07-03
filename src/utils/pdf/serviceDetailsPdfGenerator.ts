@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { supabase } from '@/integrations/supabase/client';
 import { addPDFHeader } from './pdfHeader';
 import { fetchCompanyData } from './companyDataFetcher';
 import { formatCurrency, formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
@@ -12,6 +11,7 @@ import {
   isEquipmentRentalService 
 } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { fetchServiceItemsBreakdown, ITEMS_SERVICE_TYPES } from './serviceItemsData';
 
 interface ServiceDetailsPDFData {
   service: any;
@@ -22,20 +22,15 @@ interface ServiceDetailsPDFData {
 
 const TMS_GREEN = [0, 150, 136] as [number, number, number];
 const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
-const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
 
 const addServiceItemsSection = async (
   doc: jsPDF,
   serviceId: string,
   yPosition: number
 ): Promise<number> => {
-  const { data: items, error } = await supabase
-    .from('service_items')
-    .select('*')
-    .eq('service_id', serviceId)
-    .order('created_at', { ascending: true });
-
-  if (error || !items || items.length === 0) return yPosition;
+  const breakdown = await fetchServiceItemsBreakdown(serviceId);
+  if (!breakdown) return yPosition;
+  const { items, subtotal, iva, total } = breakdown;
 
   const clp = new Intl.NumberFormat('es-CL', {
     style: 'currency',
@@ -45,14 +40,7 @@ const addServiceItemsSection = async (
 
   yPosition = addSectionTitle(doc, 'DESGLOSE DE TRABAJOS', yPosition);
 
-  const subtotal = items.reduce(
-    (sum: number, item: any) => sum + Number(item.cantidad) * Number(item.valor_unitario),
-    0
-  );
-  const iva = Math.round(subtotal * 0.19);
-  const total = subtotal + iva;
-
-  const tableBody = items.map((item: any) => [
+  const tableBody = items.map((item) => [
     item.glosa || '',
     Number(item.cantidad).toString(),
     clp.format(Number(item.valor_unitario)),
