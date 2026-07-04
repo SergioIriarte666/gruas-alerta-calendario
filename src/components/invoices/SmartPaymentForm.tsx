@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { X, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
@@ -51,7 +51,6 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     notes: ''
   });
   const [loading, setLoading] = useState(false);
-  const [showAllInvoices, setShowAllInvoices] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [isAmountAutoCalculated, setIsAmountAutoCalculated] = useState(false);
   const [paymentStatusWarnings, setPaymentStatusWarnings] = useState<Record<string, string>>({});
@@ -252,15 +251,10 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-2xl w-[95vw] border-border/70 bg-card p-0 flex flex-col">
         <DialogHeader className="shrink-0 z-10 border-b border-border/70 bg-muted/20 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="size-5 text-primary" />
-              Registrar Pago Inteligente
-            </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="size-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <Zap className="size-5 text-primary" />
+            Registrar Pago Inteligente
+          </DialogTitle>
         </DialogHeader>
         <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -301,39 +295,38 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm font-medium text-foreground">
-                      <span>Próximas facturas a pagar:</span>
+                      <span>Facturas pendientes:</span>
                       <label className="flex items-center gap-2 text-xs">
                         <input type="checkbox" checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length} onChange={e => handleSelectAllInvoices(e.target.checked)} className="size-3 rounded border border-border checked:bg-primary checked:border-primary" />
                         Seleccionar todas
                       </label>
                     </div>
-                    {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map(invoice => {
-                      const isSelected = selectedInvoiceIds.includes(invoice.id);
-                      return <div key={invoice.id} className={`flex items-center justify-between rounded-lg border p-2 text-sm ${isSelected ? 'border-primary/30 bg-primary/10' : 'border-border/70 bg-background/60'}`}>
-                        <div className="flex items-center gap-2">
-                          <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="size-4 rounded border border-border checked:bg-primary checked:border-primary" />
-                          <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
-                          <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
-                            {invoice.status}
-                          </Badge>
-                          {invoice.due_date && (() => {
-                            const isOverdue = new Date(invoice.due_date + 'T12:00:00') < businessClock.now();
-                            return (
-                              <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                                Vence: {formatForDisplay(invoice.due_date)}
-                              </span>
-                            );
-                          })()}
-                          {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
-                            ⚠️ Pago automático
-                          </Badge>}
-                        </div>
-                        <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
-                      </div>;
-                    })}
-                    {clientInvoices.length > 3 && <button type="button" onClick={() => setShowAllInvoices(!showAllInvoices)} className="w-full rounded py-1 text-center text-xs text-primary transition-colors hover:bg-primary/10 hover:text-primary">
-                      {showAllInvoices ? 'Mostrar menos' : `+${clientInvoices.length - 3} facturas más`}
-                    </button>}
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                      {clientInvoices.map(invoice => {
+                        const isSelected = selectedInvoiceIds.includes(invoice.id);
+                        return <div key={invoice.id} className={`flex items-center justify-between rounded-lg border p-2 text-sm ${isSelected ? 'border-primary/30 bg-primary/10' : 'border-border/70 bg-background/60'}`}>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" checked={isSelected} onChange={e => handleInvoiceToggle(invoice.id, e.target.checked)} className="size-4 rounded border border-border checked:bg-primary checked:border-primary" />
+                            <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
+                            <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
+                              {invoice.status}
+                            </Badge>
+                            {invoice.due_date && (() => {
+                              const isOverdue = new Date(invoice.due_date + 'T12:00:00') < businessClock.now();
+                              return (
+                                <span className={`text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                  Vence: {formatForDisplay(invoice.due_date)}
+                                </span>
+                              );
+                            })()}
+                            {paymentStatusWarnings[invoice.id] && <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
+                              ⚠️ Pago automático
+                            </Badge>}
+                          </div>
+                          <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
+                        </div>;
+                      })}
+                    </div>
                   </div>
                 </> : <Alert>
                   <AlertTriangle className="size-4" />
