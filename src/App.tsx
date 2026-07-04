@@ -74,6 +74,7 @@ const routeImports = {
   PendingUsers: () => import('@/pages/PendingUsers'),
   RegenerarInspeccion: () => import('@/pages/admin/RegenerarInspeccion'),
   ExternalServices: () => import('@/pages/admin/ExternalServices'),
+  OperatorLocations: () => import('@/pages/OperatorLocations'),
 };
 
 // Lazy components using the same import functions
@@ -123,6 +124,7 @@ const PendingApproval = lazy(routeImports.PendingApproval);
 const PendingUsers = lazy(routeImports.PendingUsers);
 const RegenerarInspeccion = lazy(routeImports.RegenerarInspeccion);
 const ExternalServices = lazy(routeImports.ExternalServices);
+const OperatorLocations = lazy(routeImports.OperatorLocations);
 
 // Preload all route chunks after initial render
 const preloadAllRoutes = () => {
@@ -264,6 +266,7 @@ function AppContent() {
           <Route path="/admin/usuarios-pendientes" element={<AdminOnlyRoute><PendingUsers /></AdminOnlyRoute>} />
           <Route path="/admin/inspecciones/regenerar" element={<AdminOnlyRoute><RegenerarInspeccion /></AdminOnlyRoute>} />
           <Route path="/admin/external-services" element={<AdminOnlyRoute><ExternalServices /></AdminOnlyRoute>} />
+          <Route path="/operator-locations" element={<AdminOnlyRoute><OperatorLocations /></AdminOnlyRoute>} />
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}

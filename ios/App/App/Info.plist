@@ -27,7 +27,11 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>TMS Operador usa tu ubicacion para asociar tu posicion al servicio activo y reportar avances operativos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TMS Operador usa tu ubicacion para compartir la posicion del operador durante servicios activos.</string>
+	<string>TMS Operador comparte tu posicion durante tu jornada laboral y servicios activos para coordinar la operacion.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

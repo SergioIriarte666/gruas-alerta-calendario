@@ -64,6 +64,7 @@ export const useOperatorMutations = () => {
           exam_expiry: operatorData.examExpiry || null,
           is_active: operatorData.isActive,
           commission_exempt: operatorData.commissionExempt ?? false,
+          tracking_enabled: operatorData.trackingEnabled ?? true,
           created_by: user?.id || null
         })
         .select()
@@ -91,6 +92,7 @@ export const useOperatorMutations = () => {
         if (operatorData.examExpiry !== undefined) updateData.exam_expiry = operatorData.examExpiry || null;
         if (operatorData.isActive !== undefined) updateData.is_active = operatorData.isActive;
         if (operatorData.commissionExempt !== undefined) updateData.commission_exempt = operatorData.commissionExempt;
+        if (operatorData.trackingEnabled !== undefined) updateData.tracking_enabled = operatorData.trackingEnabled;
 
         if (Object.keys(updateData).length === 0) return;
 

@@ -39,6 +39,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
     licenseNumber: operator?.licenseNumber || '',
     examExpiry: operator?.examExpiry || '',
     commissionExempt: operator?.commissionExempt ?? false,
+    trackingEnabled: operator?.trackingEnabled ?? true,
     isActive: operator?.isActive ?? true
   });
 
@@ -255,6 +256,23 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
                 {formData.commissionExempt ? 'Exento de comisiones' : 'Recibe comisiones'}
               </span>
             </div>
+          </div>
+
+          <div className="space-y-2 col-span-2">
+            <Label htmlFor="trackingEnabled">Rastreo GPS habilitado</Label>
+            <div className="flex items-center gap-x-2">
+              <Switch
+                id="trackingEnabled"
+                checked={formData.trackingEnabled}
+                onCheckedChange={(checked) => handleChange('trackingEnabled', checked)}
+              />
+              <span className="text-sm text-muted-foreground">
+                {formData.trackingEnabled ? 'Rastreo habilitado' : 'Rastreo deshabilitado'}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Si se desactiva, el operador no aparece en Ubicaciones y su app no comparte posición.
+            </p>
           </div>
         </div>
 

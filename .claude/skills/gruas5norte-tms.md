@@ -265,6 +265,31 @@ grep -rn "T00:00:00" src/utils/reports/ --include="*.ts"
 
 ---
 
+## App nativa (Capacitor)
+
+- La app nativa iOS/Android (**TMS Operador**, appId `cl.gruas5norte.tmsoperador`)
+  **SIEMPRE** se compila con `npm run build:operator-mobile`
+  (`VITE_APP_VARIANT=operator-mobile` horneado en tiempo de build). Esta variable
+  activa `MobileAppRouteGuard` (`src/App.tsx`) y `isOperatorMobileVariant()`
+  (`src/lib/appVariant.ts`), que fuerzan todas las rutas hacia `/operator/*`.
+- **JAMÁS** usar `npm run build` (build admin completo) antes de `cap sync` /
+  `cap copy` para la app nativa: el bundle quedaría sin la variante horneada y
+  la app nativa mostraría la vista admin en vez del portal operador.
+- Usar siempre los scripts de conveniencia para sincronizar, nunca los pasos
+  sueltos:
+  - `npm run sync:ios` → `build:operator-mobile` + `npx cap sync ios`
+  - `npm run sync:android` → `build:operator-mobile` + `npx cap sync android`
+- El deploy web de Cloudflare Pages (`app.gruas5norte.cl`) sí usa `npm run build`
+  normal (variante admin/default) — no confundir ambos flujos.
+- Verificación rápida tras sincronizar: el bundle en
+  `ios/App/App/public/assets/index-*.js` debe tener la función de
+  `MobileAppRouteGuard` sin un `return null` temprano (el check de variante se
+  optimiza/elimina en build cuando `VITE_APP_VARIANT=operator-mobile` es `true`
+  en tiempo de compilación). Si el `return null` temprano sigue presente, el
+  bundle se generó con la variante equivocada.
+
+---
+
 ## Estructura de un prompt para Claude Code
 
 Todo prompt generado con este skill debe tener esta forma:

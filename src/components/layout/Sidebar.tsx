@@ -124,6 +124,7 @@ export const Sidebar = ({
         { name: 'Grúas', href: '/cranes', icon: Building2, adminOnly: false },
         { name: 'Operadores', href: '/operators', icon: Users, adminOnly: false },
         { name: 'Vehículos', href: '/vehicles', icon: Car, adminOnly: false },
+        { name: 'Ubicaciones', href: '/operator-locations', icon: MapPin, adminOnly: true },
       ]
     },
     {

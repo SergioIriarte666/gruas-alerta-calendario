@@ -1,3 +1,4 @@
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
 export type Json =
   | string
   | number
@@ -3741,6 +3742,207 @@ export type Database = {
           },
         ]
       }
+      operator_location_points: {
+        Row: {
+          accuracy_meters: number | null
+          altitude_meters: number | null
+          created_at: string
+          heading_degrees: number | null
+          id: string
+          is_offline_sync: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform: string
+          recorded_at: string
+          service_id: string | null
+          session_id: string
+          source: string
+          speed_mps: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_meters?: number | null
+          altitude_meters?: number | null
+          created_at?: string
+          heading_degrees?: number | null
+          id?: string
+          is_offline_sync?: boolean
+          latitude: number
+          longitude: number
+          operator_id: string
+          platform?: string
+          recorded_at: string
+          service_id?: string | null
+          session_id: string
+          source?: string
+          speed_mps?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy_meters?: number | null
+          altitude_meters?: number | null
+          created_at?: string
+          heading_degrees?: number | null
+          id?: string
+          is_offline_sync?: boolean
+          latitude?: number
+          longitude?: number
+          operator_id?: string
+          platform?: string
+          recorded_at?: string
+          service_id?: string | null
+          session_id?: string
+          source?: string
+          speed_mps?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_location_points_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_points_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_points_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_points_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_points_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "operator_location_points_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "operator_location_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operator_location_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          ended_reason: string | null
+          id: string
+          last_point_at: string | null
+          operator_id: string
+          platform: string
+          service_id: string | null
+          source: string
+          started_at: string
+          started_reason: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          ended_reason?: string | null
+          id?: string
+          last_point_at?: string | null
+          operator_id: string
+          platform?: string
+          service_id?: string | null
+          source?: string
+          started_at?: string
+          started_reason?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          ended_reason?: string | null
+          id?: string
+          last_point_at?: string | null
+          operator_id?: string
+          platform?: string
+          service_id?: string | null
+          source?: string
+          started_at?: string
+          started_reason?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_location_sessions_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "operator_location_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operators: {
         Row: {
           commission_exempt: boolean
@@ -3756,6 +3958,7 @@ export type Database = {
           phone: string | null
           position: string | null
           rut: string
+          tracking_enabled: boolean
           updated_at: string | null
           user_id: string | null
         }
@@ -3773,6 +3976,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           rut: string
+          tracking_enabled?: boolean
           updated_at?: string | null
           user_id?: string | null
         }
@@ -3790,6 +3994,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           rut?: string
+          tracking_enabled?: boolean
           updated_at?: string | null
           user_id?: string | null
         }
@@ -6298,6 +6503,42 @@ export type Database = {
           },
         ]
       }
+      tracking_settings: {
+        Row: {
+          id: string
+          points_retention_days: number
+          saturday_end: string
+          saturday_start: string
+          session_timeout_minutes: number
+          sunday_enabled: boolean
+          updated_at: string
+          weekday_end: string
+          weekday_start: string
+        }
+        Insert: {
+          id?: string
+          points_retention_days?: number
+          saturday_end?: string
+          saturday_start?: string
+          session_timeout_minutes?: number
+          sunday_enabled?: boolean
+          updated_at?: string
+          weekday_end?: string
+          weekday_start?: string
+        }
+        Update: {
+          id?: string
+          points_retention_days?: number
+          saturday_end?: string
+          saturday_start?: string
+          session_timeout_minutes?: number
+          sunday_enabled?: boolean
+          updated_at?: string
+          weekday_end?: string
+          weekday_start?: string
+        }
+        Relationships: []
+      }
       trip_estimates: {
         Row: {
           additional_costs: number | null
@@ -7579,6 +7820,27 @@ export type Database = {
           id: string
           role: string
           status: string
+        }[]
+      }
+      get_operator_live_locations: {
+        Args: never
+        Returns: {
+          accuracy_meters: number
+          ended_reason: string
+          heading_degrees: number
+          latitude: number
+          longitude: number
+          operator_id: string
+          operator_name: string
+          recorded_at: string
+          service_folio: string
+          service_id: string
+          session_ended_at: string
+          session_id: string
+          session_started_at: string
+          session_status: string
+          speed_mps: number
+          started_reason: string
         }[]
       }
       get_or_create_inventory_supplier: {

@@ -265,6 +265,7 @@ export interface Operator {
   licenseNumber?: string;
   examExpiry?: string;
   commissionExempt?: boolean;
+  trackingEnabled?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

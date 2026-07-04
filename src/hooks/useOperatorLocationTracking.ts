@@ -1,37 +1,47 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 import { toast } from 'sonner';
 import type { Service } from '@/types';
 import type {
   LocationPermissionState,
   OperatorLocationPayload,
   OperatorLocationPoint,
+  TrackingSessionEndedReason,
+  TrackingSessionStartedReason,
+  TrackingSettings,
 } from '@/types/operatorLocation';
 import {
+  BackgroundGeolocation,
   checkLocationPermission,
   ensureOperatorLocationSession,
+  fetchOperatorTrackingEnabled,
+  fetchTrackingSettings,
+  findActiveOperatorLocationSession,
   getCurrentLocationPoint,
+  mapBackgroundGeolocationPoint,
   requestLocationPermission,
   saveOperatorLocationPoint,
   stopOperatorLocationSession,
 } from '@/services/operatorLocationService';
+import { isWithinTrackingSchedule, getTrackingScheduleLabel } from '@/utils/trackingSchedule';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('useOperatorLocationTracking');
 
 const LOCATION_QUEUE_KEY = 'operator-location-points-queue-v1';
-const LOCATION_SESSION_KEY = 'operator-location-session-v1';
+const TRACKING_PAUSED_KEY = 'operator-tracking-paused-v1';
 const TRACKING_INTERVAL_MS = 30000;
+const NATIVE_MIN_PERSIST_INTERVAL_MS = 20000;
+const SCHEDULE_CHECK_INTERVAL_MS = 30000;
 const MAX_QUEUED_POINTS = 200;
+const MAX_QUEUE_ATTEMPTS = 10;
+
+export type TrackingMode = TrackingSessionStartedReason | null;
 
 interface QueuedLocationPoint extends OperatorLocationPayload {
   localId: string;
-}
-
-interface StoredSession {
-  sessionId: string;
-  operatorId: string;
-  userId: string;
-  serviceId: string | null;
+  attempts: number;
 }
 
 interface UseOperatorLocationTrackingOptions {
@@ -40,36 +50,38 @@ interface UseOperatorLocationTrackingOptions {
   currentService?: Service | null;
 }
 
-const readQueuedPoints = (): QueuedLocationPoint[] => {
+const readQueuedPoints = async (): Promise<QueuedLocationPoint[]> => {
   try {
-    const raw = localStorage.getItem(LOCATION_QUEUE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as QueuedLocationPoint[];
+    const { value } = await Preferences.get({ key: LOCATION_QUEUE_KEY });
+    if (!value) return [];
+    return JSON.parse(value) as QueuedLocationPoint[];
   } catch {
     return [];
   }
 };
 
-const writeQueuedPoints = (points: QueuedLocationPoint[]) => {
-  localStorage.setItem(LOCATION_QUEUE_KEY, JSON.stringify(points.slice(-MAX_QUEUED_POINTS)));
+const writeQueuedPoints = async (points: QueuedLocationPoint[]) => {
+  await Preferences.set({
+    key: LOCATION_QUEUE_KEY,
+    value: JSON.stringify(points.slice(-MAX_QUEUED_POINTS)),
+  });
 };
 
-const readStoredSession = (): StoredSession | null => {
+const readPausedFlag = async (): Promise<boolean> => {
   try {
-    const raw = localStorage.getItem(LOCATION_SESSION_KEY);
-    return raw ? (JSON.parse(raw) as StoredSession) : null;
+    const { value } = await Preferences.get({ key: TRACKING_PAUSED_KEY });
+    return value === 'true';
   } catch {
-    return null;
+    return false;
   }
 };
 
-const writeStoredSession = (session: StoredSession | null) => {
-  if (!session) {
-    localStorage.removeItem(LOCATION_SESSION_KEY);
-    return;
+const writePausedFlag = async (paused: boolean) => {
+  if (paused) {
+    await Preferences.set({ key: TRACKING_PAUSED_KEY, value: 'true' });
+  } else {
+    await Preferences.remove({ key: TRACKING_PAUSED_KEY });
   }
-
-  localStorage.setItem(LOCATION_SESSION_KEY, JSON.stringify(session));
 };
 
 const createPayload = (
@@ -107,7 +119,24 @@ export const useOperatorLocationTracking = ({
   const [pendingCount, setPendingCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [trackingMode, setTrackingMode] = useState<TrackingMode>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [trackingSettings, setTrackingSettings] = useState<TrackingSettings | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [trackingDisabled, setTrackingDisabled] = useState(false);
+
   const intervalRef = useRef<number | null>(null);
+  const watcherIdRef = useRef<string | null>(null);
+  const scheduleIntervalRef = useRef<number | null>(null);
+  const lastNativePersistAtRef = useRef(0);
+
+  const isTrackingRef = useRef(false);
+  const trackingModeRef = useRef<TrackingMode>(null);
+  const isPausedRef = useRef(false);
+  const trackingSettingsRef = useRef<TrackingSettings | null>(null);
+  const sessionServiceIdRef = useRef<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const trackingDisabledRef = useRef(false);
 
   const serviceId = currentService?.id ?? null;
   const serviceLabel = currentService?.folio
@@ -116,21 +145,34 @@ export const useOperatorLocationTracking = ({
       ? [currentService.origin, currentService.destination].filter(Boolean).join(' -> ')
       : null;
 
-  const clearTrackingInterval = useCallback(() => {
+  const scheduleLabel = useMemo(
+    () => (trackingSettings ? getTrackingScheduleLabel(trackingSettings) : null),
+    [trackingSettings],
+  );
+
+  const clearCaptureLoop = useCallback(() => {
     if (intervalRef.current !== null) {
       window.clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    if (watcherIdRef.current !== null) {
+      const id = watcherIdRef.current;
+      watcherIdRef.current = null;
+      void BackgroundGeolocation.removeWatcher({ id }).catch((error) => {
+        logger.warn('Could not remove background geolocation watcher', error);
+      });
+    }
   }, []);
 
-  const refreshPendingCount = useCallback(() => {
-    setPendingCount(readQueuedPoints().length);
+  const refreshPendingCount = useCallback(async () => {
+    const queued = await readQueuedPoints();
+    setPendingCount(queued.length);
   }, []);
 
   const flushQueue = useCallback(async () => {
-    const queued = readQueuedPoints();
+    const queued = await readQueuedPoints();
     if (!queued.length || !navigator.onLine) {
-      refreshPendingCount();
+      await refreshPendingCount();
       return;
     }
 
@@ -144,13 +186,18 @@ export const useOperatorLocationTracking = ({
         });
         setLastSyncAt(new Date().toISOString());
       } catch (error) {
-        logger.warn('Could not flush queued location point', error);
-        remaining.push(item);
+        const attempts = item.attempts + 1;
+        if (attempts >= MAX_QUEUE_ATTEMPTS) {
+          logger.warn('Discarding queued location point after max attempts', { localId: item.localId, error });
+        } else {
+          logger.warn('Could not flush queued location point', error);
+          remaining.push({ ...item, attempts });
+        }
       }
     }
 
-    writeQueuedPoints(remaining);
-    refreshPendingCount();
+    await writeQueuedPoints(remaining);
+    await refreshPendingCount();
   }, [refreshPendingCount]);
 
   const persistPoint = useCallback(async (
@@ -169,13 +216,14 @@ export const useOperatorLocationTracking = ({
     );
 
     if (!navigator.onLine) {
-      const queued = readQueuedPoints();
+      const queued = await readQueuedPoints();
       queued.push({
         ...payload,
         localId: `${payload.recordedAt}:${queued.length}`,
+        attempts: 0,
       });
-      writeQueuedPoints(queued);
-      refreshPendingCount();
+      await writeQueuedPoints(queued);
+      await refreshPendingCount();
       return;
     }
 
@@ -184,54 +232,38 @@ export const useOperatorLocationTracking = ({
     await flushQueue();
   }, [flushQueue, refreshPendingCount]);
 
-  const captureAndPersistPoint = useCallback(async (
-    activeSessionId: string,
-    activeOperatorId: string,
-    activeUserId: string,
-    activeServiceId: string | null,
-  ) => {
-    const point = await getCurrentLocationPoint();
-    setLastPoint(point);
-    await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
-  }, [persistPoint]);
+  const stopSession = useCallback(async (endedReason: TrackingSessionEndedReason) => {
+    clearCaptureLoop();
+    const activeSessionId = sessionIdRef.current;
 
-  const stopTracking = useCallback(async () => {
-    clearTrackingInterval();
-    setIsBusy(true);
+    sessionIdRef.current = null;
+    sessionServiceIdRef.current = null;
+    trackingModeRef.current = null;
+    isTrackingRef.current = false;
+    setSessionId(null);
+    setTrackingMode(null);
+    setIsTracking(false);
 
-    try {
-      if (sessionId) {
-        await stopOperatorLocationSession(sessionId);
+    if (activeSessionId) {
+      try {
+        await stopOperatorLocationSession(activeSessionId, endedReason);
+      } catch (error) {
+        logger.warn('Could not stop location session', error);
       }
-      writeStoredSession(null);
-      setSessionId(null);
-      setIsTracking(false);
-      setErrorMessage(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'No se pudo detener la ubicacion';
-      setErrorMessage(message);
-      toast.error(message);
-    } finally {
-      setIsBusy(false);
     }
-  }, [clearTrackingInterval, sessionId]);
+  }, [clearCaptureLoop]);
 
-  const beginPolling = useCallback((
+  const beginWebPolling = useCallback((
     activeSessionId: string,
     activeOperatorId: string,
     activeUserId: string,
     activeServiceId: string | null,
   ) => {
-    clearTrackingInterval();
-
     const run = async () => {
       try {
-        await captureAndPersistPoint(
-          activeSessionId,
-          activeOperatorId,
-          activeUserId,
-          activeServiceId,
-        );
+        const point = await getCurrentLocationPoint();
+        setLastPoint(point);
+        await persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId);
         setErrorMessage(null);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'No se pudo actualizar la ubicacion';
@@ -244,105 +276,265 @@ export const useOperatorLocationTracking = ({
     intervalRef.current = window.setInterval(() => {
       void run();
     }, TRACKING_INTERVAL_MS);
-  }, [captureAndPersistPoint, clearTrackingInterval]);
+  }, [persistPoint]);
 
-  const startTracking = useCallback(async () => {
-    if (!operatorId || !userId) {
-      toast.error('No pudimos identificar al operador para compartir ubicacion');
+  const beginNativeWatcher = useCallback((
+    activeSessionId: string,
+    activeOperatorId: string,
+    activeUserId: string,
+    activeServiceId: string | null,
+  ) => {
+    lastNativePersistAtRef.current = 0;
+
+    BackgroundGeolocation.addWatcher(
+      {
+        backgroundMessage: 'Compartiendo ubicación con la central',
+        backgroundTitle: 'TMS Operador',
+        requestPermissions: true,
+        distanceFilter: 30,
+      },
+      (location, error) => {
+        if (error) {
+          logger.warn('Background geolocation watcher error', error);
+          return;
+        }
+        if (!location) return;
+
+        const now = Date.now();
+        if (now - lastNativePersistAtRef.current < NATIVE_MIN_PERSIST_INTERVAL_MS) return;
+        lastNativePersistAtRef.current = now;
+
+        const point = mapBackgroundGeolocationPoint(location);
+        setLastPoint(point);
+        void persistPoint(point, activeSessionId, activeOperatorId, activeUserId, activeServiceId)
+          .then(() => setErrorMessage(null))
+          .catch((persistError) => {
+            const message = persistError instanceof Error
+              ? persistError.message
+              : 'No se pudo actualizar la ubicacion';
+            logger.warn('Location persistence failed', persistError);
+            setErrorMessage(message);
+          });
+      },
+    ).then((id) => {
+      watcherIdRef.current = id;
+    }).catch((watcherError) => {
+      logger.warn('Could not start background geolocation watcher', watcherError);
+      setErrorMessage('No se pudo iniciar el rastreo en segundo plano');
+    });
+  }, [persistPoint]);
+
+  const beginCapture = useCallback((
+    activeSessionId: string,
+    activeOperatorId: string,
+    activeUserId: string,
+    activeServiceId: string | null,
+  ) => {
+    clearCaptureLoop();
+
+    if (Capacitor.isNativePlatform()) {
+      beginNativeWatcher(activeSessionId, activeOperatorId, activeUserId, activeServiceId);
+    } else {
+      beginWebPolling(activeSessionId, activeOperatorId, activeUserId, activeServiceId);
+    }
+  }, [beginNativeWatcher, beginWebPolling, clearCaptureLoop]);
+
+  const startSession = useCallback(async (reason: TrackingSessionStartedReason) => {
+    if (!operatorId || !userId || trackingDisabledRef.current) return;
+
+    let permission = await checkLocationPermission();
+    if (permission !== 'granted') {
+      permission = await requestLocationPermission();
+    }
+    setPermissionState(permission);
+
+    if (permission !== 'granted') {
+      if (reason === 'manual') {
+        toast.error('Debes permitir la ubicacion para compartir tu posicion');
+      }
       return;
     }
 
-    setIsBusy(true);
     try {
-      let permission = await checkLocationPermission();
-      if (permission !== 'granted') {
-        permission = await requestLocationPermission();
+      const session = await ensureOperatorLocationSession(operatorId, userId, serviceId, reason);
+
+      if (reason === 'auto_service' && isPausedRef.current) {
+        isPausedRef.current = false;
+        setIsPaused(false);
+        await writePausedFlag(false);
       }
 
-      setPermissionState(permission);
+      sessionIdRef.current = session.id;
+      sessionServiceIdRef.current = session.service_id;
+      trackingModeRef.current = session.started_reason;
+      isTrackingRef.current = true;
 
-      if (permission !== 'granted') {
-        toast.error('Debes permitir la ubicacion para compartir tu posicion');
-        return;
-      }
-
-      const session = await ensureOperatorLocationSession(operatorId, userId, serviceId);
       setSessionId(session.id);
-      writeStoredSession({
-        sessionId: session.id,
-        operatorId,
-        userId,
-        serviceId,
-      });
-
+      setTrackingMode(session.started_reason);
       setIsTracking(true);
       setErrorMessage(null);
-      beginPolling(session.id, operatorId, userId, serviceId);
-      toast.success(serviceId
-        ? 'Ubicacion compartida para el servicio activo'
-        : 'Ubicacion compartida desde la app operador');
+
+      beginCapture(session.id, operatorId, userId, serviceId);
+
+      if (reason === 'manual') {
+        toast.success(serviceId
+          ? 'Ubicacion compartida para el servicio activo'
+          : 'Ubicacion compartida desde la app operador');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo iniciar la ubicacion';
+      setErrorMessage(message);
+      if (reason === 'manual') {
+        toast.error(message);
+      }
+    }
+  }, [beginCapture, operatorId, serviceId, userId]);
+
+  const evaluate = useCallback(() => {
+    if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
+
+    if (serviceId) {
+      if (
+        !isTrackingRef.current
+        || sessionServiceIdRef.current !== serviceId
+        || trackingModeRef.current !== 'auto_service'
+      ) {
+        void startSession('auto_service');
+      }
+      return;
+    }
+
+    if (isPausedRef.current) {
+      return;
+    }
+
+    const settings = trackingSettingsRef.current;
+    const withinSchedule = settings ? isWithinTrackingSchedule(settings) : false;
+
+    if (withinSchedule) {
+      if (!isTrackingRef.current || trackingModeRef.current === 'auto_service') {
+        void startSession('auto_schedule');
+      }
+      return;
+    }
+
+    if (isTrackingRef.current && trackingModeRef.current !== 'manual') {
+      void stopSession('schedule_end');
+    }
+  }, [isReady, operatorId, serviceId, startSession, stopSession, userId]);
+
+  const pauseTracking = useCallback(async () => {
+    setIsBusy(true);
+    try {
+      await stopSession('manual');
+      isPausedRef.current = true;
+      setIsPaused(true);
+      await writePausedFlag(true);
+      toast.success('Rastreo pausado');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo pausar el rastreo';
       setErrorMessage(message);
       toast.error(message);
     } finally {
       setIsBusy(false);
     }
-  }, [beginPolling, operatorId, serviceId, userId]);
+  }, [stopSession]);
+
+  const resumeTracking = useCallback(async () => {
+    setIsBusy(true);
+    try {
+      isPausedRef.current = false;
+      setIsPaused(false);
+      await writePausedFlag(false);
+      await startSession(serviceId ? 'auto_service' : 'manual');
+    } finally {
+      setIsBusy(false);
+    }
+  }, [serviceId, startSession]);
 
   useEffect(() => {
-    void checkLocationPermission().then(setPermissionState);
-    refreshPendingCount();
+    let cancelled = false;
 
-    const storedSession = readStoredSession();
-    if (
-      storedSession &&
-      storedSession.operatorId === operatorId &&
-      storedSession.userId === userId
-    ) {
-      setSessionId(storedSession.sessionId);
-      setIsTracking(true);
-      beginPolling(
-        storedSession.sessionId,
-        storedSession.operatorId,
-        storedSession.userId,
-        storedSession.serviceId,
-      );
-    }
+    const bootstrap = async () => {
+      const [permission, paused, settings, trackingEnabled] = await Promise.all([
+        checkLocationPermission(),
+        readPausedFlag(),
+        fetchTrackingSettings(),
+        operatorId ? fetchOperatorTrackingEnabled(operatorId) : Promise.resolve(true),
+      ]);
+
+      if (cancelled) return;
+
+      setPermissionState(permission);
+      setIsPaused(paused);
+      isPausedRef.current = paused;
+      setTrackingSettings(settings);
+      trackingSettingsRef.current = settings;
+
+      const disabled = !trackingEnabled;
+      setTrackingDisabled(disabled);
+      trackingDisabledRef.current = disabled;
+
+      if (disabled) {
+        setIsReady(true);
+        return;
+      }
+
+      await refreshPendingCount();
+
+      if (operatorId) {
+        try {
+          const activeSession = await findActiveOperatorLocationSession(operatorId);
+          if (!cancelled && activeSession) {
+            sessionIdRef.current = activeSession.id;
+            sessionServiceIdRef.current = activeSession.service_id;
+            trackingModeRef.current = activeSession.started_reason;
+            isTrackingRef.current = true;
+
+            setSessionId(activeSession.id);
+            setTrackingMode(activeSession.started_reason);
+            setIsTracking(true);
+            beginCapture(activeSession.id, operatorId, userId ?? '', activeSession.service_id);
+          }
+        } catch (error) {
+          logger.warn('Could not recover active location session', error);
+        }
+      }
+
+      if (!cancelled) {
+        setIsReady(true);
+      }
+    };
+
+    void bootstrap();
 
     const handleOnline = () => {
       void flushQueue();
     };
-
     window.addEventListener('online', handleOnline);
 
     return () => {
+      cancelled = true;
       window.removeEventListener('online', handleOnline);
-      clearTrackingInterval();
+      clearCaptureLoop();
     };
-  }, [beginPolling, clearTrackingInterval, flushQueue, operatorId, refreshPendingCount, userId]);
+  }, [operatorId, userId]);
 
   useEffect(() => {
-    if (!isTracking || !sessionId || !operatorId || !userId) return;
+    if (!isReady) return;
+    evaluate();
 
-    const storedSession = readStoredSession();
-    if (!storedSession || storedSession.serviceId === serviceId) return;
+    scheduleIntervalRef.current = window.setInterval(() => {
+      evaluate();
+    }, SCHEDULE_CHECK_INTERVAL_MS);
 
-    void ensureOperatorLocationSession(operatorId, userId, serviceId)
-      .then((session) => {
-        setSessionId(session.id);
-        writeStoredSession({
-          sessionId: session.id,
-          operatorId,
-          userId,
-          serviceId,
-        });
-        beginPolling(session.id, operatorId, userId, serviceId);
-      })
-      .catch((error) => {
-        logger.warn('Could not rotate tracking session to new service', error);
-      });
-  }, [beginPolling, isTracking, operatorId, serviceId, sessionId, userId]);
+    return () => {
+      if (scheduleIntervalRef.current !== null) {
+        window.clearInterval(scheduleIntervalRef.current);
+        scheduleIntervalRef.current = null;
+      }
+    };
+  }, [evaluate, isReady]);
 
   const permissionLabel = useMemo(() => {
     switch (permissionState) {
@@ -370,8 +562,12 @@ export const useOperatorLocationTracking = ({
     errorMessage,
     sessionId,
     serviceLabel,
-    startTracking,
-    stopTracking,
+    trackingMode,
+    isPaused,
+    scheduleLabel,
+    trackingDisabled,
+    pauseTracking,
+    resumeTracking,
     flushQueue,
   };
 };

@@ -1,17 +1,47 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { supabase } from '@/integrations/supabase/client';
+import type {
+  BackgroundGeolocationPlugin,
+  Location as BackgroundGeolocationPoint,
+} from '@capacitor-community/background-geolocation';
 import type {
   LocationPermissionState,
   OperatorLocationPayload,
   OperatorLocationPoint,
   OperatorLocationSession,
+  TrackingSessionEndedReason,
+  TrackingSessionStartedReason,
+  TrackingSettings,
 } from '@/types/operatorLocation';
 
 const SESSIONS_TABLE = 'operator_location_sessions';
 const POINTS_TABLE = 'operator_location_points';
+const TRACKING_SETTINGS_TABLE = 'tracking_settings';
 
-const getSupabaseClient = () => supabase as any;
+export const DEFAULT_TRACKING_SETTINGS: TrackingSettings = {
+  weekday_start: '08:30',
+  weekday_end: '18:00',
+  saturday_start: '08:30',
+  saturday_end: '13:00',
+  sunday_enabled: false,
+  session_timeout_minutes: 10,
+  points_retention_days: 180,
+};
+
+export const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
+
+export const mapBackgroundGeolocationPoint = (
+  location: BackgroundGeolocationPoint,
+): OperatorLocationPoint => ({
+  latitude: location.latitude,
+  longitude: location.longitude,
+  accuracyMeters: location.accuracy ?? null,
+  speedMps: location.speed ?? null,
+  headingDegrees: location.bearing ?? null,
+  altitudeMeters: location.altitude ?? null,
+  recordedAt: new Date(location.time ?? Date.now()).toISOString(),
+});
 
 const mapPermissionState = (value?: string): LocationPermissionState => {
   if (value === 'granted') return 'granted';
@@ -111,14 +141,41 @@ export const getCurrentLocationPoint = async (): Promise<OperatorLocationPoint> 
   });
 };
 
+export const fetchOperatorTrackingEnabled = async (operatorId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from('operators')
+    .select('tracking_enabled')
+    .eq('id', operatorId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return true;
+  }
+
+  return data.tracking_enabled ?? true;
+};
+
+export const fetchTrackingSettings = async (): Promise<TrackingSettings> => {
+  const { data, error } = await supabase
+    .from(TRACKING_SETTINGS_TABLE)
+    .select('weekday_start, weekday_end, saturday_start, saturday_end, sunday_enabled, session_timeout_minutes, points_retention_days')
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    return DEFAULT_TRACKING_SETTINGS;
+  }
+
+  return data;
+};
+
 export const ensureOperatorLocationSession = async (
   operatorId: string,
   userId: string,
   serviceId: string | null,
+  startedReason: TrackingSessionStartedReason,
 ): Promise<OperatorLocationSession> => {
-  const client = getSupabaseClient();
-
-  const { data: existing, error: existingError } = await client
+  const { data: existing, error: existingError } = await supabase
     .from(SESSIONS_TABLE)
     .select('*')
     .eq('operator_id', operatorId)
@@ -132,21 +189,22 @@ export const ensureOperatorLocationSession = async (
     throw new Error(existingError.message || 'No se pudo revisar la sesión de ubicación activa');
   }
 
-  if (existing && existing.service_id === serviceId) {
+  if (existing && existing.service_id === serviceId && existing.started_reason === startedReason) {
     return existing as OperatorLocationSession;
   }
 
   if (existing) {
-    await client
+    await supabase
       .from(SESSIONS_TABLE)
       .update({
         status: 'stopped',
         ended_at: new Date().toISOString(),
+        ended_reason: 'service_change',
       })
       .eq('id', existing.id);
   }
 
-  const { data, error } = await client
+  const { data, error } = await supabase
     .from(SESSIONS_TABLE)
     .insert({
       operator_id: operatorId,
@@ -155,6 +213,7 @@ export const ensureOperatorLocationSession = async (
       source: 'mobile_app',
       platform: getLocationPlatform(),
       status: 'active',
+      started_reason: startedReason,
     })
     .select('*')
     .single();
@@ -166,11 +225,30 @@ export const ensureOperatorLocationSession = async (
   return data as OperatorLocationSession;
 };
 
+export const findActiveOperatorLocationSession = async (
+  operatorId: string,
+): Promise<OperatorLocationSession | null> => {
+  const { data, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .select('*')
+    .eq('operator_id', operatorId)
+    .eq('status', 'active')
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo revisar la sesión de ubicación activa');
+  }
+
+  return (data as OperatorLocationSession | null) ?? null;
+};
+
 export const saveOperatorLocationPoint = async (
   payload: OperatorLocationPayload,
 ): Promise<void> => {
-  const client = getSupabaseClient();
-  const { error } = await client.from(POINTS_TABLE).insert({
+  const { error } = await supabase.from(POINTS_TABLE).insert({
     session_id: payload.sessionId,
     operator_id: payload.operatorId,
     user_id: payload.userId,
@@ -191,7 +269,7 @@ export const saveOperatorLocationPoint = async (
     throw new Error(error.message || 'No se pudo guardar el punto de ubicación');
   }
 
-  const { error: updateError } = await client
+  const { error: updateError } = await supabase
     .from(SESSIONS_TABLE)
     .update({
       last_point_at: payload.recordedAt,
@@ -203,13 +281,16 @@ export const saveOperatorLocationPoint = async (
   }
 };
 
-export const stopOperatorLocationSession = async (sessionId: string): Promise<void> => {
-  const client = getSupabaseClient();
-  const { error } = await client
+export const stopOperatorLocationSession = async (
+  sessionId: string,
+  endedReason: TrackingSessionEndedReason,
+): Promise<void> => {
+  const { error } = await supabase
     .from(SESSIONS_TABLE)
     .update({
       status: 'stopped',
       ended_at: new Date().toISOString(),
+      ended_reason: endedReason,
     })
     .eq('id', sessionId);
 

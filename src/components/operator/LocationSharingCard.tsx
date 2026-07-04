@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { Service } from '@/types';
-import { MapPin, LocateFixed, Loader2, Square, TriangleAlert, WifiOff } from 'lucide-react';
+import { MapPin, Loader2, Pause, Play, TriangleAlert, WifiOff } from 'lucide-react';
 import { useOperatorLocationTracking } from '@/hooks/useOperatorLocationTracking';
+import { checkLocationPermission } from '@/services/operatorLocationService';
+import { Capacitor } from '@capacitor/core';
 
 interface LocationSharingCardProps {
   operatorId?: string | null;
@@ -31,6 +34,7 @@ export const LocationSharingCard = ({
 }: LocationSharingCardProps) => {
   const {
     permissionLabel,
+    permissionState,
     isTracking,
     isBusy,
     lastPoint,
@@ -38,14 +42,41 @@ export const LocationSharingCard = ({
     pendingCount,
     errorMessage,
     serviceLabel,
-    startTracking,
-    stopTracking,
+    trackingMode,
+    isPaused,
+    scheduleLabel,
+    trackingDisabled,
+    pauseTracking,
+    resumeTracking,
     flushQueue,
   } = useOperatorLocationTracking({
     operatorId,
     userId,
     currentService,
   });
+
+  const [showAlwaysHint, setShowAlwaysHint] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    void checkLocationPermission().then((state) => {
+      setShowAlwaysHint(state !== 'granted');
+    });
+  }, [permissionState]);
+
+  if (trackingDisabled) {
+    return null;
+  }
+
+  const modeBadge = isPaused
+    ? { label: 'Pausado por ti', className: 'border-amber-500/25 bg-amber-500/10 text-amber-200' }
+    : trackingMode === 'auto_service'
+      ? { label: 'En servicio', className: 'border-cyan-500/25 bg-cyan-500/10 text-cyan-200' }
+      : trackingMode === 'auto_schedule'
+        ? { label: 'En jornada', className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-200' }
+        : trackingMode === 'manual'
+          ? { label: 'Manual', className: 'border-zinc-500/25 bg-zinc-500/10 text-zinc-200' }
+          : null;
 
   return (
     <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
@@ -63,32 +94,32 @@ export const LocationSharingCard = ({
           <p className="mt-3 text-xs text-cyan-100/75">
             {serviceLabel
               ? `Se asociara a ${serviceLabel}.`
-              : 'Puedes iniciar el envio para probar desde este iPhone.'}
+              : scheduleLabel || 'Rastreo automatico segun tu jornada laboral.'}
           </p>
         </div>
 
-        {isTracking ? (
+        {isTracking && !isPaused ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => void stopTracking()}
+            onClick={() => void pauseTracking()}
             disabled={isBusy}
-            className="border-red-500/30 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+            className="border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
           >
-            {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Square className="mr-2 size-4" />}
-            Detener
+            {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Pause className="mr-2 size-4" />}
+            Pausar
           </Button>
         ) : (
           <Button
             type="button"
             size="sm"
-            onClick={() => void startTracking()}
+            onClick={() => void resumeTracking()}
             disabled={isBusy}
             className="bg-cyan-600 text-white hover:bg-cyan-500"
           >
-            {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <LocateFixed className="mr-2 size-4" />}
-            Compartir ubicacion
+            {isBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Play className="mr-2 size-4" />}
+            Reanudar
           </Button>
         )}
       </div>
@@ -111,9 +142,9 @@ export const LocationSharingCard = ({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {isTracking && (
-          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-200">
-            Compartiendo en primer plano
+        {modeBadge && (
+          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${modeBadge.className}`}>
+            {modeBadge.label}
           </span>
         )}
         {!navigator.onLine && (
@@ -134,6 +165,12 @@ export const LocationSharingCard = ({
           </Button>
         )}
       </div>
+
+      {showAlwaysHint && (
+        <div className="mt-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs text-cyan-100">
+          Para rastreo en segundo plano, activa Ubicacion → Siempre en Ajustes de iOS.
+        </div>
+      )}
 
       {errorMessage && (
         <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-100">

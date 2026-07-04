@@ -94,15 +94,22 @@ export const OperatorsMobileView = ({
                   )}
                 </h4>
               </div>
-              <Badge 
-                variant={operator.isActive ? "default" : "secondary"}
-                className={operator.isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted text-muted-foreground"
-                }
-              >
-                {operator.isActive ? 'Activo' : 'Inactivo'}
-              </Badge>
+              <div className="flex flex-col items-end gap-1">
+                <Badge
+                  variant={operator.isActive ? "default" : "secondary"}
+                  className={operator.isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {operator.isActive ? 'Activo' : 'Inactivo'}
+                </Badge>
+                {operator.trackingEnabled === false && (
+                  <Badge variant="secondary" className="border-zinc-500/30 bg-zinc-500/10 text-zinc-400 text-xs">
+                    Sin rastreo
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2 mb-4">

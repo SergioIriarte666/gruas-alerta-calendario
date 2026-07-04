@@ -219,15 +219,22 @@ export const OperatorsTable = ({
                       : operator.position || '-'}
                   </td>
                   <td className="py-3 px-4">
-                    <Badge 
-                      variant={operator.isActive ? "default" : "secondary"}
-                      className={operator.isActive 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
-                      }
-                    >
-                      {operator.isActive ? 'Activo' : 'Inactivo'}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge
+                        variant={operator.isActive ? "default" : "secondary"}
+                        className={operator.isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                        }
+                      >
+                        {operator.isActive ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                      {operator.trackingEnabled === false && (
+                        <Badge variant="secondary" className="border-zinc-500/30 bg-zinc-500/10 text-zinc-400 text-xs">
+                          Sin rastreo
+                        </Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-x-2">

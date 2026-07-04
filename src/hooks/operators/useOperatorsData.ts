@@ -31,6 +31,7 @@ const fetchOperators = async (): Promise<Operator[]> => {
     licenseNumber: operator.license_number || '',
     examExpiry: operator.exam_expiry || '',
     commissionExempt: operator.commission_exempt ?? false,
+    trackingEnabled: operator.tracking_enabled ?? true,
     isActive: operator.is_active || false,
     createdAt: operator.created_at,
     updatedAt: operator.updated_at,
