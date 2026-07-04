@@ -7722,6 +7722,34 @@ export type Database = {
       }
       import_xml_batch: { Args: { p_payload: Json }; Returns: Json }
       import_xml_costs: { Args: { p_payload: Json }; Returns: undefined }
+      import_xml_inventory_invoice: {
+        Args: {
+          p_cost_category_id: string
+          p_cost_center_id: string
+          p_cost_subcategory: string
+          p_crane_id: string
+          p_currency: string
+          p_description: string
+          p_document_type: string
+          p_due_date: string
+          p_folio: string
+          p_is_paid: boolean
+          p_issue_date: string
+          p_lines: Json
+          p_location_id: string
+          p_net_amount: number
+          p_notes: string
+          p_operator_id: string
+          p_product_service_description: string
+          p_service_folio: string
+          p_service_id: string
+          p_supplier_id: string
+          p_total_amount: number
+          p_vat_amount: number
+          p_xml_file_name: string
+        }
+        Returns: Json
+      }
       import_xml_supplier_documents: {
         Args: { p_payload: Json }
         Returns: undefined
