@@ -311,6 +311,30 @@ describe('manualCostXmlImport', () => {
           }),
         };
       }
+
+      if (table === 'supplier_invoice_items') {
+        return {
+          delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        };
+      }
+
+      if (table === 'inventory_items') {
+        return {
+          select: vi.fn().mockReturnValue({
+            ilike: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                limit: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+              }),
+            }),
+          }),
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'item-1' }, error: null }),
+            }),
+          }),
+        };
+      }
       return {};
     });
 

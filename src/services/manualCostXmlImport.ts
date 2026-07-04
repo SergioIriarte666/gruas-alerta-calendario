@@ -393,15 +393,19 @@ export const applyManualCostXmlImport = async (params: {
     };
   } catch (error) {
     logger.error('Error applying manual XML import. Rolling back changes', error);
-    await rollbackManualImport({
-      currentCost,
-      invoiceBefore,
-      paymentBefore,
-      updatedCostSnapshot,
-      createdInvoiceIds,
-      previousInvoiceId,
-      invoiceAfter,
-    });
+    try {
+      await rollbackManualImport({
+        currentCost,
+        invoiceBefore,
+        paymentBefore,
+        updatedCostSnapshot,
+        createdInvoiceIds,
+        previousInvoiceId,
+        invoiceAfter,
+      });
+    } catch (rollbackError) {
+      logger.error('Error durante el rollback de la importación manual XML:', rollbackError);
+    }
     throw error;
   }
 };
@@ -1241,39 +1245,53 @@ const rollbackManualImport = async (params: {
 }) => {
   const { currentCost, invoiceBefore, paymentBefore, updatedCostSnapshot, createdInvoiceIds, previousInvoiceId, invoiceAfter } = params;
 
+  // Cada paso corre en su propio try/catch: un fallo puntual (p.ej. un problema
+  // de red o de permisos) no debe impedir que se intenten los pasos siguientes.
+  const runRollbackStep = async (label: string, step: () => Promise<unknown>) => {
+    try {
+      await step();
+    } catch (stepError) {
+      logger.error(`Rollback: fallo al revertir ${label} de la importación manual XML:`, stepError);
+    }
+  };
+
   if (updatedCostSnapshot) {
-    await supabase
-      .from('costs')
-      .update(buildRestorableCostPatch(currentCost))
-      .eq('id', currentCost.id);
+    await runRollbackStep('el costo', () =>
+      supabase.from('costs').update(buildRestorableCostPatch(currentCost)).eq('id', currentCost.id)
+    );
   }
 
   if (paymentBefore?.id) {
-    await supabase
-      .from('supplier_payments')
-      .update({
-        supplier_id: paymentBefore.supplier_id,
-        supplier_invoice_id: paymentBefore.supplier_invoice_id,
-        reference_number: paymentBefore.reference_number,
-        description: paymentBefore.description,
-        amount: paymentBefore.amount,
-        due_date: paymentBefore.due_date,
-        status: paymentBefore.status,
-        notes: paymentBefore.notes,
-      })
-      .eq('id', paymentBefore.id);
+    await runRollbackStep('el pago a proveedor', () =>
+      supabase
+        .from('supplier_payments')
+        .update({
+          supplier_id: paymentBefore.supplier_id,
+          supplier_invoice_id: paymentBefore.supplier_invoice_id,
+          reference_number: paymentBefore.reference_number,
+          description: paymentBefore.description,
+          amount: paymentBefore.amount,
+          due_date: paymentBefore.due_date,
+          status: paymentBefore.status,
+          notes: paymentBefore.notes,
+        })
+        .eq('id', paymentBefore.id)
+    );
   }
 
   if (invoiceBefore && invoiceAfter?.id) {
-    await supabase
-      .from('supplier_invoices')
-      .update(buildInvoicePatch(invoiceBefore))
-      .eq('id', invoiceAfter.id);
+    await runRollbackStep('la factura de proveedor', () =>
+      supabase.from('supplier_invoices').update(buildInvoicePatch(invoiceBefore)).eq('id', invoiceAfter.id)
+    );
   }
 
   if (createdInvoiceIds.length > 0) {
-    await supabase.from('costs').update({ supplier_invoice_id: previousInvoiceId }).eq('id', currentCost.id);
-    await supabase.from('supplier_invoices').delete().in('id', createdInvoiceIds);
+    await runRollbackStep('el enlace del costo a la factura', () =>
+      supabase.from('costs').update({ supplier_invoice_id: previousInvoiceId }).eq('id', currentCost.id)
+    );
+    await runRollbackStep('la factura recién creada', () =>
+      supabase.from('supplier_invoices').delete().in('id', createdInvoiceIds)
+    );
   }
 };
 
