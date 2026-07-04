@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HistoricalSalesTable } from '../HistoricalSalesTable';
 import { HistoricalPurchasesTable } from '../HistoricalPurchasesTable';
 
@@ -19,8 +20,9 @@ vi.mock('lucide-react', async (importOriginal) => {
 
 describe('Product/Service description column', () => {
   it('renders header in historical sales and purchases tables', () => {
+    const queryClient = new QueryClient();
     render(
-      <div>
+      <QueryClientProvider client={queryClient}>
         <HistoricalSalesTable
           invoices={[
             {
@@ -76,7 +78,7 @@ describe('Product/Service description column', () => {
           onSelectAll={(_ids, _checked) => {}}
           selectedIds={[]}
         />
-      </div>
+      </QueryClientProvider>
     );
 
     const headers = screen.getAllByText('Descripción de Producto o Servicio');

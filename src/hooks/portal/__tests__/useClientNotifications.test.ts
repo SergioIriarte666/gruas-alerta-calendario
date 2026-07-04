@@ -14,7 +14,9 @@ const mocks = vi.hoisted(() => {
   const mockInvalidateQueries = vi.fn();
   const mockInvoke = vi.fn().mockResolvedValue({});
   const mockRemoveChannel = vi.fn();
-  const mockSubscribe = vi.fn();
+  // La API real de RealtimeChannel.subscribe() devuelve el propio canal (encadenable),
+  // el mock debe replicar eso para que `channel` no quede undefined en el cleanup.
+  const mockSubscribe = vi.fn(() => mockChannel);
   const mockChannel = {
     on: vi.fn((event: string, config: Record<string, any>, callback: (payload: any) => void) => {
       state.config = config;
