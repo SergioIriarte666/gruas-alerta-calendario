@@ -25,7 +25,8 @@ import {
   MessageCircle,
   AlertTriangle,
   Pencil,
-  Plus
+  Plus,
+  ExternalLink
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,6 +56,7 @@ import { useOpenServiceDisputes, useServiceDisputeHistory } from '@/hooks/servic
 import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
+import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
 import { CheckCircle2 } from 'lucide-react';
 
 
@@ -108,6 +110,16 @@ const calculateDuration = (startTime: string, endTime: string): string => {
     return `${hours}h ${minutes}min`;
   }
 };
+
+const formatCoordinate = (value: number) => value.toFixed(6);
+
+const formatAccuracy = (value: number | null) => {
+  if (value === null || Number.isNaN(value)) return 'Sin precision reportada';
+  return `+-${Math.round(value)} m`;
+};
+
+const buildGoogleMapsUrl = (latitude: number, longitude: number) =>
+  `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
 type SectionColor = 'blue' | 'green' | 'violet' | 'orange' | 'cyan' | 'rose' | 'amber' | 'emerald';
 
@@ -323,6 +335,7 @@ const ThirdPartyPayerSection = ({
 };
 
 export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: ServiceDetailsModalProps) => {
+  const { data: latestOperatorLocation } = useServiceLatestOperatorLocation(service?.id);
   const queryClient = useQueryClient();
   const [isSendingOperatorWhatsApp, setIsSendingOperatorWhatsApp] = React.useState(false);
   
@@ -788,6 +801,60 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                            value={primaryOperator ? `${primaryOperator.name} (${primaryOperator.rut})${hasMultipleOperators ? ' (Principal)' : ''}` : 'Sin asignar'} 
                        />
                   </DetailSection>
+
+                  {latestOperatorLocation && (
+                    <div className="space-y-3">
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="gap-2"
+                        >
+                          <a
+                            href={buildGoogleMapsUrl(
+                              latestOperatorLocation.latitude,
+                              latestOperatorLocation.longitude,
+                            )}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <ExternalLink className="size-4" />
+                            Abrir en Google Maps
+                          </a>
+                        </Button>
+                      </div>
+                      <DetailSection title="Última ubicación del operador" icon={MapPin} color="green">
+                      <DetailItem
+                        icon={Clock}
+                        label="Última actualización"
+                        value={formatForDisplayWithTime(latestOperatorLocation.recorded_at)}
+                      />
+                      <DetailItem
+                        icon={Gauge}
+                        label="Precisión"
+                        value={formatAccuracy(latestOperatorLocation.accuracy_meters)}
+                      />
+                      <DetailItem
+                        icon={MapPin}
+                        label="Latitud"
+                        value={formatCoordinate(latestOperatorLocation.latitude)}
+                      />
+                      <DetailItem
+                        icon={MapPin}
+                        label="Longitud"
+                        value={formatCoordinate(latestOperatorLocation.longitude)}
+                      />
+                      <DetailItem
+                        icon={FileText}
+                        label="Origen del punto"
+                        value={latestOperatorLocation.is_offline_sync ? 'Sincronizado después' : 'Enviado en línea'}
+                        isFullWidth={true}
+                      />
+                      </DetailSection>
+                    </div>
+                  )}
                   
                   <DetailSection title="Finanzas" icon={DollarSign} color="emerald">
                         {serviceBreakdown.hasBothValues ? (

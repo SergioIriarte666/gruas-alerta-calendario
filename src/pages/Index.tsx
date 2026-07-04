@@ -9,6 +9,7 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BriefcaseBusiness, HardHat, LogOut, Sparkles } from 'lucide-react';
 import { createLogger } from "@/lib/logger";
+import { isOperatorMobileVariant } from '@/lib/appVariant';
 
 
 const logger = createLogger("Index");
@@ -50,6 +51,77 @@ const Index: React.FC = () => {
   if (authUser && !profileUser) {
     logger.debug('Index - Auth user exists but no profile, redirecting to /register');
     return <Navigate to="/register" replace />;
+  }
+
+  if (isOperatorMobileVariant()) {
+    if (profileUser.role === 'operator') {
+      return <Navigate to="/operator" replace />;
+    }
+
+    if (profileUser.role === 'admin' && profileUser.operator_id) {
+      return <Navigate to="/operator" replace />;
+    }
+
+    return (
+      <AuthBackground>
+        <div
+          className="w-full rounded-[28px] border border-white/15 bg-[linear-gradient(180deg,rgba(18,24,38,0.58),rgba(18,24,38,0.42))] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.28)] backdrop-blur-2xl sm:p-7"
+          style={{ color: 'rgba(255,255,255,0.96)' }}
+        >
+          <div className="space-y-4 text-center">
+            <Badge
+              variant="outline"
+              className="border-white/15 bg-white/10 px-3 py-1 shadow-sm"
+              style={{ color: 'rgba(255,255,255,0.92)' }}
+            >
+              <HardHat className="mr-1 size-3.5" />
+              App operador
+            </Badge>
+            <div className="space-y-2">
+              <h1
+                className="text-2xl font-semibold tracking-tight drop-shadow-[0_1px_10px_rgba(15,23,42,0.35)]"
+                style={{ color: 'rgba(255,255,255,0.98)' }}
+              >
+                Esta app móvil está enfocada en operadores
+              </h1>
+              <p
+                className="text-sm leading-6 drop-shadow-[0_1px_8px_rgba(15,23,42,0.28)]"
+                style={{ color: 'rgba(255,255,255,0.9)' }}
+              >
+                Para gestión administrativa sigue usando la versión web del TMS. Aquí dejaremos el flujo móvil centrado en servicios, inspecciones y ubicación.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-950/36 px-4 py-3 text-left shadow-inner">
+              <p
+                className="text-[11px] uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(255,255,255,0.62)' }}
+              >
+                Cuenta activa
+              </p>
+              <p
+                className="mt-1 truncate text-sm font-medium"
+                style={{ color: 'rgba(255,255,255,0.98)' }}
+              >
+                {authUser.email}
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  void signOut();
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/6 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10"
+                style={{ color: 'rgba(255,255,255,0.9)' }}
+              >
+                <LogOut className="size-4" />
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      </AuthBackground>
+    );
   }
 
   if (profileUser.role === 'admin' && profileUser.operator_id) {

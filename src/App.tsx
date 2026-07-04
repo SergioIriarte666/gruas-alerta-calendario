@@ -1,6 +1,6 @@
 
 import { Suspense, lazy, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,7 @@ import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
 import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
+import { isOperatorMobileVariant } from '@/lib/appVariant';
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -172,6 +173,32 @@ function RouteActivityTracker() {
   return null;
 }
 
+const OPERATOR_MOBILE_ALLOWED_PREFIXES = [
+  '/',
+  '/auth',
+  '/auth/callback',
+  '/register',
+  '/pending',
+  '/reset-password',
+  '/operator',
+];
+
+function MobileAppRouteGuard() {
+  const location = useLocation();
+
+  if (!isOperatorMobileVariant()) return null;
+
+  const isAllowedRoute = OPERATOR_MOBILE_ALLOWED_PREFIXES.some((prefix) =>
+    prefix === '/'
+      ? location.pathname === '/'
+      : location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+  );
+
+  if (isAllowedRoute) return null;
+
+  return <Navigate to="/operator" replace />;
+}
+
 function AppContent() {
   // Activar triggers de notificaciones
   useNotificationTriggers();
@@ -184,6 +211,7 @@ function AppContent() {
   
   return (
     <div className="min-h-screen bg-background text-foreground">
+        <MobileAppRouteGuard />
         <RouteActivityTracker />
         <Routes>
         <Route path="/auth" element={<ErrorBoundary name="Auth"><Suspense fallback={null}><Auth /></Suspense></ErrorBoundary>} />

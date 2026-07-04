@@ -9,6 +9,7 @@ import { NextServiceCard } from '@/components/operator/NextServiceCard';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspections';
+import { LocationSharingCard } from '@/components/operator/LocationSharingCard';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -27,6 +28,7 @@ const OperatorDashboard = () => {
   const asignadosSorted = [...serviceTabs.asignados].sort((a, b) =>
     (a.serviceDate || '').localeCompare(b.serviceDate || '')
   );
+  const currentTrackingService = serviceTabs.activos[0] || asignadosSorted[0] || null;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -119,6 +121,12 @@ const OperatorDashboard = () => {
           ))}
         </div>
       )}
+
+      <LocationSharingCard
+        operatorId={user?.operator_id}
+        userId={user?.id}
+        currentService={currentTrackingService}
+      />
 
       {pendingCount > 0 && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
