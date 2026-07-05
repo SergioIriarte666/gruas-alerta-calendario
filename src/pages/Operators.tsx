@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Briefcase, IdCard, ShieldCheck, Users } from 'lucide-react';
+import { Briefcase, IdCard, ShieldCheck, UserCog } from 'lucide-react';
 
 const Operators = () => {
   const { data: operatorsData, isLoading: loading } = useOperatorsData();
@@ -174,7 +174,7 @@ const Operators = () => {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard title="Activos" value={operatorMetrics.active} description="Operadores disponibles" icon={ShieldCheck} tone="success" />
-        <MetricCard title="De Grúa" value={operatorMetrics.craneOperators} description="Personal operativo" icon={Users} tone="primary" />
+        <MetricCard title="De Grúa" value={operatorMetrics.craneOperators} description="Personal operativo" icon={UserCog} tone="primary" />
         <MetricCard title="Administrativos" value={operatorMetrics.administrative} description="Soporte y gestión" icon={Briefcase} tone="info" />
         <MetricCard title="Con Licencia" value={operatorMetrics.withLicense} description="Registros de licencia cargados" icon={IdCard} tone="warning" />
       </div>

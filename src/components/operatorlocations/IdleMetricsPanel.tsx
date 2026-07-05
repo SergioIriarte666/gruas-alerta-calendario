@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOperatorIdleMetrics } from '@/hooks/operatorlocations/useOperatorLocations';
+import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { businessClock } from '@/utils/businessClock';
 import { toLocalDateString, safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import type { OperatorIdleDaySummary } from '@/types/operatorLocations';
@@ -28,6 +29,9 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const { summaries, isLoading, error } = useOperatorIdleMetrics(dateFrom, dateTo, thresholdMinutes);
+  const { operators } = useTrackableOperators();
+  const trackableOperatorIds = new Set(operators.map((operator) => operator.id));
+  const visibleSummaries = summaries.filter((summary) => trackableOperatorIds.has(summary.operatorId));
 
   const toggleExpanded = (key: string) => {
     setExpanded((prev) => {
@@ -87,14 +91,14 @@ export const IdleMetricsPanel = ({ onViewRoute }: IdleMetricsPanelProps) => {
                 <TableCell colSpan={8} className="text-center text-sm text-zinc-500">Cargando...</TableCell>
               </TableRow>
             )}
-            {!isLoading && summaries.length === 0 && (
+            {!isLoading && visibleSummaries.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-sm text-zinc-500">
                   No hay gaps sobre el umbral en el rango seleccionado
                 </TableCell>
               </TableRow>
             )}
-            {summaries.map((summary: OperatorIdleDaySummary) => {
+            {visibleSummaries.map((summary: OperatorIdleDaySummary) => {
               const key = `${summary.operatorId}::${summary.date}`;
               const isExpanded = expanded.has(key);
               return (

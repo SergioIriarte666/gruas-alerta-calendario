@@ -15,6 +15,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useSettings } from '@/hooks/useSettings';
 import { useCompanyProfiles } from '@/hooks/useCompanyProfiles';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +26,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, toTitleCase } from '@/lib/utils';
 import {
-  BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
+  BarChart3, TrendingUp, Users, UserCog, Truck, DollarSign, Receipt,
   Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Trophy, AlertTriangle,
 } from 'lucide-react';
 import { DisputesReportView } from './disputes/DisputesReportView';
@@ -45,7 +46,7 @@ const tabs = [
   { id: 'servicios', label: 'Servicios', icon: BarChart3 },
   { id: 'ingresos', label: 'Ingresos', icon: TrendingUp },
   { id: 'clientes', label: 'Clientes', icon: Users },
-  { id: 'operadores', label: 'Operadores', icon: HardHat },
+  { id: 'operadores', label: 'Operadores', icon: UserCog },
   { id: 'flota', label: 'Flota', icon: Truck },
   { id: 'finanzas', label: 'Finanzas', icon: DollarSign },
   { id: 'costos', label: 'Costos', icon: Receipt },
@@ -376,7 +377,7 @@ const ReportsPage = () => {
         return (
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-              <HardHat className="size-3.5" />
+              <UserCog className="size-4" />
               {selectedOperatorData ? `Informe: ${selectedOperatorData.name}` : 'Informe de Operadores'}
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExportOperatorReport('pdf')}>
@@ -914,7 +915,7 @@ const ReportsPage = () => {
         {activeTab === 'operadores' && (
           <Select value={selectedOperatorId} onValueChange={setSelectedOperatorId}>
             <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
-              <HardHat className="size-3.5 mr-1.5 text-muted-foreground" />
+              <UserCog className="mr-1.5 size-4 text-muted-foreground" />
               <SelectValue placeholder="Todos los operadores" />
             </SelectTrigger>
             <SelectContent className="bg-popover border z-50">

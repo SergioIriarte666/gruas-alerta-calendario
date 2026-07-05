@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, IdCard, Briefcase, AlertTriangle } from 'lucide-react';
+import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, IdCard, Briefcase, AlertTriangle, UserCog } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -84,13 +84,20 @@ export const OperatorsMobileView = ({
                     variant={operator.operatorType === 'crane_operator' ? 'default' : 'secondary'}
                     className="text-xs"
                   >
-                    {operator.operatorType === 'crane_operator' ? '🏗️ Operador' : '📋 Admin'}
+                    {operator.operatorType === 'crane_operator' ? (
+                      <span className="flex items-center gap-1.5">
+                        <UserCog className="size-3.5 shrink-0" />
+                        <span>Operador</span>
+                      </span>
+                    ) : '📋 Admin'}
                   </Badge>
                 </div>
                 <h4 className="font-semibold text-foreground text-lg flex items-center gap-2">
                   {operator.name}
                   {operatorsWithDocumentAlerts?.has(operator.id) && (
-                    <AlertTriangle className="size-4 text-warning flex-shrink-0" title="Documentos por vencer o vencidos" />
+                    <span title="Documentos por vencer o vencidos">
+                      <AlertTriangle className="size-4 text-warning flex-shrink-0" />
+                    </span>
                   )}
                 </h4>
               </div>

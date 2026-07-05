@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOperatorLiveLocations } from '@/hooks/operatorlocations/useOperatorLocations';
+import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { LiveOperatorsMap, type LiveOperatorsMapHandle } from '@/components/operatorlocations/LiveOperatorsMap';
 import { OperatorStatusPanel } from '@/components/operatorlocations/OperatorStatusPanel';
 import { RouteHistoryPanel } from '@/components/operatorlocations/RouteHistoryPanel';
@@ -18,6 +19,9 @@ const OperatorLocations = () => {
   const mapHandleRef = useRef<LiveOperatorsMapHandle>(null);
 
   const { data: liveLocations } = useOperatorLiveLocations();
+  const { operators: trackableOperators } = useTrackableOperators();
+  const trackableOperatorIds = new Set(trackableOperators.map((operator) => operator.id));
+  const filteredLiveLocations = liveLocations.filter((location) => trackableOperatorIds.has(location.operator_id));
 
   const handleSelectOperator = (operatorId: string) => {
     setSelectedOperatorId(operatorId);
@@ -48,13 +52,13 @@ const OperatorLocations = () => {
             <div className="h-[520px] overflow-hidden rounded-2xl border border-white/5">
               <LiveOperatorsMap
                 ref={mapHandleRef}
-                locations={liveLocations}
+                locations={filteredLiveLocations}
                 onSelectOperator={handleSelectOperator}
               />
             </div>
             <div className="max-h-[520px] overflow-y-auto">
               <OperatorStatusPanel
-                locations={liveLocations}
+                locations={filteredLiveLocations}
                 selectedOperatorId={selectedOperatorId}
                 onSelectOperator={handleSelectOperator}
               />

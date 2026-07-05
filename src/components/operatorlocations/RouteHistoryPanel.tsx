@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { TriangleAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useOperators } from '@/hooks/useOperators';
+import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators';
 import { useOperatorRouteHistory } from '@/hooks/operatorlocations/useOperatorLocations';
 import { businessClock } from '@/utils/businessClock';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
@@ -160,9 +160,10 @@ interface RouteHistoryPanelProps {
 }
 
 export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHistoryPanelProps) => {
-  const { operators } = useOperators();
+  const { operators } = useTrackableOperators();
   const [operatorId, setOperatorId] = useState<string | null>(initialOperatorId ?? null);
   const [dateISO, setDateISO] = useState<string>(initialDate ?? businessClock.today());
+  const validOperatorIds = useMemo(() => new Set(operators.map((operator) => operator.id)), [operators]);
 
   useEffect(() => {
     if (initialOperatorId) setOperatorId(initialOperatorId);
@@ -171,6 +172,12 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   useEffect(() => {
     if (initialDate) setDateISO(initialDate);
   }, [initialDate]);
+
+  useEffect(() => {
+    if (operatorId && !validOperatorIds.has(operatorId)) {
+      setOperatorId(null);
+    }
+  }, [operatorId, validOperatorIds]);
 
   const { points, sessions, isLoading, error } = useOperatorRouteHistory(operatorId, dateISO);
 

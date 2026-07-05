@@ -10,6 +10,7 @@ import {
   CheckCircle,
   FileText,
   Briefcase,
+  UserCog,
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { OperatorDocumentsSection } from './OperatorDocumentsSection';
@@ -168,9 +169,19 @@ const OperatorDetailsModalInner = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <span className="text-sm text-muted-foreground">Tipo</span>
-                  <p className="text-sm font-medium">
-                    {operator.operatorType === 'crane_operator' ? 'Operador de Grúa' : 'Personal Administrativo'}
-                  </p>
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    {operator.operatorType === 'crane_operator' ? (
+                      <>
+                        <UserCog className="size-4 shrink-0 text-primary" />
+                        <span>Operador de Grúa</span>
+                      </>
+                    ) : (
+                      <>
+                        <Briefcase className="size-4 shrink-0 text-info" />
+                        <span>Personal Administrativo</span>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <span className="text-sm text-muted-foreground">Cargo</span>

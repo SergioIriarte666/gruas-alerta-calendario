@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Save } from 'lucide-react';
+import { Save, UserCog } from 'lucide-react';
 import { formatRut } from '@/utils/rutFormatter';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
@@ -136,7 +136,12 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
                 <SelectValue placeholder="Seleccione tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="crane_operator">🏗️ Operador de Grúa</SelectItem>
+                <SelectItem value="crane_operator">
+                  <span className="flex items-center gap-2">
+                    <UserCog className="size-4 shrink-0" />
+                    <span>Operador de Grúa</span>
+                  </span>
+                </SelectItem>
                 <SelectItem value="administrative">📋 Personal Administrativo</SelectItem>
               </SelectContent>
             </Select>
