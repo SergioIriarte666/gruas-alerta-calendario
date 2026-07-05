@@ -13,11 +13,14 @@ import { useClients } from '@/hooks/useClients';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
 import { useSettings } from '@/hooks/useSettings';
+import { useCompanyProfiles } from '@/hooks/useCompanyProfiles';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { SectionCard } from '@/components/ui/section-card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, toTitleCase } from '@/lib/utils';
@@ -36,6 +39,7 @@ import {
 import { format, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
+import { CompanyReference, normalizeCompanyRut, resolveCanonicalCompany } from '@/utils/companyCanonicalization';
 
 const tabs = [
   { id: 'servicios', label: 'Servicios', icon: BarChart3 },
@@ -113,8 +117,56 @@ const ReportsPage = () => {
   const { data: costCategories = [] } = useCostCategories();
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('all');
   const { cranes } = useCranes();
+  const { data: operators = [] } = useOperatorsData();
   const [selectedCompanyRut, setSelectedCompanyRut] = useState<string>('all');
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string>('all');
   const { settings } = useSettings();
+  const { data: companyProfiles = [] } = useCompanyProfiles();
+
+  const companyReferences = useMemo<CompanyReference[]>(() => {
+    const references = new Map<string, CompanyReference>();
+
+    const addReference = (rut?: string, name?: string) => {
+      const normalizedRut = normalizeCompanyRut(rut);
+      if (!normalizedRut) return;
+      references.set(normalizedRut, {
+        rut: rut!.trim(),
+        name: name?.trim() || rut!.trim(),
+      });
+    };
+
+    addReference(settings.company.taxId, settings.company.name);
+    companyProfiles.forEach(profile => addReference(profile.rut, profile.name));
+
+    return Array.from(references.values());
+  }, [companyProfiles, settings.company.name, settings.company.taxId]);
+
+  const companyOptions = useMemo(() => {
+    const options = new Map<string, string>();
+
+    companyReferences.forEach(reference => {
+      options.set(reference.rut, reference.name || reference.rut);
+    });
+
+    cranes.forEach(crane => {
+      const canonicalCompany = resolveCanonicalCompany(
+        {
+          rut: crane.ownerCompanyRut,
+          name: crane.ownerCompanyName,
+        },
+        companyReferences,
+      );
+
+      if (!canonicalCompany?.rut) return;
+      if (!options.has(canonicalCompany.rut)) {
+        options.set(canonicalCompany.rut, canonicalCompany.name || canonicalCompany.rut);
+      }
+    });
+
+    return Array.from(options.entries())
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([rut, name]) => ({ rut, name }));
+  }, [companyReferences, cranes]);
 
   const periodDates = useMemo(() => {
     if (selectedPeriod === 'custom' && customFrom && customTo) {
@@ -134,9 +186,10 @@ const ReportsPage = () => {
       to: format(periodDates.to, 'yyyy-MM-dd'),
     },
     clientId: (activeTab === 'clientes' || activeTab === 'servicios') ? selectedClientId : appliedFilters.clientId,
+    operatorId: activeTab === 'operadores' ? selectedOperatorId : appliedFilters.operatorId,
     costCategoryId: activeTab === 'costos' ? selectedCostCategoryId : 'all',
     companyRut: selectedCompanyRut,
-  }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab, selectedCompanyRut]);
+  }), [appliedFilters, periodDates, selectedClientId, selectedOperatorId, selectedCostCategoryId, activeTab, selectedCompanyRut]);
 
   const { metrics, loading, forceRefresh } = useReports(effectiveFilters);
 
@@ -148,7 +201,7 @@ const ReportsPage = () => {
     clientId: selectedClientId,
   }), [periodDates, selectedClientId]);
 
-  const { handleExport, handleExportServiceReport } = useReportActions({
+  const { handleExport, handleExportServiceReport, handleExportOperatorReport } = useReportActions({
     appliedFilters: effectiveFilters, serviceReportFilters: effectiveServiceFilters, metrics,
   });
 
@@ -163,7 +216,7 @@ const ReportsPage = () => {
     companyRut: selectedCompanyRut,
   }), [periodDates, selectedCostCategoryId, selectedCompanyRut]);
 
-  const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters });
+  const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters, metrics });
 
   const {
     servicesByMonthConfig, revenueByMonthConfig, craneUtilizationConfig,
@@ -176,17 +229,30 @@ const ReportsPage = () => {
     activeCranes: 0, activeOperators: 0, totalCosts: 0,
     netProfit: 0, profitMargin: 0, servicesByMonth: [],
     servicesByStatus: [], topClients: [], craneUtilization: [],
-    operatorUtilization: [], costsByCategory: [], costsByMonth: [],
+    operatorUtilization: [], costsByCategory: [], costsByMonth: [], serviceDetails: [],
     averageCostPerService: 0, costRevenueRatio: 0,
   };
 
   const m = metrics || defaultMetrics;
+  const visibleServiceDetails = useMemo(
+    () => m.serviceDetails.slice(0, 100),
+    [m.serviceDetails],
+  );
 
   // Client-specific metrics for Clientes tab
   const selectedClientData = useMemo(() => {
     if (selectedClientId === 'all' || !m.topClients.length) return null;
     return m.topClients.find(c => c.clientId === selectedClientId) || null;
   }, [selectedClientId, m.topClients]);
+
+  const selectedOperatorData = useMemo(() => {
+    if (selectedOperatorId === 'all') return null;
+    return operators.find(operator => operator.id === selectedOperatorId) || null;
+  }, [operators, selectedOperatorId]);
+
+  const operatorCountInView = selectedOperatorData
+    ? 1
+    : m.operatorUtilization.length;
 
   const dateLabel = `${format(periodDates.from, 'dd MMM', { locale: es })} - ${format(periodDates.to, 'dd MMM yyyy', { locale: es })}`;
 
@@ -232,10 +298,11 @@ const ReportsPage = () => {
         );
       case 'operadores':
         return (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-            <ReportMetricCard title="Total Operadores" value={m.activeOperators} />
-            <ReportMetricCard title="Servicios/Operador" value={m.activeOperators > 0 ? (m.totalServices / m.activeOperators).toFixed(1) : '0'} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <ReportMetricCard title={selectedOperatorData ? 'Operador' : 'Total Operadores'} value={selectedOperatorData ? selectedOperatorData.name : m.activeOperators} />
+            <ReportMetricCard title="Servicios/Operador" value={operatorCountInView > 0 ? (m.totalServices / operatorCountInView).toFixed(1) : '0'} />
             <ReportMetricCard title="Total Servicios" value={m.totalServices} />
+            <ReportMetricCard title="Ingresos del Período" value={`$${m.totalRevenue.toLocaleString()}`} valueClassName="text-violet-600 dark:text-violet-400" />
           </div>
         );
       case 'flota':
@@ -301,6 +368,21 @@ const ReportsPage = () => {
               <FileText className="size-4 mr-2" /> PDF
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleExportCostReport('excel')}>
+              <FileSpreadsheet className="size-4 mr-2" /> Excel
+            </DropdownMenuItem>
+          </>
+        );
+      case 'operadores':
+        return (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+              <HardHat className="size-3.5" />
+              {selectedOperatorData ? `Informe: ${selectedOperatorData.name}` : 'Informe de Operadores'}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleExportOperatorReport('pdf')}>
+              <FileText className="size-4 mr-2" /> PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportOperatorReport('excel')}>
               <FileSpreadsheet className="size-4 mr-2" /> Excel
             </DropdownMenuItem>
           </>
@@ -433,50 +515,112 @@ const ReportsPage = () => {
       case 'operadores': {
         const maxOperatorServices = m.operatorUtilization.length > 0 ? m.operatorUtilization[0].services : 1;
         return (
-          <Card className="border-border/70 bg-card/80 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center gap-2">
-                <Trophy className="size-5 text-yellow-500" />
-                Ranking de Operadores
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {m.operatorUtilization.map((op, index) => {
-                  const utilizationColor = op.utilization >= 30
-                    ? 'text-green-600 dark:text-green-400'
-                    : op.utilization >= 15
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-red-600 dark:text-red-400';
-                  return (
-                    <div key={op.operatorId} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`inline-flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
-                            {index + 1}
-                          </span>
-                          <div className="font-medium text-foreground text-sm truncate">{op.operatorName}</div>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
+            <Card className="border-border/70 bg-card/80 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Trophy className="size-5 text-yellow-500" />
+                  {selectedOperatorData ? `Detalle Operativo: ${selectedOperatorData.name}` : 'Ranking de Operadores'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {m.operatorUtilization.map((op, index) => {
+                    const utilizationColor = op.utilization >= 30
+                      ? 'text-green-600 dark:text-green-400'
+                      : op.utilization >= 15
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : 'text-red-600 dark:text-red-400';
+                    return (
+                      <div key={op.operatorId} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`inline-flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="font-medium text-foreground text-sm truncate">{op.operatorName}</div>
+                              {selectedOperatorData?.department && selectedOperatorId === op.operatorId && (
+                                <div className="text-xs text-muted-foreground truncate">{selectedOperatorData.department}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <span className={`text-sm font-bold ${utilizationColor}`}>
+                              {op.utilization.toFixed(1)}%
+                            </span>
+                            <div className="text-xs text-muted-foreground">{op.services} servicios</div>
+                          </div>
                         </div>
-                        <div className="text-right shrink-0 ml-2">
-                          <span className={`text-sm font-bold ${utilizationColor}`}>
-                            {op.utilization.toFixed(1)}%
-                          </span>
-                          <div className="text-xs text-muted-foreground">{op.services} servicios</div>
-                        </div>
+                        <Progress
+                          value={(op.services / maxOperatorServices) * 100}
+                          className="h-1.5"
+                        />
                       </div>
-                      <Progress
-                        value={(op.services / maxOperatorServices) * 100}
-                        className="h-1.5"
-                      />
+                    );
+                  })}
+                  {m.operatorUtilization.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No hay datos de operadores para el período seleccionado.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <Card className="border-border/70 bg-card/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Resumen del Período</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded-xl border border-border/70 bg-background/60 p-3">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Ticket promedio</div>
+                    <div className="mt-1 text-xl font-semibold text-foreground">
+                      ${Math.round(m.averageServiceValue).toLocaleString()}
                     </div>
-                  );
-                })}
-                {m.operatorUtilization.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No hay datos de operadores para el período seleccionado.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                  <div className="rounded-xl border border-border/70 bg-background/60 p-3">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Ingresos del período</div>
+                    <div className="mt-1 text-xl font-semibold text-violet-600 dark:text-violet-400">
+                      ${m.totalRevenue.toLocaleString()}
+                    </div>
+                  </div>
+                  {selectedOperatorData && (
+                    <div className="rounded-xl border border-border/70 bg-background/60 p-3 space-y-1.5">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Ficha del operador</div>
+                      <div className="text-sm font-medium text-foreground">{selectedOperatorData.name}</div>
+                      <div className="text-xs text-muted-foreground">RUT: {selectedOperatorData.rut || 'Sin RUT'}</div>
+                      <div className="text-xs text-muted-foreground">Teléfono: {selectedOperatorData.phone || 'Sin teléfono'}</div>
+                      <div className="text-xs text-muted-foreground">Cargo: {selectedOperatorData.position || 'Sin cargo'}</div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70 bg-card/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Estado de Servicios</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {m.servicesByStatus.map(status => (
+                      <div key={status.status} className="flex items-center justify-between rounded-xl border border-border/70 bg-background/60 px-3 py-2">
+                        <div>
+                          <div className="text-sm font-medium text-foreground">{statusLabels[status.status] || status.status}</div>
+                          <div className="text-xs text-muted-foreground">{status.percentage.toFixed(1)}% del total</div>
+                        </div>
+                        <Badge className={`${statusColors[status.status] || 'bg-muted text-foreground'} text-xs`}>
+                          {status.count}
+                        </Badge>
+                      </div>
+                    ))}
+                    {m.servicesByStatus.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No hay distribución de estados para este período.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         );
       }
 
@@ -539,6 +683,80 @@ const ReportsPage = () => {
       case 'disputas':
         return <DisputesReportView />;
     }
+  };
+
+  const renderServiceDetailTable = () => {
+    if (activeTab === 'disputas') return null;
+
+    return (
+      <Card className="border-border/70 bg-card/80 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center justify-between gap-2">
+            <span>Detalle de Servicios</span>
+            <Badge variant="outline" className="border-border/70 bg-background/70 text-xs font-normal">
+              {m.serviceDetails.length} registros
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {m.serviceDetails.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No hay servicios para el período seleccionado.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {m.serviceDetails.length > visibleServiceDetails.length && (
+                <p className="text-xs text-muted-foreground">
+                  Mostrando los últimos {visibleServiceDetails.length} servicios para mantener fluida la vista.
+                </p>
+              )}
+              <div className="overflow-auto rounded-lg border border-border/70">
+                <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/40">
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Folio</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Operador</TableHead>
+                    <TableHead>Grúa</TableHead>
+                    <TableHead>Origen</TableHead>
+                    <TableHead>Destino</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                  <TableBody>
+                  {visibleServiceDetails.map(service => (
+                    <TableRow key={service.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell className="font-medium">{service.folio}</TableCell>
+                      <TableCell className="min-w-[220px]">{toTitleCase(service.clientName)}</TableCell>
+                      <TableCell className="min-w-[180px]">{service.serviceTypeName}</TableCell>
+                      <TableCell className="min-w-[180px]">{service.operatorName}</TableCell>
+                      <TableCell className="min-w-[220px]">{service.craneName}</TableCell>
+                      <TableCell className="min-w-[220px]">{service.origin}</TableCell>
+                      <TableCell className="min-w-[220px]">{service.destination}</TableCell>
+                      <TableCell>
+                        <Badge className={`${statusColors[service.status] || 'bg-muted text-foreground'} text-xs`}>
+                          {statusLabels[service.status] || service.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap font-medium text-violet-600 dark:text-violet-400">
+                        ${service.value.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -685,28 +903,33 @@ const ReportsPage = () => {
           <SelectContent className="bg-popover border z-50">
             <SelectItem value="all">Todas las empresas</SelectItem>
             <SelectItem value="__none__">Sin empresa</SelectItem>
-            {(() => {
-              const map = new Map<string, string>();
-              if (settings.company.taxId) {
-                map.set(settings.company.taxId, settings.company.name || settings.company.taxId);
-              }
-              cranes
-                .filter(c => !!c.ownerCompanyRut)
-                .forEach(c => {
-                  const rut = c.ownerCompanyRut as string;
-                  const name = c.ownerCompanyName || rut;
-                  if (!map.has(rut)) map.set(rut, name);
-                });
-              return Array.from(map.entries())
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .map(([rut, name]) => (
-                  <SelectItem key={rut} value={rut}>
-                    {`${name} (${rut})`}
-                  </SelectItem>
-                ));
-            })()}
+            {companyOptions.map(({ rut, name }) => (
+              <SelectItem key={rut} value={rut}>
+                {`${name} (${rut})`}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+
+        {activeTab === 'operadores' && (
+          <Select value={selectedOperatorId} onValueChange={setSelectedOperatorId}>
+            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-background/70 border-border/70">
+              <HardHat className="size-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Todos los operadores" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border z-50">
+              <SelectItem value="all">Todos los operadores</SelectItem>
+              {operators
+                .filter(operator => operator.isActive)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(operator => (
+                  <SelectItem key={operator.id} value={operator.id}>
+                    {operator.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {/* Cost category selector - only visible on Costos tab */}
         {activeTab === 'costos' && (
@@ -762,6 +985,7 @@ const ReportsPage = () => {
       {/* Tab Content */}
       <div className="space-y-4">
         {renderContent()}
+        {renderServiceDetailTable()}
       </div>
     </div>
   );

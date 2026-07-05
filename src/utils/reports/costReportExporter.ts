@@ -1,12 +1,10 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { ExportCostReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
-export const exportCostReport = async ({ format, costs, settings, appliedFilters, headerCompany, headerLogoUrl }: ExportCostReportArgs) => {
+export const exportCostReport = async ({ format, costs, settings, appliedFilters, headerCompany, headerLogoUrl, serviceDetails = [] }: ExportCostReportArgs) => {
   const company = headerCompany || settings.company;
   const exportFileDefaultName = createExportFileName('informe-costos', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
@@ -71,6 +69,30 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
         5: { cellWidth: availableWidth * 0.15 }  // Notas - 15%
       }
     });
+
+    if (serviceDetails.length > 0) {
+      doc.addPage('a4', 'landscape');
+      doc.setFontSize(12);
+      doc.text('Detalle de Servicios del Período', 14, 16);
+      autoTable(doc, {
+        head: [['Fecha', 'Folio', 'Cliente', 'Tipo', 'Operador', 'Grúa', 'Origen', 'Destino', 'Estado', 'Valor']],
+        body: serviceDetails.map(service => [
+          businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy'),
+          service.folio,
+          service.clientName,
+          service.serviceTypeName,
+          service.operatorName,
+          service.craneName,
+          service.origin,
+          service.destination,
+          service.status,
+          `$${service.value.toLocaleString('es-CL')}`,
+        ]),
+        startY: 22,
+        headStyles: { fillColor: [124, 58, 237], fontSize: 8 },
+        styles: { fontSize: 7, cellPadding: 1.2 },
+      });
+    }
     
     doc.save(`${exportFileDefaultName}.pdf`);
 
@@ -154,6 +176,22 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen Ejecutivo');
+
+    if (serviceDetails.length > 0) {
+      const services_ws = XLSX.utils.json_to_sheet(serviceDetails.map(service => ({
+        'Fecha': businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'yyyy-MM-dd'),
+        'Folio': service.folio,
+        'Cliente': service.clientName,
+        'Tipo de Servicio': service.serviceTypeName,
+        'Operador': service.operatorName,
+        'Grúa': service.craneName,
+        'Origen': service.origin,
+        'Destino': service.destination,
+        'Estado': service.status,
+        'Valor': service.value,
+      })));
+      XLSX.utils.book_append_sheet(wb, services_ws, 'Detalle Servicios');
+    }
 
     XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
   }

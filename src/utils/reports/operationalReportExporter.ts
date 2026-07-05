@@ -2,8 +2,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { format as formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { ExportReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
@@ -11,6 +9,7 @@ import { createExportFileName, addCompanyHeader } from './reportUtils';
 export const exportOperationalReport = async ({ format, metrics, settings, appliedFilters, filterLabels }: ExportReportArgs) => {
   const { company } = settings;
   const exportFileDefaultName = createExportFileName('reporte', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
+  const serviceDetailHeaders = ['Fecha', 'Folio', 'Cliente', 'Tipo', 'Operador', 'Grúa', 'Origen', 'Destino', 'Estado', 'Valor'];
 
   if (format === 'pdf') {
     const doc = new jsPDF();
@@ -84,6 +83,30 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
         head: [['Grúa', 'Servicios', 'Utilización (%)']],
         body: metrics.craneUtilization.map(c => [c.craneName, c.services, `${c.utilization.toFixed(1)}%`]),
         startY: lastY + 14
+      });
+    }
+
+    if (metrics.serviceDetails.length > 0) {
+      doc.addPage('a4', 'landscape');
+      doc.setFontSize(12);
+      doc.text('Detalle de Servicios', 14, 16);
+      autoTable(doc, {
+        head: [serviceDetailHeaders],
+        body: metrics.serviceDetails.map(service => ([
+          businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'dd/MM/yyyy'),
+          service.folio,
+          service.clientName,
+          service.serviceTypeName,
+          service.operatorName,
+          service.craneName,
+          service.origin,
+          service.destination,
+          service.status,
+          `$${service.value.toLocaleString('es-CL')}`,
+        ])),
+        startY: 22,
+        headStyles: { fillColor: [124, 58, 237], fontSize: 8 },
+        styles: { fontSize: 7, cellPadding: 1.2 },
       });
     }
     
@@ -164,6 +187,22 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
         'Porcentaje (%)': Number(s.percentage.toFixed(1))
       })));
       XLSX.utils.book_append_sheet(wb, services_status_ws, 'Servicios por Estado');
+    }
+
+    if (metrics.serviceDetails.length > 0) {
+      const service_detail_ws = XLSX.utils.json_to_sheet(metrics.serviceDetails.map(service => ({
+        'Fecha': businessClock.format(new Date(`${service.serviceDate}T12:00:00Z`), 'yyyy-MM-dd'),
+        'Folio': service.folio,
+        'Cliente': service.clientName,
+        'Tipo de Servicio': service.serviceTypeName,
+        'Operador': service.operatorName,
+        'Grúa': service.craneName,
+        'Origen': service.origin,
+        'Destino': service.destination,
+        'Estado': service.status,
+        'Valor': service.value,
+      })));
+      XLSX.utils.book_append_sheet(wb, service_detail_ws, 'Detalle Servicios');
     }
 
     XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);

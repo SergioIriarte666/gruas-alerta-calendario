@@ -9,6 +9,7 @@ import {
   Truck,
   CheckCircle,
   FileText,
+  Briefcase,
 } from 'lucide-react';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { OperatorDocumentsSection } from './OperatorDocumentsSection';
@@ -153,6 +154,46 @@ const OperatorDetailsModalInner = ({
                   <span className="text-sm text-muted-foreground">RUT</span>
                   <p className="text-sm font-medium">{operator.rut}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Información Laboral */}
+            <div className="rounded-lg border border-border border-l-4 border-l-primary bg-primary/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                <div className="rounded bg-primary/10 p-1 text-primary">
+                  <Briefcase className="size-4" />
+                </div>
+                Información Laboral
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Tipo</span>
+                  <p className="text-sm font-medium">
+                    {operator.operatorType === 'crane_operator' ? 'Operador de Grúa' : 'Personal Administrativo'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Cargo</span>
+                  <p className="text-sm font-medium">{operator.position || 'Sin cargo'}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">
+                    {operator.operatorType === 'crane_operator' ? 'Licencia' : 'Departamento'}
+                  </span>
+                  <p className="text-sm font-medium">
+                    {operator.operatorType === 'crane_operator'
+                      ? operator.licenseNumber || 'Sin licencia'
+                      : operator.department || 'Sin departamento'}
+                  </p>
+                </div>
+                {operator.operatorType === 'crane_operator' && (
+                  <div className="space-y-1">
+                    <span className="text-sm text-muted-foreground">Vencimiento Examen</span>
+                    <p className="text-sm font-medium">
+                      {operator.examExpiry ? formatForDisplayWithTime(operator.examExpiry) : 'Sin fecha'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

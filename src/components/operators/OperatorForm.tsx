@@ -176,31 +176,29 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="position">Cargo</Label>
+            <Input
+              id="position"
+              type="text"
+              value={formData.position}
+              onChange={(e) => handleChange('position', e.target.value)}
+              placeholder={formData.operatorType === 'crane_operator' ? 'Ej: Operador Senior, Jefe de Turno' : 'Ej: Contador, Gerente'}
+            />
+          </div>
+
           {/* Campos específicos de Personal Administrativo */}
           {formData.operatorType === 'administrative' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="department">Departamento</Label>
-                <Input
-                  id="department"
-                  type="text"
-                  value={formData.department}
-                  onChange={(e) => handleChange('department', e.target.value)}
-                  placeholder="Ej: Contabilidad, RRHH"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="position">Cargo</Label>
-                <Input
-                  id="position"
-                  type="text"
-                  value={formData.position}
-                  onChange={(e) => handleChange('position', e.target.value)}
-                  placeholder="Ej: Contador, Gerente"
-                />
-              </div>
-            </>
+            <div className="space-y-2">
+              <Label htmlFor="department">Departamento</Label>
+              <Input
+                id="department"
+                type="text"
+                value={formData.department}
+                onChange={(e) => handleChange('department', e.target.value)}
+                placeholder="Ej: Contabilidad, RRHH"
+              />
+            </div>
           )}
 
           {/* Campos específicos de Operador de Grúa */}

@@ -56,6 +56,23 @@ export interface ExportCostReportArgs {
   appliedFilters: AppliedCostFilters;
   headerCompany?: Settings['company'];
   headerLogoUrl?: string | null;
+  serviceDetails?: ReportMetrics['serviceDetails'];
+}
+
+export interface AppliedOperatorFilters {
+  dateRange: {
+    from: string;
+    to: string;
+  };
+  operatorId?: string;
+  operatorName?: string;
+}
+
+export interface ExportOperatorReportArgs {
+  format: 'pdf' | 'excel';
+  metrics: ReportMetrics;
+  settings: Settings;
+  appliedFilters: AppliedOperatorFilters;
 }
 
 export interface ExportMaintenanceReportArgs {

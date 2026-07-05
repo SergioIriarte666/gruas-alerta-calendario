@@ -1,14 +1,16 @@
 import * as React from 'react';
-import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
+import { useCompanyProfiles } from '@/hooks/useCompanyProfiles';
 import { useCosts } from '@/hooks/useCosts';
 import { exportCostReport } from '@/utils/reports/costReportExporter';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
+import { CompanyReference, normalizeCompanyRut, resolveCanonicalCompany } from '@/utils/companyCanonicalization';
+import { ReportMetrics } from '@/hooks/useReports';
 
 
 const logger = createLogger("useCostReportActions");
@@ -22,18 +24,48 @@ interface CostReportFilters {
 
 interface UseCostReportActionsProps {
   costReportFilters: CostReportFilters;
+  metrics?: ReportMetrics | null;
 }
 
-export const useCostReportActions = ({ costReportFilters }: UseCostReportActionsProps) => {
+export const useCostReportActions = ({ costReportFilters, metrics }: UseCostReportActionsProps) => {
   const { settings } = useSettings();
-  const { clients } = useClients();
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { data: costCategories = [] } = useCostCategories();
+  const { data: companyProfiles = [] } = useCompanyProfiles();
   const { data: allCosts = [] } = useCosts({
     dateFrom: costReportFilters?.dateRange?.from || undefined,
     dateTo:   costReportFilters?.dateRange?.to   || undefined,
   });
+
+  const companyReferences = React.useMemo<CompanyReference[]>(() => {
+    const references = new Map<string, CompanyReference>();
+
+    const addReference = (rut?: string, name?: string) => {
+      const normalizedRut = normalizeCompanyRut(rut);
+      if (!normalizedRut) return;
+      references.set(normalizedRut, {
+        rut: rut!.trim(),
+        name: name?.trim() || rut!.trim(),
+      });
+    };
+
+    addReference(settings.company.taxId, settings.company.name);
+    companyProfiles.forEach(profile => addReference(profile.rut, profile.name));
+
+    return Array.from(references.values());
+  }, [companyProfiles, settings.company.name, settings.company.taxId]);
+
+  const mainCompany = React.useMemo(
+    () => resolveCanonicalCompany(
+      {
+        rut: settings.company.taxId,
+        name: settings.company.name,
+      },
+      companyReferences,
+    ),
+    [companyReferences, settings.company.name, settings.company.taxId],
+  );
 
   const getFilteredCosts = () => {
     return allCosts.filter(cost => {
@@ -58,9 +90,16 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
         // - Si el costo no tiene grúa, solo incluir si es la empresa principal (settings.company.taxId)
         if (cost.crane_id) {
           const relatedCrane = cranes.find(c => c.id === cost.crane_id);
-          if (!relatedCrane || relatedCrane.ownerCompanyRut !== costReportFilters.companyRut) return false;
+          const relatedCompany = resolveCanonicalCompany(
+            {
+              rut: relatedCrane?.ownerCompanyRut,
+              name: relatedCrane?.ownerCompanyName,
+            },
+            companyReferences,
+          );
+          if (!relatedCompany?.rut || relatedCompany.rut !== costReportFilters.companyRut) return false;
         } else {
-          if (settings.company.taxId !== costReportFilters.companyRut) return false;
+          if (!mainCompany?.rut || mainCompany.rut !== costReportFilters.companyRut) return false;
         }
       }
       
@@ -87,9 +126,27 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
       if (!rut || rut === 'all') return 'Todas las empresas';
       if (rut === '__none__') return 'Sin empresa';
       // Buscar nombre por configuración (empresa principal) o por grúas
-      if (settings.company.taxId === rut) return `${settings.company.name} (${rut})`;
-      const craneWithCompany = cranes.find(c => c.ownerCompanyRut === rut);
-      const name = craneWithCompany?.ownerCompanyName || rut;
+      if (mainCompany?.rut === rut) return `${mainCompany.name} (${rut})`;
+      const profile = companyReferences.find(reference => reference.rut === rut);
+      if (profile) return `${profile.name} (${profile.rut})`;
+      const craneWithCompany = cranes.find(c => {
+        const company = resolveCanonicalCompany(
+          {
+            rut: c.ownerCompanyRut,
+            name: c.ownerCompanyName,
+          },
+          companyReferences,
+        );
+        return company?.rut === rut;
+      });
+      const company = resolveCanonicalCompany(
+        {
+          rut: craneWithCompany?.ownerCompanyRut,
+          name: craneWithCompany?.ownerCompanyName,
+        },
+        companyReferences,
+      );
+      const name = company?.name || rut;
       return `${name} (${rut})`;
     })();
 
@@ -118,7 +175,7 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
       let headerCompany = settings.company;
       let headerLogoUrl: string | null | undefined = undefined;
       
-      if (selectedRut && selectedRut !== 'all' && selectedRut !== '__none__' && selectedRut !== settings.company.taxId) {
+      if (selectedRut && selectedRut !== 'all' && selectedRut !== '__none__' && selectedRut !== mainCompany?.rut) {
         const { data } = await supabase
           .from('company_profiles')
           .select('rut, name, address, phone, email, logo_url')
@@ -156,6 +213,7 @@ export const useCostReportActions = ({ costReportFilters }: UseCostReportActions
       await exportCostReport({
         format,
         costs: filteredCosts,
+        serviceDetails: metrics?.serviceDetails ?? [],
         settings,
         headerCompany,
         headerLogoUrl,

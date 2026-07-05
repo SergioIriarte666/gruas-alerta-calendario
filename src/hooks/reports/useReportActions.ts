@@ -5,6 +5,7 @@ import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
+import { exportOperatorReport } from '@/utils/reports/operatorReportExporter';
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
 import { toast } from 'sonner';
 import { ReportFilters, ReportMetrics } from '@/hooks/useReports';
@@ -84,5 +85,34 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
     }
   };
 
-  return { handleExport, handleExportServiceReport };
+  const handleExportOperatorReport = async (format: 'pdf' | 'excel') => {
+    if (!metrics || !settings) return;
+
+    const operatorLabel = appliedFilters.operatorId === 'all'
+      ? 'Todos los operadores'
+      : operators.find(o => o.id === appliedFilters.operatorId)?.name || appliedFilters.operatorId;
+
+    toast.info('Generando informe de operadores...', {
+      description: 'La descarga comenzará en breve.',
+    });
+
+    try {
+      await exportOperatorReport({
+        format,
+        metrics,
+        settings,
+        appliedFilters: {
+          dateRange: appliedFilters.dateRange,
+          operatorId: appliedFilters.operatorId,
+          operatorName: operatorLabel,
+        },
+      });
+    } catch (error) {
+      toast.error('Error al generar informe de operadores', {
+        description: 'No se pudo generar el archivo. Inténtalo de nuevo.',
+      });
+    }
+  };
+
+  return { handleExport, handleExportServiceReport, handleExportOperatorReport };
 };
