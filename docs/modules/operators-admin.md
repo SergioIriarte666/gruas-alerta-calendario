@@ -1,16 +1,25 @@
 # operators-admin
 
 ## Resumen
-Módulo administrativo para mantener **operadores** (alta/edición) y su información operativa. Es parte del conjunto admin-only.
+Modulo administrativo para mantener **operadores** (alta/edicion) y su informacion operativa. Es parte del conjunto admin-only.
 
 **Entrypoints**
-- Página: [Operators](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Operators.tsx)
+- Pagina: [Operators](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/pages/Operators.tsx)
 - Componentes: [src/components/operators](file:///Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario/src/components/operators)
 
 ## Arquitectura y componentes
-- Listado: `OperatorsTable` + filtros/vista mobile.
-- Formularios/modales: `OperatorForm`, `OperatorDetailsModal` (según implementación).
-- Integración con servicios: un operador se relaciona con asignaciones de servicios e inspecciones.
+- Listado: `OperatorsTable` + `OperatorsMobileView` con filtros y paginacion.
+- Formularios/modales: `OperatorForm`, `OperatorDetailsModal`.
+- Integracion con servicios: un operador se relaciona con asignaciones de servicios e inspecciones.
+- Metricas: KPIs de activos, de grua, administrativos y con licencia.
+
+### Novedades julio 2026
+- **Campo `Cargo`** disponible para todos los tipos de operador (operador de grua y administrativo)
+- **Modal de detalle** con seccion `Informacion Laboral` (tipo, cargo, licencia/departamento, vencimiento examen)
+- **Iconografia unificada:** `UserCog` de Lucide para operadores operativos en toda la interfaz
+- **Hook `useTrackableOperators`:** filtra operadores activos, tipo `crane_operator` y con `trackingEnabled = true`
+- **Filtro de rastreo** aplicado en Ubicaciones para excluir administrativos de mapa en vivo, historial y tiempos muertos
+- **Correccion de iconos:** reemplazo de emoji `🚚` y SVG custom por `UserCog` de Lucide
 
 ## API expuesta
 
@@ -19,10 +28,10 @@ Módulo administrativo para mantener **operadores** (alta/edición) y su informa
 
 ### Operaciones Supabase (tablas)
 - `operators` (entidad principal)
-- `profiles`/`user_roles` (según cómo se modela el usuario vinculado al operador)
+- `profiles`/`user_roles` (segun como se modela el usuario vinculado al operador)
 - relacionadas: `inspections`, `services`, `calendar_events`
 
-## Especificación de uso (con ejemplos)
+## Especificacion de uso (con ejemplos)
 
 ### Crear operador
 ```ts
@@ -30,28 +39,41 @@ import { supabase } from '@/integrations/supabase/client'
 
 await supabase.from('operators').insert({
   name: 'Operador Demo',
-  is_active: true
+  is_active: true,
+  operator_type: 'crane_operator',
+  position: 'Operador Senior'
 })
+```
+
+### Filtrar operadores rastreables
+```ts
+import { useTrackableOperators } from '@/hooks/operators/useTrackableOperators'
+
+const trackableOperators = useTrackableOperators()
+// resultado: operadores activos, crane_operator, trackingEnabled = true
 ```
 
 ## Dependencias
 
 ### Externas (principales)
 - `react`
-- `lucide-react`
+- `lucide-react` (UserCog, Briefcase, Users, ShieldCheck, IdCard)
 
 ### Internas (principales)
-- Hooks típicos: `useOperators`, `useOperatorServices`, `useOperatorIdByUser` (según flujo)
-- UI: `@/components/ui/*`
-- Integración con auth/permisos: `@/contexts/UserContext`, `@/hooks/useUserModulePermissions`
+- Hooks: `useOperatorsData`, `useOperatorMutations`, `useOperatorDocuments`, `useTrackableOperators`
+- UI: `@/components/ui/*`, `MetricCard`
+- Integracion con auth/permisos: `@/contexts/UserContext`, `@/hooks/useUserModulePermissions`
 
-## Configuración requerida
+## Configuracion requerida
 - RLS: solo admins deben poder escribir en `operators`.
-- Vinculación operador↔usuario: si existe, validar consistencia (RPC `get_operator_id_by_user` está tipada).
+- Vinculacion operador↔usuario: si existe, validar consistencia (RPC `get_operator_id_by_user` esta tipada).
+- `position` (Cargo) es un campo opcional visible en formulario y modal.
 
 ## Casos de uso principales
 - Alta/baja y mantenimiento de operadores.
+- Asignacion de cargo a cualquier tipo de operador.
 - Consultar historial de servicios/inspecciones por operador.
+- Filtrar operadores con rastreo habilitado para modulo de Ubicaciones.
 
 ## Diagramas
 
@@ -62,11 +84,14 @@ flowchart LR
   SB --> PR[(profiles)]
   OP --> SVC[(services)]
   OP --> INS[(inspections)]
+  TRACK[useTrackableOperators] --> OP
+  TRACK --> LOC[Ubicaciones]
 ```
 
 ## Rendimiento
-- Listar operadores suele ser liviano; si se muestran métricas/contadores, agregarlas en RPC o vistas.
+- Listar operadores suele ser liviano; si se muestran metricas/contadores, agregarlas en RPC o vistas.
+- `useTrackableOperators` usa `useMemo` para evitar recalculacion innecesaria.
 
 ## Seguridad
 - RLS estricta por rol.
-- Evitar exponer datos personales del usuario asociado al operador (email/teléfono) en roles no autorizados.
+- Evitar exponer datos personales del usuario asociado al operador (email/telefono) en roles no autorizados.

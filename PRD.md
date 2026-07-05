@@ -2,10 +2,10 @@
 
 ## TMS Gruas - Towing Management System
 
-- **Version del documento:** 4.1
-- **Ultima actualizacion:** 2026-06-27
+- **Version del documento:** 4.2
+- **Ultima actualizacion:** 2026-07-04
 - **Estado:** Vigente
-- **Base de actualizacion:** lectura completa del routing, paginas, componentes, hooks, servicios, migraciones, `docs/modules/*` y features implementados en junio 2026
+- **Base de actualizacion:** lectura completa del routing, paginas, componentes, hooks, servicios, migraciones, `docs/modules/*` y features implementados hasta julio 2026
 
 ---
 
@@ -107,7 +107,7 @@ Digitalizar de punta a punta la operacion de una empresa de gruas, reduciendo tr
 
 | Superficie | Rutas principales | Proposito |
 |---|---|---|
-| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/accounts-payable`, `/settings`, `/historical`, `/document-library`, etc. | Operacion, finanzas, activos y administracion. |
+| Backoffice | `/dashboard`, `/services`, `/calendar`, `/closures`, `/clients`, `/cranes`, `/invoices`, `/costs`, `/inventory`, `/suppliers`, `/reports`, `/operator-locations`, `/accounts-payable`, `/settings`, `/historical`, `/document-library`, etc. | Operacion, finanzas, activos y administracion. |
 | Operador | `/operator`, `/operator/service/:id/inspection` | Ejecucion de inspecciones y seguimiento de servicios asignados. |
 | Portal cliente | `/portal/dashboard`, `/portal/services`, `/portal/purchase-orders`, `/portal/request-service`, `/portal/invoices` | Autoservicio de clientes y aseguradoras. |
 
@@ -148,7 +148,8 @@ Ademas del rol base, el sistema maneja visibilidad granular por modulo para usua
 | Inventario | `/inventory` | `admin`, `viewer` | costos, proveedores, compras, gruas, movimientos |
 | Proveedores | `/suppliers` | `admin`, `viewer` | supplier_categories, pagos, XML, costos, inventario, producto/servicio por defecto |
 | Cuentas por pagar | `/accounts-payable` | `admin`, `viewer` | deudas, cuotas, pagos, reportes |
-| Reportes | `/reports` | `admin`, `viewer` | servicios, facturas, costos, inventario, pagos/cobros |
+| Reportes | `/reports` | `admin`, `viewer` | servicios, facturas, costos, inventario, pagos/cobros, operadores |
+| Ubicaciones | `/operator-locations` | `admin`, `viewer` | operadores, ubicaciones en vivo, historial |
 | Proyecciones | `/income-projections` | `admin`, `viewer` | facturas, pagos/cobros, aging, cashflow |
 | Comisiones | `/commissions` | `admin` | servicios, operadores, costos |
 | Quick Entries | `/quick-entries` | `admin` | OCR, costos, evidencia movil |
@@ -370,13 +371,28 @@ flowchart LR
 
 ### 5.13 Operadores
 
-- CRUD, datos y tablas de soporte
+- CRUD, datos, documentos y tablas de soporte
+- **Nuevo:** campo `Cargo` disponible para todos los tipos de operador (operador de grua y administrativo)
+- **Nuevo:** modal de detalle con seccion `Informacion Laboral` (tipo, cargo, licencia/departamento, vencimiento)
+- **Nuevo:** iconografia unificada con `UserCog` de Lucide para operadores operativos
 - relacion con servicios, comisiones e inspecciones
+- **Nuevo:** hook `useTrackableOperators` para filtro de operadores con rastreo habilitado (activos, tipo `crane_operator`, `trackingEnabled = true`)
+- **Nuevo:** filtro de rastreo aplicado en Ubicaciones (mapa en vivo, historial de ruta, tiempos muertos)
 
 ### 5.14 Reportes
 
-- reporteria operacional y financiera
-- exportaciones PDF y Excel
+- reporteria operacional y financiera con 8 tabs de dominio:
+  - `Servicios`, `Ingresos`, `Clientes`, `Operadores`, `Flota`, `Finanzas`, `Costos`, `Disputas`
+- **Nuevo:** filtro por operador en tab `Operadores` con selector contextual
+- **Nuevo:** detalle de servicios en pantalla (tabla con fecha, folio, cliente, tipo, operador, grua, origen, destino, estado, valor) segun periodo y filtros activos
+- **Nuevo:** exportaciones PDF y Excel con hoja/seccion `Detalle Servicios` en todos los tipos de informe (General, Operadores, Costos)
+- **Nuevo:** exportador dedicado `operatorReportExporter` con ranking, resumen del periodo y estados
+- **Nuevo:** exportador `costReportExporter` con detalle de servicios del periodo
+- **Nuevo:** canonicalizacion de empresas (`companyCanonicalization`) para evitar duplicados por RUT invalido
+- **Nuevo:** optimizacion de rendimiento con constantes de referencia estables (`EMPTY_OPERATORS`, `EMPTY_COSTS`) y `try/finally` para estado `loading`
+- filtros por periodo (predefinidos + personalizado), cliente, empresa y categoria de costo
+- KPIs, graficos y ranking por tab activo
+- tiempo real via `useReportsRealtime`
 
 ### 5.15 Proyecciones
 
@@ -469,7 +485,18 @@ flowchart LR
 - soft delete (`deleted_at`)
 - indices para consultas por categoria activa y vencimientos proximos
 
-### 5.26 Prevencion de duplicados y registros huerfanos (Transversal)
+### 5.26 Ubicaciones de Operadores (NUEVO)
+
+- ruta `/operator-locations`
+- **Mapa en vivo:** visualizacion en tiempo real de operadores rastreables en mapa interactivo
+- **Panel lateral** con lista de operadores activos y su ubicacion actual
+- **Historial de ruta:** consulta de trayectoria por operador y rango de fechas
+- **Tiempos muertos:** metricas de inactividad por operador (`IdleMetricsPanel`)
+- **Filtro de rastreo:** solo muestra operadores activos, tipo `crane_operator` y con `trackingEnabled = true`
+- usa `useTrackableOperators` para filtrar administrativos y operadores sin rastreo
+- hooks: `useOperatorLiveLocations`, `useOperatorRouteHistory`, `useOperatorIdleMetrics`
+
+### 5.27 Prevencion de duplicados y registros huerfanos (Transversal)
 
 - **Aviso "Folio detectado":**
   - `CostFormStep2`: detecta "N° XXXX" o "Folio XXXX" en description
@@ -595,9 +622,12 @@ flowchart LR
 - `src/hooks/useServices.ts` — hook principal de servicios
 - `src/hooks/useInventory.ts` — hook de inventario
 - `src/hooks/useHistoricalImport.ts` — hook compartido de importacion historica
+- `src/hooks/reports/useReports.ts` — hook central de reportes con metricas y serviceDetails
+- `src/hooks/operators/useTrackableOperators.ts` — filtro de operadores rastreables
 - `src/services/UnifiedPurchaseService.ts` — compras unificadas
 - `src/utils/businessClock.ts` — timezone de negocio
 - `src/utils/folioExtractor.ts` — extraccion de folios desde texto
+- `src/utils/companyCanonicalization.ts` — canonicalizacion de empresas
 - `src/utils/purchaseHistoryParser.ts` — parser de compras SAP
 - `src/utils/invoiceHistoryParser.ts` — parser de ventas DTE SII
 
@@ -833,7 +863,8 @@ Documentado en detalle en `docs/guia-configuracion-whatsapp.md`. Configuracion v
 | Cierres | `src/pages/Closures.tsx` | hooks de cierres (covered/excess) | `docs/modules/closures.md` |
 | Clientes | `src/pages/Clients.tsx` | hooks de clientes, `formatRut` | `docs/modules/clients.md` |
 | Gruas | `src/pages/Cranes.tsx` | hooks de flota y mantenciones | `docs/modules/cranes.md` |
-| Reportes | `src/pages/Reports.tsx` | `useReports` | `docs/modules/reports.md` |
+| Reportes | `src/components/reports/ReportsPage.tsx` | `useReports`, `useReportActions`, `useCostReportActions`, `useReportsRealtime` | `docs/modules/reports.md` |
+| Ubicaciones | `src/pages/OperatorLocations.tsx` | `useOperatorLiveLocations`, `useOperatorRouteHistory`, `useOperatorIdleMetrics`, `useTrackableOperators` | NUEVO |
 | Proyecciones | `src/pages/IncomeProjections.tsx` | hooks de aging/cashflow | `docs/modules/projections.md` |
 | Cuentas por pagar | `src/pages/AccountsPayable.tsx` | hooks de deudas | `docs/modules/accounts-payable.md` |
 | Comisiones | `src/pages/Commissions.tsx` | hooks y RPCs | `docs/modules/commissions.md` |
