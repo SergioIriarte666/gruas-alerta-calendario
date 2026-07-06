@@ -38,16 +38,16 @@ const escapeHtml = (value: string): string =>
 const buildPopupHtml = (location: OperatorLiveLocation): string => {
   const status = deriveOperatorStatus(location);
   const parts = [
-    `<strong>${escapeHtml(location.operator_name)}</strong>`,
-    `<div>${OPERATOR_STATUS_LABELS[status]} · ${formatMinutesAgo(location.recorded_at)}</div>`,
+    `<div style="font-size:15px;font-weight:700;color:#0f172a">${escapeHtml(location.operator_name)}</div>`,
+    `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#334155">${OPERATOR_STATUS_LABELS[status]} · ${formatMinutesAgo(location.recorded_at)}</div>`,
   ];
   if (location.service_folio) {
-    parts.push(`<div>Folio ${escapeHtml(location.service_folio)}</div>`);
+    parts.push(`<div style="margin-top:3px;font-size:13px;font-weight:600;color:#475569">Folio ${escapeHtml(location.service_folio)}</div>`);
   }
   if (typeof location.speed_mps === 'number') {
-    parts.push(`<div>${Math.round(location.speed_mps * 3.6)} km/h</div>`);
+    parts.push(`<div style="margin-top:3px;font-size:12px;font-weight:600;color:#64748b">${Math.round(location.speed_mps * 3.6)} km/h</div>`);
   }
-  return `<div style="font-size:12px;line-height:1.5;color:#e4e4e7">${parts.join('')}</div>`;
+  return `<div style="min-width:180px;padding:2px 4px;font-size:12px;line-height:1.45;color:#0f172a">${parts.join('')}</div>`;
 };
 
 export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperatorsMapProps>(

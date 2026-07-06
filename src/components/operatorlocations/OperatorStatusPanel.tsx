@@ -10,13 +10,13 @@ import {
 import { cn } from '@/lib/utils';
 
 const STATUS_BADGE_CLASS: Record<OperatorLiveStatus, string> = {
-  en_servicio: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
-  en_jornada: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  manual: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-300',
-  sin_senal: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  pausado: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-300',
-  fuera_jornada: 'border-slate-500/30 bg-slate-500/10 text-slate-300',
-  inactivo: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-300',
+  en_servicio: 'border-cyan-200 bg-cyan-50 text-cyan-800',
+  en_jornada: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  manual: 'border-slate-200 bg-slate-100 text-slate-700',
+  sin_senal: 'border-amber-200 bg-amber-50 text-amber-800',
+  pausado: 'border-slate-200 bg-slate-100 text-slate-700',
+  fuera_jornada: 'border-slate-200 bg-slate-100 text-slate-700',
+  inactivo: 'border-slate-200 bg-slate-100 text-slate-700',
 };
 
 interface OperatorStatusPanelProps {
@@ -35,7 +35,7 @@ export const OperatorStatusPanel = ({
   return (
     <div className="flex flex-col gap-2">
       {sorted.length === 0 && (
-        <p className="rounded-xl border border-white/5 bg-zinc-950/35 p-4 text-center text-sm text-zinc-500">
+        <p className="rounded-xl border border-slate-200 bg-white p-4 text-center text-sm text-slate-600 shadow-sm">
           No hay operadores activos
         </p>
       )}
@@ -50,24 +50,24 @@ export const OperatorStatusPanel = ({
             type="button"
             onClick={() => onSelectOperator(location.operator_id)}
             className={cn(
-              'w-full rounded-xl border p-3 text-left transition-colors',
+              'w-full rounded-xl border p-3 text-left transition-colors shadow-sm',
               isSelected
-                ? 'border-cyan-500/40 bg-cyan-500/10'
-                : 'border-white/5 bg-zinc-950/35 hover:border-white/10 hover:bg-zinc-900/60',
+                ? 'border-cyan-300 bg-cyan-50'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50',
             )}
           >
             <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-sm font-medium text-white">{location.operator_name}</p>
-              <Badge variant="outline" className={cn('shrink-0 text-[11px]', STATUS_BADGE_CLASS[status])}>
+              <p className="truncate text-base font-semibold text-slate-900">{location.operator_name}</p>
+              <Badge variant="outline" className={cn('shrink-0 text-[11px] font-semibold', STATUS_BADGE_CLASS[status])}>
                 {OPERATOR_STATUS_LABELS[status]}
               </Badge>
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-sm font-medium text-slate-700">
               Última señal {formatMinutesAgo(location.recorded_at)}
               {location.service_folio ? ` · Folio ${location.service_folio}` : ''}
             </p>
             {status === 'pausado' && location.session_ended_at && (
-              <p className="mt-0.5 text-xs text-zinc-500">
+              <p className="mt-0.5 text-xs font-medium text-slate-600">
                 Pausó a las {businessClock.format(location.session_ended_at, 'HH:mm')}
               </p>
             )}
