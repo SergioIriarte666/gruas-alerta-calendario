@@ -1,8 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fromZonedTime } from 'date-fns-tz';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('useOperatorRouteHistory');
+const ROUTE_QUERY_KEY = ['operator-route-history'];
+const INVALIDATE_DEBOUNCE_MS = 2000;
 
 interface OperatorRouteHistoryResult {
   points: OperatorRoutePoint[];
@@ -53,11 +59,59 @@ const fetchRouteHistory = async (
 };
 
 export const useOperatorRouteHistory = (operatorId: string | null, dateISO: string | null) => {
+  const queryClient = useQueryClient();
+  const debounceRef = useRef<number | null>(null);
+
   const query = useQuery({
-    queryKey: ['operator-route-history', operatorId, dateISO],
+    queryKey: [...ROUTE_QUERY_KEY, operatorId, dateISO],
     queryFn: () => fetchRouteHistory(operatorId as string, dateISO as string),
     enabled: Boolean(operatorId && dateISO),
+    staleTime: 30 * 1000,
+    refetchInterval: operatorId ? 30 * 1000 : false,
   });
+
+  useEffect(() => {
+    if (!operatorId) return;
+
+    const scheduleInvalidate = () => {
+      if (debounceRef.current !== null) {
+        window.clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = window.setTimeout(() => {
+        debounceRef.current = null;
+        void queryClient.invalidateQueries({
+          queryKey: [...ROUTE_QUERY_KEY, operatorId],
+        });
+      }, INVALIDATE_DEBOUNCE_MS);
+    };
+
+    const handleChange = (payload: unknown) => {
+      logger.debug('Operator route realtime change', payload);
+      scheduleInvalidate();
+    };
+
+    const channel = supabase
+      .channel(`operator-route-history-${operatorId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'operator_location_points', filter: `operator_id=eq.${operatorId}` },
+        handleChange,
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'operator_location_sessions', filter: `operator_id=eq.${operatorId}` },
+        handleChange,
+      )
+      .subscribe();
+
+    return () => {
+      if (debounceRef.current !== null) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [operatorId, queryClient]);
 
   return {
     points: query.data?.points ?? [],

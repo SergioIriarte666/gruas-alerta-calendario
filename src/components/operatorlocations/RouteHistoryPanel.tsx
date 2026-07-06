@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { TriangleAlert } from 'lucide-react';
+import { LocateFixed, TriangleAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -33,9 +34,10 @@ const ENDED_REASON_LABELS: Record<string, string> = {
 
 interface RouteMapProps {
   points: OperatorRoutePoint[];
+  autoFollow: boolean;
 }
 
-function RouteMap({ points }: RouteMapProps) {
+function RouteMap({ points, autoFollow }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const loadedRef = useRef(false);
@@ -131,16 +133,26 @@ function RouteMap({ points }: RouteMapProps) {
       }
     }
 
+    const lastPoint = points[points.length - 1];
+
     try {
-      map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 0 });
+      if (autoFollow && lastPoint) {
+        map.easeTo({
+          center: [lastPoint.longitude, lastPoint.latitude],
+          zoom: Math.max(map.getZoom(), 15),
+          duration: 800,
+        });
+      } else {
+        map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 0 });
+      }
     } catch (error) {
-      logger.warn('Could not fit bounds to route', error);
+      logger.warn('Could not update route viewport', error);
     }
   };
 
   useEffect(() => {
     render();
-  }, [points]);
+  }, [autoFollow, points]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -163,6 +175,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   const { operators } = useTrackableOperators();
   const [operatorId, setOperatorId] = useState<string | null>(initialOperatorId ?? null);
   const [dateISO, setDateISO] = useState<string>(initialDate ?? businessClock.today());
+  const [autoFollow, setAutoFollow] = useState(() => (initialDate ?? businessClock.today()) === businessClock.today());
   const validOperatorIds = useMemo(() => new Set(operators.map((operator) => operator.id)), [operators]);
 
   useEffect(() => {
@@ -172,6 +185,10 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
   useEffect(() => {
     if (initialDate) setDateISO(initialDate);
   }, [initialDate]);
+
+  useEffect(() => {
+    setAutoFollow(dateISO === businessClock.today());
+  }, [dateISO]);
 
   useEffect(() => {
     if (operatorId && !validOperatorIds.has(operatorId)) {
@@ -207,7 +224,25 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
           onChange={setDateISO}
           className="w-full sm:w-48"
         />
+
+        <Button
+          type="button"
+          variant={autoFollow ? 'default' : 'outline'}
+          className="w-full sm:w-auto"
+          onClick={() => setAutoFollow((current) => !current)}
+        >
+          <LocateFixed className="size-4" />
+          {autoFollow ? 'Siguiendo ruta en vivo' : 'Seguir ruta en vivo'}
+        </Button>
       </div>
+
+      {operatorId && (
+        <p className="text-sm text-muted-foreground">
+          {autoFollow
+            ? 'El mapa se recentra automáticamente en el último punto recibido.'
+            : 'El mapa queda libre para que revises la ruta sin recentrado automático.'}
+        </p>
+      )}
 
       {!operatorId && (
         <p className="rounded-xl border border-white/5 bg-zinc-950/35 p-6 text-center text-sm text-zinc-500">
@@ -227,7 +262,7 @@ export const RouteHistoryPanel = ({ initialOperatorId, initialDate }: RouteHisto
             {isLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">Cargando ruta...</div>
             ) : (
-              <RouteMap points={points} />
+              <RouteMap points={points} autoFollow={autoFollow} />
             )}
           </div>
 
