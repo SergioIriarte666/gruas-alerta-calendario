@@ -18,6 +18,7 @@ Este directorio reúne documentación operativa y técnica del sistema. La inten
 - [Configuración técnica](technical/configuration.md): variables, parámetros globales y puesta en marcha.
 - [Workflow Supabase](technical/supabase-workflow.md): rutina recomendada para mantener local, migraciones y remoto sincronizados.
 - [Hardening Supabase](technical/supabase-security-hardening.md): endurecimiento de funciones, storage y auth para bajar warnings de seguridad.
+- [Ficha App Store TMS Operador](technical/app-store-listing-tms-operador.md): textos, checklist y metadata sugerida para App Store Connect.
 - [Settings admin](modules/settings-admin.md): configuracion administrativa, usuarios, alertas y herramientas criticas.
 - [Backup](modules/backup.md): respaldos, auditoria y utilidades administrativas.
 - [Turnstile](technical/turnstile-configuration.md): configuracion opcional de captcha para recuperacion de contrasena.
