@@ -62,7 +62,7 @@ export function LocationAutocomplete({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value);
   const [predictions, setPredictions] = useState<AutocompletePrediction[]>([]);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [resolvingPlace, setResolvingPlace] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const sessionTokenRef = useRef<string>(generateSessionToken());
@@ -108,7 +108,7 @@ export function LocationAutocomplete({
     }
 
     const timer = window.setTimeout(async () => {
-      setGoogleLoading(true);
+      setSearchLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke('maps-proxy', {
           body: {
@@ -121,10 +121,10 @@ export function LocationAutocomplete({
         if (error) throw error;
         setPredictions(Array.isArray(data?.suggestions) ? data.suggestions : []);
       } catch (err) {
-        logger.error('Google autocomplete error', err);
+        logger.error('Location autocomplete error', err);
         setPredictions([]);
       } finally {
-        setGoogleLoading(false);
+        setSearchLoading(false);
       }
     }, 350);
 
@@ -180,7 +180,7 @@ export function LocationAutocomplete({
         prediction.placePrediction.text.text;
 
       if (typeof lat !== 'number' || typeof lng !== 'number') {
-        toast.error('No se pudo obtener las coordenadas de Google');
+        toast.error('No se pudo obtener las coordenadas de la ubicacion');
         return;
       }
 
@@ -307,10 +307,10 @@ export function LocationAutocomplete({
                 </CommandGroup>
               ) : null}
 
-              {googleLoading ? (
+              {searchLoading ? (
                 <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Buscando en Google...
+                  Buscando ubicaciones...
                 </div>
               ) : null}
 
@@ -321,19 +321,19 @@ export function LocationAutocomplete({
                 </div>
               ) : null}
 
-              {shouldCallGoogle && !googleLoading && predictions.length === 0 ? (
+              {shouldCallGoogle && !searchLoading && predictions.length === 0 ? (
                 <CommandEmpty>Sin resultados</CommandEmpty>
               ) : null}
 
               {!shouldCallGoogle &&
               displayedFavorites.length === 0 &&
-              !googleLoading &&
+              !searchLoading &&
               !resolvingPlace ? (
                 <CommandEmpty>No hay lugares frecuentes disponibles.</CommandEmpty>
               ) : null}
 
               {predictions.length > 0 ? (
-                <CommandGroup heading="Sugerencias de Google">
+                <CommandGroup heading="Sugerencias de ubicacion">
                   {predictions.map((prediction) => {
                     const mainText =
                       prediction.placePrediction.structuredFormat?.mainText?.text ??

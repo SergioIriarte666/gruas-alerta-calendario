@@ -8,10 +8,6 @@ const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GEOCODING_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
 const STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap";
 
-// Copiapó center — biases autocomplete results toward Norte Chico / Atacama
-const LOCATION_BIAS_CENTER = { latitude: -27.3668, longitude: -70.3322 };
-const LOCATION_BIAS_RADIUS_METERS = 500_000; // 500 km
-
 /** Decode a Google-encoded polyline into GeoJSON [lng, lat] pairs. */
 function decodePolyline(encoded: string): [number, number][] {
   const coords: [number, number][] = [];
@@ -128,12 +124,6 @@ Deno.serve(async (req: Request) => {
         languageCode: "es-CL",
         regionCode: "CL",
         includedRegionCodes: ["cl"],
-        locationBias: {
-          circle: {
-            center: LOCATION_BIAS_CENTER,
-            radius: LOCATION_BIAS_RADIUS_METERS,
-          },
-        },
       };
 
       if (sessionToken) {

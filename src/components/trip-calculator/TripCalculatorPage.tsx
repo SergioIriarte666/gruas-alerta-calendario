@@ -48,7 +48,11 @@ export const TripCalculatorPage = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="calculator" className="mt-6">
+        <TabsContent
+          value="calculator"
+          forceMount
+          className={activeTab === 'calculator' ? 'mt-6' : 'hidden'}
+        >
           <TripCalculatorForm />
         </TabsContent>
 

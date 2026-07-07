@@ -225,7 +225,7 @@ export function AddressAutocomplete({
               )}
 
               {hasPlaceSuggestions && (
-                <CommandGroup heading="Sugerencias de Google">
+                <CommandGroup heading="Sugerencias de ubicacion">
                   {suggestions.map((s) => (
                     <CommandItem
                       key={s.placeId ?? `${s.source}-${s.text}`}

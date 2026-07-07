@@ -166,25 +166,9 @@ export function shouldExcludeFallbackStation(
   originName: string,
   destName: string,
 ): boolean {
-  const normalizedStation = normalizeRouteName(stationName);
-  const normalizedOrigin = normalizeRouteName(originName);
-  const normalizedDest = normalizeRouteName(destName);
-
-  const routeTouchesCopiapo =
-    normalizedOrigin.includes('copiapo') || normalizedDest.includes('copiapo');
-  const routeTouchesCaldera =
-    normalizedOrigin.includes('caldera') || normalizedDest.includes('caldera');
-
-  // Puerto Viejo corresponde al tramo hacia Caldera; no debe incluirse
-  // cuando la ruta usa Copiapó pero no entra a Caldera.
-  if (
-    normalizedStation.includes('puerto viejo') &&
-    routeTouchesCopiapo &&
-    !routeTouchesCaldera
-  ) {
-    return true;
-  }
-
+  void stationName;
+  void originName;
+  void destName;
   return false;
 }
 
@@ -486,7 +470,10 @@ export function useTollCalculationV2() {
         }
 
         if (breakdown.length === 0) {
-          if (exactLookupStatus === 'no_results') {
+          if (
+            exactLookupStatus === 'no_results' &&
+            !canUseFallbackRange(originName, destName, estimateKm(originName, stationIndex), estimateKm(destName, stationIndex))
+          ) {
             const noTollsExactResult: TollResultV2 = {
               totalCost: 0,
               idaCost: 0,
@@ -503,7 +490,11 @@ export function useTollCalculationV2() {
             return noTollsExactResult;
           }
 
-          if (exactLookupStatus === 'failed' && routeGeometry?.coordinates?.length) {
+          if (
+            exactLookupStatus === 'failed' &&
+            routeGeometry?.coordinates?.length &&
+            !canUseFallbackRange(originName, destName, estimateKm(originName, stationIndex), estimateKm(destName, stationIndex))
+          ) {
             const noTollsGeometryResult: TollResultV2 = {
               totalCost: 0,
               idaCost: 0,
