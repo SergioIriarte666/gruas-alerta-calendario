@@ -5,6 +5,11 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Contacto de cobranza (independiente de company_data para no afectar otros módulos)
+const CONTACT_PHONE = '+56 9 8769 6972';
+const CONTACT_EMAIL = 'asistencia@gruas5norte.cl';
+const FALLBACK_LOGO_URL = 'https://app.gruas5norte.cl/logo-gruas-5-norte.png';
+
 const escapeHtml = (v: unknown): string =>
   String(v ?? '')
     .replace(/&/g, '&amp;')
@@ -69,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Derive invoice + client server-side
     const { data: invoice, error: invErr } = await supabase
       .from('invoices')
-      .select('id, total, due_date, issue_date, client_id, clients:client_id(name, email)')
+      .select('id, total, due_date, issue_date, client_id, numero_fiscal, clients:client_id(name, email)')
       .eq('id', invoiceId)
       .maybeSingle();
     if (invErr || !invoice?.clients?.email) {
@@ -81,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
     const clientName = invoice.clients.name as string;
     const total = Number(invoice.total ?? 0);
     const dueDate = invoice.due_date as string;
-    const displayFolio = folio || '';
+    const displayFolio = (invoice.numero_fiscal as string | null) || folio || '';
 
     // Destinatarios permitidos: email principal + contactos de cobranza activos
     const { data: billingContacts } = await supabase
@@ -120,12 +125,11 @@ const handler = async (req: Request): Promise<Response> => {
     // Company data
     const { data: companyData } = await supabase
       .from('company_data')
-      .select('business_name, phone, email, address, rut')
+      .select('business_name, phone, email, address, rut, logo_url')
       .single();
 
     const companyName = companyData?.business_name || 'Gruas 5 Norte';
-    const companyPhone = companyData?.phone || '';
-    const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
+    const logoUrl = companyData?.logo_url || FALLBACK_LOGO_URL;
     const companyAddress = companyData?.address || '';
     const companyRut = companyData?.rut || '';
 
@@ -136,70 +140,69 @@ const handler = async (req: Request): Promise<Response> => {
       minimumFractionDigits: 0
     }).format(total);
 
+    const currentYear = new Date().getFullYear();
+
     const emailHtml = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Factura vencida ${folio}</title>
+          <title>Factura vencida ${escapeHtml(displayFolio)}</title>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
-            .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-            .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #ef4444; }
-            .logo { font-size: 28px; font-weight: bold; color: #ef4444; margin-bottom: 10px; }
-            .alert-banner { background: #fef2f2; border: 1px solid #fecaca; padding: 16px; border-radius: 8px; margin: 20px 0; text-align: center; }
-            .alert-banner h3 { color: #dc2626; margin: 0 0 4px 0; font-size: 18px; }
-            .alert-banner p { color: #7f1d1d; margin: 0; font-size: 14px; }
-            .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
-            .label { font-weight: bold; color: #333; }
-            .value { color: #666; }
-            .total-box { background: #ef4444; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f1f5f9; color: #334155; }
+            .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.06); }
+            .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1e293b; }
+            .header img { max-height: 70px; margin-bottom: 12px; }
+            .alert-banner { background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0; text-align: center; }
+            .alert-banner h3 { color: #1e293b; margin: 0 0 4px 0; font-size: 18px; }
+            .alert-banner p { color: #475569; margin: 0; font-size: 14px; }
+            .total-box { background: #1e293b; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 30px 0; }
+            .payment-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin: 20px 0; color: #334155; }
+            .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <div class="logo">${escapeHtml(companyName)}</div>
-              <p style="color: #666; margin: 0;">RUT: ${escapeHtml(companyRut)}</p>
-              <p style="color: #666; margin: 0;">${escapeHtml(companyAddress)}</p>
+              <img src="${logoUrl}" alt="${escapeHtml(companyName)}" width="200" style="max-height: 70px; height: auto; margin-bottom: 12px;">
+              <p style="color: #475569; margin: 0;">RUT: ${escapeHtml(companyRut)}</p>
+              <p style="color: #475569; margin: 0;">${escapeHtml(companyAddress)}</p>
             </div>
 
             <div class="alert-banner">
               <h3>Factura vencida</h3>
-              <p>La factura N° ${escapeHtml(folio)} emitida a nombre de ${escapeHtml(clientName)} se encuentra vencida hace ${daysOverdue} dia(s).</p>
+              <p>La factura N&deg; ${escapeHtml(displayFolio)} emitida a nombre de ${escapeHtml(clientName)} se encuentra vencida hace ${daysOverdue} dia(s).</p>
             </div>
 
-            <div style="margin: 20px 0;">
-              <div class="info-row">
-                <span class="label">Cliente:</span>
-                <span class="value">${escapeHtml(clientName)}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">Factura:</span>
-                <span class="value">${escapeHtml(folio)}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">Fecha de Vencimiento:</span>
-                <span class="value">${formattedDueDate}</span>
-              </div>
-              <div class="info-row">
-                <span class="label">Dias vencida:</span>
-                <span class="value" style="color: #dc2626; font-weight: bold;">${daysOverdue} dia(s)</span>
-              </div>
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">Cliente:</td>
+                <td align="right" style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">${escapeHtml(clientName)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">Factura:</td>
+                <td align="right" style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">${escapeHtml(displayFolio)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">Fecha de Vencimiento:</td>
+                <td align="right" style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #475569;">${formattedDueDate}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #1e293b;">Dias vencida:</td>
+                <td align="right" style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #b91c1c; font-weight: bold;">${daysOverdue} dia(s)</td>
+              </tr>
+            </table>
 
             <div class="total-box">
               <h2 style="margin: 0;">Total Pendiente: ${formattedTotal}</h2>
             </div>
 
-            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <div class="payment-box">
               <p><strong>Formas de Pago:</strong></p>
               <ul>
                 <li>Transferencia bancaria</li>
                 <li>Efectivo</li>
-                <li>Cheque al dia</li>
               </ul>
               <p style="margin-bottom: 6px;"><strong>Datos para transferencia:</strong></p>
               <p style="margin-top: 0; margin-bottom: 6px; line-height: 1.5;">
@@ -209,13 +212,13 @@ const handler = async (req: Request): Promise<Response> => {
               N&deg; de cuenta: 71851095<br>
               Enviar comprobante a: <a href="mailto:pagos@gruas5norte.cl" style="color: #1e293b;">pagos@gruas5norte.cl</a></p>
               <p><strong>Para coordinar el pago contacte:</strong><br>
-              ${escapeHtml(companyPhone)}<br>
-              ${escapeHtml(companyEmail)}</p>
+              ${CONTACT_PHONE}<br>
+              <a href="mailto:${CONTACT_EMAIL}" style="color: #1e293b;">${CONTACT_EMAIL}</a></p>
             </div>
 
             <div class="footer">
               <p>Gracias por preferirnos.</p>
-              <p style="margin-top: 20px; font-size: 12px;">2025 ${escapeHtml(companyName)}. Todos los derechos reservados.</p>
+              <p style="margin-top: 20px; font-size: 12px;">${currentYear} ${escapeHtml(companyName)}. Todos los derechos reservados.</p>
             </div>
           </div>
         </body>

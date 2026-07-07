@@ -31,9 +31,10 @@ export const useSettingsSaver = () => {
         phone: settings.company.phone || '',
         email: settings.company.email || '',
         rut: settings.company.taxId || '',
+        // Quitar cache-buster ?t= agregado por useSettingsFetcher antes de persistir
         logo_url:
           typeof settings.company.logo === 'string'
-            ? settings.company.logo
+            ? settings.company.logo.split('?')[0]
             : null,
         folio_format: settings.company.folioFormat || 'SRV-{number}',
         next_service_folio_number: settings.company.nextServiceFolioNumber || 1000,
