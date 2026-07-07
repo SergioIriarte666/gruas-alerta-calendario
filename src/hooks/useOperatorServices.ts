@@ -116,53 +116,36 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
 
     const statusFilter = ['pending', 'in_progress', 'inspection_completed', 'completed'] as const;
 
-    const [{ data: directServices, error: directError }, { data: resourceLinks, error: resourceError }] = await Promise.all([
+    const [{ data: directServices, error: directError }, { data: resourceServices, error: resourceServicesError }] = await Promise.all([
       supabase
         .from('services')
         .select(OPERATOR_SERVICES_SELECT)
         .eq('operator_id', operatorData.id)
         .in('status', statusFilter)
         .order('service_date', { ascending: true }),
+      // Servicios asignados vía service_resources (multi-operador), filtrados server-side
+      // para nunca traer el historial completo del operador (puede tener cientos de filas).
       supabase
-        .from('service_resources')
-        .select('service_id')
-        .eq('resource_type', 'operator')
-        .eq('operator_id', operatorData.id),
+        .from('services')
+        .select(`${OPERATOR_SERVICES_SELECT}, service_resources!inner(operator_id, resource_type)`)
+        .eq('service_resources.operator_id', operatorData.id)
+        .eq('service_resources.resource_type', 'operator')
+        .in('status', statusFilter)
+        .order('service_date', { ascending: true }),
     ]);
 
     if (directError) {
       logger.error('Error fetching operator services (direct):', directError);
       throw new Error(`Error al obtener servicios: ${directError.message}`);
     }
-    if (resourceError) {
-      logger.error('Error fetching operator services (service_resources):', resourceError);
-      throw new Error(`Error al obtener asignaciones: ${resourceError.message}`);
-    }
-
-    const serviceIdsFromResources = Array.from(
-      new Set((resourceLinks || []).map(r => r.service_id).filter(Boolean))
-    );
-
-    let resourceServices: any[] = [];
-    if (serviceIdsFromResources.length > 0) {
-      const { data: resServices, error: resServicesError } = await supabase
-        .from('services')
-        .select(OPERATOR_SERVICES_SELECT)
-        .in('id', serviceIdsFromResources)
-        .in('status', statusFilter)
-        .order('service_date', { ascending: true });
-
-      if (resServicesError) {
-        logger.error('Error fetching operator services (by service_resources):', resServicesError);
-        throw new Error(`Error al obtener servicios asignados: ${resServicesError.message}`);
-      }
-
-      resourceServices = resServices || [];
+    if (resourceServicesError) {
+      logger.error('Error fetching operator services (by service_resources):', resourceServicesError);
+      throw new Error(`Error al obtener servicios asignados: ${resourceServicesError.message}`);
     }
 
     const mergedById = new Map<string, any>();
     for (const s of (directServices || [])) mergedById.set((s as any).id, s);
-    for (const s of resourceServices) mergedById.set((s as any).id, s);
+    for (const s of (resourceServices || [])) mergedById.set((s as any).id, s);
 
     const merged = Array.from(mergedById.values()).filter(
       (s: any) => s.service_types?.service_category !== 'externo_tercero'

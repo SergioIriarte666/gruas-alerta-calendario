@@ -21,6 +21,23 @@ const LoadingScreen = ({ message }: { message: string }) => (
   </div>
 );
 
+const OperatorPortalDisabledScreen = ({ onLogout }: { onLogout: () => void }) => (
+  <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-center">
+    <div className="w-full max-w-sm">
+      <h1 className="text-lg font-semibold text-white">Acceso deshabilitado</h1>
+      <p className="mt-3 text-sm text-zinc-400">
+        Contacta al administrador.
+      </p>
+      <button
+        onClick={onLogout}
+        className="mt-6 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+      >
+        Salir
+      </button>
+    </div>
+  </div>
+);
+
 const getOfflineCachedRole = (): string | null => {
   try {
     const raw = localStorage.getItem('offline-user-profile-cache-v1');
@@ -33,7 +50,7 @@ const getOfflineCachedRole = (): string | null => {
 };
 
 const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: ProtectedRouteProps) => {
-  const { user: authUser, loading: authLoading } = useAuth();
+  const { user: authUser, loading: authLoading, signOut } = useAuth();
   const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
   const { hasModuleAccess, loadingCurrentUser } = useUserModulePermissions();
   const location = useLocation();
@@ -132,10 +149,19 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   const effectiveModuleKey = moduleKey || getModuleByRoute(location.pathname)?.key;
-  
-  if (effectiveModuleKey && !loadingCurrentUser) {
+
+  // Los admins/viewers siempre tienen acceso al portal operador, sin importar
+  // lo que haya guardado en user_module_permissions (evita bloquearse a sí mismos
+  // por un guardado accidental en el modal de permisos).
+  const isOperatorPortalExemptRole = profileUser!.role === 'admin' || profileUser!.role === 'viewer';
+  const skipModuleCheck = effectiveModuleKey === 'operator_portal' && isOperatorPortalExemptRole;
+
+  if (effectiveModuleKey && !loadingCurrentUser && !skipModuleCheck) {
     const hasAccess = hasModuleAccess(effectiveModuleKey);
     if (!hasAccess) {
+      if (effectiveModuleKey === 'operator_portal') {
+        return <OperatorPortalDisabledScreen onLogout={() => void signOut()} />;
+      }
       return <Navigate to="/dashboard" replace />;
     }
   }

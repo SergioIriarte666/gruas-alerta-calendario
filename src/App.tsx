@@ -271,7 +271,7 @@ function AppContent() {
 
         {/* Operator routes - accessible by operators and admins */}
         <Route path="/operator" element={
-          <ProtectedRoute allowedRoles={['operator', 'admin']}>
+          <ProtectedRoute allowedRoles={['operator', 'admin']} moduleKey="operator_portal">
             <OperatorLayout />
           </ProtectedRoute>
         }>

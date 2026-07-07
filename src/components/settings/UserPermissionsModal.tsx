@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Save, AlertTriangle, Shield } from 'lucide-react';
 import { APP_MODULES } from '@/constants/modules';
 import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
@@ -43,9 +44,9 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
 
   useEffect(() => {
     if (open && user?.id) {
-      fetchPermissions(user.id);
+      fetchPermissions(user.id, user.role);
     }
-  }, [open, user?.id, fetchPermissions]);
+  }, [open, user?.id, user?.role, fetchPermissions]);
 
   useEffect(() => {
     // Initialize local state from fetched permissions
@@ -84,9 +85,10 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
 
     setSaving(true);
     try {
+      const isPortalExemptRole = user.role === 'admin' || user.role === 'viewer';
       const permissionsToUpdate = Object.entries(localPermissions).map(([moduleKey, isEnabled]) => ({
         moduleKey,
-        isEnabled
+        isEnabled: moduleKey === 'operator_portal' && isPortalExemptRole ? true : isEnabled
       }));
 
       const success = await updatePermissions(user.id, permissionsToUpdate);
@@ -106,6 +108,56 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
   };
 
   const userName = user?.full_name || user?.email || 'Usuario';
+  const isPortalOnlyRole = user?.role === 'operator' || user?.role === 'client';
+  const isPortalExemptRole = user?.role === 'admin' || user?.role === 'viewer';
+  const portalModules = APP_MODULES.filter(m => m.key === 'operator_portal');
+  const adminModules = APP_MODULES.filter(m => m.key !== 'operator_portal');
+
+  const renderModuleCard = (module: typeof APP_MODULES[number]) => {
+    const ModuleIcon = module.icon;
+    const isPortalExempt = module.key === 'operator_portal' && isPortalExemptRole;
+    const isEnabled = isPortalExempt ? true : (localPermissions[module.key] ?? true);
+
+    const card = (
+      <div
+        key={module.key}
+        className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
+          isEnabled
+            ? 'border-primary/30 bg-primary/10'
+            : 'border-border/50 bg-muted/30'
+        } ${isPortalExempt ? 'opacity-60' : ''}`}
+      >
+        <Checkbox
+          id={`perm-${module.key}`}
+          checked={isEnabled}
+          disabled={isPortalExempt}
+          onCheckedChange={(checked) => handleToggle(module.key, checked === true)}
+        />
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <ModuleIcon className={`size-4 flex-shrink-0 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+          <Label
+            htmlFor={`perm-${module.key}`}
+            className={`text-sm truncate ${isPortalExempt ? 'cursor-default' : 'cursor-pointer'} ${
+              isEnabled ? 'text-foreground' : 'text-muted-foreground'
+            }`}
+          >
+            {module.label}
+          </Label>
+        </div>
+      </div>
+    );
+
+    if (!isPortalExempt) return card;
+
+    return (
+      <TooltipProvider key={module.key} delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>{card}</TooltipTrigger>
+          <TooltipContent>Los administradores siempre tienen acceso</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,40 +198,23 @@ const UserPermissionsModal: React.FC<UserPermissionsModalProps> = ({
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {APP_MODULES.map(module => {
-                  const ModuleIcon = module.icon;
-                  const isEnabled = localPermissions[module.key] ?? true;
-
-                  return (
-                    <div
-                      key={module.key}
-                      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
-                        isEnabled 
-                          ? 'border-primary/30 bg-primary/10'
-                          : 'border-border/50 bg-muted/30'
-                      }`}
-                    >
-                      <Checkbox
-                        id={`perm-${module.key}`}
-                        checked={isEnabled}
-                        onCheckedChange={(checked) => handleToggle(module.key, checked === true)}
-                      />
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <ModuleIcon className={`size-4 flex-shrink-0 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <Label 
-                          htmlFor={`perm-${module.key}`}
-                          className={`text-sm cursor-pointer truncate ${
-                            isEnabled ? 'text-foreground' : 'text-muted-foreground'
-                          }`}
-                        >
-                          {module.label}
-                        </Label>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {isPortalOnlyRole ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {portalModules.map(renderModuleCard)}
+                  </div>
+                  <p className="mt-4 mb-2 text-xs font-medium text-muted-foreground">
+                    Módulos administrativos (no aplican al portal operador)
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {adminModules.map(renderModuleCard)}
+                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {APP_MODULES.map(renderModuleCard)}
+                </div>
+              )}
 
               <Alert className="mt-4 border-warning/30 bg-warning/10">
                 <AlertTriangle className="size-4 text-warning" />

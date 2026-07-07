@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Database,
   Archive,
+  Smartphone,
   type LucideIcon
 } from 'lucide-react';
 
@@ -183,13 +184,21 @@ export const APP_MODULES: AppModule[] = [
     defaultRoles: ['admin'],
     route: '/backup'
   },
-  { 
-    key: 'settings', 
-    label: 'Configuración', 
-    icon: Settings, 
+  {
+    key: 'settings',
+    label: 'Configuración',
+    icon: Settings,
     description: 'Configuración del sistema',
     defaultRoles: ['admin'],
     route: '/settings'
+  },
+  {
+    key: 'operator_portal',
+    label: 'Portal Operador',
+    icon: Smartphone,
+    description: 'Acceso a la app/portal del operador (/operator)',
+    defaultRoles: ['operator'],
+    route: '/operator'
   },
 ];
 

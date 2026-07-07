@@ -16,7 +16,7 @@ interface UserModulePermissionsResult {
   permissions: ModulePermission[];
   loading: boolean;
   error: string | null;
-  fetchPermissions: (userId: string) => Promise<void>;
+  fetchPermissions: (userId: string, role?: string) => Promise<void>;
   updatePermission: (userId: string, moduleKey: string, isEnabled: boolean) => Promise<boolean>;
   updatePermissions: (userId: string, permissions: { moduleKey: string; isEnabled: boolean }[]) => Promise<boolean>;
   hasModuleAccess: (moduleKey: string) => boolean;
@@ -33,10 +33,10 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch permissions for a specific user (admin viewing other users)
-  const fetchPermissions = useCallback(async (userId: string) => {
+  const fetchPermissions = useCallback(async (userId: string, role?: string) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: fetchError } = await supabase
         .from('user_module_permissions')
@@ -45,13 +45,18 @@ export const useUserModulePermissions = (): UserModulePermissionsResult => {
 
       if (fetchError) throw fetchError;
 
+      // Sin rol suele estar los módulos admin desmarcados por defecto para operator/client:
+      // esos roles no acceden a esas rutas, solo al Portal Operador.
+      const isPortalOnlyRole = role === 'operator' || role === 'client';
+
       // Map all modules with their permission status
       const allPermissions = APP_MODULES.map(module => {
         const existingPermission = data?.find(p => p.module_key === module.key);
-        return {
-          module_key: module.key,
-          is_enabled: existingPermission ? existingPermission.is_enabled : true // Default to enabled
-        };
+        if (existingPermission) {
+          return { module_key: module.key, is_enabled: existingPermission.is_enabled };
+        }
+        const defaultEnabled = isPortalOnlyRole ? module.key === 'operator_portal' : true;
+        return { module_key: module.key, is_enabled: defaultEnabled };
       });
 
       setPermissions(allPermissions);
