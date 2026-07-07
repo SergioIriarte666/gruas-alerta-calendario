@@ -1,6 +1,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { supabase } from '@/integrations/supabase/client';
+import { businessClock } from '@/utils/businessClock';
 import type {
   BackgroundGeolocationPlugin,
   Location as BackgroundGeolocationPoint,
@@ -18,6 +19,37 @@ import type {
 const SESSIONS_TABLE = 'operator_location_sessions';
 const POINTS_TABLE = 'operator_location_points';
 const TRACKING_SETTINGS_TABLE = 'tracking_settings';
+const POINTS_CONFLICT_TARGET = 'operator_id,recorded_at,latitude,longitude';
+
+// Bug conocido de WebKit/Safari: GeolocationPosition.timestamp a veces viene
+// referido al epoch de Apple (2001-01-01) en vez del epoch Unix (1970-01-01).
+const APPLE_TO_UNIX_EPOCH_OFFSET_MS = 978307200000;
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Nunca confiar en el timestamp del fix GPS como fuente única: si viene muy
+ * lejos del reloj del dispositivo, se sanea (offset de epoch Apple) o se
+ * descarta a favor de la hora de captura real.
+ */
+export const resolveRecordedAt = (rawTimestampMs: number | null | undefined): string => {
+  const deviceNowMs = businessClock.now().getTime();
+
+  if (typeof rawTimestampMs !== 'number' || Number.isNaN(rawTimestampMs)) {
+    return new Date(deviceNowMs).toISOString();
+  }
+
+  if (Math.abs(deviceNowMs - rawTimestampMs) <= ONE_YEAR_MS) {
+    return new Date(rawTimestampMs).toISOString();
+  }
+
+  const correctedMs = rawTimestampMs + APPLE_TO_UNIX_EPOCH_OFFSET_MS;
+  if (Math.abs(deviceNowMs - correctedMs) <= ONE_DAY_MS) {
+    return new Date(correctedMs).toISOString();
+  }
+
+  return new Date(deviceNowMs).toISOString();
+};
 
 export const DEFAULT_TRACKING_SETTINGS: TrackingSettings = {
   weekday_start: '08:30',
@@ -40,7 +72,7 @@ export const mapBackgroundGeolocationPoint = (
   speedMps: location.speed ?? null,
   headingDegrees: location.bearing ?? null,
   altitudeMeters: location.altitude ?? null,
-  recordedAt: new Date(location.time ?? Date.now()).toISOString(),
+  recordedAt: resolveRecordedAt(location.time),
 });
 
 const mapPermissionState = (value?: string): LocationPermissionState => {
@@ -114,7 +146,7 @@ export const getCurrentLocationPoint = async (): Promise<OperatorLocationPoint> 
       speedMps: position.coords.speed ?? null,
       headingDegrees: position.coords.heading ?? null,
       altitudeMeters: position.coords.altitude ?? null,
-      recordedAt: new Date(position.timestamp).toISOString(),
+      recordedAt: resolveRecordedAt(position.timestamp),
     };
   }
 
@@ -128,7 +160,7 @@ export const getCurrentLocationPoint = async (): Promise<OperatorLocationPoint> 
           speedMps: position.coords.speed ?? null,
           headingDegrees: position.coords.heading ?? null,
           altitudeMeters: position.coords.altitude ?? null,
-          recordedAt: new Date(position.timestamp).toISOString(),
+          recordedAt: resolveRecordedAt(position.timestamp),
         });
       },
       reject,
@@ -248,7 +280,7 @@ export const findActiveOperatorLocationSession = async (
 export const saveOperatorLocationPoint = async (
   payload: OperatorLocationPayload,
 ): Promise<void> => {
-  const { error } = await supabase.from(POINTS_TABLE).insert({
+  const { error } = await supabase.from(POINTS_TABLE).upsert({
     session_id: payload.sessionId,
     operator_id: payload.operatorId,
     user_id: payload.userId,
@@ -263,6 +295,9 @@ export const saveOperatorLocationPoint = async (
     is_offline_sync: payload.isOfflineSync ?? false,
     source: 'mobile_app',
     platform: getLocationPlatform(),
+  }, {
+    onConflict: POINTS_CONFLICT_TARGET,
+    ignoreDuplicates: true,
   });
 
   if (error) {

@@ -129,6 +129,7 @@ export const useOperatorLocationTracking = ({
   const watcherIdRef = useRef<string | null>(null);
   const scheduleIntervalRef = useRef<number | null>(null);
   const lastNativePersistAtRef = useRef(0);
+  const lastPersistedSignatureRef = useRef<string | null>(null);
 
   const isTrackingRef = useRef(false);
   const trackingModeRef = useRef<TrackingMode>(null);
@@ -207,6 +208,12 @@ export const useOperatorLocationTracking = ({
     activeUserId: string,
     activeServiceId: string | null,
   ) => {
+    const signature = `${activeSessionId}:${point.recordedAt}:${point.latitude}:${point.longitude}`;
+    if (lastPersistedSignatureRef.current === signature) {
+      return;
+    }
+    lastPersistedSignatureRef.current = signature;
+
     const payload = createPayload(
       point,
       activeSessionId,
@@ -565,6 +572,7 @@ export const useOperatorLocationTracking = ({
     trackingMode,
     isPaused,
     scheduleLabel,
+    trackingSettings,
     trackingDisabled,
     pauseTracking,
     resumeTracking,

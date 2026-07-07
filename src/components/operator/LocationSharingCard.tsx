@@ -5,6 +5,12 @@ import { MapPin, Loader2, Pause, Play, TriangleAlert, WifiOff } from 'lucide-rea
 import { useOperatorLocationTracking } from '@/hooks/useOperatorLocationTracking';
 import { checkLocationPermission } from '@/services/operatorLocationService';
 import { Capacitor } from '@capacitor/core';
+import { businessClock } from '@/utils/businessClock';
+import { formatInChileTime, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+
+const FRESHNESS_CHECK_INTERVAL_MS = 30000;
+const DEFAULT_SESSION_TIMEOUT_MINUTES = 10;
+const FRESHNESS_MARGIN_MINUTES = 1;
 
 interface LocationSharingCardProps {
   operatorId?: string | null;
@@ -15,11 +21,11 @@ interface LocationSharingCardProps {
 const formatTimestamp = (value: string | null) => {
   if (!value) return 'Aun sin lecturas';
 
-  return new Date(value).toLocaleTimeString('es-CL', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+  const isToday = formatInChileTime(value, 'yyyy-MM-dd') === businessClock.today();
+  if (isToday) {
+    return businessClock.format(value, 'HH:mm:ss');
+  }
+  return formatForDisplayWithTime(value);
 };
 
 const formatAccuracy = (value: number | null) => {
@@ -45,6 +51,7 @@ export const LocationSharingCard = ({
     trackingMode,
     isPaused,
     scheduleLabel,
+    trackingSettings,
     trackingDisabled,
     pauseTracking,
     resumeTracking,
@@ -56,6 +63,7 @@ export const LocationSharingCard = ({
   });
 
   const [showAlwaysHint, setShowAlwaysHint] = useState(false);
+  const [, setFreshnessTick] = useState(0);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -64,9 +72,25 @@ export const LocationSharingCard = ({
     });
   }, [permissionState]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setFreshnessTick((tick) => tick + 1);
+    }, FRESHNESS_CHECK_INTERVAL_MS);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   if (trackingDisabled) {
     return null;
   }
+
+  const freshnessThresholdMs =
+    ((trackingSettings?.session_timeout_minutes ?? DEFAULT_SESSION_TIMEOUT_MINUTES) + FRESHNESS_MARGIN_MINUTES)
+    * 60 * 1000;
+  const lastPointAgeMs = lastPoint?.recordedAt
+    ? businessClock.now().getTime() - new Date(lastPoint.recordedAt).getTime()
+    : null;
+  const hasStaleReading = isTracking && !isPaused
+    && (lastPointAgeMs === null || lastPointAgeMs > freshnessThresholdMs);
 
   const modeBadge = isPaused
     ? { label: 'Pausado por ti', className: 'border-amber-500/25 bg-amber-500/10 text-amber-200' }
@@ -132,11 +156,17 @@ export const LocationSharingCard = ({
         </div>
         <div className="rounded-xl border border-white/5 bg-zinc-950/35 p-3">
           <p className="text-[11px] uppercase tracking-wide text-zinc-500">Sincronizacion</p>
-          <p className="mt-1 text-sm font-medium text-white">
-            {lastSyncAt ? formatTimestamp(lastSyncAt) : pendingCount > 0 ? 'Pendiente' : 'Sin envios'}
+          <p className={`mt-1 text-sm font-medium ${hasStaleReading ? 'text-amber-300' : 'text-white'}`}>
+            {hasStaleReading
+              ? 'Sin lecturas recientes'
+              : lastSyncAt
+                ? formatTimestamp(lastSyncAt)
+                : pendingCount > 0 ? 'Pendiente' : 'Sin envios'}
           </p>
-          <p className="mt-1 text-xs text-zinc-400">
-            {pendingCount > 0 ? `${pendingCount} punto(s) en cola` : 'Todo al dia'}
+          <p className={`mt-1 text-xs ${hasStaleReading ? 'text-amber-300/80' : 'text-zinc-400'}`}>
+            {hasStaleReading
+              ? 'Verifica la conexion o el GPS del dispositivo'
+              : pendingCount > 0 ? `${pendingCount} punto(s) en cola` : 'Todo al dia'}
           </p>
         </div>
       </div>

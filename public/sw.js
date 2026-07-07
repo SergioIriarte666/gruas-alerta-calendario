@@ -1,11 +1,19 @@
 
-const CACHE_NAME = 'tms-operador-v10';
-const SW_VERSION = '10.0.0';
+const CACHE_NAME = 'tms-operador-v11';
+const SW_VERSION = '11.0.0';
 const DEBUG = false;
 
 self.addEventListener('install', (event) => {
-  if (DEBUG) console.log(`[Service Worker] Install v${SW_VERSION} - Clean install`);
-  self.skipWaiting();
+  if (DEBUG) console.log(`[Service Worker] Install v${SW_VERSION} - waiting for client ack`);
+  // No auto skipWaiting: se espera un mensaje SKIP_WAITING del cliente para
+  // que la app pueda avisar "Nueva versión disponible" antes de activar.
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    if (DEBUG) console.log('[Service Worker] SKIP_WAITING received, activating new version');
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
