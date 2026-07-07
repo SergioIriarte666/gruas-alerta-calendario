@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <img src="${logoUrl}" alt="${escapeHtml(companyName)}" width="200" style="max-height: 70px; height: auto; margin-bottom: 12px;">
+              <img src="${logoUrl}" alt="${escapeHtml(companyName)}" width="110" height="110" style="display: block; margin: 0 auto 12px auto;">
               <p style="color: #475569; margin: 0;">RUT: ${escapeHtml(companyRut)}</p>
               <p style="color: #475569; margin: 0;">${escapeHtml(companyAddress)}</p>
             </div>
