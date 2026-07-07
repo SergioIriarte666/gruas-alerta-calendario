@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f1f5f9; color: #334155; }
             .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.06); }
-            .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1e293b; }
+            .header { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1e293b; }
             .header img { max-height: 70px; margin-bottom: 12px; }
             .alert-banner { background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 8px; margin: 20px 0; text-align: center; }
             .alert-banner h3 { color: #1e293b; margin: 0 0 4px 0; font-size: 18px; }
@@ -165,9 +165,18 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <img src="${logoUrl}" alt="${escapeHtml(companyName)}" width="110" height="110" style="display: block; margin: 0 auto 12px auto;">
-              <p style="color: #475569; margin: 0;">RUT: ${escapeHtml(companyRut)}</p>
-              <p style="color: #475569; margin: 0;">${escapeHtml(companyAddress)}</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+                <tr>
+                  <td width="120" valign="middle" style="text-align: left;">
+                    <img src="${logoUrl}" alt="${escapeHtml(companyName)}" width="110" height="110" style="display: block;">
+                  </td>
+                  <td valign="middle" style="text-align: right;">
+                    <p style="margin: 0; font-weight: bold; font-size: 18px; color: #1e293b;">${escapeHtml(companyName)}</p>
+                    <p style="margin: 4px 0 0 0; color: #475569;">RUT: ${escapeHtml(companyRut)}</p>
+                    <p style="margin: 0; color: #475569;">${escapeHtml(companyAddress)}</p>
+                  </td>
+                </tr>
+              </table>
             </div>
 
             <div class="alert-banner">
