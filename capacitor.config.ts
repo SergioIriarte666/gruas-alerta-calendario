@@ -9,6 +9,10 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
   },
   plugins: {
+    CapacitorUpdater: {
+      autoUpdate: false,
+      appReadyTimeout: 15000,
+    },
     SplashScreen: {
       launchAutoHide: true,
       backgroundColor: '#0f172a',

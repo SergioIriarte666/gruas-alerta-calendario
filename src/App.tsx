@@ -22,6 +22,7 @@ import ConnectionTest from '@/pages/ConnectionTest';
 import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { isOperatorMobileVariant } from '@/lib/appVariant';
+import { startLiveUpdateService } from '@/services/liveUpdate';
 
 // Precargar zona horaria del negocio antes de renderizar nada
 businessClock.bootstrap().catch(() => {/* fallback ya manejado */});
@@ -204,6 +205,10 @@ function MobileAppRouteGuard() {
 function AppContent() {
   // Activar triggers de notificaciones
   useNotificationTriggers();
+
+  useEffect(() => {
+    void startLiveUpdateService();
+  }, []);
 
   // Preload all route chunks after first render
   useEffect(() => {

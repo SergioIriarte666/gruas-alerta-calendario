@@ -40,6 +40,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_bundle_versions: {
+        Row: {
+          bundle_url: string
+          checksum: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          min_native_version: string
+          notes: string | null
+          platform: string
+          version: string
+        }
+        Insert: {
+          bundle_url: string
+          checksum?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_native_version: string
+          notes?: string | null
+          platform?: string
+          version: string
+        }
+        Update: {
+          bundle_url?: string
+          checksum?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_native_version?: string
+          notes?: string | null
+          platform?: string
+          version?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           id: number
@@ -7321,6 +7357,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_app_bundle_version: {
+        Args: { p_version: string }
+        Returns: undefined
+      }
       admin_create_user: {
         Args: {
           p_client_id?: string
