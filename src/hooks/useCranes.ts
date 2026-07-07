@@ -4,6 +4,7 @@ import { Crane, CraneStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
+import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 
 
 const logger = createLogger("useCranes");
@@ -289,16 +290,22 @@ export const useCranes = (activeOnly = false) => {
     mutationFn: async (id: string) => {
       const crane = cranes.find(c => c.id === id);
       if (!crane) throw new Error('Crane not found');
+      if (isCranePermanentlyLocked(crane)) {
+        throw new Error('No se puede cambiar el estado de una grúa vendida o dada de baja');
+      }
+
+      const nextActive = !crane.isActive;
+      const nextStatus = nextActive ? 'active' as const : 'inactive' as const;
 
       const { error } = await supabase
         .from('cranes')
-        .update({ is_active: !crane.isActive })
+        .update({ is_active: nextActive, status: nextStatus })
         .eq('id', id)
         .select('id')
         .single();
 
       if (error) throw error;
-      return { ...crane, isActive: !crane.isActive };
+      return { ...crane, isActive: nextActive, status: nextStatus };
     },
     onSuccess: (crane) => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
@@ -312,7 +319,7 @@ export const useCranes = (activeOnly = false) => {
     onError: (error: any) => {
       logger.error('Error toggling crane status:', error);
       toast.error("Error", {
-        description: "No se pudo cambiar el estado de la grúa.",
+        description: error?.message || "No se pudo cambiar el estado de la grúa.",
       });
     },
   });

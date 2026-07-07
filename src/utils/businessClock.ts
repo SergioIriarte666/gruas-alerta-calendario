@@ -16,6 +16,7 @@
 
 import { formatInTimeZone } from 'date-fns-tz';
 import { createLogger } from "@/lib/logger";
+import { supabase } from '@/integrations/supabase/client';
 
 
 const logger = createLogger("businessClock");
@@ -28,7 +29,6 @@ let bootstrapPromise: Promise<void> | null = null;
 
 async function fetchTimezone(): Promise<string> {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
     const { data } = await supabase
       .from('company_data')
       .select('report_timezone, report_use_system_timezone')

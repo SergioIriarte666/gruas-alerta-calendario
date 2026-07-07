@@ -9,6 +9,8 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { CranesMobileView } from './CranesMobileView';
 import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
 import { getCraneTypeLabel } from '@/utils/craneType';
+import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
+import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
 
 export type CraneSortField = 'licensePlate' | 'ownerCompanyRut' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -25,6 +27,7 @@ interface CranesTableProps {
   sortField?: CraneSortField;
   sortDirection?: SortDirection;
   onSort?: (field: CraneSortField) => void;
+  fleetComplianceByResourceId?: Map<string, FleetComplianceRow>;
 }
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -52,6 +55,7 @@ export const CranesTable = ({
   sortField,
   sortDirection,
   onSort,
+  fleetComplianceByResourceId,
 }: CranesTableProps) => {
   const { isMobile } = useDeviceType();
 
@@ -66,6 +70,7 @@ export const CranesTable = ({
         onViewDetails={onViewDetails}
         onNewCrane={onNewCrane}
         searchTerm={searchTerm}
+        fleetComplianceByResourceId={fleetComplianceByResourceId}
       />
     );
   }
@@ -182,6 +187,9 @@ export const CranesTable = ({
                     <SortIcon field="circulationPermitExpiry" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">
+                  Aptitud
+                </th>
                 <th 
                   className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('isActive')}
@@ -215,6 +223,21 @@ export const CranesTable = ({
                   </td>
                   <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(crane.circulationPermitExpiry)}
+                  </td>
+                  <td className="py-3 px-4">
+                    {(() => {
+                      const compliance = fleetComplianceByResourceId?.get(crane.id);
+                      const tooltip = compliance?.next_item_label
+                        ? `${compliance.next_item_label}${compliance.next_expiry_date ? ` · ${formatForDisplay(compliance.next_expiry_date)}` : ''}`
+                        : undefined;
+
+                      return compliance ? (
+                        <ComplianceBadge
+                          level={compliance.worst_level}
+                          tooltip={tooltip}
+                        />
+                      ) : null;
+                    })()}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 

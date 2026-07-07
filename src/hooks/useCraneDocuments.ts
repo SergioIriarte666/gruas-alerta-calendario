@@ -130,6 +130,7 @@ export const useCraneDocuments = (craneId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crane-documents', craneId] });
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
+      queryClient.invalidateQueries({ queryKey: ['fleet-compliance'] });
       toast.success("Documento subido correctamente y fecha de vencimiento actualizada");
     },
     onError: (error: any) => {

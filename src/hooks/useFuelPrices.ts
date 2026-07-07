@@ -316,6 +316,16 @@ export function useSyncReferenceFuelPrices() {
         throw new Error('Debes iniciar sesión para actualizar los precios de combustible.');
       }
 
+      const { data: isAdmin, error: adminCheckError } = await supabase.rpc('is_admin_user_safe');
+
+      if (adminCheckError) {
+        throw adminCheckError;
+      }
+
+      if (!isAdmin) {
+        throw new Error('Solo los administradores pueden actualizar los precios de combustible desde COPEC.');
+      }
+
       const fetchedPrices = await fetchReferenceStationFuelPrices();
 
       if (fetchedPrices.length === 0) {

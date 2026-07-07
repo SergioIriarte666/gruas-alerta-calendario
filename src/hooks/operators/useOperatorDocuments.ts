@@ -158,6 +158,7 @@ export const useOperatorDocuments = (operatorId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operator-documents', operatorId] });
       queryClient.invalidateQueries({ queryKey: ['operator-document-alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['fleet-compliance'] });
       toast.success('Documento subido correctamente');
     },
     onError: (error: any) => {
@@ -186,6 +187,7 @@ export const useOperatorDocuments = (operatorId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operator-documents', operatorId] });
       queryClient.invalidateQueries({ queryKey: ['operator-document-alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['fleet-compliance'] });
       toast.success('Documento eliminado');
     },
     onError: (error: any) => {

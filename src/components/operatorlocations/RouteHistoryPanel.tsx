@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { LocateFixed, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,6 +9,7 @@ import { useOperatorRouteHistory } from '@/hooks/operatorlocations/useOperatorLo
 import { businessClock } from '@/utils/businessClock';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
+import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 
 const logger = createLogger('RouteHistoryPanel');
 
@@ -39,33 +38,49 @@ interface RouteMapProps {
 
 function RouteMap({ points, autoFollow }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const loadedRef = useRef(false);
   const layerIdsRef = useRef<string[]>([]);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markersRef = useRef<import('mapbox-gl').Marker[]>([]);
+  const mapboxRef = useRef<MapboxModule | null>(null);
+  const [mapboxReady, setMapboxReady] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || !MAPBOX_TOKEN) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: COPIAPO_CENTER,
-      zoom: 12,
-    });
+    let cancelled = false;
+    let localMap: import('mapbox-gl').Map | null = null;
 
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-    map.on('load', () => {
-      loadedRef.current = true;
-      render();
-    });
-    mapRef.current = map;
+    void loadMapbox()
+      .then((mapboxgl) => {
+        if (cancelled || !containerRef.current) return;
+
+        mapboxRef.current = mapboxgl;
+        mapboxgl.default.accessToken = MAPBOX_TOKEN;
+        localMap = new mapboxgl.default.Map({
+          container: containerRef.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: COPIAPO_CENTER,
+          zoom: 12,
+        });
+
+        localMap.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), 'top-right');
+        localMap.on('load', () => {
+          loadedRef.current = true;
+          setMapboxReady(true);
+        });
+        mapRef.current = localMap;
+      })
+      .catch((error) => {
+        logger.error('Could not load Mapbox for route history map', error);
+      });
 
     return () => {
+      cancelled = true;
+      setMapboxReady(false);
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
-      map.remove();
+      localMap?.remove();
       mapRef.current = null;
       loadedRef.current = false;
     };
@@ -73,7 +88,8 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
   const render = () => {
     const map = mapRef.current;
-    if (!map || !loadedRef.current) return;
+    const mapboxgl = mapboxRef.current;
+    if (!map || !mapboxgl || !loadedRef.current) return;
 
     layerIdsRef.current.forEach((id) => {
       if (map.getLayer(id)) map.removeLayer(id);
@@ -92,7 +108,7 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
       bySession.set(point.session_id, group);
     }
 
-    const bounds = new mapboxgl.LngLatBounds();
+    const bounds = new mapboxgl.default.LngLatBounds();
     let colorIndex = 0;
 
     for (const [sessionId, sessionPoints] of bySession.entries()) {
@@ -122,13 +138,13 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
       const startEl = document.createElement('div');
       startEl.style.cssText = `width:14px;height:14px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
-      markersRef.current.push(new mapboxgl.Marker({ element: startEl }).setLngLat(coordinates[0]).addTo(map));
+      markersRef.current.push(new mapboxgl.default.Marker({ element: startEl }).setLngLat(coordinates[0]).addTo(map));
 
       if (coordinates.length > 1) {
         const endEl = document.createElement('div');
         endEl.style.cssText = `width:14px;height:14px;border-radius:2px;background:${color};border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)`;
         markersRef.current.push(
-          new mapboxgl.Marker({ element: endEl }).setLngLat(coordinates[coordinates.length - 1]).addTo(map),
+          new mapboxgl.default.Marker({ element: endEl }).setLngLat(coordinates[coordinates.length - 1]).addTo(map),
         );
       }
     }
@@ -152,7 +168,7 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
 
   useEffect(() => {
     render();
-  }, [autoFollow, points]);
+  }, [autoFollow, mapboxReady, points]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -163,7 +179,16 @@ function RouteMap({ points, autoFollow }: RouteMapProps) {
     );
   }
 
-  return <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />;
+  return (
+    <div className="relative h-full min-h-[320px] w-full">
+      <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />
+      {!mapboxReady && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/5 bg-zinc-950/35 text-sm text-zinc-500">
+          Cargando mapa de ruta...
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface RouteHistoryPanelProps {

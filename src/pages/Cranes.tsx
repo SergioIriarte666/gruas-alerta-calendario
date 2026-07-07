@@ -30,10 +30,12 @@ import { CheckCircle2, Shield, Truck, TriangleAlert } from 'lucide-react';
 import { businessClock } from '@/utils/businessClock';
 import { isCranePermanentlyLocked } from '@/utils/craneStatus';
 import { toast } from 'sonner';
+import { useFleetCompliance } from '@/hooks/useFleetCompliance';
 
 
 const Cranes = () => {
   const { cranes, loading, createCrane, updateCrane, deleteCrane, toggleCraneStatus } = useCranes();
+  const { byResourceId: fleetComplianceByResourceId } = useFleetCompliance();
   const location = useLocation() as any;
   const navigate = useNavigate();
   
@@ -291,6 +293,7 @@ const Cranes = () => {
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
+        fleetComplianceByResourceId={fleetComplianceByResourceId}
       />
 
       {totalPages > 1 && (

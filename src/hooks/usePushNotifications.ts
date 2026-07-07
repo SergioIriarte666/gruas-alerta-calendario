@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceWorkerManager } from './useServiceWorkerManager';
 import { createLogger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('PushNotifications');
 
@@ -204,8 +205,6 @@ export const usePushNotifications = (): PushNotificationHook => {
 
       // Save to server with improved error handling
       try {
-        const { supabase } = await import('@/integrations/supabase/client');
-        
         const savePromise = supabase.functions.invoke('save-push-subscription', {
           body: {
             userId: user.id,
@@ -270,8 +269,6 @@ export const usePushNotifications = (): PushNotificationHook => {
       }
 
       // Notify server with timeout
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       const removePromise = supabase.functions.invoke('remove-push-subscription', {
         body: { userId: user.id }
       });

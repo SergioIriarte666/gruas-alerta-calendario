@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ServiceType } from '@/types';
 import { ServiceOperator } from '@/types/serviceDetails';
+import { ComplianceIssue, formatComplianceIssueMessage } from './useResourceCompliance';
 
 interface ServiceFormData {
   serviceType: string;
@@ -23,14 +24,15 @@ export interface ValidationError {
 interface UseServiceFormValidationProps {
   formData: ServiceFormData;
   selectedServiceType: ServiceType | undefined;
+  complianceIssues?: ComplianceIssue[];
 }
 
 export const useServiceFormValidation = ({
   formData,
-  selectedServiceType
+  selectedServiceType,
+  complianceIssues = [],
 }: UseServiceFormValidationProps) => {
-  
-  const validationErrors = useMemo(() => {
+  const fieldErrors = useMemo(() => {
     const errors: ValidationError[] = [];
     
     if (!selectedServiceType) {
@@ -131,18 +133,40 @@ export const useServiceFormValidation = ({
     return errors;
   }, [formData, selectedServiceType]);
 
-  const hasErrors = validationErrors.filter(e => e.severity === 'error').length > 0;
+  const complianceValidationErrors = useMemo(
+    () =>
+      complianceIssues.map((issue) => ({
+        field: `compliance:${issue.resource_type}:${issue.item}`,
+        message: formatComplianceIssueMessage(issue),
+        severity: issue.level,
+      })) satisfies ValidationError[],
+    [complianceIssues],
+  );
+
+  const complianceBlockingErrors = useMemo(
+    () => complianceValidationErrors.filter((error) => error.severity === 'error'),
+    [complianceValidationErrors],
+  );
+
+  const validationErrors = useMemo(
+    () => [...fieldErrors, ...complianceValidationErrors],
+    [complianceValidationErrors, fieldErrors],
+  );
+
+  const hasErrors = fieldErrors.filter(e => e.severity === 'error').length > 0;
   const hasWarnings = validationErrors.filter(e => e.severity === 'warning').length > 0;
 
   const getFieldError = (fieldName: string): ValidationError | undefined => {
-    return validationErrors.find(e => e.field === fieldName);
+    return fieldErrors.find(e => e.field === fieldName);
   };
 
   const isFieldInvalid = (fieldName: string): boolean => {
-    return validationErrors.some(e => e.field === fieldName && e.severity === 'error');
+    return fieldErrors.some(e => e.field === fieldName && e.severity === 'error');
   };
 
   return {
+    fieldErrors,
+    complianceBlockingErrors,
     validationErrors,
     hasErrors,
     hasWarnings,

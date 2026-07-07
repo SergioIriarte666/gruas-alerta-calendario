@@ -1,6 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import {
   OPERATOR_STATUS_COLORS,
@@ -10,6 +8,7 @@ import {
   type OperatorLiveLocation,
 } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
+import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
 
 const logger = createLogger('LiveOperatorsMap');
 
@@ -53,9 +52,11 @@ const buildPopupHtml = (location: OperatorLiveLocation): string => {
 export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperatorsMapProps>(
   ({ locations, onSelectOperator }, ref) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const mapRef = useRef<mapboxgl.Map | null>(null);
-    const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+    const mapRef = useRef<import('mapbox-gl').Map | null>(null);
+    const markersRef = useRef<Map<string, import('mapbox-gl').Marker>>(new Map());
     const coordsRef = useRef<Map<string, [number, number]>>(new Map());
+    const mapboxRef = useRef<MapboxModule | null>(null);
+    const [mapboxReady, setMapboxReady] = useState(false);
 
     useImperativeHandle(ref, () => ({
       flyToOperator: (operatorId: string) => {
@@ -69,32 +70,49 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
     useEffect(() => {
       if (!containerRef.current || !MAPBOX_TOKEN) return;
 
-      mapboxgl.accessToken = MAPBOX_TOKEN;
+      let cancelled = false;
+      let localMap: import('mapbox-gl').Map | null = null;
 
-      const map = new mapboxgl.Map({
-        container: containerRef.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: COPIAPO_CENTER,
-        zoom: DEFAULT_ZOOM,
-      });
+      void loadMapbox()
+        .then((mapboxgl) => {
+          if (cancelled || !containerRef.current) return;
 
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-      mapRef.current = map;
+          mapboxRef.current = mapboxgl;
+          mapboxgl.default.accessToken = MAPBOX_TOKEN;
+
+          localMap = new mapboxgl.default.Map({
+            container: containerRef.current,
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: COPIAPO_CENTER,
+            zoom: DEFAULT_ZOOM,
+          });
+
+          localMap.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), 'top-right');
+          mapRef.current = localMap;
+          setMapboxReady(true);
+        })
+        .catch((error) => {
+          logger.error('Could not load Mapbox for live operators map', error);
+        });
 
       return () => {
+        cancelled = true;
+        setMapboxReady(false);
         markersRef.current.forEach((marker) => marker.remove());
         markersRef.current.clear();
-        map.remove();
+        coordsRef.current.clear();
+        localMap?.remove();
         mapRef.current = null;
       };
     }, []);
 
     useEffect(() => {
       const map = mapRef.current;
-      if (!map || !MAPBOX_TOKEN) return;
+      const mapboxgl = mapboxRef.current;
+      if (!map || !mapboxgl || !MAPBOX_TOKEN) return;
 
       const activeIds = new Set<string>();
-      const bounds = new mapboxgl.LngLatBounds();
+      const bounds = new mapboxgl.default.LngLatBounds();
       let hasCoords = false;
 
       for (const location of locations) {
@@ -126,9 +144,9 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
           el.style.cursor = 'pointer';
           el.style.backgroundColor = color;
 
-          const popup = new mapboxgl.Popup({ offset: 14, closeButton: false }).setHTML(popupHtml);
+          const popup = new mapboxgl.default.Popup({ offset: 14, closeButton: false }).setHTML(popupHtml);
 
-          marker = new mapboxgl.Marker({ element: el })
+          marker = new mapboxgl.default.Marker({ element: el })
             .setLngLat(coords)
             .setPopup(popup)
             .addTo(map);
@@ -154,7 +172,7 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
           logger.warn('Could not fit bounds to operator markers', error);
         }
       }
-    }, [locations, onSelectOperator]);
+    }, [locations, mapboxReady, onSelectOperator]);
 
     if (!MAPBOX_TOKEN) {
       return (
@@ -165,7 +183,16 @@ export const LiveOperatorsMap = forwardRef<LiveOperatorsMapHandle, LiveOperators
       );
     }
 
-    return <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />;
+    return (
+      <div className="relative h-full min-h-[320px] w-full">
+        <div ref={containerRef} className="h-full min-h-[320px] w-full rounded-2xl" />
+        {!mapboxReady && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/5 bg-zinc-950/35 text-sm text-zinc-500">
+            Cargando mapa en vivo...
+          </div>
+        )}
+      </div>
+    );
   },
 );
 

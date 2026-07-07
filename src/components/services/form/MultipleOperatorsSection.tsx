@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus, Users, DollarSign, AlertTriangle } from 'lucide-react';
 import { Operator } from '@/types';
 import { ServiceOperator } from '@/types/serviceDetails';
+import { ComplianceIssue, formatComplianceIssueMessage } from '@/hooks/services/useResourceCompliance';
 
 interface MultipleOperatorsSectionProps {
   operators: ServiceOperator[];
@@ -16,6 +17,7 @@ interface MultipleOperatorsSectionProps {
   disabled?: boolean;
   hasValidationError?: boolean;
   validationMessage?: string;
+  complianceIssuesByOperatorId?: Record<string, ComplianceIssue[]>;
 }
 export const MultipleOperatorsSection = ({
   operators,
@@ -24,7 +26,8 @@ export const MultipleOperatorsSection = ({
   operatorRequired = false,
   disabled = false,
   hasValidationError = false,
-  validationMessage
+  validationMessage,
+  complianceIssuesByOperatorId = {},
 }: MultipleOperatorsSectionProps) => {
   const [nextId, setNextId] = useState(1);
   const addOperator = () => {
@@ -64,6 +67,15 @@ export const MultipleOperatorsSection = ({
   };
   const getTotalCommissions = () => {
     return operators.reduce((total, op) => total + (op.commission || 0), 0);
+  };
+  const getOperatorComplianceIssues = (operatorId?: string) => {
+    if (!operatorId) return [];
+    return complianceIssuesByOperatorId[operatorId] || [];
+  };
+  const getOperatorComplianceTone = (issues: ComplianceIssue[]) => {
+    return issues.some((issue) => issue.level === 'error')
+      ? 'text-destructive'
+      : 'text-amber-600';
   };
   return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-border/70 bg-card/80 shadow-sm'}`}>
       <CardHeader>
@@ -127,6 +139,11 @@ export const MultipleOperatorsSection = ({
                       </SelectItem>)}
                   </SelectContent>
                 </Select>
+                {getOperatorComplianceIssues(operator.operatorId).length > 0 && (
+                  <p className={`text-xs ${getOperatorComplianceTone(getOperatorComplianceIssues(operator.operatorId))}`}>
+                    ⚠ {formatComplianceIssueMessage(getOperatorComplianceIssues(operator.operatorId)[0], { includeResourcePrefix: false })}
+                  </p>
+                )}
               </div>
 
               {/* Rol */}

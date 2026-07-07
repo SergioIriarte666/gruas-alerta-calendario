@@ -890,7 +890,6 @@ export class UnifiedPurchaseService {
 
       logger.debug('[UnifiedPurchase] registerForExistingCost completed successfully');
 
-      const { showSyncToast } = await import('@/utils/syncToast');
       showSyncToast('Inventario Sincronizado', [
         { module: 'inventario', action: `Entrada: ${params.quantity} ${params.itemName}`, success: true },
         { module: 'pieza', action: 'Pieza asignada a grúa', success: true },

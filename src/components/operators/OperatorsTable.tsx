@@ -6,6 +6,8 @@ import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { OperatorsMobileView } from './OperatorsMobileView';
+import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
+import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
 
 export type OperatorSortField = 'operatorType' | 'name' | 'rut' | 'phone' | 'license' | 'examExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -23,6 +25,7 @@ interface OperatorsTableProps {
   sortDirection?: SortDirection;
   onSort?: (field: OperatorSortField) => void;
   operatorsWithDocumentAlerts?: Set<string>;
+  fleetComplianceByResourceId?: Map<string, FleetComplianceRow>;
 }
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -51,6 +54,7 @@ export const OperatorsTable = ({
   sortDirection,
   onSort,
   operatorsWithDocumentAlerts,
+  fleetComplianceByResourceId,
 }: OperatorsTableProps) => {
   const { isMobile } = useDeviceType();
 
@@ -66,6 +70,7 @@ export const OperatorsTable = ({
         onNewOperator={onNewOperator}
         searchTerm={searchTerm}
         operatorsWithDocumentAlerts={operatorsWithDocumentAlerts}
+        fleetComplianceByResourceId={fleetComplianceByResourceId}
       />
     );
   }
@@ -172,6 +177,9 @@ export const OperatorsTable = ({
                     <SortIcon field="examExpiry" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">
+                  Aptitud
+                </th>
                 <th 
                   className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('isActive')}
@@ -221,6 +229,23 @@ export const OperatorsTable = ({
                     {operator.operatorType === 'crane_operator'
                       ? formatForDisplay(operator.examExpiry || '')
                       : operator.position || '-'}
+                  </td>
+                  <td className="py-3 px-4">
+                    {operator.operatorType === 'crane_operator' ? (
+                      (() => {
+                        const compliance = fleetComplianceByResourceId?.get(operator.id);
+                        const tooltip = compliance?.next_item_label
+                          ? `${compliance.next_item_label}${compliance.next_expiry_date ? ` · ${formatForDisplay(compliance.next_expiry_date)}` : ''}`
+                          : undefined;
+
+                        return compliance ? (
+                          <ComplianceBadge
+                            level={compliance.worst_level}
+                            tooltip={tooltip}
+                          />
+                        ) : null;
+                      })()
+                    ) : null}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap items-center gap-1.5">

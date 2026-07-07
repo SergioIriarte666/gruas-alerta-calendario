@@ -6,6 +6,8 @@ import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
+import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
 
 interface OperatorsMobileViewProps {
   operators: Operator[];
@@ -17,6 +19,7 @@ interface OperatorsMobileViewProps {
   onNewOperator: () => void;
   searchTerm: string;
   operatorsWithDocumentAlerts?: Set<string>;
+  fleetComplianceByResourceId?: Map<string, FleetComplianceRow>;
 }
 
 export const OperatorsMobileView = ({
@@ -29,6 +32,7 @@ export const OperatorsMobileView = ({
   onNewOperator,
   searchTerm,
   operatorsWithDocumentAlerts,
+  fleetComplianceByResourceId,
 }: OperatorsMobileViewProps) => {
   const { isMobile } = useDeviceType();
 
@@ -77,6 +81,16 @@ export const OperatorsMobileView = ({
       {operators.map((operator) => (
         <Card key={operator.id} className="bg-card border">
           <CardContent className="p-4">
+            {(() => {
+              const compliance = operator.operatorType === 'crane_operator'
+                ? fleetComplianceByResourceId?.get(operator.id)
+                : undefined;
+              const tooltip = compliance?.next_item_label
+                ? `${compliance.next_item_label}${compliance.next_expiry_date ? ` · ${formatForDisplay(compliance.next_expiry_date)}` : ''}`
+                : undefined;
+
+              return (
+                <>
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -111,6 +125,13 @@ export const OperatorsMobileView = ({
                 >
                   {operator.isActive ? 'Activo' : 'Inactivo'}
                 </Badge>
+                {compliance ? (
+                  <ComplianceBadge
+                    level={compliance.worst_level}
+                    compact
+                    tooltip={tooltip}
+                  />
+                ) : null}
                 {operator.trackingEnabled === false && (
                   <Badge variant="secondary" className="border-zinc-500/30 bg-zinc-500/10 text-zinc-400 text-xs">
                     Sin rastreo
@@ -209,6 +230,9 @@ export const OperatorsMobileView = ({
                 {isMobile && <span className="ml-1">Eliminar</span>}
               </Button>
             </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       ))}

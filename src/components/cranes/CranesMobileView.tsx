@@ -11,6 +11,9 @@ import { cn } from '@/lib/utils';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { getCraneStatusLabel, isCranePermanentlyLocked } from '@/utils/craneStatus';
 import { getCraneTypeLabel } from '@/utils/craneType';
+import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
+import type { FleetComplianceRow } from '@/hooks/useFleetCompliance';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 
 interface CranesMobileViewProps {
   cranes: Crane[];
@@ -20,10 +23,13 @@ interface CranesMobileViewProps {
   onViewDetails: (crane: Crane) => void;
   onNewCrane: () => void;
   searchTerm: string;
+  fleetComplianceByResourceId?: Map<string, FleetComplianceRow>;
 }
 
 const CraneInventoryIndicators = ({ crane }: { crane: Crane }) => {
-  const { data: metrics, isLoading } = useCraneInventoryMetrics(crane.id);
+  // Sin realtime en la lista: evita abrir un websocket por tarjeta.
+  // Los datos se refrescan igual via invalidateQueries desde el detalle.
+  const { data: metrics, isLoading } = useCraneInventoryMetrics(crane.id, { realtime: false });
 
   if (isLoading || !metrics) {
     return (
@@ -71,8 +77,9 @@ export const CranesMobileView = ({
   onViewDetails,
   onNewCrane,
   searchTerm,
+  fleetComplianceByResourceId,
 }: CranesMobileViewProps) => {
-  const { isMobile, isTablet } = useDeviceType();
+  const { isMobile } = useDeviceType();
   
   if (cranes.length === 0 && searchTerm) {
     return (
@@ -119,6 +126,14 @@ export const CranesMobileView = ({
       {cranes.map((crane) => (
         <Card key={crane.id} className="glass-card">
           <CardContent className="p-4">
+            {(() => {
+              const compliance = fleetComplianceByResourceId?.get(crane.id);
+              const tooltip = compliance?.next_item_label
+                ? `${compliance.next_item_label}${compliance.next_expiry_date ? ` · ${formatForDisplay(compliance.next_expiry_date)}` : ''}`
+                : undefined;
+
+              return (
+                <>
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h4 className="font-semibold text-foreground text-lg">{crane.licensePlate}</h4>
@@ -128,15 +143,24 @@ export const CranesMobileView = ({
                 </p>
                 <p className="text-muted-foreground text-sm">Tipo: {getCraneTypeLabel(crane.type)}</p>
               </div>
-              <Badge 
-                variant={crane.isActive ? "default" : "secondary"}
-                className={crane.isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted text-muted-foreground"
-                }
-              >
-                {getCraneStatusLabel(crane.status)}
-              </Badge>
+              <div className="flex flex-col items-end gap-1">
+                <Badge 
+                  variant={crane.isActive ? "default" : "secondary"}
+                  className={crane.isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {getCraneStatusLabel(crane.status)}
+                </Badge>
+                {compliance ? (
+                  <ComplianceBadge
+                    level={compliance.worst_level}
+                    compact
+                    tooltip={tooltip}
+                  />
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-2 mb-4">
@@ -204,6 +228,9 @@ export const CranesMobileView = ({
                 {isMobile && <span className="ml-1">Eliminar</span>}
               </Button>
             </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       ))}

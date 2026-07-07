@@ -1,0 +1,3 @@
+- Nombre: admin_servicio_recurso_no_apto
+- Idioma: es_CL — Categoría: Utility
+- Cuerpo: "⚠️ Servicio {{1}} agendado para el {{2}} está en riesgo: {{3}} tiene {{4}} vencido o que vence el {{5}}. Regularice el documento o reasigne el recurso antes de la fecha del servicio."

@@ -4,6 +4,7 @@ import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { businessClock } from './businessClock';
 import { createLogger } from '@/lib/logger';
+import { supabase } from '@/integrations/supabase/client';
 
 const logger = createLogger('TimezoneUtils');
 
@@ -29,9 +30,7 @@ const getUserSettingsFromCache = async () => {
   }
 
   try {
-    // Solo importar supabase si estamos en el browser
     if (typeof window !== 'undefined') {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
@@ -435,7 +434,6 @@ export const getBusinessTimezone = async (): Promise<string> => {
 
   try {
     if (typeof window !== 'undefined') {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data } = await supabase
         .from('company_data')
         .select('report_timezone, report_use_system_timezone')

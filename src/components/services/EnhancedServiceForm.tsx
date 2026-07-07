@@ -27,6 +27,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
+import { useResourceCompliance, formatComplianceIssueMessage } from '@/hooks/services/useResourceCompliance';
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
 import { useServiceItems } from '@/hooks/services/useServiceItems';
@@ -45,6 +46,8 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { OperatorNotificationDialogs } from './OperatorNotificationDialogs';
+import { ComplianceOverrideDialog } from './form/ComplianceOverrideDialog';
+import { useUser } from '@/contexts/UserContext';
 
 const logger = createLogger('EnhancedServiceForm');
 
@@ -66,6 +69,7 @@ export const EnhancedServiceForm = React.memo(({
   const { clients } = useClients();
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
+  const { user: profileUser } = useUser();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { suppliers } = useSuppliers();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
@@ -88,6 +92,8 @@ export const EnhancedServiceForm = React.memo(({
   const [enableItems, setEnableItems] = useState(false);
   const [valueFromRate, setValueFromRate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplianceOverrideOpen, setIsComplianceOverrideOpen] = useState(false);
+  const [isComplianceOverrideSubmitting, setIsComplianceOverrideSubmitting] = useState(false);
 
   const handleCreationFlowComplete = useCallback((createdService: Service) => {
     logger.debug('📞 Calling onSubmit callback...');
@@ -413,6 +419,18 @@ export const EnhancedServiceForm = React.memo(({
 
   // Obtener el tipo de servicio seleccionado
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
+  const selectedOperatorIds = useMemo(
+    () =>
+      (formData.operators || [])
+        .map((operator) => operator.operatorId)
+        .filter((operatorId): operatorId is string => Boolean(operatorId?.trim())),
+    [formData.operators],
+  );
+  const {
+    issues: complianceIssues,
+    blockingIssues,
+    isLoading: complianceLoading,
+  } = useResourceCompliance(formData.crane, selectedOperatorIds, formData.serviceDate);
 
   const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
   const isItemsServiceType = ITEMS_SERVICE_TYPES.includes(selectedServiceType?.name ?? '');
@@ -499,8 +517,33 @@ export const EnhancedServiceForm = React.memo(({
 
   const { validationErrors, hasErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
     formData: validationFormData,
-    selectedServiceType
+    selectedServiceType,
+    complianceIssues,
   });
+  const complianceBlockingIssuesByField = useMemo(
+    () => validationErrors.filter((error) => error.field.startsWith('compliance:') && error.severity === 'error'),
+    [validationErrors],
+  );
+  const craneComplianceIssues = useMemo(
+    () => complianceIssues.filter((issue) => issue.resource_type === 'crane'),
+    [complianceIssues],
+  );
+  const operatorComplianceIssuesById = useMemo(
+    () =>
+      complianceIssues.reduce<Record<string, typeof complianceIssues>>((accumulator, issue) => {
+        if (issue.resource_type !== 'operator') {
+          return accumulator;
+        }
+
+        if (!accumulator[issue.resource_id]) {
+          accumulator[issue.resource_id] = [];
+        }
+
+        accumulator[issue.resource_id].push(issue);
+        return accumulator;
+      }, {}),
+    [complianceIssues],
+  );
 
   // Calculadores de totales
   const totalCommissions = useMemo(
@@ -754,7 +797,7 @@ export const EnhancedServiceForm = React.memo(({
 
   // Handler único de guardado: usado por el submit del form (fase 4)
   // y por el botón "Guardar" persistente disponible en todas las fases
-  const performSave = async () => {
+  const performSave = async (options?: { complianceOverrideReason?: string }) => {
     if (isCreating || isUpdating || isSubmitting) {
       return;
     }
@@ -771,6 +814,41 @@ export const EnhancedServiceForm = React.memo(({
           setCurrentStep(errorStep);
         }
         return;
+      }
+
+      if (complianceLoading && (formData.crane || selectedOperatorIds.length > 0)) {
+        playRetroErrorSound();
+        toast.error('Validando aptitud de recursos. Intenta nuevamente en unos segundos.');
+        return;
+      }
+
+      if (blockingIssues.length > 0 && !options?.complianceOverrideReason) {
+        if (profileUser?.role !== 'admin') {
+          playRetroErrorSound();
+          toast.error('Recursos no aptos. Solo un administrador puede autorizar esta asignación.');
+          setCurrentStep(3);
+          return;
+        }
+
+        setIsComplianceOverrideOpen(true);
+        setCurrentStep(3);
+        return;
+      }
+
+      if (blockingIssues.length > 0 && options?.complianceOverrideReason) {
+        const { error: complianceLogError } = await (supabase as any).rpc('log_compliance_override', {
+          p_service_context: {
+            crane_id: formData.crane || null,
+            operator_ids: selectedOperatorIds,
+            service_date: formData.serviceDate,
+            issues: blockingIssues,
+          },
+          p_reason: options.complianceOverrideReason,
+        });
+
+        if (complianceLogError) {
+          throw complianceLogError;
+        }
       }
 
       // Servicios con excedente requieren indicar quién paga el excedente
@@ -956,6 +1034,17 @@ export const EnhancedServiceForm = React.memo(({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await performSave();
+  };
+
+  const handleComplianceOverrideConfirm = async (reason: string) => {
+    setIsComplianceOverrideSubmitting(true);
+
+    try {
+      await performSave({ complianceOverrideReason: reason });
+      setIsComplianceOverrideOpen(false);
+    } finally {
+      setIsComplianceOverrideSubmitting(false);
+    }
   };
 
   return (
@@ -1208,6 +1297,11 @@ export const EnhancedServiceForm = React.memo(({
                           ))}
                         </SelectContent>
                       </Select>
+                      {craneComplianceIssues.length > 0 && (
+                        <p className={`text-sm ${craneComplianceIssues.some((issue) => issue.level === 'error') ? 'text-destructive' : 'text-amber-600'}`}>
+                          ⚠ {formatComplianceIssueMessage(craneComplianceIssues[0], { includeResourcePrefix: false })}
+                        </p>
+                      )}
                       {isFieldInvalid('crane') && (
                         <p className="text-sm text-destructive flex items-center gap-1">
                           <AlertTriangle className="size-3" />
@@ -1244,6 +1338,7 @@ export const EnhancedServiceForm = React.memo(({
                       disabled={false}
                       hasValidationError={isFieldInvalid('operators')}
                       validationMessage={getFieldError('operators')?.message}
+                      complianceIssuesByOperatorId={operatorComplianceIssuesById}
                     />
                   </ColoredSectionCard>
                 )}
@@ -1564,6 +1659,14 @@ export const EnhancedServiceForm = React.memo(({
         onDecline={declineNotification}
         onRetry={retryNotification}
         onRetryCancel={cancelRetry}
+      />
+
+      <ComplianceOverrideDialog
+        open={isComplianceOverrideOpen}
+        onOpenChange={setIsComplianceOverrideOpen}
+        issues={blockingIssues}
+        isSubmitting={isComplianceOverrideSubmitting}
+        onConfirm={handleComplianceOverrideConfirm}
       />
     </div>
   );

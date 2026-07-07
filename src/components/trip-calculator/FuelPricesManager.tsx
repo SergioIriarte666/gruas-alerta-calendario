@@ -44,6 +44,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
@@ -106,15 +107,26 @@ export const FuelPricesManager = () => {
   const [editingPrice, setEditingPrice] = useState<FuelPrice | null>(null);
   const hasAutoSyncedRef = useRef(false);
   const { user, loading: authLoading } = useAuth();
+  const { user: profileUser, loading: profileLoading } = useUser();
   const { data: currentPrices = [], isLoading: loadingCurrent } = useCurrentFuelPrices();
   const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory();
   const { mutate: deletePrice } = useDeleteFuelPrice();
   const { mutate: syncReferencePrices, isPending: isSyncing } = useSyncReferenceFuelPrices();
 
   const pivot = useMemo(() => buildWeeklyPivot(history), [history]);
+  const canSyncReferencePrices = profileUser?.role === 'admin';
 
   useEffect(() => {
-    if (hasAutoSyncedRef.current || loadingCurrent || authLoading || !user) return;
+    if (
+      hasAutoSyncedRef.current ||
+      loadingCurrent ||
+      authLoading ||
+      profileLoading ||
+      !user ||
+      !canSyncReferencePrices
+    ) {
+      return;
+    }
 
     hasAutoSyncedRef.current = true;
     syncReferencePrices(undefined, {
@@ -122,7 +134,7 @@ export const FuelPricesManager = () => {
         console.error('No se pudo sincronizar precios de combustible automáticamente', error);
       },
     });
-  }, [authLoading, loadingCurrent, syncReferencePrices, user]);
+  }, [authLoading, canSyncReferencePrices, loadingCurrent, profileLoading, syncReferencePrices, user]);
 
   const handleEdit = (price: FuelPrice) => {
     setEditingPrice(price);
@@ -144,7 +156,8 @@ export const FuelPricesManager = () => {
 
         toast.success(`Los precios de ${result.stationLabel} ya estaban al día`);
       },
-      onError: () => toast.error('No se pudo actualizar desde la estación de referencia'),
+      onError: (error) =>
+        toast.error(error instanceof Error ? error.message : 'No se pudo actualizar desde la estación de referencia'),
     });
   };
 
@@ -173,7 +186,8 @@ export const FuelPricesManager = () => {
             type="button"
             variant="outline"
             onClick={handleManualSync}
-            disabled={isSyncing}
+            disabled={isSyncing || profileLoading || !canSyncReferencePrices}
+            title={!canSyncReferencePrices ? 'Solo administradores pueden actualizar desde COPEC' : undefined}
           >
             <RefreshCw className={`size-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             Actualizar desde COPEC
@@ -228,6 +242,12 @@ export const FuelPricesManager = () => {
           );
         })}
       </div>
+
+      {!profileLoading && !canSyncReferencePrices && (
+        <p className="text-sm text-muted-foreground">
+          La sincronización automática desde COPEC está disponible solo para administradores.
+        </p>
+      )}
 
       {/* Weekly pivot table */}
       <Card>

@@ -9,6 +9,13 @@ import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashb
 import { PendingSummaryModal } from '@/components/dashboard/PendingSummaryModal';
 import { PageHeader } from '@/components/ui/page-header';
 import { SectionCard } from '@/components/ui/section-card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   Truck, 
   Activity,
@@ -24,11 +31,16 @@ import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
 import { downloadPendingReportPDF } from '@/utils/pdf/pendingReportPDF';
 import { toast } from 'sonner';
+import { useFleetCompliance } from '@/hooks/useFleetCompliance';
+import { ComplianceBadge } from '@/components/shared/ComplianceBadge';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 
 const Dashboard: React.FC = () => {
   const { metrics, recentServices, loading: dashboardLoading } = useDashboardData();
+  const { rows: fleetComplianceRows, counters } = useFleetCompliance();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [downloadingReport, setDownloadingReport] = useState(false);
+  const [isComplianceDialogOpen, setIsComplianceDialogOpen] = useState(false);
 
   const handleDownloadReport = async () => {
     setDownloadingReport(true);
@@ -95,6 +107,8 @@ const Dashboard: React.FC = () => {
   }
 
   if (!metrics) return null;
+
+  const notFitResources = fleetComplianceRows.filter((row) => row.worst_level === 'error');
 
   return (
     <div className="space-y-6">
@@ -193,7 +207,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Secondary Metrics - Service Status Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="En Curso"
             value={metrics.servicesByStatus.pending}
@@ -217,6 +231,21 @@ const Dashboard: React.FC = () => {
             icon={AlertTriangle}
             description="Servicios cancelados"
           />
+
+          <button
+            type="button"
+            onClick={() => setIsComplianceDialogOpen(true)}
+            className="rounded-lg text-left outline-none transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-violet-500"
+          >
+            <MetricCard
+              title="Recursos No Aptos"
+              value={counters.totalNotFit}
+              tone={counters.totalNotFit > 0 ? 'danger' : 'success'}
+              icon={AlertTriangle}
+              description="Grúas y operadores con documentos vencidos"
+              className="cursor-pointer hover:shadow-md"
+            />
+          </button>
         </div>
 
         {/* Invoice Alerts Dashboard */}
@@ -249,6 +278,56 @@ const Dashboard: React.FC = () => {
             onClose={handleCloseDetails}
           />
         )}
+
+        <Dialog open={isComplianceDialogOpen} onOpenChange={setIsComplianceDialogOpen}>
+          <DialogContent className="border-border/70 bg-card sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Recursos no aptos</DialogTitle>
+              <DialogDescription>
+                Grúas y operadores con documentos vencidos al día de hoy.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+              {notFitResources.length === 0 ? (
+                <div className="rounded-xl border border-success/20 bg-success/5 p-4 text-sm text-muted-foreground">
+                  No hay recursos no aptos en este momento.
+                </div>
+              ) : (
+                notFitResources.map((resource) => {
+                  const tooltip = resource.next_item_label
+                    ? `${resource.next_item_label}${resource.next_expiry_date ? ` · ${formatForDisplay(resource.next_expiry_date)}` : ''}`
+                    : undefined;
+
+                  return (
+                    <div
+                      key={`${resource.resource_type}-${resource.resource_id}`}
+                      className="rounded-xl border border-border/70 bg-background/60 p-4"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-1">
+                          <p className="font-medium text-foreground">{resource.resource_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {resource.resource_type === 'crane' ? 'Grúa' : 'Operador'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {resource.next_item_label || 'Sin detalle adicional'}
+                            {resource.next_expiry_date ? ` · ${formatForDisplay(resource.next_expiry_date)}` : ''}
+                          </p>
+                        </div>
+
+                        <ComplianceBadge
+                          level={resource.worst_level}
+                          tooltip={tooltip}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </section>
     </div>
   );

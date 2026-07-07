@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertAcknowledgementDialog } from '@/components/documents/AlertAcknowledgementDialog';
 import {
   Dialog,
   DialogContent,
@@ -39,15 +40,22 @@ import {
   Clock,
   Trash2,
   Plus,
+  BellOff,
 } from 'lucide-react';
 import { Operator, DocumentType, DOCUMENT_TYPE_LABELS, DOCUMENT_TYPES_WITH_EXPIRY } from '@/types';
+import {
+  useAlertAcknowledgements,
+  useCreateAlertAcknowledgement,
+} from '@/hooks/useAlertAcknowledgements';
 import {
   useOperatorDocuments,
   getDocumentStatus,
   getDaysUntilExpiry,
 } from '@/hooks/operators/useOperatorDocuments';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { getOperatorDocumentAlertKey } from '@/lib/documentAlertKeys';
 import { createLogger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 const logger = createLogger('OperatorDocuments');
 
@@ -87,11 +95,18 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
     activeDocumentAction,
   } =
     useOperatorDocuments(operator.id);
-  const { isAdmin } = useUserPermissions();
+  const { user, isAdmin } = useUserPermissions();
+  const createAcknowledgement = useCreateAlertAcknowledgement();
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [form, setForm] = useState<UploadFormState>(EMPTY_FORM);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+  const [acknowledgementTarget, setAcknowledgementTarget] = useState<{
+    documentId: string;
+    label: string;
+    alertKey: string;
+    expiryDate: string;
+  } | null>(null);
 
   const requiresExpiry = form.documentType
     ? DOCUMENT_TYPES_WITH_EXPIRY.includes(form.documentType as DocumentType)
@@ -161,6 +176,38 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
 
   const expiredDocs = documents.filter((d) => getDocumentStatus(d.expiryDate) === 'vencido');
   const expiringDocs = documents.filter((d) => getDocumentStatus(d.expiryDate) === 'por_vencer');
+  const acknowledgementItems = documents
+    .filter((doc) => doc.expiryDate)
+    .map((doc) => ({
+      alertKey: getOperatorDocumentAlertKey(
+        doc.id,
+        getDocumentStatus(doc.expiryDate) === 'vencido' ? 'vencido' : 'por_vencer',
+      ),
+      docExpiryDate: doc.expiryDate ?? null,
+    }));
+  const { isAcknowledged } = useAlertAcknowledgements(acknowledgementItems);
+
+  const handleSilenceAlert = async (notes: string) => {
+    if (!acknowledgementTarget || !user?.id) return;
+
+    try {
+      await createAcknowledgement.mutateAsync({
+        alertKey: acknowledgementTarget.alertKey,
+        docExpiryDate: acknowledgementTarget.expiryDate,
+        acknowledgedBy: user.id,
+        notes,
+      });
+      toast.success('Alerta silenciada hasta la renovación del documento');
+      setAcknowledgementTarget(null);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        toast.info('Ya estaba silenciada');
+        setAcknowledgementTarget(null);
+        return;
+      }
+      toast.error(error?.message ?? 'No se pudo silenciar la alerta');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -226,6 +273,11 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
           const doc = documents.find((d) => d.documentType === type);
           const status = getDocumentStatus(doc?.expiryDate);
           const days = getDaysUntilExpiry(doc?.expiryDate);
+          const alertKey = doc?.expiryDate && status !== 'vigente' && status !== 'sin_fecha'
+            ? getOperatorDocumentAlertKey(doc.id, status === 'vencido' ? 'vencido' : 'por_vencer')
+            : null;
+          const canSilenceAlert = Boolean(isAdmin && doc?.expiryDate && status !== 'vigente' && status !== 'sin_fecha');
+          const isAlertAcknowledged = alertKey && doc?.expiryDate ? isAcknowledged(alertKey, doc.expiryDate) : false;
 
           return (
             <Card key={type} className={`border transition-all ${doc ? cardBorder(status) : 'border-border/60'}`}>
@@ -251,7 +303,10 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                       {doc.expiryDate && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Vencimiento</span>
-                          <span className="text-foreground">{doc.expiryDate}</span>
+                          <div className="flex items-center gap-2">
+                            {isAlertAcknowledged && <StatusBadge tone="info">Silenciada</StatusBadge>}
+                            <span className="text-foreground">{doc.expiryDate}</span>
+                          </div>
                         </div>
                       )}
                       {doc.issuedDate && (
@@ -308,6 +363,24 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
                             : 'Ver'}
                         </Button>
                       </div>
+                      {canSilenceAlert && alertKey && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          disabled={createAcknowledgement.isPending}
+                          onClick={() => setAcknowledgementTarget({
+                            documentId: doc.id,
+                            label: DOCUMENT_TYPE_LABELS[type],
+                            alertKey,
+                            expiryDate: doc.expiryDate!,
+                          })}
+                        >
+                          <BellOff className="size-3 mr-1" />
+                          Silenciar alerta WhatsApp
+                        </Button>
+                      )}
                       {isAdmin && (
                         <Button
                           size="sm"
@@ -487,6 +560,19 @@ export const OperatorDocumentsSection = ({ operator }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertAcknowledgementDialog
+        open={!!acknowledgementTarget}
+        onOpenChange={(open) => !open && setAcknowledgementTarget(null)}
+        title="Silenciar alerta WhatsApp"
+        description={
+          acknowledgementTarget
+            ? `La alerta de ${acknowledgementTarget.label} quedará silenciada hasta que cambie la fecha de vencimiento del documento.`
+            : ''
+        }
+        isSubmitting={createAcknowledgement.isPending}
+        onConfirm={handleSilenceAlert}
+      />
     </div>
   );
 };

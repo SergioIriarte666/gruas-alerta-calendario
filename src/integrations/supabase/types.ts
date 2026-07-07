@@ -1,4 +1,3 @@
-WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
 export type Json =
   | string
   | number
@@ -40,6 +39,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          acknowledged_by: string | null
+          alert_key: string
+          doc_expiry_date: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          acknowledged_at?: string
+          acknowledged_by?: string | null
+          alert_key: string
+          doc_expiry_date: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          acknowledged_at?: string
+          acknowledged_by?: string | null
+          alert_key?: string
+          doc_expiry_date?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_acknowledgements_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_bundle_versions: {
         Row: {
           bundle_url: string
@@ -7812,6 +7846,18 @@ export type Database = {
           expiry_date: string
         }[]
       }
+      get_fleet_compliance: {
+        Args: { p_reference_date?: string }
+        Returns: {
+          issues_count: number
+          next_expiry_date: string
+          next_item_label: string
+          resource_id: string
+          resource_name: string
+          resource_type: string
+          worst_level: string
+        }[]
+      }
       get_invoice_overdue_stats: { Args: never; Returns: Json }
       get_invoice_payment_status: {
         Args: { p_invoice_id: string }
@@ -7967,6 +8013,23 @@ export type Database = {
           ultimo_envio_whatsapp_at: string
         }[]
       }
+      get_resource_compliance: {
+        Args: {
+          p_crane_id?: string
+          p_operator_ids?: string[]
+          p_service_date?: string
+        }
+        Returns: {
+          days_until: number
+          expiry_date: string
+          item: string
+          item_label: string
+          level: string
+          resource_id: string
+          resource_name: string
+          resource_type: string
+        }[]
+      }
       get_supplier_payment_stats: {
         Args: { p_supplier_id: string }
         Returns: {
@@ -8102,6 +8165,10 @@ export type Database = {
           p_operation: string
           p_table_name: string
         }
+        Returns: undefined
+      }
+      log_compliance_override: {
+        Args: { p_reason: string; p_service_context: Json }
         Returns: undefined
       }
       log_cost_snapshot_entry: {

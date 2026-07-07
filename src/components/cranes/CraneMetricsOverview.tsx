@@ -22,6 +22,7 @@ import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { CraneDocumentsSection } from './CraneDocumentsSection';
 import { createLogger } from "@/lib/logger";
 import { businessClock } from '@/utils/businessClock';
+import { getCraneStatusLabel } from '@/utils/craneStatus';
 
 
 const logger = createLogger("CraneMetricsOverview");
@@ -83,13 +84,13 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
           <p className="text-muted-foreground">Resumen de métricas clave</p>
         </div>
         <Badge 
-          variant={crane.isActive ? "default" : "secondary"}
-          className={crane.isActive 
+          variant={crane.status === 'active' ? "default" : "secondary"}
+          className={crane.status === 'active'
             ? "border-primary/20 bg-primary-soft text-foreground" 
             : "border-border bg-muted text-muted-foreground"
           }
         >
-          {crane.isActive ? 'Activa' : 'Inactiva'}
+          {getCraneStatusLabel(crane.status)}
         </Badge>
       </div>
 

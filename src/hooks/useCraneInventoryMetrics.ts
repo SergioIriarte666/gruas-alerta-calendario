@@ -33,13 +33,24 @@ export interface CraneInventoryMetrics {
   };
 }
 
-export const useCraneInventoryMetrics = (craneId: string) => {
+interface UseCraneInventoryMetricsOptions {
+  realtime?: boolean;
+}
+
+export const useCraneInventoryMetrics = (
+  craneId: string,
+  { realtime = true }: UseCraneInventoryMetricsOptions = {},
+) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!craneId) return;
+    if (!craneId || !realtime) return;
     const channel = supabase
-      .channel(`crane-inventory-metrics-${craneId}`)
+      // Topic unico por montaje: este hook puede montarse en paralelo
+      // (lista movil + modal de detalle) con el mismo craneId. Con topic
+      // fijo, supabase-js reutiliza la instancia del canal y el segundo
+      // .subscribe() lanza "tried to subscribe multiple times".
+      .channel(`crane-inventory-metrics-${craneId}-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_parts', filter: `crane_id=eq.${craneId}` }, () => {
         queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics', craneId] });
       })
@@ -53,7 +64,7 @@ export const useCraneInventoryMetrics = (craneId: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [craneId, queryClient]);
+  }, [craneId, queryClient, realtime]);
 
   return useQuery({
     queryKey: ['crane-inventory-metrics', craneId],

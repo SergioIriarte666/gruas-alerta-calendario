@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { AlertAcknowledgementDialog } from '@/components/documents/AlertAcknowledgementDialog';
 import { 
   Calendar,
   Upload,
@@ -13,12 +14,17 @@ import {
   AlertTriangle,
   FileText,
   CheckCircle,
-  Clock
+  Clock,
+  BellOff,
 } from 'lucide-react';
 import { Crane } from '@/types';
+import { useAlertAcknowledgements, useCreateAlertAcknowledgement } from '@/hooks/useAlertAcknowledgements';
 import { useCraneDocuments } from '@/hooks/useCraneDocuments';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { getCraneDocumentAlertKey } from '@/lib/documentAlertKeys';
 import { parseFromDatabase, getCurrentChileDate, formatForDisplay } from '@/utils/timezoneUtils';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { toast } from 'sonner';
 
 interface CraneDocumentsSectionProps {
   crane: Crane;
@@ -44,9 +50,17 @@ const documentTypes = [
 
 export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => {
   const { documents, isLoading, uploading, uploadDocument, downloadDocument, getDocumentByType } = useCraneDocuments(crane.id);
+  const { user, isAdmin } = useUserPermissions();
+  const createAcknowledgement = useCreateAlertAcknowledgement();
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<{[key: string]: File}>({});
   const [expiryDates, setExpiryDates] = useState<{[key: string]: string}>({});
+  const [acknowledgementTarget, setAcknowledgementTarget] = useState<{
+    documentId: string;
+    label: string;
+    alertKey: string;
+    expiryDate: string;
+  } | null>(null);
 
   const getDaysUntilExpiry = (date: string) => {
     if (!date) return 0;
@@ -61,6 +75,19 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
     if (days <= 30) return 'warning';
     return 'success';
   };
+
+  const acknowledgementItems = documents
+    .filter((doc) => Boolean(doc.expiryDate))
+    .map((doc) => {
+      const daysUntilExpiry = doc.expiryDate ? getDaysUntilExpiry(doc.expiryDate) : null;
+      const alertStatus = daysUntilExpiry !== null && daysUntilExpiry < 0 ? 'vencido' : 'por_vencer';
+      return {
+        alertKey: getCraneDocumentAlertKey(doc.id, alertStatus),
+        docExpiryDate: doc.expiryDate ?? null,
+      };
+    });
+
+  const { isAcknowledged } = useAlertAcknowledgements(acknowledgementItems);
 
   const handleFileSelect = (type: string, file: File) => {
     setSelectedFiles(prev => ({ ...prev, [type]: file }));
@@ -89,11 +116,37 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
     }
   };
 
+  const handleSilenceAlert = async (notes: string) => {
+    if (!acknowledgementTarget || !user?.id) return;
+
+    try {
+      await createAcknowledgement.mutateAsync({
+        alertKey: acknowledgementTarget.alertKey,
+        docExpiryDate: acknowledgementTarget.expiryDate,
+        acknowledgedBy: user.id,
+        notes,
+      });
+      toast.success('Alerta silenciada hasta la renovación del documento');
+      setAcknowledgementTarget(null);
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        toast.info('Ya estaba silenciada');
+        setAcknowledgementTarget(null);
+        return;
+      }
+      toast.error(error?.message ?? 'No se pudo silenciar la alerta');
+    }
+  };
+
   const DocumentCard = ({ type }: { type: typeof documentTypes[0] }) => {
     const document = getDocumentByType(type.key);
     const expiryDate = crane[type.craneField] as string;
     const daysUntilExpiry = expiryDate ? getDaysUntilExpiry(expiryDate) : 0;
     const status = getExpiryStatus(daysUntilExpiry);
+    const alertStatus = expiryDate ? (daysUntilExpiry < 0 ? 'vencido' : 'por_vencer') : null;
+    const alertKey = document && alertStatus ? getCraneDocumentAlertKey(document.id, alertStatus) : null;
+    const canSilenceAlert = Boolean(isAdmin && document && expiryDate && daysUntilExpiry <= 30);
+    const isAlertAcknowledged = alertKey && expiryDate ? isAcknowledged(alertKey, expiryDate) : false;
     const selectedFile = selectedFiles[type.key];
     const isUploading = uploadingType === type.key;
 
@@ -148,9 +201,12 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
             {expiryDate && (
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Vencimiento:</span>
-                <span className="text-foreground">
-                  {formatForDisplay(parseFromDatabase(expiryDate))}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isAlertAcknowledged && <Badge variant="secondary">Silenciada</Badge>}
+                  <span className="text-foreground">
+                    {formatForDisplay(parseFromDatabase(expiryDate))}
+                  </span>
+                </div>
               </div>
             )}
 
@@ -166,25 +222,44 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
 
           {/* Acciones si hay documento */}
           {document && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => downloadDocument(document)}
-                className="flex-1"
-              >
-                <Download className="size-4 mr-2" />
-                Descargar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.open(document.fileUrl, '_blank')}
-                className="flex-1"
-              >
-                <Eye className="size-4 mr-2" />
-                Ver
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => downloadDocument(document)}
+                  className="flex-1"
+                >
+                  <Download className="size-4 mr-2" />
+                  Descargar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(document.fileUrl, '_blank')}
+                  className="flex-1"
+                >
+                  <Eye className="size-4 mr-2" />
+                  Ver
+                </Button>
+              </div>
+              {canSilenceAlert && alertKey && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  disabled={createAcknowledgement.isPending}
+                  onClick={() => setAcknowledgementTarget({
+                    documentId: document.id,
+                    label: type.label,
+                    alertKey,
+                    expiryDate,
+                  })}
+                >
+                  <BellOff className="size-4 mr-2" />
+                  Silenciar alerta WhatsApp
+                </Button>
+              )}
             </div>
           )}
 
@@ -299,6 +374,19 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
           </CardContent>
         </Card>
       )}
+
+      <AlertAcknowledgementDialog
+        open={!!acknowledgementTarget}
+        onOpenChange={(open) => !open && setAcknowledgementTarget(null)}
+        title="Silenciar alerta WhatsApp"
+        description={
+          acknowledgementTarget
+            ? `La alerta de ${acknowledgementTarget.label} quedará silenciada hasta que cambie la fecha de vencimiento del documento.`
+            : ''
+        }
+        isSubmitting={createAcknowledgement.isPending}
+        onConfirm={handleSilenceAlert}
+      />
     </div>
   );
 };

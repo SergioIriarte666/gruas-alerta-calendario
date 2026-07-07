@@ -5,6 +5,7 @@ import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { getCraneTypeLabel } from '@/utils/craneType';
+import { getCraneStatusLabel } from '@/utils/craneStatus';
 
 interface CraneInformationProps {
   crane: Crane;
@@ -73,13 +74,13 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
                 <label className="text-gray-300 text-sm">Estado</label>
                 <div>
                   <Badge 
-                    variant={crane.isActive ? "default" : "secondary"}
-                    className={crane.isActive 
+                    variant={crane.status === 'active' ? "default" : "secondary"}
+                    className={crane.status === 'active'
                       ? "bg-tms-green/20 text-tms-green border-tms-green/50" 
                       : "bg-gray-600/20 text-gray-400 border-gray-600/50"
                     }
                   >
-                    {crane.isActive ? 'Activa' : 'Inactiva'}
+                    {getCraneStatusLabel(crane.status)}
                   </Badge>
                 </div>
               </div>

@@ -14,6 +14,9 @@ const TZ = "America/Santiago";
 // Las 4 plantillas fueron aprobadas por Meta el 2026-06-10 (es_CL, Utilidad,
 // "calidad pendiente"). Poner en false y redesplegar si Meta degrada alguna.
 const DOC_ALERTS_ENABLED = true;
+// Alerta de servicios en riesgo. Requiere plantilla
+// admin_servicio_recurso_no_apto aprobada por Meta. Activar tras aprobación.
+const SERVICE_RISK_ALERTS_ENABLED = false;
 
 function today(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
@@ -44,6 +47,23 @@ function daysBetween(fromISO: string, toISO: string): number {
   const db = Date.UTC(+b[1], +b[2] - 1, +b[3]);
   return Math.floor((db - da) / 86400000);
 }
+function isMondayInTZ(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 1;
+}
+/**
+ * Escalera de intensidad según urgencia.
+ * Casos mentales validados:
+ * - daysUntil=20 y hoy no-lunes -> skip
+ * - daysUntil=10 -> envia
+ * - daysUntil=3 -> envia
+ * - daysUntil=-5 -> envia diario
+ */
+function cadenceAllows(daysUntil: number, todayISO: string): boolean {
+  if (daysUntil <= 7) return true;
+  if (daysUntil <= 15) return daysUntil % 2 === 0;
+  return isMondayInTZ(todayISO);
+}
 
 async function getAdminPhones(supabase: any, settings: any): Promise<string[]> {
   const raw = [
@@ -64,6 +84,42 @@ async function shouldRun(supabase: any, alertKey: string, dateISO: string, conte
     return false;
   }
   return true;
+}
+
+async function getAcknowledgedAlertMap(
+  supabase: any,
+  candidates: Array<{ alertKey: string; docExpiryDate: string | null | undefined }>,
+) {
+  const validCandidates = candidates.filter((candidate) => candidate.alertKey && candidate.docExpiryDate);
+  const uniqueAlertKeys = [...new Set(validCandidates.map((candidate) => candidate.alertKey))];
+
+  if (uniqueAlertKeys.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await supabase
+    .from("alert_acknowledgements")
+    .select("alert_key, doc_expiry_date")
+    .in("alert_key", uniqueAlertKeys);
+
+  if (error) {
+    console.warn("[wa-daily-alerts] acknowledgement lookup error:", error.message);
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as Array<{ alert_key: string; doc_expiry_date: string }>)
+      .map((row) => `${row.alert_key}::${row.doc_expiry_date}`),
+  );
+}
+
+function isAcknowledgedForCurrentExpiry(
+  acknowledgedSet: Set<string>,
+  alertKey: string,
+  docExpiryDate: string | null | undefined,
+) {
+  if (!docExpiryDate) return false;
+  return acknowledgedSet.has(`${alertKey}::${docExpiryDate}`);
 }
 
 Deno.serve(async (req: Request) => {
@@ -120,6 +176,13 @@ Deno.serve(async (req: Request) => {
   const todayISO = today();
   const tomorrowISO = addDaysISO(todayISO, 1);
   const results: Record<string, unknown> = {};
+  const activeUpcomingServiceStatuses = [
+    "pending",
+    "scheduled", // compatibilidad legacy si existen registros textuales antiguos
+    "quoted",
+    "purchase_order_pending",
+    "with_purchase_order",
+  ];
 
   // ── 1. Facturas vencidas (notify_invoice_overdue)
   if (settings?.notify_invoice_overdue) {
@@ -247,13 +310,30 @@ Deno.serve(async (req: Request) => {
     const expiredList = (expired ?? []) as any[];
     const sentExpiring: any[] = [];
     const sentExpired: any[] = [];
+    let cadenceSkippedExpiring = 0;
+    let cadenceSkippedExpired = 0;
+    let ackSilencedExpiring = 0;
+    let ackSilencedExpired = 0;
+    const acknowledgedOperatorAlerts = await getAcknowledgedAlertMap(supabase, [
+      ...expiringList.map((doc) => ({ alertKey: `operator_doc_expiry:${doc.id}`, docExpiryDate: doc.expiry_date })),
+      ...expiredList.map((doc) => ({ alertKey: `operator_doc_vencido:${doc.id}`, docExpiryDate: doc.expiry_date })),
+    ]);
 
     for (const doc of expiringList) {
+      const days = daysBetween(todayISO, doc.expiry_date);
+      if (!forceSend && !cadenceAllows(days, todayISO)) {
+        cadenceSkippedExpiring += 1;
+        continue;
+      }
+
       const dedupeKey = `operator_doc_expiry:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, dedupeKey, doc.expiry_date)) {
+        ackSilencedExpiring += 1;
+        continue;
+      }
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;
 
-      const days = daysBetween(todayISO, doc.expiry_date);
       const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
       const operatorName = (doc.operator as any)?.name ?? "Operador";
 
@@ -267,11 +347,21 @@ Deno.serve(async (req: Request) => {
     }
 
     for (const doc of expiredList) {
+      const daysExpired = daysBetween(doc.expiry_date, todayISO);
+      const daysUntil = -daysExpired;
+      if (!forceSend && !cadenceAllows(daysUntil, todayISO)) {
+        cadenceSkippedExpired += 1;
+        continue;
+      }
+
       const dedupeKey = `operator_doc_vencido:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, dedupeKey, doc.expiry_date)) {
+        ackSilencedExpired += 1;
+        continue;
+      }
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;
 
-      const daysExpired = daysBetween(doc.expiry_date, todayISO);
       const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
       const operatorName = (doc.operator as any)?.name ?? "Operador";
 
@@ -285,8 +375,20 @@ Deno.serve(async (req: Request) => {
     }
 
     results.operator_doc_expiry = {
-      expiring: { total: expiringList.length, dispatched: sentExpiring.length, detail: sentExpiring },
-      expired: { total: expiredList.length, dispatched: sentExpired.length, detail: sentExpired },
+      expiring: {
+        total: expiringList.length,
+        cadenceSkipped: cadenceSkippedExpiring,
+        ackSilenced: ackSilencedExpiring,
+        dispatched: sentExpiring.length,
+        detail: sentExpiring,
+      },
+      expired: {
+        total: expiredList.length,
+        cadenceSkipped: cadenceSkippedExpired,
+        ackSilenced: ackSilencedExpired,
+        dispatched: sentExpired.length,
+        detail: sentExpired,
+      },
     };
   }
 
@@ -318,14 +420,31 @@ Deno.serve(async (req: Request) => {
     const craneExpiredList = (craneExpired ?? []) as any[];
     const sentCraneExpiring: any[] = [];
     const sentCraneExpired: any[] = [];
+    let cadenceSkippedCraneExpiring = 0;
+    let cadenceSkippedCraneExpired = 0;
+    let ackSilencedCraneExpiring = 0;
+    let ackSilencedCraneExpired = 0;
+    const acknowledgedCraneAlerts = await getAcknowledgedAlertMap(supabase, [
+      ...craneExpiringList.map((doc) => ({ alertKey: `crane_doc_expiry:${doc.id}`, docExpiryDate: doc.expiry_date })),
+      ...craneExpiredList.map((doc) => ({ alertKey: `crane_doc_vencido:${doc.id}`, docExpiryDate: doc.expiry_date })),
+    ]);
 
     for (const doc of craneExpiringList) {
       if ((doc.crane as any)?.status !== 'active') continue;
+      const days = daysBetween(todayISO, doc.expiry_date);
+      if (!forceSend && !cadenceAllows(days, todayISO)) {
+        cadenceSkippedCraneExpiring += 1;
+        continue;
+      }
+
       const dedupeKey = `crane_doc_expiry:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedCraneAlerts, dedupeKey, doc.expiry_date)) {
+        ackSilencedCraneExpiring += 1;
+        continue;
+      }
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;
 
-      const days = daysBetween(todayISO, doc.expiry_date);
       const docLabel = CRANE_DOC_LABELS[doc.document_type] ?? doc.document_type;
       const craneName = (doc.crane as any)?.license_plate ?? "Equipo";
 
@@ -340,11 +459,21 @@ Deno.serve(async (req: Request) => {
 
     for (const doc of craneExpiredList) {
       if ((doc.crane as any)?.status !== 'active') continue;
+      const daysExpired = daysBetween(doc.expiry_date, todayISO);
+      const daysUntil = -daysExpired;
+      if (!forceSend && !cadenceAllows(daysUntil, todayISO)) {
+        cadenceSkippedCraneExpired += 1;
+        continue;
+      }
+
       const dedupeKey = `crane_doc_vencido:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedCraneAlerts, dedupeKey, doc.expiry_date)) {
+        ackSilencedCraneExpired += 1;
+        continue;
+      }
       const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
       if (!ok) continue;
 
-      const daysExpired = daysBetween(doc.expiry_date, todayISO);
       const docLabel = CRANE_DOC_LABELS[doc.document_type] ?? doc.document_type;
       const craneName = (doc.crane as any)?.license_plate ?? "Equipo";
 
@@ -358,8 +487,120 @@ Deno.serve(async (req: Request) => {
     }
 
     results.crane_doc_expiry = {
-      expiring: { total: craneExpiringList.length, dispatched: sentCraneExpiring.length, detail: sentCraneExpiring },
-      expired: { total: craneExpiredList.length, dispatched: sentCraneExpired.length, detail: sentCraneExpired },
+      expiring: {
+        total: craneExpiringList.length,
+        cadenceSkipped: cadenceSkippedCraneExpiring,
+        ackSilenced: ackSilencedCraneExpiring,
+        dispatched: sentCraneExpiring.length,
+        detail: sentCraneExpiring,
+      },
+      expired: {
+        total: craneExpiredList.length,
+        cadenceSkipped: cadenceSkippedCraneExpired,
+        ackSilenced: ackSilencedCraneExpired,
+        dispatched: sentCraneExpired.length,
+        detail: sentCraneExpired,
+      },
+    };
+  }
+
+  // ── 6. Servicios próximos en riesgo por recursos no aptos
+  if (!SERVICE_RISK_ALERTS_ENABLED) {
+    results.service_resource_risk = { skipped: true, reason: "kill_switch_off" };
+  } else if ((settings as any)?.notify_service_resource_risk === false) {
+    results.service_resource_risk = { skipped: true, reason: "setting_disabled" };
+  } else {
+    const { data: upcomingServices } = await supabase
+      .from("services")
+      .select("id, folio, service_date, crane_id, operator_id, client:clients(name)")
+      .gte("service_date", todayISO)
+      .lte("service_date", addDaysISO(todayISO, 7))
+      .in("status", activeUpcomingServiceStatuses)
+      .limit(30);
+
+    const services = (upcomingServices ?? []) as any[];
+    const serviceIds = services.map((svc) => svc.id).filter(Boolean);
+    const operatorIdsByServiceId = new Map<string, string[]>();
+
+    if (serviceIds.length > 0) {
+      const { data: serviceResources } = await supabase
+        .from("service_resources")
+        .select("service_id, operator_id, resource_type")
+        .in("service_id", serviceIds)
+        .eq("resource_type", "operator");
+
+      for (const resource of (serviceResources ?? []) as any[]) {
+        if (!resource.service_id || !resource.operator_id) continue;
+        const existing = operatorIdsByServiceId.get(resource.service_id) ?? [];
+        existing.push(resource.operator_id);
+        operatorIdsByServiceId.set(resource.service_id, existing);
+      }
+    }
+
+    let issuesCount = 0;
+    let dispatchedCount = 0;
+
+    for (const svc of services) {
+      const operatorIds = [
+        ...new Set([
+          ...(svc.operator_id ? [svc.operator_id] : []),
+          ...(operatorIdsByServiceId.get(svc.id) ?? []),
+        ]),
+      ];
+
+      if (!svc.crane_id && operatorIds.length === 0) continue;
+
+      const { data: issues, error: issuesError } = await supabase.rpc("get_resource_compliance", {
+        p_crane_id: svc.crane_id,
+        p_operator_ids: operatorIds.length > 0 ? operatorIds : null,
+        p_service_date: svc.service_date,
+      });
+
+      if (issuesError) {
+        console.warn("[wa-daily-alerts] service risk compliance rpc error:", issuesError.message, { serviceId: svc.id });
+        continue;
+      }
+
+      const blockingIssues = ((issues ?? []) as any[]).filter((issue) => issue.level === "error");
+      issuesCount += blockingIssues.length;
+
+      for (const issue of blockingIssues) {
+        const dedupeKey = `service_resource_risk:${svc.id}:${issue.resource_id}:${issue.item}`;
+        const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, {
+          serviceId: svc.id,
+          resourceId: issue.resource_id,
+          item: issue.item,
+        });
+        if (!ok) continue;
+
+        const outcome = await sendWhatsAppTemplateBulk(
+          phones,
+          "admin_servicio_recurso_no_apto",
+          [
+            String(svc.folio ?? ""),
+            fmtDateDisplay(svc.service_date),
+            issue.resource_type === "crane"
+              ? `Grúa ${issue.resource_name}`
+              : `Operador ${issue.resource_name}`,
+            issue.item_label,
+            issue.expiry_date ? fmtDateDisplay(issue.expiry_date) : fmtDateDisplay(svc.service_date),
+          ],
+          {
+            event: "servicio_recurso_no_apto",
+            context: { serviceId: svc.id, resourceId: issue.resource_id, item: issue.item },
+          },
+        );
+
+        if (outcome.notified > 0) {
+          dispatchedCount += 1;
+        }
+      }
+    }
+
+    results.service_resource_risk = {
+      services: services.length,
+      issues: issuesCount,
+      dispatched: dispatchedCount,
     };
   }
 

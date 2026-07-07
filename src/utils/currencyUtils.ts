@@ -1,5 +1,6 @@
 import { formatCurrency } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
+import { supabase } from '@/integrations/supabase/client';
 
 
 const logger = createLogger("currencyUtils");
@@ -20,9 +21,7 @@ const getUserCurrencyFromCache = async (): Promise<string> => {
   }
 
   try {
-    // Solo importar supabase si estamos en el browser
     if (typeof window !== 'undefined') {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {

@@ -25,11 +25,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Briefcase, IdCard, ShieldCheck, UserCog } from 'lucide-react';
+import { useFleetCompliance } from '@/hooks/useFleetCompliance';
 
 const Operators = () => {
   const { data: operatorsData, isLoading: loading } = useOperatorsData();
   const { createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperatorMutations();
   const { data: operatorsWithDocumentAlerts } = useOperatorDocumentAlerts();
+  const { byResourceId: fleetComplianceByResourceId } = useFleetCompliance();
   
   const operators = operatorsData || [];
   
@@ -199,6 +201,7 @@ const Operators = () => {
         sortDirection={sortDirection}
         onSort={handleSort}
         operatorsWithDocumentAlerts={operatorsWithDocumentAlerts}
+        fleetComplianceByResourceId={fleetComplianceByResourceId}
       />
 
       <OperatorDetailsModal
