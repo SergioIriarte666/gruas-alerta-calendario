@@ -10,6 +10,7 @@ import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { usePendingOfflineInspections } from '@/hooks/usePendingOfflineInspections';
 import { LocationSharingCard } from '@/components/operator/LocationSharingCard';
+import { DocumentStatusBanner } from '@/components/operator/DocumentStatusBanner';
 
 const logger = createLogger('OperatorDashboard');
 
@@ -83,6 +84,7 @@ const OperatorDashboard = () => {
 
   return (
     <div className="space-y-4">
+      <DocumentStatusBanner operatorId={user?.operator_id} />
 
       {/* ── Bienvenida + refresh ── */}
       <div className="flex items-center justify-between">

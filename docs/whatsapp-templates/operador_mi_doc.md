@@ -1,0 +1,13 @@
+- Nombre: operador_mi_doc_vencimiento
+- Idioma: es_CL — Categoria: Utility
+- Header: sin header
+- Botones: sin botones
+- Cuerpo: "Hola {{1}}, tu documento {{2}} vence el {{3}} (quedan {{4}} dias). Coordina su renovacion para mantenerte habilitado para nuevos servicios."
+- Ejemplo: Juan Perez / Licencia de Conducir / 20-07-2026 / 13
+
+- Nombre: operador_mi_doc_vencido
+- Idioma: es_CL — Categoria: Utility
+- Header: sin header
+- Botones: sin botones
+- Cuerpo: "Hola {{1}}, tu documento {{2}} vencio el {{3}} (hace {{4}} dias). Debes regularizarlo para poder ser asignado a nuevos servicios."
+- Ejemplo: Juan Perez / Examen de Altura / 01-07-2026 / 6

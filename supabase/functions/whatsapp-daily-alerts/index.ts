@@ -17,6 +17,10 @@ const DOC_ALERTS_ENABLED = true;
 // Alerta de servicios en riesgo. Requiere plantilla
 // admin_servicio_recurso_no_apto aprobada por Meta. Activar tras aprobación.
 const SERVICE_RISK_ALERTS_ENABLED = false;
+// Aviso directo al operador sobre SUS documentos. Requiere plantillas
+// operador_mi_doc_vencimiento / operador_mi_doc_vencido aprobadas por Meta.
+// Activar tras aprobación.
+const OPERATOR_SELF_ALERTS_ENABLED = false;
 
 function today(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
@@ -293,7 +297,7 @@ Deno.serve(async (req: Request) => {
     // Documentos por vencer (hoy…+30 días)
     const { data: expiring } = await supabase
       .from("operator_documents")
-      .select("id, operator_id, document_type, expiry_date, operator:operators(name)")
+      .select("id, operator_id, document_type, expiry_date, operator:operators(name, phone, operator_type)")
       .gte("expiry_date", todayISO)
       .lte("expiry_date", in30ISO)
       .order("expiry_date", { ascending: true });
@@ -301,7 +305,7 @@ Deno.serve(async (req: Request) => {
     // Documentos ya vencidos
     const { data: expired } = await supabase
       .from("operator_documents")
-      .select("id, operator_id, document_type, expiry_date, operator:operators(name)")
+      .select("id, operator_id, document_type, expiry_date, operator:operators(name, phone, operator_type)")
       .lt("expiry_date", todayISO)
       .order("expiry_date", { ascending: false })
       .limit(20);
@@ -314,64 +318,134 @@ Deno.serve(async (req: Request) => {
     let cadenceSkippedExpired = 0;
     let ackSilencedExpiring = 0;
     let ackSilencedExpired = 0;
+    const operatorSelfAlertsEnabled =
+      OPERATOR_SELF_ALERTS_ENABLED && (settings as any)?.notify_operator_self_document !== false;
+    const sentSelfExpiring: any[] = [];
+    const sentSelfExpired: any[] = [];
+    let selfCadenceSkippedExpiring = 0;
+    let selfCadenceSkippedExpired = 0;
+    let selfAdministrativeSkippedExpiring = 0;
+    let selfAdministrativeSkippedExpired = 0;
+    let selfInvalidPhoneExpiring = 0;
+    let selfInvalidPhoneExpired = 0;
     const acknowledgedOperatorAlerts = await getAcknowledgedAlertMap(supabase, [
       ...expiringList.map((doc) => ({ alertKey: `operator_doc_expiry:${doc.id}`, docExpiryDate: doc.expiry_date })),
       ...expiredList.map((doc) => ({ alertKey: `operator_doc_vencido:${doc.id}`, docExpiryDate: doc.expiry_date })),
     ]);
 
+    if (!OPERATOR_SELF_ALERTS_ENABLED) {
+      results.operator_self_alerts = { skipped: true, reason: "disabled" };
+    } else if ((settings as any)?.notify_operator_self_document === false) {
+      results.operator_self_alerts = { skipped: true, reason: "config_disabled" };
+    }
+
     for (const doc of expiringList) {
       const days = daysBetween(todayISO, doc.expiry_date);
+      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const operator = (doc.operator as any) ?? {};
+      const operatorName = operator.name ?? "Operador";
+
       if (!forceSend && !cadenceAllows(days, todayISO)) {
         cadenceSkippedExpiring += 1;
+        if (operatorSelfAlertsEnabled) selfCadenceSkippedExpiring += 1;
         continue;
       }
 
-      const dedupeKey = `operator_doc_expiry:${doc.id}`;
-      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, dedupeKey, doc.expiry_date)) {
+      const adminDedupeKey = `operator_doc_expiry:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, adminDedupeKey, doc.expiry_date)) {
         ackSilencedExpiring += 1;
+      } else {
+        const ok = forceSend || await shouldRun(supabase, adminDedupeKey, todayISO, { docId: doc.id });
+        if (ok) {
+          const outcome = await sendWhatsAppTemplateBulk(
+            phones,
+            "admin_doc_op_vencimiento",
+            [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(days)],
+            { event: "operador_doc_vencimiento", context: { docId: doc.id, operatorId: doc.operator_id } },
+          );
+          sentExpiring.push({ operatorName, docLabel, days, notified: outcome.notified });
+        }
+      }
+
+      if (!operatorSelfAlertsEnabled) continue;
+      if (operator.operator_type !== "crane_operator") {
+        selfAdministrativeSkippedExpiring += 1;
         continue;
       }
-      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
-      if (!ok) continue;
 
-      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
-      const operatorName = (doc.operator as any)?.name ?? "Operador";
+      const normalizedPhone = normalizeChileanPhone(operator.phone ?? "");
+      if (!normalizedPhone.ok) {
+        selfInvalidPhoneExpiring += 1;
+        sentSelfExpiring.push({ operatorName, docLabel, days, skipped: "invalid_phone" });
+        continue;
+      }
 
-      const outcome = await sendWhatsAppTemplateBulk(
-        phones,
-        "admin_doc_op_vencimiento",
+      const selfDedupeKey = `operator_self_doc:${doc.id}`;
+      const selfOk = forceSend || await shouldRun(supabase, selfDedupeKey, todayISO, { docId: doc.id, operatorId: doc.operator_id });
+      if (!selfOk) continue;
+
+      const selfOutcome = await sendWhatsAppTemplateBulk(
+        [normalizedPhone.phone],
+        "operador_mi_doc_vencimiento",
         [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(days)],
-        { event: "operador_doc_vencimiento", context: { docId: doc.id, operatorId: doc.operator_id } },
+        { event: "operador_mi_doc_vencimiento", context: { docId: doc.id, operatorId: doc.operator_id } },
       );
-      sentExpiring.push({ operatorName, docLabel, days, notified: outcome.notified });
+      sentSelfExpiring.push({ operatorName, docLabel, days, notified: selfOutcome.notified });
     }
 
     for (const doc of expiredList) {
       const daysExpired = daysBetween(doc.expiry_date, todayISO);
       const daysUntil = -daysExpired;
+      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
+      const operator = (doc.operator as any) ?? {};
+      const operatorName = operator.name ?? "Operador";
+
       if (!forceSend && !cadenceAllows(daysUntil, todayISO)) {
         cadenceSkippedExpired += 1;
+        if (operatorSelfAlertsEnabled) selfCadenceSkippedExpired += 1;
         continue;
       }
 
-      const dedupeKey = `operator_doc_vencido:${doc.id}`;
-      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, dedupeKey, doc.expiry_date)) {
+      const adminDedupeKey = `operator_doc_vencido:${doc.id}`;
+      if (isAcknowledgedForCurrentExpiry(acknowledgedOperatorAlerts, adminDedupeKey, doc.expiry_date)) {
         ackSilencedExpired += 1;
+      } else {
+        const ok = forceSend || await shouldRun(supabase, adminDedupeKey, todayISO, { docId: doc.id });
+        if (ok) {
+          const outcome = await sendWhatsAppTemplateBulk(
+            phones,
+            "admin_doc_op_vencido",
+            [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(daysExpired)],
+            { event: "operador_doc_vencido", context: { docId: doc.id, operatorId: doc.operator_id } },
+          );
+          sentExpired.push({ operatorName, docLabel, daysExpired, notified: outcome.notified });
+        }
+      }
+
+      if (!operatorSelfAlertsEnabled) continue;
+      if (operator.operator_type !== "crane_operator") {
+        selfAdministrativeSkippedExpired += 1;
         continue;
       }
-      const ok = forceSend || await shouldRun(supabase, dedupeKey, todayISO, { docId: doc.id });
-      if (!ok) continue;
 
-      const docLabel = OPERATOR_DOC_LABELS[doc.document_type] ?? doc.document_type;
-      const operatorName = (doc.operator as any)?.name ?? "Operador";
+      const normalizedPhone = normalizeChileanPhone(operator.phone ?? "");
+      if (!normalizedPhone.ok) {
+        selfInvalidPhoneExpired += 1;
+        sentSelfExpired.push({ operatorName, docLabel, daysExpired, skipped: "invalid_phone" });
+        continue;
+      }
 
-      const outcome = await sendWhatsAppTemplateBulk(
-        phones,
-        "admin_doc_op_vencido",
+      const selfDedupeKey = `operator_self_doc:${doc.id}`;
+      const selfOk = forceSend || await shouldRun(supabase, selfDedupeKey, todayISO, { docId: doc.id, operatorId: doc.operator_id });
+      if (!selfOk) continue;
+
+      const selfOutcome = await sendWhatsAppTemplateBulk(
+        [normalizedPhone.phone],
+        "operador_mi_doc_vencido",
         [operatorName, docLabel, fmtDateDisplay(doc.expiry_date), String(daysExpired)],
-        { event: "operador_doc_vencido", context: { docId: doc.id, operatorId: doc.operator_id } },
+        { event: "operador_mi_doc_vencido", context: { docId: doc.id, operatorId: doc.operator_id } },
       );
-      sentExpired.push({ operatorName, docLabel, daysExpired, notified: outcome.notified });
+      sentSelfExpired.push({ operatorName, docLabel, daysExpired, notified: selfOutcome.notified });
     }
 
     results.operator_doc_expiry = {
@@ -390,6 +464,26 @@ Deno.serve(async (req: Request) => {
         detail: sentExpired,
       },
     };
+    if (operatorSelfAlertsEnabled) {
+      results.operator_self_alerts = {
+        expiring: {
+          total: expiringList.length,
+          cadenceSkipped: selfCadenceSkippedExpiring,
+          administrativeSkipped: selfAdministrativeSkippedExpiring,
+          invalidPhone: selfInvalidPhoneExpiring,
+          dispatched: sentSelfExpiring.filter((entry) => !entry.skipped).length,
+          detail: sentSelfExpiring,
+        },
+        expired: {
+          total: expiredList.length,
+          cadenceSkipped: selfCadenceSkippedExpired,
+          administrativeSkipped: selfAdministrativeSkippedExpired,
+          invalidPhone: selfInvalidPhoneExpired,
+          dispatched: sentSelfExpired.filter((entry) => !entry.skipped).length,
+          detail: sentSelfExpired,
+        },
+      };
+    }
   }
 
   // ── 5. Documentos de grúas por vencer / vencidos (notify_operator_document_expiry)

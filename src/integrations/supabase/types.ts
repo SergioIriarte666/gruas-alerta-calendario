@@ -7077,6 +7077,7 @@ export type Database = {
           notify_invoice_overdue: boolean
           notify_operator_assigned: boolean
           notify_operator_document_expiry: boolean
+          notify_operator_self_document: boolean
           notify_payment_pending: boolean
           notify_service_completed: boolean
           notify_service_no_operator: boolean
@@ -7097,6 +7098,7 @@ export type Database = {
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
           notify_operator_document_expiry?: boolean
+          notify_operator_self_document?: boolean
           notify_payment_pending?: boolean
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
@@ -7117,6 +7119,7 @@ export type Database = {
           notify_invoice_overdue?: boolean
           notify_operator_assigned?: boolean
           notify_operator_document_expiry?: boolean
+          notify_operator_self_document?: boolean
           notify_payment_pending?: boolean
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
