@@ -22,11 +22,14 @@ import {
   Receipt,
   Wrench,
   Package,
-  Printer
+  Printer,
+  Send,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { useInvoiceEmailLog } from '@/hooks/useInvoiceEmailLog';
 
 interface InvoiceDetailsModalProps {
   invoice: Invoice | null;
@@ -153,6 +156,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   const [serviceAmounts, setServiceAmounts] = useState<Record<string, number>>({});
   const [closures, setClosures] = useState<ClosureRow[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
+  const { data: emailLog, isLoading: loadingEmailLog } = useInvoiceEmailLog(invoice?.id);
   const [cancellation, setCancellation] = useState<{
     credit_note_number: string;
     cancellation_reason: string;
@@ -325,11 +329,12 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-6">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="financial">Financiera</TabsTrigger>
             <TabsTrigger value="payments">Pagos</TabsTrigger>
             <TabsTrigger value="services">Servicios</TabsTrigger>
+            <TabsTrigger value="collections">Cobranza</TabsTrigger>
           </TabsList>
 
           {/* Tab 1: General */}
@@ -758,6 +763,74 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                   </div>
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Tab 5: Cobranza */}
+          <TabsContent value="collections" className="mt-6">
+            <div className="rounded-lg border border-border border-l-4 border-l-danger bg-danger/5 p-4">
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-danger">
+                <div className="rounded bg-danger/10 p-1 text-danger">
+                  <Send className="size-4" />
+                </div>
+                Notificaciones de cobranza
+                {emailLog && emailLog.length > 0 && (
+                  <Badge className="ml-2 bg-danger text-danger-foreground text-xs">
+                    {emailLog.filter(e => e.success).length} enviada{emailLog.filter(e => e.success).length !== 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </h3>
+
+              {loadingEmailLog ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="size-8 mx-auto mb-2 animate-spin opacity-50" />
+                  <p className="text-sm">Cargando historial...</p>
+                </div>
+              ) : !emailLog || emailLog.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Send className="size-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sin notificaciones enviadas</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">Fecha</th>
+                        <th className="text-left py-2 px-3 font-medium text-muted-foreground">Destinatarios</th>
+                        <th className="text-center py-2 px-3 font-medium text-muted-foreground">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emailLog.map((entry) => (
+                        <tr key={entry.id} className="border-b border-border hover:bg-muted/50">
+                          <td className="py-2 px-3 text-foreground text-xs">
+                            {(() => {
+                              try {
+                                return new Date(entry.sent_at).toLocaleString('es-CL');
+                              } catch {
+                                return entry.sent_at;
+                              }
+                            })()}
+                          </td>
+                          <td className="py-2 px-3 text-foreground text-xs">
+                            {entry.recipients.join(', ')}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            {entry.success ? (
+                              <CheckCircle className="size-4 text-success inline" />
+                            ) : (
+                              <span title={entry.error_message || 'Error desconocido'}>
+                                <XCircle className="size-4 text-danger inline cursor-help" />
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

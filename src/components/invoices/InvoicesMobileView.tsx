@@ -2,13 +2,15 @@ import { Invoice } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Edit, CheckCircle, Ban, FileText, Calendar, User, DollarSign } from 'lucide-react';
+import { Eye, Edit, CheckCircle, Ban, FileText, Calendar, User, DollarSign, Mail } from 'lucide-react';
 import { isValid, parseISO, differenceInDays } from 'date-fns';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { useState, useEffect } from 'react';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
+import { InvoiceOverdueNotifyDialog } from './InvoiceOverdueNotifyDialog';
+import { useInvoiceEmail } from '@/hooks/useInvoiceEmail';
 import { toTitleCase } from '@/lib/utils';
 
 interface InvoicesMobileViewProps {
@@ -79,6 +81,8 @@ export const InvoicesMobileView = ({
 }: InvoicesMobileViewProps) => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
+  const [notifyingInvoice, setNotifyingInvoice] = useState<Invoice | null>(null);
+  const { sendOverdueNotification, isSendingOverdue } = useInvoiceEmail();
 
   // Keep viewingInvoice in sync with fresh data from parent
   useEffect(() => {
@@ -200,6 +204,18 @@ export const InvoicesMobileView = ({
                     <Ban className="size-3.5" />
                   </Button>
                 )}
+                {invoice.status === 'overdue' && invoiceWithDetails?.client?.email && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs px-2 text-danger border-danger/20 bg-danger/10 hover:bg-danger/15"
+                    onClick={() => setNotifyingInvoice(invoice)}
+                    disabled={isSendingOverdue}
+                    title="Notificar vencimiento por email"
+                  >
+                    <Mail className="size-3.5" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -218,6 +234,21 @@ export const InvoicesMobileView = ({
         onClose={() => setCancellingInvoice(null)}
         onSuccess={() => onRefresh?.()}
         getClientName={getClientName}
+      />
+
+      <InvoiceOverdueNotifyDialog
+        open={!!notifyingInvoice}
+        onOpenChange={(open) => { if (!open) setNotifyingInvoice(null); }}
+        onConfirm={() => {
+          if (!notifyingInvoice?.id) return;
+          sendOverdueNotification({
+            invoiceId: notifyingInvoice.id,
+            folio: notifyingInvoice.folio || '',
+          });
+          setNotifyingInvoice(null);
+        }}
+        isSending={isSendingOverdue}
+        invoice={notifyingInvoice ? getInvoiceWithDetails(notifyingInvoice) : null}
       />
     </div>
   );

@@ -69,6 +69,9 @@ verify_jwt = true
 [functions.send-invoice-email]
 verify_jwt = false
 
+[functions.send-invoice-overdue-notification]
+verify_jwt = true
+
 [functions.send-operator-notification]
 verify_jwt = false
 

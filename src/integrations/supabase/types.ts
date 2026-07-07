@@ -400,6 +400,50 @@ export type Database = {
           },
         ]
       }
+      client_billing_contacts: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -3338,6 +3382,57 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_email_log: {
+        Row: {
+          email_type: string
+          error_message: string | null
+          id: string
+          invoice_id: string
+          recipients: string[]
+          resend_id: string | null
+          sent_at: string
+          sent_by: string | null
+          success: boolean
+        }
+        Insert: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          invoice_id: string
+          recipients: string[]
+          resend_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          success?: boolean
+        }
+        Update: {
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string
+          recipients?: string[]
+          resend_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_email_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_email_log_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
