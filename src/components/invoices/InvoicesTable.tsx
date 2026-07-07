@@ -9,8 +9,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
-import { InvoiceOverdueNotifyDialog } from './InvoiceOverdueNotifyDialog';
-import { useInvoiceEmail } from '@/hooks/useInvoiceEmail';
+import { OverdueNotificationDialog } from './OverdueNotificationDialog';
 import { toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
 
@@ -174,7 +173,6 @@ const InvoicesTable = ({
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
   const [notifyingInvoice, setNotifyingInvoice] = useState<Invoice | null>(null);
-  const { sendOverdueNotification, isSendingOverdue } = useInvoiceEmail();
 
   // Keep viewingInvoice in sync with fresh data from parent
   useEffect(() => {
@@ -393,7 +391,6 @@ const InvoicesTable = ({
                               onClick={() => setNotifyingInvoice(invoice)}
                               className="border-danger/20 bg-danger/10 text-danger hover:bg-danger/15"
                               title="Notificar vencimiento por email"
-                              disabled={isSendingOverdue}
                             >
                               <Mail className="size-4" />
                             </Button>
@@ -427,20 +424,15 @@ const InvoicesTable = ({
         getClientName={getClientName}
       />
 
-      <InvoiceOverdueNotifyDialog
+      <OverdueNotificationDialog
+        invoice={notifyingInvoice ? { id: notifyingInvoice.id, folio: notifyingInvoice.folio || '' } : null}
+        clientEmail={(() => {
+          const detailed = notifyingInvoice ? getInvoiceWithDetails(notifyingInvoice) : null;
+          return detailed?.client?.email || '';
+        })()}
+        clientId={notifyingInvoice?.clientId || ''}
         open={!!notifyingInvoice}
         onOpenChange={(open) => { if (!open) setNotifyingInvoice(null); }}
-        onConfirm={() => {
-          if (!notifyingInvoice?.id) return;
-          const detailed = getInvoiceWithDetails(notifyingInvoice);
-          sendOverdueNotification({
-            invoiceId: notifyingInvoice.id,
-            folio: notifyingInvoice.folio || '',
-          });
-          setNotifyingInvoice(null);
-        }}
-        isSending={isSendingOverdue}
-        invoice={notifyingInvoice ? getInvoiceWithDetails(notifyingInvoice) : null}
       />
     </Card>
   );

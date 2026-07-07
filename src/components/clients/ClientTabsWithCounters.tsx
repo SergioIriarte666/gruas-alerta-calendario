@@ -10,8 +10,10 @@ import { useClientServices } from '@/hooks/useClientServices';
 import { useClientInvoices } from '@/hooks/useClientInvoices';
 import { useClientClosures } from '@/hooks/useClientClosures';
 import { useClientRequests } from '@/hooks/useClientRequests';
+import { useClientBillingContacts } from '@/hooks/useClientBillingContacts';
 import { toTitleCase } from '@/lib/utils';
 import { ClientLogoUpload } from './ClientLogoUpload';
+import { ClientBillingContacts } from './ClientBillingContacts';
 
 interface ClientTabsWithCountersProps {
   client: Client;
@@ -24,6 +26,8 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
   const { invoices, loading: invoicesLoading } = useClientInvoices(client.id);
   const { closures, loading: closuresLoading } = useClientClosures(client.id);
   const { requests, loading: requestsLoading } = useClientRequests(client.id);
+  const { contacts, isLoading: contactsLoading } = useClientBillingContacts(client.id);
+  const activeContactsCount = contacts.filter(c => c.is_active).length;
 
   const getTabLabel = (baseLabel: string, count: number, loading: boolean) => {
     if (loading) return `${baseLabel} (...)`;
@@ -34,7 +38,7 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
     <div className="h-full flex flex-col">
       <Tabs defaultValue="overview" className="h-full flex flex-col">
         <div className="flex-shrink-0 overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-6 bg-card border-border">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:grid-cols-7 bg-card border-border">
             <TabsTrigger 
               value="overview" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
@@ -70,6 +74,12 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
             >
               {getTabLabel('Solicitudes', requests.length, requestsLoading)}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="billing_contacts" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground whitespace-nowrap text-xs sm:text-sm"
+            >
+              {getTabLabel('Cobranza', activeContactsCount, contactsLoading)}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -197,6 +207,10 @@ export const ClientTabsWithCounters = ({ client, logoUrl, onLogoChange }: Client
 
               <TabsContent value="requests" className="m-0">
                 <ClientRequestHistory client={client} />
+              </TabsContent>
+
+              <TabsContent value="billing_contacts" className="m-0">
+                <ClientBillingContacts clientId={client.id} />
               </TabsContent>
           </div>
         </div>
