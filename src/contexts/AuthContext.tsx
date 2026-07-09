@@ -1,8 +1,10 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { queryClient, resetAuthErrorHandling } from '@/lib/queryClient';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthContext');
@@ -21,6 +23,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  // Tracks whether the current sign-out was requested by the user (via signOut()),
+  // so the SIGNED_OUT listener below doesn't show a duplicate "session expired" toast/redirect.
+  const manualSignOutRef = useRef(false);
 
   const logActivity = async (params: { userId: string; eventType: string; path?: string }) => {
     try {
@@ -48,6 +53,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(currentSession?.user ?? null);
         if (event === 'SIGNED_IN' && currentSession?.user?.id) {
           logActivity({ userId: currentSession.user.id, eventType: 'login', path: window.location.pathname });
+          resetAuthErrorHandling();
+        }
+        if (event === 'SIGNED_OUT') {
+          const wasManual = manualSignOutRef.current;
+          manualSignOutRef.current = false;
+          resetAuthErrorHandling();
+          if (!wasManual) {
+            logger.warn('Sesión cerrada de forma inesperada (probablemente expirada)');
+            queryClient.clear();
+            toast.error('Tu sesión expiró, vuelve a iniciar sesión');
+            window.location.href = '/auth';
+          }
         }
         // Do NOT setLoading here — only the initial load controls it
       }
@@ -93,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
+    manualSignOutRef.current = true;
     try {
       if (user?.id) {
         await logActivity({ userId: user.id, eventType: 'logout', path: window.location.pathname });

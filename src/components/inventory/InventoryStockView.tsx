@@ -25,7 +25,7 @@ import {
   useCreateInventoryMovement,
 } from '@/hooks/useInventory';
 import { ProductDrawer } from './ProductDrawer';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { SimpleEntryForm } from './SimpleEntryForm';
 import { SimpleExitForm } from './SimpleExitForm';
 import { businessClock } from '@/utils/businessClock';
@@ -152,6 +152,7 @@ export const InventoryStockView = () => {
                 <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+                    <DialogDescription className="sr-only">Formulario para crear un nuevo producto en el catálogo de inventario.</DialogDescription>
                   </DialogHeader>
                   <ProductFormModal onSuccess={() => setShowCreateProductForm(false)} onClose={() => setShowCreateProductForm(false)} />
                 </DialogContent>
@@ -165,6 +166,7 @@ export const InventoryStockView = () => {
                 <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Entrada de Inventario</DialogTitle>
+                    <DialogDescription className="sr-only">Formulario para registrar una entrada de stock en bodega.</DialogDescription>
                   </DialogHeader>
                   <SimpleEntryForm onSuccess={() => setShowEntryForm(false)} />
                 </DialogContent>
@@ -178,6 +180,7 @@ export const InventoryStockView = () => {
                 <DialogContent className="max-h-[90vh] max-w-3xl border-border/70 bg-card overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Registrar Salida de Inventario</DialogTitle>
+                    <DialogDescription className="sr-only">Formulario para registrar una salida de stock en bodega.</DialogDescription>
                   </DialogHeader>
                   <SimpleExitForm onSuccess={() => setShowExitForm(false)} />
                 </DialogContent>
@@ -506,6 +509,7 @@ export const InventoryStockView = () => {
         <DialogContent className="max-h-[90vh] max-w-2xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Editar Producto</DialogTitle>
+            <DialogDescription className="sr-only">Formulario para editar los datos de un producto del catálogo.</DialogDescription>
           </DialogHeader>
           {editProductId ? (
             <ProductFormModal
@@ -521,6 +525,7 @@ export const InventoryStockView = () => {
         <DialogContent className="max-w-3xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Limpiar ítems huérfanos</DialogTitle>
+            <DialogDescription className="sr-only">Lista de ítems sin stock ni movimientos activos, con opción de marcarlos inactivos o eliminarlos.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
@@ -563,6 +568,7 @@ export const InventoryStockView = () => {
         <DialogContent className="max-h-[90vh] max-w-6xl border-border/70 bg-card">
           <DialogHeader>
             <DialogTitle>Administrar Productos Duplicados</DialogTitle>
+            <DialogDescription className="sr-only">Panel para revisar y fusionar productos duplicados del catálogo de inventario.</DialogDescription>
           </DialogHeader>
           <DuplicateProductsPanel onMerged={() => setShowDuplicateMerge(false)} />
         </DialogContent>

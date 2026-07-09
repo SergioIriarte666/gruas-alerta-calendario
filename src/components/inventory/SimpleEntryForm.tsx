@@ -79,8 +79,11 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       movement_date: businessClock.now(),
       quantity: 1,
       unit_cost: 0,
+      item_id: '',
       item_name: '',
+      location_id: '',
       immediate_consumption: false,
+      crane_id: '',
     },
   });
 
@@ -226,7 +229,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                   value={watchedValues.item_name}
                   onChange={(e) => {
                     setValue('item_name', e.target.value);
-                    setValue('item_id', undefined);
+                    setValue('item_id', '');
                   }}
                   className="mt-2"
                 />

@@ -60,8 +60,11 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
     defaultValues: {
       movement_date: businessClock.now(),
       quantity: 1,
+      item_id: '',
+      location_id: '',
       destination_type: 'crane',
-      crane_id: defaultCraneId,
+      source_entry_id: '',
+      crane_id: defaultCraneId ?? '',
     },
   });
 
@@ -100,7 +103,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defau
   React.useEffect(() => {
     if (!recentEntries.length) {
       if (watchedValues.source_entry_id) {
-        setValue('source_entry_id', undefined);
+        setValue('source_entry_id', '');
       }
       return;
     }

@@ -1,7 +1,8 @@
 
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
@@ -133,17 +134,6 @@ const preloadAllRoutes = () => {
     importFn().catch(() => {}); // Silently preload, ignore errors
   });
 };
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 2 * 60 * 1000, // 2 minutes - serve cached data without refetch
-      gcTime: 10 * 60 * 1000, // 10 minutes - keep cache in memory during navigation
-      retry: 1,
-      refetchOnWindowFocus: false, // Don't refetch on tab focus
-    },
-  },
-});
 
 function RouteActivityTracker() {
   const { user } = useAuth();
