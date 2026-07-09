@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Package } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ProductCombobox, type ProductComboboxItem } from '@/components/inventory/ProductCombobox';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { getSalePrice } from '@/utils/inventoryPricing';
+import { createLogger } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 
-interface InventoryItem {
-  id: string;
-  name: string;
+const logger = createLogger('ProductSalesSection');
+
+interface InventoryItem extends ProductComboboxItem {
   unit_cost: number;
-  current_stock: number;
-  unit_of_measure: string;
+  sale_markup_percent?: number | null;
+  sale_price_fixed?: number | null;
 }
 
 interface ProductSaleItem {
@@ -35,6 +40,11 @@ interface ProductSalesSectionProps {
   disabled?: boolean;
 }
 
+const buildQuantitySchema = (maxStock: number) =>
+  z.number({ invalid_type_error: 'La cantidad debe ser un número' })
+    .min(1, 'La cantidad debe ser mayor a 0')
+    .max(maxStock, `Stock disponible: ${maxStock}`);
+
 export const ProductSalesSection = ({
   salesItems,
   onSalesItemsChange,
@@ -43,6 +53,8 @@ export const ProductSalesSection = ({
   const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState<number | null>(null);
+  const [quantityError, setQuantityError] = useState<string | null>(null);
+  const { systemSettings } = useSystemSettings();
 
   // Fetch available inventory items
   const { data: inventoryItems = [], isLoading } = useQuery({
@@ -53,7 +65,10 @@ export const ProductSalesSection = ({
         .select(`
           id,
           name,
+          sku,
           unit_cost,
+          sale_markup_percent,
+          sale_price_fixed,
           unit_of_measure,
           inventory_stock(current_quantity)
         `)
@@ -64,14 +79,17 @@ export const ProductSalesSection = ({
       return data.map(item => {
         // Sum stock from all locations for this item
         const totalStock = item.inventory_stock?.reduce(
-          (sum: number, stock: any) => sum + (stock.current_quantity || 0), 
+          (sum: number, stock: any) => sum + (stock.current_quantity || 0),
           0
         ) || 0;
 
         return {
           id: item.id,
           name: item.name,
+          sku: item.sku,
           unit_cost: item.unit_cost || 0,
+          sale_markup_percent: item.sale_markup_percent,
+          sale_price_fixed: item.sale_price_fixed,
           unit_of_measure: item.unit_of_measure,
           current_stock: totalStock
         };
@@ -80,6 +98,12 @@ export const ProductSalesSection = ({
   });
 
   const selectedProduct = inventoryItems.find(item => item.id === selectedProductId);
+
+  const validateQuantity = (value: number, maxStock: number): boolean => {
+    const result = buildQuantitySchema(maxStock).safeParse(value);
+    setQuantityError(result.success ? null : result.error.issues[0].message);
+    return result.success;
+  };
 
   const addProduct = () => {
     if (!selectedProduct) {
@@ -92,13 +116,7 @@ export const ProductSalesSection = ({
       return;
     }
 
-    if (quantity <= 0) {
-      toast.error('La cantidad debe ser mayor a 0');
-      return;
-    }
-
-    if (quantity > selectedProduct.current_stock) {
-      toast.error(`Stock insuficiente. Disponible: ${selectedProduct.current_stock} ${selectedProduct.unit_of_measure}`);
+    if (!validateQuantity(quantity, selectedProduct.current_stock)) {
       return;
     }
 
@@ -124,11 +142,12 @@ export const ProductSalesSection = ({
     };
 
     onSalesItemsChange([...salesItems, newItem]);
-    
+
     // Reset form
     setSelectedProductId('');
     setQuantity(1);
     setCustomPrice(null);
+    setQuantityError(null);
     toast.success('Producto agregado a la venta');
   };
 
@@ -142,13 +161,13 @@ export const ProductSalesSection = ({
     if (!item) return;
 
     if (newQuantity > item.availableStock) {
-      toast.error(`Stock insuficiente. Disponible: ${item.availableStock} ${item.unitOfMeasure}`);
+      toast.error(`Stock disponible: ${item.availableStock}`);
       return;
     }
 
     onSalesItemsChange(
-      salesItems.map(s => 
-        s.id === itemId 
+      salesItems.map(s =>
+        s.id === itemId
           ? { ...s, quantity: newQuantity, totalPrice: newQuantity * s.unitPrice }
           : s
       )
@@ -157,8 +176,8 @@ export const ProductSalesSection = ({
 
   const updatePrice = (itemId: string, newPrice: number) => {
     onSalesItemsChange(
-      salesItems.map(s => 
-        s.id === itemId 
+      salesItems.map(s =>
+        s.id === itemId
           ? { ...s, unitPrice: newPrice, totalPrice: s.quantity * newPrice }
           : s
       )
@@ -169,12 +188,44 @@ export const ProductSalesSection = ({
     return salesItems.reduce((total, item) => total + item.totalPrice, 0);
   };
 
-  // Auto-set custom price when product changes
+  // Al elegir un producto: autocompletar el precio con el último precio de
+  // venta usado para ese producto (inventory_movements.sale_unit_price de la
+  // salida vinculada a un servicio más reciente). Si no hay historial, se usa
+  // el precio de venta configurado del producto (fijo, % propio o margen por
+  // defecto global) como referencia editable — nunca el costo puro.
   useEffect(() => {
-    if (selectedProduct) {
-      setCustomPrice(selectedProduct.unit_cost);
+    if (!selectedProduct) {
+      setCustomPrice(null);
+      return;
     }
-  }, [selectedProduct]);
+
+    let cancelled = false;
+    setCustomPrice(getSalePrice(selectedProduct, systemSettings.defaultSaleMarkupPercent).price);
+
+    supabase
+      .from('inventory_movements')
+      .select('sale_unit_price')
+      .eq('item_id', selectedProduct.id)
+      .eq('movement_type', 'exit')
+      .not('sale_unit_price', 'is', null)
+      .order('movement_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          logger.error('Error buscando último precio de venta:', error);
+          return;
+        }
+        if (data?.sale_unit_price != null) {
+          setCustomPrice(Number(data.sale_unit_price));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProduct, systemSettings.defaultSaleMarkupPercent]);
 
   return (
     <Card>
@@ -189,44 +240,17 @@ export const ProductSalesSection = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Producto</Label>
-            <Select
+            <ProductCombobox
+              products={inventoryItems}
               value={selectedProductId}
-              onValueChange={setSelectedProductId}
+              onChange={(id) => {
+                setSelectedProductId(id);
+                const product = inventoryItems.find(item => item.id === id);
+                if (product) validateQuantity(quantity, product.current_stock);
+              }}
               disabled={disabled || isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={isLoading ? "Cargando..." : "Seleccionar producto"} />
-              </SelectTrigger>
-              <SelectContent>
-                {inventoryItems.map((item) => (
-                  <SelectItem 
-                    key={item.id} 
-                    value={item.id}
-                    disabled={item.current_stock === 0}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className={item.current_stock === 0 ? "text-muted-foreground" : ""}>
-                        {item.name}
-                      </span>
-                      <Badge 
-                        variant={item.current_stock === 0 ? "destructive" : "secondary"}
-                        className="ml-2"
-                      >
-                        {item.current_stock === 0 
-                          ? "Sin stock" 
-                          : `${item.current_stock} ${item.unit_of_measure}`
-                        }
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-                {inventoryItems.length === 0 && !isLoading && (
-                  <SelectItem value="" disabled>
-                    No hay productos disponibles
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+              placeholder={isLoading ? 'Cargando...' : 'Seleccionar producto'}
+            />
           </div>
 
           <div className="space-y-2">
@@ -236,9 +260,16 @@ export const ProductSalesSection = ({
               min="1"
               max={selectedProduct?.current_stock || 999}
               value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => {
+                const newQuantity = Math.max(1, parseInt(e.target.value) || 1);
+                setQuantity(newQuantity);
+                if (selectedProduct) validateQuantity(newQuantity, selectedProduct.current_stock);
+              }}
               disabled={disabled}
             />
+            {quantityError && (
+              <p className="text-sm text-destructive">{quantityError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -251,16 +282,34 @@ export const ProductSalesSection = ({
               onChange={(e) => setCustomPrice(parseFloat(e.target.value) || 0)}
               placeholder={selectedProduct ? selectedProduct.unit_cost.toString() : '0'}
               disabled={disabled}
+              className={cn(
+                selectedProduct && (customPrice ?? 0) < selectedProduct.unit_cost && 'border-amber-500 focus-visible:ring-amber-500'
+              )}
             />
+            {selectedProduct && (customPrice ?? 0) < selectedProduct.unit_cost && (
+              <p className="text-xs text-amber-600">
+                Bajo el costo: ${selectedProduct.unit_cost.toLocaleString('es-CL')}
+              </p>
+            )}
+            {selectedProduct && (
+              <p className="text-xs text-muted-foreground">
+                Costo: ${selectedProduct.unit_cost.toLocaleString('es-CL')}
+                {' · '}
+                Margen: {selectedProduct.unit_cost > 0
+                  ? Math.round(((customPrice ?? 0) - selectedProduct.unit_cost) / selectedProduct.unit_cost * 100)
+                  : 0}%
+              </p>
+            )}
           </div>
 
           <div className="flex items-end">
             <Button
               onClick={addProduct}
               disabled={
-                disabled || 
-                !selectedProductId || 
-                (selectedProduct && selectedProduct.current_stock === 0)
+                disabled ||
+                !selectedProductId ||
+                (selectedProduct && selectedProduct.current_stock === 0) ||
+                !!quantityError
               }
               className="w-full"
             >
@@ -282,7 +331,7 @@ export const ProductSalesSection = ({
                 <div>Stock Disp.</div>
                 <div>Acciones</div>
               </div>
-              
+
               {salesItems.map((item) => (
                 <div key={item.id} className="grid grid-cols-6 gap-4 p-4 border-t">
                   <div className="flex flex-col">
@@ -291,7 +340,7 @@ export const ProductSalesSection = ({
                       {item.unitOfMeasure}
                     </Badge>
                   </div>
-                  
+
                   <div>
                     <Input
                       type="number"
@@ -303,7 +352,7 @@ export const ProductSalesSection = ({
                       className="w-20"
                     />
                   </div>
-                  
+
                   <div>
                     <Input
                       type="number"
@@ -315,15 +364,15 @@ export const ProductSalesSection = ({
                       className="w-24"
                     />
                   </div>
-                  
+
                   <div className="font-medium">
                     ${item.totalPrice.toLocaleString()}
                   </div>
-                  
+
                   <div className="text-sm text-muted-foreground">
                     {item.availableStock} {item.unitOfMeasure}
                   </div>
-                  
+
                   <div>
                     <Button
                       variant="ghost"

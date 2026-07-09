@@ -37,6 +37,8 @@ export interface SystemSettings {
   dataRetention: number;
   maintenanceMode: boolean;
   reportColumnConfig?: ReportColumnsConfig;
+  /** Margen de venta por defecto (%) para productos de inventario sin configuración propia. */
+  defaultSaleMarkupPercent: number;
 }
 
 export interface NotificationSettings {
@@ -77,6 +79,7 @@ export const defaultSettings: Settings = {
     backupFrequency: 'daily',
     dataRetention: 12,
     maintenanceMode: false,
+    defaultSaleMarkupPercent: 30,
   },
   notifications: {
     emailNotifications: true,

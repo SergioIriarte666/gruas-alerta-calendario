@@ -21,6 +21,8 @@ export interface InventoryItem {
   maximum_stock: number;
   safety_stock: number;
   unit_cost: number;
+  sale_markup_percent?: number | null;
+  sale_price_fixed?: number | null;
   is_active: boolean;
   is_critical: boolean;
   has_expiration: boolean;
@@ -154,6 +156,8 @@ const INVENTORY_ITEM_SELECT = `
   maximum_stock,
   safety_stock,
   unit_cost,
+  sale_markup_percent,
+  sale_price_fixed,
   is_active,
   is_critical,
   has_expiration,
@@ -175,6 +179,8 @@ const INVENTORY_ITEM_EMBED_SELECT = `
   maximum_stock,
   safety_stock,
   unit_cost,
+  sale_markup_percent,
+  sale_price_fixed,
   is_active,
   is_critical,
   has_expiration,

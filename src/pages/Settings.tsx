@@ -170,6 +170,7 @@ const Settings = () => {
               saving={systemSaving}
               onSave={handleSystemSave}
               onUpdateSettings={updateSystemSettings}
+              isAdmin={isAdmin}
             />
           </TabsContent>
 

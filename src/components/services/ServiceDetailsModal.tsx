@@ -411,7 +411,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const saleMargin = useServiceSaleMargin(
     serviceData?.id,
     Number(serviceData?.value || 0),
-    isProductSaleService && isAdmin()
+    isProductSaleService && isAdmin
   );
 
   if (!isOpen || !serviceData) return null;
@@ -924,7 +924,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}/>
                   </DetailSection>
 
-                  {isProductSaleService && isAdmin() && (
+                  {isProductSaleService && isAdmin && (
                       <DetailSection title="Margen de Venta de Productos" icon={DollarSign} color="emerald">
                          <DetailItem
                            icon={DollarSign}

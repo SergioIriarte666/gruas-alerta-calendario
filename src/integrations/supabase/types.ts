@@ -2785,6 +2785,8 @@ export type Database = {
           minimum_stock: number | null
           name: string
           safety_stock: number | null
+          sale_markup_percent: number | null
+          sale_price_fixed: number | null
           sku: string | null
           unit_cost: number | null
           unit_of_measure: string
@@ -2804,6 +2806,8 @@ export type Database = {
           minimum_stock?: number | null
           name: string
           safety_stock?: number | null
+          sale_markup_percent?: number | null
+          sale_price_fixed?: number | null
           sku?: string | null
           unit_cost?: number | null
           unit_of_measure?: string
@@ -2823,6 +2827,8 @@ export type Database = {
           minimum_stock?: number | null
           name?: string
           safety_stock?: number | null
+          sale_markup_percent?: number | null
+          sale_price_fixed?: number | null
           sku?: string | null
           unit_cost?: number | null
           unit_of_measure?: string
@@ -6478,6 +6484,7 @@ export type Database = {
           backup_frequency: string
           created_at: string
           data_retention: number
+          default_sale_markup_percent: number
           email_notifications: boolean
           id: string
           invoice_alerts: boolean
@@ -6497,6 +6504,7 @@ export type Database = {
           backup_frequency?: string
           created_at?: string
           data_retention?: number
+          default_sale_markup_percent?: number
           email_notifications?: boolean
           id?: string
           invoice_alerts?: boolean
@@ -6516,6 +6524,7 @@ export type Database = {
           backup_frequency?: string
           created_at?: string
           data_retention?: number
+          default_sale_markup_percent?: number
           email_notifications?: boolean
           id?: string
           invoice_alerts?: boolean

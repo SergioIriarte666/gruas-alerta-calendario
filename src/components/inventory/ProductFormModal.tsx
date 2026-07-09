@@ -8,7 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useInventoryCategories, useCreateInventoryItem, useUpdateInventoryItem, type InventoryItem } from '@/hooks/useInventory';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { getSalePrice } from '@/utils/inventoryPricing';
 import { toast } from 'sonner';
 import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } from '@/utils/validationUtils';
 import { useSimilarItemsSearch, type SimilarItem } from '@/utils/inventoryHelper';
@@ -29,6 +32,8 @@ const productSchema = z.object({
   maximum_stock: z.number().min(0, 'Debe ser mayor o igual a 0'),
   safety_stock: z.number().min(0, 'Debe ser mayor o igual a 0'),
   unit_cost: z.number().min(0, 'Debe ser mayor o igual a 0'),
+  sale_markup_percent: z.number().min(0, 'Debe ser mayor o igual a 0').nullable().optional(),
+  sale_price_fixed: z.number().min(0, 'Debe ser mayor o igual a 0').nullable().optional(),
   is_active: z.boolean().default(true),
   is_critical: z.boolean().default(false),
   has_expiration: z.boolean().default(false),
@@ -39,6 +44,14 @@ const productSchema = z.object({
   message: "El stock de seguridad debe ser menor o igual al stock máximo",
   path: ["safety_stock"],
 });
+
+type PriceMode = 'default' | 'percent' | 'fixed';
+
+const resolveInitialPriceMode = (product?: InventoryItem): PriceMode => {
+  if (product?.sale_price_fixed != null) return 'fixed';
+  if (product?.sale_markup_percent != null) return 'percent';
+  return 'default';
+};
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -52,9 +65,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   const { data: categories = [] } = useInventoryCategories();
   const createProduct = useCreateInventoryItem();
   const updateProduct = useUpdateInventoryItem();
+  const { systemSettings } = useSystemSettings();
   const [confirmCreateNew, setConfirmCreateNew] = React.useState(false);
   const [selectedProductForDetails, setSelectedProductForDetails] = React.useState<SimilarItem | null>(null);
   const [showDetailsModal, setShowDetailsModal] = React.useState(false);
+  const [priceMode, setPriceMode] = React.useState<PriceMode>(() => resolveInitialPriceMode(product));
 
   const {
     register,
@@ -76,6 +91,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
       maximum_stock: product?.maximum_stock || 0,
       safety_stock: product?.safety_stock || 0,
       unit_cost: product?.unit_cost || 0,
+      sale_markup_percent: product?.sale_markup_percent ?? null,
+      sale_price_fixed: product?.sale_price_fixed ?? null,
       is_active: product?.is_active ?? true,
       is_critical: product?.is_critical ?? false,
       has_expiration: product?.has_expiration ?? false,
@@ -94,13 +111,25 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
       maximum_stock: product?.maximum_stock || 0,
       safety_stock: product?.safety_stock || 0,
       unit_cost: product?.unit_cost || 0,
+      sale_markup_percent: product?.sale_markup_percent ?? null,
+      sale_price_fixed: product?.sale_price_fixed ?? null,
       is_active: product?.is_active ?? true,
       is_critical: product?.is_critical ?? false,
       has_expiration: product?.has_expiration ?? false,
     });
+    setPriceMode(resolveInitialPriceMode(product));
   }, [product, reset]);
 
   const watchedValues = watch();
+
+  const salePricePreview = getSalePrice(
+    {
+      unit_cost: watchedValues.unit_cost || 0,
+      sale_markup_percent: priceMode === 'percent' ? watchedValues.sale_markup_percent : null,
+      sale_price_fixed: priceMode === 'fixed' ? watchedValues.sale_price_fixed : null,
+    },
+    systemSettings.defaultSaleMarkupPercent
+  );
   const productName = watchedValues.name || '';
   const { exactMatch, similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
     productName,
@@ -130,6 +159,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
         maximum_stock: data.maximum_stock,
         safety_stock: data.safety_stock,
         unit_cost: data.unit_cost,
+        sale_markup_percent: priceMode === 'percent' ? (data.sale_markup_percent ?? 0) : null,
+        sale_price_fixed: priceMode === 'fixed' ? (data.sale_price_fixed ?? 0) : null,
         is_active: data.is_active,
         is_critical: data.is_critical,
         has_expiration: data.has_expiration,
@@ -348,6 +379,78 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
             {errors.unit_cost && (
               <p className="text-sm text-destructive mt-1">{errors.unit_cost.message}</p>
             )}
+          </div>
+
+          {/* Precio de Venta */}
+          <div className="rounded-lg border p-3 space-y-3">
+            <Label>Precio de Venta</Label>
+            <RadioGroup
+              value={priceMode}
+              onValueChange={(value) => setPriceMode(value as PriceMode)}
+              className="space-y-2"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="default" id="price-mode-default" />
+                <Label htmlFor="price-mode-default" className="font-normal cursor-pointer">
+                  Usar margen por defecto ({systemSettings.defaultSaleMarkupPercent}%)
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="percent" id="price-mode-percent" />
+                <Label htmlFor="price-mode-percent" className="font-normal cursor-pointer">
+                  % sobre costo
+                </Label>
+                {priceMode === 'percent' && (
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="w-28"
+                    value={watchedValues.sale_markup_percent ?? ''}
+                    onChange={(e) => setValue(
+                      'sale_markup_percent',
+                      e.target.value === '' ? null : parseFloat(e.target.value) || 0
+                    )}
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="fixed" id="price-mode-fixed" />
+                <Label htmlFor="price-mode-fixed" className="font-normal cursor-pointer">
+                  Valor fijo
+                </Label>
+                {priceMode === 'fixed' && (
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="w-28"
+                    value={watchedValues.sale_price_fixed ?? ''}
+                    onChange={(e) => setValue(
+                      'sale_price_fixed',
+                      e.target.value === '' ? null : parseFloat(e.target.value) || 0
+                    )}
+                  />
+                )}
+              </div>
+            </RadioGroup>
+
+            {errors.sale_markup_percent && (
+              <p className="text-sm text-destructive">{errors.sale_markup_percent.message}</p>
+            )}
+            {errors.sale_price_fixed && (
+              <p className="text-sm text-destructive">{errors.sale_price_fixed.message}</p>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Costo: ${(watchedValues.unit_cost || 0).toLocaleString('es-CL')}
+              {' → '}
+              Venta: ${salePricePreview.price.toLocaleString('es-CL')}
+              {' '}
+              ({salePricePreview.source === 'fixed' ? 'fijo' : `+${Math.round(salePricePreview.markupPercent)}%`})
+            </p>
           </div>
 
           {/* Switches */}

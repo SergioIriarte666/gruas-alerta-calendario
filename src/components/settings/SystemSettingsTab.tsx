@@ -24,13 +24,15 @@ interface SystemSettingsTabProps {
   saving: boolean;
   onSave: () => void;
   onUpdateSettings: (updates: Partial<SystemSettings>) => void;
+  isAdmin: boolean;
 }
 
 export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
   settings,
   saving,
   onSave,
-  onUpdateSettings
+  onUpdateSettings,
+  isAdmin
 }) => {
   const queryClient = useQueryClient();
 
@@ -181,15 +183,36 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
                 {settings.maintenanceMode && (
                   <Badge variant="warning">Activo</Badge>
                 )}
-                <Switch 
+                <Switch
                   checked={settings.maintenanceMode}
                   onCheckedChange={(checked) => onUpdateSettings({ maintenanceMode: checked })}
                 />
               </div>
             </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>Margen de venta por defecto (%)</Label>
+              <p className="text-sm text-muted-foreground">
+                Se aplica a productos de inventario sin precio de venta ni % de recargo propios
+                {!isAdmin && ' (solo un administrador puede modificarlo)'}.
+              </p>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                value={settings.defaultSaleMarkupPercent}
+                onChange={(e) => onUpdateSettings({
+                  defaultSaleMarkupPercent: Math.max(0, parseFloat(e.target.value) || 0)
+                })}
+                disabled={!isAdmin}
+                className={inputClassName}
+              />
+            </div>
           </div>
-          
-          <Button onClick={onSave} disabled={saving}>
+
+          <Button onClick={onSave} disabled={saving || !isAdmin}>
             <Save className="size-4 mr-2" />
             {saving ? 'Guardando...' : 'Guardar Configuración'}
           </Button>

@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useInventory';
 import { ProductDrawer } from './ProductDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SimpleEntryForm } from './SimpleEntryForm';
 import { SimpleExitForm } from './SimpleExitForm';
 import { businessClock } from '@/utils/businessClock';
@@ -33,6 +34,8 @@ import { ProductFormModal } from './ProductFormModal';
 import { DuplicateProductsPanel } from './DuplicateProductsPanel';
 import { toast } from 'sonner';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { getSalePrice, describeSalePriceSource } from '@/utils/inventoryPricing';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   useInventoryOrphans,
@@ -59,6 +62,7 @@ export const InventoryStockView = () => {
   const { data: categories = [] } = useInventoryCategories();
   const { data: allStock = [] } = useInventoryStock();
   const { isAdmin } = useUserPermissions();
+  const { systemSettings } = useSystemSettings();
   const isMobile = useIsMobile();
   const { data: locations = [] } = useInventoryLocations();
   const createMovement = useCreateInventoryMovement();
@@ -370,6 +374,7 @@ export const InventoryStockView = () => {
                     <th className="px-4 py-3 text-left font-medium">Producto</th>
                     <th className="px-4 py-3 text-left font-medium">SKU</th>
                     <th className="px-4 py-3 text-right font-medium">Stock</th>
+                    {isAdmin ? <th className="px-4 py-3 text-right font-medium">Precio Venta</th> : null}
                     <th className="px-4 py-3 text-left font-medium">Estado</th>
                     <th className="px-4 py-3 text-right font-medium">Acciones</th>
                   </tr>
@@ -380,6 +385,7 @@ export const InventoryStockView = () => {
                     const status = getStockStatus(item);
                     const StatusIcon = status.icon;
                     const isPreparing = hardDelete.preparingId === item.id;
+                    const salePrice = getSalePrice(item, systemSettings.defaultSaleMarkupPercent);
 
                     return (
                       <tr key={item.id} className="border-b border-border/60 transition-colors hover:bg-muted/30">
@@ -391,6 +397,20 @@ export const InventoryStockView = () => {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{item.sku || '-'}</td>
                         <td className="px-4 py-3 text-right font-medium text-foreground">{totalStock} {item.unit_of_measure}</td>
+                        {isAdmin ? (
+                          <td className="px-4 py-3 text-right">
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="font-medium text-foreground cursor-default">
+                                    ${salePrice.price.toLocaleString('es-CL')}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>{describeSalePriceSource(salePrice)}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </td>
+                        ) : null}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <StatusIcon className="size-4 text-muted-foreground" />
@@ -445,6 +465,7 @@ export const InventoryStockView = () => {
                 const status = getStockStatus(item);
                 const StatusIcon = status.icon;
                 const isPreparing = hardDelete.preparingId === item.id;
+                const salePrice = getSalePrice(item, systemSettings.defaultSaleMarkupPercent);
 
                 return (
                   <div
@@ -459,6 +480,13 @@ export const InventoryStockView = () => {
                           {item.is_critical ? <Badge variant="outline" className="border-danger/20 bg-danger/10 text-danger">Crítico</Badge> : null}
                         </div>
                         {item.sku ? <p className="mt-1 text-sm text-muted-foreground">SKU: {item.sku}</p> : null}
+                        {isAdmin ? (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Venta: <span className="font-medium text-foreground">${salePrice.price.toLocaleString('es-CL')}</span>
+                            {' '}
+                            ({describeSalePriceSource(salePrice)})
+                          </p>
+                        ) : null}
                         <div className="mt-3 flex items-center gap-2">
                           <StatusIcon className="size-4 text-muted-foreground" />
                           <Badge variant="outline" className={cn('font-semibold', status.className)}>{status.label}</Badge>

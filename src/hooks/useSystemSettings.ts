@@ -1,6 +1,7 @@
 import { businessClock } from '@/utils/businessClock';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SystemSettings, NotificationSettings } from '@/types/settings';
@@ -22,6 +23,7 @@ interface SystemSettingsFromDB {
   overdue_notifications: boolean;
   system_updates: boolean;
   report_column_config?: any;
+  default_sale_markup_percent: number;
 }
 
 const SYSTEM_SETTINGS_SELECT = `
@@ -35,16 +37,19 @@ const SYSTEM_SETTINGS_SELECT = `
   invoice_alerts,
   overdue_notifications,
   system_updates,
-  report_column_config
+  report_column_config,
+  default_sale_markup_percent
 `;
 
 export const useSystemSettings = () => {
+  const queryClient = useQueryClient();
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     autoBackup: true,
     backupFrequency: 'daily',
     dataRetention: 12,
     maintenanceMode: false,
     reportColumnConfig: defaultReportColumnConfig,
+    defaultSaleMarkupPercent: 30,
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -90,6 +95,7 @@ export const useSystemSettings = () => {
           dataRetention: data.data_retention,
           maintenanceMode: data.maintenance_mode,
           reportColumnConfig,
+          defaultSaleMarkupPercent: data.default_sale_markup_percent ?? 30,
         });
 
         setNotificationSettings({
@@ -136,6 +142,7 @@ export const useSystemSettings = () => {
         overdue_notifications: notificationSettings.overdueNotifications,
         system_updates: notificationSettings.systemUpdates,
         report_column_config: JSON.parse(JSON.stringify(systemSettings.reportColumnConfig)) as Json,
+        default_sale_markup_percent: systemSettings.defaultSaleMarkupPercent,
         updated_at: businessClock.nowISO(),
       };
 
@@ -162,6 +169,10 @@ export const useSystemSettings = () => {
 
         if (error) throw error;
       }
+
+      // El margen por defecto afecta el precio de venta sugerido en el
+      // catálogo y en "Productos a Vender"; refrescar ese cache.
+      queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
 
       return { success: true };
     } catch (error) {
