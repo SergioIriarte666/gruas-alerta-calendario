@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>TMS Operador</string>
+	<string>TMS Operador</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,13 +24,14 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>TMS Operador usa tu ubicacion para asociar tu posicion al servicio activo y reportar avances operativos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>TMS Operador comparte tu posicion durante tu jornada laboral y servicios activos para coordinar la operacion.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>TMS Operador usa tu ubicacion para asociar tu posicion al servicio activo y reportar avances operativos.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>bluetooth-peripheral</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
