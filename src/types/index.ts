@@ -282,6 +282,8 @@ export interface ServiceItem {
   glosa: string;
   cantidad: number;
   valor_unitario: number;
+  /** Producto de inventario de origen si el ítem viene de "Productos a Vender". NULL para texto libre. */
+  inventory_item_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -291,6 +293,7 @@ export interface ServiceItemDraft {
   glosa: string;
   cantidad: number;
   valor_unitario: number;
+  inventory_item_id?: string | null;
 }
 
 // ── Documentos de Operadores ──────────────────────────────────────────────────

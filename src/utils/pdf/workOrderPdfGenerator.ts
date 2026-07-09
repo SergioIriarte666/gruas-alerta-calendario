@@ -1,190 +1,129 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { Service } from '@/types';
-import { Settings } from '@/types/settings';
-import { addCompanyHeader } from '@/utils/reports/reportUtils';
-import { getCraneTypeLabel } from '@/utils/craneType';
-import { formatForDisplay } from '@/utils/timezoneUtils';
-import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
-import { toTitleCase } from '@/lib/utils';
+import { type Service } from '@/types';
+import { type Settings } from '@/types/settings';
+import { fetchServiceItemsBreakdown } from './serviceItemsData';
+import {
+  PDF_COLORS,
+  addFooter,
+  addLetterhead,
+  addLineItemsTable,
+  addSectionTable,
+  addSummaryTable,
+  buildCraneLabel,
+  buildFinancialSummary,
+  buildVehicleLabel,
+  fetchCommercialDocumentContext,
+  formatDocumentCurrency,
+  formatDocumentDateTime,
+  formatText,
+  resolvePrimaryOperator,
+} from './commercialPdfShared';
 
-const VIOLET: [number, number, number] = [139, 92, 246];
-const MUTED: [number, number, number] = [100, 100, 100];
+const addSignatureBlock = (doc: jsPDF, startY: number) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const baseY = Math.max(startY + 8, pageHeight - 62);
+  const columnWidth = 78;
+  const leftX = 16;
+  const rightX = pageWidth - 16 - columnWidth;
 
-/**
- * Genera una Orden de Trabajo para terreno (sin información financiera interna).
- * Tipografía grande, claro, con cuadros de firma al pie.
- */
+  [leftX, rightX].forEach((x) => {
+    doc.setDrawColor(...PDF_COLORS.line);
+    doc.line(x, baseY, x + columnWidth, baseY);
+    doc.line(x, baseY + 14, x + columnWidth, baseY + 14);
+  });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...PDF_COLORS.ink);
+  doc.text('Recibido conforme por', leftX, baseY - 3);
+  doc.text('Ejecutado por', rightX, baseY - 3);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...PDF_COLORS.slate);
+  doc.text('Nombre y firma', leftX, baseY + 4.5);
+  doc.text('RUT', leftX, baseY + 18.5);
+  doc.text('Nombre y firma', rightX, baseY + 4.5);
+  doc.text('RUT', rightX, baseY + 18.5);
+};
+
 export const generateWorkOrderPDF = async (
   service: Service,
   settings: Settings,
 ): Promise<{ blob: Blob; fileName: string }> => {
   const doc = new jsPDF('p', 'mm', 'a4');
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-  const marginX = 20;
-  const contentWidth = pageWidth - marginX * 2;
+  const context = await fetchCommercialDocumentContext(settings);
+  const primaryOperator = resolvePrimaryOperator(service);
 
-  let y = await addCompanyHeader(doc, settings.company, 15);
-
-  // Título
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(...VIOLET);
-  doc.text('ORDEN DE TRABAJO', pageWidth / 2, y, { align: 'center' });
-  y += 6;
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal');
-
-  // Folio destacado
-  doc.setFillColor(...VIOLET);
-  doc.rect(marginX, y, contentWidth, 14, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.text(`FOLIO: ${service.folio}`, marginX + 4, y + 9.5);
-  // Fecha + hora a la derecha
-  doc.setFontSize(11);
-  const dateStr = service.serviceDate ? formatForDisplay(service.serviceDate) : '—';
-  const timeStr = service.startTime || '';
-  doc.text(`${dateStr}${timeStr ? '  ' + timeStr : ''}`, pageWidth - marginX - 4, y + 9.5, {
-    align: 'right',
+  let y = await addLetterhead(doc, context, {
+    title: 'ORDEN DE TRABAJO',
+    documentNumber: formatText(service.folio),
+    secondaryLine: formatDocumentDateTime(service.serviceDate, service.startTime),
   });
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal');
-  y += 18;
 
-  // Cliente
-  const clientRows: [string, string][] = [
-    ['Razón Social', toTitleCase(service.client?.name || '—')],
-    ['RUT', service.client?.rut || '—'],
-    ['Teléfono', service.client?.phone || '—'],
+  const clientRows: Array<[string, string]> = [
+    ['Cliente', formatText(service.client?.name)],
+    ['RUT', formatText(service.client?.rut)],
+    ['Contacto', formatText(service.contactPerson || service.client?.contactName)],
+    ['Telefono', formatText(service.contactPhone || service.client?.phone)],
   ];
-  if (service.client?.contactName) clientRows.push(['Contacto', service.client.contactName]);
-  if (service.insuredName) clientRows.push(['Asegurado', toTitleCase(service.insuredName)]);
-  if (service.purchaseOrder || service.purchaseOrderNumber)
-    clientRows.push(['Orden de Compra', service.purchaseOrderNumber || service.purchaseOrder || '—']);
 
-  autoTable(doc, {
-    startY: y,
-    head: [['Cliente', '']],
-    body: clientRows,
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-    styles: { fontSize: 11, cellPadding: 3 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 },
-      1: { cellWidth: contentWidth - 50 },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 5;
-
-  // Vehículo
-  autoTable(doc, {
-    startY: y,
-    head: [['Vehículo a Asistir', '']],
-    body: [
-      ['Vehículo', formatVehicleInfo(service)],
-      ['Patente', shouldShowVehicleInfo(service) ? service.licensePlate || '—' : '—'],
-    ],
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-    styles: { fontSize: 11, cellPadding: 3 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 },
-      1: { cellWidth: contentWidth - 50 },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 5;
-
-  // Ruta
-  autoTable(doc, {
-    startY: y,
-    head: [['Ruta', '']],
-    body: [
-      ['Origen', service.origin || '—'],
-      ['Destino', service.destination || '—'],
-      ['Tipo de Servicio', service.serviceType?.name || '—'],
-    ],
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-    styles: { fontSize: 11, cellPadding: 3 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 },
-      1: { cellWidth: contentWidth - 50 },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 5;
-
-  // Asignación
-  const assignRows: [string, string][] = [];
-  if (service.crane)
-    assignRows.push([
-      'Grúa',
-      `${service.crane.licensePlate || ''} · ${service.crane.brand || ''} ${service.crane.model || ''} · ${getCraneTypeLabel(service.crane.type)}`,
-    ]);
-  if (service.operator)
-    assignRows.push(['Operador', toTitleCase(service.operator.name || '—')]);
-
-  if (assignRows.length) {
-    autoTable(doc, {
-      startY: y,
-      head: [['Asignación', '']],
-      body: assignRows,
-      theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-      styles: { fontSize: 11, cellPadding: 3 },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50, textColor: 60 },
-        1: { cellWidth: contentWidth - 50 },
-      },
-      margin: { left: marginX, right: marginX },
-    });
-    y = (doc as any).lastAutoTable.finalY + 5;
+  if (service.purchaseOrderNumber || service.purchaseOrder) {
+    clientRows.push(['Orden de compra', formatText(service.purchaseOrderNumber || service.purchaseOrder)]);
   }
 
-  // Observaciones / instrucciones (cuadro grande)
-  autoTable(doc, {
-    startY: y,
-    head: [['Instrucciones / Observaciones']],
-    body: [[service.observations || ' ']],
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-    styles: { fontSize: 10, cellPadding: 4, minCellHeight: 28 },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 10;
+  y = addSectionTable(doc, y, 'Datos del Cliente', clientRows);
 
-  // Firmas
-  const sigY = Math.max(y, pageHeight - 50);
-  const colW = (contentWidth - 10) / 2;
-  doc.setDrawColor(180);
-  doc.rect(marginX, sigY, colW, 28);
-  doc.rect(marginX + colW + 10, sigY, colW, 28);
-  doc.setFontSize(9);
-  doc.setTextColor(...MUTED);
-  doc.text('Firma Operador', marginX + colW / 2, sigY + 33, { align: 'center' });
-  doc.text('Firma Cliente / Recepción', marginX + colW + 10 + colW / 2, sigY + 33, {
-    align: 'center',
-  });
-  doc.setTextColor(0, 0, 0);
+  const operationalRows: Array<[string, string]> = [
+    ['Tipo de servicio', formatText(service.serviceType?.name)],
+    ['Fecha / hora', formatDocumentDateTime(service.serviceDate, service.startTime)],
+    ['Ubicacion / faena', formatText(service.origin)],
+    ['Destino / entrega', formatText(service.destination)],
+    ['Grua asignada', buildCraneLabel(service)],
+    ['Operador', formatText(primaryOperator?.name)],
+    ['Vehiculo / equipo', buildVehicleLabel(service)],
+  ];
 
-  // Footer
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const ph = doc.internal.pageSize.height;
-    doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
-    doc.text('Documento de uso interno operacional', marginX, ph - 7);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 7, { align: 'right' });
-  }
+  y = addSectionTable(doc, y, 'Datos Operativos', operationalRows);
+
+  const breakdown = await fetchServiceItemsBreakdown(service.id);
+  const lineRows = breakdown?.items.length
+    ? breakdown.items.map((item) => [
+        formatText(item.glosa),
+        String(Number(item.cantidad || 0)),
+        formatDocumentCurrency(Number(item.valor_unitario || 0)),
+        formatDocumentCurrency(Number(item.cantidad || 0) * Number(item.valor_unitario || 0)),
+      ])
+    : [[
+        formatText(service.serviceType?.name || 'Servicio'),
+        '1',
+        formatDocumentCurrency(Number(service.value || 0)),
+        formatDocumentCurrency(Number(service.value || 0)),
+      ]];
+
+  const serviceNetAmount = breakdown?.subtotal ?? Number(service.value || 0);
+  y = addLineItemsTable(doc, y + 2, 'Desglose Operativo', lineRows, [
+    ['', '', 'Subtotal neto', formatDocumentCurrency(serviceNetAmount)],
+  ]);
+
+  const totals = buildFinancialSummary(service, serviceNetAmount);
+  y = addSummaryTable(doc, y, 'Resumen Referencial', [
+    ['Subtotal servicio', formatDocumentCurrency(totals.serviceNet)],
+    ...(totals.custodyNet > 0 ? [['Custodia', formatDocumentCurrency(totals.custodyNet)] as [string, string]] : []),
+    ...(totals.excessNet > 0 ? [['Excedente', formatDocumentCurrency(totals.excessNet)] as [string, string]] : []),
+    ['Total neto referencial', formatDocumentCurrency(totals.subtotalNet)],
+  ]);
+
+  y = addSectionTable(doc, y, 'Observaciones del Servicio', [
+    ['Detalle', formatText(service.observations || 'Sin observaciones registradas.')],
+  ]);
+
+  addSignatureBlock(doc, y);
+  addFooter(doc, 'Documento operativo interno. Valores expresados como referencia neta.');
 
   return {
     blob: doc.output('blob'),
-    fileName: `orden-trabajo-${service.folio}.pdf`,
+    fileName: `OrdenTrabajo_${service.folio}.pdf`,
   };
 };

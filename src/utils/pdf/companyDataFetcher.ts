@@ -1,47 +1,55 @@
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { type CompanySettings } from '@/types/settings';
 
 const logger = createLogger('CompanyDataFetcher');
 
-interface CompanyData {
+export interface CompanyData {
   businessName: string;
   rut: string;
   address: string;
   phone: string;
   email: string;
   logoUrl?: string;
+  legalTexts?: string;
+  website?: string;
 }
 
-const DEFAULT_COMPANY: CompanyData = {
-  businessName: 'Grúas 5 Norte',
-  rut: '76.769.841-0',
-  address: 'Panamericana Norte Km. 841, Copiapó',
-  phone: '+56 9 62380627',
-  email: 'asistencia@gruas5norte.cl',
-};
+const buildFallbackCompany = (fallback?: Partial<CompanySettings>): CompanyData => ({
+  businessName: fallback?.name || '',
+  rut: fallback?.taxId || '',
+  address: fallback?.address || '',
+  phone: fallback?.phone || '',
+  email: fallback?.email || '',
+  logoUrl: fallback?.logo || undefined,
+});
 
-export const fetchCompanyData = async (): Promise<CompanyData> => {
+export const fetchCompanyData = async (fallback?: Partial<CompanySettings>): Promise<CompanyData> => {
+  const fallbackCompany = buildFallbackCompany(fallback);
+
   try {
     // maybeSingle() no lanza error si no hay filas o si RLS bloquea (406)
     const { data, error } = await supabase
       .from('company_data')
-      .select('business_name, rut, address, phone, email, logo_url')
+      .select('business_name, rut, address, phone, email, logo_url, legal_texts, website')
       .maybeSingle();
 
     if (error || !data) {
       logger.warn('company_data no disponible, usando defaults:', error?.code);
-      return DEFAULT_COMPANY;
+      return fallbackCompany;
     }
 
     return {
-      businessName: data.business_name || DEFAULT_COMPANY.businessName,
-      rut: data.rut || DEFAULT_COMPANY.rut,
-      address: data.address || DEFAULT_COMPANY.address,
-      phone: data.phone || DEFAULT_COMPANY.phone,
-      email: data.email || DEFAULT_COMPANY.email,
-      logoUrl: data.logo_url || undefined,
+      businessName: data.business_name || fallbackCompany.businessName,
+      rut: data.rut || fallbackCompany.rut,
+      address: data.address || fallbackCompany.address,
+      phone: data.phone || fallbackCompany.phone,
+      email: data.email || fallbackCompany.email,
+      logoUrl: data.logo_url || fallbackCompany.logoUrl,
+      legalTexts: data.legal_texts || undefined,
+      website: data.website || undefined,
     };
   } catch {
-    return DEFAULT_COMPANY;
+    return fallbackCompany;
   }
 };

@@ -71,7 +71,7 @@ export function ServiceItemsTab({ serviceId, readOnly = false }: ServiceItemsTab
     }));
 
     saveItems.mutate(
-      { toUpsert, toDelete },
+      { serviceId, toUpsert, toDelete },
       {
         onSuccess: () => {
           setIsDirty(false);

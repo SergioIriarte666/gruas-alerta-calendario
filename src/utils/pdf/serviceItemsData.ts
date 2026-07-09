@@ -1,6 +1,16 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo', 'Venta de Productos'];
+export const VENTA_PRODUCTOS_SERVICE_TYPE_ID = '3e695d47-aa5a-4937-ab86-1e8557a1ba17'; // Venta de Productos
+
+export const ITEMS_SERVICE_TYPES = [
+  'Apoyo Logistico',
+  'Servicios Mecánicos y De Apoyo',
+  'Venta de Productos',
+];
+
+export const isItemsServiceType = (serviceType?: { id?: string | null; name?: string | null } | null) =>
+  ITEMS_SERVICE_TYPES.includes(serviceType?.name || '') ||
+  serviceType?.id === VENTA_PRODUCTOS_SERVICE_TYPE_ID;
 
 export interface ServiceItemRow {
   glosa: string;

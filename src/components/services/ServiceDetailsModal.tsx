@@ -60,6 +60,10 @@ import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModa
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
 import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
 import { CheckCircle2 } from 'lucide-react';
+import {
+  VENTA_PRODUCTOS_SERVICE_TYPE_ID,
+  isItemsServiceType as supportsServiceItems,
+} from '@/utils/pdf/serviceItemsData';
 
 
 const logger = createLogger("ServiceDetailsModal");
@@ -379,8 +383,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const custodyInfo = isCustody && serviceData ? getCustodyInfo(serviceData) : null;
   const isEquipmentRental = serviceData ? isEquipmentRentalService(serviceData) : false;
 
-  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo', 'Venta de Productos'];
-  const showItemsTab = ITEMS_SERVICE_TYPES.includes(serviceData?.serviceType?.name ?? '');
+  const showItemsTab = supportsServiceItems(serviceData?.serviceType);
   
   // Refrescar datos al abrir. La antigua "sincronización silenciosa" de comisiones
   // (rpc force_commission_sync_for_service) se eliminó: era un write-path oculto
@@ -406,7 +409,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const [showMarkDispute, setShowMarkDispute] = React.useState(false);
   const [showResolveDispute, setShowResolveDispute] = React.useState(false);
 
-  const isProductSaleService = serviceData?.serviceType?.name === 'Venta de Productos';
+  const isProductSaleService = serviceData?.serviceType?.id === VENTA_PRODUCTOS_SERVICE_TYPE_ID
+    || serviceData?.serviceType?.name === 'Venta de Productos';
   const { isAdmin } = useUserPermissions();
   const saleMargin = useServiceSaleMargin(
     serviceData?.id,

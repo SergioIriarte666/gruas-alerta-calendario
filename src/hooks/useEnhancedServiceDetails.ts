@@ -28,8 +28,8 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     .from('services')
     .select(`
       *, quote_number,
-      client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
-      third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+      client:clients!services_client_id_fkey(id, name, rut, phone, email, address, contact_name, department, is_active, created_at, updated_at),
+      third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, contact_name, department, is_active, created_at, updated_at),
       cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
       operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, commission_exempt, created_at, updated_at),
       service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at, is_outsourced),
@@ -255,8 +255,8 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
       phone: (serviceData.client || serviceData.third_party_client).phone,
       email: (serviceData.client || serviceData.third_party_client).email,
       address: (serviceData.client || serviceData.third_party_client).address,
+      contactName: (serviceData.client || serviceData.third_party_client).contact_name || undefined,
       department: (serviceData.client || serviceData.third_party_client).department || '',
-      contactName: undefined,
       isActive: (serviceData.client || serviceData.third_party_client).is_active,
       createdAt: (serviceData.client || serviceData.third_party_client).created_at,
       updatedAt: (serviceData.client || serviceData.third_party_client).updated_at

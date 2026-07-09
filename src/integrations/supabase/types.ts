@@ -5504,6 +5504,7 @@ export type Database = {
           created_at: string
           glosa: string
           id: string
+          inventory_item_id: string | null
           service_id: string
           updated_at: string
           valor_unitario: number
@@ -5513,6 +5514,7 @@ export type Database = {
           created_at?: string
           glosa: string
           id?: string
+          inventory_item_id?: string | null
           service_id: string
           updated_at?: string
           valor_unitario?: number
@@ -5522,11 +5524,19 @@ export type Database = {
           created_at?: string
           glosa?: string
           id?: string
+          inventory_item_id?: string | null
           service_id?: string
           updated_at?: string
           valor_unitario?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "service_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_items_service_id_fkey"
             columns: ["service_id"]

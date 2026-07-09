@@ -1,263 +1,115 @@
-import { businessClock } from '@/utils/businessClock';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { Service } from '@/types';
-import { Settings } from '@/types/settings';
-import { addCompanyHeader } from '@/utils/reports/reportUtils';
-import { getCraneTypeLabel } from '@/utils/craneType';
-import { formatForDisplay, safeParseDateOnly } from '@/utils/timezoneUtils';
-import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
-import { toTitleCase } from '@/lib/utils';
-import { fetchServiceItemsBreakdown, ITEMS_SERVICE_TYPES } from './serviceItemsData';
+import { type Service } from '@/types';
+import { type Settings } from '@/types/settings';
+import { businessClock } from '@/utils/businessClock';
+import { fetchServiceItemsBreakdown } from './serviceItemsData';
+import {
+  QUOTE_VALIDITY_DAYS,
+  DEFAULT_COMMERCIAL_TERMS,
+  addDaysToBusinessDate,
+  addFooter,
+  addLetterhead,
+  addLineItemsTable,
+  addSectionTable,
+  addSummaryTable,
+  buildCraneLabel,
+  buildFinancialSummary,
+  fetchCommercialDocumentContext,
+  formatDocumentCurrency,
+  formatDocumentDate,
+  formatDocumentDateTime,
+  formatText,
+  resolvePrimaryOperator,
+} from './commercialPdfShared';
 
-const VIOLET: [number, number, number] = [139, 92, 246];
-const MUTED: [number, number, number] = [100, 100, 100];
-
-const formatCLP = (n: number) =>
-  new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
-    minimumFractionDigits: 0,
-  }).format(Math.round(n || 0));
-
-const addDaysISO = (iso: string, days: number) => {
-  const d = safeParseDateOnly(iso);
-  d.setDate(d.getDate() + days);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-/**
- * Genera un PDF de Cotización / Presupuesto para un servicio.
- * Sigue el patrón visual del módulo de Costos (violet brand color).
- */
 export const generateQuotePDF = async (
   service: Service,
   settings: Settings,
 ): Promise<{ blob: Blob; fileName: string }> => {
   const doc = new jsPDF('p', 'mm', 'a4');
-  const pageWidth = doc.internal.pageSize.width;
-  const marginX = 20;
-  const contentWidth = pageWidth - marginX * 2;
+  const context = await fetchCommercialDocumentContext(settings);
+  const validUntilIso = addDaysToBusinessDate(businessClock.today(), QUOTE_VALIDITY_DAYS);
+  const primaryOperator = resolvePrimaryOperator(service);
 
-  // Header corporativo (mismo patrón que costDetailPdfGenerator)
-  let y = await addCompanyHeader(doc, settings.company, 15);
-
-  // Título
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(...VIOLET);
-  doc.text('COTIZACIÓN / PRESUPUESTO', pageWidth / 2, y, { align: 'center' });
-  y += 8;
-  doc.setDrawColor(...VIOLET);
-  doc.setLineWidth(0.5);
-  doc.line(marginX, y, pageWidth - marginX, y);
-  y += 6;
-  doc.setTextColor(0, 0, 0);
-  doc.setFont(undefined, 'normal');
-
-  const today = businessClock.today();
-  const quoteNumber = service.quoteNumber || `COT-${service.folio}`;
-  const validUntil = addDaysISO(today, 15);
-
-  // Bloque cabecera del documento
-  autoTable(doc, {
-    startY: y,
-    body: [
-      ['N° Cotización', quoteNumber, 'Fecha emisión', formatForDisplay(today)],
-      ['Folio servicio', service.folio, 'Válida hasta', formatForDisplay(validUntil)],
-    ],
-    theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 2 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 35, textColor: 60, fillColor: [245, 245, 245] },
-      1: { cellWidth: contentWidth / 2 - 35 },
-      2: { fontStyle: 'bold', cellWidth: 35, textColor: 60, fillColor: [245, 245, 245] },
-      3: { cellWidth: contentWidth / 2 - 35 },
-    },
-    margin: { left: marginX, right: marginX },
+  let y = await addLetterhead(doc, context, {
+    title: 'COTIZACION',
+    documentNumber: `${formatText(service.folio)}${service.quoteNumber ? ` · ${service.quoteNumber}` : ''}`,
+    secondaryLine: `Valida hasta ${formatDocumentDate(validUntilIso)}`,
   });
-  y = (doc as any).lastAutoTable.finalY + 6;
 
-  // Cliente
-  const clientRows: [string, string][] = [
-    ['Razón Social', toTitleCase(service.client?.name || '—')],
-    ['RUT', service.client?.rut || '—'],
-    ['Dirección', service.client?.address || '—'],
-    ['Teléfono', service.client?.phone || '—'],
-    ['Email', service.client?.email || '—'],
+  const clientRows: Array<[string, string]> = [
+    ['Cliente', formatText(service.client?.name)],
+    ['RUT', formatText(service.client?.rut)],
+    ['Contacto', formatText(service.contactPerson || service.client?.contactName)],
+    ['Telefono', formatText(service.contactPhone || service.client?.phone)],
   ];
-  if (service.client?.contactName) clientRows.push(['Contacto', service.client.contactName]);
-  if (service.purchaseOrder || service.purchaseOrderNumber)
-    clientRows.push(['Orden de Compra', service.purchaseOrderNumber || service.purchaseOrder || '—']);
 
-  autoTable(doc, {
-    startY: y,
-    head: [['Cliente', '']],
-    body: clientRows,
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-    styles: { fontSize: 9, cellPadding: 2 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 45, textColor: 60 },
-      1: { cellWidth: contentWidth - 45 },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 6;
-
-  // Detalle del servicio
-  const serviceRows: [string, string][] = [
-    ['Tipo de Servicio', service.serviceType?.name || '—'],
-    ['Vehículo', formatVehicleInfo(service)],
-    ['Patente', shouldShowVehicleInfo(service) ? service.licensePlate || '—' : '—'],
-    ['Origen', service.origin || '—'],
-    ['Destino', service.destination || '—'],
-    ['Fecha estimada', service.serviceDate ? formatForDisplay(service.serviceDate) : '—'],
-  ];
-  if (service.crane)
-    serviceRows.push([
-      'Grúa asignada',
-      `${service.crane.licensePlate || ''} - ${getCraneTypeLabel(service.crane.type)}`.trim(),
-    ]);
-  if (service.observations) serviceRows.push(['Observaciones', service.observations]);
-
-  autoTable(doc, {
-    startY: y,
-    head: [['Detalle del Servicio', '']],
-    body: serviceRows,
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-    styles: { fontSize: 9, cellPadding: 2 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 45, textColor: 60 },
-      1: { cellWidth: contentWidth - 45 },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 6;
-
-  // Custodia (si aplica)
-  const custodyTotal = Number(service.custodyTotalAmount || 0);
-  if (service.custodyMode && service.custodyMode !== 'none' && custodyTotal > 0) {
-    autoTable(doc, {
-      startY: y,
-      head: [['Custodia', '']],
-      body: [
-        ['Días', String(service.custodyDays ?? '—')],
-        ['Tarifa diaria', formatCLP(Number(service.custodyDailyRate || 0))],
-        ['Total custodia', formatCLP(custodyTotal)],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-      styles: { fontSize: 9, cellPadding: 2 },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 45, textColor: 60 },
-        1: { cellWidth: contentWidth - 45 },
-      },
-      margin: { left: marginX, right: marginX },
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
+  if (service.purchaseOrderNumber || service.purchaseOrder) {
+    clientRows.push(['Orden de compra', formatText(service.purchaseOrderNumber || service.purchaseOrder)]);
   }
 
-  // Desglose de ítems (Glosa/Cantidad/Valor unitario) — solo para tipos de servicio con desglose habilitado
-  const serviceTypeName = service.serviceType?.name || '';
-  if (ITEMS_SERVICE_TYPES.includes(serviceTypeName)) {
-    const breakdown = await fetchServiceItemsBreakdown(service.id);
-    if (breakdown) {
-      const itemRows = breakdown.items.map((item) => [
-        item.glosa || '',
-        Number(item.cantidad).toString(),
-        formatCLP(Number(item.valor_unitario)),
-        formatCLP(Number(item.cantidad) * Number(item.valor_unitario)),
-      ]);
+  y = addSectionTable(doc, y, 'Datos del Cliente', clientRows);
 
-      autoTable(doc, {
-        startY: y,
-        head: [['Desglose de Ítems', 'Cant.', 'Valor unit.', 'Total neto']],
-        body: itemRows,
-        foot: [['', '', 'Subtotal ítems', formatCLP(breakdown.subtotal)]],
-        theme: 'grid',
-        headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-        footStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9 },
-        styles: { fontSize: 9, cellPadding: 2.5 },
-        columnStyles: {
-          0: { cellWidth: contentWidth - 18 - 35 - 32, textColor: 60 },
-          1: { cellWidth: 18, halign: 'right' },
-          2: { cellWidth: 35, halign: 'right' },
-          3: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
-        },
-        margin: { left: marginX, right: marginX },
-      });
-      y = (doc as any).lastAutoTable.finalY + 6;
-
-      // TODO: breakdown.subtotal (~$672.000 en SRV-6743) no coincide con service.value
-      // ($960.000, usado como "Servicio base" más abajo). Definir con negocio si el
-      // desglose debe reemplazar el valor del servicio o mantenerse como referencia
-      // informativa antes de unificar ambos montos.
-    }
-  }
-
-  // Tabla de valores (totales)
-  const serviceBase = Number(service.value || 0);
-  const excess = service.hasExcess ? Number(service.excessAmount || 0) : 0;
-  const subtotalNet = serviceBase + custodyTotal + excess;
-  const iva = Math.round(subtotalNet * 0.19);
-  const total = subtotalNet + iva;
-
-  const valueRows: [string, string][] = [
-    ['Servicio base', formatCLP(serviceBase)],
+  const descriptionRows: Array<[string, string]> = [
+    ['Tipo de servicio', formatText(service.serviceType?.name)],
+    ['Fecha programada', formatDocumentDateTime(service.serviceDate, service.startTime)],
+    ['Vehiculo / equipo', formatText(service.vehicleBrand || service.vehicleModel || service.licensePlate ? `${service.vehicleBrand} ${service.vehicleModel}`.trim() || service.licensePlate : '-')],
+    ['Origen / faena', formatText(service.origin)],
+    ['Destino', formatText(service.destination)],
+    ['Grua asignada', buildCraneLabel(service)],
+    ['Operador asignado', formatText(primaryOperator?.name)],
   ];
-  if (custodyTotal > 0) valueRows.push(['Custodia', formatCLP(custodyTotal)]);
-  if (excess > 0) valueRows.push(['Exceso', formatCLP(excess)]);
-  valueRows.push(['Subtotal neto', formatCLP(subtotalNet)]);
-  valueRows.push(['IVA (19%)', formatCLP(iva)]);
 
-  autoTable(doc, {
-    startY: y,
-    head: [['Concepto', 'Monto']],
-    body: valueRows,
-    foot: [['TOTAL A PAGAR', formatCLP(total)]],
-    theme: 'grid',
-    headStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-    footStyles: { fillColor: VIOLET, textColor: 255, fontStyle: 'bold', fontSize: 11 },
-    styles: { fontSize: 9, cellPadding: 2.5 },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: contentWidth - 60, textColor: 60 },
-      1: { cellWidth: 60, halign: 'right' },
-    },
-    margin: { left: marginX, right: marginX },
-  });
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y = addSectionTable(doc, y, 'Descripcion del Servicio', descriptionRows);
 
-  // Condiciones
-  doc.setFontSize(8);
-  doc.setTextColor(...MUTED);
-  const conditions = doc.splitTextToSize(
-    'Precios expresados en pesos chilenos (CLP). IVA incluido en el total. ' +
-      `Cotización válida hasta el ${formatForDisplay(validUntil)}.`,
-    contentWidth,
-  );
-  doc.text(conditions, marginX, y);
-  y += conditions.length * 4 + 4;
+  const breakdown = await fetchServiceItemsBreakdown(service.id);
+  const lineRows = breakdown?.items.length
+    ? breakdown.items.map((item) => [
+        formatText(item.glosa),
+        String(Number(item.cantidad || 0)),
+        formatDocumentCurrency(Number(item.valor_unitario || 0)),
+        formatDocumentCurrency(Number(item.cantidad || 0) * Number(item.valor_unitario || 0)),
+      ])
+    : [[
+        formatText(service.serviceType?.name || 'Servicio'),
+        '1',
+        formatDocumentCurrency(Number(service.value || 0)),
+        formatDocumentCurrency(Number(service.value || 0)),
+      ]];
 
-  // Footer en cada página
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const ph = doc.internal.pageSize.height;
-    doc.setDrawColor(220);
-    doc.line(marginX, ph - 14, pageWidth - marginX, ph - 14);
-    doc.setFontSize(8);
-    doc.setTextColor(...MUTED);
-    doc.text('Este documento es una cotización y no constituye factura.', marginX, ph - 9);
-    doc.text(`Página ${i} de ${pageCount}`, pageWidth - marginX, ph - 9, { align: 'right' });
+  const serviceNetAmount = breakdown?.subtotal ?? Number(service.value || 0);
+  y = addLineItemsTable(doc, y + 2, 'Desglose', lineRows, [
+    ['', '', 'Subtotal servicio', formatDocumentCurrency(serviceNetAmount)],
+  ]);
+
+  const totals = buildFinancialSummary(service, serviceNetAmount);
+  const summaryRows = [
+    ['Subtotal servicio', formatDocumentCurrency(totals.serviceNet)],
+    ...(totals.custodyNet > 0 ? [['Custodia', formatDocumentCurrency(totals.custodyNet)] as [string, string]] : []),
+    ...(totals.excessNet > 0 ? [['Excedente', formatDocumentCurrency(totals.excessNet)] as [string, string]] : []),
+    ['Subtotal neto', formatDocumentCurrency(totals.subtotalNet)],
+    ['IVA 19%', formatDocumentCurrency(totals.iva)],
+  ];
+
+  y = addSummaryTable(doc, y, 'Totales', summaryRows, [
+    ['TOTAL', formatDocumentCurrency(totals.total)],
+  ]);
+
+  const termsRows: Array<[string, string]> = [
+    ['Validez', `${QUOTE_VALIDITY_DAYS} dias corridos desde la emision`],
+    ['Forma de pago', context.company.legalTexts || DEFAULT_COMMERCIAL_TERMS],
+  ];
+
+  if (service.observations) {
+    termsRows.push(['Observaciones', formatText(service.observations)]);
   }
+
+  y = addSectionTable(doc, y, 'Condiciones Comerciales', termsRows);
+
+  addFooter(doc, `Documento comercial emitido por ${context.company.businessName || 'la empresa emisora'}.`);
 
   return {
     blob: doc.output('blob'),
-    fileName: `cotizacion-${service.folio}.pdf`,
+    fileName: `Cotizacion_${service.folio}.pdf`,
   };
 };

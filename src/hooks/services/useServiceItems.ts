@@ -3,8 +3,60 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { ServiceItem } from '@/types';
+import { VENTA_PRODUCTOS_SERVICE_TYPE_ID } from '@/utils/pdf/serviceItemsData';
 
 const logger = createLogger('ServiceItems');
+
+interface SaveServiceItemsParams {
+  serviceId: string;
+  toUpsert: Omit<ServiceItem, 'created_at' | 'updated_at'>[];
+  toDelete: string[];
+}
+
+export const persistServiceItems = async ({
+  serviceId,
+  toUpsert,
+  toDelete,
+}: SaveServiceItemsParams) => {
+  if (toDelete.length > 0) {
+    const { error } = await supabase
+      .from('service_items')
+      .delete()
+      .in('id', toDelete);
+    if (error) throw error;
+  }
+
+  if (toUpsert.length > 0) {
+    const { error } = await supabase
+      .from('service_items')
+      .upsert(toUpsert, { onConflict: 'id' });
+    if (error) throw error;
+  }
+
+  const { data: serviceMeta, error: serviceMetaError } = await supabase
+    .from('services')
+    .select('service_type_id')
+    .eq('id', serviceId)
+    .maybeSingle();
+
+  if (serviceMetaError) {
+    throw serviceMetaError;
+  }
+
+  if (serviceMeta?.service_type_id === VENTA_PRODUCTOS_SERVICE_TYPE_ID) {
+    const subtotal = toUpsert.reduce(
+      (sum, item) => sum + Number(item.cantidad || 0) * Number(item.valor_unitario || 0),
+      0,
+    );
+
+    const { error: updateValueError } = await supabase
+      .from('services')
+      .update({ value: subtotal })
+      .eq('id', serviceId);
+
+    if (updateValueError) throw updateValueError;
+  }
+};
 
 export function useServiceItems(serviceId: string | undefined) {
   const queryClient = useQueryClient();
@@ -27,29 +79,38 @@ export function useServiceItems(serviceId: string | undefined) {
 
   const saveItems = useMutation({
     mutationFn: async ({
+      serviceId: targetServiceId,
       toUpsert,
       toDelete,
     }: {
+      serviceId?: string;
       toUpsert: Omit<ServiceItem, 'created_at' | 'updated_at'>[];
       toDelete: string[];
+      silent?: boolean;
     }) => {
-      if (toDelete.length > 0) {
-        const { error } = await supabase
-          .from('service_items')
-          .delete()
-          .in('id', toDelete);
-        if (error) throw error;
+      const resolvedServiceId = targetServiceId || serviceId;
+      if (!resolvedServiceId) {
+        throw new Error('No se recibió serviceId para guardar el desglose');
       }
-      if (toUpsert.length > 0) {
-        const { error } = await supabase
-          .from('service_items')
-          .upsert(toUpsert, { onConflict: 'id' });
-        if (error) throw error;
-      }
+
+      await persistServiceItems({
+        serviceId: resolvedServiceId,
+        toUpsert,
+        toDelete,
+      });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      toast.success('Desglose guardado');
+    onSuccess: (_, variables) => {
+      const resolvedServiceId = variables.serviceId || serviceId;
+      if (resolvedServiceId) {
+        queryClient.invalidateQueries({ queryKey: ['service-items', resolvedServiceId] });
+        queryClient.invalidateQueries({ queryKey: ['services', resolvedServiceId] });
+        queryClient.invalidateQueries({ queryKey: ['serviceDetails', resolvedServiceId] });
+        queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', resolvedServiceId] });
+        queryClient.invalidateQueries({ queryKey: ['service-change-history', resolvedServiceId] });
+      }
+      if (!variables.silent) {
+        toast.success('Desglose guardado');
+      }
     },
     onError: (err) => {
       logger.error('Error guardando ítems', err);

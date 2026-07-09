@@ -15,8 +15,8 @@ const fetchServiceById = async (serviceId: string, transformRawServiceData: (dat
     .from('services')
     .select(`
       *,
-      client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
-      third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+      client:clients!services_client_id_fkey(id, name, rut, phone, email, address, contact_name, department, is_active, created_at, updated_at),
+      third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, contact_name, department, is_active, created_at, updated_at),
       cranes!services_crane_id_fkey(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
       operators!services_operator_id_fkey(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
       service_types!services_service_type_id_fkey(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)

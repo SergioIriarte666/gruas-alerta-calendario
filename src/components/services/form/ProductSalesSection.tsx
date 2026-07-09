@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ interface ProductSaleItem {
   id: string;
   productId: string;
   productName: string;
+  sku?: string | null;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -34,10 +35,20 @@ interface ProductSaleItem {
   unitOfMeasure: string;
 }
 
+/** Ítem de service_items ya persistido, para reconstruir salesItems al editar. */
+export interface InitialSaleItem {
+  id: string;
+  inventoryItemId: string | null;
+  cantidad: number;
+  valorUnitario: number;
+}
+
 interface ProductSalesSectionProps {
   salesItems: ProductSaleItem[];
   onSalesItemsChange: (items: ProductSaleItem[]) => void;
   disabled?: boolean;
+  /** service_items existentes al editar un servicio; se usan una sola vez para hidratar salesItems. */
+  initialItems?: InitialSaleItem[];
 }
 
 const buildQuantitySchema = (maxStock: number) =>
@@ -48,13 +59,15 @@ const buildQuantitySchema = (maxStock: number) =>
 export const ProductSalesSection = ({
   salesItems,
   onSalesItemsChange,
-  disabled = false
+  disabled = false,
+  initialItems
 }: ProductSalesSectionProps) => {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const { systemSettings } = useSystemSettings();
+  const hydratedRef = useRef(false);
 
   // Fetch available inventory items
   const { data: inventoryItems = [], isLoading } = useQuery({
@@ -99,6 +112,44 @@ export const ProductSalesSection = ({
 
   const selectedProduct = inventoryItems.find(item => item.id === selectedProductId);
 
+  // Al editar un servicio existente: reconstruir salesItems desde los
+  // service_items ya persistidos (vía inventory_item_id), una sola vez y
+  // solo si el llamador no trae ya productos cargados.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    if (isLoading) return;
+    if (!initialItems || initialItems.length === 0) {
+      hydratedRef.current = true;
+      return;
+    }
+    if (salesItems.length > 0) {
+      hydratedRef.current = true;
+      return;
+    }
+
+    const hydrated: ProductSaleItem[] = initialItems
+      .filter((item) => !!item.inventoryItemId)
+      .map((item) => {
+        const product = inventoryItems.find((p) => p.id === item.inventoryItemId);
+        return {
+          id: item.id,
+          productId: item.inventoryItemId as string,
+          productName: product?.name ?? '(producto eliminado)',
+          sku: product?.sku ?? null,
+          quantity: item.cantidad,
+          unitPrice: item.valorUnitario,
+          totalPrice: item.cantidad * item.valorUnitario,
+          availableStock: product?.current_stock ?? 0,
+          unitOfMeasure: product?.unit_of_measure ?? 'unidad',
+        };
+      });
+
+    if (hydrated.length > 0) {
+      onSalesItemsChange(hydrated);
+    }
+    hydratedRef.current = true;
+  }, [initialItems, isLoading, inventoryItems, salesItems.length, onSalesItemsChange]);
+
   const validateQuantity = (value: number, maxStock: number): boolean => {
     const result = buildQuantitySchema(maxStock).safeParse(value);
     setQuantityError(result.success ? null : result.error.issues[0].message);
@@ -131,9 +182,10 @@ export const ProductSalesSection = ({
     const totalPrice = quantity * unitPrice;
 
     const newItem: ProductSaleItem = {
-      id: `sale-${Date.now()}`,
+      id: crypto.randomUUID(),
       productId: selectedProduct.id,
       productName: selectedProduct.name,
+      sku: selectedProduct.sku ?? null,
       quantity,
       unitPrice,
       totalPrice,

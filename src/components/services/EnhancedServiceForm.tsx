@@ -31,7 +31,6 @@ import { useResourceCompliance, formatComplianceIssueMessage } from '@/hooks/ser
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useOperatorNotificationFlow } from '@/hooks/services/useOperatorNotificationFlow';
 import { useServiceItems } from '@/hooks/services/useServiceItems';
-import { useQueryClient } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -48,6 +47,10 @@ import { createLogger } from '@/lib/logger';
 import { OperatorNotificationDialogs } from './OperatorNotificationDialogs';
 import { ComplianceOverrideDialog } from './form/ComplianceOverrideDialog';
 import { useUser } from '@/contexts/UserContext';
+import {
+  VENTA_PRODUCTOS_SERVICE_TYPE_ID,
+  isItemsServiceType as supportsServiceItems,
+} from '@/utils/pdf/serviceItemsData';
 
 const logger = createLogger('EnhancedServiceForm');
 
@@ -76,8 +79,7 @@ export const EnhancedServiceForm = React.memo(({
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
-  const { items: existingServiceItems, isLoading: loadingServiceItems } = useServiceItems(service?.id);
-  const queryClient = useQueryClient();
+  const { items: existingServiceItems, isLoading: loadingServiceItems, saveItems } = useServiceItems(service?.id);
   
   // Step navigation state
   const [currentStep, setCurrentStep] = useState(1);
@@ -432,17 +434,18 @@ export const EnhancedServiceForm = React.memo(({
     isLoading: complianceLoading,
   } = useResourceCompliance(formData.crane, selectedOperatorIds, formData.serviceDate);
 
-  // "Venta de Productos" queda fuera de esta lista a propósito: ese tipo ya
-  // tiene su propia sección dedicada (ProductSalesSection/salesItems) más abajo.
-  // Sí se incluye en el ITEMS_SERVICE_TYPES de serviceItemsData.ts/ServiceDetailsModal
-  // para que el PDF y la pestaña "Desglose" muestren sus ítems (ver syncServiceItems).
-  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
-  const isItemsServiceType = ITEMS_SERVICE_TYPES.includes(selectedServiceType?.name ?? '');
+  const isProductSalesType = selectedServiceType?.id === VENTA_PRODUCTOS_SERVICE_TYPE_ID
+    || selectedServiceType?.name === 'Venta de Productos';
+  const isItemsServiceType = supportsServiceItems(selectedServiceType);
 
   // Cargar ítems existentes una sola vez por servicio al editar, antes de que
-  // el efecto de auto-toggle pueda limpiarlos
+  // el efecto de auto-toggle pueda limpiarlos. "Venta de Productos" se excluye:
+  // sus service_items se hidratan dentro de ProductSalesSection (vía
+  // inventory_item_id), no en el editor genérico de ítems.
   const itemsLoadedRef = useRef<string | null>(null);
   useEffect(() => {
+    if (!selectedServiceType) return;
+    if (isProductSalesType) return;
     if (service?.id && !loadingServiceItems && itemsLoadedRef.current !== service.id) {
       setFormData(prev => ({
         ...prev,
@@ -458,7 +461,7 @@ export const EnhancedServiceForm = React.memo(({
       }
       itemsLoadedRef.current = service.id;
     }
-  }, [service?.id, loadingServiceItems, existingServiceItems]);
+  }, [service?.id, loadingServiceItems, existingServiceItems, selectedServiceType, isProductSalesType]);
 
   useEffect(() => {
     if (isItemsServiceType) {
@@ -612,7 +615,7 @@ export const EnhancedServiceForm = React.memo(({
 
   // Auto-calculate service value for product sales
   useEffect(() => {
-    if (selectedServiceType?.name === 'Venta de Productos' && formData.salesItems?.length > 0) {
+    if (isProductSalesType && formData.salesItems?.length > 0) {
       const totalSales = formData.salesItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
       setFormData(prev =>
         prev.value === totalSales
@@ -620,7 +623,7 @@ export const EnhancedServiceForm = React.memo(({
           : { ...prev, value: totalSales }
       );
     }
-  }, [formData.salesItems, selectedServiceType?.name]);
+  }, [formData.salesItems, isProductSalesType]);
 
   // Auto-initialize custody mode for "Custodia de Vehículos" service type
   useEffect(() => {
@@ -765,35 +768,30 @@ export const EnhancedServiceForm = React.memo(({
     service,
   ]);
 
+  // "Venta de Productos" no usa el editor genérico de ítems (serviceItems):
+  // sus líneas vienen de ProductSalesSection (salesItems), con glosa =
+  // nombre + SKU e inventory_item_id vinculado al producto de origen. Se
+  // mapean al mismo shape que usa el editor genérico para pasar por UN solo
+  // camino de sincronización (sin fork), reutilizando el PDF de cotización/
+  // factura y la pestaña "Desglose" existentes (ver ITEMS_SERVICE_TYPES en
+  // serviceItemsData.ts).
+  const getServiceItemDrafts = (): ServiceItemDraft[] => {
+    if (isProductSalesType) {
+      return (formData.salesItems || []).map(item => ({
+        id: item.id,
+        glosa: item.sku ? `${item.productName} (${item.sku})` : item.productName,
+        cantidad: item.quantity,
+        valor_unitario: item.unitPrice,
+        inventory_item_id: item.productId,
+      }));
+    }
+    return formData.serviceItems || [];
+  };
+
   // Sincroniza el desglose de ítems (creación, edición y eliminación) tanto
   // al crear como al actualizar un servicio
   const syncServiceItems = async (resultId: string) => {
-    // "Venta de Productos" no usa el editor genérico de ítems (serviceItems):
-    // sus líneas vienen de ProductSalesSection (salesItems). Las reflejamos en
-    // service_items solo para reutilizar el PDF de cotización/factura y la
-    // pestaña "Desglose" existentes (ver ITEMS_SERVICE_TYPES en serviceItemsData.ts).
-    if (selectedServiceType?.name === 'Venta de Productos') {
-      const salesItems = formData.salesItems || [];
-
-      const { error: deleteError } = await supabase.from('service_items').delete().eq('service_id', resultId);
-      if (deleteError) logger.warn('Error eliminando service_items de venta:', deleteError);
-
-      if (salesItems.length > 0) {
-        const rows = salesItems.map(item => ({
-          service_id: resultId,
-          glosa: item.productName,
-          cantidad: item.quantity,
-          valor_unitario: item.unitPrice,
-        }));
-        const { error: insertError } = await supabase.from('service_items').insert(rows);
-        if (insertError) logger.warn('Error guardando service_items de venta:', insertError);
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['service-items', resultId] });
-      return;
-    }
-
-    const drafts = formData.serviceItems || [];
+    const drafts = getServiceItemDrafts();
     if (drafts.length === 0 && (existingServiceItems || []).length === 0) {
       return;
     }
@@ -810,18 +808,15 @@ export const EnhancedServiceForm = React.memo(({
         glosa: item.glosa,
         cantidad: item.cantidad,
         valor_unitario: item.valor_unitario,
+        inventory_item_id: item.inventory_item_id ?? null,
       }));
 
-    if (toDelete.length > 0) {
-      const { error } = await supabase.from('service_items').delete().in('id', toDelete);
-      if (error) logger.warn('Error eliminando service_items:', error);
-    }
-    if (toUpsert.length > 0) {
-      const { error } = await supabase.from('service_items').upsert(toUpsert, { onConflict: 'id' });
-      if (error) logger.warn('Error guardando service_items:', error);
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['service-items', resultId] });
+    await saveItems.mutateAsync({
+      serviceId: resultId,
+      toUpsert,
+      toDelete,
+      silent: true,
+    });
   };
 
   // Handler único de guardado: usado por el submit del form (fase 4)
@@ -931,7 +926,7 @@ export const EnhancedServiceForm = React.memo(({
         logger.debug('🔄 Updating existing service...');
         result = await updateService(service.id, finalData);
         
-        if (selectedServiceType?.name === 'Venta de Productos' && 
+        if (isProductSalesType && 
             finalData.status === 'completed' && 
             service.status !== 'completed' &&
             finalData.salesItems?.length > 0) {
@@ -978,7 +973,7 @@ export const EnhancedServiceForm = React.memo(({
             });
         }
         
-        if (selectedServiceType?.name === 'Venta de Productos' && 
+        if (isProductSalesType && 
             finalData.salesItems?.length > 0) {
           
           logger.debug('🔄 Processing inventory deduction for new product sale...');
@@ -1373,16 +1368,24 @@ export const EnhancedServiceForm = React.memo(({
                 )}
 
                 {/* Product Sales Section */}
-                {selectedServiceType?.name === 'Venta de Productos' && (
+                {isProductSalesType && (
                   <ProductSalesSection
                     salesItems={formData.salesItems || []}
                     onSalesItemsChange={(items) => setFormData(prev => ({ ...prev, salesItems: items }))}
                     disabled={false}
+                    initialItems={service?.id
+                      ? (existingServiceItems || []).map(i => ({
+                          id: i.id,
+                          inventoryItemId: i.inventory_item_id ?? null,
+                          cantidad: Number(i.cantidad),
+                          valorUnitario: Number(i.valor_unitario),
+                        }))
+                      : undefined}
                   />
                 )}
 
                 {/* Costos del Servicio */}
-                {selectedServiceType?.name !== 'Venta de Productos' && (
+                {!isProductSalesType && (
                   <ServiceCostDetailsSection
                     costDetails={formData.costDetails || []}
                     onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
@@ -1481,25 +1484,27 @@ export const EnhancedServiceForm = React.memo(({
                   </div>
 
                   {/* Toggle para habilitar Desglose de Trabajos */}
-                  <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-4">
-                    <div className="space-y-0.5">
-                      <Label className="text-base">Habilitar Desglose de Trabajos</Label>
-                      <div className="text-sm text-muted-foreground">
-                        Activar para registrar ítems con glosa, cantidad y valor
+                  {!isProductSalesType && (
+                    <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-4">
+                      <div className="space-y-0.5">
+                        <Label className="text-base">Habilitar Desglose de Trabajos</Label>
+                        <div className="text-sm text-muted-foreground">
+                          Activar para registrar ítems con glosa, cantidad y valor
+                        </div>
                       </div>
+                      <Switch
+                        checked={enableItems || isItemsServiceType}
+                        onCheckedChange={(checked) => {
+                          setEnableItems(checked);
+                          if (!checked) setFormData(prev => ({ ...prev, serviceItems: [] }));
+                        }}
+                        disabled={isItemsServiceType}
+                      />
                     </div>
-                    <Switch
-                      checked={enableItems || isItemsServiceType}
-                      onCheckedChange={(checked) => {
-                        setEnableItems(checked);
-                        if (!checked) setFormData(prev => ({ ...prev, serviceItems: [] }));
-                      }}
-                      disabled={isItemsServiceType}
-                    />
-                  </div>
+                  )}
 
                   {/* Tabla de ítems */}
-                  {(enableItems || isItemsServiceType) && (
+                  {!isProductSalesType && (enableItems || isItemsServiceType) && (
                     <div className="space-y-3 pt-2">
                       <div className="overflow-x-auto rounded-md border border-border">
                         <table className="w-full text-sm">
