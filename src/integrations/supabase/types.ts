@@ -2956,6 +2956,8 @@ export type Database = {
           reason: string | null
           receipt_photo_paths: string[] | null
           reference_document: string | null
+          sale_unit_price: number | null
+          service_id: string | null
           status: string
           supplier_id: string | null
           supplier_invoice_id: string | null
@@ -2983,6 +2985,8 @@ export type Database = {
           reason?: string | null
           receipt_photo_paths?: string[] | null
           reference_document?: string | null
+          sale_unit_price?: number | null
+          service_id?: string | null
           status?: string
           supplier_id?: string | null
           supplier_invoice_id?: string | null
@@ -3010,6 +3014,8 @@ export type Database = {
           reason?: string | null
           receipt_photo_paths?: string[] | null
           reference_document?: string | null
+          sale_unit_price?: number | null
+          service_id?: string | null
           status?: string
           supplier_id?: string | null
           supplier_invoice_id?: string | null
@@ -3074,6 +3080,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "operators"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
           {
             foreignKeyName: "inventory_movements_supplier_id_fkey"

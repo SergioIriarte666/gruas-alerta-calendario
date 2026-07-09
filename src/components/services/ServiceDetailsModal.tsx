@@ -53,6 +53,8 @@ import { useSettings } from '@/hooks/useSettings';
 import { createLogger } from "@/lib/logger";
 import { ServiceItemsTab } from './ServiceItemsTab';
 import { useOpenServiceDisputes, useServiceDisputeHistory } from '@/hooks/services/useServiceDisputes';
+import { useServiceSaleMargin } from '@/hooks/services/useServiceSaleMargin';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
@@ -377,7 +379,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const custodyInfo = isCustody && serviceData ? getCustodyInfo(serviceData) : null;
   const isEquipmentRental = serviceData ? isEquipmentRentalService(serviceData) : false;
 
-  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
+  const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo', 'Venta de Productos'];
   const showItemsTab = ITEMS_SERVICE_TYPES.includes(serviceData?.serviceType?.name ?? '');
   
   // Refrescar datos al abrir. La antigua "sincronización silenciosa" de comisiones
@@ -403,6 +405,14 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   const currentDispute = service?.id ? openDisputesByServiceId.get(service.id) : undefined;
   const [showMarkDispute, setShowMarkDispute] = React.useState(false);
   const [showResolveDispute, setShowResolveDispute] = React.useState(false);
+
+  const isProductSaleService = serviceData?.serviceType?.name === 'Venta de Productos';
+  const { isAdmin } = useUserPermissions();
+  const saleMargin = useServiceSaleMargin(
+    serviceData?.id,
+    Number(serviceData?.value || 0),
+    isProductSaleService && isAdmin()
+  );
 
   if (!isOpen || !serviceData) return null;
   
@@ -913,6 +923,30 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                          <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
                          <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-success' : 'text-destructive'}`}/>
                   </DetailSection>
+
+                  {isProductSaleService && isAdmin() && (
+                      <DetailSection title="Margen de Venta de Productos" icon={DollarSign} color="emerald">
+                         <DetailItem
+                           icon={DollarSign}
+                           label="Total Venta"
+                           value={formatCurrency(saleMargin.saleTotal)}
+                           valueClass="text-md text-info font-medium"
+                         />
+                         <DetailItem
+                           icon={DollarSign}
+                           label="Costo FIFO (bodega)"
+                           value={saleMargin.isLoading ? '…' : formatCurrency(saleMargin.fifoCost)}
+                           valueClass="text-md text-destructive font-medium"
+                         />
+                         <DetailItem
+                           icon={DollarSign}
+                           label="Margen"
+                           value={saleMargin.isLoading ? '…' : formatCurrency(saleMargin.margin)}
+                           valueClass={`text-lg font-bold ${saleMargin.margin >= 0 ? 'text-success' : 'text-destructive'}`}
+                           isFullWidth
+                         />
+                      </DetailSection>
+                  )}
 
                   {serviceData.observations && (
                       <DetailSection title="Observaciones" icon={FileText} color="orange">

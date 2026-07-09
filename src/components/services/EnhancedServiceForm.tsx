@@ -432,6 +432,10 @@ export const EnhancedServiceForm = React.memo(({
     isLoading: complianceLoading,
   } = useResourceCompliance(formData.crane, selectedOperatorIds, formData.serviceDate);
 
+  // "Venta de Productos" queda fuera de esta lista a propósito: ese tipo ya
+  // tiene su propia sección dedicada (ProductSalesSection/salesItems) más abajo.
+  // Sí se incluye en el ITEMS_SERVICE_TYPES de serviceItemsData.ts/ServiceDetailsModal
+  // para que el PDF y la pestaña "Desglose" muestren sus ítems (ver syncServiceItems).
   const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
   const isItemsServiceType = ITEMS_SERVICE_TYPES.includes(selectedServiceType?.name ?? '');
 
@@ -764,6 +768,31 @@ export const EnhancedServiceForm = React.memo(({
   // Sincroniza el desglose de ítems (creación, edición y eliminación) tanto
   // al crear como al actualizar un servicio
   const syncServiceItems = async (resultId: string) => {
+    // "Venta de Productos" no usa el editor genérico de ítems (serviceItems):
+    // sus líneas vienen de ProductSalesSection (salesItems). Las reflejamos en
+    // service_items solo para reutilizar el PDF de cotización/factura y la
+    // pestaña "Desglose" existentes (ver ITEMS_SERVICE_TYPES en serviceItemsData.ts).
+    if (selectedServiceType?.name === 'Venta de Productos') {
+      const salesItems = formData.salesItems || [];
+
+      const { error: deleteError } = await supabase.from('service_items').delete().eq('service_id', resultId);
+      if (deleteError) logger.warn('Error eliminando service_items de venta:', deleteError);
+
+      if (salesItems.length > 0) {
+        const rows = salesItems.map(item => ({
+          service_id: resultId,
+          glosa: item.productName,
+          cantidad: item.quantity,
+          valor_unitario: item.unitPrice,
+        }));
+        const { error: insertError } = await supabase.from('service_items').insert(rows);
+        if (insertError) logger.warn('Error guardando service_items de venta:', insertError);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['service-items', resultId] });
+      return;
+    }
+
     const drafts = formData.serviceItems || [];
     if (drafts.length === 0 && (existingServiceItems || []).length === 0) {
       return;

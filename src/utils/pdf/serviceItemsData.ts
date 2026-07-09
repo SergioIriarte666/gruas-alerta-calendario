@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo'];
+export const ITEMS_SERVICE_TYPES = ['Apoyo Logistico', 'Servicios Mecánicos y De Apoyo', 'Venta de Productos'];
 
 export interface ServiceItemRow {
   glosa: string;
