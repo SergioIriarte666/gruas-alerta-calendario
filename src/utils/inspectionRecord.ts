@@ -197,28 +197,33 @@ export const overwriteExistingInspectionPhase = async (
  * Garantiza que todas las fotos del set fotográfico estén en Supabase Storage.
  * Lanza si falta una foto en caché local o si la subida falla — nunca devuelve
  * fotos "perdidas" silenciosamente, porque son la prueba del estado de entrega.
+ *
+ * Sube las fotos una por una (no Promise.all): con 12+ fotos, subir todas en paralelo
+ * multiplica la memoria y el ancho de banda usados en terreno simultáneamente.
  */
 export const ensurePhotosUploaded = async (
   photographicSet: PhotographicSetItem[] | undefined,
   serviceId: string,
 ): Promise<(PhotographicSetItem & { storageUrl: string })[]> => {
   const photos = photographicSet || [];
+  const uploaded: (PhotographicSetItem & { storageUrl: string })[] = [];
 
-  return Promise.all(
-    photos.map(async (photo) => {
-      if (photo.storageUrl) {
-        return { ...photo, storageUrl: photo.storageUrl };
-      }
+  for (const photo of photos) {
+    if (photo.storageUrl) {
+      uploaded.push({ ...photo, storageUrl: photo.storageUrl });
+      continue;
+    }
 
-      const cached = PhotoStorage.load(photo.fileName);
-      if (!cached) {
-        throw new Error(`Falta la foto ${photo.fileName} en el dispositivo; no se puede subir a Storage.`);
-      }
+    const cached = await PhotoStorage.load(photo.fileName);
+    if (!cached) {
+      throw new Error(`Falta la foto ${photo.fileName} en el dispositivo; no se puede subir a Storage.`);
+    }
 
-      const storageUrl = await uploadInspectionPhoto(photo.fileName, cached.dataUrl, serviceId);
-      return { ...photo, storageUrl };
-    })
-  );
+    const storageUrl = await uploadInspectionPhoto(photo.fileName, cached.blob, serviceId);
+    uploaded.push({ ...photo, storageUrl });
+  }
+
+  return uploaded;
 };
 
 export const persistInspection = async (
@@ -383,26 +388,23 @@ const categoryFromPath = (path: string, index: number): PdfPhotoCategory => {
     : PDF_PHOTO_CATEGORIES[index % PDF_PHOTO_CATEGORIES.length];
 };
 
-const urlToDataUrl = async (url: string): Promise<string> => {
+const urlToBlob = async (url: string): Promise<Blob> => {
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`No se pudo descargar la foto inicial (${resp.status})`);
-  const blob = await resp.blob();
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
+  return await resp.blob();
 };
 
 /**
- * Carga las fotos de la inspección INICIAL (photos_before_service) como data URLs, listas para
+ * Carga las fotos de la inspección INICIAL (photos_before_service) como Blobs, listas para
  * embeber en el PDF de entrega. Devuelve [] si no hay (nunca lanza hacia arriba: la entrega no
  * debe bloquearse si las iniciales no cargan; el PDF inicial sigue existiendo aparte).
+ *
+ * Descarga las fotos una por una (no Promise.all): mantener 6+ fotos como Blobs en memoria
+ * simultáneamente durante la entrega ya causó presión de memoria en iOS.
  */
 export const fetchInitialPhotosForPdf = async (
   serviceId: string,
-): Promise<Array<{ fileName: string; category: PdfPhotoCategory; dataUrl: string }>> => {
+): Promise<Array<{ fileName: string; category: PdfPhotoCategory; blob: Blob }>> => {
   const { data, error } = await supabase
     .from('inspections')
     .select('photos_before_service, storage_tier')
@@ -434,14 +436,15 @@ export const fetchInitialPhotosForPdf = async (
     })));
   }
 
-  const results = await Promise.all(signedPhotos.map(async ({ url, fileName }, index) => {
+  const results: Array<{ fileName: string; category: PdfPhotoCategory; blob: Blob }> = [];
+  for (let index = 0; index < signedPhotos.length; index++) {
+    const { url, fileName } = signedPhotos[index];
     try {
-      const dataUrl = await urlToDataUrl(url);
-      return { fileName, category: categoryFromPath(fileName, index), dataUrl };
+      const blob = await urlToBlob(url);
+      results.push({ fileName, category: categoryFromPath(fileName, index), blob });
     } catch (e) {
       logger.warn(`No se pudo cargar foto inicial ${fileName} para el PDF:`, e);
-      return null;
     }
-  }));
-  return results.filter((r): r is { fileName: string; category: PdfPhotoCategory; dataUrl: string } => !!r);
+  }
+  return results;
 };

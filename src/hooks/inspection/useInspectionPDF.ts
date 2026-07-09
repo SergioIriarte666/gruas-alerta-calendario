@@ -17,7 +17,7 @@ export const useInspectionPDF = () => {
     service: any,
     inspection: InspectionFormValues,
     isFinal: boolean = true,
-    initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>
+    initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; blob: Blob }>
   ) => {
     logger.debug('Iniciando generación de PDF...');
     setIsGeneratingPDF(true);

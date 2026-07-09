@@ -14,6 +14,7 @@ import { createLogger } from '@/lib/logger';
 import { submitInspectionPipeline } from '@/utils/inspectionSubmission';
 import { queuePendingInspection, updateCachedOperatorService } from '@/utils/operatorOffline';
 import { isInSituService } from '@/utils/inspectionPhase';
+import { PhotoStorage } from '@/utils/photoStorage';
 import type { Service } from '@/types';
 
 const logger = createLogger('useServiceInspection');
@@ -138,27 +139,14 @@ export const useServiceInspection = () => {
 
       finishPdfGeneration();
 
-      let emailSent = false;
-      if (service.client?.email && service.client.email.includes('@')) {
-        try {
-          await sendInspectionEmailMutation.mutateAsync({
-            pdfBlob: blob,
-            service,
-            inspection: valuesWithPhotos,
-            phase,
-          });
-          emailSent = true;
-        } catch (emailError) {
-          logger.error('Error en email:', emailError);
-          toast.error('Inspección guardada correctamente, pero no se pudo enviar el correo');
-          reportNotificationError('email', emailError);
-        }
-      }
-
-      return { blob, values: valuesWithPhotos, emailSent, phase, signedUrl, queuedOffline: false } as const;
+      // El envío de email codifica el PDF completo a base64 en memoria (el paso más
+      // pesado de todo el flujo). El servicio y el registro de inspección ya quedaron
+      // persistidos arriba: no bloquear la pantalla de éxito con este paso — se dispara
+      // después, en onSuccess, una vez que el operador ya ve la confirmación de guardado.
+      return { blob, values: valuesWithPhotos, phase, signedUrl, queuedOffline: false } as const;
     },
     onSuccess: async (result) => {
-      const { blob, values, emailSent, phase, signedUrl, queuedOffline } = result;
+      const { blob, values, phase, signedUrl, queuedOffline } = result;
 
       logger.debug('Procesamiento completado para fase:', phase);
 
@@ -190,12 +178,29 @@ export const useServiceInspection = () => {
           queuedOffline: true,
         });
       } else {
-        toast.success(emailSent
-          ? `${successLabel} guardada y enviada por correo exitosamente`
-          : `${successLabel} guardada exitosamente`);
+        toast.success(`${successLabel} guardada exitosamente`);
 
+        // Mostrar la pantalla de éxito ANTES de cualquier paso pesado adicional: si el
+        // envío de email o WhatsApp fallara o la app se recargara, el operador ya vio
+        // la confirmación y el registro ya está persistido en la base de datos.
         revealPDF(blob!);
-        setCompletedInspection({ blob, values, phase, signedUrl, emailSent, whatsappSent: false, queuedOffline: false });
+        setCompletedInspection({ blob, values, phase, signedUrl, emailSent: false, whatsappSent: false, queuedOffline: false });
+
+        if (service.client?.email && service.client.email.includes('@')) {
+          try {
+            await sendInspectionEmailMutation.mutateAsync({
+              pdfBlob: blob!,
+              service,
+              inspection: values,
+              phase,
+            });
+            setCompletedInspection(current => current ? { ...current, emailSent: true } : current);
+          } catch (emailError) {
+            logger.error('Error en email:', emailError);
+            toast.error('Inspección guardada correctamente, pero no se pudo enviar el correo');
+            reportNotificationError('email', emailError);
+          }
+        }
 
         try {
           const whatsappSent = await sendWhatsApp(signedUrl!, phase);
@@ -207,9 +212,14 @@ export const useServiceInspection = () => {
       }
 
       if (phase === 'final' && !queuedOffline) {
-        values.photographicSet?.forEach(photo => {
-          localStorage.removeItem(`photo-${photo.fileName}`);
-        });
+        // Las fotos comprimidas viven en IndexedDB (ver photoStorage.ts), no en
+        // localStorage: limpiar ahí, o los blobs de inspecciones ya completadas
+        // se acumulan indefinidamente en el dispositivo.
+        for (const photo of values.photographicSet || []) {
+          PhotoStorage.remove(photo.fileName).catch((error) => {
+            logger.warn(`No se pudo limpiar la foto ${photo.fileName} de IndexedDB`, error);
+          });
+        }
         localStorage.removeItem(`inspection_${serviceId}`);
         localStorage.removeItem(`inspection_metadata_${serviceId}`);
       }

@@ -1,9 +1,10 @@
+
 import { businessClock } from '@/utils/businessClock';
 
 import jsPDF from 'jspdf';
-import { compressImageForPDF } from './photos/photoProcessor';
+import { compressBlobForPDF } from './photos/photoProcessor';
 import { drawPhotoPlaceholder } from './photos/photoPlaceholder';
-import { getPhotoFromStorage } from './photos/photoStorage';
+import { getPhotoBlobForPdf } from './photos/photoStorage';
 import { createLogger } from "@/lib/logger";
 
 
@@ -14,7 +15,7 @@ export const addPhotographicSetSection = async (
     fileName: string;
     category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
     storageUrl?: string;
-    dataUrl?: string;
+    blob?: Blob;
   }>,
   yPosition: number,
   title: string = 'SET FOTOGRÁFICO'
@@ -44,7 +45,7 @@ export const addPhotographicSetSection = async (
     const categoryOrder = ['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'];
     const categoryLabels = {
       'izquierdo': 'Vista Izquierda',
-      'derecho': 'Vista Derecha', 
+      'derecho': 'Vista Derecha',
       'frontal': 'Vista Frontal',
       'trasero': 'Vista Trasera',
       'interior': 'Vista Interior',
@@ -70,7 +71,7 @@ export const addPhotographicSetSection = async (
       if (yPosition + photoHeight + 40 > 280) {
         doc.addPage();
         yPosition = 20;
-        
+
         // Repetir título en nueva página
         doc.setFontSize(14);
         doc.setTextColor(0, 150, 136);
@@ -78,29 +79,32 @@ export const addPhotographicSetSection = async (
         yPosition += 15;
       }
 
-      // Procesar fotos de la fila actual
+      // Procesar fotos de la fila actual (una a la vez, secuencial: nunca Promise.all
+      // sobre todas las fotos, para no decodificar/comprimir varias imágenes a la vez)
       for (let j = 0; j < photosPerRow && i + j < organizedPhotos.length; j++) {
         const item = organizedPhotos[i + j];
         const xPos = 20 + j * (photoWidth + 10);
-        
+
         // Título de la categoría
         doc.setFontSize(10);
         doc.setTextColor(60, 60, 60);
         doc.text(item.label, xPos, yPosition);
-        
+
         try {
-          const photoData = getPhotoFromStorage(item.photo!.fileName, item.photo!.storageUrl, item.photo!.dataUrl);
-          
-          if (photoData) {
+          const rawBlob = await getPhotoBlobForPdf(item.photo!.fileName, item.photo!.storageUrl, item.photo!.blob);
+
+          if (rawBlob) {
             try {
-              // Comprimir imagen para PDF
-              const compressedImageData = await compressImageForPDF(photoData);
-              doc.addImage(compressedImageData, 'JPEG', xPos, yPosition + 5, photoWidth, photoHeight);
-              
+              let compressedBlob: Blob | null = await compressBlobForPDF(rawBlob);
+              const bytes = new Uint8Array(await compressedBlob.arrayBuffer());
+              compressedBlob = null; // liberar referencia apenas se obtuvieron los bytes
+
+              doc.addImage(bytes, 'JPEG', xPos, yPosition + 5, photoWidth, photoHeight);
+
               // Agregar borde
               doc.setDrawColor(200, 200, 200);
               doc.rect(xPos, yPosition + 5, photoWidth, photoHeight);
-              
+
               // Agregar timestamp en la esquina
               doc.setFontSize(7);
               doc.setTextColor(255, 255, 255);
@@ -108,7 +112,7 @@ export const addPhotographicSetSection = async (
               doc.setFillColor(0, 0, 0);
               doc.rect(xPos + 2, yPosition + photoHeight - 7, 45, 10, 'F');
               doc.text(businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm'), xPos + 4, yPosition + photoHeight);
-              
+
               validPhotosAdded++;
               logger.debug(`Foto agregada exitosamente: ${item.photo!.fileName} (${item.category})`);
             } catch (imageError) {
@@ -124,7 +128,7 @@ export const addPhotographicSetSection = async (
           drawPhotoPlaceholder(doc, xPos, yPosition + 5, photoWidth, photoHeight, 'Error de procesamiento');
         }
       }
-      
+
       yPosition += photoHeight + 25;
       currentRow++;
     }
@@ -145,9 +149,9 @@ export const addPhotographicSetSection = async (
 
 // Mantener función legacy para compatibilidad temporal
 export const addPhotosSection = async (
-  doc: jsPDF, 
-  title: string, 
-  photoNames: string[], 
+  doc: jsPDF,
+  title: string,
+  photoNames: string[],
   yPosition: number
 ): Promise<number> => {
   logger.warn('addPhotosSection está deprecated, usa addPhotographicSetSection');

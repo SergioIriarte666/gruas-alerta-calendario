@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -17,7 +16,7 @@ export const PhotoGrid = ({ photos, onRemovePhoto }: PhotoGridProps) => {
       {photos.map((photo, index) => (
         <div key={photo.name} className="relative">
           <img
-            src={photo.dataUrl}
+            src={photo.previewUrl}
             alt={`Foto ${index + 1}`}
             className="w-full h-24 object-cover rounded border border-slate-600"
           />

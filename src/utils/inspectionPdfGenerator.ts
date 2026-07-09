@@ -18,7 +18,7 @@ const logger = createLogger("inspectionPdfGenerator");
 export const generateInspectionPDF = async (data: {
   service: Service;
   inspection: InspectionFormValues;
-  initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; dataUrl: string }>;
+  initialPhotos?: Array<{ fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor'; blob: Blob }>;
   regenerationFooter?: string;
 }, isFinal: boolean = true): Promise<Blob> => {
   try {

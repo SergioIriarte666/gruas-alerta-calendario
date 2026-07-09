@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Camera, Trash2 } from 'lucide-react';
+import { Camera as CameraIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { PhotoProcessor } from '@/utils/photoProcessor';
 import { PhotoStorage } from '@/utils/photoStorage';
 import { PhotoData } from '@/types/photo';
 import { uploadInspectionPhoto, deleteInspectionPhoto } from '@/utils/photoUpload';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('PhotographicSet');
+const logger = createLogger('InspectionPhotos');
 
 interface PhotographicSetPhoto {
   fileName: string;
@@ -36,9 +37,14 @@ const PHOTO_CATEGORIES = [
   { id: 'motor', label: 'Motor', shortLabel: 'Motor', icon: '⚙️' }
 ] as const;
 
+const isUserCancellation = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+  return /cancel/i.test(message);
+};
+
 export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'initial', isOptional = false }: PhotographicSetProps) => {
   const [loadedPhotoData, setLoadedPhotoData] = useState<Record<string, PhotoData>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('izquierdo');
 
   useEffect(() => {
@@ -51,7 +57,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
 
       for (const photo of photos) {
         try {
-          const photoData = PhotoStorage.load(photo.fileName);
+          const photoData = await PhotoStorage.load(photo.fileName);
           if (photoData) {
             photoDataMap[photo.fileName] = photoData;
             loadedCount++;
@@ -76,26 +82,49 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
     }
   }, [photos]);
 
-  const handleFileSelect = async (files: FileList | null, category: string) => {
-    if (!files || files.length === 0) return;
+  // Revocar los object URLs de la instantánea anterior cada vez que loadedPhotoData
+  // cambia, y también al desmontar. Nunca reventamos WKWebView reteniendo blob URLs
+  // huérfanos de fotos que ya no se muestran.
+  useEffect(() => {
+    return () => {
+      Object.values(loadedPhotoData).forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    };
+  }, [loadedPhotoData]);
 
-    const file = files[0];
-    if (!PhotoProcessor.validateImageFile(file)) {
-      toast.error('Solo se permiten archivos de imagen');
-      return;
-    }
-
-    setIsLoading(true);
+  const handleCapture = async (category: string) => {
+    if (isCapturing) return;
+    setIsCapturing(true);
 
     try {
-      logger.debug(`Processing new photo for category: ${category}`);
-      const processedPhoto = await PhotoProcessor.processImage(file, `Set_Fotografico_${category}`);
+      logger.debug(`Iniciando captura de cámara para categoría: ${category}`);
 
-      // Guardar en localStorage (caché inmediata)
-      PhotoStorage.save(processedPhoto);
-      logger.debug(`Photo saved to storage: ${processedPhoto.name}`);
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+        quality: 60,
+        width: 1600,
+        correctOrientation: true,
+      });
 
-      setLoadedPhotoData(prev => ({ ...prev, [processedPhoto.name]: processedPhoto }));
+      if (!photo.webPath) {
+        throw new Error('La cámara no devolvió una imagen válida');
+      }
+
+      const response = await fetch(photo.webPath);
+      const rawBlob = await response.blob();
+      logger.debug(`Foto capturada para ${category}: ${Math.round(rawBlob.size / 1024)} KB`);
+
+      const processedPhoto = await PhotoProcessor.processImage(rawBlob, `Set_Fotografico_${category}`);
+      logger.debug(`Foto comprimida para ${category}: ${processedPhoto.name} (${Math.round(processedPhoto.blob.size / 1024)} KB)`);
+
+      // Guardar en IndexedDB (caché local inmediata, nunca base64 en localStorage)
+      await PhotoStorage.save(processedPhoto);
+
+      const previewUrl = URL.createObjectURL(processedPhoto.blob);
+      setLoadedPhotoData(prev => ({
+        ...prev,
+        [processedPhoto.name]: { name: processedPhoto.name, blob: processedPhoto.blob, previewUrl },
+      }));
 
       const newPhoto: PhotographicSetPhoto = {
         fileName: processedPhoto.name,
@@ -109,7 +138,7 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
       toast.success(`Foto ${category} agregada`);
 
       // Subir a Supabase Storage en segundo plano
-      uploadInspectionPhoto(processedPhoto.name, processedPhoto.dataUrl, serviceId)
+      uploadInspectionPhoto(processedPhoto.name, processedPhoto.blob, serviceId)
         .then((url) => {
           logger.debug(`Foto subida a Supabase: ${processedPhoto.name}`);
           // Actualizar el array con la storageUrl para que quede registrada en la inspección
@@ -123,10 +152,14 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
           logger.warn(`Foto sin backup en Supabase: ${processedPhoto.name} (se reintentará al enviar la inspección)`, uploadErr);
         });
     } catch (error) {
-      logger.error('Error processing photo:', error);
-      toast.error('Error al procesar la fotografía');
+      if (isUserCancellation(error)) {
+        logger.debug(`Captura cancelada por el usuario para categoría: ${category}`);
+      } else {
+        logger.error('Error capturando fotografía:', error);
+        toast.error('Error al procesar la fotografía');
+      }
     } finally {
-      setIsLoading(false);
+      setIsCapturing(false);
     }
   };
 
@@ -206,22 +239,12 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                     <h3 className="text-lg font-semibold text-foreground">
                       {category.icon} Vista {category.label}
                     </h3>
-                    {!photo && (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileSelect(e.target.files, category.id)}
-                        className="hidden"
-                        id={`camera-${category.id}`}
-                        disabled={isLoading}
-                      />
-                    )}
                   </div>
 
                   {photoData ? (
                     <div className="relative">
                       <img
-                        src={photoData.dataUrl}
+                        src={photoData.previewUrl}
                         alt={`Vista ${category.label}`}
                         className="w-full max-w-md h-64 object-cover rounded-lg border border-border"
                       />
@@ -258,27 +281,27 @@ export const PhotographicSet = ({ photos, onPhotosChange, serviceId, phase = 'in
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
-                          disabled={isLoading}
+                          onClick={() => handleCapture(category.id)}
+                          disabled={isCapturing}
                         >
-                          <Camera className="size-4 mr-1" />
+                          <CameraIcon className="size-4 mr-1" />
                           Tomar nueva
                         </Button>
                       </div>
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <Camera className="size-12 mx-auto mb-4 text-muted-foreground" />
+                      <CameraIcon className="size-12 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground mb-4">
                         Toma una foto de la vista {category.label.toLowerCase()}
                       </p>
                       <Button
                         variant="outline"
-                        onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
-                        disabled={isLoading}
+                        onClick={() => handleCapture(category.id)}
+                        disabled={isCapturing}
                       >
-                        <Camera className="size-4 mr-2" />
-                        {isLoading ? 'Procesando...' : 'Tomar Fotografía'}
+                        <CameraIcon className="size-4 mr-2" />
+                        {isCapturing ? 'Procesando...' : 'Tomar Fotografía'}
                       </Button>
                     </div>
                   )}

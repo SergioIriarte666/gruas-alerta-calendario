@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('inspectionSubmission');
+const photosLogger = createLogger('InspectionPhotos');
 
 export interface InspectionSubmissionResult {
   blob: Blob;
@@ -87,6 +88,10 @@ export const submitInspectionPipeline = async ({
       })
     : undefined;
 
+  const totalPhotoCount = uploadedPhotos.length + (initialPhotos?.length || 0);
+  photosLogger.debug(`Iniciando armado de PDF (${phase}): ${totalPhotoCount} foto(s) a embeber`);
+  const pdfStartedAt = Date.now();
+
   const pdfGenerator = createPDFGenerator((progress, step) => {
     onPdfProgress?.(progress, step);
   });
@@ -96,6 +101,10 @@ export const submitInspectionPipeline = async ({
     isFinal: phase === 'final',
     initialPhotos,
   });
+
+  photosLogger.debug(
+    `PDF armado en ${Date.now() - pdfStartedAt}ms: ${Math.round(blob.size / 1024)} KB`,
+  );
 
   const uploadResult = await uploadInspectionPdf(
     blob,

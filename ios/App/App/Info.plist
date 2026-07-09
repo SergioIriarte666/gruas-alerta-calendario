@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>TMS Operador usa la cámara para registrar el set fotográfico de la inspección del vehículo.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>TMS Operador comparte tu posicion durante tu jornada laboral y servicios activos para coordinar la operacion.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

@@ -47,6 +47,7 @@ import { createLogger } from '@/lib/logger';
 import { reportFrontendError } from '@/utils/reportFrontendError';
 import { useUser } from '@/contexts/UserContext';
 import { getPendingInspectionByServicePhase } from '@/utils/operatorOffline';
+import { PhotoStorage } from '@/utils/photoStorage';
 import { isInSituService } from '@/utils/inspectionPhase';
 
 const logger = createLogger('InspectionForm');
@@ -131,7 +132,7 @@ export const InspectionForm = ({
         }
         return false;
       })
-      .then((blockedByExisting) => {
+      .then(async (blockedByExisting) => {
         if (blockedByExisting) return;
 
     // Si el servicio está en estado "pending", comenzar limpio
@@ -212,16 +213,18 @@ export const InspectionForm = ({
       logger.debug('📷 Photos count:', savedData.photographicSet?.length || 0);
       logger.debug('🔄 Loading phase:', metadata.inspection_phase);
       
-      // Verificar que las fotos existen en almacenamiento local durable
+      // Verificar que las fotos existen en almacenamiento local durable (IndexedDB)
       if (savedData.photographicSet && savedData.photographicSet.length > 0) {
-        const validPhotos = savedData.photographicSet.filter(photo => {
-          const photoExists = localStorage.getItem(`photo-${photo.fileName}`) !== null;
+        const validPhotos = [];
+        for (const photo of savedData.photographicSet) {
+          const photoExists = await PhotoStorage.exists(photo.fileName);
           if (!photoExists) {
             logger.warn(`🗑️ Photo not found in storage: ${photo.fileName}`);
+            continue;
           }
-          return photoExists;
-        });
-        
+          validPhotos.push(photo);
+        }
+
         if (validPhotos.length !== savedData.photographicSet.length) {
           logger.debug(`📷 Cleaned photos: ${validPhotos.length}/${savedData.photographicSet.length}`);
           const cleanedData = { ...savedData, photographicSet: validPhotos };

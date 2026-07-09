@@ -5,32 +5,23 @@ const logger = createLogger('PhotoUpload');
 export const PHOTO_BUCKET = 'inspection-photos';
 const SIGNED_URL_SECONDS = 60 * 60 * 24 * 7; // 7 días
 
-const dataUrlToBlob = (dataUrl: string): Blob => {
-  const [header, data] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-  const binary = atob(data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return new Blob([bytes], { type: mime });
-};
-
 /**
  * Sube la foto a Storage y devuelve el PATH del objeto (no una signed URL): la evidencia
  * puede consultarse meses después de subida, mucho después de que cualquier token expire.
+ *
+ * Recibe el Blob comprimido directamente (nunca un data: URL): evita el round-trip
+ * atob→Uint8Array que materializaba una copia completa en memoria por cada subida.
  */
 export const uploadInspectionPhoto = async (
   fileName: string,
-  dataUrl: string,
+  photoBlob: Blob,
   serviceId: string
 ): Promise<string> => {
-  const blob = dataUrlToBlob(dataUrl);
   const path = `${serviceId}/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
     .from(PHOTO_BUCKET)
-    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+    .upload(path, photoBlob, { upsert: true, contentType: photoBlob.type || 'image/jpeg' });
 
   if (uploadError) {
     logger.error('Error subiendo foto a storage:', uploadError.message);

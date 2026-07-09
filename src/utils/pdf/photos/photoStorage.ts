@@ -1,34 +1,56 @@
 import { createLogger } from '@/lib/logger';
+import { loadInspectionPhotoBlob } from '@/utils/inspectionPhotoDb';
+import { getInspectionPhotoSignedUrl } from '@/utils/photoUpload';
+import { extractStoragePath } from '@/utils/storagePath';
+import { PHOTO_BUCKET } from '@/utils/photoUpload';
 
 const logger = createLogger('PdfPhotoStorage');
 
 /**
- * Obtiene una foto para el PDF.
- * Prioridad: localStorage (data: URL, jsPDF la puede embeber directamente) → storageUrl (Supabase, fallback).
- * Nunca priorizar storageUrl: jsPDF.addImage no puede cargar una URL remota sin pre-cargarla,
- * así que pasarla directo produce una imagen vacía/placeholder en el PDF.
+ * Obtiene el Blob de una foto para embeber en el PDF.
+ * Prioridad: caché local en IndexedDB (misma sesión de captura) → storageUrl (Supabase,
+ * fallback cuando no hay caché local, ej. recarga de página o entrega en otro dispositivo).
+ * Nunca retorna un data: URL: el llamador decide si necesita convertir a Uint8Array.
  */
-export const getPhotoFromStorage = (
+export const getPhotoBlobForPdf = async (
   photoName: string,
   storageUrl?: string,
-  dataUrl?: string
-): string | null => {
-  if (dataUrl?.startsWith('data:image')) return dataUrl;
+  blob?: Blob,
+): Promise<Blob | null> => {
+  if (blob) return blob;
 
-  if (photoName && typeof photoName === 'string') {
-    const localData =
-      localStorage.getItem(`photo-${photoName}`) ??
-      localStorage.getItem(photoName);
+  if (photoName) {
+    const cached = await loadInspectionPhotoBlob(photoName).catch((error) => {
+      logger.warn(`Error leyendo foto ${photoName} de IndexedDB:`, error);
+      return null;
+    });
 
-    logger.debug(`Buscando foto: photo-${photoName}, encontrada en caché local: ${!!localData}`);
-
-    if (localData?.startsWith('data:image')) {
-      return localData;
+    if (cached) {
+      logger.debug(`Foto encontrada en caché local: ${photoName}`);
+      return cached;
     }
   } else {
     logger.warn(`Nombre de foto inválido: ${photoName}`);
   }
 
-  // Fallback: si no hay caché local (ej. recarga de página), usar storageUrl.
-  return storageUrl ?? null;
+  if (!storageUrl) return null;
+
+  try {
+    // El path de Storage (persistido en `inspections`) no tiene protocolo. Algunos
+    // flujos administrativos (regeneración de PDF) pasan en cambio una URL ya
+    // firmada o un data: URL directamente utilizable — en ese caso se descarga tal cual.
+    const extractedPath = extractStoragePath(storageUrl, PHOTO_BUCKET);
+    const fetchableUrl = extractedPath
+      ? await getInspectionPhotoSignedUrl(extractedPath)
+      : storageUrl.startsWith('data:') || storageUrl.startsWith('http')
+        ? storageUrl
+        : await getInspectionPhotoSignedUrl(storageUrl);
+
+    const response = await fetch(fetchableUrl);
+    if (!response.ok) throw new Error(`No se pudo descargar la foto (${response.status})`);
+    return await response.blob();
+  } catch (error) {
+    logger.warn(`No se pudo recuperar la foto ${photoName} desde Storage:`, error);
+    return null;
+  }
 };

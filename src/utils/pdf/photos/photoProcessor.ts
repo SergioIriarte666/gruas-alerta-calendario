@@ -1,72 +1,19 @@
 import { createLogger } from '@/lib/logger';
+import { compressImage } from '@/utils/imageCompression';
 
 const logger = createLogger('PdfPhotoProcessor');
 
 /**
- * Comprime una imagen para incluirla en el PDF.
- * - Si imageData es un data: URL → comprime con canvas (seguro, mismo origen).
- * - Si es https:// → devuelve tal cual (canvas con URL externa tainea el contexto).
+ * Comprime un Blob de imagen para incluirlo en el PDF (máx. 600x450, JPEG q0.85).
+ * Trabaja siempre sobre Blob/Uint8Array, nunca sobre un data: URL completo: convertir
+ * cada foto a base64 de a una — y liberar el Blob de origen apenas se usa — es lo que
+ * mantiene la memoria plana al generar un PDF con 12+ fotos en iOS.
  */
-export const compressImageForPDF = async (imageData: string): Promise<string> => {
-  // URL externa: no pasar por canvas para evitar SecurityError
-  if (!imageData.startsWith('data:')) {
-    logger.debug('Imagen externa, saltando compresión de canvas:', imageData.slice(0, 60));
-    return imageData;
+export const compressBlobForPDF = async (blob: Blob): Promise<Blob> => {
+  try {
+    return await compressImage(blob, { maxDimension: 600, quality: 0.85 });
+  } catch (error) {
+    logger.warn('Error comprimiendo foto para PDF, se usará el blob original', error);
+    return blob;
   }
-
-  return new Promise((resolve) => {
-    try {
-      const img = new Image();
-
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-
-          if (!ctx) {
-            resolve(imageData);
-            return;
-          }
-
-          const maxWidth = 600;
-          const maxHeight = 450;
-          let { width, height } = img;
-
-          if (width > height) {
-            if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
-          } else {
-            if (height > maxHeight) { width = (width * maxHeight) / height; height = maxHeight; }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-
-          try {
-            const compressed = canvas.toDataURL('image/jpeg', 0.85);
-            logger.debug(`Imagen comprimida: ${imageData.length} → ${compressed.length} chars`);
-            resolve(compressed);
-          } catch (securityErr) {
-            logger.warn('Canvas tainted, devolviendo imagen original');
-            resolve(imageData);
-          }
-        } catch {
-          logger.warn('Error en compresión, usando original');
-          resolve(imageData);
-        }
-      };
-
-      img.onerror = () => {
-        logger.warn('Error cargando imagen para compresión');
-        resolve(imageData);
-      };
-
-      img.src = imageData;
-    } catch {
-      resolve(imageData);
-    }
-  });
 };

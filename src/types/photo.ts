@@ -1,6 +1,7 @@
 export interface PhotoData {
   name: string;
-  dataUrl: string;
+  blob: Blob;
+  previewUrl: string;
   storageUrl?: string;
 }
 

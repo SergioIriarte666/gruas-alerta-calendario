@@ -15,12 +15,26 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loadedPhotos = PhotoStorage.loadMultiple(photos);
-    if (loadedPhotos.length > 0) {
-      setPhotoData(loadedPhotos);
-      logger.debug(`Loaded ${loadedPhotos.length} existing photos for ${title}`);
-    }
+    let cancelled = false;
+
+    PhotoStorage.loadMultiple(photos).then((loadedPhotos) => {
+      if (cancelled) return;
+      if (loadedPhotos.length > 0) {
+        setPhotoData(loadedPhotos);
+        logger.debug(`Loaded ${loadedPhotos.length} existing photos for ${title}`);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [photos, title]);
+
+  useEffect(() => {
+    return () => {
+      photoData.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
+    };
+  }, [photoData]);
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files) return;
@@ -42,8 +56,8 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
           continue;
         }
 
-        const photoData = await PhotoProcessor.processImage(file, title);
-        newPhotos.push(photoData);
+        const processed = await PhotoProcessor.processImage(file, title);
+        newPhotos.push({ name: processed.name, blob: processed.blob, previewUrl: URL.createObjectURL(processed.blob) });
       }
 
       if (newPhotos.length === 0) {
@@ -57,7 +71,7 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
       setPhotoData(updatedPhotoData);
       onPhotosChange(updatedPhotoNames);
 
-      PhotoStorage.saveMultiple(newPhotos);
+      await PhotoStorage.saveMultiple(newPhotos);
 
       toast.success(`${newPhotos.length} foto(s) agregada(s)`);
     } catch (error) {
@@ -83,10 +97,10 @@ export const PhotoCapture = ({ title, photos, onPhotosChange, maxPhotos = 5 }: P
     toast.success('Foto eliminada');
   };
 
-  const refreshPhotos = () => {
+  const refreshPhotos = async () => {
     setIsLoading(true);
 
-    const loadedPhotos = PhotoStorage.loadMultiple(photos);
+    const loadedPhotos = await PhotoStorage.loadMultiple(photos);
     setPhotoData(loadedPhotos);
     setIsLoading(false);
 
