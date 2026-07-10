@@ -38,11 +38,11 @@ export const InventoryValidatedDocumentCard: React.FC<InventoryValidatedDocument
   manualMatchedItems, onSetManualMatch, onRemoveManualMatch, catalogSearchOpen, onSetCatalogSearchOpen,
   inventoryCatalog, creatingProductKeys, editedDescription, onEditDescription, onUpdateLineDescription, onCreateMissingProduct,
 }) => (
-  <Card className="overflow-hidden border-border/70 shadow-sm">
+  <Card className={cn('overflow-hidden border-border/70 shadow-sm transition-opacity', !isSelected && 'opacity-60')}>
     <CardHeader className="pb-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <Checkbox checked={isSelected} onCheckedChange={checked => onToggleSelected(checked === true)} disabled={!validatedDoc.isValid || isImporting} />
+          <Checkbox aria-label={`Seleccionar factura ${validatedDoc.doc.folio}`} checked={isSelected} onCheckedChange={checked => onToggleSelected(checked === true)} disabled={!validatedDoc.isValid || isImporting} />
           <div>
             <CardTitle className="flex items-center gap-2 text-base"><FileText className="size-4" />{validatedDoc.doc.folio}</CardTitle>
             <Textarea rows={2} className="mt-1 resize-y text-sm" value={editedDescription} onChange={e => onEditDescription(e.target.value)} disabled={isImporting} />

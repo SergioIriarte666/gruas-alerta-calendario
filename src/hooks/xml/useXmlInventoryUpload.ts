@@ -335,6 +335,12 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
     });
   };
 
+  const selectAllDocuments = () => {
+    setSelectedDocuments(new Set(validatedDocuments.filter(item => item.isValid).map(item => item.doc.folio)));
+  };
+
+  const clearSelectedDocuments = () => setSelectedDocuments(new Set());
+
   const updateLineDescription = (folio: string, lineNumber: number, description: string) => {
     setLineDescriptionOverrides(prev => ({ ...prev, [getLineKey(folio, lineNumber)]: description }));
   };
@@ -498,7 +504,7 @@ export function useXmlInventoryUpload({ onSuccess, onClose }: UseXmlInventoryUpl
   return {
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive,
     validatedDocuments, selectedValidatedDocuments, summary, inventoryCatalog, serviceSearchResults,
-    selectedDocuments, toggleSelectedDocument,
+    selectedDocuments, toggleSelectedDocument, selectAllDocuments, clearSelectedDocuments,
     lineDescriptionOverrides, updateLineDescription,
     manualMatchedItems, setManualMatchedItems,
     editedDescriptions, setEditedDescriptions,

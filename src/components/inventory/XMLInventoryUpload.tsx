@@ -9,9 +9,12 @@ import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAle
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface XMLInventoryUploadProps {
   isOpen: boolean;
@@ -24,7 +27,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
   const {
     selectedFile, parseResult, isAnalyzing, getRootProps, getInputProps, isDragActive,
     validatedDocuments, selectedValidatedDocuments, summary, inventoryCatalog, serviceSearchResults,
-    selectedDocuments, toggleSelectedDocument,
+    selectedDocuments, toggleSelectedDocument, selectAllDocuments, clearSelectedDocuments,
     lineDescriptionOverrides, updateLineDescription,
     manualMatchedItems, setManualMatchedItems,
     editedDescriptions, setEditedDescriptions,
@@ -50,6 +53,7 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
     handleImport, handleClose, resetState,
     handleCreateMissingProduct, handleUseSuggestedProduct, handleCreateSuggestedNew,
   } = hook;
+  const selectedInventoryTotal = selectedValidatedDocuments.reduce((sum, item) => sum + item.doc.total_amount, 0);
 
   return (
     <>
@@ -78,6 +82,87 @@ export const XMLInventoryUpload: React.FC<XMLInventoryUploadProps> = ({ isOpen, 
                   {parseResult?.errors?.length ? (
                     <Alert variant="destructive"><AlertCircle className="size-4" /><AlertDescription>{parseResult.errors.join(' ')}</AlertDescription></Alert>
                   ) : null}
+
+                  {validatedDocuments.length > 0 && (
+                    <Card className="overflow-hidden border-border/70 shadow-sm">
+                      <CardHeader className="border-b border-border/60 bg-muted/30 pb-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                              <Receipt className="size-5" />
+                              Facturas detectadas
+                            </CardTitle>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {selectedValidatedDocuments.length} de {validatedDocuments.length} seleccionadas · Total ${selectedInventoryTotal.toLocaleString('es-CL')}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 sm:flex">
+                            <Button type="button" variant="outline" size="sm" onClick={selectAllDocuments} disabled={isImporting}>
+                              Seleccionar válidas
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={clearSelectedDocuments} disabled={isImporting}>
+                              Deseleccionar todas
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="max-h-72 divide-y divide-border/60 overflow-y-auto">
+                          {validatedDocuments.map((validatedDoc, index) => {
+                            const isSelected = selectedDocuments.has(validatedDoc.doc.folio);
+                            const supplierName = validatedDoc.supplier?.name || parseResult?.suppliers.find(s => s.rut === validatedDoc.doc.supplier_rut)?.name || 'Proveedor sin nombre';
+
+                            return (
+                              <div
+                                key={`${validatedDoc.doc.supplier_rut || 'sin-rut'}-${validatedDoc.doc.folio || index}`}
+                                className={cn(
+                                  'flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40',
+                                  isSelected ? 'bg-background' : 'bg-muted/30 text-muted-foreground',
+                                  !validatedDoc.isValid && 'cursor-not-allowed opacity-70'
+                                )}
+                              >
+                                <Checkbox
+                                  aria-label={`Seleccionar factura ${validatedDoc.doc.folio || index + 1}`}
+                                  className="mt-1"
+                                  checked={isSelected}
+                                  disabled={!validatedDoc.isValid || isImporting}
+                                  onCheckedChange={checked => toggleSelectedDocument(validatedDoc.doc.folio, checked === true)}
+                                />
+                                <button
+                                  type="button"
+                                  className="min-w-0 flex-1 text-left disabled:cursor-not-allowed"
+                                  disabled={!validatedDoc.isValid || isImporting}
+                                  onClick={() => toggleSelectedDocument(validatedDoc.doc.folio, !isSelected)}
+                                >
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span className="font-medium text-foreground">Folio {validatedDoc.doc.folio || 'sin folio'}</span>
+                                    <span className="text-sm">{supplierName}</span>
+                                    <Badge variant={validatedDoc.isValid ? 'default' : 'destructive'}>
+                                      {validatedDoc.isValid ? 'Lista' : 'Con errores'}
+                                    </Badge>
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                    {validatedDoc.doc.issue_date && <span>Fecha: {validatedDoc.doc.issue_date}</span>}
+                                    <span>Monto: ${validatedDoc.doc.total_amount.toLocaleString('es-CL')}</span>
+                                    <span>{validatedDoc.lines.filter(l => !discardedLines.has(l.key)).length} línea(s)</span>
+                                  </div>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {validatedDocuments.length > 0 && selectedValidatedDocuments.length === 0 && (
+                    <Alert className="border-warning/30 bg-warning/10">
+                      <AlertCircle className="size-4 text-warning" />
+                      <AlertDescription className="text-warning">
+                        Selecciona al menos una factura válida para importar a bodega.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {validatedDocuments.length === 0 && !parseResult?.errors?.length && (
                     <Card className="border-dashed border-primary/20 bg-gradient-to-br from-background to-primary/5 shadow-none">

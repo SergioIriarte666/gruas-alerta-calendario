@@ -83,11 +83,12 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
         : { label: 'Listo para revisar', badgeClass: 'bg-success/15 text-success', hint: 'Puedes cargarlo o ajustar sus detalles.' };
 
   return (
-    <div className={cn('flex flex-col p-3 rounded-lg gap-2 shadow-sm border',
+    <div className={cn('flex flex-col p-3 rounded-lg gap-2 shadow-sm border transition-opacity',
       hasMatches && currentDecision !== 'new' ? 'bg-info/10 border-info/30'
       : isDuplicate && isExactDuplicate ? 'bg-danger/10 border-danger/30'
       : isDuplicate && duplicateInfo.matchType === 'similar' ? 'bg-warning/10 border-warning/30'
-      : 'bg-muted/30 border-border/60')}>
+      : 'bg-muted/30 border-border/60',
+      !isSelected && 'opacity-60')}>
 
       {hasMatches && (
         <div className="flex items-center gap-2 rounded bg-info/15 px-2 py-1.5 text-xs text-info">
@@ -112,7 +113,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
 
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-x-3 flex-1 min-w-0">
-          <Checkbox checked={isSelected} onCheckedChange={onToggle} />
+          <Checkbox aria-label={`Seleccionar factura ${document.folio}`} checked={isSelected} onCheckedChange={onToggle} />
           <div className="min-w-0 flex-1">
             <p className="text-foreground font-medium break-words whitespace-pre-wrap">{effectiveGlosa}</p>
             <div className="flex items-center gap-x-4 text-sm text-muted-foreground flex-wrap">

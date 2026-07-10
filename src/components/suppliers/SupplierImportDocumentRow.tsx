@@ -95,11 +95,12 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
 
   return (
     <div className={cn(
-      'flex flex-col gap-3 rounded-lg border p-3 shadow-sm',
+      'flex flex-col gap-3 rounded-lg border p-3 shadow-sm transition-opacity',
       hasMatches && currentDecision !== 'new' ? 'border-info/30 bg-info/10'
         : isExactDuplicate ? 'border-danger/30 bg-danger/10'
         : isDuplicate && duplicateInfo.matchType === 'similar' ? 'border-warning/30 bg-warning/10'
-        : 'border-border/60 bg-muted/30'
+        : 'border-border/60 bg-muted/30',
+      !isSelected && 'opacity-60'
     )}>
       {hasMatches ? (
         <div className="rounded-md border border-info/30 bg-info/10 p-2.5 text-xs">
@@ -180,7 +181,7 @@ export const SupplierImportDocumentRow: React.FC<SupplierImportDocumentRowProps>
 
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-x-3">
-          <Checkbox checked={isSelected} onCheckedChange={onToggle} />
+          <Checkbox aria-label={`Seleccionar factura ${document.folio}`} checked={isSelected} onCheckedChange={onToggle} />
           <div className="min-w-0 flex-1">
             <p className="break-words whitespace-pre-wrap font-medium text-foreground">{effectiveGlosa}</p>
             <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground">

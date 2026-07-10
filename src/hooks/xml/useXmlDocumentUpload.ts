@@ -531,6 +531,15 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     return s;
   });
 
+  const selectAllDocuments = () => {
+    if (!parseResult) return;
+    setSelectedDocuments(new Set(parseResult.documents
+      .filter(d => d.folio && d.total_amount > 0)
+      .map(getDocumentStateKey)));
+  };
+
+  const clearSelectedDocuments = () => setSelectedDocuments(new Set());
+
   const reset = () => {
     resetParsing();
     setUploadProgress(0);
@@ -584,6 +593,6 @@ export function useXmlDocumentUpload({ onSuccess, onClose }: UseXmlDocumentUploa
     expandMatchSearchForDoc,
     handleUploadData, reset,
     handleCategoryChange, handleSubcategoryChange,
-    toggleSupplierSelection, toggleDocumentSelection,
+    toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
   };
 }

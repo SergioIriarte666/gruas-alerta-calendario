@@ -15,6 +15,7 @@ import { AlertCircle, CheckCircle, Loader2, FileSpreadsheet, Users, Receipt, Dol
 import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { getDocumentStateKey } from '@/utils/xml/xmlGlosaHelpers';
+import { cn } from '@/lib/utils';
 
 interface XMLDocumentUploadProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
     getMatchQuality, getCostAgeLabel, handleLinkDecisionChange, expandMatchSearchForDoc,
     handleUploadData, reset,
     handleCategoryChange, handleSubcategoryChange,
-    toggleSupplierSelection, toggleDocumentSelection,
+    toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
   } = useXmlDocumentUpload({ onSuccess, onClose });
 
   const handleClose = () => {
@@ -91,6 +92,81 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                   </div>
                 </CardContent>
               </Card>
+
+              {parseResult.documents.length > 0 && (
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="border-b border-border/60 bg-muted/30 pb-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Receipt className="size-5" />
+                          Facturas detectadas
+                        </CardTitle>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {selectedDocuments.size} de {parseResult.documents.length} seleccionadas · Total ${selectedTotalAmount.toLocaleString('es-CL')}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 sm:flex">
+                        <Button type="button" variant="outline" size="sm" onClick={selectAllDocuments}>
+                          Seleccionar todas
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={clearSelectedDocuments}>
+                          Deseleccionar todas
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-72 divide-y divide-border/60 overflow-y-auto">
+                      {parseResult.documents.map((document, index) => {
+                        const documentKey = getDocumentStateKey(document);
+                        const isSelected = selectedDocuments.has(documentKey);
+                        const supplierName = parseResult.suppliers.find(s => s.rut === document.supplier_rut)?.name || 'Proveedor sin nombre';
+                        const duplicateInfo = getDuplicateInfoForDocument(document);
+                        const isExactDuplicate = duplicateInfo?.matchType === 'exact_folio';
+
+                        return (
+                          <div
+                            key={`${documentKey}-${index}`}
+                            className={cn(
+                              'flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40',
+                              isSelected ? 'bg-background' : 'bg-muted/30 text-muted-foreground'
+                            )}
+                          >
+                            <Checkbox
+                              aria-label={`Seleccionar factura ${document.folio || index + 1}`}
+                              className="mt-1"
+                              checked={isSelected}
+                              onCheckedChange={() => toggleDocumentSelection(documentKey)}
+                            />
+                            <button type="button" className="min-w-0 flex-1 text-left" onClick={() => toggleDocumentSelection(documentKey)}>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="font-medium text-foreground">Folio {document.folio || 'sin folio'}</span>
+                                <span className="text-sm">{supplierName}</span>
+                                {isExactDuplicate && <Badge variant="destructive">Ya registrado</Badge>}
+                                {duplicateInfo?.matchType === 'similar' && <Badge className="border-warning/30 bg-warning/15 text-warning">Revisar</Badge>}
+                              </div>
+                              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                {document.issue_date && <span>Fecha: {document.issue_date}</span>}
+                                <span>Monto: ${document.total_amount.toLocaleString('es-CL')}</span>
+                              </div>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {createPayments && selectedDocuments.size === 0 && (
+                <Alert className="border-warning/30 bg-warning/10">
+                  <AlertCircle className="size-4 text-warning" />
+                  <AlertDescription className="text-warning">
+                    Selecciona al menos una factura para crear pagos desde el XML.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {duplicateResults.length > 0 && showDuplicateWarning && (
                 <Alert className="border-warning/30 bg-warning/10">
@@ -214,7 +290,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
                   <Button variant="outline" onClick={handleClose} disabled={isUploading}>Cancelar</Button>
-                  <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0}>
+                  <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0 || (createPayments && selectedDocuments.size === 0)}>
                     {isUploading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <CheckCircle className="mr-2 size-4" />}
                     Confirmar importación{createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
                   </Button>
