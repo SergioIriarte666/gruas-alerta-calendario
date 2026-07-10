@@ -14,13 +14,14 @@ const TZ = "America/Santiago";
 // Las 4 plantillas fueron aprobadas por Meta el 2026-06-10 (es_CL, Utilidad,
 // "calidad pendiente"). Poner en false y redesplegar si Meta degrada alguna.
 const DOC_ALERTS_ENABLED = true;
-// Alerta de servicios en riesgo. Requiere plantilla
-// admin_servicio_recurso_no_apto aprobada por Meta. Activar tras aprobación.
-const SERVICE_RISK_ALERTS_ENABLED = false;
-// Aviso directo al operador sobre SUS documentos. Requiere plantillas
-// operador_mi_doc_vencimiento / operador_mi_doc_vencido aprobadas por Meta.
-// Activar tras aprobación.
-const OPERATOR_SELF_ALERTS_ENABLED = false;
+// Alerta de servicios en riesgo. Plantilla admin_servicio_recurso_no_apto
+// aprobada por Meta el 2026-07-07 (es_CL, Utilidad).
+const SERVICE_RISK_ALERTS_ENABLED = true;
+// Aviso directo al operador sobre SUS documentos. Plantillas
+// operador_mi_doc_vencimiento / operador_mi_doc_vencido aprobadas por Meta
+// el 2026-07-07 (es_CL, Utilidad). Gate adicional en runtime:
+// settings.notify_operator_self_document (master switch respetado).
+const OPERATOR_SELF_ALERTS_ENABLED = true;
 
 function today(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
