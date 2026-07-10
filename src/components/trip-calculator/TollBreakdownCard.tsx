@@ -1,8 +1,7 @@
-import { AlertTriangle, CheckCircle2, DollarSign } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle2, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { TollResultV2 } from '@/hooks/useTollCalculationV2';
+import type { TollResultV3 } from '@/hooks/useTollCalculationV3';
 
 const formatClp = (amount: number) =>
   new Intl.NumberFormat('es-CL', {
@@ -17,31 +16,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   CAMION_PESADO: 'Camión Pesado',
 };
 
-const SOURCE_LABELS: Record<string, { label: string; color: string }> = {
-  route_geometry: {
-    label: 'Ruta real + coordenadas',
-    color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  },
-  getapi_matched: {
-    label: 'Ruta exacta verificada',
-    color: 'bg-green-100 text-green-800 border-green-300',
-  },
-  fallback_range: {
-    label: 'Estimación por tramo',
-    color: 'bg-amber-100 text-amber-800 border-amber-300',
-  },
-  manual: {
-    label: 'Ingreso manual',
-    color: 'bg-slate-100 text-slate-800 border-slate-300',
-  },
-};
-
 interface TollBreakdownCardProps {
-  result: TollResultV2;
+  result: TollResultV3;
 }
 
 export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
-  const sourceInfo = SOURCE_LABELS[result.source];
+  const noTolls = result.totalCost === 0;
 
   return (
     <Card className="border-2 border-amber-200 dark:border-amber-800">
@@ -55,41 +35,41 @@ export const TollBreakdownCard = ({ result }: TollBreakdownCardProps) => {
             <Badge variant="outline" className="text-xs font-normal">
               {CATEGORY_LABELS[result.category] ?? result.category}
             </Badge>
-            {sourceInfo && (
-              <Badge variant="outline" className={`text-xs font-normal ${sourceInfo.color}`}>
-                {sourceInfo.label}
-              </Badge>
-            )}
+            <Badge
+              variant="outline"
+              className="text-xs font-normal bg-green-100 text-green-800 border-green-300"
+            >
+              Tarifas oficiales (GetAPI)
+            </Badge>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {result.warning && (
-          <Alert className="py-2">
-            <AlertTriangle className="size-3.5" />
-            <AlertDescription className="text-xs">{result.warning}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-1">
-          {result.breakdown.map((item, index) => (
-            <div
-              key={`${item.stationName}-${item.vehicleCategory}-${index}`}
-              className="flex items-center justify-between border-b py-1 text-sm last:border-0"
-            >
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="px-1.5 text-xs font-normal">
-                  {item.stationType}
-                </Badge>
-                <span className="text-foreground">{item.stationName}</span>
-                <span className="hidden text-xs text-muted-foreground sm:inline">
-                  — {item.concessionName}
-                </span>
+        {noTolls ? (
+          <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+            <CheckCircle2 className="size-4 text-green-600" />
+            Sin peajes detectados en esta ruta
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {result.breakdown.map((item, index) => (
+              <div
+                key={`${item.name}-${index}`}
+                className="flex items-center justify-between border-b py-1 text-sm last:border-0"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground">{item.name}</span>
+                  {item.highway && (
+                    <span className="hidden text-xs text-muted-foreground sm:inline">
+                      — {item.highway}
+                    </span>
+                  )}
+                </div>
+                <span className="font-mono text-sm font-medium">{formatClp(item.amount)}</span>
               </div>
-              <span className="font-mono text-sm font-medium">{formatClp(item.rateAmount)}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-1 border-t-2 pt-1.5">
           <div className="flex items-center justify-between text-sm text-muted-foreground">

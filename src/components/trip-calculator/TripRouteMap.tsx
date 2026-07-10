@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { useEffect, useRef, useState } from 'react';
+import { loadGoogleMaps } from '@/lib/googleMapsLoader';
+import { createLogger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Map as MapIcon, ExternalLink, Maximize2 } from 'lucide-react';
+import { Map as MapIcon, ExternalLink, Maximize2, Loader2, MapPinOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +11,8 @@ import {
   DialogTitle as DlgTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+
+const logger = createLogger('TripRouteMap');
 
 interface TripRouteMapProps {
   geometry: { type: string; coordinates: [number, number][] };
@@ -22,124 +24,131 @@ interface TripRouteMapProps {
   estimatedTimeHours: number;
 }
 
-interface RouteLeafletMapProps {
-  coordinates: [number, number][];
+interface InteractiveRouteMapProps {
+  geometry: { type: string; coordinates: [number, number][] };
   originCoords: [number, number];
   destinationCoords: [number, number];
+  gestureHandling: 'greedy' | 'cooperative';
   className?: string;
 }
 
-const originIcon = L.divIcon({
-  className: 'trip-route-marker trip-route-marker--origin',
-  html: '<span class="trip-route-marker__dot"></span>',
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
-});
-
-const destinationIcon = L.divIcon({
-  className: 'trip-route-marker trip-route-marker--destination',
-  html: '<span class="trip-route-marker__dot"></span>',
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
-});
-
-function RouteLeafletMap({
-  coordinates,
+function InteractiveRouteMap({
+  geometry,
   originCoords,
   destinationCoords,
+  gestureHandling,
   className,
-}: RouteLeafletMapProps) {
+}: InteractiveRouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
-
-  const latLngs = useMemo(
-    () => coordinates.map(([lng, lat]) => [lat, lng] as [number, number]),
-    [coordinates],
-  );
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
-    if (!containerRef.current || latLngs.length === 0) return;
+    let cancelled = false;
+    let resizeTimer: number | undefined;
 
-    const map = L.map(containerRef.current, {
-      zoomControl: true,
-      attributionControl: false,
-      dragging: true,
-      scrollWheelZoom: false,
-      doubleClickZoom: true,
-      boxZoom: false,
-      keyboard: false,
-      tap: false,
-    });
+    const init = async () => {
+      try {
+        const g = await loadGoogleMaps();
+        if (cancelled || !containerRef.current) return;
 
-    mapRef.current = map;
+        const map = new g.maps.Map(containerRef.current, {
+          mapTypeId: 'roadmap',
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: g.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: g.maps.ControlPosition.TOP_RIGHT,
+            mapTypeIds: ['roadmap', 'satellite', 'terrain'],
+          },
+          zoomControl: true,
+          zoomControlOptions: { position: g.maps.ControlPosition.RIGHT_BOTTOM },
+          streetViewControl: false,
+          fullscreenControl: false,
+          gestureHandling,
+        });
 
-    map.zoomControl.setPosition('topright');
+        const path = geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-    }).addTo(map);
+        new g.maps.Polyline({
+          path,
+          strokeColor: '#7c3aed',
+          strokeOpacity: 0.9,
+          strokeWeight: 5,
+          map,
+        });
 
-    L.polyline(latLngs, {
-      color: '#5b21b6',
-      weight: 7,
-      opacity: 0.95,
-      lineJoin: 'round',
-    }).addTo(map);
+        new g.maps.Marker({
+          position: { lat: originCoords[1], lng: originCoords[0] },
+          map,
+          label: { text: 'A', color: '#ffffff', fontWeight: 'bold' },
+          icon: {
+            path: g.maps.SymbolPath.CIRCLE,
+            fillColor: '#16a34a',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+            scale: 11,
+          },
+        });
 
-    L.polyline(latLngs, {
-      color: '#a78bfa',
-      weight: 12,
-      opacity: 0.28,
-      lineJoin: 'round',
-    }).addTo(map);
+        new g.maps.Marker({
+          position: { lat: destinationCoords[1], lng: destinationCoords[0] },
+          map,
+          label: { text: 'B', color: '#ffffff', fontWeight: 'bold' },
+          icon: {
+            path: g.maps.SymbolPath.CIRCLE,
+            fillColor: '#ef4444',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+            scale: 11,
+          },
+        });
 
-    L.marker([originCoords[1], originCoords[0]], { icon: originIcon }).addTo(map);
-    L.marker([destinationCoords[1], destinationCoords[0]], { icon: destinationIcon }).addTo(map);
+        const bounds = new g.maps.LatLngBounds();
+        path.forEach((point) => bounds.extend(point));
+        bounds.extend({ lat: originCoords[1], lng: originCoords[0] });
+        bounds.extend({ lat: destinationCoords[1], lng: destinationCoords[0] });
+        map.fitBounds(bounds, 48);
 
-    const bounds = L.latLngBounds(latLngs);
-    bounds.extend([originCoords[1], originCoords[0]]);
-    bounds.extend([destinationCoords[1], destinationCoords[0]]);
-    map.fitBounds(bounds, { padding: [24, 24] });
+        // El contenedor puede no tener su tamaño final (animación de modal,
+        // layout todavía asentándose) en el momento del fitBounds inicial.
+        resizeTimer = window.setTimeout(() => {
+          g.maps.event.trigger(map, 'resize');
+          map.fitBounds(bounds, 48);
+        }, 150);
 
-    const resizeTimer = window.setTimeout(() => {
-      map.invalidateSize();
-      map.fitBounds(bounds, { padding: [24, 24] });
-    }, 150);
+        if (!cancelled) setStatus('ready');
+      } catch (error) {
+        logger.error('No se pudo inicializar el mapa interactivo', error);
+        if (!cancelled) setStatus('error');
+      }
+    };
+
+    void init();
 
     return () => {
-      window.clearTimeout(resizeTimer);
-      map.remove();
-      mapRef.current = null;
+      cancelled = true;
+      if (resizeTimer) window.clearTimeout(resizeTimer);
     };
-  }, [latLngs, originCoords, destinationCoords]);
+  }, [geometry, originCoords, destinationCoords, gestureHandling]);
+
+  if (status === 'error') {
+    return (
+      <div className={`${className ?? ''} flex flex-col items-center justify-center gap-2 text-muted-foreground`}>
+        <MapPinOff className="size-6" />
+        <span className="text-sm">No se pudo cargar el mapa. Usa el botón Google Maps.</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={className}>
-      <div ref={containerRef} className="h-full w-full" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/10 to-transparent" />
-      <style>{`
-        .trip-route-marker {
-          display: grid;
-          place-items: center;
-          border-radius: 9999px;
-          box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18);
-        }
-        .trip-route-marker__dot {
-          display: block;
-          width: 10px;
-          height: 10px;
-          border-radius: 9999px;
-          background: white;
-        }
-        .trip-route-marker--origin {
-          background: #16a34a;
-          border: 4px solid rgba(255, 255, 255, 0.95);
-        }
-        .trip-route-marker--destination {
-          background: #ef4444;
-          border: 4px solid rgba(255, 255, 255, 0.95);
-        }
-      `}</style>
+    <div className={`${className ?? ''} relative`}>
+      <div ref={containerRef} className="size-full" />
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+          <Loader2 className="size-6 animate-spin text-violet-600" />
+        </div>
+      )}
     </div>
   );
 }
@@ -165,7 +174,7 @@ export const TripRouteMap = ({
     <>
       <Card className="overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <MapIcon className="size-5 text-violet-600" />
@@ -175,7 +184,7 @@ export const TripRouteMap = ({
                 {distanceKm.toFixed(1)} km · {hours}h {minutes}min estimados
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -198,11 +207,12 @@ export const TripRouteMap = ({
           </div>
         </CardHeader>
         <CardContent>
-          <RouteLeafletMap
-            coordinates={geometry.coordinates}
+          <InteractiveRouteMap
+            geometry={geometry}
             originCoords={originCoords}
             destinationCoords={destinationCoords}
-            className="relative h-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+            gestureHandling="cooperative"
+            className="h-[320px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
           />
         </CardContent>
       </Card>
@@ -210,7 +220,7 @@ export const TripRouteMap = ({
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <DlgTitle className="flex items-center gap-2 text-lg">
                   <MapIcon className="size-5 text-violet-600" />
@@ -220,7 +230,7 @@ export const TripRouteMap = ({
                   {originName} → {destinationName} · {distanceKm.toFixed(1)} km · {hours}h {minutes}min
                 </DialogDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -234,12 +244,13 @@ export const TripRouteMap = ({
             </div>
           </DialogHeader>
           {modalOpen && (
-            <RouteLeafletMap
+            <InteractiveRouteMap
               key="route-map-modal"
-              coordinates={geometry.coordinates}
+              geometry={geometry}
               originCoords={originCoords}
               destinationCoords={destinationCoords}
-              className="relative h-[68vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+              gestureHandling="greedy"
+              className="h-[68vh] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
             />
           )}
         </DialogContent>

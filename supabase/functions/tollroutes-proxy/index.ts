@@ -167,10 +167,76 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Calculate tolls along an explicit route path (endpoint incluido en plan Starter)
+    if (action === "calculate-by-path") {
+      const { path, categoryCode } = body as {
+        path?: Array<{ lat: number; lng: number }>;
+        categoryCode?: string;
+      };
+
+      if (!Array.isArray(path) || path.length < 2) {
+        return new Response(
+          JSON.stringify({ error: "path debe ser un arreglo de al menos 2 puntos {lat,lng}" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      // Límite del plan Starter: 1.500 coordenadas por petición.
+      // Downsampling uniforme preservando siempre primer y último punto.
+      const MAX_POINTS = 1400;
+      let sampled = path;
+      if (path.length > MAX_POINTS) {
+        const step = (path.length - 1) / (MAX_POINTS - 1);
+        sampled = Array.from({ length: MAX_POINTS }, (_, i) => path[Math.round(i * step)]);
+      }
+
+      // El endpoint requiere timestamp por punto (está diseñado para trazas GPS).
+      // Timestamps sintéticos crecientes: base ahora, +10s por punto.
+      const baseTime = Date.now();
+      const apiPath = sampled.map((point, index) => ({
+        lat: Number(point.lat),
+        lng: Number(point.lng),
+        timestamp: new Date(baseTime + index * 10_000).toISOString().slice(0, 19),
+      }));
+
+      const payload = {
+        categoryCode: categoryCode ?? "LIVIANO",
+        plate: "GRUA5N",
+        useSampling: true,
+        path: apiPath,
+      };
+
+      console.log("Toll calculate-by-path:", JSON.stringify({
+        categoryCode: payload.categoryCode,
+        points: apiPath.length,
+        originalPoints: path.length,
+      }));
+
+      const res = await fetch(`${GETAPI_BASE}/calculate-by-path`, {
+        method: "POST",
+        headers: { ...apiHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log("Toll API error (calculate-by-path):", res.status, JSON.stringify(data));
+        return new Response(
+          JSON.stringify({ error: data?.message || "Toll API error", details: data, apiStatus: res.status }),
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Toll calculate-by-path response:", JSON.stringify(data));
+      return new Response(JSON.stringify(data), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({
         error:
-          "Invalid action. Use 'route-cost', 'route-cost-by-coords', 'locations', 'categories', or 'highways'",
+          "Invalid action. Use 'route-cost', 'route-cost-by-coords', 'calculate-by-path', 'locations', 'categories', or 'highways'",
       }),
       {
         status: 400,

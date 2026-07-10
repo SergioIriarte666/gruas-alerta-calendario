@@ -73,6 +73,41 @@ function encodeSignedNumber(num: number): string {
   return encoded;
 }
 
+const VALID_MAP_TYPES = new Set(["roadmap", "hybrid", "satellite", "terrain"]);
+
+/**
+ * Expande el bounding box de la ruta con un margen porcentual y devuelve las
+ * dos esquinas opuestas. Se usan como puntos "visible" (invisibles en el mapa)
+ * para forzar a la Static Maps API a alejar el zoom lo suficiente y evitar que
+ * el trazo o los marcadores queden pegados/cortados en el borde de la imagen.
+ */
+function paddedBoundsCorners(
+  points: [number, number][],
+  paddingRatio = 0.15,
+): [[number, number], [number, number]] {
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+
+  for (const [lng, lat] of points) {
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+
+  const lngSpan = Math.max(maxLng - minLng, 0.01);
+  const latSpan = Math.max(maxLat - minLat, 0.01);
+  const lngPad = lngSpan * paddingRatio;
+  const latPad = latSpan * paddingRatio;
+
+  return [
+    [minLng - lngPad, minLat - latPad],
+    [maxLng + lngPad, maxLat + latPad],
+  ];
+}
+
 function simplifyCoords(coords: [number, number][], maxPoints: number): [number, number][] {
   if (coords.length <= maxPoints) return coords;
 
@@ -266,7 +301,7 @@ Deno.serve(async (req: Request) => {
 
     // ── STATIC MAP (Maps Static API) ────────────────────────────────────────
     if (action === "static_map") {
-      const { geometry, origin, destination, mode = "preview" } = body;
+      const { geometry, origin, destination, mode = "preview", mapType = "roadmap", center, zoom } = body;
       if (
         !geometry?.coordinates?.length ||
         !Array.isArray(origin) ||
@@ -278,6 +313,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      const resolvedMapType = VALID_MAP_TYPES.has(mapType) ? mapType : "roadmap";
       const coords: [number, number][] = geometry.coordinates;
       const simplified = simplifyCoords(coords, mode === "full" ? 180 : 90);
       const encodedPath = encodePolyline(simplified);
@@ -286,7 +322,7 @@ Deno.serve(async (req: Request) => {
       const params = new URLSearchParams({
         size,
         scale: "2",
-        maptype: "hybrid",
+        maptype: resolvedMapType,
         language: "es",
         region: "CL",
         path: `weight:5|color:0x7c3aedcc|enc:${encodedPath}`,
@@ -294,6 +330,24 @@ Deno.serve(async (req: Request) => {
       });
 
       params.append("markers", `color:red|label:B|${destination[1]},${destination[0]}`);
+
+      // El frontend controla el zoom (botones +/-) calculando su propio encuadre
+      // y enviando center+zoom explícitos. Sin esos valores, se cae a un ajuste
+      // automático con margen para no cortar el trazo/marcadores.
+      if (
+        center?.lat !== undefined &&
+        center?.lng !== undefined &&
+        typeof zoom === "number" &&
+        Number.isFinite(zoom)
+      ) {
+        params.append("center", `${center.lat},${center.lng}`);
+        params.append("zoom", String(Math.round(zoom)));
+      } else {
+        const [nw, se] = paddedBoundsCorners([...coords, origin, destination]);
+        params.append("visible", `${nw[1]},${nw[0]}`);
+        params.append("visible", `${se[1]},${se[0]}`);
+      }
+
       params.append("key", API_KEY);
 
       const imageRes = await fetch(`${STATIC_MAPS_BASE}?${params.toString()}`);
@@ -309,11 +363,14 @@ Deno.serve(async (req: Request) => {
       }
 
       const imageData = await imageRes.arrayBuffer();
-      const contentType = imageRes.headers.get("Content-Type") ?? "image/png";
+      // supabase-js solo devuelve un Blob cuando Content-Type es exactamente
+      // "application/octet-stream" (cualquier otro tipo no-JSON se parsea como texto,
+      // lo que corrompe los bytes binarios). Maps Static API devuelve PNG por defecto;
+      // el cliente reconstruye el Blob con ese MIME al recibirlo.
       return new Response(imageData, {
         headers: {
           ...getCorsHeaders(req),
-          "Content-Type": contentType,
+          "Content-Type": "application/octet-stream",
           "Cache-Control": "private, max-age=300",
         },
       });

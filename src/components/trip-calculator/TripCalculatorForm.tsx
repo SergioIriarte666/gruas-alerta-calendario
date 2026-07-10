@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
 import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
-import { useTollCalculationV2 } from '@/hooks/useTollCalculationV2';
+import { useTollCalculationV3 } from '@/hooks/useTollCalculationV3';
 import { TripCostBreakdown } from './TripCostBreakdown';
 import { TollBreakdownCard } from './TollBreakdownCard';
 import { TripRouteMap } from './TripRouteMap';
@@ -39,12 +39,12 @@ export const TripCalculatorForm = () => {
   const { cranes } = useCranes();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
   const {
-    calculate: calculateTollV2,
-    result: tollV2Result,
-    isCalculating: tollV2Loading,
+    calculate: calculateTollV3,
+    result: tollV3Result,
+    isCalculating: tollV3Loading,
     requiresManualEntry,
-    reset: resetTollV2,
-  } = useTollCalculationV2();
+    reset: resetTollV3,
+  } = useTollCalculationV3();
   const { locations: savedLocations } = useSavedLocations();
 
   const activeCranes = cranes.filter((c) => c.isActive);
@@ -65,14 +65,14 @@ export const TripCalculatorForm = () => {
       setOriginCoords(null);
     }
     reset();
-    resetTollV2();
+    resetTollV3();
   };
 
   const handleOriginPlaceSelected = (location: SelectedLocation) => {
     setOriginName(location.name);
     setOriginCoords([location.longitude, location.latitude]);
     reset();
-    resetTollV2();
+    resetTollV3();
   };
 
   const handleDestChange = (text: string) => {
@@ -89,19 +89,19 @@ export const TripCalculatorForm = () => {
       setDestCoords(null);
     }
     reset();
-    resetTollV2();
+    resetTollV3();
   };
 
   const handleDestPlaceSelected = (location: SelectedLocation) => {
     setDestName(location.name);
     setDestCoords([location.longitude, location.latitude]);
     reset();
-    resetTollV2();
+    resetTollV3();
   };
 
   const showManualToll = useMemo(
-    () => requiresManualEntry && !tollV2Result,
-    [requiresManualEntry, tollV2Result],
+    () => requiresManualEntry && !tollV3Result,
+    [requiresManualEntry, tollV3Result],
   );
 
   const handleCalculate = async () => {
@@ -111,27 +111,23 @@ export const TripCalculatorForm = () => {
       const craneCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
       const route = await fetchRouteDirections(originCoords, destCoords);
 
-      logger.debug('Toll lookup V2:', { originName, destName, craneCategory, twoVehicles });
+      logger.debug('Toll lookup V3:', { originName, destName, craneCategory, twoVehicles });
 
-      const tollV2 = await calculateTollV2({
-        originName,
-        destName,
-        originCoords,
-        destCoords,
+      const tollV3 = await calculateTollV3({
         routeGeometry: route.geometry,
         craneCategory,
         twoVehicles,
         returnConfig,
       });
 
-      const tollCost = tollV2?.totalCost ?? (manualToll ? Number(manualToll) : 0);
-      const tollData = tollV2
+      const tollCost = tollV3?.totalCost ?? (manualToll ? Number(manualToll) : 0);
+      const tollData = tollV3
         ? {
-            total_cost: tollV2.totalCost,
-            tolls: tollV2.breakdown.map((item) => ({
-              name: item.stationName,
-              cost: item.rateAmount,
-              highway: item.highway ?? undefined,
+            total_cost: tollV3.totalCost,
+            tolls: tollV3.breakdown.map((item) => ({
+              name: item.name,
+              cost: item.amount,
+              highway: item.highway,
             })),
           }
         : null;
@@ -147,7 +143,7 @@ export const TripCalculatorForm = () => {
         vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
         returnConfig,
         manualTollCost: tollCost,
-        tollCostAlreadyRoundTrip: Boolean(tollV2),
+        tollCostAlreadyRoundTrip: Boolean(tollV3),
         tollDetails: tollData?.tolls,
         additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
         tollWasManual: false,
@@ -163,7 +159,7 @@ export const TripCalculatorForm = () => {
     if (!originCoords || !destCoords || !craneType) return;
 
     try {
-      resetTollV2();
+      resetTollV3();
       const route = await fetchRouteDirections(originCoords, destCoords);
 
       const input: TripCalculationInput = {
@@ -222,7 +218,7 @@ export const TripCalculatorForm = () => {
                 onValueChange={(v) => {
                   setSelectedCraneId(v);
                   reset();
-                  resetTollV2();
+                  resetTollV3();
                 }}
               >
                 <SelectTrigger>
@@ -255,7 +251,7 @@ export const TripCalculatorForm = () => {
               onCheckedChange={(v) => {
                 setTwoVehicles(v);
                 reset();
-                resetTollV2();
+                resetTollV3();
               }}
             />
             <Label className="cursor-pointer">
@@ -270,7 +266,7 @@ export const TripCalculatorForm = () => {
               onValueChange={(v) => {
                 setReturnConfig(v as ReturnTripConfig);
                 reset();
-                resetTollV2();
+                resetTollV3();
               }}
             >
               <SelectTrigger>
@@ -287,11 +283,11 @@ export const TripCalculatorForm = () => {
           <Button
             type="button"
             onClick={handleCalculate}
-            disabled={!canCalculate || isCalculating || tollV2Loading}
+            disabled={!canCalculate || isCalculating || tollV3Loading}
             className="w-full md:w-auto bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8"
             size="lg"
           >
-            {isCalculating || tollV2Loading ? (
+            {isCalculating || tollV3Loading ? (
               <>
                 <Loader2 className="size-4 mr-2 animate-spin" />
                 Calculando...
@@ -350,8 +346,8 @@ export const TripCalculatorForm = () => {
               estimatedTimeHours={result.estimated_time_hours}
             />
           )}
-          {tollV2Result && tollV2Result.totalCost > 0 && (
-            <TollBreakdownCard result={tollV2Result} />
+          {tollV3Result && (
+            <TollBreakdownCard result={tollV3Result} />
           )}
           <TripCostBreakdown
             result={result}
