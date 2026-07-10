@@ -13,6 +13,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { CostFilters } from './CostFilters';
 import { cn } from '@/lib/utils';
+import { ENTITIES } from '@/lib/entities';
 
 import { safeDateToDisplay, CostPeriod } from '@/utils/timezoneUtils';
 
@@ -81,7 +82,8 @@ export const UnifiedCostFilters = ({
     onFiltersChange(newFilters);
   };
 
-  // Cuenta de filtros activos
+  // Cuenta de filtros activos ("entity" no cuenta: su default es 'gruas_5_norte',
+  // no 'all', así que no es un filtro "extra" que el usuario haya agregado)
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.category && filters.category !== 'all') count++;
@@ -198,6 +200,20 @@ export const UnifiedCostFilters = ({
           </div>
 
           <div className={cn('flex gap-2', isMobile ? 'flex-wrap' : 'items-center')}>
+            <Select
+              value={filters.entity}
+              onValueChange={(value) => updateFilter('entity', value as CostFilters['entity'])}
+            >
+              <SelectTrigger className="h-11 w-[180px] rounded-xl border-border/70 bg-background/70">
+                <SelectValue placeholder="Empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las empresas</SelectItem>
+                <SelectItem value={ENTITIES.GRUAS_5_NORTE.key}>{ENTITIES.GRUAS_5_NORTE.label}</SelectItem>
+                <SelectItem value={ENTITIES.LOWBOY.key}>{ENTITIES.LOWBOY.label}</SelectItem>
+              </SelectContent>
+            </Select>
+
             {!isMobile && (
               <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/70 p-1">
                 <Button

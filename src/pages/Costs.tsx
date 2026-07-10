@@ -72,6 +72,7 @@ const CostsPage = () => {
         minAmount: '',
         maxAmount: '',
         costCenterId: 'all',
+        entity: 'gruas_5_norte',
     });
 
     const [page, setPage] = useState(1);
@@ -97,15 +98,15 @@ const CostsPage = () => {
         dateFrom,
         dateTo,
         searchTerm: serverSearchTerm,
-        entity: 'gruas_5_norte',
+        entity: filters.entity === 'all' ? undefined : filters.entity,
     });
     const costs: Cost[] = pagedResult?.costs ?? [];
     const totalCostCount = pagedResult?.total ?? 0;
 
-    // Reiniciar página cuando cambian los filtros de fecha o búsqueda
+    // Reiniciar página cuando cambian los filtros de fecha, búsqueda o empresa
     useEffect(() => {
         setPage(1);
-    }, [dateFrom, dateTo, pageSize, searchTerm]);
+    }, [dateFrom, dateTo, pageSize, searchTerm, filters.entity]);
     const { mutate: deleteCost } = useDeleteCost();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
@@ -234,6 +235,7 @@ const CostsPage = () => {
             minAmount: '',
             maxAmount: '',
             costCenterId: 'all',
+            entity: 'gruas_5_norte',
         });
         setPage(1);
     }, []);

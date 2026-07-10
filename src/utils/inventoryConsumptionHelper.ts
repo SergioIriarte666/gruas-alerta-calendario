@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import { EntityKey, resolveInventoryLocationId } from '@/lib/entities';
 
 const logger = createLogger('InventoryConsumptionHelper');
 
@@ -12,6 +13,7 @@ interface CreateDirectConsumptionData {
   craneId: string;
   date: string;
   supplierId?: string | null;
+  entity?: EntityKey;
 }
 
 /**
@@ -33,20 +35,21 @@ export const createDirectInventoryConsumption = async ({
   craneId,
   date,
   supplierId,
+  entity,
 }: CreateDirectConsumptionData): Promise<boolean> => {
   try {
     logger.debug('[InventoryConsumption] Starting direct consumption for cost:', costId);
-    
+
     // 1. Find or create inventory item
     let inventoryItemId: string;
-    
+
     const { data: existingItem } = await supabase
       .from('inventory_items')
       .select('id')
       .ilike('name', itemName.trim())
       .limit(1)
       .single();
-    
+
     if (existingItem) {
       inventoryItemId = existingItem.id;
       logger.debug('[InventoryConsumption] Found existing item:', inventoryItemId);
@@ -62,30 +65,18 @@ export const createDirectInventoryConsumption = async ({
         })
         .select('id')
         .single();
-      
+
       if (createItemError || !newItem) {
         logger.error('[InventoryConsumption] Error creating item:', createItemError);
         throw new Error('No se pudo crear el ítem de inventario');
       }
-      
+
       inventoryItemId = newItem.id;
       logger.debug('[InventoryConsumption] Created new item:', inventoryItemId);
     }
-    
-    // 2. Get active warehouse location
-    const { data: location } = await supabase
-      .from('inventory_locations')
-      .select('id')
-      .eq('is_active', true)
-      .limit(1)
-      .single();
-    
-    if (!location) {
-      logger.error('[InventoryConsumption] No active location found');
-      throw new Error('No hay ubicación de inventario activa');
-    }
-    
-    const locationId = location.id;
+
+    // 2. Get warehouse location for this entity (G5N y LowBoy tienen bodegas separadas)
+    const locationId = await resolveInventoryLocationId(supabase, entity);
     logger.debug('[InventoryConsumption] Using location:', locationId);
     
     // 3. Create ENTRY movement (purchase)
@@ -175,6 +166,7 @@ interface CreateDirectEntryData {
   unitCost: number;
   date: string;
   supplierId?: string | null;
+  entity?: EntityKey;
 }
 
 /**
@@ -189,6 +181,7 @@ export const createDirectInventoryEntry = async ({
   unitCost,
   date,
   supplierId,
+  entity,
 }: CreateDirectEntryData): Promise<boolean> => {
   try {
     logger.debug('[InventoryEntry] Starting entry for cost:', costId);
@@ -241,24 +234,15 @@ export const createDirectInventoryEntry = async ({
       inventoryItemId = newItem.id;
     }
 
-    // 2. Get active warehouse location
-    const { data: location } = await supabase
-      .from('inventory_locations')
-      .select('id')
-      .eq('is_active', true)
-      .limit(1)
-      .single();
-
-    if (!location) {
-      throw new Error('No hay ubicación de inventario activa');
-    }
+    // 2. Get warehouse location for this entity (G5N y LowBoy tienen bodegas separadas)
+    const locationId = await resolveInventoryLocationId(supabase, entity);
 
     // 3. Create ENTRY movement only
     const { data: entryMovement, error: entryError } = await supabase
       .from('inventory_movements')
       .insert({
         item_id: inventoryItemId,
-        location_id: location.id,
+        location_id: locationId,
         movement_type: 'entry',
         quantity,
         unit_cost: unitCost,
@@ -333,7 +317,7 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
     // Find costs with immediate_consumption that have crane_id but no inventory movements
     const { data: unsyncedCosts, error: queryError } = await supabase
       .from('costs')
-      .select('id, description, purchase_quantity, purchase_unit_cost, crane_id, date, supplier_id')
+      .select('id, description, purchase_quantity, purchase_unit_cost, crane_id, date, supplier_id, entity')
       .eq('immediate_consumption', true)
       .not('crane_id', 'is', null)
       .not('purchase_quantity', 'is', null)
@@ -375,6 +359,7 @@ export const syncUnsyncedImmediateConsumptions = async (): Promise<{
           craneId: cost.crane_id!,
           date: cost.date,
           supplierId: cost.supplier_id,
+          entity: (cost as { entity?: EntityKey }).entity,
         });
         
         if (success) {

@@ -9,6 +9,7 @@ import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { supabase } from '@/integrations/supabase/client';
 import { createDirectInventoryEntry } from '@/utils/inventoryConsumptionHelper';
+import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { applyCurrentDocumentFolioToSuggestion } from '@/utils/xmlGlosaSuggestion';
@@ -537,8 +538,13 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
 
           const docEntity = getDocumentEntity(doc);
           const isLowboyDoc = docEntity === ENTITIES.LOWBOY.key;
-          // La bodega es de G5N: nunca sincronizar inventario para gastos LowBoy, aunque el toggle global esté activo.
-          const effectiveSyncToInventory = syncToInventory && !isLowboyDoc;
+          // G5N y LowBoy tienen bodegas separadas (inventory_locations por entidad,
+          // ver resolveInventoryLocationId en lib/entities.ts) — ambas pueden sincronizar.
+          const effectiveSyncToInventory = syncToInventory;
+          const lowboyCraneId = isLowboyDoc ? (craneIdByDocument[documentKey] ?? null) : null;
+          // Si el documento LowBoy trae equipo asignado, la entrada a bodega se consume
+          // de inmediato hacia esa grúa (igual que el flujo manual); si no, solo entra a bodega.
+          const isLowboyImmediateConsumption = isLowboyDoc && !!lowboyCraneId;
 
           const costData = {
             date: emissionDate,
@@ -550,18 +556,21 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
               supplierNameByRut.get(doc.supplier_rut) ? `Proveedor: ${supplierNameByRut.get(doc.supplier_rut)}` : '',
               doc.folio ? `Factura: ${doc.folio}` : '',
               doc.supplier_rut ? `RUT: ${doc.supplier_rut}` : '',
-              isLowboyDoc && syncToInventory ? 'Sync Bodega desactivada automáticamente (gasto LowBoy)' : '',
             ].filter(Boolean).join(' | ') || null,
             service_folio: doc.folio || null,
             payment_date: paymentDate,
             supplier_id: supplierId,
-            crane_id: isLowboyDoc ? (craneIdByDocument[documentKey] ?? null) : null,
+            crane_id: isLowboyDoc ? lowboyCraneId : null,
             entity: docEntity,
             paid_by: isLowboyDoc ? (paidByDocument[documentKey] || ENTITIES.GRUAS_5_NORTE.key) : ENTITIES.GRUAS_5_NORTE.key,
             dte_tipo: doc.dte_tipo ?? null,
             dte_folio: doc.folio ? parseInt(doc.folio, 10) || null : null,
             dte_rut_emisor: doc.supplier_rut || null,
-            ...(effectiveSyncToInventory && { purchase_quantity: 1, purchase_unit_cost: doc.total_amount, immediate_consumption: false }),
+            ...(effectiveSyncToInventory && {
+              purchase_quantity: 1,
+              purchase_unit_cost: doc.total_amount,
+              immediate_consumption: isLowboyImmediateConsumption,
+            }),
           };
 
           await new Promise<void>(resolve => {
@@ -582,7 +591,22 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                   } catch (linkErr) { logger.warn('[useXmlCostUpload] Auto-vinculación con sii_rcv_records falló para el costo:', costRecord.id, linkErr); }
                 }
                 if (effectiveSyncToInventory && costRecord?.id) {
-                  try { await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: doc.total_amount, date: emissionDate, supplierId }); }
+                  try {
+                    if (isLowboyImmediateConsumption) {
+                      await UnifiedPurchaseService.registerForExistingCost({
+                        costId: costRecord.id,
+                        itemName: effectiveGlosa,
+                        quantity: 1,
+                        unitCost: doc.total_amount,
+                        date: emissionDate,
+                        craneId: lowboyCraneId!,
+                        supplierId,
+                        entity: docEntity,
+                      });
+                    } else {
+                      await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: doc.total_amount, date: emissionDate, supplierId, entity: docEntity });
+                    }
+                  }
                   catch (invErr) { logger.warn('[useXmlCostUpload] Inventory sync failed for cost:', costRecord.id, invErr); }
                 }
                 resolve();
@@ -669,6 +693,15 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
       return s;
     });
 
+  const selectAllDocuments = () => {
+    if (!parseResult) return;
+    setSelectedDocuments(new Set(parseResult.documents
+      .filter(d => d.folio && d.total_amount > 0)
+      .map(getDocumentStateKey)));
+  };
+
+  const clearSelectedDocuments = () => setSelectedDocuments(new Set());
+
   const reset = () => {
     resetParsing();
     setUploadProgress(0);
@@ -735,6 +768,6 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     // Handlers
     handleUploadCosts, reset,
     handleCategoryChange, handleSubcategoryChange,
-    toggleSupplierSelection, toggleDocumentSelection,
+    toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
   };
 }

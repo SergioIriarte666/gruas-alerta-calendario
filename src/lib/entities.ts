@@ -30,3 +30,51 @@ export function entityByRut(rut: string | null | undefined): EntityKey | null {
   if (normalized === normalizeRut(ENTITIES.GRUAS_5_NORTE.rut)) return ENTITIES.GRUAS_5_NORTE.key;
   return null;
 }
+
+/**
+ * Código (inventory_locations.code) de la bodega dueña del stock de cada entidad.
+ * G5N y LowBoy no comparten bodega física: mezclar su stock en una sola
+ * ubicación inflaría/desinflaría el inventario real de repuestos de G5N con
+ * compras que no le pertenecen.
+ */
+export const INVENTORY_LOCATION_CODE_BY_ENTITY: Record<EntityKey, string> = {
+  gruas_5_norte: 'BP001', // Bodega Principal
+  lowboy: 'LB001', // Bodega LowBoy
+};
+
+/**
+ * Resuelve el id de la bodega (inventory_locations) que le corresponde a una
+ * entidad. Busca por `code` (no por UUID hardcodeado) para no depender de que
+ * la fila nunca se recree. Si el código esperado no existe (entorno sin la
+ * migración de la bodega LowBoy, por ejemplo), cae a la ubicación activa más
+ * antigua — mismo comportamiento que existía antes de separar bodegas.
+ */
+export async function resolveInventoryLocationId(
+  supabase: { from: (table: string) => any },
+  entity: EntityKey = ENTITIES.GRUAS_5_NORTE.key,
+): Promise<string> {
+  const code = INVENTORY_LOCATION_CODE_BY_ENTITY[entity];
+
+  const { data: byCode } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('code', code)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (byCode?.id) return byCode.id;
+
+  const { data: fallback } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!fallback?.id) {
+    throw new Error('No hay ubicación de inventario activa');
+  }
+
+  return fallback.id;
+}

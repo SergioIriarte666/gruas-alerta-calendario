@@ -8,18 +8,17 @@ import { CostDocumentRow } from '@/components/costs/CostDocumentRow';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertCircle, Loader2, Users, Receipt, DollarSign, Building, ShieldAlert, Link2, Package, Info, Code, Database, Download } from 'lucide-react';
+import { AlertCircle, Loader2, Users, Receipt, DollarSign, Building, ShieldAlert, Link2, Package, Info, Code, Database } from 'lucide-react';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { getDocumentStateKey } from '@/utils/xml/xmlGlosaHelpers';
-import { splitDteXmlFile } from '@/utils/xml/dteSplitter';
-import { downloadTextFile } from '@/utils/fileDownload';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 
 interface XMLCostUploadProps {
   isOpen: boolean;
@@ -51,7 +50,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     buildSuggestedGlosa, applyConditionToSupplierDocuments, resolveCategoryId,
     handleUploadCosts, reset,
     handleCategoryChange, handleSubcategoryChange,
-    toggleSupplierSelection, toggleDocumentSelection,
+    toggleSupplierSelection, toggleDocumentSelection, selectAllDocuments, clearSelectedDocuments,
     getDocumentEntity, lowboyCraneOptions, craneIdByDocument, setCraneIdByDocument,
     paidByDocument, setPaidByDocument, hasLowboyDocuments,
   } = useXmlCostUpload({ onSuccess, onClose });
@@ -61,26 +60,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     reset();
     batchProgress.close();
     onClose();
-  };
-
-  const handleDownloadSplitInvoices = async () => {
-    if (!selectedFile) return;
-
-    const result = await splitDteXmlFile(selectedFile);
-    if (result.errors.length > 0) {
-      toast.error(result.errors[0]);
-      return;
-    }
-
-    result.documents.forEach(document => {
-      downloadTextFile({
-        content: document.content,
-        fileName: document.fileName,
-        contentType: 'application/xml;charset=utf-8',
-      });
-    });
-
-    toast.success(`Se descargaron ${result.documents.length} facturas separadas`);
   };
 
   return (
@@ -102,19 +81,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 { title: 'Total Selec.', value: `$${selectedTotal.toLocaleString('es-CL')}`, icon: DollarSign, tone: 'info' },
               ]} />
 
-              {parseResult.totalDocuments > 1 && (
-                <Alert className="border-info/30 bg-info/10">
-                  <Download className="size-4 text-info" />
-                  <AlertDescription className="flex flex-col gap-3 text-info sm:flex-row sm:items-center sm:justify-between">
-                    <span>Este XML contiene {parseResult.totalDocuments} documentos. Puedes descargarlos como facturas XML separadas.</span>
-                    <Button type="button" variant="outline" size="sm" onClick={handleDownloadSplitInvoices} className="shrink-0">
-                      <Download className="mr-2 size-4" />
-                      Descargar separadas
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {hasLowboyDocuments && (
                 <Alert className="border-primary/30 bg-primary/10">
                   <Building className="size-4 text-primary" />
@@ -133,10 +99,89 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     <TooltipProvider><Tooltip><TooltipTrigger asChild><Info className="size-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent><p>Los costos se registrarán como entradas de inventario automáticamente</p></TooltipContent></Tooltip></TooltipProvider>
                   </div>
                   {syncToInventory && <p className="ml-8 text-xs text-success">✓ Los costos se sincronizarán con el módulo de Bodega</p>}
-                  {syncToInventory && hasLowboyDocuments && <p className="ml-8 text-xs text-warning">⚠️ La bodega es de Grúas 5 Norte: los documentos LowBoy quedarán excluidos de esta sincronización automáticamente.</p>}
+                  {syncToInventory && hasLowboyDocuments && <p className="ml-8 text-xs text-info">ℹ️ Los documentos LowBoy se sincronizan con su propia bodega (Bodega LowBoy); si asignas un equipo, además se registra el consumo inmediato hacia esa grúa.</p>}
                   <p className="text-xs text-muted-foreground">Activa esta opción solo si además quieres reflejar estos documentos como entradas en inventario.</p>
                 </CardContent>
               </Card>
+
+              {parseResult.documents.length > 0 && (
+                <Card className="overflow-hidden border-border/70 shadow-sm">
+                  <CardHeader className="border-b border-border/60 bg-muted/30 pb-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Receipt className="size-5" />
+                          Facturas detectadas
+                        </CardTitle>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {selectedDocuments.size} de {parseResult.documents.length} seleccionadas · Total ${selectedTotal.toLocaleString('es-CL')}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 sm:flex">
+                        <Button type="button" variant="outline" size="sm" onClick={selectAllDocuments}>
+                          Seleccionar todas
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={clearSelectedDocuments}>
+                          Deseleccionar todas
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="max-h-72 divide-y divide-border/60 overflow-y-auto">
+                      {parseResult.documents.map((document, index) => {
+                        const documentKey = getDocumentStateKey(document);
+                        const isSelected = selectedDocuments.has(documentKey);
+                        const supplierName = parseResult.suppliers.find(s => s.rut === document.supplier_rut)?.name || 'Proveedor sin nombre';
+                        const duplicateInfo = getDuplicateInfoForDocument(document);
+                        const isExactDuplicate = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
+
+                        return (
+                          <div
+                            key={`${documentKey}-${index}`}
+                            className={cn(
+                              'flex cursor-pointer items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40',
+                              isSelected ? 'bg-background' : 'bg-muted/30 text-muted-foreground'
+                            )}
+                          >
+                            <Checkbox
+                              aria-label={`Seleccionar factura ${document.folio || index + 1}`}
+                              className="mt-1"
+                              checked={isSelected}
+                              onCheckedChange={() => toggleDocumentSelection(documentKey)}
+                            />
+                            <button
+                              type="button"
+                              className="min-w-0 flex-1 text-left"
+                              onClick={() => toggleDocumentSelection(documentKey)}
+                            >
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="font-medium text-foreground">Folio {document.folio || 'sin folio'}</span>
+                                <span className="text-sm">{supplierName}</span>
+                                {isExactDuplicate && <Badge variant="destructive">Ya registrado</Badge>}
+                                {duplicateInfo?.matchType === 'similar' && <Badge className="border-warning/30 bg-warning/15 text-warning">Revisar</Badge>}
+                              </div>
+                              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                {document.issue_date && <span>Fecha: {document.issue_date}</span>}
+                                <span>Monto: ${document.total_amount.toLocaleString('es-CL')}</span>
+                              </div>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {selectedDocuments.size === 0 && (
+                <Alert className="border-warning/30 bg-warning/10">
+                  <AlertCircle className="size-4 text-warning" />
+                  <AlertDescription className="text-warning">
+                    Selecciona al menos una factura para habilitar la carga.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {duplicateResults.length > 0 && showDuplicateWarning && (
                 <Alert className="border-warning/30 bg-warning/10">

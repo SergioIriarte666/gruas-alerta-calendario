@@ -566,6 +566,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                         date: submissionData.date,
                                         supplierId: submissionData.supplier_id,
                                         craneId: submissionData.crane_id!,
+                                        entity: submissionData.entity,
                                     });
                                 }
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
@@ -669,6 +670,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                                     date: submissionData.date,
                                     supplierId: submissionData.supplier_id,
                                     craneId: submissionData.crane_id!,
+                                    entity: submissionData.entity,
                                 });
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
                                 queryClient.invalidateQueries({ queryKey: ['crane-parts'] });

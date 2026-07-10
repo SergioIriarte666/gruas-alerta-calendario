@@ -12,6 +12,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useOperators } from '@/hooks/useOperators';
 import { useCranes } from '@/hooks/useCranes';
 import { safeParseDateOnly, toLocalDateString } from '@/utils/timezoneUtils';
+import { EntityKey } from '@/lib/entities';
 
 export interface CostFilters {
   category: string;
@@ -24,6 +25,8 @@ export interface CostFilters {
   minAmount: string;
   maxAmount: string;
   costCenterId: string;
+  /** 'all' muestra ambas entidades; por defecto la página parte en 'gruas_5_norte'. */
+  entity: EntityKey | 'all';
 }
 
 interface CostFiltersProps {

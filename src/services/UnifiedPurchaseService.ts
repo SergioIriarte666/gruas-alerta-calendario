@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { showSyncToast, type SyncAction } from '@/utils/syncToast';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
+import { ENTITIES, EntityKey, resolveInventoryLocationId } from '@/lib/entities';
 
 
 const logger = createLogger("UnifiedPurchaseService");
@@ -11,23 +12,27 @@ export interface UnifiedPurchaseData {
   itemId?: string; // If item already exists
   quantity: number;
   unitCost: number;
-  
+
   // Purchase details
   date: string;
   supplierId?: string | null;
   supplierName?: string | null;
   locationId?: string | null;
-  
+
   // Document references
   referenceDocument?: string | null;
   batchNumber?: string | null;
   expirationDate?: string | null;
   observations?: string | null;
-  
+
   // Consumption options
   immediateConsumption: boolean;
   craneId?: string | null; // If specified → direct consumption to crane
   // If no craneId but immediateConsumption=true → caller should open multi-crane distribution dialog
+
+  // Entidad dueña de la compra: determina a qué bodega va el stock
+  // (G5N y LowBoy tienen bodegas separadas). Por defecto G5N.
+  entity?: EntityKey;
 }
 
 export interface UnifiedPurchaseResult {
@@ -96,7 +101,7 @@ export class UnifiedPurchaseService {
       logger.debug('[UnifiedPurchase] Inventory item ID:', result.inventoryItemId);
       
       // Step 2: Get active warehouse location
-      const locationId = data.locationId || await this.getDefaultLocation();
+      const locationId = data.locationId || await this.getDefaultLocation(data.entity);
       if (!locationId) {
         throw new Error('No hay ubicación de inventario activa');
       }
@@ -225,18 +230,11 @@ export class UnifiedPurchaseService {
   }
 
   /**
-   * Get default active warehouse location
+   * Get the warehouse location for the given entity (G5N and LowBoy have
+   * separate warehouses — see resolveInventoryLocationId in lib/entities.ts).
    */
-  private static async getDefaultLocation(): Promise<string | null> {
-    const { data: location } = await supabase
-      .from('inventory_locations')
-      .select('id')
-      .eq('is_active', true)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single();
-    
-    return location?.id || null;
+  private static async getDefaultLocation(entity: EntityKey = ENTITIES.GRUAS_5_NORTE.key): Promise<string | null> {
+    return resolveInventoryLocationId(supabase, entity);
   }
 
   /**
@@ -839,6 +837,7 @@ export class UnifiedPurchaseService {
     craneId: string;
     supplierId?: string | null;
     supplierName?: string | null;
+    entity?: EntityKey;
   }): Promise<void> {
     try {
       logger.debug('[UnifiedPurchase] registerForExistingCost - costId:', params.costId);
@@ -852,8 +851,8 @@ export class UnifiedPurchaseService {
         immediateConsumption: true,
       });
 
-      // 2. Get warehouse location
-      const locationId = await this.getDefaultLocation();
+      // 2. Get warehouse location (G5N y LowBoy tienen bodegas separadas)
+      const locationId = await this.getDefaultLocation(params.entity);
       if (!locationId) {
         throw new Error('No hay ubicación de inventario activa');
       }
