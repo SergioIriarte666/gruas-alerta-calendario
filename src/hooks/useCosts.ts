@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tansta
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
+import { EntityKey } from '@/lib/entities';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
 import { createLogger } from "@/lib/logger";
@@ -61,6 +62,11 @@ const COSTS_LIST_SELECT_CLAUSE = `
   document_type,
   document_number,
   payment_date,
+  entity,
+  paid_by,
+  dte_tipo,
+  dte_folio,
+  dte_rut_emisor,
   notes,
   supplier_id,
   supplier_invoice_id,
@@ -97,6 +103,8 @@ const COSTS_LIST_SELECT_CLAUSE = `
 export interface CostDateFilters {
   dateFrom?: string; // 'YYYY-MM-DD'
   dateTo?: string;   // 'YYYY-MM-DD'
+  /** Filtra por entidad legal dueña del gasto. Sin este filtro se traen ambas entidades. */
+  entity?: EntityKey;
 }
 
 export interface CostQueryFilters extends CostDateFilters {
@@ -122,6 +130,7 @@ const fetchCosts = async (filters: CostDateFilters = {}): Promise<Cost[]> => {
 
     if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
     if (filters.dateTo) query = query.lte('date', filters.dateTo);
+    if (filters.entity) query = query.eq('entity', filters.entity);
 
     const { data, error } = await query;
 
@@ -144,12 +153,13 @@ export const useCosts = (filters: CostDateFilters = {}) => {
   // Normalizar '' a undefined para que todos los consumidores sin filtro compartan cache
   const dateFrom = filters.dateFrom || undefined;
   const dateTo = filters.dateTo || undefined;
+  const entity = filters.entity || undefined;
 
   return useQuery({
     // Las fechas DEBEN ir en la queryKey: sin esto TanStack Query reutiliza
     // el cache de la query sin filtros y el filtro nunca re-fetcha
-    queryKey: ['costs', { dateFrom, dateTo }],
-    queryFn: () => fetchCosts({ dateFrom, dateTo }),
+    queryKey: ['costs', { dateFrom, dateTo, entity }],
+    queryFn: () => fetchCosts({ dateFrom, dateTo, entity }),
     placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -165,9 +175,10 @@ export const usePagedCosts = (
   const dateFrom = filters.dateFrom || undefined;
   const dateTo = filters.dateTo || undefined;
   const searchTerm = filters.searchTerm?.trim() || undefined;
+  const entity = filters.entity || undefined;
 
   return useQuery({
-    queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo, searchTerm: searchTerm ?? '' }],
+    queryKey: ['costs', 'paged', page, pageSize, { dateFrom, dateTo, searchTerm: searchTerm ?? '', entity }],
     queryFn: async (): Promise<{ costs: Cost[]; total: number }> => {
       const hasSearch = !!searchTerm;
       const searchLower = searchTerm?.toLowerCase() ?? '';
@@ -186,6 +197,7 @@ export const usePagedCosts = (
 
       if (dateFrom) query = query.gte('date', dateFrom);
       if (dateTo) query = query.lte('date', dateTo);
+      if (entity) query = query.eq('entity', entity);
 
       if (hasSearch) {
         query = query.or(
@@ -265,6 +277,11 @@ const addCost = async (costData: CostFormData) => {
       document_number: (costData as any).document_number || null,
       location_text: (costData as any).location_text || null,
       other_reason: (costData as any).other_reason || null,
+      entity: (costData as any).entity || 'gruas_5_norte',
+      paid_by: (costData as any).paid_by || 'gruas_5_norte',
+      dte_tipo: (costData as any).dte_tipo ?? null,
+      dte_folio: (costData as any).dte_folio ?? null,
+      dte_rut_emisor: (costData as any).dte_rut_emisor || null,
       // FASE 2: Campos para sincronización con inventario
       purchase_quantity: costData.purchase_quantity,
       purchase_unit_cost: costData.purchase_unit_cost,

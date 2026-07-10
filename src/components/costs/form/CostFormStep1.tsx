@@ -3,7 +3,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Tag, FileText } from 'lucide-react';
+import { Calendar, Tag, FileText, Building2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
@@ -30,6 +30,7 @@ export const CostFormStep1 = ({
 }: CostFormStep1Props) => {
   const watchedDescription = form.watch('description');
   const watchedCategoryId = form.watch('category_id');
+  const watchedEntity = form.watch('entity');
 
   const { suggestion, isClassifying, categoryName, source, clearSuggestion } = useAutoClassify(
     watchedDescription || '',
@@ -122,6 +123,62 @@ export const CostFormStep1 = ({
                 <FormMessage />
               </FormItem>
             )} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField name="entity" control={form.control} render={({ field }) => (
+              <FormItem>
+                <Label className="flex items-center gap-2 text-foreground">
+                  <Building2 className="size-4" />
+                  Entidad
+                </Label>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    if (value === 'gruas_5_norte') {
+                      form.setValue('paid_by', 'gruas_5_norte');
+                      form.setValue('crane_id', 'none');
+                    }
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="gruas_5_norte">Grúas 5 Norte SpA</SelectItem>
+                    <SelectItem value="lowboy">LowBoy Chile SpA</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+            {watchedEntity === 'lowboy' && (
+              <FormField name="paid_by" control={form.control} render={({ field }) => (
+                <FormItem>
+                  <Label className="flex items-center gap-2 text-foreground">
+                    <Building2 className="size-4" />
+                    Financiado por
+                  </Label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="gruas_5_norte">Grúas 5 Norte</SelectItem>
+                      <SelectItem value="lowboy">LowBoy Chile SpA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Quién puso la plata para este gasto.</p>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
           </div>
 
           <FormField name="description" control={form.control} render={({ field }) => {

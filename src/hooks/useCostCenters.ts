@@ -52,10 +52,12 @@ const fetchCostCentersWithStats = async (): Promise<CostCenterWithStats[]> => {
   // Traer costos del año en curso para cubrir todos los períodos posibles
   const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
 
+  // Los centros de costo son presupuesto de G5N: excluir costos LowBoy para no inflar el gasto vs. presupuesto.
   const { data: costStats, error: statsError } = await supabase
     .from('costs')
     .select('cost_center_id, amount, date')
     .not('cost_center_id', 'is', null)
+    .eq('entity', 'gruas_5_norte')
     .gte('date', yearStart);
 
   if (statsError) throw new Error(statsError.message);

@@ -1015,6 +1015,10 @@ export type Database = {
           description: string
           document_number: string | null
           document_type: string | null
+          dte_folio: number | null
+          dte_rut_emisor: string | null
+          dte_tipo: number | null
+          entity: string
           id: string
           immediate_consumption: boolean | null
           inventory_movement_id: string | null
@@ -1024,6 +1028,7 @@ export type Database = {
           notes: string | null
           operator_id: string | null
           other_reason: string | null
+          paid_by: string
           payment_batch_id: string | null
           payment_date: string | null
           purchase_quantity: number | null
@@ -1048,6 +1053,10 @@ export type Database = {
           description: string
           document_number?: string | null
           document_type?: string | null
+          dte_folio?: number | null
+          dte_rut_emisor?: string | null
+          dte_tipo?: number | null
+          entity?: string
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
@@ -1057,6 +1066,7 @@ export type Database = {
           notes?: string | null
           operator_id?: string | null
           other_reason?: string | null
+          paid_by?: string
           payment_batch_id?: string | null
           payment_date?: string | null
           purchase_quantity?: number | null
@@ -1081,6 +1091,10 @@ export type Database = {
           description?: string
           document_number?: string | null
           document_type?: string | null
+          dte_folio?: number | null
+          dte_rut_emisor?: string | null
+          dte_tipo?: number | null
+          entity?: string
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
@@ -1090,6 +1104,7 @@ export type Database = {
           notes?: string | null
           operator_id?: string | null
           other_reason?: string | null
+          paid_by?: string
           payment_batch_id?: string | null
           payment_date?: string | null
           purchase_quantity?: number | null
@@ -1525,12 +1540,12 @@ export type Database = {
         Row: {
           base_consumption_per_km_override: number | null
           brand: string
-          circulation_permit_expiry: string
+          circulation_permit_expiry: string | null
           created_at: string | null
           created_by: string | null
           fuel_type_override: string | null
           id: string
-          insurance_expiry: string
+          insurance_expiry: string | null
           is_active: boolean | null
           license_plate: string
           loaded_consumption_factor_override: number | null
@@ -1538,7 +1553,7 @@ export type Database = {
           owner_company_name: string | null
           owner_company_rut: string | null
           status: Database["public"]["Enums"]["crane_status"]
-          technical_review_expiry: string
+          technical_review_expiry: string | null
           toll_vehicle_category: string
           towing_consumption_factor_override: number | null
           type: Database["public"]["Enums"]["crane_type"]
@@ -1547,12 +1562,12 @@ export type Database = {
         Insert: {
           base_consumption_per_km_override?: number | null
           brand: string
-          circulation_permit_expiry: string
+          circulation_permit_expiry?: string | null
           created_at?: string | null
           created_by?: string | null
           fuel_type_override?: string | null
           id?: string
-          insurance_expiry: string
+          insurance_expiry?: string | null
           is_active?: boolean | null
           license_plate: string
           loaded_consumption_factor_override?: number | null
@@ -1560,7 +1575,7 @@ export type Database = {
           owner_company_name?: string | null
           owner_company_rut?: string | null
           status?: Database["public"]["Enums"]["crane_status"]
-          technical_review_expiry: string
+          technical_review_expiry?: string | null
           toll_vehicle_category?: string
           towing_consumption_factor_override?: number | null
           type: Database["public"]["Enums"]["crane_type"]
@@ -1569,12 +1584,12 @@ export type Database = {
         Update: {
           base_consumption_per_km_override?: number | null
           brand?: string
-          circulation_permit_expiry?: string
+          circulation_permit_expiry?: string | null
           created_at?: string | null
           created_by?: string | null
           fuel_type_override?: string | null
           id?: string
-          insurance_expiry?: string
+          insurance_expiry?: string | null
           is_active?: boolean | null
           license_plate?: string
           loaded_consumption_factor_override?: number | null
@@ -1582,7 +1597,7 @@ export type Database = {
           owner_company_name?: string | null
           owner_company_rut?: string | null
           status?: Database["public"]["Enums"]["crane_status"]
-          technical_review_expiry?: string
+          technical_review_expiry?: string | null
           toll_vehicle_category?: string
           towing_consumption_factor_override?: number | null
           type?: Database["public"]["Enums"]["crane_type"]
@@ -2553,6 +2568,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
+      intercompany_adjustments: {
+        Row: {
+          adjustment_date: string
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string
+          direction: string
+          id: string
+          reference: string | null
+        }
+        Insert: {
+          adjustment_date: string
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description: string
+          direction?: string
+          id?: string
+          reference?: string | null
+        }
+        Update: {
+          adjustment_date?: string
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          direction?: string
+          id?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intercompany_adjustments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -6170,10 +6226,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "sii_rcv_records_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "sii_rcv_imports"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sii_rcv_records_linked_cost_id_fkey"
             columns: ["linked_cost_id"]
             isOneToOne: false
             referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sii_rcv_records_linked_cost_id_fkey"
+            columns: ["linked_cost_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_crane_parts_candidates"
+            referencedColumns: ["candidate_cost_id"]
+          },
+          {
+            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
+            columns: ["linked_service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
             referencedColumns: ["id"]
           },
           {
@@ -6184,11 +6261,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sii_rcv_records_import_id_fkey"
-            columns: ["import_id"]
+            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
+            columns: ["linked_service_id"]
             isOneToOne: false
-            referencedRelation: "sii_rcv_imports"
+            referencedRelation: "services_with_excess_summary"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
+            columns: ["linked_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }

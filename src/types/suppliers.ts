@@ -179,6 +179,10 @@ export interface XMLDocumentData {
   currency: string;
   description: string;
   supplier_rut: string;
+  /** RUTRecep del DTE (receptor del documento): determina la entidad dueña del gasto. */
+  receiver_rut?: string;
+  /** Código crudo TipoDTE del SII (33=Factura Electrónica, etc.), no la etiqueta legible. */
+  dte_tipo?: number;
   status?: string;
   payment_terms?: string;
   /** FmaPago del SII: 1=Contado, 2=Crédito, 3=Sin costo */

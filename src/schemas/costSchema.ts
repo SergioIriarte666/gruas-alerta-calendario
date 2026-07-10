@@ -6,7 +6,10 @@ export const costSchema = z.object({
     description: z.string().min(3, 'La descripción debe tener al menos 3 caracteres').transform(val => val.trim()),
     amount: z.coerce.number().nonnegative('El monto no puede ser negativo').min(0, 'El monto debe ser 0 o mayor'),
     category_id: z.string().nonempty('La categoría es requerida'),
-    
+
+    entity: z.enum(['gruas_5_norte', 'lowboy']).default('gruas_5_norte'),
+    paid_by: z.enum(['gruas_5_norte', 'lowboy']).default('gruas_5_norte'),
+
     cost_center_id: z.preprocess(
         (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().nullable().optional()

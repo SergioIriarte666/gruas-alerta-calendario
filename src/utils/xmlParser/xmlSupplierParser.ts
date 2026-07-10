@@ -477,9 +477,10 @@ export class XMLSupplierParser {
     const iva = getNestedNumber('Documento/Encabezado/Totales/IVA');
     const montoTotal = getNestedNumber('Documento/Encabezado/Totales/MntTotal');
     
-    // Extraer información del emisor
+    // Extraer información del emisor y receptor
     const rutEmisor = getNestedValue('Documento/Encabezado/Emisor/RUTEmisor');
     const razonSocial = toTitleCaseEs(getNestedValue('Documento/Encabezado/Emisor/RznSoc'));
+    const rutRecep = getNestedValue('Documento/Encabezado/Receptor/RUTRecep');
     
     // Extraer detalles si existen
     const items: XMLDocumentItem[] = [];
@@ -525,19 +526,23 @@ export class XMLSupplierParser {
 
     const paymentMethodCode = fmaPago ? parseInt(fmaPago, 10) : undefined;
 
+    const tipoDTECode = tipoDTE ? parseInt(tipoDTE, 10) : undefined;
+
     return {
       folio: folio,
       document_type: this.getDocumentTypeLabel(tipoDTE),
+      dte_tipo: tipoDTECode && !isNaN(tipoDTECode) ? tipoDTECode : undefined,
       issue_date: this.formatDate(fechaEmision),
       due_date: fechaVencimiento ? this.formatDate(fechaVencimiento) : undefined,
       net_amount: montoNeto,
       vat_amount: iva,
       total_amount: montoTotal,
       currency: 'CLP',
-      description: items.length > 0 
+      description: items.length > 0
         ? `${razonSocial} ${items.map(i => i.product_name || i.description).join(', ')}`
         : razonSocial,
       supplier_rut: this.formatRUT(rutEmisor),
+      receiver_rut: rutRecep ? this.formatRUT(rutRecep) : undefined,
       status: 'emitido',
       payment_method_code: paymentMethodCode && !isNaN(paymentMethodCode) ? paymentMethodCode : undefined,
       items: items.length > 0 ? items : undefined

@@ -97,6 +97,7 @@ const CostsPage = () => {
         dateFrom,
         dateTo,
         searchTerm: serverSearchTerm,
+        entity: 'gruas_5_norte',
     });
     const costs: Cost[] = pagedResult?.costs ?? [];
     const totalCostCount = pagedResult?.total ?? 0;

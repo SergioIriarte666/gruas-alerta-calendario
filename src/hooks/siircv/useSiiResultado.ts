@@ -18,19 +18,23 @@ type CostRow = {
   cranes: { license_plate: string; brand: string; model: string } | null;
 };
 
-async function fetchCostsForCranes(craneIds: string[], desde: string, hasta: string): Promise<CostRow[]> {
-  if (craneIds.length === 0) return [];
+/** Sentinel para agrupar/filtrar costos LowBoy sin crane_id asignado (ej. equipo Fontaine sin patente). */
+export const SIN_EQUIPO_SENTINEL = '__sin_equipo__';
+
+// Base determinística: TODOS los costos con entity='lowboy' en el rango, sin importar crane_id.
+// El multi-select de equipos en el panel es solo un refinamiento visual sobre este universo.
+async function fetchLowboyCosts(desde: string, hasta: string): Promise<CostRow[]> {
   const rows: CostRow[] = [];
   for (let offset = 0; ; offset += COSTS_PAGE_SIZE) {
     const { data, error } = await supabase
       .from('costs')
       .select('id, date, amount, category_id, crane_id, cost_categories(name), cranes(license_plate, brand, model)')
-      .in('crane_id', craneIds)
+      .eq('entity', 'lowboy')
       .gte('date', desde)
       .lte('date', hasta)
       .range(offset, offset + COSTS_PAGE_SIZE - 1);
     if (error) {
-      logger.error('Error fetching costs for cranes', error);
+      logger.error('Error fetching LowBoy costs', error);
       throw error;
     }
     rows.push(...((data ?? []) as unknown as CostRow[]));
@@ -65,11 +69,17 @@ export function useSiiResultado(entityRut: string, craneIds: string[], desde: st
     enabled: !!entityRut && !!desde && !!hasta,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<SiiResultado> => {
-      const [ventaRows, compraRows, costRows] = await Promise.all([
+      const [ventaRows, compraRows, allCostRows] = await Promise.all([
         fetchSiiRcvRecords({ entityRut, bookType: 'venta', desde, hasta }),
         fetchSiiRcvRecords({ entityRut, bookType: 'compra', desde, hasta }),
-        fetchCostsForCranes(craneIds, desde, hasta),
+        fetchLowboyCosts(desde, hasta),
       ]);
+
+      // Refinamiento visual: si hay selección, filtra por equipo (o "sin equipo asignado").
+      // Sin selección, muestra el universo completo de costos LowBoy del período.
+      const costRows = craneIds.length > 0
+        ? allCostRows.filter((cost) => craneIds.includes(cost.crane_id ?? SIN_EQUIPO_SENTINEL))
+        : allCostRows;
 
       const ingresos = calcIngresos(ventaRows);
       const costos = costRows.reduce((sum, cost) => sum + Number(cost.amount), 0);
@@ -90,15 +100,15 @@ export function useSiiResultado(entityRut: string, craneIds: string[], desde: st
 
       const equipoMap = new Map<string, CostosPorEquipo>();
       costRows.forEach((cost) => {
-        if (!cost.crane_id) return;
-        const current = equipoMap.get(cost.crane_id) ?? {
-          craneId: cost.crane_id,
-          licensePlate: cost.cranes?.license_plate ?? 'Sin patente',
-          label: cost.cranes ? `${cost.cranes.brand} ${cost.cranes.model}` : 'Sin equipo',
+        const key = cost.crane_id ?? SIN_EQUIPO_SENTINEL;
+        const current = equipoMap.get(key) ?? {
+          craneId: key,
+          licensePlate: cost.cranes?.license_plate ?? '',
+          label: cost.cranes ? `${cost.cranes.brand} ${cost.cranes.model}` : 'Sin equipo asignado',
           total: 0,
         };
         current.total += Number(cost.amount);
-        equipoMap.set(cost.crane_id, current);
+        equipoMap.set(key, current);
       });
       const costosPorEquipo = [...equipoMap.values()].sort((a, b) => b.total - a.total);
 

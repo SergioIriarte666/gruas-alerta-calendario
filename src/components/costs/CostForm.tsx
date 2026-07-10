@@ -8,6 +8,7 @@ import { Cost, CostFormData } from '@/types/costs';
 import { useAddCost, useUpdateCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
+import { LOWBOY_CRANE_IDS } from '@/lib/entities';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServices } from '@/hooks/useServices';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -68,16 +69,6 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
 
     const servicesForCosts = getServicesForCosts();
 
-    // Grúas elegibles en el selector: operacionales + la grúa actual del costo
-    // en edición aunque esté vendida/dada de baja (para no vaciar el campo)
-    const selectableCranes = useMemo(() => {
-        const currentCrane = cost?.crane_id ? cranes.find(c => c.id === cost.crane_id) : undefined;
-        if (currentCrane && !operationalCranes.some(c => c.id === currentCrane.id)) {
-            return [...operationalCranes, currentCrane];
-        }
-        return operationalCranes;
-    }, [cranes, operationalCranes, cost?.crane_id]);
-
     const isQuickEntryPrefill = Boolean((prefilledData as Record<string, unknown>)?.quickEntryId);
     const receiptPhotoPaths = useMemo(
         () => ((((prefilledData as Record<string, unknown>)?.receipt_photo_paths as string[] | undefined) || []).filter(Boolean)),
@@ -120,6 +111,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             description: '',
             amount: 0,
             category_id: '',
+            entity: 'gruas_5_norte',
+            paid_by: 'gruas_5_norte',
             crane_id: 'none',
             operator_id: 'none',
             service_id: 'none',
@@ -142,6 +135,20 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
     const selectedServiceId = watch('service_id');
     const selectedCategoryId = watch('category_id');
     const watchedValues = watch();
+
+    // Grúas elegibles en el selector: operacionales + la grúa actual del costo en edición
+    // aunque esté vendida/dada de baja (para no vaciar el campo). Si la entidad es LowBoy,
+    // se restringe SOLO a los equipos LowBoy del maestro (nunca al revés: entity no se infiere de crane_id).
+    const selectableCranes = useMemo(() => {
+        if (watchedValues.entity === 'lowboy') {
+            return cranes.filter(c => (LOWBOY_CRANE_IDS as readonly string[]).includes(c.id));
+        }
+        const currentCrane = cost?.crane_id ? cranes.find(c => c.id === cost.crane_id) : undefined;
+        if (currentCrane && !operationalCranes.some(c => c.id === currentCrane.id)) {
+            return [...operationalCranes, currentCrane];
+        }
+        return operationalCranes;
+    }, [cranes, operationalCranes, cost?.crane_id, watchedValues.entity]);
 
     // Auto-fill fields when service is selected
     useEffect(() => {
@@ -264,6 +271,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 description: cost.description,
                 amount: Number(cost.amount),
                 category_id: cost.category_id,
+                entity: (((cost as Record<string, unknown>).entity as 'gruas_5_norte' | 'lowboy') || 'gruas_5_norte'),
+                paid_by: (((cost as Record<string, unknown>).paid_by as 'gruas_5_norte' | 'lowboy') || 'gruas_5_norte'),
                 crane_id: cost.crane_id || 'none',
                 operator_id: cost.operator_id || 'none',
                 service_id: cost.service_id || 'none',
@@ -297,6 +306,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 description: prefilledData.description || '',
                 amount: Number(prefilledData.amount) || 0,
                 category_id: prefilledData.category_id || '',
+                entity: (((prefilledData as Record<string, unknown>).entity as 'gruas_5_norte' | 'lowboy') || 'gruas_5_norte'),
+                paid_by: (((prefilledData as Record<string, unknown>).paid_by as 'gruas_5_norte' | 'lowboy') || 'gruas_5_norte'),
                 crane_id: prefilledData.crane_id || 'none',
                 operator_id: prefilledData.operator_id || 'none',
                 service_id: prefilledData.service_id || 'none',
@@ -324,6 +335,8 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
                 description: '',
                 amount: 0,
                 category_id: '',
+                entity: 'gruas_5_norte',
+                paid_by: 'gruas_5_norte',
                 crane_id: 'none',
                 operator_id: 'none',
                 service_id: 'none',

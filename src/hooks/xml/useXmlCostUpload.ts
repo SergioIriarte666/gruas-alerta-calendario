@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useXMLParsing } from '@/hooks/useXMLParsing';
 import { useAddCost, useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCranes } from '@/hooks/useCranes';
+import { entityByRut, ENTITIES, LOWBOY_CRANE_IDS, EntityKey } from '@/lib/entities';
 import { useCostDuplicateCheck, CostDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { useBatchProgress } from '@/components/ui/batch-progress-modal';
@@ -52,6 +54,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
   const [isSearchingMatches, setIsSearchingMatches] = useState(false);
   const [expandedDocumentDetails, setExpandedDocumentDetails] = useState<Record<string, boolean>>({});
   const [historicalGlosaSuggestions, setHistoricalGlosaSuggestions] = useState<Record<string, HistoricalGlosaSuggestion>>({});
+  const [craneIdByDocument, setCraneIdByDocument] = useState<Record<string, string | null>>({});
+  const [paidByDocument, setPaidByDocument] = useState<Record<string, EntityKey>>({});
 
   const batchProgress = useBatchProgress();
   const { mutate: addCost } = useAddCost();
@@ -60,6 +64,15 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
+  const { cranes } = useCranes();
+  const lowboyCraneOptions = cranes
+    .filter(c => (LOWBOY_CRANE_IDS as readonly string[]).includes(c.id))
+    .map(c => ({ id: c.id, label: `${c.licensePlate || 'Sin patente'} - ${c.brand} ${c.model}`.trim() }));
+  const firstActiveLowboyCraneId = cranes.find(c => (LOWBOY_CRANE_IDS as readonly string[]).includes(c.id) && c.isActive)?.id
+    ?? lowboyCraneOptions[0]?.id
+    ?? null;
+
+  const getDocumentEntity = (doc: XMLDocumentData): EntityKey => entityByRut(doc.receiver_rut) ?? ENTITIES.GRUAS_5_NORTE.key;
 
   const resolveCategoryId = (rawCategory?: string | null) => {
     const normalized = rawCategory?.trim();
@@ -213,6 +226,18 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setSupplierPaymentCondition(initialSupplierCondition);
     setSupplierCreditDate(initialSupplierCreditDate);
     setHistoricalGlosaSuggestions(nextHistoricalGlosaSuggestions);
+
+    const initialCraneByDoc: Record<string, string | null> = {};
+    const initialPaidByDoc: Record<string, EntityKey> = {};
+    result.documents.forEach(doc => {
+      if (getDocumentEntity(doc) === ENTITIES.LOWBOY.key) {
+        const key = getDocumentStateKey(doc);
+        initialCraneByDoc[key] = firstActiveLowboyCraneId;
+        initialPaidByDoc[key] = ENTITIES.GRUAS_5_NORTE.key;
+      }
+    });
+    setCraneIdByDocument(initialCraneByDoc);
+    setPaidByDocument(initialPaidByDoc);
 
     const initialDueOverrides: Record<string, string> = {};
     result.documents.forEach(doc => {
@@ -487,7 +512,14 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           }
 
           const mappedCategory = supplierCategoryMapping[doc.supplier_rut] || '';
-          const categoryId = resolveCategoryId(mappedCategory) || costCategoriesData[0]?.id || '';
+          let categoryId = resolveCategoryId(mappedCategory) || costCategoriesData[0]?.id || '';
+          // Salvaguarda: "Peajes" nunca para montos > $1.000.000 (ej. compra de semiremolque
+          // mal categorizada por la palabra "carretera" en el giro del emisor).
+          const resolvedCategoryName = activeCategories.find(c => c.id === categoryId)?.name?.toLowerCase();
+          if (resolvedCategoryName === 'peajes' && doc.total_amount > 1_000_000) {
+            const otrosId = resolveCategoryId('otros') || activeCategories.find(c => c.name.toLowerCase() === 'otros')?.id;
+            if (otrosId) categoryId = otrosId;
+          }
           const subcatName = supplierSubcategoryMapping[doc.supplier_rut] || null;
           const supplierId = supplierIdByRut.get(doc.supplier_rut);
           if (!supplierId) {
@@ -503,17 +535,33 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           const isDuplicatePaymentInDb = doc.folio ? existingPaymentKeys.has(`${supplierId}|${doc.folio}`) : false;
           if (isDuplicateByCheck || isDuplicateInDb || isDuplicatePaymentInDb) { skippedDuplicatesCount++; continue; }
 
+          const docEntity = getDocumentEntity(doc);
+          const isLowboyDoc = docEntity === ENTITIES.LOWBOY.key;
+          // La bodega es de G5N: nunca sincronizar inventario para gastos LowBoy, aunque el toggle global esté activo.
+          const effectiveSyncToInventory = syncToInventory && !isLowboyDoc;
+
           const costData = {
             date: emissionDate,
             description: effectiveGlosa,
             amount: doc.total_amount,
             category_id: categoryId,
             subcategory: subcatName,
-            notes: [supplierNameByRut.get(doc.supplier_rut) ? `Proveedor: ${supplierNameByRut.get(doc.supplier_rut)}` : '', doc.folio ? `Factura: ${doc.folio}` : '', doc.supplier_rut ? `RUT: ${doc.supplier_rut}` : ''].filter(Boolean).join(' | ') || null,
+            notes: [
+              supplierNameByRut.get(doc.supplier_rut) ? `Proveedor: ${supplierNameByRut.get(doc.supplier_rut)}` : '',
+              doc.folio ? `Factura: ${doc.folio}` : '',
+              doc.supplier_rut ? `RUT: ${doc.supplier_rut}` : '',
+              isLowboyDoc && syncToInventory ? 'Sync Bodega desactivada automáticamente (gasto LowBoy)' : '',
+            ].filter(Boolean).join(' | ') || null,
             service_folio: doc.folio || null,
             payment_date: paymentDate,
             supplier_id: supplierId,
-            ...(syncToInventory && { purchase_quantity: 1, purchase_unit_cost: doc.total_amount, immediate_consumption: false }),
+            crane_id: isLowboyDoc ? (craneIdByDocument[documentKey] ?? null) : null,
+            entity: docEntity,
+            paid_by: isLowboyDoc ? (paidByDocument[documentKey] || ENTITIES.GRUAS_5_NORTE.key) : ENTITIES.GRUAS_5_NORTE.key,
+            dte_tipo: doc.dte_tipo ?? null,
+            dte_folio: doc.folio ? parseInt(doc.folio, 10) || null : null,
+            dte_rut_emisor: doc.supplier_rut || null,
+            ...(effectiveSyncToInventory && { purchase_quantity: 1, purchase_unit_cost: doc.total_amount, immediate_consumption: false }),
           };
 
           await new Promise<void>(resolve => {
@@ -522,7 +570,18 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
                 const costRecord = Array.isArray(data) ? data[0] : data;
                 createdCostId = costRecord?.id ?? null;
                 successCount++;
-                if (syncToInventory && costRecord?.id) {
+                if (isLowboyDoc && costRecord?.id && doc.dte_tipo && doc.folio && doc.supplier_rut) {
+                  try {
+                    await supabase.from('sii_rcv_records')
+                      .update({ linked_cost_id: costRecord.id })
+                      .eq('book_type', 'compra')
+                      .eq('doc_type', doc.dte_tipo)
+                      .eq('folio', parseInt(doc.folio, 10))
+                      .eq('counterpart_rut', doc.supplier_rut)
+                      .is('linked_cost_id', null);
+                  } catch (linkErr) { logger.warn('[useXmlCostUpload] Auto-vinculación con sii_rcv_records falló para el costo:', costRecord.id, linkErr); }
+                }
+                if (effectiveSyncToInventory && costRecord?.id) {
                   try { await createDirectInventoryEntry({ costId: costRecord.id, itemName: effectiveGlosa, quantity: 1, unitCost: doc.total_amount, date: emissionDate, supplierId }); }
                   catch (invErr) { logger.warn('[useXmlCostUpload] Inventory sync failed for cost:', costRecord.id, invErr); }
                 }
@@ -630,6 +689,8 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     setLinkDecisions({});
     setHistoricalGlosaSuggestions({});
     setSyncToInventory(false);
+    setCraneIdByDocument({});
+    setPaidByDocument({});
   };
 
   const selectedTotal = parseResult
@@ -661,6 +722,11 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
     // Options
     syncToInventory, setSyncToInventory,
     defaultDaysToAdd,
+    // Entidad LowBoy
+    getDocumentEntity, lowboyCraneOptions,
+    craneIdByDocument, setCraneIdByDocument,
+    paidByDocument, setPaidByDocument,
+    hasLowboyDocuments: parseResult ? parseResult.documents.some(d => getDocumentEntity(d) === ENTITIES.LOWBOY.key) : false,
     // Data
     activeCategories, paymentTerms, loadingTerms, batchProgress,
     // Helpers

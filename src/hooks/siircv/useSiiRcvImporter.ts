@@ -96,6 +96,41 @@ export function useSiiRcvImporter() {
         .eq('id', importId);
       if (updateError) logger.warn('No se pudo actualizar el resumen del lote', updateError);
 
+      // Auto-vinculación conciliatoria con costs (no bloqueante): busca por (dte_tipo, dte_folio,
+      // dte_rut_emisor) — misma identidad de documento que el wizard "Cargar Gastos desde XML" deja
+      // en costs. Solo aplica a compras: linked_cost_id está restringido a book_type='compra'.
+      if (params.bookType === 'compra' && validRows.length > 0) {
+        try {
+          const emisorRuts = Array.from(new Set(validRows.map((row) => row.counterpart_rut).filter(Boolean)));
+          const { data: candidateCosts, error: candidatesError } = await supabase
+            .from('costs')
+            .select('id, dte_tipo, dte_folio, dte_rut_emisor')
+            .in('dte_rut_emisor', emisorRuts)
+            .not('dte_folio', 'is', null);
+
+          if (!candidatesError && candidateCosts) {
+            const costIdByKey = new Map<string, string>();
+            candidateCosts.forEach((c) => {
+              if (c.dte_tipo == null || c.dte_folio == null || !c.dte_rut_emisor) return;
+              costIdByKey.set(`${c.dte_tipo}|${c.dte_folio}|${c.dte_rut_emisor}`, c.id);
+            });
+
+            const linkUpdates = hashedRows
+              .map((row) => ({ contentHash: row.content_hash, costId: costIdByKey.get(`${row.doc_type}|${row.folio}|${row.counterpart_rut}`) }))
+              .filter((r): r is { contentHash: string; costId: string } => !!r.costId);
+
+            await Promise.all(linkUpdates.map(({ contentHash, costId }) =>
+              supabase.from('sii_rcv_records')
+                .update({ linked_cost_id: costId })
+                .eq('content_hash', contentHash)
+                .is('linked_cost_id', null)
+            ));
+          }
+        } catch (linkError) {
+          logger.warn('Auto-vinculación con costs falló (no bloqueante)', linkError);
+        }
+      }
+
       return { importId, inserted, skipped };
     },
     onSuccess: async (result) => {

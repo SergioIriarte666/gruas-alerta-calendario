@@ -45,6 +45,12 @@ interface CostDocumentRowProps {
   paymentTerms: PaymentTerm[];
   loadingTerms: boolean;
   applyCondition: (rut: string, condition: string, creditDate?: string) => void;
+  isLowboy?: boolean;
+  craneOptions?: { id: string; label: string }[];
+  craneId?: string | null;
+  onCraneIdChange?: (craneId: string | null) => void;
+  paidBy?: 'gruas_5_norte' | 'lowboy';
+  onPaidByChange?: (paidBy: 'gruas_5_norte' | 'lowboy') => void;
 }
 
 const autoResize = (el: HTMLTextAreaElement | null) => {
@@ -59,6 +65,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
   descriptionValue, onDescriptionChange, historicalSuggestion, effectiveGlosa,
   paymentCondition, onPaymentConditionChange, onDueDateChange, isPaid, onPaidChange,
   paidDate, onPaidDateChange, paymentTerms, loadingTerms, applyCondition,
+  isLowboy, craneOptions = [], craneId, onCraneIdChange, paidBy = 'gruas_5_norte', onPaidByChange,
 }) => {
   const isDuplicate = !!duplicateInfo;
   const isExactDuplicate = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
@@ -116,6 +123,7 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', statusMeta.badgeClass)}>{statusMeta.label}</span>
               <span className="text-xs text-muted-foreground">{statusMeta.hint}</span>
+              {isLowboy && <Badge className="bg-primary/15 text-primary border-primary/30">LowBoy Chile SpA</Badge>}
             </div>
           </div>
         </div>
@@ -177,6 +185,33 @@ export const CostDocumentRow: React.FC<CostDocumentRowProps> = ({
               <p className="mt-1 text-xs text-muted-foreground">Si ya fue pagado, indica la fecha real del pago.</p>
             </div>
           </div>
+
+          {isLowboy && (
+            <div className="flex flex-wrap items-end gap-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="flex-1 min-w-[180px] max-w-[260px]">
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Equipo LowBoy</Label>
+                <Select value={craneId ?? '__none__'} onValueChange={val => onCraneIdChange?.(val === '__none__' ? null : val)}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Selecciona equipo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin equipo asignado</SelectItem>
+                    {craneOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {!craneId && <p className="mt-1 text-xs text-warning">⚠️ Sin equipo asignado. El gasto igual quedará registrado como LowBoy.</p>}
+              </div>
+              <div className="flex-1 min-w-[180px] max-w-[260px]">
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Financiado por</Label>
+                <Select value={paidBy} onValueChange={val => onPaidByChange?.(val as 'gruas_5_norte' | 'lowboy')}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gruas_5_norte">Grúas 5 Norte</SelectItem>
+                    <SelectItem value="lowboy">LowBoy Chile SpA</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">Quién puso la plata para este gasto.</p>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-border/70 bg-background/70 px-3 py-2 text-sm text-muted-foreground">Vista resumida. Abre los detalles solo si necesitas editar la descripción o la fecha de vencimiento.</div>

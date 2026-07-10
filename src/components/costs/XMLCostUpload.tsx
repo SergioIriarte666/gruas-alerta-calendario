@@ -49,6 +49,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     handleUploadCosts, reset,
     handleCategoryChange, handleSubcategoryChange,
     toggleSupplierSelection, toggleDocumentSelection,
+    getDocumentEntity, lowboyCraneOptions, craneIdByDocument, setCraneIdByDocument,
+    paidByDocument, setPaidByDocument, hasLowboyDocuments,
   } = useXmlCostUpload({ onSuccess, onClose });
 
   const handleClose = () => {
@@ -77,6 +79,15 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 { title: 'Total Selec.', value: `$${selectedTotal.toLocaleString('es-CL')}`, icon: DollarSign, tone: 'info' },
               ]} />
 
+              {hasLowboyDocuments && (
+                <Alert className="border-primary/30 bg-primary/10">
+                  <Building className="size-4 text-primary" />
+                  <AlertDescription className="text-primary">
+                    <strong>🏗️ Documentos de LowBoy Chile SpA detectados.</strong> Se registrarán con entidad LowBoy, financiados por Grúas 5 Norte por defecto. Ajusta el equipo y quién financia en cada documento (sección "Ver detalles").
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
                 <CardHeader className="border-b border-border/60 bg-muted/30 py-4"><CardTitle className="text-base text-foreground">Cómo registrar estos gastos</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -86,6 +97,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     <TooltipProvider><Tooltip><TooltipTrigger asChild><Info className="size-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent><p>Los costos se registrarán como entradas de inventario automáticamente</p></TooltipContent></Tooltip></TooltipProvider>
                   </div>
                   {syncToInventory && <p className="ml-8 text-xs text-success">✓ Los costos se sincronizarán con el módulo de Bodega</p>}
+                  {syncToInventory && hasLowboyDocuments && <p className="ml-8 text-xs text-warning">⚠️ La bodega es de Grúas 5 Norte: los documentos LowBoy quedarán excluidos de esta sincronización automáticamente.</p>}
                   <p className="text-xs text-muted-foreground">Activa esta opción solo si además quieres reflejar estos documentos como entradas en inventario.</p>
                 </CardContent>
               </Card>
@@ -160,11 +172,18 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                         const defaultDueDate = dueDateOverrides[documentKey] || document.due_date || (() => { const d = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd')); d.setDate(d.getDate() + defaultDaysToAdd); return format(d, 'yyyy-MM-dd'); })();
                         const dupInfo = getDuplicateInfoForDocument(document);
                         const isExactDup = dupInfo?.matchType === 'exact' || dupInfo?.matchType === 'folio';
+                        const isLowboy = getDocumentEntity(document) === 'lowboy';
                         return (
                           <CostDocumentRow
                             key={index}
                             document={document}
                             documentKey={documentKey}
+                            isLowboy={isLowboy}
+                            craneOptions={lowboyCraneOptions}
+                            craneId={craneIdByDocument[documentKey] ?? null}
+                            onCraneIdChange={craneId => setCraneIdByDocument(prev => ({ ...prev, [documentKey]: craneId }))}
+                            paidBy={paidByDocument[documentKey] || 'gruas_5_norte'}
+                            onPaidByChange={paidBy => setPaidByDocument(prev => ({ ...prev, [documentKey]: paidBy }))}
                             isSelected={selectedDocuments.has(documentKey)}
                             onToggle={() => toggleDocumentSelection(documentKey)}
                             defaultDueDate={defaultDueDate}

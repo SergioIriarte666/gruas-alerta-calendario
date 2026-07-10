@@ -8,14 +8,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCranes } from '@/hooks/useCranes';
-import { useSiiResultado } from '@/hooks/useSiiRcv';
+import { useSiiResultado, SIN_EQUIPO_SENTINEL } from '@/hooks/useSiiRcv';
 import { businessClock } from '@/utils/businessClock';
 import { toLocalDateString } from '@/utils/timezoneUtils';
+import { IntercompanyAccountSection } from './IntercompanyAccountSection';
 
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value || 0);
 
 // Fallback si el crane aún no tiene owner_company_rut confiable coincidente con entityRut.
-const LOWBOY_PLATES = ['JD-6696', 'DSBZ-85'];
+const LOWBOY_PLATES = ['JD-6696', 'DSBZ-85', 'USA-FONTAINE'];
 
 type Preset = 'current-month' | 'previous-month' | 'current-year';
 
@@ -54,7 +55,9 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
     const preselected = byRut.length > 0
       ? byRut
       : cranes.filter((crane) => LOWBOY_PLATES.includes(crane.licensePlate)).map((crane) => crane.id);
-    setCraneIds(preselected);
+    // "Sin equipo asignado" incluido por defecto para no ocultar costos LowBoy sin crane_id
+    // (ej. el equipo Fontaine, sin patente chilena, parqueado bajo notas hasta tener PPU).
+    setCraneIds([...preselected, SIN_EQUIPO_SENTINEL]);
     setInitialized(true);
   }, [cranes, entityRut, initialized]);
 
@@ -109,6 +112,15 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
                       {craneIds.includes(crane.id) && <Check className="size-3 text-primary" />}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => toggleCrane(SIN_EQUIPO_SENTINEL)}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-muted"
+                  >
+                    <Checkbox checked={craneIds.includes(SIN_EQUIPO_SENTINEL)} />
+                    <span className="min-w-0 flex-1 truncate italic text-muted-foreground">Sin equipo asignado</span>
+                    {craneIds.includes(SIN_EQUIPO_SENTINEL) && <Check className="size-3 text-primary" />}
+                  </button>
                 </div>
               </ScrollArea>
             </PopoverContent>
@@ -161,7 +173,7 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
               <TableBody>
                 {data?.costosPorEquipo.length ? data.costosPorEquipo.map((item) => (
                   <TableRow key={item.craneId}>
-                    <TableCell>{item.label} <span className="text-xs text-muted-foreground">({item.licensePlate})</span></TableCell>
+                    <TableCell>{item.label} {item.licensePlate && <span className="text-xs text-muted-foreground">({item.licensePlate})</span>}</TableCell>
                     <TableCell className="text-right">{formatCLP(item.total)}</TableCell>
                   </TableRow>
                 )) : <TableRow><TableCell colSpan={2} className="h-20 text-center text-muted-foreground">Sin costos en el período.</TableCell></TableRow>}
@@ -193,6 +205,8 @@ export function SiiResultadoPanel({ entityRut }: SiiResultadoPanelProps) {
           )}
         </CardContent>
       </Card>
+
+      <IntercompanyAccountSection desde={desde} hasta={hasta} />
     </div>
   );
 }
