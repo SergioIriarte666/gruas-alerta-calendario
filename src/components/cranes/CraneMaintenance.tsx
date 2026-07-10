@@ -51,9 +51,13 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
 
   const confirmDelete = async () => {
     if (recordToDelete) {
-      await deleteMutation.mutateAsync(recordToDelete.id);
-      setDeleteDialogOpen(false);
-      setRecordToDelete(null);
+      try {
+        await deleteMutation.mutateAsync(recordToDelete.id);
+        setDeleteDialogOpen(false);
+        setRecordToDelete(null);
+      } catch {
+        // no-op: onError already handled it
+      }
     }
   };
 

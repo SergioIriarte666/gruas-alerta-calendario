@@ -54,17 +54,21 @@ export const PurchaseVoidTool = () => {
 
   const handleConfirm = async () => {
     if (!selected) return;
-    await voidMutation.mutateAsync({
-      costId: selected.id,
-      reason: reason.trim(),
-      revertPayment,
-      revertInvoice,
-    });
-    // Reset
-    setSelected(null);
-    setReason('');
-    setConfirmText('');
-    setConfirmOpen(false);
+    try {
+      await voidMutation.mutateAsync({
+        costId: selected.id,
+        reason: reason.trim(),
+        revertPayment,
+        revertInvoice,
+      });
+      // Reset
+      setSelected(null);
+      setReason('');
+      setConfirmText('');
+      setConfirmOpen(false);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

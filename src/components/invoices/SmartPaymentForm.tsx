@@ -171,7 +171,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.client_id || !formData.amount) return;
+    if (!formData.client_id || !formData.amount || !formData.payment_date) return;
 
     if (selectedInvoiceIds.length > 0) {
       const selectedTotal = getSelectedInvoicesTotal();
@@ -418,7 +418,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             )}
 
             <div className="flex gap-2 border-t border-border/70 pt-4">
-              <Button type="submit" disabled={loading} className="flex-1">
+              <Button type="submit" disabled={loading || !formData.payment_date} className="flex-1">
                 {loading ? 'Procesando...' : 'Registrar Pago'}
               </Button>
               <Button type="button" variant="outline" className="border-border/70 bg-background/60" onClick={onClose}>

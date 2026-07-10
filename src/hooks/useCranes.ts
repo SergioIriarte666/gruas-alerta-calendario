@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
 import { isCranePermanentlyLocked } from '@/utils/craneStatus';
+import { emptyToNull } from '@/lib/utils';
+import { translateDatabaseError } from '@/utils/errorTranslation';
 
 
 const logger = createLogger("useCranes");
@@ -127,9 +129,9 @@ export const useCranes = (activeOnly = false) => {
           towing_consumption_factor_override: craneData.towingConsumptionFactorOverride ?? null,
           owner_company_rut: craneData.ownerCompanyRut || null,
           owner_company_name: craneData.ownerCompanyName || null,
-          circulation_permit_expiry: craneData.circulationPermitExpiry,
-          insurance_expiry: craneData.insuranceExpiry,
-          technical_review_expiry: craneData.technicalReviewExpiry,
+          circulation_permit_expiry: emptyToNull(craneData.circulationPermitExpiry),
+          insurance_expiry: emptyToNull(craneData.insuranceExpiry),
+          technical_review_expiry: emptyToNull(craneData.technicalReviewExpiry),
           is_active: craneData.isActive,
           status: craneData.status ?? (craneData.isActive ? 'active' : 'inactive'),
           created_by: user?.id || null
@@ -181,7 +183,7 @@ export const useCranes = (activeOnly = false) => {
       }
       
       toast.error("Error", {
-        description: "No se pudo crear la grúa.",
+        description: translateDatabaseError(error),
       });
     },
   });
@@ -202,9 +204,9 @@ export const useCranes = (activeOnly = false) => {
       if (craneData.type !== undefined) updateData.type = craneData.type;
       if (craneData.ownerCompanyRut !== undefined) updateData.owner_company_rut = craneData.ownerCompanyRut || null;
       if (craneData.ownerCompanyName !== undefined) updateData.owner_company_name = craneData.ownerCompanyName || null;
-      if (craneData.circulationPermitExpiry !== undefined) updateData.circulation_permit_expiry = craneData.circulationPermitExpiry;
-      if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = craneData.insuranceExpiry;
-      if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = craneData.technicalReviewExpiry;
+      if (craneData.circulationPermitExpiry !== undefined) updateData.circulation_permit_expiry = emptyToNull(craneData.circulationPermitExpiry);
+      if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = emptyToNull(craneData.insuranceExpiry);
+      if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = emptyToNull(craneData.technicalReviewExpiry);
       if (craneData.isActive !== undefined) updateData.is_active = craneData.isActive;
       if (craneData.status !== undefined) {
         updateData.status = craneData.status;
@@ -250,16 +252,18 @@ export const useCranes = (activeOnly = false) => {
     onError: (error: any) => {
       logger.error('💥 Error en updateCraneMutation:', error);
       
-      let errorMessage = "No se pudo actualizar la grúa.";
-      
+      let errorMessage: string;
+
       if (error?.message?.includes('no autenticado')) {
         errorMessage = "Sesión expirada. Por favor, inicia sesión nuevamente.";
       } else if (error?.code === '23505') {
         errorMessage = "Ya existe una grúa con esa patente.";
       } else if (error?.code === 'PGRST116') {
         errorMessage = "No tienes permisos para actualizar esta grúa.";
+      } else {
+        errorMessage = translateDatabaseError(error);
       }
-      
+
       toast.error("Error", {
         description: errorMessage,
       });

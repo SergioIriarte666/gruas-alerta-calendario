@@ -54,6 +54,27 @@ function formatBootError(error: unknown): string {
   }
 }
 
+// ── Boot-error scope ────────────────────────────────────────────
+// This listener exists to catch FATAL startup failures on the operator
+// portal (mobile app), not runtime mutation/query rejections in the
+// admin desktop panel — each area already has its own ErrorBoundary and
+// toasts for that. So the full-screen "Error al iniciar" only applies
+// while (a) we're still in the boot phase and (b) the route is under
+// the operator portal.
+let bootCompleted = false;
+
+function isOperatorPortalRoute(): boolean {
+  return /^\/operator(\/|$)/.test(window.location.pathname);
+}
+
+function shouldShowBootError(): boolean {
+  return !bootCompleted && isOperatorPortalRoute();
+}
+
+function markBootCompleted() {
+  bootCompleted = true;
+}
+
 function showBootError(error: unknown) {
   const root = document.getElementById('root');
   if (!root) return;
@@ -79,6 +100,10 @@ window.addEventListener('unhandledrejection', (ev) => {
     reloadOnce();
     return;
   }
+  if (!shouldShowBootError()) {
+    logger.error('Unhandled promise rejection (post-boot o fuera del portal operador)', { reason: ev.reason });
+    return;
+  }
   showBootError(ev.reason);
 });
 window.addEventListener('error', (ev) => {
@@ -88,6 +113,10 @@ window.addEventListener('error', (ev) => {
   }
   if (isChunkError(ev.message) || isChunkError(ev.error)) {
     reloadOnce();
+    return;
+  }
+  if (!shouldShowBootError()) {
+    logger.error('Error global (post-boot o fuera del portal operador)', { message: ev.message, error: ev.error });
     return;
   }
   showBootError(ev.error || ev.message);
@@ -101,8 +130,19 @@ if (Capacitor.isNativePlatform()) {
 }
 
 // ── Render ─────────────────────────────────────────────────────
+const rootElement = document.getElementById('root')!;
+
+// Boot finishes the moment the app actually paints something into #root
+// (past any top-level Suspense fallback). After that, unhandledrejection
+// / error events are runtime issues, not startup failures.
+const bootObserver = new MutationObserver(() => {
+  markBootCompleted();
+  bootObserver.disconnect();
+});
+bootObserver.observe(rootElement, { childList: true, subtree: true });
+
 try {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
+  ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary name="RootApp">
       <App />
     </ErrorBoundary>

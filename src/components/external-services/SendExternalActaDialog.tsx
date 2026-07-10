@@ -41,8 +41,12 @@ export const SendExternalActaDialog = ({
       toast.error('Ingresa un email válido');
       return;
     }
-    await send.mutateAsync({ serviceId, recipientEmail: email, recipientName });
-    onOpenChange(false);
+    try {
+      await send.mutateAsync({ serviceId, recipientEmail: email, recipientName });
+      onOpenChange(false);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

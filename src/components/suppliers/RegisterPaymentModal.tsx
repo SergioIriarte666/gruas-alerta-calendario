@@ -62,7 +62,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
   };
 
   const handleSubmit = () => {
-    if (selectedPaymentIds.length === 0) {
+    if (selectedPaymentIds.length === 0 || !paymentDate) {
       return;
     }
 
@@ -209,7 +209,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={selectedPaymentIds.length === 0 || isRegistering}
+              disabled={selectedPaymentIds.length === 0 || isRegistering || !paymentDate}
             >
               {isRegistering ? (
                 <>

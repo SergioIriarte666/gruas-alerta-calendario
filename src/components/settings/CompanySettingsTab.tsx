@@ -99,16 +99,20 @@ export const CompanySettingsTab = () => {
       toast.error('Datos incompletos', { description: 'RUT y Nombre son obligatorios.' });
       return;
     }
-    await saveProfileMutation.mutateAsync({
-      rut: profileForm.rut.trim(),
-      name: profileForm.name.trim(),
-      address: profileForm.address.trim() || null,
-      phone: profileForm.phone.trim() || null,
-      email: profileForm.email.trim() || null,
-      logo_url: profileForm.logoUrl || null,
-    });
-    setSelectedProfileRut(profileForm.rut.trim());
-    toast.success('Empresa guardada', { description: 'Se guardó el perfil de empresa para encabezados y logotipo.' });
+    try {
+      await saveProfileMutation.mutateAsync({
+        rut: profileForm.rut.trim(),
+        name: profileForm.name.trim(),
+        address: profileForm.address.trim() || null,
+        phone: profileForm.phone.trim() || null,
+        email: profileForm.email.trim() || null,
+        logo_url: profileForm.logoUrl || null,
+      });
+      setSelectedProfileRut(profileForm.rut.trim());
+      toast.success('Empresa guardada', { description: 'Se guardó el perfil de empresa para encabezados y logotipo.' });
+    } catch {
+      // El error ya es manejado por onError de la mutación.
+    }
   };
 
   const handleProfileLogoChange = async (logoFile: File | null) => {

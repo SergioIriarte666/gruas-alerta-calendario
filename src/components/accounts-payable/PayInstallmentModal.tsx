@@ -37,6 +37,7 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!paymentDate) return;
     pay(
       {
         installment,
@@ -118,7 +119,7 @@ export const PayInstallmentModal = ({ installment, open, onOpenChange }: PayInst
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isPending || (isUF && (!ufValue || ufValueNumber <= 0))}>
+            <Button type="submit" disabled={isPending || !paymentDate || (isUF && (!ufValue || ufValueNumber <= 0))}>
               {isPending ? 'Registrando...' : 'Registrar Pago'}
             </Button>
           </DialogFooter>

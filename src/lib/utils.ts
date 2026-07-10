@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Normalizes empty form values to null before sending to Postgres.
+ * Postgres rejects "" for date/timestamp columns (code 22007); optional
+ * date/text inputs that were cleared must become null, not "".
+ */
+export function emptyToNull<T>(value: T): T | null {
+  return value === '' || value === undefined ? null : value;
+}
+
 export function formatCurrency(amount: number, currency: string = 'CLP'): string {
   const localeMap: Record<string, string> = {
     'CLP': 'es-CL',

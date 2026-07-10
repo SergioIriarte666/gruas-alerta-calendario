@@ -67,16 +67,20 @@ export function SiiRcvImportCard({ entityRut, onEntityRutChange }: SiiRcvImportC
   const handleImport = async () => {
     if (!file || !bookType || !entityRut.trim()) return;
     const period = validRows[0]?.doc_date ? validRows[0].doc_date.slice(0, 7) : null;
-    await runImport({
-      entityRut: entityRut.trim(),
-      bookType,
-      fileName: file.name,
-      period,
-      rows,
-    });
-    setFile(null);
-    setRows([]);
-    setBookType(null);
+    try {
+      await runImport({
+        entityRut: entityRut.trim(),
+        bookType,
+        fileName: file.name,
+        period,
+        rows,
+      });
+      setFile(null);
+      setRows([]);
+      setBookType(null);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

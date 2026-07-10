@@ -90,6 +90,10 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           finalData.date = receiptExtraction.date;
         }
       }
+      // La columna date es NOT NULL: si se limpió el selector, usar hoy en vez de enviar "".
+      if (!finalData.date) {
+        finalData.date = getTodayLocal();
+      }
 
       await createQuickEntry({
         ...finalData,

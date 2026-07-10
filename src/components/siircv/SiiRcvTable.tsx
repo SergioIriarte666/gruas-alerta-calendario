@@ -136,9 +136,13 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
   };
 
   const unlink = async (record: SiiRcvRecordRow) => {
-    await manager.setLink.mutateAsync(record.book_type === 'compra'
-      ? { id: record.id, linkedCostId: null }
-      : { id: record.id, linkedServiceId: null });
+    try {
+      await manager.setLink.mutateAsync(record.book_type === 'compra'
+        ? { id: record.id, linkedCostId: null }
+        : { id: record.id, linkedServiceId: null });
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   const columns = useMemo<ColumnDef<SiiRcvRecordRow>[]>(() => {
@@ -314,7 +318,9 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                   onClick={(event) => {
                     event.preventDefault();
                     if (!deletingRecord) return;
-                    void manager.deleteRecord.mutateAsync(deletingRecord.id).then(() => setDeletingRecord(null));
+                    void manager.deleteRecord.mutateAsync(deletingRecord.id).then(() => setDeletingRecord(null)).catch(() => {
+                      // no-op: onError already handled it (dialog stays open for retry)
+                    });
                   }}
                 >
                   {manager.deleteRecord.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}

@@ -151,10 +151,11 @@ const Cranes = () => {
   };
 
   const handleSubmit = (data: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // onError ya muestra el toast; el catch solo evita un unhandled rejection.
     if (editingCrane) {
-      updateCrane(editingCrane.id, data);
+      updateCrane(editingCrane.id, data).catch(() => {});
     } else {
-      createCrane(data);
+      createCrane(data).catch(() => {});
     }
     setIsDialogOpen(false);
     setEditingCrane(undefined);
@@ -346,9 +347,9 @@ const Cranes = () => {
               onClick={() => {
                 if (!pendingAction) return;
                 if (pendingAction.type === 'delete') {
-                  deleteCrane(pendingAction.crane.id);
+                  deleteCrane(pendingAction.crane.id).catch(() => {});
                 } else {
-                  toggleCraneStatus(pendingAction.crane.id);
+                  toggleCraneStatus(pendingAction.crane.id).catch(() => {});
                 }
                 setPendingAction(null);
               }}

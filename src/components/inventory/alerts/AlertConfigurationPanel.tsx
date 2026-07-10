@@ -100,12 +100,16 @@ export const AlertConfigurationPanel: React.FC<AlertConfigurationPanelProps> = (
 
   const confirmDelete = async () => {
     if (!alertToDelete) return;
-    await deleteAlert.mutateAsync(alertToDelete);
-    setAlertToDelete(null);
+    try {
+      await deleteAlert.mutateAsync(alertToDelete);
+      setAlertToDelete(null);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   const handleToggle = async (id: string, isActive: boolean) => {
-    await toggleAlert.mutateAsync({ id, isActive: !isActive });
+    await toggleAlert.mutateAsync({ id, isActive: !isActive }).catch(() => {});
   };
 
   if (isLoading || permissionsLoading) {

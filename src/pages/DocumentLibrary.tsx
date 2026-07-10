@@ -342,14 +342,18 @@ const DocumentLibrary = () => {
       expires_at: form.expires_at || null,
     };
 
-    if (editingDocument) {
-      await updateDocument({ id: editingDocument.id, metadata });
-    } else if (selectedFile) {
-      await uploadDocument({ file: selectedFile, metadata });
-    }
+    try {
+      if (editingDocument) {
+        await updateDocument({ id: editingDocument.id, metadata });
+      } else if (selectedFile) {
+        await uploadDocument({ file: selectedFile, metadata });
+      }
 
-    setIsFormOpen(false);
-    resetForm();
+      setIsFormOpen(false);
+      resetForm();
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   const handleDownload = async (document: BusinessDocument) => {
@@ -390,8 +394,12 @@ const DocumentLibrary = () => {
     }
 
     setVerifyingDelete(false);
-    await deleteDocument(documentToDelete.id);
-    setDocumentToDelete(null);
+    try {
+      await deleteDocument(documentToDelete.id);
+      setDocumentToDelete(null);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   const clearFilters = () => {

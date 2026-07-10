@@ -124,14 +124,18 @@ export const DuplicateProductsPanel: React.FC<DuplicateProductsPanelProps> = ({ 
 
     if (duplicates.length === 0) return;
 
-    await mergeItems.mutateAsync({
-      masterItemId: master.id,
-      duplicateItemIds: duplicates.map((item) => item.id),
-      masterName: master.name,
-    });
+    try {
+      await mergeItems.mutateAsync({
+        masterItemId: master.id,
+        duplicateItemIds: duplicates.map((item) => item.id),
+        masterName: master.name,
+      });
 
-    setGroupToConfirm(null);
-    onMerged?.();
+      setGroupToConfirm(null);
+      onMerged?.();
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

@@ -106,7 +106,9 @@ export const DebtForm = ({ open, onOpenChange, onCreateCreditor }: DebtFormProps
   const canSubmit = !!form.creditor_id
     && Number(form.total_amount) > 0
     && Number(form.installments_count) > 0
+    && !!form.first_due_date
     && (!form.has_down_payment || (Number(form.down_payment_amount) > 0 && !!form.down_payment_date))
+    && (!form.has_down_payment || !form.down_payment_paid || !!form.down_payment_payment_date)
     && (!form.has_down_payment || remainingTotal >= 0);
 
   return (

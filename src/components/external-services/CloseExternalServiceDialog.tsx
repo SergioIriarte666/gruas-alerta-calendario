@@ -55,16 +55,20 @@ export const CloseExternalServiceDialog = ({ service, open, onOpenChange }: Prop
     }
     if (!user?.name) return toast.error('Tu perfil no tiene nombre. Configúralo antes de cerrar.');
 
-    await close.mutateAsync({
-      serviceId: service.id,
-      thirdPartyProviderName: providerName.trim(),
-      thirdPartyProviderRut: providerRut.trim() || undefined,
-      thirdPartyServiceSummary: summary.trim(),
-      closureNotes: notes.trim() || undefined,
-      adminSignature: signature,
-      adminName: user.name,
-    });
-    onOpenChange(false);
+    try {
+      await close.mutateAsync({
+        serviceId: service.id,
+        thirdPartyProviderName: providerName.trim(),
+        thirdPartyProviderRut: providerRut.trim() || undefined,
+        thirdPartyServiceSummary: summary.trim(),
+        closureNotes: notes.trim() || undefined,
+        adminSignature: signature,
+        adminName: user.name,
+      });
+      onOpenChange(false);
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

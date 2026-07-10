@@ -34,15 +34,19 @@ export const EvidenceUploadCard = ({ serviceId, readOnly = false }: Props) => {
 
   const handleUpload = async () => {
     if (!pendingFile) return;
-    await upload.mutateAsync({
-      serviceId,
-      file: pendingFile,
-      evidenceType,
-      notes: notes.trim() || undefined,
-    });
-    setPendingFile(null);
-    setNotes('');
-    if (inputRef.current) inputRef.current.value = '';
+    try {
+      await upload.mutateAsync({
+        serviceId,
+        file: pendingFile,
+        evidenceType,
+        notes: notes.trim() || undefined,
+      });
+      setPendingFile(null);
+      setNotes('');
+      if (inputRef.current) inputRef.current.value = '';
+    } catch {
+      // no-op: onError already handled it
+    }
   };
 
   return (

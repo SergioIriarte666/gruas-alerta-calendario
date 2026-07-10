@@ -173,7 +173,8 @@ const Clients = () => {
   }, [selectedClients, batchUpdate]);
 
   const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
-    createClient(clientData);
+    // onError ya muestra el toast; el catch solo evita un unhandled rejection.
+    createClient(clientData).catch(() => {});
     setIsDialogOpen(false);
     toast.success("Cliente creado", { description: "El cliente ha sido creado exitosamente." });
   }, [createClient]);
@@ -186,7 +187,8 @@ const Clients = () => {
           address: clientData.address, contactName: clientData.contactName, isActive: clientData.isActive,
           department: clientData.department, departments: [clientData.department]
         };
-        createClient(newClientData);
+        // onError ya muestra el toast; el catch solo evita un unhandled rejection.
+        createClient(newClientData).catch(() => {});
         setIsDialogOpen(false);
         setSelectedClient(undefined);
         toast.success("Departamento agregado", { description: `Se agregó el departamento "${clientData.department}" al cliente.` });
@@ -208,12 +210,14 @@ const Clients = () => {
   }, []);
   const confirmDeleteClient = React.useCallback(() => {
     if (!clientToDelete) return;
-    deleteClient(clientToDelete.id);
+    // onError ya muestra el toast; el catch solo evita un unhandled rejection.
+    deleteClient(clientToDelete.id).catch(() => {});
     toast.error("Cliente eliminado", { description: "El cliente ha sido eliminado del sistema." });
     setClientToDelete(null);
   }, [clientToDelete, deleteClient]);
   const handleToggleStatus = React.useCallback((client: Client) => {
-    toggleClientStatus(client.id);
+    // onError ya muestra el toast; el catch solo evita un unhandled rejection.
+    toggleClientStatus(client.id).catch(() => {});
     toast.info(client.isActive ? "Cliente desactivado" : "Cliente activado", { description: `El cliente ha sido ${client.isActive ? 'desactivado' : 'activado'}.` });
   }, [toggleClientStatus]);
   const handleNewClient = React.useCallback(() => { setSelectedClient(undefined); setIsDialogOpen(true); }, []);

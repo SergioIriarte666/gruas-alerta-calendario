@@ -87,8 +87,12 @@ export function LowboyRecordForm({
   }, [defaultBookType, form, open, record]);
 
   const handleSubmit = async (values: SiiRcvRecordFormValues) => {
-    await onSubmit(values);
-    onOpenChange(false);
+    try {
+      await onSubmit(values);
+      onOpenChange(false);
+    } catch {
+      // no-op: onError already handled it (dialog stays open for retry)
+    }
   };
 
   const linked = Boolean(record?.linked_cost_id || record?.linked_service_id);

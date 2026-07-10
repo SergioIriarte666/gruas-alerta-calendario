@@ -145,7 +145,14 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
           <Button
             type="button"
             disabled={!selectedId || isPending}
-            onClick={async () => { await onLink(selectedId); onOpenChange(false); }}
+            onClick={async () => {
+              try {
+                await onLink(selectedId);
+                onOpenChange(false);
+              } catch {
+                // no-op: onError already handled it (dialog stays open for retry)
+              }
+            }}
           >
             {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Link2 className="mr-2 size-4" />}
             Confirmar vínculo
