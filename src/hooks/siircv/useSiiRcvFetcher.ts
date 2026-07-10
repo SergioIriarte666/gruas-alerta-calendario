@@ -3,8 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import type { SiiBookType, SiiRcvImportRow, SiiRcvRecordRow } from '@/types/siiRcv';
 
-const logger = createLogger('useSiiRcvFetcher');
+const logger = createLogger('Lowboy');
 const PAGE_SIZE = 1000;
+const LOWBOY_RECORD_SELECT = `
+  *,
+  linked_cost:costs!sii_rcv_records_linked_cost_id_fkey(id, description, amount, date),
+  linked_service:services!sii_rcv_records_linked_service_id_fkey(
+    id,
+    folio,
+    service_date,
+    value,
+    client:clients!services_client_id_fkey(id, name)
+  )
+`;
 
 export type SiiRcvFilters = {
   entityRut: string;
@@ -18,7 +29,7 @@ export async function fetchSiiRcvRecords(filters: SiiRcvFilters): Promise<SiiRcv
   for (let offset = 0; ; offset += PAGE_SIZE) {
     let query = supabase
       .from('sii_rcv_records')
-      .select('*')
+      .select(LOWBOY_RECORD_SELECT)
       .eq('entity_rut', filters.entityRut)
       .order('doc_date', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
@@ -56,7 +67,7 @@ export function useSiiRcvPagedRecords(filters: SiiRcvFilters, page: number, limi
       const offset = (page - 1) * limit;
       let query = supabase
         .from('sii_rcv_records')
-        .select('*', { count: 'exact' })
+        .select(LOWBOY_RECORD_SELECT, { count: 'exact' })
         .eq('entity_rut', filters.entityRut)
         .order('doc_date', { ascending: false })
         .range(offset, offset + limit - 1);

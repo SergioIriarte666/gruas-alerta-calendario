@@ -6121,7 +6121,10 @@ export type Database = {
           folio: number
           id: string
           import_id: string | null
+          linked_cost_id: string | null
+          linked_service_id: string | null
           net_amount: number
+          source: string
           tax_amount: number
           total_amount: number
         }
@@ -6138,7 +6141,10 @@ export type Database = {
           folio: number
           id?: string
           import_id?: string | null
+          linked_cost_id?: string | null
+          linked_service_id?: string | null
           net_amount?: number
+          source?: string
           tax_amount?: number
           total_amount?: number
         }
@@ -6155,11 +6161,28 @@ export type Database = {
           folio?: number
           id?: string
           import_id?: string | null
+          linked_cost_id?: string | null
+          linked_service_id?: string | null
           net_amount?: number
+          source?: string
           tax_amount?: number
           total_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sii_rcv_records_linked_cost_id_fkey"
+            columns: ["linked_cost_id"]
+            isOneToOne: false
+            referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
+            columns: ["linked_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sii_rcv_records_import_id_fkey"
             columns: ["import_id"]

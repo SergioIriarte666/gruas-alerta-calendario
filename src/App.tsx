@@ -249,6 +249,8 @@ function AppContent() {
           <Route path="/clients/:clientId/pipeline" element={<VipClientPipeline />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/document-library" element={<DocumentLibrary />} />
+          <Route path="/lowboy" element={<LibrosSii />} />
+          <Route path="/libros-sii" element={<Navigate to="/lowboy" replace />} />
 
           {/* Admin-only routes */}
           <Route path="/operators" element={<AdminOnlyRoute><Operators /></AdminOnlyRoute>} />
@@ -264,7 +266,6 @@ function AppContent() {
           <Route path="/admin/inspecciones/regenerar" element={<AdminOnlyRoute><RegenerarInspeccion /></AdminOnlyRoute>} />
           <Route path="/admin/external-services" element={<AdminOnlyRoute><ExternalServices /></AdminOnlyRoute>} />
           <Route path="/operator-locations" element={<AdminOnlyRoute><OperatorLocations /></AdminOnlyRoute>} />
-          <Route path="/libros-sii" element={<AdminOnlyRoute><LibrosSii /></AdminOnlyRoute>} />
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}
