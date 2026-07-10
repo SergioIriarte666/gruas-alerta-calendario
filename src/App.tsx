@@ -77,6 +77,7 @@ const routeImports = {
   RegenerarInspeccion: () => import('@/pages/admin/RegenerarInspeccion'),
   ExternalServices: () => import('@/pages/admin/ExternalServices'),
   OperatorLocations: () => import('@/pages/OperatorLocations'),
+  LibrosSii: () => import('@/pages/LibrosSii'),
 };
 
 // Lazy components using the same import functions
@@ -116,6 +117,7 @@ const VipClientPipeline = lazy(routeImports.VipClientPipeline);
 const NotFound = lazy(routeImports.NotFound);
 const DailyReport = lazy(routeImports.DailyReport);
 const Historical = lazy(routeImports.Historical);
+const LibrosSii = lazy(routeImports.LibrosSii);
 const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
 const TripCalculator = lazy(routeImports.TripCalculator);
@@ -262,6 +264,7 @@ function AppContent() {
           <Route path="/admin/inspecciones/regenerar" element={<AdminOnlyRoute><RegenerarInspeccion /></AdminOnlyRoute>} />
           <Route path="/admin/external-services" element={<AdminOnlyRoute><ExternalServices /></AdminOnlyRoute>} />
           <Route path="/operator-locations" element={<AdminOnlyRoute><OperatorLocations /></AdminOnlyRoute>} />
+          <Route path="/libros-sii" element={<AdminOnlyRoute><LibrosSii /></AdminOnlyRoute>} />
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}

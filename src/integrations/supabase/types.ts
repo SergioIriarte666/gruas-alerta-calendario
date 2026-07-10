@@ -6071,6 +6071,104 @@ export type Database = {
           },
         ]
       }
+      sii_rcv_imports: {
+        Row: {
+          book_type: string
+          created_at: string
+          entity_rut: string
+          file_name: string | null
+          id: string
+          imported_by: string | null
+          period: string | null
+          records_inserted: number
+          records_skipped: number
+        }
+        Insert: {
+          book_type: string
+          created_at?: string
+          entity_rut: string
+          file_name?: string | null
+          id?: string
+          imported_by?: string | null
+          period?: string | null
+          records_inserted?: number
+          records_skipped?: number
+        }
+        Update: {
+          book_type?: string
+          created_at?: string
+          entity_rut?: string
+          file_name?: string | null
+          id?: string
+          imported_by?: string | null
+          period?: string | null
+          records_inserted?: number
+          records_skipped?: number
+        }
+        Relationships: []
+      }
+      sii_rcv_records: {
+        Row: {
+          book_type: string
+          content_hash: string
+          counterpart_name: string | null
+          counterpart_rut: string
+          created_at: string
+          doc_date: string
+          doc_type: number
+          entity_rut: string
+          exempt_amount: number
+          folio: number
+          id: string
+          import_id: string | null
+          net_amount: number
+          tax_amount: number
+          total_amount: number
+        }
+        Insert: {
+          book_type: string
+          content_hash: string
+          counterpart_name?: string | null
+          counterpart_rut: string
+          created_at?: string
+          doc_date: string
+          doc_type: number
+          entity_rut: string
+          exempt_amount?: number
+          folio: number
+          id?: string
+          import_id?: string | null
+          net_amount?: number
+          tax_amount?: number
+          total_amount?: number
+        }
+        Update: {
+          book_type?: string
+          content_hash?: string
+          counterpart_name?: string | null
+          counterpart_rut?: string
+          created_at?: string
+          doc_date?: string
+          doc_type?: number
+          entity_rut?: string
+          exempt_amount?: number
+          folio?: number
+          id?: string
+          import_id?: string | null
+          net_amount?: number
+          tax_amount?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sii_rcv_records_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "sii_rcv_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_categories: {
         Row: {
           created_at: string

@@ -15,7 +15,8 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target,
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight,
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive, FileClock
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark, Database, HardHat, UserCheck, Archive, FileClock,
+  BookOpenCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -147,6 +148,7 @@ export const Sidebar = ({
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
         { name: 'Históricos', href: '/historical', icon: Briefcase, adminOnly: false },
+        { name: 'Libros SII', href: '/libros-sii', icon: BookOpenCheck, adminOnly: true },
         { name: 'Cálculo de Viajes', href: '/trip-calculator', icon: MapPin, adminOnly: false },
       ]
     },
