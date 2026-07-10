@@ -13,10 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { AlertCircle, Loader2, Users, Receipt, DollarSign, Building, ShieldAlert, Link2, Package, Info, Code, Database } from 'lucide-react';
+import { AlertCircle, Loader2, Users, Receipt, DollarSign, Building, ShieldAlert, Link2, Package, Info, Code, Database, Download } from 'lucide-react';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { getDocumentStateKey } from '@/utils/xml/xmlGlosaHelpers';
+import { splitDteXmlFile } from '@/utils/xml/dteSplitter';
+import { downloadTextFile } from '@/utils/fileDownload';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface XMLCostUploadProps {
   isOpen: boolean;
@@ -60,6 +63,26 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     onClose();
   };
 
+  const handleDownloadSplitInvoices = async () => {
+    if (!selectedFile) return;
+
+    const result = await splitDteXmlFile(selectedFile);
+    if (result.errors.length > 0) {
+      toast.error(result.errors[0]);
+      return;
+    }
+
+    result.documents.forEach(document => {
+      downloadTextFile({
+        content: document.content,
+        fileName: document.fileName,
+        contentType: 'application/xml;charset=utf-8',
+      });
+    });
+
+    toast.success(`Se descargaron ${result.documents.length} facturas separadas`);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
       <DialogContent className="flex max-h-[96vh] w-[calc(100vw-1rem)] max-w-[1600px] flex-col overflow-hidden border-border/70 bg-card p-0 shadow-2xl sm:w-[min(96vw,1600px)]">
@@ -78,6 +101,19 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 { title: 'Errores', value: parseResult.errors.length, icon: AlertCircle, tone: 'danger' },
                 { title: 'Total Selec.', value: `$${selectedTotal.toLocaleString('es-CL')}`, icon: DollarSign, tone: 'info' },
               ]} />
+
+              {parseResult.totalDocuments > 1 && (
+                <Alert className="border-info/30 bg-info/10">
+                  <Download className="size-4 text-info" />
+                  <AlertDescription className="flex flex-col gap-3 text-info sm:flex-row sm:items-center sm:justify-between">
+                    <span>Este XML contiene {parseResult.totalDocuments} documentos. Puedes descargarlos como facturas XML separadas.</span>
+                    <Button type="button" variant="outline" size="sm" onClick={handleDownloadSplitInvoices} className="shrink-0">
+                      <Download className="mr-2 size-4" />
+                      Descargar separadas
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {hasLowboyDocuments && (
                 <Alert className="border-primary/30 bg-primary/10">
