@@ -49,6 +49,12 @@ interface ProductSalesSectionProps {
   disabled?: boolean;
   /** service_items existentes al editar un servicio; se usan una sola vez para hidratar salesItems. */
   initialItems?: InitialSaleItem[];
+  /**
+   * true mientras el llamador todavía está trayendo `initialItems` desde la BD.
+   * Sin esto, un `initialItems` vacío por carga en curso se confunde con "el
+   * servicio no tiene ítems" y la hidratación se bloquea para siempre (bug SRV-6822).
+   */
+  initialItemsLoading?: boolean;
 }
 
 const buildQuantitySchema = (maxStock: number) =>
@@ -60,7 +66,8 @@ export const ProductSalesSection = ({
   salesItems,
   onSalesItemsChange,
   disabled = false,
-  initialItems
+  initialItems,
+  initialItemsLoading = false,
 }: ProductSalesSectionProps) => {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -118,6 +125,10 @@ export const ProductSalesSection = ({
   useEffect(() => {
     if (hydratedRef.current) return;
     if (isLoading) return;
+    // Mientras `initialItems` todavía se está trayendo desde la BD, un array
+    // vacío no significa "sin ítems" — esperar antes de fijar hydratedRef,
+    // o un service_items real que llega después nunca se hidrata.
+    if (initialItemsLoading) return;
     if (!initialItems || initialItems.length === 0) {
       hydratedRef.current = true;
       return;
@@ -148,7 +159,7 @@ export const ProductSalesSection = ({
       onSalesItemsChange(hydrated);
     }
     hydratedRef.current = true;
-  }, [initialItems, isLoading, inventoryItems, salesItems.length, onSalesItemsChange]);
+  }, [initialItems, isLoading, initialItemsLoading, inventoryItems, salesItems.length, onSalesItemsChange]);
 
   const validateQuantity = (value: number, maxStock: number): boolean => {
     const result = buildQuantitySchema(maxStock).safeParse(value);

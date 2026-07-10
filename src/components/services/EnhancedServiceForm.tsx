@@ -46,6 +46,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { OperatorNotificationDialogs } from './OperatorNotificationDialogs';
 import { ComplianceOverrideDialog } from './form/ComplianceOverrideDialog';
+import { EmptyItemsConfirmDialog } from './form/EmptyItemsConfirmDialog';
 import { useUser } from '@/contexts/UserContext';
 import {
   VENTA_PRODUCTOS_SERVICE_TYPE_ID,
@@ -96,6 +97,10 @@ export const EnhancedServiceForm = React.memo(({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplianceOverrideOpen, setIsComplianceOverrideOpen] = useState(false);
   const [isComplianceOverrideSubmitting, setIsComplianceOverrideSubmitting] = useState(false);
+  const [isEmptyItemsConfirmOpen, setIsEmptyItemsConfirmOpen] = useState(false);
+  const [isEmptyItemsConfirmSubmitting, setIsEmptyItemsConfirmSubmitting] = useState(false);
+  const [pendingEmptyItemsCount, setPendingEmptyItemsCount] = useState(0);
+  const [pendingSaveOptions, setPendingSaveOptions] = useState<{ complianceOverrideReason?: string } | null>(null);
 
   const handleCreationFlowComplete = useCallback((createdService: Service) => {
     logger.debug('📞 Calling onSubmit callback...');
@@ -817,17 +822,65 @@ export const EnhancedServiceForm = React.memo(({
       toDelete,
       silent: true,
     });
+
+    // Advertencia (no bloqueante): si se eliminaron ítems y el servicio ya
+    // tiene salidas de bodega activas vinculadas, esas salidas no se revierten
+    // automáticamente (inventory_movements.service_id no referencia ítems
+    // individuales) — avisar para que se revise manualmente si corresponde.
+    if (toDelete.length > 0) {
+      const { data: activeExits } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('service_id', resultId)
+        .eq('movement_type', 'exit')
+        .eq('status', 'active')
+        .limit(1);
+
+      if (activeExits && activeExits.length > 0) {
+        toast.warning('Ítems eliminados con salida de bodega asociada', {
+          description: 'Este servicio ya tiene salidas de inventario registradas. Revisa manualmente si corresponde ajustarlas.',
+        });
+      }
+    }
   };
 
   // Handler único de guardado: usado por el submit del form (fase 4)
   // y por el botón "Guardar" persistente disponible en todas las fases
-  const performSave = async (options?: { complianceOverrideReason?: string }) => {
+  const performSave = async (options?: {
+    complianceOverrideReason?: string;
+    confirmedEmptyItems?: boolean;
+  }) => {
     if (isCreating || isUpdating || isSubmitting) {
       return;
     }
     setIsSubmitting(true);
 
     try {
+      // Blindaje contra condición de carrera (bug SRV-6822): mientras los
+      // datos hijos del servicio (cost details, operadores, service_items)
+      // todavía se están trayendo desde la BD, el reemplazo "delete all +
+      // insert" de más abajo vería un estado vacío y borraría todo sin poder
+      // reinsertar lo real. No permitir guardar hasta que termine de cargar.
+      if (service?.id && (loadingEnhancedService || loadingServiceItems)) {
+        playRetroErrorSound();
+        toast.error('Cargando los datos completos del servicio. Intenta guardar nuevamente en un momento.');
+        return;
+      }
+
+      // Si el servicio ya tenía ítems en BD y el formulario ahora los deja en
+      // 0, puede ser una eliminación intencional del usuario o un vacío por
+      // error — pedir confirmación explícita antes de ejecutar el delete.
+      if (service?.id && !options?.confirmedEmptyItems) {
+        const drafts = getServiceItemDrafts();
+        const hadItemsInDb = (existingServiceItems || []).length > 0;
+        if (hadItemsInDb && drafts.length === 0) {
+          setPendingEmptyItemsCount((existingServiceItems || []).length);
+          setPendingSaveOptions(options ?? null);
+          setIsEmptyItemsConfirmOpen(true);
+          return;
+        }
+      }
+
       // Validación completa del formulario antes de cualquier persistencia:
       // no se permite guardado parcial desde ninguna fase
       if (hasErrors) {
@@ -1068,6 +1121,17 @@ export const EnhancedServiceForm = React.memo(({
       setIsComplianceOverrideOpen(false);
     } finally {
       setIsComplianceOverrideSubmitting(false);
+    }
+  };
+
+  const handleConfirmEmptyItems = async () => {
+    setIsEmptyItemsConfirmSubmitting(true);
+
+    try {
+      await performSave({ ...(pendingSaveOptions ?? {}), confirmedEmptyItems: true });
+      setIsEmptyItemsConfirmOpen(false);
+    } finally {
+      setIsEmptyItemsConfirmSubmitting(false);
     }
   };
 
@@ -1381,6 +1445,7 @@ export const EnhancedServiceForm = React.memo(({
                           valorUnitario: Number(i.valor_unitario),
                         }))
                       : undefined}
+                    initialItemsLoading={!!service?.id && loadingServiceItems}
                   />
                 )}
 
@@ -1701,6 +1766,14 @@ export const EnhancedServiceForm = React.memo(({
         issues={blockingIssues}
         isSubmitting={isComplianceOverrideSubmitting}
         onConfirm={handleComplianceOverrideConfirm}
+      />
+
+      <EmptyItemsConfirmDialog
+        open={isEmptyItemsConfirmOpen}
+        onOpenChange={setIsEmptyItemsConfirmOpen}
+        itemCount={pendingEmptyItemsCount}
+        isSubmitting={isEmptyItemsConfirmSubmitting}
+        onConfirm={handleConfirmEmptyItems}
       />
     </div>
   );
