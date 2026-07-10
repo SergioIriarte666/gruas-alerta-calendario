@@ -208,6 +208,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
             partName: watchedValues.part_name || '',
             quantity: watchedValues.quantity || undefined,
             unitPrice: watchedValues.unit_price || undefined,
+            entity: watchedValues.entity,
         };
     }, [watchedValues, categories, cranes, operators, suppliers, costCenters, cost, selectedCategoryId]);
 

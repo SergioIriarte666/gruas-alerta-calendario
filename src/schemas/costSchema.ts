@@ -1,5 +1,6 @@
 
 import * as z from 'zod';
+import { LOWBOY_CRANE_IDS } from '@/lib/entities';
 
 export const costSchema = z.object({
     date: z.string().nonempty('La fecha es requerida'),
@@ -100,6 +101,15 @@ export const costSchema = z.object({
 }, {
     message: "Los campos de pieza, proveedor, cantidad y precio unitario son requeridos para piezas y repuestos",
     path: ["part_name"],
+}).refine((data) => {
+    // Un costo de LowBoy solo puede asociarse a uno de los equipos LowBoy del maestro
+    if (data.entity === 'lowboy' && data.crane_id) {
+        return (LOWBOY_CRANE_IDS as readonly string[]).includes(data.crane_id);
+    }
+    return true;
+}, {
+    message: "Un costo de LowBoy solo puede asociarse a un equipo de LowBoy Chile SpA",
+    path: ["crane_id"],
 });
 
 export type CostFormValues = z.infer<typeof costSchema>;

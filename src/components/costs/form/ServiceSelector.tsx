@@ -15,9 +15,10 @@ interface ServiceSelectorProps {
   value: string;
   onValueChange: (value: string) => void;
   isLoading: boolean;
+  disabled?: boolean;
 }
 
-export const ServiceSelector = ({ services, value, onValueChange, isLoading }: ServiceSelectorProps) => {
+export const ServiceSelector = ({ services, value, onValueChange, isLoading, disabled = false }: ServiceSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filtrar servicios basado en el término de búsqueda
@@ -39,7 +40,7 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading }: S
   };
 
   return (
-    <Select onValueChange={onValueChange} value={value ?? 'none'} disabled={isLoading}>
+    <Select onValueChange={onValueChange} value={value ?? 'none'} disabled={isLoading || disabled}>
       <FormControl>
         <SelectTrigger className="bg-white/10">
           <SelectValue placeholder="Sin asociar" />

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Receipt, Calendar, Tag, DollarSign, FileText, Building2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ENTITIES, EntityKey } from '@/lib/entities';
 
 interface CostSummaryPanelProps {
   date: string;
@@ -21,6 +22,7 @@ interface CostSummaryPanelProps {
   partName?: string;
   quantity?: number;
   unitPrice?: number;
+  entity?: EntityKey;
 }
 
 export const CostSummaryPanel = ({
@@ -40,7 +42,9 @@ export const CostSummaryPanel = ({
   partName,
   quantity,
   unitPrice,
+  entity,
 }: CostSummaryPanelProps) => {
+  const isLowboy = entity === ENTITIES.LOWBOY.key;
   const formatCurrency = (value: number) => {
     return value.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
   };
@@ -80,6 +84,17 @@ export const CostSummaryPanel = ({
           <span className="text-xs text-muted-foreground">Fecha:</span>
           <span className="text-sm font-medium">{formatDate(date)}</span>
         </div>
+
+        {/* Empresa (solo se muestra cuando es LowBoy, para no ruidosizar el flujo estándar de G5N) */}
+        {isLowboy && (
+          <div className="flex items-center gap-2">
+            <Building2 className="size-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Empresa:</span>
+            <Badge variant="outline" className="text-xs border-primary/30 bg-primary/10 text-primary">
+              {ENTITIES.LOWBOY.label}
+            </Badge>
+          </div>
+        )}
 
         {/* Categoría */}
         {categoryName && (
