@@ -20,6 +20,8 @@ export interface WhatsAppSettings {
   notifyInvoiceOverdue: boolean;
   notifyDailyReminder: boolean;
   notifyVehiclePickup: boolean;
+  notifyOperatorSelfDocument: boolean;
+  notifyServiceResourceRisk: boolean;
 }
 
 const defaultSettings: WhatsAppSettings = {
@@ -35,6 +37,8 @@ const defaultSettings: WhatsAppSettings = {
   notifyInvoiceOverdue: false,
   notifyDailyReminder: false,
   notifyVehiclePickup: true,
+  notifyOperatorSelfDocument: true,
+  notifyServiceResourceRisk: true,
 };
 
 const isMissingWhatsappEnabledColumn = (error: unknown): boolean => {
@@ -63,6 +67,8 @@ const buildNotificationPayload = (currentSettings: WhatsAppSettings, forceDisabl
   notify_invoice_overdue: forceDisableAll ? false : currentSettings.notifyInvoiceOverdue,
   notify_daily_reminder: forceDisableAll ? false : currentSettings.notifyDailyReminder,
   notify_vehicle_pickup: forceDisableAll ? false : currentSettings.notifyVehiclePickup,
+  notify_operator_self_document: forceDisableAll ? false : currentSettings.notifyOperatorSelfDocument,
+  notify_service_resource_risk: forceDisableAll ? false : currentSettings.notifyServiceResourceRisk,
 });
 
 export const useWhatsAppSettings = () => {
@@ -115,6 +121,8 @@ export const useWhatsAppSettings = () => {
           notifyInvoiceOverdue: data.notify_invoice_overdue ?? false,
           notifyDailyReminder: data.notify_daily_reminder ?? false,
           notifyVehiclePickup: data.notify_vehicle_pickup ?? true,
+          notifyOperatorSelfDocument: data.notify_operator_self_document ?? true,
+          notifyServiceResourceRisk: data.notify_service_resource_risk ?? true,
         });
       }
     } catch (error) {

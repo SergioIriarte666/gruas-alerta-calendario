@@ -7010,6 +7010,7 @@ export type Database = {
           notify_service_completed: boolean
           notify_service_no_operator: boolean
           notify_service_no_quote: boolean
+          notify_service_resource_risk: boolean
           notify_vehicle_pickup: boolean
           notify_weekly_summary: boolean
           updated_at: string
@@ -7031,6 +7032,7 @@ export type Database = {
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
           notify_service_no_quote?: boolean
+          notify_service_resource_risk?: boolean
           notify_vehicle_pickup?: boolean
           notify_weekly_summary?: boolean
           updated_at?: string
@@ -7052,6 +7054,7 @@ export type Database = {
           notify_service_completed?: boolean
           notify_service_no_operator?: boolean
           notify_service_no_quote?: boolean
+          notify_service_resource_risk?: boolean
           notify_vehicle_pickup?: boolean
           notify_weekly_summary?: boolean
           updated_at?: string

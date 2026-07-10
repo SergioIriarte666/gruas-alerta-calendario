@@ -24,6 +24,8 @@ const notifications: { key: NotificationKey; label: string; desc: string }[] = [
   { key: 'notifyServiceNoOperator', label: 'Servicio programado sin operador', desc: 'WhatsApp a admins (lun-vie 08:00) si hay servicios programados hoy o mañana sin operador asignado' },
   { key: 'notifyInvoiceOverdue', label: 'Factura vencida sin pago', desc: 'WhatsApp a admins (lun-vie 08:00) sobre facturas con due_date pasada y saldo pendiente' },
   { key: 'notifyDailyReminder', label: 'Resumen diario a admins', desc: 'WhatsApp a admins (lun-vie 08:00) con cantidad de servicios del día y facturas pendientes' },
+  { key: 'notifyOperatorSelfDocument', label: 'Aviso al operador de sus propios documentos', desc: 'WhatsApp directo al operador cuando SUS documentos están por vencer o vencidos' },
+  { key: 'notifyServiceResourceRisk', label: 'Servicio con recurso no apto', desc: 'WhatsApp a admins cuando un servicio queda asignado a una grúa u operador con documentos vencidos o por vencer' },
 ];
 
 // Validación visual de teléfono chileno (móvil)
