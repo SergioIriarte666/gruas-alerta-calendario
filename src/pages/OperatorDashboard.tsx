@@ -29,6 +29,9 @@ const OperatorDashboard = () => {
   const asignadosSorted = [...serviceTabs.asignados].sort((a, b) =>
     (a.serviceDate || '').localeCompare(b.serviceDate || '')
   );
+  const completadosRecientes = [...serviceTabs.completados]
+    .sort((a, b) => (b.serviceDate || '').localeCompare(a.serviceDate || ''))
+    .slice(0, 5);
   const currentTrackingService = serviceTabs.activos[0] || asignadosSorted[0] || null;
 
   const handleRefresh = async () => {
@@ -42,7 +45,7 @@ const OperatorDashboard = () => {
     asignados:          { services: asignadosSorted,                 emptyLabel: 'No hay servicios asignados' },
     activos:            { services: serviceTabs.activos,             emptyLabel: 'No hay servicios activos' },
     pendientes_entrega: { services: serviceTabs.pendientes_entrega,  emptyLabel: 'No hay entregas pendientes', showDelivery: true },
-    completados:        { services: serviceTabs.completados,         emptyLabel: 'No hay servicios completados' },
+    completados:        { services: completadosRecientes,            emptyLabel: 'No hay servicios completados' },
   };
 
   const current = sectionMap[activeTab];
