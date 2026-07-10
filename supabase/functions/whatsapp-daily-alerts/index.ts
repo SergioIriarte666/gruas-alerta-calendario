@@ -197,6 +197,7 @@ Deno.serve(async (req: Request) => {
       .lt("due_date", todayISO)
       .neq("status", "paid")
       .neq("status", "cancelled")
+      .neq("source", "historico")
       .order("due_date", { ascending: true })
       .limit(20);
 
@@ -268,7 +269,8 @@ Deno.serve(async (req: Request) => {
         .from("invoices")
         .select("id", { count: "exact", head: true })
         .neq("status", "paid")
-        .neq("status", "cancelled");
+        .neq("status", "cancelled")
+        .neq("source", "historico");
 
       const outcome = await sendWhatsAppTemplateBulk(
         phones,
