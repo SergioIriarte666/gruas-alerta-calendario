@@ -4,7 +4,21 @@ import { Capacitor } from '@capacitor/core'
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import App from './App.tsx'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { createLogger } from '@/lib/logger'
 import './index.css'
+
+const logger = createLogger('Boot')
+
+// ── Benign browser warnings ────────────────────────────────────
+// ResizeObserver's own loop-detection notice. Chrome/Safari/Radix all
+// surface this as a window 'error'/'unhandledrejection' event even though
+// nothing actually failed — it must never be treated as a fatal boot error.
+const BENIGN_ERRORS = [/ResizeObserver loop (completed with undelivered notifications|limit exceeded)/];
+
+function isBenignError(value: unknown): boolean {
+  const message = typeof value === 'string' ? value : value instanceof Error ? value.message : '';
+  return typeof message === 'string' && BENIGN_ERRORS.some((rx) => rx.test(message));
+}
 
 // ── Chunk-load error recovery ──────────────────────────────────
 // After a deploy, browsers may still hold a cached index.html that
@@ -57,6 +71,10 @@ function showBootError(error: unknown) {
 }
 
 window.addEventListener('unhandledrejection', (ev) => {
+  if (isBenignError(ev.reason?.message ?? ev.reason)) {
+    logger.warn('Aviso benigno ignorado', { reason: ev.reason });
+    return;
+  }
   if (isChunkError(ev.reason)) {
     reloadOnce();
     return;
@@ -64,6 +82,10 @@ window.addEventListener('unhandledrejection', (ev) => {
   showBootError(ev.reason);
 });
 window.addEventListener('error', (ev) => {
+  if (isBenignError(ev.message) || isBenignError(ev.error)) {
+    logger.warn('Aviso benigno ignorado', { message: ev.message });
+    return;
+  }
   if (isChunkError(ev.message) || isChunkError(ev.error)) {
     reloadOnce();
     return;
