@@ -21,6 +21,139 @@ const MAX_PLAUSIBLE_ORIGIN_DISTANCE_KM = 300;
 
 const EARTH_RADIUS_KM = 6371;
 
+const PULSE_STYLE_ID = 'tm-marker-pulse-style';
+
+// Inyectado una sola vez: Mapbox renderiza los marcadores como elementos DOM
+// planos, no hay forma de usar CSS-in-JS/modulos aqui.
+const ensurePulseStyleInjected = () => {
+  if (document.getElementById(PULSE_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = PULSE_STYLE_ID;
+  style.textContent = `
+    @keyframes tm-pulse-ring {
+      0% { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+};
+
+// Trazos de lucide-react (Truck / MapPin) embebidos a mano: los marcadores de
+// Mapbox son elementos DOM crudos, fuera del arbol de React.
+const TRUCK_ICON_PATHS = `
+  <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+  <path d="M15 18H9" />
+  <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+  <circle cx="17" cy="18" r="2" />
+  <circle cx="7" cy="18" r="2" />
+`;
+
+const MAP_PIN_ICON_PATH = `
+  <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+  <circle cx="12" cy="10" r="3" />
+`;
+
+const CRANE_MARKER_SIZE = 48;
+const CRANE_ICON_SIZE = 28;
+const GRAY_MUTED = '#6b7280';
+
+const createCraneMarkerElement = () => {
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.width = `${CRANE_MARKER_SIZE}px`;
+  wrapper.style.height = `${CRANE_MARKER_SIZE}px`;
+
+  const ring = document.createElement('div');
+  ring.className = 'tm-crane-pulse';
+  ring.style.position = 'absolute';
+  ring.style.inset = '0';
+  ring.style.borderRadius = '9999px';
+
+  const circle = document.createElement('div');
+  circle.className = 'tm-crane-circle';
+  circle.style.position = 'absolute';
+  circle.style.inset = '0';
+  circle.style.borderRadius = '9999px';
+  circle.style.backgroundColor = '#ffffff';
+  circle.style.boxShadow = '0 4px 12px rgba(15,23,42,0.35)';
+  circle.style.display = 'flex';
+  circle.style.alignItems = 'center';
+  circle.style.justifyContent = 'center';
+
+  const iconWrapper = document.createElement('div');
+  iconWrapper.className = 'tm-crane-icon';
+  iconWrapper.style.width = `${CRANE_ICON_SIZE}px`;
+  iconWrapper.style.height = `${CRANE_ICON_SIZE}px`;
+  iconWrapper.style.transition = 'transform 0.3s ease';
+  iconWrapper.innerHTML = `<svg width="${CRANE_ICON_SIZE}" height="${CRANE_ICON_SIZE}" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${TRUCK_ICON_PATHS}</svg>`;
+
+  circle.appendChild(iconWrapper);
+  wrapper.appendChild(ring);
+  wrapper.appendChild(circle);
+
+  return { wrapper, ring, circle, iconWrapper };
+};
+
+const updateCraneMarkerElement = (
+  refs: ReturnType<typeof createCraneMarkerElement>,
+  heading: number | null,
+  isActive: boolean,
+) => {
+  const color = isActive ? 'hsl(var(--primary))' : GRAY_MUTED;
+  refs.circle.style.border = `2px solid ${color}`;
+  const svg = refs.iconWrapper.querySelector('svg');
+  if (svg) svg.setAttribute('stroke', color);
+
+  if (typeof heading === 'number') {
+    refs.iconWrapper.style.transform = `rotate(${heading}deg)`;
+  }
+
+  refs.ring.style.backgroundColor = isActive ? 'hsl(var(--primary))' : 'transparent';
+  refs.ring.style.animation = isActive ? 'tm-pulse-ring 2s ease-out infinite' : 'none';
+};
+
+const ORIGIN_LABEL_MAX_CHARS = 20;
+
+const truncateLabel = (text: string): string =>
+  text.length > ORIGIN_LABEL_MAX_CHARS ? `${text.slice(0, ORIGIN_LABEL_MAX_CHARS).trimEnd()}…` : text;
+
+const createOriginMarkerElement = () => {
+  // Ancla de tamano cero: el pin se dibuja hacia arriba desde este punto (su
+  // punta queda exactamente en la coordenada) y la etiqueta se posiciona
+  // debajo, sin desplazar el punto de anclaje real usado por Mapbox.
+  const anchor = document.createElement('div');
+  anchor.style.position = 'relative';
+  anchor.style.width = '0px';
+  anchor.style.height = '0px';
+
+  const pin = document.createElement('div');
+  pin.style.position = 'absolute';
+  pin.style.bottom = '0';
+  pin.style.left = '0';
+  pin.style.transform = 'translate(-50%, 0)';
+  pin.style.lineHeight = '0';
+  pin.innerHTML = `<svg width="32" height="40" viewBox="0 0 24 24" fill="hsl(var(--warning))" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(15,23,42,0.35));">${MAP_PIN_ICON_PATH}</svg>`;
+
+  const label = document.createElement('div');
+  label.style.position = 'absolute';
+  label.style.top = '6px';
+  label.style.left = '0';
+  label.style.transform = 'translate(-50%, 0)';
+  label.style.whiteSpace = 'nowrap';
+  label.style.backgroundColor = '#ffffff';
+  label.style.borderRadius = '9999px';
+  label.style.padding = '2px 8px';
+  label.style.boxShadow = '0 2px 6px rgba(15,23,42,0.25)';
+  label.style.fontSize = '11px';
+  label.style.fontWeight = '600';
+  label.style.color = '#1f2937';
+
+  anchor.appendChild(pin);
+  anchor.appendChild(label);
+
+  return { anchor, label };
+};
+
 const haversineDistanceKm = (a: [number, number], b: [number, number]): number => {
   const [lngA, latA] = a;
   const [lngB, latB] = b;
@@ -111,11 +244,15 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   const mapRef = useRef<import('mapbox-gl').Map | null>(null);
   const mapboxRef = useRef<MapboxModule | null>(null);
   const craneMarkerRef = useRef<import('mapbox-gl').Marker | null>(null);
+  const craneElRefs = useRef<ReturnType<typeof createCraneMarkerElement> | null>(null);
   const originMarkerRef = useRef<import('mapbox-gl').Marker | null>(null);
+  const originElRefs = useRef<ReturnType<typeof createOriginMarkerElement> | null>(null);
   const [mapboxReady, setMapboxReady] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || !MAPBOX_TOKEN) return;
+
+    ensurePulseStyleInjected();
 
     let cancelled = false;
     let localMap: import('mapbox-gl').Map | null = null;
@@ -145,7 +282,11 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       cancelled = true;
       setMapboxReady(false);
       craneMarkerRef.current?.remove();
+      craneMarkerRef.current = null;
+      craneElRefs.current = null;
       originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
+      originElRefs.current = null;
       localMap?.remove();
       mapRef.current = null;
     };
@@ -174,47 +315,40 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       }
     }
 
-    if (data.position) {
-      const coords: [number, number] = [data.position.lng, data.position.lat];
+    if (data.position && craneCoords) {
       if (!craneMarkerRef.current) {
-        const el = document.createElement('div');
-        el.style.width = '32px';
-        el.style.height = '32px';
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.borderRadius = '9999px';
-        el.style.backgroundColor = '#0891b2';
-        el.style.border = '3px solid white';
-        el.style.boxShadow = '0 4px 10px rgba(15,23,42,0.4)';
-        el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 20 L12 16 L4 20 Z"/></svg>';
-        craneMarkerRef.current = new mapboxgl.default.Marker({ element: el }).setLngLat(coords).addTo(map);
+        const refs = createCraneMarkerElement();
+        craneElRefs.current = refs;
+        craneMarkerRef.current = new mapboxgl.default.Marker({ element: refs.wrapper, anchor: 'center' })
+          .setLngLat(craneCoords)
+          .addTo(map);
       } else {
-        craneMarkerRef.current.setLngLat(coords);
+        craneMarkerRef.current.setLngLat(craneCoords);
       }
-      const el = craneMarkerRef.current.getElement();
-      const icon = el.querySelector('svg') as SVGElement | null;
-      if (icon && typeof data.position.heading === 'number') {
-        icon.style.transform = `rotate(${data.position.heading}deg)`;
+
+      if (craneElRefs.current) {
+        updateCraneMarkerElement(craneElRefs.current, data.position.heading, data.state === 'active');
       }
     }
 
     if (originCoords) {
       if (!originMarkerRef.current) {
-        const el = document.createElement('div');
-        el.style.width = '14px';
-        el.style.height = '14px';
-        el.style.borderRadius = '9999px';
-        el.style.backgroundColor = '#f59e0b';
-        el.style.border = '3px solid white';
-        el.style.boxShadow = '0 2px 6px rgba(15,23,42,0.35)';
-        originMarkerRef.current = new mapboxgl.default.Marker({ element: el }).setLngLat(originCoords).addTo(map);
+        const refs = createOriginMarkerElement();
+        originElRefs.current = refs;
+        originMarkerRef.current = new mapboxgl.default.Marker({ element: refs.anchor, anchor: 'bottom' })
+          .setLngLat(originCoords)
+          .addTo(map);
       } else {
         originMarkerRef.current.setLngLat(originCoords);
+      }
+
+      if (originElRefs.current && data.origin?.text) {
+        originElRefs.current.label.textContent = truncateLabel(data.origin.text);
       }
     } else if (originMarkerRef.current) {
       originMarkerRef.current.remove();
       originMarkerRef.current = null;
+      originElRefs.current = null;
     }
 
     try {
