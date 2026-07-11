@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Building2, Loader2, MapPin, Star } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Building2, Loader2, MapPin, MapPinCheck, Star } from 'lucide-react';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -11,11 +12,20 @@ import {
 } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
 import { useFavoriteLocations, matchFavoriteLocations } from '@/hooks/useFavoriteLocations';
 import { useOriginSearchCascade } from '@/hooks/useOriginSearchCascade';
 import { OriginPinMap } from '@/components/services/OriginPinMap';
 import type { QuickAddress } from '@/components/services/MapboxAddressInput';
+import { parseLocationInput, type ParsedLocation } from '@/lib/locationParser';
+
+const logger = createLogger('OriginLocationField');
+const EXACT_LOCATION_RESOLVE_DEBOUNCE_MS = 400;
+
+const formatCoordsFallback = (lat: number, lng: number) => `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`;
 
 export interface OriginResolvedCoords {
   lat: number | null;
@@ -57,6 +67,9 @@ export function OriginLocationField({
   id,
 }: OriginLocationFieldProps) {
   const [open, setOpen] = useState(false);
+  const [isExactLocation, setIsExactLocation] = useState(false);
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const resolvingValueRef = useRef<string | null>(null);
 
   const { data: favoriteLocations = [] } = useFavoriteLocations();
   const catalogMatches = useMemo(
@@ -65,11 +78,81 @@ export function OriginLocationField({
   );
 
   const trimmed = value.trim();
-  const showNetworkTier = open && !disabled && trimmed.length >= 3;
+  // Nivel 0: si el texto ya es una ubicacion explicita (coordenadas, DMS o
+  // link de Google Maps), no tiene sentido gastar llamadas a Places/Geocoding
+  // en el mientras tanto.
+  const parsedLocation = useMemo(() => parseLocationInput(trimmed), [trimmed]);
+  const showNetworkTier = open && !disabled && trimmed.length >= 3 && !parsedLocation;
   const { result: networkResult, loading: networkLoading } = useOriginSearchCascade(value, {
     enabled: showNetworkTier,
     department,
   });
+
+  const handleParsedLocation = async (parsed: ParsedLocation) => {
+    if ('error' in parsed) {
+      toast.error('No reconocimos ese link de Google Maps. Ingresa la dirección manualmente.');
+      onChange('');
+      onCoordsChange({ lat: null, lng: null, catalogId: null });
+      setOpen(false);
+      return;
+    }
+
+    setIsResolvingLocation(true);
+    try {
+      let resolved: { lat: number; lng: number } | null = null;
+
+      if ('needsServerResolve' in parsed) {
+        const { data, error: resolveError } = await supabase.functions.invoke('maps-proxy', {
+          body: { action: 'resolve_link', url: parsed.url },
+        });
+        if (!resolveError && data && typeof data.lat === 'number' && typeof data.lng === 'number') {
+          resolved = { lat: data.lat, lng: data.lng };
+        }
+      } else {
+        resolved = { lat: parsed.lat, lng: parsed.lng };
+      }
+
+      if (!resolved) {
+        toast.error('No pudimos resolver ese link. Ingresa la dirección manualmente.');
+        onChange('');
+        onCoordsChange({ lat: null, lng: null, catalogId: null });
+        setOpen(false);
+        return;
+      }
+
+      onCoordsChange({ lat: resolved.lat, lng: resolved.lng, catalogId: null });
+      setIsExactLocation(true);
+      setOpen(false);
+
+      const { data: reverseData, error: reverseError } = await supabase.functions.invoke('maps-proxy', {
+        body: { action: 'reverse_geocode', lat: resolved.lat, lng: resolved.lng },
+      });
+      const address = !reverseError && typeof reverseData?.address === 'string' ? reverseData.address : null;
+      onChange(address || formatCoordsFallback(resolved.lat, resolved.lng));
+    } catch (err) {
+      logger.warn('No se pudo resolver la ubicacion exacta', err);
+      toast.error('No pudimos resolver esa ubicación. Ingresa la dirección manualmente.');
+    } finally {
+      setIsResolvingLocation(false);
+    }
+  };
+
+  useEffect(() => {
+    if (disabled || !parsedLocation) return;
+    // Evita re-resolver el mismo valor si el efecto se re-monta (StrictMode)
+    // mientras la resolucion anterior sigue en curso.
+    if (resolvingValueRef.current === trimmed) return;
+
+    const timer = window.setTimeout(() => {
+      resolvingValueRef.current = trimmed;
+      void handleParsedLocation(parsedLocation).finally(() => {
+        resolvingValueRef.current = null;
+      });
+    }, EXACT_LOCATION_RESOLVE_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trimmed, disabled]);
 
   const filteredQuickSuggestions = useMemo(() => {
     const search = trimmed.toLowerCase();
@@ -95,12 +178,14 @@ export function OriginLocationField({
     onChange(match.name);
     onCoordsChange({ lat: match.latitude, lng: match.longitude, catalogId: match.id });
     onSaveToCatalogChange(false);
+    setIsExactLocation(false);
     setOpen(false);
   };
 
   const selectNetworkResult = () => {
     if (!networkResult) return;
     onCoordsChange({ lat: networkResult.lat, lng: networkResult.lng, catalogId: null });
+    setIsExactLocation(false);
     setOpen(false);
   };
 
@@ -122,6 +207,7 @@ export function OriginLocationField({
                 onChange(event.target.value);
                 onCoordsChange({ lat: null, lng: null, catalogId: null });
                 onSaveToCatalogChange(false);
+                setIsExactLocation(false);
                 if (!open) setOpen(true);
               }}
               onFocus={() => setOpen(true)}
@@ -135,8 +221,19 @@ export function OriginLocationField({
               )}
             />
             <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
-              {networkLoading ? (
+              {isResolvingLocation || networkLoading ? (
                 <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : isExactLocation ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="pointer-events-auto">
+                        <MapPinCheck className="size-4 text-emerald-600" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Coordenadas exactas del cliente</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ) : (
                 <MapPin className="size-4 text-muted-foreground/70" />
               )}

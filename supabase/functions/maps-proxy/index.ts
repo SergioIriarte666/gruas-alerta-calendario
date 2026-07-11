@@ -8,6 +8,50 @@ const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const GEOCODING_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
 const STATIC_MAPS_BASE = "https://maps.googleapis.com/maps/api/staticmap";
 
+// resolve_link: dominios de Google permitidos, tanto para la URL de entrada
+// como para cada hop intermedio de redireccion. Nunca se sigue un redirect
+// que apunte fuera de esta lista (SSRF guard).
+const RESOLVE_LINK_ALLOWED_HOSTS = new Set([
+  "maps.app.goo.gl",
+  "goo.gl",
+  "google.com",
+  "www.google.com",
+]);
+const RESOLVE_LINK_MAX_HOPS = 3;
+
+const isAllowedResolveLinkUrl = (url: URL): boolean => {
+  const host = url.hostname.toLowerCase();
+  if (!RESOLVE_LINK_ALLOWED_HOSTS.has(host)) return false;
+  if (url.protocol !== "https:") return false;
+  // google.com/www.google.com solo son validos bajo /maps (el resto del
+  // allowlist son dominios acortadores de proposito unico).
+  if ((host === "google.com" || host === "www.google.com") && !url.pathname.startsWith("/maps")) {
+    return false;
+  }
+  return true;
+};
+
+// Mismo parseo que el cliente (src/lib/locationParser.ts) aplica a una URL
+// larga de Google Maps: prioriza el pin exacto (!3d!4d) sobre el centro del
+// encuadre (@lat,lng).
+const parseGoogleMapsLongUrl = (url: string): { lat: number; lng: number } | null => {
+  const exactPin = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/.exec(url);
+  if (exactPin) {
+    const lat = parseFloat(exactPin[1]);
+    const lng = parseFloat(exactPin[2]);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) return { lat, lng };
+  }
+
+  const center = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/.exec(url);
+  if (center) {
+    const lat = parseFloat(center[1]);
+    const lng = parseFloat(center[2]);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) return { lat, lng };
+  }
+
+  return null;
+};
+
 /** Decode a Google-encoded polyline into GeoJSON [lng, lat] pairs. */
 function decodePolyline(encoded: string): [number, number][] {
   const coords: [number, number][] = [];
@@ -447,6 +491,135 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ── RESOLVE LINK (links cortos de Google Maps) ───────────────────────────
+    // Resuelve maps.app.goo.gl/goo.gl (y valida cualquier google.com/maps largo)
+    // siguiendo redirects manualmente, validando el dominio en CADA hop: nunca
+    // se sigue un redirect fuera del allowlist de Google (SSRF guard).
+    if (action === "resolve_link") {
+      const { url } = body;
+      if (!url || typeof url !== "string") {
+        return new Response(
+          JSON.stringify({ error: "url is required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      let currentUrl: URL;
+      try {
+        currentUrl = new URL(url);
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "invalid_url" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      if (!isAllowedResolveLinkUrl(currentUrl)) {
+        return new Response(
+          JSON.stringify({ error: "domain_not_allowed" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      let finalResponse: Response | null = null;
+      let finalUrlString = currentUrl.toString();
+
+      try {
+        for (let hop = 0; hop < RESOLVE_LINK_MAX_HOPS; hop++) {
+          const res = await fetch(currentUrl.toString(), { redirect: "manual" });
+
+          if (res.status >= 300 && res.status < 400) {
+            const location = res.headers.get("location");
+            if (!location) break;
+
+            const nextUrl = new URL(location, currentUrl);
+            if (!isAllowedResolveLinkUrl(nextUrl)) {
+              // No se registra la URL completa: solo el dominio rechazado.
+              console.warn(JSON.stringify({ action: "resolve_link", rejectedHost: nextUrl.hostname }));
+              return new Response(
+                JSON.stringify({ error: "redirect_outside_google" }),
+                { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+              );
+            }
+
+            currentUrl = nextUrl;
+            finalUrlString = nextUrl.toString();
+            continue;
+          }
+
+          finalResponse = res;
+          finalUrlString = res.url || currentUrl.toString();
+          break;
+        }
+      } catch (fetchError) {
+        console.error("resolve_link fetch error:", fetchError);
+        return new Response(
+          JSON.stringify({ error: "unresolvable" }),
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const durationMs = Date.now() - t0;
+      console.log(JSON.stringify({ action: "resolve_link", durationMs, resolved: !!finalResponse }));
+
+      if (!finalResponse) {
+        return new Response(
+          JSON.stringify({ error: "unresolvable" }),
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const coords = parseGoogleMapsLongUrl(finalUrlString);
+      if (!coords) {
+        return new Response(
+          JSON.stringify({ error: "unresolvable" }),
+          { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ lat: coords.lat, lng: coords.lng, resolvedUrl: finalUrlString }),
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    // ── REVERSE GEOCODE (Geocoding API) ──────────────────────────────────────
+    // Convierte coordenadas confirmadas (catalogo/Places/Geocoding/link de
+    // cliente + pin arrastrado) en una direccion legible y editable.
+    if (action === "reverse_geocode") {
+      const { lat, lng } = body;
+      if (typeof lat !== "number" || typeof lng !== "number") {
+        return new Response(
+          JSON.stringify({ error: "lat and lng are required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const params = new URLSearchParams({
+        latlng: `${lat},${lng}`,
+        key: API_KEY,
+        language: "es",
+      });
+
+      const res = await fetch(`${GEOCODING_BASE}?${params}`);
+      const data = await res.json();
+      const durationMs = Date.now() - t0;
+      console.log(JSON.stringify({ action: "reverse_geocode", durationMs, ok: res.ok, status: res.status }));
+
+      if (!res.ok || data.status === "REQUEST_DENIED" || data.status === "INVALID_REQUEST") {
+        return new Response(
+          JSON.stringify({ error: data?.error_message ?? "Reverse geocoding error", details: data }),
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const address = data.results?.[0]?.formatted_address ?? null;
+
+      return new Response(JSON.stringify({ address }), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     // ── GEOCODE (Geocoding API) ──────────────────────────────────────────────
     if (action === "geocode") {
       const { address, query } = body;
@@ -498,7 +671,7 @@ Deno.serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Invalid action. Use autocomplete | place_details | route | static_map | geocode" }),
+      JSON.stringify({ error: "Invalid action. Use autocomplete | place_details | route | static_map | geocode | resolve_link | reverse_geocode | text_search" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
   } catch (err) {
