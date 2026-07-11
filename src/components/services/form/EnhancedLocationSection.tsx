@@ -3,10 +3,17 @@ import { Label } from '@/components/ui/label';
 import { AlertTriangle } from 'lucide-react';
 import { useFrequentLocations } from '@/hooks/services/useFrequentLocations';
 import { MapboxAddressInput, type QuickAddress } from '@/components/services/MapboxAddressInput';
+import { OriginLocationField, type OriginResolvedCoords } from '@/components/services/OriginLocationField';
 
 interface EnhancedLocationSectionProps {
   origin: string;
   onOriginChange: (value: string) => void;
+  originCoords: OriginResolvedCoords;
+  onOriginCoordsChange: (coords: OriginResolvedCoords) => void;
+  saveOriginToCatalog: boolean;
+  onSaveOriginToCatalogChange: (value: boolean) => void;
+  originDepartment?: string | null;
+  isAdmin: boolean;
   destination: string;
   onDestinationChange: (value: string) => void;
   originRequired?: boolean;
@@ -19,6 +26,12 @@ interface EnhancedLocationSectionProps {
 export const EnhancedLocationSection = ({
   origin,
   onOriginChange,
+  originCoords,
+  onOriginCoordsChange,
+  saveOriginToCatalog,
+  onSaveOriginToCatalogChange,
+  originDepartment,
+  isAdmin,
   destination,
   onDestinationChange,
   originRequired = false,
@@ -63,10 +76,16 @@ export const EnhancedLocationSection = ({
             </span>
           )}
         </Label>
-        <MapboxAddressInput
+        <OriginLocationField
           id="origin"
           value={origin}
-          onChange={(value) => onOriginChange(value)}
+          onChange={onOriginChange}
+          coords={originCoords}
+          onCoordsChange={onOriginCoordsChange}
+          saveToCatalog={saveOriginToCatalog}
+          onSaveToCatalogChange={onSaveOriginToCatalogChange}
+          department={originDepartment}
+          isAdmin={isAdmin}
           placeholder="Direccion de origen del servicio"
           disabled={disabled}
           error={originError}

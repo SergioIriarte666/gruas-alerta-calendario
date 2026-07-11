@@ -142,6 +142,8 @@ export const useServiceTransformer = () => {
         endTime: item.end_time || undefined,
         craneMileage: item.crane_mileage || undefined,
         origin: item.origin || '',
+        originLat: item.origin_lat ?? null,
+        originLng: item.origin_lng ?? null,
         destination: item.destination || '',
         value: parseFloat(item.value) || 0,
         operatorCommission: parseFloat(item.operator_commission) || 0,

@@ -7,10 +7,9 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
-import { isRelevantPlaceResult } from '@/utils/placeRelevance';
+import { resolveClientDepartment, resolveOriginCoordinates } from '@/services/originResolutionService';
 
 const logger = createLogger('ServiceManager');
-const geocodingLogger = createLogger('ServiceGeocoding');
 
 interface CreateServiceOptions {
   silent?: boolean;
@@ -22,153 +21,34 @@ interface UpdateServiceOptions {
   skipInvalidation?: boolean;
 }
 
-// Granularidad demasiado amplia para servir como ubicacion de un servicio:
-// Google devuelve el centroide del pais/region cuando no encuentra la direccion.
-const LOW_QUALITY_GEOCODE_TYPES = new Set([
-  'country',
-  'administrative_area_level_1',
-  'administrative_area_level_2',
-]);
+const geocodeOrigin = resolveOriginCoordinates;
 
-// Solo estas granularidades son suficientemente precisas para ubicar una grua.
-const USEFUL_GEOCODE_TYPES = new Set([
-  'street_address',
-  'route',
-  'premise',
-  'establishment',
-  'point_of_interest',
-  'locality',
-]);
-
-// Centro de Copiapo (Atacama, Chile): sesgo por defecto para Places Text Search
-// cuando no se conocen coordenadas del departamento del cliente.
-const DEFAULT_PLACE_BIAS = { lat: -27.366, lng: -70.332 };
-const PLACE_BIAS_RADIUS_METERS = 50000;
-
-const resolveClientDepartment = async (clientId?: string | null): Promise<string | null> => {
-  if (!clientId) return null;
-
-  const { data } = await supabase
-    .from('clients')
-    .select('department')
-    .eq('id', clientId)
-    .maybeSingle();
-
-  return data?.department || null;
-};
-
-// Nivel 1: Places Text Search. Los origenes del negocio son nombres coloquiales
-// de lugares ("Salfa Norte"), no direcciones postales, y Places resuelve
-// establecimientos donde Geocoding falla. Places nunca devuelve centroides de
-// pais/region: si hay resultado, es un lugar concreto y no necesita quality gate.
-const searchPlaceForOrigin = async (
-  address: string,
-  department?: string | null,
-): Promise<{ lat: number; lng: number } | null> => {
-  const textQuery = department ? `${address}, ${department}` : address;
+// Alimenta el catalogo de ubicaciones (saved_locations) con el pin
+// confirmado por el admin: reutilizar una ubicacion existente incrementa su
+// usage_count, guardar una nueva solo ocurre si el checkbox estaba activo.
+// Best-effort: nunca debe romper la creacion/actualizacion del servicio.
+const syncOriginCatalog = async (serviceData: Pick<
+  ServiceFormData,
+  'origin' | 'originLat' | 'originLng' | 'originCatalogId' | 'saveOriginToCatalog'
+>) => {
+  if (serviceData.originLat == null || serviceData.originLng == null) return;
+  if (!serviceData.originCatalogId && !serviceData.saveOriginToCatalog) return;
 
   try {
-    const { data, error } = await supabase.functions.invoke('maps-proxy', {
-      body: {
-        action: 'text_search',
-        textQuery,
-        locationBias: { ...DEFAULT_PLACE_BIAS, radius: PLACE_BIAS_RADIUS_METERS },
-        regionCode: 'CL',
-      },
+    const { error } = await supabase.rpc('upsert_service_origin_location', {
+      p_matched_id: serviceData.originCatalogId ?? null,
+      p_typed_text: serviceData.origin?.trim() || null,
+      p_lat: serviceData.originLat,
+      p_lng: serviceData.originLng,
+      p_save_new: !!serviceData.saveOriginToCatalog,
     });
 
     if (error) {
-      logger.warn('[searchPlaceForOrigin] Places text search failed, falling back to geocoding:', error);
-      return null;
+      logger.warn('[syncOriginCatalog] No se pudo sincronizar el catalogo de ubicaciones:', error);
     }
-
-    const result = data?.results?.[0] as
-      | {
-          coordinates?: [number, number];
-          displayName?: string | null;
-          formattedAddress?: string | null;
-        }
-      | undefined;
-
-    if (!result?.coordinates) return null;
-
-    // Guard de relevancia: ante un origin sin sentido, Places casi nunca
-    // devuelve cero resultados, sino su mejor adivinanza dentro del
-    // locationBias (un POI aleatorio cercano). Si ningun token del origin
-    // aparece en el nombre/direccion del resultado, se descarta y se cae
-    // al fallback de Geocoding API.
-    if (!isRelevantPlaceResult(address, result.displayName, result.formattedAddress)) {
-      geocodingLogger.warn(
-        `Places irrelevante para '${address}': '${result.displayName ?? result.formattedAddress ?? ''}' — descartado`,
-      );
-      return null;
-    }
-
-    const [lng, lat] = result.coordinates;
-    return { lat, lng };
-  } catch (placesError) {
-    logger.warn('[searchPlaceForOrigin] Places text search threw, falling back to geocoding:', placesError);
-    return null;
+  } catch (syncError) {
+    logger.warn('[syncOriginCatalog] Error inesperado sincronizando catalogo:', syncError);
   }
-};
-
-// Nivel 2 (fallback): Geocoding API, solo si Places no encontro nada. Conserva
-// el quality gate: Geocoding si devuelve centroides de pais/region para
-// direcciones que no reconoce.
-const geocodeAddressFallback = async (
-  address: string,
-  department?: string | null,
-): Promise<{ lat: number | null; lng: number | null }> => {
-  const query = department ? `${address}, ${department}, Chile` : `${address}, Chile`;
-
-  try {
-    const { data, error } = await supabase.functions.invoke('maps-proxy', {
-      body: { action: 'geocode', address: query },
-    });
-
-    if (error) {
-      logger.warn('[geocodeAddressFallback] Geocoding failed, continuing without coordinates:', error);
-      return { lat: null, lng: null };
-    }
-
-    const result = data?.results?.[0] as
-      | { coordinates?: [number, number]; types?: string[]; locationType?: string | null }
-      | undefined;
-
-    if (!result?.coordinates) {
-      return { lat: null, lng: null };
-    }
-
-    const types = result.types ?? [];
-    const isLowQuality = types.some((type) => LOW_QUALITY_GEOCODE_TYPES.has(type));
-    const hasUsefulType = types.some((type) => USEFUL_GEOCODE_TYPES.has(type));
-    if (isLowQuality || !hasUsefulType) {
-      return { lat: null, lng: null };
-    }
-
-    const [lng, lat] = result.coordinates;
-    return { lat, lng };
-  } catch (geoError) {
-    logger.warn('[geocodeAddressFallback] Geocoding threw, continuing without coordinates:', geoError);
-    return { lat: null, lng: null };
-  }
-};
-
-const geocodeOrigin = async (
-  address: string,
-  department?: string | null,
-): Promise<{ lat: number | null; lng: number | null }> => {
-  const placeResult = await searchPlaceForOrigin(address, department);
-  if (placeResult) {
-    return placeResult;
-  }
-
-  const fallbackResult = await geocodeAddressFallback(address, department);
-  if (fallbackResult.lat === null || fallbackResult.lng === null) {
-    geocodingLogger.warn(`Geocoding de baja calidad para '${address}', se omiten coordenadas`);
-  }
-
-  return fallbackResult;
 };
 
 const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
@@ -246,6 +126,8 @@ const transformToService = (data: ServiceSnakeCase): Service => {
     vehicleModel: data.vehicle_model || '',
     licensePlate: data.license_plate || '',
     origin: data.origin || '',
+    originLat: (data.origin_lat as number | null | undefined) ?? null,
+    originLng: (data.origin_lng as number | null | undefined) ?? null,
     destination: data.destination || '',
     // Manejo robusto de tipo de servicio
     serviceType: data.serviceType || {
@@ -441,9 +323,15 @@ export const useServiceManager = () => {
           created_by: createdBy
         };
 
-        const originGeo = transformedData.origin
-          ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
-          : { lat: null, lng: null };
+        // Si el formulario ya confirmo un pin (catalogo, Places/Geocoding +
+        // arrastre), se usa tal cual. El geocoding en submit es solo una red
+        // de seguridad para flujos que nunca pasaron por esa confirmacion.
+        const hasConfirmedOriginCoords = serviceData.originLat != null && serviceData.originLng != null;
+        const originGeo = hasConfirmedOriginCoords
+          ? { lat: serviceData.originLat as number, lng: serviceData.originLng as number }
+          : transformedData.origin
+            ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
+            : { lat: null, lng: null };
         const transformedDataWithGeo = {
           ...transformedData,
           origin_lat: originGeo.lat,
@@ -595,9 +483,11 @@ export const useServiceManager = () => {
           }
         }
 
+        await syncOriginCatalog(serviceData);
+
         await queryClient.invalidateQueries({ queryKey: ['services'] });
         await queryClient.invalidateQueries({ queryKey: ['costs'] });
-        
+
         const transformedService = transformToService(newService);
         return transformedService;
 
@@ -893,19 +783,25 @@ export const useServiceManager = () => {
       }
 
       if (serviceData.origin !== undefined && serviceData.origin && serviceData.origin.trim() !== '') {
-        let clientIdForGeocode = transformedData.client_id as string | null | undefined;
-        if (clientIdForGeocode === undefined) {
-          const { data: currentServiceClient } = await supabase
-            .from('services')
-            .select('client_id')
-            .eq('id', id)
-            .maybeSingle();
-          clientIdForGeocode = currentServiceClient?.client_id ?? null;
-        }
+        if (serviceData.originLat != null && serviceData.originLng != null) {
+          // El formulario ya confirmo un pin: se usa tal cual, sin geocodificar.
+          transformedData.origin_lat = serviceData.originLat;
+          transformedData.origin_lng = serviceData.originLng;
+        } else {
+          let clientIdForGeocode = transformedData.client_id as string | null | undefined;
+          if (clientIdForGeocode === undefined) {
+            const { data: currentServiceClient } = await supabase
+              .from('services')
+              .select('client_id')
+              .eq('id', id)
+              .maybeSingle();
+            clientIdForGeocode = currentServiceClient?.client_id ?? null;
+          }
 
-        const originGeo = await geocodeOrigin(serviceData.origin, await resolveClientDepartment(clientIdForGeocode));
-        transformedData.origin_lat = originGeo.lat;
-        transformedData.origin_lng = originGeo.lng;
+          const originGeo = await geocodeOrigin(serviceData.origin, await resolveClientDepartment(clientIdForGeocode));
+          transformedData.origin_lat = originGeo.lat;
+          transformedData.origin_lng = originGeo.lng;
+        }
       }
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas

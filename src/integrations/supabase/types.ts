@@ -8551,6 +8551,16 @@ export type Database = {
         Returns: undefined
       }
       update_vip_services_batch: { Args: { p_updates: Json }; Returns: Json }
+      upsert_service_origin_location: {
+        Args: {
+          p_lat: number
+          p_lng: number
+          p_matched_id: string
+          p_save_new: boolean
+          p_typed_text: string
+        }
+        Returns: undefined
+      }
       validate_all_warnings_eliminated: { Args: never; Returns: undefined }
       validate_email: { Args: { email: string }; Returns: boolean }
       validate_payment_amounts: {

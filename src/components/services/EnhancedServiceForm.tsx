@@ -18,6 +18,7 @@ import { FormStepNavigation, getDefaultSteps, FormStep } from './form/FormStepNa
 import { FormSummaryPanel } from './form/FormSummaryPanel';
 import { ColoredSectionCard } from './form/ColoredSectionCard';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 import { useInventoryDeduction } from '@/hooks/useInventoryDeduction';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -77,6 +78,7 @@ export const EnhancedServiceForm = React.memo(({
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { suppliers } = useSuppliers();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
+  const { isAdmin } = useUserPermissions();
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
@@ -144,6 +146,10 @@ export const EnhancedServiceForm = React.memo(({
     vehicleModel: service?.vehicleModel || '',
     licensePlate: service?.licensePlate || '',
     origin: service?.origin || '',
+    originLat: service?.originLat ?? null,
+    originLng: service?.originLng ?? null,
+    originCatalogId: null as string | null,
+    saveOriginToCatalog: false,
     destination: service?.destination || '',
     crane: service?.crane?.id || '',
     operators: service?.operator ? [{
@@ -201,6 +207,10 @@ export const EnhancedServiceForm = React.memo(({
         vehicleModel: prefilledData.vehicleModel || '',
         licensePlate: prefilledData.licensePlate || '',
         origin: prefilledData.origin || '',
+        originLat: null,
+        originLng: null,
+        originCatalogId: null,
+        saveOriginToCatalog: false,
         destination: prefilledData.destination || '',
         crane: prefilledData.craneId || '',
         operators: prefilledData.operators || [],
@@ -383,6 +393,10 @@ export const EnhancedServiceForm = React.memo(({
         vehicleModel: service.vehicleModel,
         licensePlate: service.licensePlate,
         origin: service.origin,
+        originLat: service.originLat ?? null,
+        originLng: service.originLng ?? null,
+        originCatalogId: null,
+        saveOriginToCatalog: false,
         destination: service.destination,
         crane: service.crane?.id || '',
         operators: service.operator ? [{
@@ -1317,6 +1331,21 @@ export const EnhancedServiceForm = React.memo(({
                   <EnhancedLocationSection
                     origin={formData.origin}
                     onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
+                    originCoords={{
+                      lat: formData.originLat,
+                      lng: formData.originLng,
+                      catalogId: formData.originCatalogId,
+                    }}
+                    onOriginCoordsChange={(coords) => setFormData(prev => ({
+                      ...prev,
+                      originLat: coords.lat,
+                      originLng: coords.lng,
+                      originCatalogId: coords.catalogId,
+                    }))}
+                    saveOriginToCatalog={formData.saveOriginToCatalog}
+                    onSaveOriginToCatalogChange={(value) => setFormData(prev => ({ ...prev, saveOriginToCatalog: value }))}
+                    originDepartment={selectedClient?.department}
+                    isAdmin={isAdmin}
                     destination={formData.destination}
                     onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
                     originRequired={selectedServiceType?.originRequired || false}

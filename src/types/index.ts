@@ -18,6 +18,8 @@ export interface Service {
   vehicleModel: string;
   licensePlate: string;
   origin: string;
+  originLat?: number | null;
+  originLng?: number | null;
   destination: string;
   serviceType: ServiceType;
   value: number;
@@ -83,6 +85,8 @@ export interface ServiceSnakeCase extends Service {
   // Campos snake_case de DB (no camelCase en Service)
   request_date?: string;
   service_date?: string;
+  origin_lat?: number | null;
+  origin_lng?: number | null;
   purchase_order?: string;
   quote_number?: string;
   vehicle_brand?: string;
@@ -160,6 +164,15 @@ export interface ServiceFormData {
   vehicleModel: string;
   licensePlate: string;
   origin: string;
+  // Coordenadas del pin confirmado por el admin para el origen (catalogo,
+  // Places o Geocoding + arrastre manual). Si estan presentes, el submit
+  // las usa tal cual y no vuelve a geocodificar.
+  originLat?: number | null;
+  originLng?: number | null;
+  // id de saved_locations si el origen se selecciono del catalogo curado
+  originCatalogId?: string | null;
+  // checkbox "Guardar en catalogo de ubicaciones" (solo admin)
+  saveOriginToCatalog?: boolean;
   destination: string;
   crane?: string;
   operators?: Array<{
