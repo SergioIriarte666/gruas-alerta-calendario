@@ -436,6 +436,10 @@ Deno.serve(async (req: Request) => {
         // Keep [lng, lat] to match Mapbox-proxy format used in the codebase
         coordinates: [p.location.longitude, p.location.latitude] as [number, number],
         types: p.types ?? [],
+        // Expuestos por separado para que los consumidores puedan validar
+        // relevancia (nombre del lugar vs. la consulta original del usuario)
+        displayName: p.displayName?.text ?? null,
+        formattedAddress: p.formattedAddress ?? null,
       }));
 
       return new Response(JSON.stringify({ results }), {

@@ -7,6 +7,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
+import { isRelevantPlaceResult } from '@/utils/placeRelevance';
 
 const logger = createLogger('ServiceManager');
 const geocodingLogger = createLogger('ServiceGeocoding');
@@ -81,10 +82,29 @@ const searchPlaceForOrigin = async (
       return null;
     }
 
-    const coordinates = data?.results?.[0]?.coordinates as [number, number] | undefined;
-    if (!coordinates) return null;
+    const result = data?.results?.[0] as
+      | {
+          coordinates?: [number, number];
+          displayName?: string | null;
+          formattedAddress?: string | null;
+        }
+      | undefined;
 
-    const [lng, lat] = coordinates;
+    if (!result?.coordinates) return null;
+
+    // Guard de relevancia: ante un origin sin sentido, Places casi nunca
+    // devuelve cero resultados, sino su mejor adivinanza dentro del
+    // locationBias (un POI aleatorio cercano). Si ningun token del origin
+    // aparece en el nombre/direccion del resultado, se descarta y se cae
+    // al fallback de Geocoding API.
+    if (!isRelevantPlaceResult(address, result.displayName, result.formattedAddress)) {
+      geocodingLogger.warn(
+        `Places irrelevante para '${address}': '${result.displayName ?? result.formattedAddress ?? ''}' — descartado`,
+      );
+      return null;
+    }
+
+    const [lng, lat] = result.coordinates;
     return { lat, lng };
   } catch (placesError) {
     logger.warn('[searchPlaceForOrigin] Places text search threw, falling back to geocoding:', placesError);
