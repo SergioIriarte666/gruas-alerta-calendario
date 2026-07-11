@@ -31,6 +31,8 @@ export interface RouteResult {
 export interface GeoResult {
   name: string;
   coordinates: [number, number]; // [lng, lat]
+  types?: string[];
+  locationType?: string | null;
 }
 
 /**

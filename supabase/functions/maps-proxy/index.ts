@@ -409,11 +409,16 @@ Deno.serve(async (req: Request) => {
 
       const results = (data.results ?? []).map((r: {
         formatted_address: string;
-        geometry: { location: { lat: number; lng: number } };
+        types?: string[];
+        geometry: { location: { lat: number; lng: number }; location_type?: string };
       }) => ({
         name: r.formatted_address,
         // Keep [lng, lat] to match Mapbox-proxy format used in the codebase
         coordinates: [r.geometry.location.lng, r.geometry.location.lat] as [number, number],
+        // Granularidad del resultado, para que los consumidores puedan rechazar
+        // matches demasiado amplios (pais, region, etc.)
+        types: r.types ?? [],
+        locationType: r.geometry.location_type ?? null,
       }));
 
       return new Response(JSON.stringify({ results }), {

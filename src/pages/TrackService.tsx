@@ -13,6 +13,25 @@ const POLL_INTERVAL_MS = 15000;
 const COPIAPO_CENTER: [number, number] = [-70.33, -27.37];
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const DEFAULT_ZOOM = 13;
+// Distancia grua-origen mas alla de la cual el dato de origen se considera
+// sospechoso (p.ej. geocoding de baja calidad que devolvio un centroide lejano)
+// y se ignora en el encuadre del mapa.
+const MAX_PLAUSIBLE_ORIGIN_DISTANCE_KM = 300;
+
+const EARTH_RADIUS_KM = 6371;
+
+const haversineDistanceKm = (a: [number, number], b: [number, number]): number => {
+  const [lngA, latA] = a;
+  const [lngB, latB] = b;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(latB - latA);
+  const dLng = toRad(lngB - lngA);
+  const sinLat = Math.sin(dLat / 2);
+  const sinLng = Math.sin(dLng / 2);
+  const h = sinLat * sinLat + Math.cos(toRad(latA)) * Math.cos(toRad(latB)) * sinLng * sinLng;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+};
 
 type TrackingState = 'active' | 'no_signal' | 'waiting' | 'finished';
 
@@ -137,8 +156,23 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     const mapboxgl = mapboxRef.current;
     if (!map || !mapboxgl || !mapboxReady) return;
 
-    const bounds = new mapboxgl.default.LngLatBounds();
-    let hasBounds = false;
+    const craneCoords: [number, number] | null = data.position
+      ? [data.position.lng, data.position.lat]
+      : null;
+    const rawOriginCoords: [number, number] | null = data.origin?.lat != null && data.origin?.lng != null
+      ? [data.origin.lng, data.origin.lat]
+      : null;
+
+    let originCoords = rawOriginCoords;
+    if (craneCoords && rawOriginCoords) {
+      const distanceKm = haversineDistanceKm(craneCoords, rawOriginCoords);
+      if (distanceKm > MAX_PLAUSIBLE_ORIGIN_DISTANCE_KM) {
+        logger.warn('Origen sospechoso: distancia grua-origen supera el umbral, se ignora en el encuadre', {
+          distanceKm: Math.round(distanceKm),
+        });
+        originCoords = null;
+      }
+    }
 
     if (data.position) {
       const coords: [number, number] = [data.position.lng, data.position.lat];
@@ -163,12 +197,9 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
       if (icon && typeof data.position.heading === 'number') {
         icon.style.transform = `rotate(${data.position.heading}deg)`;
       }
-      bounds.extend(coords);
-      hasBounds = true;
     }
 
-    if (data.origin?.lat != null && data.origin?.lng != null) {
-      const coords: [number, number] = [data.origin.lng, data.origin.lat];
+    if (originCoords) {
       if (!originMarkerRef.current) {
         const el = document.createElement('div');
         el.style.width = '14px';
@@ -177,20 +208,26 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
         el.style.backgroundColor = '#f59e0b';
         el.style.border = '3px solid white';
         el.style.boxShadow = '0 2px 6px rgba(15,23,42,0.35)';
-        originMarkerRef.current = new mapboxgl.default.Marker({ element: el }).setLngLat(coords).addTo(map);
+        originMarkerRef.current = new mapboxgl.default.Marker({ element: el }).setLngLat(originCoords).addTo(map);
       } else {
-        originMarkerRef.current.setLngLat(coords);
+        originMarkerRef.current.setLngLat(originCoords);
       }
-      bounds.extend(coords);
-      hasBounds = true;
+    } else if (originMarkerRef.current) {
+      originMarkerRef.current.remove();
+      originMarkerRef.current = null;
     }
 
-    if (hasBounds) {
-      try {
+    try {
+      if (craneCoords && originCoords) {
+        const bounds = new mapboxgl.default.LngLatBounds();
+        bounds.extend(craneCoords);
+        bounds.extend(originCoords);
         map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 0 });
-      } catch (error) {
-        logger.warn('No se pudo ajustar el mapa a los marcadores', error);
+      } else if (craneCoords) {
+        map.jumpTo({ center: craneCoords, zoom: DEFAULT_ZOOM });
       }
+    } catch (error) {
+      logger.warn('No se pudo ajustar el mapa a los marcadores', error);
     }
   }, [data, mapboxReady]);
 

@@ -9,6 +9,7 @@ import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 
 const logger = createLogger('ServiceManager');
+const geocodingLogger = createLogger('ServiceGeocoding');
 
 interface CreateServiceOptions {
   silent?: boolean;
@@ -20,10 +21,45 @@ interface UpdateServiceOptions {
   skipInvalidation?: boolean;
 }
 
-const geocodeOrigin = async (address: string): Promise<{ lat: number | null; lng: number | null }> => {
+// Granularidad demasiado amplia para servir como ubicacion de un servicio:
+// Google devuelve el centroide del pais/region cuando no encuentra la direccion.
+const LOW_QUALITY_GEOCODE_TYPES = new Set([
+  'country',
+  'administrative_area_level_1',
+  'administrative_area_level_2',
+]);
+
+// Solo estas granularidades son suficientemente precisas para ubicar una grua.
+const USEFUL_GEOCODE_TYPES = new Set([
+  'street_address',
+  'route',
+  'premise',
+  'establishment',
+  'point_of_interest',
+  'locality',
+]);
+
+const resolveClientDepartment = async (clientId?: string | null): Promise<string | null> => {
+  if (!clientId) return null;
+
+  const { data } = await supabase
+    .from('clients')
+    .select('department')
+    .eq('id', clientId)
+    .maybeSingle();
+
+  return data?.department || null;
+};
+
+const geocodeOrigin = async (
+  address: string,
+  department?: string | null,
+): Promise<{ lat: number | null; lng: number | null }> => {
+  const query = department ? `${address}, ${department}, Chile` : `${address}, Chile`;
+
   try {
     const { data, error } = await supabase.functions.invoke('maps-proxy', {
-      body: { action: 'geocode', address },
+      body: { action: 'geocode', address: query },
     });
 
     if (error) {
@@ -31,12 +67,23 @@ const geocodeOrigin = async (address: string): Promise<{ lat: number | null; lng
       return { lat: null, lng: null };
     }
 
-    const coordinates = data?.results?.[0]?.coordinates as [number, number] | undefined;
-    if (!coordinates) {
+    const result = data?.results?.[0] as
+      | { coordinates?: [number, number]; types?: string[]; locationType?: string | null }
+      | undefined;
+
+    if (!result?.coordinates) {
       return { lat: null, lng: null };
     }
 
-    const [lng, lat] = coordinates;
+    const types = result.types ?? [];
+    const isLowQuality = types.some((type) => LOW_QUALITY_GEOCODE_TYPES.has(type));
+    const hasUsefulType = types.some((type) => USEFUL_GEOCODE_TYPES.has(type));
+    if (isLowQuality || !hasUsefulType) {
+      geocodingLogger.warn(`Geocoding de baja calidad para '${address}', se omiten coordenadas`);
+      return { lat: null, lng: null };
+    }
+
+    const [lng, lat] = result.coordinates;
     return { lat, lng };
   } catch (geoError) {
     logger.warn('[geocodeOrigin] Geocoding threw, continuing without coordinates:', geoError);
@@ -315,7 +362,7 @@ export const useServiceManager = () => {
         };
 
         const originGeo = transformedData.origin
-          ? await geocodeOrigin(transformedData.origin)
+          ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
           : { lat: null, lng: null };
         const transformedDataWithGeo = {
           ...transformedData,
@@ -766,7 +813,17 @@ export const useServiceManager = () => {
       }
 
       if (serviceData.origin !== undefined && serviceData.origin && serviceData.origin.trim() !== '') {
-        const originGeo = await geocodeOrigin(serviceData.origin);
+        let clientIdForGeocode = transformedData.client_id as string | null | undefined;
+        if (clientIdForGeocode === undefined) {
+          const { data: currentServiceClient } = await supabase
+            .from('services')
+            .select('client_id')
+            .eq('id', id)
+            .maybeSingle();
+          clientIdForGeocode = currentServiceClient?.client_id ?? null;
+        }
+
+        const originGeo = await geocodeOrigin(serviceData.origin, await resolveClientDepartment(clientIdForGeocode));
         transformedData.origin_lat = originGeo.lat;
         transformedData.origin_lng = originGeo.lng;
       }
