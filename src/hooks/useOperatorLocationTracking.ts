@@ -7,6 +7,7 @@ import type {
   LocationPermissionState,
   OperatorLocationPayload,
   OperatorLocationPoint,
+  OperatorLocationSession,
   TrackingSessionEndedReason,
   TrackingSessionStartedReason,
   TrackingSettings,
@@ -23,11 +24,14 @@ import {
   requestLocationPermission,
   saveOperatorLocationPoint,
   stopOperatorLocationSession,
+  updateOperatorLocationSessionService,
 } from '@/services/operatorLocationService';
 import { isWithinTrackingSchedule, getTrackingScheduleLabel } from '@/utils/trackingSchedule';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('useOperatorLocationTracking');
+// Logger dedicado para detectar regresiones del bug SRV: sesiones auto_service con service_id NULL
+const trackingLogger = createLogger('OperatorTracking');
 
 const LOCATION_QUEUE_KEY = 'operator-location-points-queue-v1';
 const TRACKING_PAUSED_KEY = 'operator-tracking-paused-v1';
@@ -140,6 +144,11 @@ export const useOperatorLocationTracking = ({
   const trackingDisabledRef = useRef(false);
 
   const serviceId = currentService?.id ?? null;
+  // Mantenida al dia en cada render (no en un efecto) para que startSession pueda leer
+  // el service_id mas reciente incluso durante el await de permisos, que puede tardar
+  // un tiempo indeterminado y dejar obsoleto el valor capturado en el closure.
+  const serviceIdRef = useRef<string | null>(serviceId);
+  serviceIdRef.current = serviceId;
   const serviceLabel = currentService?.folio
     ? `Folio ${currentService.folio}`
     : currentService?.origin || currentService?.destination
@@ -346,6 +355,28 @@ export const useOperatorLocationTracking = ({
     }
   }, [beginNativeWatcher, beginWebPolling, clearCaptureLoop]);
 
+  const maybeRepairAutoServiceSession = useCallback(async (
+    session: OperatorLocationSession,
+  ): Promise<OperatorLocationSession> => {
+    const expectedServiceId = serviceIdRef.current;
+    if (session.started_reason !== 'auto_service' || session.service_id || !expectedServiceId) {
+      return session;
+    }
+
+    trackingLogger.warn('auto_service session created with null service_id, repairing', {
+      sessionId: session.id,
+      expectedServiceId,
+    });
+
+    try {
+      await updateOperatorLocationSessionService(session.id, expectedServiceId);
+      return { ...session, service_id: expectedServiceId };
+    } catch (repairError) {
+      trackingLogger.warn('Could not repair auto_service session service_id', repairError);
+      return session;
+    }
+  }, []);
+
   const startSession = useCallback(async (reason: TrackingSessionStartedReason) => {
     if (!operatorId || !userId || trackingDisabledRef.current) return;
 
@@ -362,8 +393,14 @@ export const useOperatorLocationTracking = ({
       return;
     }
 
+    // Leida justo antes de escribir en la sesion: durante el await de permisos arriba
+    // el service_id "real" puede haber cambiado respecto al valor capturado al invocar
+    // esta funcion, así que para auto_service usamos siempre el mas reciente.
+    const effectiveServiceId = reason === 'auto_service' ? serviceIdRef.current : serviceId;
+
     try {
-      const session = await ensureOperatorLocationSession(operatorId, userId, serviceId, reason);
+      let session = await ensureOperatorLocationSession(operatorId, userId, effectiveServiceId, reason);
+      session = await maybeRepairAutoServiceSession(session);
 
       if (reason === 'auto_service' && isPausedRef.current) {
         isPausedRef.current = false;
@@ -381,10 +418,10 @@ export const useOperatorLocationTracking = ({
       setIsTracking(true);
       setErrorMessage(null);
 
-      beginCapture(session.id, operatorId, userId, serviceId);
+      beginCapture(session.id, operatorId, userId, effectiveServiceId);
 
       if (reason === 'manual') {
-        toast.success(serviceId
+        toast.success(effectiveServiceId
           ? 'Ubicacion compartida para el servicio activo'
           : 'Ubicacion compartida desde la app operador');
       }
@@ -395,7 +432,7 @@ export const useOperatorLocationTracking = ({
         toast.error(message);
       }
     }
-  }, [beginCapture, operatorId, serviceId, userId]);
+  }, [beginCapture, maybeRepairAutoServiceSession, operatorId, serviceId, userId]);
 
   const evaluate = useCallback(() => {
     if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
@@ -491,7 +528,10 @@ export const useOperatorLocationTracking = ({
 
       if (operatorId) {
         try {
-          const activeSession = await findActiveOperatorLocationSession(operatorId);
+          let activeSession = await findActiveOperatorLocationSession(operatorId);
+          if (activeSession) {
+            activeSession = await maybeRepairAutoServiceSession(activeSession);
+          }
           if (!cancelled && activeSession) {
             sessionIdRef.current = activeSession.id;
             sessionServiceIdRef.current = activeSession.service_id;

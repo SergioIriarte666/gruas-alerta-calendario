@@ -5730,6 +5730,71 @@ export type Database = {
           },
         ]
       }
+      service_tracking_links: {
+        Row: {
+          access_count: number
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          last_accessed_at: string | null
+          revoked_at: string | null
+          service_id: string
+          token: string
+        }
+        Insert: {
+          access_count?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          service_id: string
+          token: string
+        }
+        Update: {
+          access_count?: number
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          service_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_tracking_links_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_tracking_links_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_tracking_links_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_tracking_links_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_types: {
         Row: {
           base_price: number | null
@@ -5910,6 +5975,8 @@ export type Database = {
           operator_notified_at: string | null
           operator_notified_for: string | null
           origin: string | null
+          origin_lat: number | null
+          origin_lng: number | null
           outsourced_cost: number | null
           outsourced_notes: string | null
           outsourced_provider_id: string | null
@@ -5968,6 +6035,8 @@ export type Database = {
           operator_notified_at?: string | null
           operator_notified_for?: string | null
           origin?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
@@ -6026,6 +6095,8 @@ export type Database = {
           operator_notified_at?: string | null
           operator_notified_for?: string | null
           origin?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
           outsourced_cost?: number | null
           outsourced_notes?: string | null
           outsourced_provider_id?: string | null
@@ -7750,6 +7821,10 @@ export type Database = {
       create_payment_from_existing_income: {
         Args: { p_income_id: string }
         Returns: Json
+      }
+      create_service_tracking_link: {
+        Args: { p_service_id: string }
+        Returns: string
       }
       current_user_role: { Args: never; Returns: string }
       debug_service_states: {

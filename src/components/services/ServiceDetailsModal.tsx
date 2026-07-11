@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   Pencil,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Share2
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -536,6 +537,22 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
     }
   };
 
+  const handleShareTracking = async () => {
+    try {
+      const { data: token, error } = await supabase.rpc('create_service_tracking_link', {
+        p_service_id: serviceData.id,
+      });
+
+      if (error) throw error;
+
+      await navigator.clipboard.writeText(`https://app.gruas5norte.cl/track/${token}`);
+      toast.success('Link de seguimiento copiado');
+    } catch (err) {
+      logger.error('[ServiceDetailsModal] Error generando link de seguimiento:', err);
+      toast.error('No se pudo generar el link de seguimiento');
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex h-[90vh] max-w-7xl w-[95vw] flex-col border-border/70 bg-card p-0">
@@ -583,6 +600,17 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                 >
                   <Copy className="size-4" />
                   Duplicar
+                </Button>
+              )}
+              {isAdmin && (serviceData.status === 'pending' || serviceData.status === 'in_progress') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleShareTracking()}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="size-4" />
+                  Compartir seguimiento
                 </Button>
               )}
               <Button

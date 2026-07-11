@@ -105,6 +105,9 @@ verify_jwt = true
 [functions.whatsapp-webhook]
 verify_jwt = false
 
+[functions.service-tracking]
+verify_jwt = false
+
 [functions.whatsapp-daily-alerts]
 verify_jwt = false
 

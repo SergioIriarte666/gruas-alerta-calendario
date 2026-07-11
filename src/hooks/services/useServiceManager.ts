@@ -20,6 +20,30 @@ interface UpdateServiceOptions {
   skipInvalidation?: boolean;
 }
 
+const geocodeOrigin = async (address: string): Promise<{ lat: number | null; lng: number | null }> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('maps-proxy', {
+      body: { action: 'geocode', address },
+    });
+
+    if (error) {
+      logger.warn('[geocodeOrigin] Geocoding failed, continuing without coordinates:', error);
+      return { lat: null, lng: null };
+    }
+
+    const coordinates = data?.results?.[0]?.coordinates as [number, number] | undefined;
+    if (!coordinates) {
+      return { lat: null, lng: null };
+    }
+
+    const [lng, lat] = coordinates;
+    return { lat, lng };
+  } catch (geoError) {
+    logger.warn('[geocodeOrigin] Geocoding threw, continuing without coordinates:', geoError);
+    return { lat: null, lng: null };
+  }
+};
+
 const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
   if (!error) return fallback;
   if (typeof error === 'string' && error.trim()) return error;
@@ -290,10 +314,18 @@ export const useServiceManager = () => {
           created_by: createdBy
         };
 
+        const originGeo = transformedData.origin
+          ? await geocodeOrigin(transformedData.origin)
+          : { lat: null, lng: null };
+        const transformedDataWithGeo = {
+          ...transformedData,
+          origin_lat: originGeo.lat,
+          origin_lng: originGeo.lng,
+        };
 
         const { data: newService, error: serviceError } = await supabase
           .from('services')
-          .insert(transformedData)
+          .insert(transformedDataWithGeo)
           .select(`
             *,
             client:clients!services_client_id_fkey(*),
@@ -731,6 +763,12 @@ export const useServiceManager = () => {
             outsourced_notes: serviceData.outsourcedNotes || null
           })
         };
+      }
+
+      if (serviceData.origin !== undefined && serviceData.origin && serviceData.origin.trim() !== '') {
+        const originGeo = await geocodeOrigin(serviceData.origin);
+        transformedData.origin_lat = originGeo.lat;
+        transformedData.origin_lng = originGeo.lng;
       }
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas

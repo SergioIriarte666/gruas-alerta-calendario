@@ -68,6 +68,7 @@ const routeImports = {
   Historical: () => import('@/pages/Historical'),
   ServiceRates: () => import('@/pages/ServiceRates'),
   ResetPassword: () => import('@/pages/ResetPassword'),
+  TrackService: () => import('@/pages/TrackService'),
   TripCalculator: () => import('@/pages/TripCalculator'),
   PerformanceTest: () => import('@/pages/PerformanceTest'),
   AuthCallback: () => import('@/pages/AuthCallback'),
@@ -120,6 +121,7 @@ const Historical = lazy(routeImports.Historical);
 const LibrosSii = lazy(routeImports.LibrosSii);
 const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
+const TrackService = lazy(routeImports.TrackService);
 const TripCalculator = lazy(routeImports.TripCalculator);
 const PerformanceTest = lazy(routeImports.PerformanceTest);
 const AuthCallback = lazy(routeImports.AuthCallback);
@@ -218,6 +220,7 @@ function AppContent() {
         <Route path="/register" element={<Suspense fallback={null}><Register /></Suspense>} />
         <Route path="/pending" element={<Suspense fallback={null}><PendingApproval /></Suspense>} />
         <Route path="/reset-password" element={<ErrorBoundary name="ResetPassword"><Suspense fallback={null}><ResetPassword /></Suspense></ErrorBoundary>} />
+        <Route path="/track/:token" element={<ErrorBoundary name="TrackService"><Suspense fallback={null}><TrackService /></Suspense></ErrorBoundary>} />
         <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
         <Route path="/debug-freeze" element={<DebugFreeze />} />
         <Route path="/connection-test" element={<ConnectionTest />} />

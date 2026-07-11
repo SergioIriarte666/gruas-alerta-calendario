@@ -257,6 +257,20 @@ export const ensureOperatorLocationSession = async (
   return data as OperatorLocationSession;
 };
 
+export const updateOperatorLocationSessionService = async (
+  sessionId: string,
+  serviceId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({ service_id: serviceId })
+    .eq('id', sessionId);
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo corregir la sesión de ubicación');
+  }
+};
+
 export const findActiveOperatorLocationSession = async (
   operatorId: string,
 ): Promise<OperatorLocationSession | null> => {
