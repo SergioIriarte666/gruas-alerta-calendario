@@ -376,6 +376,73 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ── TEXT SEARCH (Places API New) ─────────────────────────────────────────
+    // Para nombres coloquiales de lugares ("Salfa Norte") en vez de direcciones
+    // postales: Places resuelve establecimientos, Geocoding no. A diferencia de
+    // Geocoding, Places nunca devuelve centroides de pais/region como resultado.
+    if (action === "text_search") {
+      const { textQuery, locationBias, regionCode } = body;
+      if (!textQuery) {
+        return new Response(
+          JSON.stringify({ error: "textQuery is required" }),
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const payload: Record<string, unknown> = {
+        textQuery,
+        languageCode: "es-CL",
+        regionCode: regionCode ?? "CL",
+      };
+
+      if (locationBias?.lat !== undefined && locationBias?.lng !== undefined) {
+        payload.locationBias = {
+          circle: {
+            center: { latitude: Number(locationBias.lat), longitude: Number(locationBias.lng) },
+            radius: Number(locationBias.radius ?? 50000),
+          },
+        };
+      }
+
+      const res = await fetch(`${PLACES_BASE}/places:searchText`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": API_KEY,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.types",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      const durationMs = Date.now() - t0;
+      console.log(JSON.stringify({ action: "text_search", durationMs, ok: res.ok, status: res.status }));
+
+      if (!res.ok) {
+        return new Response(
+          JSON.stringify({ error: data?.error?.message ?? "Google Places text search error", details: data }),
+          { status: 502, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
+      const results = (data.places ?? []).map((p: {
+        id: string;
+        displayName?: { text?: string };
+        formattedAddress?: string;
+        location: { latitude: number; longitude: number };
+        types?: string[];
+      }) => ({
+        name: p.formattedAddress ?? p.displayName?.text ?? "",
+        // Keep [lng, lat] to match Mapbox-proxy format used in the codebase
+        coordinates: [p.location.longitude, p.location.latitude] as [number, number],
+        types: p.types ?? [],
+      }));
+
+      return new Response(JSON.stringify({ results }), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     // ── GEOCODE (Geocoding API) ──────────────────────────────────────────────
     if (action === "geocode") {
       const { address, query } = body;

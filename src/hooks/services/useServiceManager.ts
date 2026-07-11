@@ -39,6 +39,11 @@ const USEFUL_GEOCODE_TYPES = new Set([
   'locality',
 ]);
 
+// Centro de Copiapo (Atacama, Chile): sesgo por defecto para Places Text Search
+// cuando no se conocen coordenadas del departamento del cliente.
+const DEFAULT_PLACE_BIAS = { lat: -27.366, lng: -70.332 };
+const PLACE_BIAS_RADIUS_METERS = 50000;
+
 const resolveClientDepartment = async (clientId?: string | null): Promise<string | null> => {
   if (!clientId) return null;
 
@@ -51,7 +56,46 @@ const resolveClientDepartment = async (clientId?: string | null): Promise<string
   return data?.department || null;
 };
 
-const geocodeOrigin = async (
+// Nivel 1: Places Text Search. Los origenes del negocio son nombres coloquiales
+// de lugares ("Salfa Norte"), no direcciones postales, y Places resuelve
+// establecimientos donde Geocoding falla. Places nunca devuelve centroides de
+// pais/region: si hay resultado, es un lugar concreto y no necesita quality gate.
+const searchPlaceForOrigin = async (
+  address: string,
+  department?: string | null,
+): Promise<{ lat: number; lng: number } | null> => {
+  const textQuery = department ? `${address}, ${department}` : address;
+
+  try {
+    const { data, error } = await supabase.functions.invoke('maps-proxy', {
+      body: {
+        action: 'text_search',
+        textQuery,
+        locationBias: { ...DEFAULT_PLACE_BIAS, radius: PLACE_BIAS_RADIUS_METERS },
+        regionCode: 'CL',
+      },
+    });
+
+    if (error) {
+      logger.warn('[searchPlaceForOrigin] Places text search failed, falling back to geocoding:', error);
+      return null;
+    }
+
+    const coordinates = data?.results?.[0]?.coordinates as [number, number] | undefined;
+    if (!coordinates) return null;
+
+    const [lng, lat] = coordinates;
+    return { lat, lng };
+  } catch (placesError) {
+    logger.warn('[searchPlaceForOrigin] Places text search threw, falling back to geocoding:', placesError);
+    return null;
+  }
+};
+
+// Nivel 2 (fallback): Geocoding API, solo si Places no encontro nada. Conserva
+// el quality gate: Geocoding si devuelve centroides de pais/region para
+// direcciones que no reconoce.
+const geocodeAddressFallback = async (
   address: string,
   department?: string | null,
 ): Promise<{ lat: number | null; lng: number | null }> => {
@@ -63,7 +107,7 @@ const geocodeOrigin = async (
     });
 
     if (error) {
-      logger.warn('[geocodeOrigin] Geocoding failed, continuing without coordinates:', error);
+      logger.warn('[geocodeAddressFallback] Geocoding failed, continuing without coordinates:', error);
       return { lat: null, lng: null };
     }
 
@@ -79,16 +123,32 @@ const geocodeOrigin = async (
     const isLowQuality = types.some((type) => LOW_QUALITY_GEOCODE_TYPES.has(type));
     const hasUsefulType = types.some((type) => USEFUL_GEOCODE_TYPES.has(type));
     if (isLowQuality || !hasUsefulType) {
-      geocodingLogger.warn(`Geocoding de baja calidad para '${address}', se omiten coordenadas`);
       return { lat: null, lng: null };
     }
 
     const [lng, lat] = result.coordinates;
     return { lat, lng };
   } catch (geoError) {
-    logger.warn('[geocodeOrigin] Geocoding threw, continuing without coordinates:', geoError);
+    logger.warn('[geocodeAddressFallback] Geocoding threw, continuing without coordinates:', geoError);
     return { lat: null, lng: null };
   }
+};
+
+const geocodeOrigin = async (
+  address: string,
+  department?: string | null,
+): Promise<{ lat: number | null; lng: number | null }> => {
+  const placeResult = await searchPlaceForOrigin(address, department);
+  if (placeResult) {
+    return placeResult;
+  }
+
+  const fallbackResult = await geocodeAddressFallback(address, department);
+  if (fallbackResult.lat === null || fallbackResult.lng === null) {
+    geocodingLogger.warn(`Geocoding de baja calidad para '${address}', se omiten coordenadas`);
+  }
+
+  return fallbackResult;
 };
 
 const getReadableSupabaseError = (error: unknown, fallback = 'Error desconocido') => {
