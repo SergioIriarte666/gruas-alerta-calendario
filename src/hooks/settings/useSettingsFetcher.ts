@@ -15,7 +15,8 @@ const COMPANY_DATA_SELECT = `
   rut,
   logo_url,
   folio_format,
-  next_service_folio_number
+  next_service_folio_number,
+  operational_contact_phone
 `;
 
 export const useSettingsFetcher = () => {
@@ -54,6 +55,7 @@ export const useSettingsFetcher = () => {
           logo: companyData.logo_url ? `${companyData.logo_url}?t=${new Date().getTime()}` : undefined,
           folioFormat: companyData.folio_format || defaultSettings.company.folioFormat,
           nextServiceFolioNumber: companyData.next_service_folio_number || 1000,
+          operationalContactPhone: companyData.operational_contact_phone || defaultSettings.company.operationalContactPhone,
         };
       }
 

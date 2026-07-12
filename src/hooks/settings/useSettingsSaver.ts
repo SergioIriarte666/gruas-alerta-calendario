@@ -15,6 +15,7 @@ interface CompanyDataPayload {
   logo_url?: string | null;
   folio_format?: string;
   next_service_folio_number?: number;
+  operational_contact_phone: string;
 }
 
 export const useSettingsSaver = () => {
@@ -38,6 +39,7 @@ export const useSettingsSaver = () => {
             : null,
         folio_format: settings.company.folioFormat || 'SRV-{number}',
         next_service_folio_number: settings.company.nextServiceFolioNumber || 1000,
+        operational_contact_phone: settings.company.operationalContactPhone || '',
       };
 
       logger.debug('Intentando guardar datos de empresa (payload enviado):', companyPayload);

@@ -9,6 +9,9 @@ export interface CompanySettings {
   logo?: string;
   folioFormat: string;
   nextServiceFolioNumber?: number; // Nuevo campo para controlar numeración
+  /** Telefono de contacto operativo (independiente de `phone`), usado en el
+   * boton de llamada de la pagina publica de seguimiento (/track/:token). */
+  operationalContactPhone: string;
 }
 
 export type { ReportColumnsConfig } from './reportColumnConfig';
@@ -64,6 +67,7 @@ export const defaultSettings: Settings = {
     email: '',
     taxId: '',
     folioFormat: 'SRV-{number}',
+    operationalContactPhone: '',
   },
   user: {
     language: 'es',

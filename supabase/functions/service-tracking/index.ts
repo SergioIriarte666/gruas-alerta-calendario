@@ -127,24 +127,35 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(req, { error: "invalid_link" }, 404);
   }
 
-  const { data: service, error: serviceError } = await supabase
-    .from("services")
-    .select(`
-      folio,
-      status,
-      origin,
-      origin_lat,
-      origin_lng,
-      operator_id,
-      crane:cranes(license_plate, type),
-      operator:operators(name)
-    `)
-    .eq("id", link.service_id)
-    .maybeSingle();
+  const [{ data: service, error: serviceError }, { data: companyData }] = await Promise.all([
+    supabase
+      .from("services")
+      .select(`
+        folio,
+        status,
+        origin,
+        origin_lat,
+        origin_lng,
+        operator_id,
+        crane:cranes(license_plate, type),
+        operator:operators(name)
+      `)
+      .eq("id", link.service_id)
+      .maybeSingle(),
+    // Telefono de contacto operativo (Configuracion > Empresa), independiente
+    // del telefono legal/comercial. Fila unica de company_data.
+    supabase
+      .from("company_data")
+      .select("operational_contact_phone")
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (serviceError || !service) {
     return jsonResponse(req, { error: "invalid_link" }, 404);
   }
+
+  const supportPhone = companyData?.operational_contact_phone || null;
 
   // Fire-and-forget (awaited, error swallowed): no bloquea ni falla la respuesta.
   try {
@@ -173,7 +184,7 @@ Deno.serve(async (req: Request) => {
     // cierra, asi que revoked_at siempre estara seteado aqui: mostrar
     // "finalizado" de todas formas (sin posicion, no hay riesgo de exponer
     // tracking en vivo) en vez del invalid_link generico de mas abajo.
-    return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null });
+    return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null, support_phone: supportPhone });
   }
 
   // Revocacion manual/anticipada (servicio aun no finalizado): a diferencia
@@ -218,6 +229,7 @@ Deno.serve(async (req: Request) => {
       origin,
       journey_stage: "assigned",
       eta: null,
+      support_phone: supportPhone,
     });
   }
 
@@ -239,6 +251,7 @@ Deno.serve(async (req: Request) => {
       origin,
       journey_stage: "assigned",
       eta: null,
+      support_phone: supportPhone,
     });
   }
 
@@ -318,5 +331,6 @@ Deno.serve(async (req: Request) => {
     origin,
     journey_stage: journeyStage,
     eta,
+    support_phone: supportPhone,
   });
 });

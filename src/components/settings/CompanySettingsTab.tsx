@@ -211,6 +211,22 @@ export const CompanySettingsTab = () => {
           </div>
 
           <div>
+            <Label htmlFor="operationalContactPhone">Contacto operativo (seguimiento público)</Label>
+            <PhoneInput
+              id="operationalContactPhone"
+              value={localSettings.operationalContactPhone ?? ''}
+              onChange={(v) => handleInputChange('operationalContactPhone', v)}
+              placeholder="9 XXXX XXXX"
+              className={inputClassName}
+            />
+            <p className="mt-1 text-sm text-muted-foreground">
+              Número que ve el cliente en el botón "Llamar" de la página pública de seguimiento
+              (/track). Independiente del teléfono de arriba; si se deja vacío, se usa un número
+              por defecto.
+            </p>
+          </div>
+
+          <div>
             <Label htmlFor="folioFormat">Formato de folio</Label>
             <Input
               id="folioFormat"

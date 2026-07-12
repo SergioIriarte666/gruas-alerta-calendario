@@ -25,11 +25,14 @@ const EARTH_RADIUS_KM = 6371;
 const LOGO_SRC = '/logo-gruas-5-norte.png';
 const COMPANY_NAME = 'Grúas 5 Norte';
 const COMPANY_LOCATION = 'Copiapó';
-// Telefono publico de contacto (mismo que figura en los PDF de servicio
-// externo). Constante de frontend a proposito: no forma parte del contrato
-// de service-tracking.
-const COMPANY_PHONE_E164 = '+56962380627';
-const COMPANY_PHONE_DISPLAY = '+56 9 6238 0627';
+// Fallback si Configuracion > Empresa > "Contacto operativo" esta vacio: el
+// backend (service-tracking) manda ese valor como support_phone; este es
+// solo el respaldo para que el boton nunca quede roto/sin numero.
+const DEFAULT_COMPANY_PHONE_E164 = '+56962380627';
+
+// El valor guardado en Configuracion trae formato "+56 9 1234 5678" (ver
+// PhoneInput): quitar espacios para armar un href tel: valido.
+const toTelHref = (phone: string): string => `tel:${phone.replace(/\s+/g, '')}`;
 
 const prefersReducedMotion = (): boolean =>
   typeof window !== 'undefined'
@@ -344,6 +347,7 @@ interface TrackingResponse {
   origin?: { lat: number | null; lng: number | null; text: string | null };
   journey_stage?: JourneyStage;
   eta?: { seconds: number; distance_meters: number; polyline: string } | null;
+  support_phone?: string | null;
 }
 
 type PageStatus = 'loading' | 'ready' | 'invalid' | 'error';
@@ -638,9 +642,9 @@ const NoSignalBanner = () => (
   </div>
 );
 
-const CallButton = () => (
+const CallButton = ({ phone }: { phone?: string | null }) => (
   <Button variant="outline" size="sm" className="w-full gap-2" asChild>
-    <a href={`tel:${COMPANY_PHONE_E164}`}>
+    <a href={toTelHref(phone || DEFAULT_COMPANY_PHONE_E164)}>
       <Phone className="size-4" />
       Llamar a {COMPANY_NAME}
     </a>
@@ -789,7 +793,7 @@ const TrackService = () => {
             </p>
           )}
 
-          <CallButton />
+          <CallButton phone={data.support_phone} />
 
           <p className="text-center text-[11px] text-muted-foreground/80">
             {COMPANY_NAME} SpA · {COMPANY_LOCATION}
