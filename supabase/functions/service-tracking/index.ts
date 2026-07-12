@@ -123,7 +123,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const now = Date.now();
-  if (link.revoked_at || new Date(link.expires_at).getTime() <= now) {
+  if (new Date(link.expires_at).getTime() <= now) {
     return jsonResponse(req, { error: "invalid_link" }, 404);
   }
 
@@ -169,7 +169,17 @@ Deno.serve(async (req: Request) => {
   };
 
   if (FINISHED_STATUSES.includes(service.status)) {
+    // El trigger de revocacion corre en el mismo instante en que el servicio
+    // cierra, asi que revoked_at siempre estara seteado aqui: mostrar
+    // "finalizado" de todas formas (sin posicion, no hay riesgo de exponer
+    // tracking en vivo) en vez del invalid_link generico de mas abajo.
     return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null });
+  }
+
+  // Revocacion manual/anticipada (servicio aun no finalizado): a diferencia
+  // del caso de arriba, aqui si debe cortar el acceso por completo.
+  if (link.revoked_at) {
+    return jsonResponse(req, { error: "invalid_link" }, 404);
   }
 
   let session: { id: string } | null = null;
