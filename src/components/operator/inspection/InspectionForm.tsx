@@ -135,9 +135,10 @@ export const InspectionForm = ({
       .then(async (blockedByExisting) => {
         if (blockedByExisting) return;
 
-    // Si el servicio está en estado "pending", comenzar limpio
-    if (service?.status === 'pending') {
-      logger.debug('🧹 Service is pending - starting fresh');
+    // Si el servicio esta recien asignado o recien iniciado ("Iniciar Servicio"
+    // aun no completa la inspeccion inicial), comenzar limpio.
+    if (service?.status === 'pending' || service?.status === 'in_progress') {
+      logger.debug('🧹 Service is pending/in_progress - starting fresh');
       clearPersistedData();
       setCurrentPhase('initial');
       setIsInitialized(true);

@@ -166,6 +166,7 @@ export async function sendWhatsAppTemplate(
   templateName: string,
   parameters: string[],
   options: WhatsAppSendOptions = {},
+  buttonUrlParam?: string,
 ): Promise<WhatsAppSendResult> {
   const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
   const token = Deno.env.get("WHATSAPP_TOKEN");
@@ -205,6 +206,22 @@ export async function sendWhatsAppTemplate(
     };
   }
 
+  const components: Record<string, unknown>[] = [
+    {
+      type: "body",
+      parameters: parameters.map((text) => ({ type: "text", text })),
+    },
+  ];
+
+  if (buttonUrlParam) {
+    components.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [{ type: "text", text: buttonUrlParam }],
+    });
+  }
+
   const payload = {
     messaging_product: "whatsapp",
     to: recipient,
@@ -212,12 +229,7 @@ export async function sendWhatsAppTemplate(
     template: {
       name: templateName,
       language: { code: "es_CL" },
-      components: [
-        {
-          type: "body",
-          parameters: parameters.map((text) => ({ type: "text", text })),
-        },
-      ],
+      components,
     },
   };
 

@@ -3,10 +3,11 @@ import { Service } from '@/types';
 import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play, Package, Navigation, Car } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getTodayLocal, safeDaysSince } from '@/utils/timezoneUtils';
 import { openNavigation } from '@/utils/navigationUtils';
 import { cn } from '@/lib/utils';
+import { useServiceStatusUpdate } from '@/hooks/inspection/useServiceStatusUpdate';
 
 interface AssignedServiceCardProps {
   service: Service;
@@ -116,6 +117,18 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   const borderClass = getUrgencyBorder(service.serviceDate, status);
   const baseCard = cn('bg-zinc-900 border border-white/5 border-l-2 rounded-2xl px-4 py-3', borderClass);
 
+  const navigate = useNavigate();
+  const { updateServiceStatusMutation } = useServiceStatusUpdate(service.id);
+
+  const handleStartService = async () => {
+    try {
+      await updateServiceStatusMutation.mutateAsync({ id: service.id, targetStatus: 'in_progress' });
+      navigate(`/operator/service/${service.id}/inspection`);
+    } catch {
+      // el hook ya muestra el toast de error, no hay nada mas que hacer aqui
+    }
+  };
+
   // COMPLETADO
   if (status === 'completed') {
     return (
@@ -129,14 +142,15 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   // EN PROGRESO
   if (status === 'in_progress') {
     return (
-      <div className={baseCard}>
-        <CardHeader service={service} rightSlot={<Play className="size-4 text-blue-400 flex-shrink-0" />} />
-        <CardBody service={service} />
-        <div className="mt-3 text-xs text-blue-400 font-medium flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-blue-400 animate-pulse" />
-          Servicio en progreso
+      <Link to={`/operator/service/${service.id}/inspection`} className="block">
+        <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
+          <CardHeader service={service} rightSlot={<Play className="size-4 text-blue-400 flex-shrink-0" />} />
+          <CardBody service={service} showNavigation />
+          <div className="mt-3 bg-blue-950/50 border border-blue-900/50 rounded-xl px-3 py-2 text-xs text-blue-400 font-medium text-center">
+            Toca para continuar con la inspección inicial
+          </div>
         </div>
-      </div>
+      </Link>
     );
   }
 
@@ -158,12 +172,18 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   // PENDIENTE
   if (status === 'pending') {
     return (
-      <Link to={`/operator/service/${service.id}/inspection`} className="block">
-        <div className={cn(baseCard, 'active:scale-[0.99] transition-transform')}>
-          <CardHeader service={service} rightSlot={<ChevronRight className="size-4 text-zinc-600 flex-shrink-0" />} />
-          <CardBody service={service} showNavigation />
-        </div>
-      </Link>
+      <div className={baseCard}>
+        <CardHeader service={service} rightSlot={<ChevronRight className="size-4 text-zinc-600 flex-shrink-0" />} />
+        <CardBody service={service} showNavigation />
+        <button
+          type="button"
+          onClick={handleStartService}
+          disabled={updateServiceStatusMutation.isPending}
+          className="mt-3 w-full bg-blue-950/50 border border-blue-900/50 rounded-xl px-3 py-2 text-xs text-blue-400 font-medium text-center active:scale-[0.99] transition-transform disabled:opacity-60"
+        >
+          {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
+        </button>
+      </div>
     );
   }
 

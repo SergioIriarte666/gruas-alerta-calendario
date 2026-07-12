@@ -6,6 +6,7 @@ import { createLogger } from '@/lib/logger';
 import { businessClock } from '@/utils/businessClock';
 import { formatMinutesAgo } from '@/types/operatorLocations';
 import { getCraneTypeLabel } from '@/utils/craneType';
+import { cn } from '@/lib/utils';
 
 const logger = createLogger('PublicTracking');
 
@@ -166,6 +167,101 @@ const haversineDistanceKm = (a: [number, number], b: [number, number]): number =
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
 };
 
+// Decodifica una polyline codificada de Google (mismo algoritmo que usa
+// maps-proxy) — el backend de service-tracking envia la polyline sin
+// decodificar, este es el unico consumidor.
+const decodePolyline = (encoded: string): [number, number][] => {
+  const coords: [number, number][] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < encoded.length) {
+    let result = 0;
+    let shift = 0;
+    let b: number;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+    result = 0;
+    shift = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+    coords.push([lng / 1e5, lat / 1e5]);
+  }
+
+  return coords;
+};
+
+const ROUTE_SOURCE_ID = 'tm-route-source';
+const ROUTE_LAYER_ID = 'tm-route-layer';
+const DEFAULT_ROUTE_COLOR = '#8b5cf6';
+
+const resolvePrimaryColor = (): string => {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+  return raw ? `hsl(${raw})` : DEFAULT_ROUTE_COLOR;
+};
+
+const formatEtaLabel = (seconds: number): string => {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return `Tu grúa llega en ~${minutes} min`;
+};
+
+type JourneyStage = 'assigned' | 'en_route' | 'on_site' | 'towing' | 'finished';
+
+const JOURNEY_STEPS: { key: JourneyStage; label: string }[] = [
+  { key: 'assigned', label: 'Asignado' },
+  { key: 'en_route', label: 'En camino' },
+  { key: 'on_site', label: 'En el lugar' },
+  { key: 'towing', label: 'Trasladando' },
+  { key: 'finished', label: 'Finalizado' },
+];
+
+const JourneyStepper = ({ stage }: { stage: JourneyStage }) => {
+  const currentIndex = JOURNEY_STEPS.findIndex((step) => step.key === stage);
+
+  return (
+    <div className="flex items-center gap-1 border-b border-zinc-200 bg-white px-3 py-3">
+      {JOURNEY_STEPS.map((step, index) => {
+        const isDone = currentIndex >= 0 && index < currentIndex;
+        const isCurrent = index === currentIndex;
+        return (
+          <div key={step.key} className="flex flex-1 items-center last:flex-none">
+            <div className="flex flex-col items-center gap-1">
+              <span
+                className={cn(
+                  'size-2.5 rounded-full transition-colors',
+                  isCurrent ? 'bg-cyan-600 ring-4 ring-cyan-100' : isDone ? 'bg-cyan-600' : 'bg-zinc-300',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-center text-[10px] font-medium leading-tight',
+                  isCurrent ? 'text-cyan-700' : 'text-zinc-400',
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {index < JOURNEY_STEPS.length - 1 && (
+              <div className={cn('mx-1 h-0.5 flex-1', isDone ? 'bg-cyan-600' : 'bg-zinc-200')} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 type TrackingState = 'active' | 'no_signal' | 'waiting' | 'finished';
 
 interface TrackingResponse {
@@ -181,6 +277,8 @@ interface TrackingResponse {
     recorded_at: string;
   } | null;
   origin?: { lat: number | null; lng: number | null; text: string | null };
+  journey_stage?: JourneyStage;
+  eta?: { seconds: number; distance_meters: number; polyline: string } | null;
 }
 
 type PageStatus = 'loading' | 'ready' | 'invalid' | 'error';
@@ -197,9 +295,17 @@ const useServiceTrackingPoll = (token: string | undefined) => {
 
     let cancelled = false;
     let intervalId: number | null = null;
+    let finished = false;
+
+    const stopPolling = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
 
     const poll = async () => {
-      if (document.hidden) return;
+      if (document.hidden || finished) return;
       try {
         const response = await fetch(
           `${SUPABASE_URL}/functions/v1/service-tracking?token=${encodeURIComponent(token)}`,
@@ -214,6 +320,11 @@ const useServiceTrackingPoll = (token: string | undefined) => {
         const json = (await response.json()) as TrackingResponse;
         setData(json);
         setStatus('ready');
+
+        if (json.state === 'finished') {
+          finished = true;
+          stopPolling();
+        }
       } catch (error) {
         if (cancelled) return;
         logger.warn('No se pudo obtener el estado de seguimiento', error);
@@ -222,7 +333,9 @@ const useServiceTrackingPoll = (token: string | undefined) => {
     };
 
     void poll();
-    intervalId = window.setInterval(() => void poll(), POLL_INTERVAL_MS);
+    if (!finished) {
+      intervalId = window.setInterval(() => void poll(), POLL_INTERVAL_MS);
+    }
 
     const handleVisibility = () => {
       if (!document.hidden) void poll();
@@ -231,7 +344,7 @@ const useServiceTrackingPoll = (token: string | undefined) => {
 
     return () => {
       cancelled = true;
-      if (intervalId !== null) window.clearInterval(intervalId);
+      stopPolling();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [token]);
@@ -248,6 +361,7 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
   const originMarkerRef = useRef<import('mapbox-gl').Marker | null>(null);
   const originElRefs = useRef<ReturnType<typeof createOriginMarkerElement> | null>(null);
   const [mapboxReady, setMapboxReady] = useState(false);
+  const [styleLoaded, setStyleLoaded] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || !MAPBOX_TOKEN) return;
@@ -271,6 +385,11 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
           zoom: 13,
         });
         localMap.addControl(new mapboxgl.default.NavigationControl({ showCompass: false }), 'top-right');
+        // addSource/addLayer (linea de ruta) exigen que el estilo ya haya
+        // cargado; los Marker DOM no, por eso mapboxReady no basta para ellos.
+        localMap.once('load', () => {
+          if (!cancelled) setStyleLoaded(true);
+        });
         mapRef.current = localMap;
         setMapboxReady(true);
       })
@@ -281,6 +400,7 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     return () => {
       cancelled = true;
       setMapboxReady(false);
+      setStyleLoaded(false);
       craneMarkerRef.current?.remove();
       craneMarkerRef.current = null;
       craneElRefs.current = null;
@@ -296,6 +416,31 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     const map = mapRef.current;
     const mapboxgl = mapboxRef.current;
     if (!map || !mapboxgl || !mapboxReady) return;
+
+    // Linea de ruta hasta el origen: bajo los marcadores por defecto, ya que
+    // estos son elementos DOM (Marker), no layers del mapa GL.
+    if (styleLoaded) {
+      const polylineCoords = data.eta?.polyline ? decodePolyline(data.eta.polyline) : [];
+      const routeData = {
+        type: 'Feature' as const,
+        properties: {},
+        geometry: { type: 'LineString' as const, coordinates: polylineCoords },
+      };
+
+      const existingSource = map.getSource(ROUTE_SOURCE_ID) as import('mapbox-gl').GeoJSONSource | undefined;
+      if (existingSource) {
+        existingSource.setData(routeData);
+      } else if (polylineCoords.length > 1) {
+        map.addSource(ROUTE_SOURCE_ID, { type: 'geojson', data: routeData });
+        map.addLayer({
+          id: ROUTE_LAYER_ID,
+          type: 'line',
+          source: ROUTE_SOURCE_ID,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 'line-color': resolvePrimaryColor(), 'line-width': 4 },
+        });
+      }
+    }
 
     const craneCoords: [number, number] | null = data.position
       ? [data.position.lng, data.position.lat]
@@ -363,7 +508,7 @@ const TrackingMap = ({ data }: { data: TrackingResponse }) => {
     } catch (error) {
       logger.warn('No se pudo ajustar el mapa a los marcadores', error);
     }
-  }, [data, mapboxReady]);
+  }, [data, mapboxReady, styleLoaded]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -416,7 +561,12 @@ const TrackService = () => {
   }
 
   if (data.state === 'finished') {
-    return <StatusMessage title="Servicio finalizado" subtitle={`Folio ${data.folio}`} />;
+    return (
+      <StatusMessage
+        title="Servicio finalizado — gracias por confiar en nosotros"
+        subtitle={`Folio ${data.folio}`}
+      />
+    );
   }
 
   const headerLabel = data.state === 'waiting'
@@ -440,12 +590,17 @@ const TrackService = () => {
           )}
           {data.operator_first_name && <span>Operador: {data.operator_first_name}</span>}
         </div>
+        {data.eta && (
+          <p className="mt-2 text-sm font-semibold text-cyan-700">{formatEtaLabel(data.eta.seconds)}</p>
+        )}
         {timestampLabel && (
           <p className="mt-1 text-xs text-zinc-400">
             {data.state === 'no_signal' ? `Última posición conocida ${timestampLabel}` : `Actualizado ${timestampLabel}`}
           </p>
         )}
       </div>
+
+      <JourneyStepper stage={data.journey_stage ?? 'assigned'} />
 
       <div className="flex-1">
         {data.state === 'waiting' ? (

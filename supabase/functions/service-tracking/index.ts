@@ -11,11 +11,73 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 const FINISHED_STATUSES = ["completed", "cancelled", "invoiced"];
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 
+// Journey stage (Fase 2): distancias del ultimo punto al origen que marcan
+// llegada ("on_site") y posterior alejamiento con carga ("towing"). on_site
+// es "sticky" via on_site_reached_at: una vez detectado no vuelve a en_route.
+const ON_SITE_METERS = 300;
+const TOWING_METERS = 500;
+const ETA_CACHE_MS = 60 * 1000;
+const ROUTES_BASE = "https://routes.googleapis.com/directions/v2:computeRoutes";
+const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY") ?? "";
+
+type Eta = { seconds: number; distance_meters: number; polyline: string } | null;
+
 const jsonResponse = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
   });
+
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** Duracion/distancia/polyline via Routes API. La polyline viaja codificada:
+ * el cliente la decodifica (mismo algoritmo que usa maps-proxy). */
+async function fetchEta(
+  originLat: number,
+  originLng: number,
+  destLat: number,
+  destLng: number,
+): Promise<Eta> {
+  if (!GOOGLE_MAPS_API_KEY) return null;
+  try {
+    const res = await fetch(ROUTES_BASE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
+      },
+      body: JSON.stringify({
+        origin: { location: { latLng: { latitude: originLat, longitude: originLng } } },
+        destination: { location: { latLng: { latitude: destLat, longitude: destLng } } },
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+        computeAlternativeRoutes: false,
+        languageCode: "es-CL",
+        units: "METRIC",
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const route = Array.isArray(data.routes) ? data.routes[0] : null;
+    if (!route?.polyline?.encodedPolyline) return null;
+    return {
+      seconds: parseInt(String(route.duration ?? "0s").replace("s", ""), 10) || 0,
+      distance_meters: Number(route.distanceMeters ?? 0),
+      polyline: route.polyline.encodedPolyline,
+    };
+  } catch (error) {
+    console.warn("[service-tracking] fetchEta failed:", error);
+    return null;
+  }
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -48,7 +110,11 @@ Deno.serve(async (req: Request) => {
 
   const { data: link, error: linkError } = await supabase
     .from("service_tracking_links")
-    .select("id, service_id, revoked_at, expires_at, access_count")
+    .select(`
+      id, service_id, revoked_at, expires_at, access_count,
+      eta_seconds, eta_distance_meters, eta_polyline, eta_cached_at,
+      on_site_reached_at
+    `)
     .eq("token", token)
     .maybeSingle();
 
@@ -103,7 +169,7 @@ Deno.serve(async (req: Request) => {
   };
 
   if (FINISHED_STATUSES.includes(service.status)) {
-    return jsonResponse(req, { state: "finished", folio: service.folio });
+    return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null });
   }
 
   let session: { id: string } | null = null;
@@ -140,6 +206,8 @@ Deno.serve(async (req: Request) => {
       operator_first_name: operatorFirstName,
       position: null,
       origin,
+      journey_stage: "assigned",
+      eta: null,
     });
   }
 
@@ -159,13 +227,74 @@ Deno.serve(async (req: Request) => {
       operator_first_name: operatorFirstName,
       position: null,
       origin,
+      journey_stage: "assigned",
+      eta: null,
     });
   }
 
   const isStale = now - new Date(point.recorded_at).getTime() > STALE_THRESHOLD_MS;
+  const state = isStale ? "no_signal" : "active";
+
+  const hasOrigin = origin.lat != null && origin.lng != null;
+  const distanceToOriginM = hasOrigin
+    ? haversineMeters(point.latitude, point.longitude, origin.lat as number, origin.lng as number)
+    : null;
+
+  let journeyStage: "assigned" | "en_route" | "on_site" | "towing" = "en_route";
+  let onSiteReachedAt = link.on_site_reached_at as string | null;
+
+  if (distanceToOriginM !== null) {
+    if (onSiteReachedAt && distanceToOriginM > TOWING_METERS) {
+      journeyStage = "towing";
+    } else if (distanceToOriginM < ON_SITE_METERS) {
+      journeyStage = "on_site";
+      if (!onSiteReachedAt) {
+        onSiteReachedAt = new Date().toISOString();
+        try {
+          await supabase
+            .from("service_tracking_links")
+            .update({ on_site_reached_at: onSiteReachedAt })
+            .eq("id", link.id);
+        } catch {
+          // no-op: el hito es informativo, nunca debe romper el seguimiento publico
+        }
+      }
+    } else if (onSiteReachedAt) {
+      journeyStage = "on_site";
+    }
+  }
+
+  let eta: Eta = null;
+  if (state === "active" && hasOrigin) {
+    const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
+    if (now - cachedAt < ETA_CACHE_MS && link.eta_polyline) {
+      eta = {
+        seconds: link.eta_seconds as number,
+        distance_meters: link.eta_distance_meters as number,
+        polyline: link.eta_polyline as string,
+      };
+    } else {
+      eta = await fetchEta(point.latitude, point.longitude, origin.lat as number, origin.lng as number);
+      if (eta) {
+        try {
+          await supabase
+            .from("service_tracking_links")
+            .update({
+              eta_seconds: eta.seconds,
+              eta_distance_meters: eta.distance_meters,
+              eta_polyline: eta.polyline,
+              eta_cached_at: new Date().toISOString(),
+            })
+            .eq("id", link.id);
+        } catch {
+          // no-op: el cache de ETA es una optimizacion, nunca debe romper el seguimiento publico
+        }
+      }
+    }
+  }
 
   return jsonResponse(req, {
-    state: isStale ? "no_signal" : "active",
+    state,
     folio: service.folio,
     crane: craneInfo,
     operator_first_name: operatorFirstName,
@@ -177,5 +306,7 @@ Deno.serve(async (req: Request) => {
       recorded_at: point.recorded_at,
     },
     origin,
+    journey_stage: journeyStage,
+    eta,
   });
 });
