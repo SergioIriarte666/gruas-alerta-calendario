@@ -602,6 +602,7 @@ export type Database = {
           next_excess_folio_number: number | null
           next_invoice_folio_number: number | null
           next_service_folio_number: number
+          operational_contact_phone: string | null
           phone: string
           report_timezone: string
           report_use_system_timezone: boolean
@@ -632,6 +633,7 @@ export type Database = {
           next_excess_folio_number?: number | null
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
+          operational_contact_phone?: string | null
           phone: string
           report_timezone?: string
           report_use_system_timezone?: boolean
@@ -662,6 +664,7 @@ export type Database = {
           next_excess_folio_number?: number | null
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
+          operational_contact_phone?: string | null
           phone?: string
           report_timezone?: string
           report_use_system_timezone?: boolean
@@ -5730,14 +5733,96 @@ export type Database = {
           },
         ]
       }
+      service_route_metrics: {
+        Row: {
+          computed_at: string
+          en_route_distance_km: number | null
+          en_route_duration_minutes: number | null
+          first_point_at: string
+          gaps_count: number
+          last_point_at: string
+          low_confidence: boolean
+          points_count: number
+          service_id: string
+          total_distance_km: number
+          total_duration_minutes: number
+          towing_distance_km: number | null
+          towing_duration_minutes: number | null
+        }
+        Insert: {
+          computed_at?: string
+          en_route_distance_km?: number | null
+          en_route_duration_minutes?: number | null
+          first_point_at: string
+          gaps_count: number
+          last_point_at: string
+          low_confidence?: boolean
+          points_count: number
+          service_id: string
+          total_distance_km: number
+          total_duration_minutes: number
+          towing_distance_km?: number | null
+          towing_duration_minutes?: number | null
+        }
+        Update: {
+          computed_at?: string
+          en_route_distance_km?: number | null
+          en_route_duration_minutes?: number | null
+          first_point_at?: string
+          gaps_count?: number
+          last_point_at?: string
+          low_confidence?: boolean
+          points_count?: number
+          service_id?: string
+          total_distance_km?: number
+          total_duration_minutes?: number
+          towing_distance_km?: number | null
+          towing_duration_minutes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_route_metrics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_route_metrics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_route_metrics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_route_metrics_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_tracking_links: {
         Row: {
           access_count: number
           created_at: string
           created_by: string | null
+          eta_cached_at: string | null
+          eta_distance_meters: number | null
+          eta_polyline: string | null
+          eta_seconds: number | null
           expires_at: string
           id: string
           last_accessed_at: string | null
+          on_site_reached_at: string | null
           revoked_at: string | null
           service_id: string
           token: string
@@ -5746,9 +5831,14 @@ export type Database = {
           access_count?: number
           created_at?: string
           created_by?: string | null
+          eta_cached_at?: string | null
+          eta_distance_meters?: number | null
+          eta_polyline?: string | null
+          eta_seconds?: number | null
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
+          on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id: string
           token: string
@@ -5757,9 +5847,14 @@ export type Database = {
           access_count?: number
           created_at?: string
           created_by?: string | null
+          eta_cached_at?: string | null
+          eta_distance_meters?: number | null
+          eta_polyline?: string | null
+          eta_seconds?: number | null
           expires_at?: string
           id?: string
           last_accessed_at?: string | null
+          on_site_reached_at?: string | null
           revoked_at?: string | null
           service_id?: string
           token?: string
@@ -7740,6 +7835,10 @@ export type Database = {
         Returns: Json
       }
       comprehensive_payment_diagnosis: { Args: never; Returns: Json }
+      compute_service_route_metrics: {
+        Args: { p_service_id: string }
+        Returns: undefined
+      }
       create_automatic_payment_for_invoice:
         | { Args: { p_invoice_id: string }; Returns: Json }
         | {
@@ -8134,6 +8233,10 @@ export type Database = {
           p_rut: string
           p_subcategory: string
         }
+        Returns: string
+      }
+      get_or_create_tracking_token: {
+        Args: { p_created_by?: string; p_service_id: string }
         Returns: string
       }
       get_overdue_invoices_for_alerts: {

@@ -27,10 +27,12 @@ import {
   Pencil,
   Plus,
   ExternalLink,
-  Share2
+  Share2,
+  Route
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useClients } from '@/hooks/useClients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,6 +62,7 @@ import { MarkServiceDisputeModal } from './disputes/MarkServiceDisputeModal';
 import { ResolveServiceDisputeModal } from './disputes/ResolveServiceDisputeModal';
 import { DISPUTE_TYPE_LABELS } from '@/utils/serviceDisputeUtils';
 import { useServiceLatestOperatorLocation } from '@/hooks/useServiceLatestOperatorLocation';
+import { useServiceRouteMetrics } from '@/hooks/useServiceRouteMetrics';
 import { CheckCircle2 } from 'lucide-react';
 import {
   VENTA_PRODUCTOS_SERVICE_TYPE_ID,
@@ -127,6 +130,72 @@ const formatAccuracy = (value: number | null) => {
 
 const buildGoogleMapsUrl = (latitude: number, longitude: number) =>
   `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+
+const FINAL_SERVICE_STATUSES = ['completed', 'cancelled', 'invoiced', 'partially_invoiced'];
+
+const formatKmCL = (value: number) =>
+  `${value.toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+
+const formatDurationHumanized = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes === 0 ? `${hours} h` : `${hours} h ${remainingMinutes} min`;
+};
+
+interface RouteMetricsSectionProps {
+  serviceId: string;
+  status: string;
+  isOpen: boolean;
+}
+
+const RouteMetricsSection = ({ serviceId, status, isOpen }: RouteMetricsSectionProps) => {
+  const { data: routeMetrics, isLoading } = useServiceRouteMetrics(serviceId, isOpen);
+
+  if (isLoading) return null;
+
+  const hasBreakdown = routeMetrics?.en_route_distance_km != null && routeMetrics?.towing_distance_km != null;
+
+  return (
+    <DetailSection title="Recorrido" icon={Route} color="cyan">
+      {routeMetrics ? (
+        <>
+          <DetailItem icon={Gauge} label="Distancia recorrida" value={formatKmCL(routeMetrics.total_distance_km)} />
+          <DetailItem icon={Timer} label="Tiempo en servicio" value={formatDurationHumanized(routeMetrics.total_duration_minutes)} />
+          {hasBreakdown && (
+            <p className="col-span-1 text-sm text-muted-foreground md:col-span-2">
+              Ida: {formatKmCL(routeMetrics.en_route_distance_km as number)} · {formatDurationHumanized(routeMetrics.en_route_duration_minutes as number)}
+              {' — '}
+              Traslado: {formatKmCL(routeMetrics.towing_distance_km as number)} · {formatDurationHumanized(routeMetrics.towing_duration_minutes as number)}
+            </p>
+          )}
+          {routeMetrics.low_confidence && (
+            <div className="col-span-1 md:col-span-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="cursor-help text-amber-700 border-amber-300 bg-amber-50">
+                      Datos parciales
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    El GPS tuvo huecos de señal durante este servicio; los valores pueden estar subestimados.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="col-span-1 text-sm text-muted-foreground md:col-span-2">
+          {FINAL_SERVICE_STATUSES.includes(status)
+            ? 'Sin registro GPS para este servicio.'
+            : 'El recorrido se calculará al cerrar el servicio.'}
+        </p>
+      )}
+    </DetailSection>
+  );
+};
 
 type SectionColor = 'blue' | 'green' | 'violet' | 'orange' | 'cyan' | 'rose' | 'amber' | 'emerald';
 
@@ -897,7 +966,13 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       </DetailSection>
                     </div>
                   )}
-                  
+
+                  <RouteMetricsSection
+                    serviceId={serviceData.id}
+                    status={serviceData.status}
+                    isOpen={isOpen}
+                  />
+
                   <DetailSection title="Finanzas" icon={DollarSign} color="emerald">
                         {serviceBreakdown.hasBothValues ? (
                           <>
