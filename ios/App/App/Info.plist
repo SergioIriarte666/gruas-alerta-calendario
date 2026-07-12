@@ -32,6 +32,8 @@
 	<string>TMS Operador usa tu ubicacion para asociar tu posicion al servicio activo y reportar avances operativos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>TMS Operador accede a tu galeria para adjuntar fotografias del servicio y evidencias operativas.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>TMS Operador guarda y gestiona fotografias de evidencias operativas asociadas a servicios e inspecciones.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
