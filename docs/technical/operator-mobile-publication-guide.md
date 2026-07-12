@@ -1,32 +1,44 @@
 # Guia de publicacion de la app operador movil
 
 ## Objetivo
-Esta guia documenta como preparar, publicar y compartir la app movil del operador para iPhone y Android usando la implementacion actual con Capacitor.
+Esta guia resume el flujo real de publicacion y distribucion de `TMS Operador` en iPhone y Android usando Capacitor.
 
-Esta pensada para el proyecto:
+Aplica a este proyecto:
 - app id: `cl.gruas5norte.tmsoperador`
 - nombre visible: `TMS Operador`
 
-## Estado actual del proyecto
-La app ya cuenta con:
-- proyecto iOS en [ios/](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/ios)
-- proyecto Android en [android/](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android)
-- build movil dedicada con `npm run build:operator-mobile`
-- sincronizacion nativa con `npm run cap:sync`
-- icono aplicado para iPhone, Android y web
-- permiso de ubicacion configurado en iOS
+## Estado actual a julio 2026
 
-## Estrategia recomendada
-Orden sugerido para este proyecto:
+### iPhone / App Store
+- cuenta Apple Developer activa
+- App Store Connect habilitado
+- ficha de App Store completada
+- politica de privacidad publicada
+- capturas de iPhone cargadas
+- capturas de iPad 13" cargadas
+- build enviado a Apple:
+  - version: `1.0.1`
+  - build: `4`
+  - estado: pendiente de revision por Apple
 
-1. publicar primero en **TestFlight**
-2. distribuir el APK o usar **Internal Testing** en Android
-3. validar con operadores reales
-4. decidir despues si se hace publicacion formal en App Store y Google Play
+### Android / Google Play
+- proyecto Android operativo
+- APK debug generado para pruebas manuales
+- AAB release firmado generado para Google Play
+- version actual Android:
+  - `versionCode = 2`
+  - `versionName = "1.0.1"`
+- cuenta Play Console aun pendiente de verificacion final por Google
 
-## Flujo general antes de publicar
+## Archivos clave del proyecto
+- proyecto iOS: [ios/App/App.xcodeproj](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/ios/App/App.xcodeproj)
+- proyecto Android: [android/](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android)
+- configuracion Android: [android/app/build.gradle](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android/app/build.gradle)
+- permisos iPhone: [ios/App/App/Info.plist](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/ios/App/App/Info.plist)
 
-### 1. Preparar la build web movil
+## Preparacion comun antes de publicar
+
+### 1. Preparar la build movil
 Ejecutar:
 
 ```bash
@@ -34,37 +46,48 @@ npm run build:operator-mobile
 npm run cap:sync
 ```
 
-Esto deja actualizados los assets web dentro de iOS y Android.
+Para Android:
 
-### 2. Confirmar contenido listo
-Antes de publicar conviene revisar:
-- nombre de app
-- icono
-- permisos de ubicacion
-- login operador
-- dashboard operador
+```bash
+npm run sync:android
+```
+
+Para iPhone:
+
+```bash
+npm run sync:ios
+```
+
+### 2. Confirmar flujo funcional
+Antes de publicar o subir una nueva build conviene validar:
+- login del operador
+- lectura de servicios asignados
 - compartir ubicacion
-- Google Maps
-- textos visibles para operador
+- visibilidad de la ubicacion en TMS
+- captura de fotografias y evidencias
+- apertura de Google Maps
+- cierre de sesion
 
-### 3. Definir entorno
-Antes de subir a usuarios reales, confirmar:
-- URL backend o configuracion productiva correcta
-- claves y configuracion Supabase correctas
-- cuentas reales de prueba para operadores
+### 3. Confirmar version
+Revisar:
+- Android en [android/app/build.gradle](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android/app/build.gradle)
+- iPhone desde Xcode en `General > Identity`
+
+Regla practica:
+- `versionName` / `Version` cambia cuando quieres mostrar una nueva version al usuario
+- `versionCode` / `Build` debe subir en cada carga nueva
 
 ## Publicacion en iPhone
 
-### Camino recomendado: TestFlight
-Para este proyecto, TestFlight es la mejor forma de compartir la app con operadores iPhone sin instalar manualmente desde Xcode.
+### Estado actual
+La app ya fue subida a App Store Connect y enviada a revision con:
+- version `1.0.1`
+- build `4`
 
-### Requisitos
-- cuenta activa en Apple Developer
-- acceso a App Store Connect
-- Xcode instalado
-- proyecto iOS funcionando localmente
+### Bundle identifier oficial
+`cl.gruas5norte.tmsoperador`
 
-### Paso a paso
+### Flujo recomendado para nuevas builds
 
 #### 1. Abrir el proyecto iOS
 Abrir:
@@ -77,201 +100,155 @@ En Xcode:
 - confirmar `Team`
 - confirmar `Bundle Identifier`
 
-Para este proyecto:
-- bundle id esperado: `cl.gruas5norte.tmsoperador`
-
 #### 3. Revisar version y build
-En Xcode, pestaña `General`, definir:
-- `Version`: version visible, por ejemplo `1.0.0`
-- `Build`: numero interno incremental, por ejemplo `1`
+En Xcode, pestaña `General`:
+- `Version`: por ejemplo `1.0.1`
+- `Build`: incrementar siempre, por ejemplo `5`
 
-Cada nueva subida a TestFlight debe aumentar al menos el `Build`.
-
-#### 4. Seleccionar Any iOS Device
-En la barra superior de Xcode, elegir un destino generico como:
-- `Any iPhone Device`
-- o el nombre equivalente que muestre Xcode
-
-#### 5. Crear el archive
-En Xcode:
+#### 4. Crear el archive
 - menu `Product`
 - `Archive`
 
-Cuando termine, se abrira el organizador de archivos.
-
-#### 6. Subir a App Store Connect
+#### 5. Subir a App Store Connect
 Desde Organizer:
 - seleccionar el archive
 - `Distribute App`
 - `App Store Connect`
 - `Upload`
 
-Aceptar las opciones por defecto si no hay un requerimiento especial.
+#### 6. Esperar procesamiento
+La build puede quedar:
+- `Processing`
+- luego `Ready to Submit` o equivalente en TestFlight / Distribution
 
-#### 7. Configurar TestFlight
-En App Store Connect:
-- abrir la app
-- ir a `TestFlight`
-- esperar que Apple procese la build
-- agregar testers internos o externos
+### Ajustes importantes aprendidos en esta implementacion
 
-### Compartir con operadores iPhone
+#### Privacidad de fotos en iPhone
+Fue necesario declarar en `Info.plist`:
+- `NSPhotoLibraryUsageDescription`
+- `NSPhotoLibraryAddUsageDescription`
 
-#### Opcion 1. Testers internos
-Sirve para pruebas rapidas con cuentas del equipo.
+Esto ya quedo resuelto en:
+- [ios/App/App/Info.plist](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/ios/App/App/Info.plist)
 
-#### Opcion 2. Testers externos
-Sirve para operadores reales fuera del equipo interno.
+#### App Privacy en App Store Connect
+Se declaro recoleccion de estos tipos de datos:
+- direccion de correo electronico
+- ubicacion exacta
+- fotos o videos
+- otro contenido del usuario
+- ID de usuario
 
-Flujo para el operador:
-1. instalar `TestFlight` desde App Store
-2. recibir invitacion por correo o link
-3. instalar la app desde TestFlight
+Uso recomendado para todos:
+- solo `Funcionalidad de la app`
+- no tracking
+- no publicidad
 
-### Recomendaciones para iPhone
-- partir con grupo pequeno de operadores
-- validar permisos de ubicacion en terreno
-- medir estabilidad y bateria antes de crecer el piloto
+#### Capturas iPad 13"
+Apple exigio capturas de iPad de 13" para poder completar el envio.
+Se generaron versiones adaptadas en:
+- [/Users/sergioiriartevasquez/Desktop/appstore-ipad-13in](</Users/sergioiriartevasquez/Desktop/appstore-ipad-13in>)
+
+### Estado recomendado mientras Apple revisa
+Mientras el build esta pendiente de revision:
+- no hace falta subir nada nuevo salvo que corrijas algo importante
+- si haces cambios nativos o funcionales relevantes, corresponde nueva build
+- si solo haces cambios web OTA, revisar si el cambio realmente evita nueva build o no
 
 ## Publicacion en Android
 
-### Camino recomendado
-Para este proyecto hay dos opciones razonables:
+### Estado actual
+Ya existen dos salidas utiles:
 
-1. **APK directo** para pruebas simples
-2. **Google Play Internal Testing** para una distribucion mas ordenada
+#### APK de pruebas
+Usado para instalar manualmente en tablets o telefonos Android.
 
-Si solo hay una tablet Android o un solo operador Android, el APK suele bastar al comienzo.
+Ruta habitual:
+- [android/app/build/outputs/apk/debug/app-debug.apk](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android/app/build/outputs/apk/debug/app-debug.apk)
 
-### Requisitos
-- Android Studio instalado
-- proyecto Android sincronizado
-- dispositivo o tablet real para prueba
-- cuenta Google Play solo si se publicara por Play Console
+#### AAB firmado para Google Play
+Usado para Play Console.
 
-### Preparar el proyecto
-Abrir:
-- [android/](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android)
+Ruta habitual:
+- [android/app/build/outputs/bundle/release/app-release.aab](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android/app/build/outputs/bundle/release/app-release.aab)
 
-### Opcion A. Generar APK
+### Version Android actual
+En [android/app/build.gradle](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/android/app/build.gradle):
+- `applicationId = "cl.gruas5norte.tmsoperador"`
+- `versionCode = 2`
+- `versionName = "1.0.1"`
+
+### Permisos relevantes en Android
+La app usa:
+- camara
+- ubicacion precisa
+- servicio en primer plano de ubicacion
+- notificaciones para el servicio de ubicacion
+
+No se detecto `ACCESS_BACKGROUND_LOCATION` en el proyecto actual.
+
+### Como generar APK de prueba
 En Android Studio:
 - `Build`
-- `Generate Signed Bundle / APK`
-- elegir `APK`
-- crear o usar un keystore
-- generar la build firmada
+- `Build Bundle(s) / APK(s)`
+- `Build APK(s)`
 
-Resultado:
-- archivo `.apk` para compartir manualmente
-
-### Opcion B. Subir a Google Play Internal Testing
+### Como generar AAB firmado
 En Android Studio:
 - `Build`
-- `Generate Signed Bundle / APK`
+- `Generate Signed App Bundle / APK`
 - elegir `Android App Bundle`
+- crear o usar keystore
+- seleccionar variante `release`
+- `Create`
 
-Resultado:
-- archivo `.aab`
+### Keystore
+Guardar fuera del repo:
+- archivo `.jks`
+- password del keystore
+- alias
+- password del alias
 
-Luego en Google Play Console:
-- crear la aplicacion
-- entrar a `Internal testing`
-- subir el `.aab`
-- invitar usuarios de prueba
+Sin eso, luego se complica publicar actualizaciones futuras.
 
-### Compartir con operadores Android
+### Estado Play Console
+Actualmente la cuenta esta en proceso de verificacion por Google.
+Mientras eso no termine:
+- puedes generar APK y AAB
+- no puedes completar la publicacion en Play Console
 
-#### Si es APK
-El operador o encargado debe:
-1. descargar el APK
-2. permitir instalacion desde fuente autorizada si el equipo lo pide
-3. instalar la app
-
-#### Si es Internal Testing
-El operador recibe link de prueba desde Google Play y la instala como cualquier otra app.
-
-## Configuracion recomendada para uso real
+## Estrategia recomendada hoy
 
 ### iPhone
-Para operadores en terreno:
-- ubicacion activada
-- ubicacion precisa activada
-- Background App Refresh activado si luego se extiende a segundo plano
-- desactivar modo ahorro durante pruebas de terreno
+Seguir asi:
+1. esperar la respuesta de Apple para build `1.0.1 (4)`
+2. si Apple pide cambios, corregir y subir build nueva
+3. si Apple aprueba, decidir si publicar de inmediato o controlar rollout
 
 ### Android
-Para operadores en terreno:
-- ubicacion precisa activada
-- permitir uso de ubicacion siempre si mas adelante se habilita segundo plano
-- excluir la app de optimizacion de bateria cuando se requiera continuidad
+Seguir asi:
+1. usar `app-debug.apk` para pruebas manuales
+2. conservar `app-release.aab` listo para Play Console
+3. esperar verificacion de Google
+4. al habilitarse la cuenta, completar ficha y subir el AAB
 
-## Politica de versiones recomendada
+## Checklist rapido de salida
 
-### Version visible
-Usar formato:
-- `1.0.0`
-- `1.0.1`
-- `1.1.0`
+### iPhone
+- build correcta seleccionada en App Store Connect
+- ficha completada
+- privacidad publicada
+- screenshots iPhone e iPad cargados
+- notas de revision con cuenta de prueba
 
-### Build interno
-Incrementar en cada subida:
-- `1`
-- `2`
-- `3`
-
-Ejemplo:
-- primera prueba TestFlight: version `1.0.0`, build `1`
-- correccion menor: version `1.0.0`, build `2`
-- nueva mejora funcional: version `1.1.0`, build `3`
-
-## Checklist de salida
-
-### Antes de compartir con usuarios
-- build movil ejecutada
-- `cap sync` ejecutado
-- icono correcto visible
-- login del operador probado
-- ubicacion probada
-- ultima ubicacion visible en TMS
-- Google Maps probado
-- cierre de sesion probado
-
-### Antes de publicar a un grupo mas grande
-- validar consumo de bateria
-- validar comportamiento con mala senal
-- validar reconexion
-- validar permisos en dispositivos reales
-
-## Problemas frecuentes
-
-### iPhone no instala o no abre
-Revisar:
-- firma
-- developer mode si es prueba local por Xcode
-- confianza de certificado si es instalacion local
-- que el build este realmente subido a TestFlight si ya se usa ese camino
-
-### Icono no cambia
-Revisar:
-- volver a correr `npm run cap:sync`
-- reinstalar la app en el dispositivo
-- limpiar build en Xcode o Android Studio
-
-### Android no instala APK
-Revisar:
-- firma del APK
-- permisos para instalar apps
-- compatibilidad de version Android del dispositivo
-
-## Recomendacion final para este proyecto
-La mejor estrategia hoy es:
-
-1. usar **TestFlight** para operadores iPhone
-2. usar **APK** o **Internal Testing** para la tablet Android
-3. operar un piloto controlado con pocos usuarios
-4. recoger observaciones de terreno antes de una publicacion mas amplia
+### Android
+- APK debug probado en equipo real
+- AAB release generado
+- keystore respaldado
+- version Android confirmada
+- Play Console pendiente solo de habilitacion de cuenta
 
 ## Archivos relacionados
-- [docs/technical/operator-mobile-implementation.md](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/docs/technical/operator-mobile-implementation.md)
-- [docs/technical/operator-mobile-capacitor.md](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/docs/technical/operator-mobile-capacitor.md)
-- [capacitor.config.ts](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/capacitor.config.ts)
+- [docs/technical/app-store-listing-tms-operador.md](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/docs/technical/app-store-listing-tms-operador.md)
+- [docs/technical/install-android-apk.md](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/docs/technical/install-android-apk.md)
+- [docs/technical/operator-mobile-ota-updates.md](/Users/sergioiriartevasquez/Desktop/gruas-alerta-calendario-main/docs/technical/operator-mobile-ota-updates.md)

@@ -9,6 +9,15 @@ Esta guia esta pensada para la app iPhone del proyecto:
 - bundle id: `cl.gruas5norte.tmsoperador`
 - uso principal: operadores en terreno de Gruas 5 Norte
 
+## Estado actual
+Al cierre de esta guia:
+- App Store Connect ya esta habilitado
+- la politica de privacidad ya fue publicada
+- la app ya fue enviada a Apple con:
+  - version `1.0.1`
+  - build `4`
+  - estado: pendiente de revision
+
 ## Estado recomendado antes de enviar a revision
 Antes de pasar desde TestFlight a publicacion formal, conviene tener validado al menos lo siguiente:
 
@@ -78,7 +87,7 @@ Nota:
 ## Mensaje para App Review
 
 ### Notas para revision
-`Aplicacion de uso interno para operadores de Gruas 5 Norte. Requiere credenciales de acceso para ingresar. La app permite visualizar servicios asignados, revisar su detalle operativo y compartir ubicacion asociada a atenciones en curso.`
+`Aplicacion de uso interno para operadores de Gruas 5 Norte. Requiere credenciales de acceso para ingresar. La app permite visualizar servicios asignados, revisar su detalle operativo, capturar evidencias operativas y compartir ubicacion asociada a atenciones en curso.`
 
 ### Si Apple solicita acceso de prueba
 Preparar y mantener:
@@ -94,11 +103,18 @@ Texto sugerido si Apple pide instrucciones:
 ## Privacidad y datos
 
 ### Uso esperado de datos
-Para esta app, lo esperable en App Store Connect es declarar al menos:
+Para esta app, en App Store Connect ya se trabajo sobre esta base:
 
-- ubicacion precisa
-- identificadores de usuario o cuenta, si el login los usa
-- informacion funcional minima asociada al servicio
+- direccion de correo electronico
+- ubicacion exacta
+- fotos o videos
+- otro contenido del usuario
+- ID de usuario
+
+Para todos ellos, el uso recomendado es:
+- `Funcionalidad de la app`
+- sin tracking
+- sin publicidad
 
 ### Motivo del uso de ubicacion
 Texto sugerido:
@@ -128,11 +144,16 @@ Subir pantallas reales y limpias, idealmente desde un iPhone moderno:
 
 ### Orden recomendado de capturas
 
-1. dashboard principal
-2. ubicacion del operador
-3. detalle del servicio
-4. navegacion o accion operativa
+1. login
+2. dashboard principal
+3. ubicacion del operador
+4. detalle del servicio
 5. historial o seguimiento
+
+### Capturas iPad 13"
+Apple exigio tambien capturas de iPad de 13".
+Se generaron versiones adaptadas en:
+- [/Users/sergioiriartevasquez/Desktop/appstore-ipad-13in](</Users/sergioiriartevasquez/Desktop/appstore-ipad-13in>)
 
 ## Checklist para completar la ficha
 
@@ -179,12 +200,12 @@ Idealmente una pagina simple con:
 ## Estrategia recomendada de publicacion
 
 ### Opcion recomendada para este proyecto
-No publicar de inmediato al publico general. Mejor avanzar asi:
+El primer envio formal ya fue realizado. Para las siguientes iteraciones, mantener este orden:
 
-1. TestFlight interno
-2. prueba con 2 a 5 operadores reales
-3. ajustes finales
-4. envio a revision de Apple
+1. probar cambios por TestFlight cuando aplique
+2. validar con operadores reales
+3. subir nueva build si el cambio es nativo o requiere nueva revision
+4. enviar a revision de Apple
 5. decidir si la publicacion sera:
    - privada para uso controlado
    - o publica en App Store
@@ -200,10 +221,10 @@ Conviene publicar cuando:
 ## Texto sugerido para metadata final
 
 ### Version actual
-`1.0.0`
+`1.0.1`
 
 ### Novedades de la version
-`Primera version de TMS Operador para uso interno. Incluye servicios asignados, visualizacion de detalle operativo y ubicacion compartida en terreno.`
+`Version operativa de TMS Operador para uso interno. Incluye servicios asignados, visualizacion de detalle operativo, captura de evidencias y ubicacion compartida en terreno.`
 
 ## Preguntas practicas
 
