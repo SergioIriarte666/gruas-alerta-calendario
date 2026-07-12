@@ -30,6 +30,8 @@
 	<string>TMS Operador comparte tu posicion durante tu jornada laboral y servicios activos para coordinar la operacion.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>TMS Operador usa tu ubicacion para asociar tu posicion al servicio activo y reportar avances operativos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>TMS Operador accede a tu galeria para adjuntar fotografias del servicio y evidencias operativas.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
