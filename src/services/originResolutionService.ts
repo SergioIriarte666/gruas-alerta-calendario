@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { isRelevantPlaceResult } from '@/utils/placeRelevance';
+import { findExactCatalogMatch, normalizeLocationText, type FavoriteLocation } from '@/hooks/useFavoriteLocations';
 
 const geocodingLogger = createLogger('ServiceGeocoding');
 
@@ -37,6 +38,37 @@ export const resolveClientDepartment = async (clientId?: string | null): Promise
     .maybeSingle();
 
   return data?.department || null;
+};
+
+// Nivel 0 (catalogo): saved_locations es la fuente autoritativa de los origenes
+// recurrentes del negocio (faenas, minas). Debe GANAR SIEMPRE ante un match exacto
+// (normalizado) de nombre o alias, antes de gastar llamadas a Places/Geocoding, que
+// para nombres coloquiales homonimos ("Mantos de Oro") devuelven un punto equivocado
+// en otra ciudad. Devuelve tambien el id para poder incrementar usage_count.
+export const resolveOriginFromCatalog = async (
+  address: string,
+): Promise<{ lat: number; lng: number; catalogId: string } | null> => {
+  if (normalizeLocationText(address).length < 2) return null;
+
+  const { data, error } = await supabase
+    .from('saved_locations')
+    .select('id, name, aliases, address, category, latitude, longitude, usage_count')
+    .eq('is_active', true);
+
+  if (error) {
+    geocodingLogger.warn('[resolveOriginFromCatalog] No se pudo consultar el catalogo:', error);
+    return null;
+  }
+
+  const locations: FavoriteLocation[] = (data ?? []).map((location) => ({
+    ...location,
+    aliases: location.aliases ?? [],
+  }));
+
+  const match = findExactCatalogMatch(address, locations);
+  if (!match || match.latitude == null || match.longitude == null) return null;
+
+  return { lat: match.latitude, lng: match.longitude, catalogId: match.id };
 };
 
 // Nivel 1: Places Text Search. Los origenes del negocio son nombres coloquiales
@@ -143,10 +175,17 @@ export const geocodeAddressFallback = async (
 export const resolveOriginCoordinates = async (
   address: string,
   department?: string | null,
-): Promise<{ lat: number | null; lng: number | null }> => {
+): Promise<{ lat: number | null; lng: number | null; catalogId?: string | null }> => {
+  // Nivel 0: catalogo. Gana ante cualquier match exacto, antes de tocar Places/Geocoding.
+  const catalogMatch = await resolveOriginFromCatalog(address);
+  if (catalogMatch) {
+    geocodingLogger.debug(`Origen '${address}' resuelto por catalogo (${catalogMatch.catalogId})`);
+    return { lat: catalogMatch.lat, lng: catalogMatch.lng, catalogId: catalogMatch.catalogId };
+  }
+
   const placeResult = await searchPlaceForOrigin(address, department);
   if (placeResult) {
-    return placeResult;
+    return { ...placeResult, catalogId: null };
   }
 
   const fallbackResult = await geocodeAddressFallback(address, department);
@@ -154,5 +193,5 @@ export const resolveOriginCoordinates = async (
     geocodingLogger.warn(`Geocoding de baja calidad para '${address}', se omiten coordenadas`);
   }
 
-  return fallbackResult;
+  return { ...fallbackResult, catalogId: null };
 };

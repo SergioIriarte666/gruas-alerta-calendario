@@ -327,11 +327,15 @@ export const useServiceManager = () => {
         // arrastre), se usa tal cual. El geocoding en submit es solo una red
         // de seguridad para flujos que nunca pasaron por esa confirmacion.
         const hasConfirmedOriginCoords = serviceData.originLat != null && serviceData.originLng != null;
-        const originGeo = hasConfirmedOriginCoords
-          ? { lat: serviceData.originLat as number, lng: serviceData.originLng as number }
-          : transformedData.origin
-            ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
-            : { lat: null, lng: null };
+        const originGeo: { lat: number | null; lng: number | null; catalogId?: string | null } =
+          hasConfirmedOriginCoords
+            ? { lat: serviceData.originLat as number, lng: serviceData.originLng as number, catalogId: serviceData.originCatalogId ?? null }
+            : transformedData.origin
+              ? await geocodeOrigin(transformedData.origin, await resolveClientDepartment(transformedData.client_id))
+              : { lat: null, lng: null, catalogId: null };
+        // Si la resolucion en submit cayo en el catalogo, se propaga el id para
+        // incrementar usage_count aunque el usuario nunca haya tocado el dropdown.
+        const resolvedOriginCatalogId = originGeo.catalogId ?? serviceData.originCatalogId ?? null;
         const transformedDataWithGeo = {
           ...transformedData,
           origin_lat: originGeo.lat,
@@ -483,7 +487,12 @@ export const useServiceManager = () => {
           }
         }
 
-        await syncOriginCatalog(serviceData);
+        await syncOriginCatalog({
+          ...serviceData,
+          originLat: originGeo.lat,
+          originLng: originGeo.lng,
+          originCatalogId: resolvedOriginCatalogId,
+        });
 
         await queryClient.invalidateQueries({ queryKey: ['services'] });
         await queryClient.invalidateQueries({ queryKey: ['costs'] });
@@ -783,6 +792,7 @@ export const useServiceManager = () => {
       }
 
       if (serviceData.origin !== undefined && serviceData.origin && serviceData.origin.trim() !== '') {
+        let resolvedOriginCatalogId = serviceData.originCatalogId ?? null;
         if (serviceData.originLat != null && serviceData.originLng != null) {
           // El formulario ya confirmo un pin: se usa tal cual, sin geocodificar.
           transformedData.origin_lat = serviceData.originLat;
@@ -801,7 +811,16 @@ export const useServiceManager = () => {
           const originGeo = await geocodeOrigin(serviceData.origin, await resolveClientDepartment(clientIdForGeocode));
           transformedData.origin_lat = originGeo.lat;
           transformedData.origin_lng = originGeo.lng;
+          resolvedOriginCatalogId = originGeo.catalogId ?? resolvedOriginCatalogId;
         }
+
+        // Mantener usage_count del catalogo al dia tambien en ediciones (best-effort).
+        await syncOriginCatalog({
+          ...serviceData,
+          originLat: transformedData.origin_lat as number | null,
+          originLng: transformedData.origin_lng as number | null,
+          originCatalogId: resolvedOriginCatalogId,
+        });
       }
 
       // Auto-transiciones de flujo VIP también para actualizaciones completas

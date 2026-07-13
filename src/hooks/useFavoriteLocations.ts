@@ -40,17 +40,30 @@ export function useFavoriteLocations() {
   });
 }
 
+/**
+ * Normaliza texto de ubicacion para comparar catalogo vs. lo tipeado: minusculas,
+ * sin tildes/diacriticos (NFD + strip de marcas combinantes) y espacios colapsados.
+ * "MANTOS DE ORO", "Mantos de Oro" y "  mantos  de oro " normalizan a "mantos de oro".
+ */
+export const normalizeLocationText = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export function matchFavoriteLocations(
   query: string,
   locations: FavoriteLocation[],
 ): FavoriteLocation[] {
-  const trimmed = query.trim().toLowerCase();
+  const trimmed = normalizeLocationText(query);
   if (trimmed.length < 2) return [];
 
   return locations
     .map((location) => {
-      const nameLower = location.name.toLowerCase();
-      const aliasesLower = location.aliases.map((alias) => alias.toLowerCase());
+      const nameLower = normalizeLocationText(location.name);
+      const aliasesLower = location.aliases.map((alias) => normalizeLocationText(alias));
 
       let score = 0;
       if (nameLower === trimmed) score = 100;
@@ -70,4 +83,31 @@ export function matchFavoriteLocations(
     )
     .slice(0, 8)
     .map((item) => item.location);
+}
+
+/**
+ * Match determinista para la resolucion de origen en el submit: SOLO coincidencia
+ * exacta (normalizada) contra el nombre o algun alias, y que la entrada tenga
+ * coordenadas. Devuelve la de mayor usage_count ante empate. El catalogo debe ganar
+ * SIEMPRE que haya match exacto, antes de tocar Places/Geocoding — a diferencia de
+ * matchFavoriteLocations (usada para sugerir en el dropdown, con prefijos/substrings).
+ */
+export function findExactCatalogMatch(
+  query: string,
+  locations: FavoriteLocation[],
+): FavoriteLocation | null {
+  const normalized = normalizeLocationText(query);
+  if (normalized.length < 2) return null;
+
+  const exact = locations.filter(
+    (location) =>
+      location.latitude != null &&
+      location.longitude != null &&
+      (normalizeLocationText(location.name) === normalized ||
+        location.aliases.some((alias) => normalizeLocationText(alias) === normalized)),
+  );
+
+  if (exact.length === 0) return null;
+
+  return exact.sort((left, right) => right.usage_count - left.usage_count)[0];
 }
