@@ -101,7 +101,7 @@ interface PlaceSearchResult {
 export const searchPlaceForOrigin = async (
   address: string,
   department?: string | null,
-): Promise<{ lat: number; lng: number } | null> => {
+): Promise<{ lat: number; lng: number; formattedAddress: string | null } | null> => {
   const textQuery = department ? `${address}, ${department}` : address;
 
   try {
@@ -160,7 +160,7 @@ export const searchPlaceForOrigin = async (
     }
 
     const [lng, lat] = chosen.coordinates;
-    return { lat, lng };
+    return { lat, lng, formattedAddress: chosen.formattedAddress ?? chosen.displayName ?? null };
   } catch (placesError) {
     geocodingLogger.warn('[searchPlaceForOrigin] Places text search threw, falling back to geocoding:', placesError);
     return null;
@@ -173,7 +173,7 @@ export const searchPlaceForOrigin = async (
 export const geocodeAddressFallback = async (
   address: string,
   department?: string | null,
-): Promise<{ lat: number | null; lng: number | null }> => {
+): Promise<{ lat: number | null; lng: number | null; formattedAddress: string | null }> => {
   const query = department ? `${address}, ${department}, Chile` : `${address}, Chile`;
 
   try {
@@ -183,29 +183,29 @@ export const geocodeAddressFallback = async (
 
     if (error) {
       geocodingLogger.warn('[geocodeAddressFallback] Geocoding failed, continuing without coordinates:', error);
-      return { lat: null, lng: null };
+      return { lat: null, lng: null, formattedAddress: null };
     }
 
     const result = data?.results?.[0] as
-      | { coordinates?: [number, number]; types?: string[]; locationType?: string | null }
+      | { coordinates?: [number, number]; types?: string[]; locationType?: string | null; name?: string | null }
       | undefined;
 
     if (!result?.coordinates) {
-      return { lat: null, lng: null };
+      return { lat: null, lng: null, formattedAddress: null };
     }
 
     const types = result.types ?? [];
     const isLowQuality = types.some((type) => LOW_QUALITY_GEOCODE_TYPES.has(type));
     const hasUsefulType = types.some((type) => USEFUL_GEOCODE_TYPES.has(type));
     if (isLowQuality || !hasUsefulType) {
-      return { lat: null, lng: null };
+      return { lat: null, lng: null, formattedAddress: null };
     }
 
     const [lng, lat] = result.coordinates;
-    return { lat, lng };
+    return { lat, lng, formattedAddress: result.name ?? null };
   } catch (geoError) {
     geocodingLogger.warn('[geocodeAddressFallback] Geocoding threw, continuing without coordinates:', geoError);
-    return { lat: null, lng: null };
+    return { lat: null, lng: null, formattedAddress: null };
   }
 };
 

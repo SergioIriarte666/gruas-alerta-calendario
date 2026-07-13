@@ -309,6 +309,14 @@ export function OriginLocationField({
                     <MapPin className="size-4 shrink-0 text-emerald-600" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{value}</p>
+                      {/* Direccion resuelta: deja que el operador confirme que no cayo
+                          en una calle homonima antes de guardar. */}
+                      {networkResult.formattedAddress &&
+                      networkResult.formattedAddress.trim().toLowerCase() !== value.trim().toLowerCase() ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {networkResult.formattedAddress}
+                        </p>
+                      ) : null}
                     </div>
                   </CommandItem>
                 </CommandGroup>

@@ -10,6 +10,7 @@ export interface OriginSearchResult {
   lat: number;
   lng: number;
   source: 'places' | 'geocoding';
+  formattedAddress: string | null;
 }
 
 interface UseOriginSearchCascadeOptions {
@@ -47,7 +48,12 @@ export function useOriginSearchCascade(
         if (cancelled) return;
 
         if (placeResult) {
-          setResult({ ...placeResult, source: 'places' });
+          setResult({
+            lat: placeResult.lat,
+            lng: placeResult.lng,
+            source: 'places',
+            formattedAddress: placeResult.formattedAddress,
+          });
           return;
         }
 
@@ -55,7 +61,12 @@ export function useOriginSearchCascade(
         if (cancelled) return;
 
         if (fallbackResult.lat != null && fallbackResult.lng != null) {
-          setResult({ lat: fallbackResult.lat, lng: fallbackResult.lng, source: 'geocoding' });
+          setResult({
+            lat: fallbackResult.lat,
+            lng: fallbackResult.lng,
+            source: 'geocoding',
+            formattedAddress: fallbackResult.formattedAddress,
+          });
         } else {
           setResult(null);
         }
