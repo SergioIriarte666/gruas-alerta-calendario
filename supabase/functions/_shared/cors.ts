@@ -6,13 +6,18 @@ const WITH_SDK_INFO =
  * Returns per-request CORS headers that reflect the caller's origin only when it matches
  * the configured ALLOWED_ORIGIN env var (or any localhost origin in development).
  * Falls back to the configured production origin, or '*' if none is set.
+ *
+ * La app operador instalada (iOS/Android Capacitor) corre en un WKWebView cuyo origen es
+ * `capacitor://localhost` (o `ionic://localhost`), no un origen http(s). Sin estos esquemas
+ * en la whitelist, el preflight respondía con el Allow-Origin del dominio web y WKWebView
+ * bloqueaba el POST real ("Failed to send a request to the Edge Function").
  */
 export function getCorsHeaders(
   req: Request,
   allowHeaders = STANDARD,
 ): Record<string, string> {
   const origin = req.headers.get('origin') ?? '';
-  const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const isLocalhost = /^(https?|capacitor|ionic):\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
   let allowedOrigin: string;
   if (isLocalhost) {
