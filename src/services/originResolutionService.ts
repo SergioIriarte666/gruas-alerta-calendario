@@ -71,6 +71,29 @@ export const resolveOriginFromCatalog = async (
   return { lat: match.latitude, lng: match.longitude, catalogId: match.id };
 };
 
+// Indicadores de que el texto tipeado ES una direccion de calle (y no un nombre
+// de localidad/lugar): si aparecen, un resultado tipo route/street es legitimo.
+const STREET_QUERY_REGEX = /(\bcalle\b|\bavenida\b|\bav\.?\b|\bpasaje\b|\bpsje\.?\b|\bcamino\b|\bruta\b|\bcarretera\b|\bkm\b|\bkil[oó]metro\b|#|n[°º]|\d)/i;
+
+// Tipos de Places que representan un LUGAR (localidad, comuna, POI) vs. una CALLE.
+const PLACE_LIKE_TYPES = new Set([
+  'locality', 'sublocality', 'neighborhood', 'colloquial_area',
+  'administrative_area_level_1', 'administrative_area_level_2', 'administrative_area_level_3',
+  'point_of_interest', 'establishment', 'premise', 'tourist_attraction', 'natural_feature',
+]);
+const STREET_LIKE_TYPES = new Set(['route', 'street_address', 'intersection']);
+
+const isStreetLikeResult = (types: string[]): boolean =>
+  types.some((type) => STREET_LIKE_TYPES.has(type)) &&
+  !types.some((type) => PLACE_LIKE_TYPES.has(type));
+
+interface PlaceSearchResult {
+  coordinates?: [number, number];
+  displayName?: string | null;
+  formattedAddress?: string | null;
+  types?: string[];
+}
+
 // Nivel 1: Places Text Search. Los origenes del negocio son nombres coloquiales
 // de lugares ("Salfa Norte"), no direcciones postales, y Places resuelve
 // establecimientos donde Geocoding falla. Places nunca devuelve centroides de
@@ -96,29 +119,47 @@ export const searchPlaceForOrigin = async (
       return null;
     }
 
-    const result = data?.results?.[0] as
-      | {
-          coordinates?: [number, number];
-          displayName?: string | null;
-          formattedAddress?: string | null;
-        }
-      | undefined;
+    const results = (data?.results ?? []) as PlaceSearchResult[];
+    const withCoords = results.filter(
+      (result): result is PlaceSearchResult & { coordinates: [number, number] } =>
+        Array.isArray(result.coordinates) && result.coordinates.length === 2,
+    );
+    if (withCoords.length === 0) return null;
 
-    if (!result?.coordinates) return null;
+    const isStreetQuery = STREET_QUERY_REGEX.test(address);
 
-    // Guard de relevancia: ante un origin sin sentido, Places casi nunca
-    // devuelve cero resultados, sino su mejor adivinanza dentro del
-    // locationBias (un POI aleatorio cercano). Si ningun token del origin
-    // aparece en el nombre/direccion del resultado, se descarta y se cae
-    // al fallback de Geocoding API.
-    if (!isRelevantPlaceResult(address, result.displayName, result.formattedAddress)) {
+    // Guard de relevancia por tokens: ante un origin sin sentido, Places casi nunca
+    // devuelve cero resultados, sino su mejor adivinanza dentro del locationBias.
+    const relevant = withCoords.filter((result) =>
+      isRelevantPlaceResult(address, result.displayName, result.formattedAddress),
+    );
+    const pool = relevant.length > 0 ? relevant : withCoords;
+
+    // Preferir un resultado de LUGAR (localidad/POI) sobre una CALLE: con el sesgo a
+    // Copiapo (radio 50 km), Places devuelve calles homonimas locales ("calle Iquique",
+    // "sector Mantos de Oro") que le ganan al lugar real. Entre los candidatos se elige
+    // primero uno place-like.
+    const chosen = pool.find((result) => !isStreetLikeResult(result.types ?? [])) ?? pool[0];
+    const chosenTypes = chosen.types ?? [];
+
+    // El texto es un nombre de lugar (sin indicadores de calle) pero el mejor resultado
+    // sesgado es solo una calle homonima: se descarta para que Geocoding (sin sesgo)
+    // resuelva el lugar real (p. ej. "Iquique" -> ciudad, no la calle Iquique de Copiapo).
+    if (!isStreetQuery && isStreetLikeResult(chosenTypes)) {
       geocodingLogger.warn(
-        `Places irrelevante para '${address}': '${result.displayName ?? result.formattedAddress ?? ''}' — descartado`,
+        `Places devolvio calle homonima para lugar '${address}': '${chosen.displayName ?? chosen.formattedAddress ?? ''}' — descartado, se usa Geocoding`,
       );
       return null;
     }
 
-    const [lng, lat] = result.coordinates;
+    if (!isRelevantPlaceResult(address, chosen.displayName, chosen.formattedAddress)) {
+      geocodingLogger.warn(
+        `Places irrelevante para '${address}': '${chosen.displayName ?? chosen.formattedAddress ?? ''}' — descartado`,
+      );
+      return null;
+    }
+
+    const [lng, lat] = chosen.coordinates;
     return { lat, lng };
   } catch (placesError) {
     geocodingLogger.warn('[searchPlaceForOrigin] Places text search threw, falling back to geocoding:', placesError);
