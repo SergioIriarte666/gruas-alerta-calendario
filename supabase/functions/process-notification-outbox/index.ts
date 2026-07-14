@@ -16,6 +16,10 @@ import {
   sendInspectionEmailWithPdf,
   type InspectionEmailData,
 } from "../_shared/email.ts";
+import {
+  getEmailNotificationGate,
+  getInspectionEmailSkipReason,
+} from "../_shared/emailSettings.ts";
 
 const BATCH_LIMIT = 10;
 const MAX_ATTEMPTS = 5;
@@ -115,11 +119,22 @@ class OutboxWorker {
   }
 
   private async processRow(row: OutboxRow): Promise<"sent" | "skipped"> {
-    const gate = await getWhatsAppGate(this.supabase);
-    const gateReason = this.getGateSkipReason(row.kind, gate);
-    if (gateReason) {
-      await this.markSkipped(row.id, gateReason);
-      return "skipped";
+    if (row.kind === "tracking_link" || row.kind === "inspection_whatsapp" || row.kind === "delivery_whatsapp") {
+      const gate = await getWhatsAppGate(this.supabase);
+      const gateReason = this.getWhatsAppSkipReason(row.kind, gate);
+      if (gateReason) {
+        await this.markSkipped(row.id, gateReason);
+        return "skipped";
+      }
+    }
+
+    if (row.kind === "inspection_email" || row.kind === "delivery_email") {
+      const gate = await getEmailNotificationGate(this.supabase);
+      const gateReason = getInspectionEmailSkipReason(row.kind, gate);
+      if (gateReason) {
+        await this.markSkipped(row.id, gateReason);
+        return "skipped";
+      }
     }
 
     if (row.kind === "tracking_link") {
@@ -147,17 +162,15 @@ class OutboxWorker {
     return "sent";
   }
 
-  private getGateSkipReason(
-    kind: OutboxKind,
+  private getWhatsAppSkipReason(
+    kind: "tracking_link" | "inspection_whatsapp" | "delivery_whatsapp",
     gate: { enabled: boolean; settings: Record<string, unknown> | null },
   ): string | null {
     if (!gate.enabled) return "whatsapp_disabled";
-    if ((kind === "inspection_whatsapp" || kind === "inspection_email") &&
-        gate.settings?.notify_inspection_completed === false) {
+    if (kind === "inspection_whatsapp" && gate.settings?.notify_inspection_completed === false) {
       return "notify_inspection_completed_disabled";
     }
-    if ((kind === "delivery_whatsapp" || kind === "delivery_email") &&
-        gate.settings?.notify_vehicle_pickup === false) {
+    if (kind === "delivery_whatsapp" && gate.settings?.notify_vehicle_pickup === false) {
       return "notify_vehicle_pickup_disabled";
     }
     return null;

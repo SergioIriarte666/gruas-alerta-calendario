@@ -11,6 +11,10 @@ import {
   notificationDedupeKey,
   releaseNotificationDedupe,
 } from "../_shared/dedupe.ts";
+import {
+  getEmailNotificationGate,
+  getInspectionEmailSkipReason,
+} from "../_shared/emailSettings.ts";
 
 interface InspectionEmailRequest {
   inspectionData: InspectionEmailData;
@@ -75,6 +79,15 @@ const handler = async (req: Request): Promise<Response> => {
     sanitizeInspectionEmailAddress(inspectionData.clientEmail);
 
     const phase = inspectionData.phase === "final" ? "final" : "initial";
+    const emailGate = await getEmailNotificationGate(supabaseService);
+    const gateReason = getInspectionEmailSkipReason(
+      phase === "final" ? "delivery_email" : "inspection_email",
+      emailGate,
+    );
+    if (gateReason) {
+      return json({ success: true, skipped: gateReason }, 200, req);
+    }
+
     const { data: inspection, error: inspectionError } = await supabaseService
       .from("inspections")
       .select("id")

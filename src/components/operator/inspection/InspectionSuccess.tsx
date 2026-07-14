@@ -49,7 +49,7 @@ export const InspectionSuccess = ({
           <p className="mt-1 text-xs">
             {queuedOffline
               ? 'Se encolarán cuando el dispositivo sincronice el registro.'
-              : 'El correo y WhatsApp se enviarán desde el servidor.'}
+              : 'El servidor enviará los canales que estén activos en configuración.'}
           </p>
         </div>
 
