@@ -51,6 +51,16 @@ interface LogRow {
   hidden_at: string | null;
 }
 
+interface OutboxRow {
+  id: string;
+  kind: string;
+  status: 'pending' | 'failed';
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+  service: { folio: string | null } | { folio: string | null }[] | null;
+}
+
 const STATUS_META: Record<LogStatus, { label: string; icon: React.ElementType; className: string }> = {
   queued: { label: 'En cola', icon: Clock, className: 'bg-muted text-muted-foreground' },
   sent: { label: 'Enviado', icon: Send, className: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
@@ -79,7 +89,9 @@ function fmtDate(iso: string): string {
 
 export const WhatsAppMessageHistory: React.FC = () => {
   const [rows, setRows] = useState<LogRow[]>([]);
+  const [outboxRows, setOutboxRows] = useState<OutboxRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [outboxLoading, setOutboxLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | LogStatus>('all');
   const [showHidden, setShowHidden] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -94,6 +106,7 @@ export const WhatsAppMessageHistory: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setOutboxLoading(true);
     let query = supabase
       .from('whatsapp_message_log')
       .select('*')
@@ -111,6 +124,29 @@ export const WhatsAppMessageHistory: React.FC = () => {
     if (!error) setRows((data as LogRow[]) ?? []);
     setSelected(new Set());
     setLoading(false);
+
+    const staleIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const [failedOutbox, staleOutbox] = await Promise.all([
+      supabase
+        .from('notification_outbox')
+        .select('id,kind,status,attempts,last_error,created_at,service:services(folio)')
+        .eq('status', 'failed')
+        .order('created_at', { ascending: false })
+        .limit(25),
+      supabase
+        .from('notification_outbox')
+        .select('id,kind,status,attempts,last_error,created_at,service:services(folio)')
+        .eq('status', 'pending')
+        .lt('created_at', staleIso)
+        .order('created_at', { ascending: true })
+        .limit(25),
+    ]);
+    const outbox = [
+      ...((failedOutbox.data as OutboxRow[] | null) ?? []),
+      ...((staleOutbox.data as OutboxRow[] | null) ?? []),
+    ];
+    setOutboxRows(outbox);
+    setOutboxLoading(false);
 
     // Counts independientes del filtro de estado (solo respetan visibilidad)
     const results = await Promise.all(
@@ -185,6 +221,10 @@ export const WhatsAppMessageHistory: React.FC = () => {
 
   const allSelected = rows.length > 0 && selected.size === rows.length;
   const someSelected = selected.size > 0 && selected.size < rows.length;
+  const getOutboxFolio = (row: OutboxRow) => {
+    const service = Array.isArray(row.service) ? row.service[0] : row.service;
+    return service?.folio || 'Sin folio';
+  };
 
   return (
     <div className="space-y-4">
@@ -255,6 +295,63 @@ export const WhatsAppMessageHistory: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="rounded-lg border border-border/60 overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+          <div>
+            <div className="text-sm font-medium">Outbox de notificaciones</div>
+            <div className="text-xs text-muted-foreground">Fallidas y pendientes con más de 10 minutos</div>
+          </div>
+          <Badge variant="outline">{outboxRows.length}</Badge>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[140px]">Fecha</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Folio</TableHead>
+              <TableHead className="w-[110px]">Estado</TableHead>
+              <TableHead className="w-[90px]">Intentos</TableHead>
+              <TableHead>Detalle</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {outboxLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-5 text-center text-sm text-muted-foreground">
+                  Cargando outbox...
+                </TableCell>
+              </TableRow>
+            ) : outboxRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-5 text-center text-sm text-muted-foreground">
+                  Sin notificaciones pendientes antiguas ni fallidas.
+                </TableCell>
+              </TableRow>
+            ) : outboxRows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="text-xs text-muted-foreground">{fmtDate(row.created_at)}</TableCell>
+                <TableCell className="text-xs font-medium">{row.kind}</TableCell>
+                <TableCell className="text-xs">{getOutboxFolio(row)}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={row.status === 'failed'
+                      ? 'bg-destructive/10 text-destructive border-destructive/30'
+                      : 'bg-muted text-muted-foreground'}
+                  >
+                    {row.status === 'failed' ? 'Fallida' : 'Pendiente'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs">{row.attempts}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {row.last_error || 'Sin detalle'}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <div className="rounded-lg border border-border/60 overflow-hidden">
         <Table>

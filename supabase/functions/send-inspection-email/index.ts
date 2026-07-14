@@ -1,191 +1,127 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@6";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import {
+  sanitizeInspectionEmailAddress,
+  sendInspectionEmailWithPdf,
+  type InspectionEmailData,
+} from "../_shared/email.ts";
+import {
+  acquireNotificationDedupe,
+  notificationDedupeKey,
+  releaseNotificationDedupe,
+} from "../_shared/dedupe.ts";
 
 interface InspectionEmailRequest {
-  inspectionData: {
-    serviceId: string;
-    folio: string;
-    clientName: string;
-    clientEmail: string;
-    operatorName: string;
-    serviceDate: string;
-    equipmentCount: number;
-    phase?: 'initial' | 'final';
-  };
-  pdfBlob: string; // Base64 encoded PDF
+  inspectionData: InspectionEmailData;
+  pdfBlob: string;
 }
 
+const json = (body: unknown, status = 200, req: Request) => new Response(JSON.stringify(body), {
+  status,
+  headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
+});
+
+const decodeBase64Pdf = (base64: string): Uint8Array =>
+  Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
-    // Authenticate the caller
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ error: "No autorizado" }, 401, req);
     }
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.50.0');
+
     const supabaseAuth = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } },
     );
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
+      return json({ error: "Usuario no autenticado" }, 401, req);
     }
 
-    // Only staff (admin or operator) may dispatch branded inspection emails
-    const callerUid = (claimsData.claims as any).sub as string | undefined;
+    const callerUid = (claimsData.claims as { sub?: string }).sub;
     if (!callerUid) {
-      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...getCorsHeaders(req) } });
+      return json({ error: "Usuario no autenticado" }, 401, req);
     }
+
     const supabaseService = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false, autoRefreshToken: false } },
     );
+
     const { data: roleRows } = await supabaseService
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', callerUid)
-      .in('role', ['admin', 'operator']);
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerUid)
+      .in("role", ["admin", "operator"]);
     if (!roleRows || roleRows.length === 0) {
-      return new Response(JSON.stringify({ error: 'No autorizado: se requiere rol de administrador u operador' }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      });
+      return json({ error: "No autorizado: se requiere rol de administrador u operador" }, 403, req);
     }
 
-    console.log("📧 Iniciando envío de inspección por email");
-    
     const { inspectionData, pdfBlob }: InspectionEmailRequest = await req.json();
-    
-    console.log("📋 Datos de inspección:", {
+    if (!inspectionData?.serviceId || !inspectionData?.folio || !pdfBlob) {
+      return json({ success: false, error: "inspectionData y pdfBlob son requeridos" }, 400, req);
+    }
+
+    sanitizeInspectionEmailAddress(inspectionData.clientEmail);
+
+    const phase = inspectionData.phase === "final" ? "final" : "initial";
+    const { data: inspection, error: inspectionError } = await supabaseService
+      .from("inspections")
+      .select("id")
+      .eq("service_id", inspectionData.serviceId)
+      .maybeSingle();
+
+    if (inspectionError || !inspection?.id) {
+      return json({ success: false, error: "Inspección no encontrada para dedupe" }, 404, req);
+    }
+
+    const dedupeKind = phase === "final" ? "delivery_email" : "inspection_email";
+    const alertKey = notificationDedupeKey(dedupeKind, inspection.id);
+    const dedupe = await acquireNotificationDedupe(supabaseService, alertKey, {
+      service_id: inspectionData.serviceId,
+      inspection_id: inspection.id,
       folio: inspectionData.folio,
-      clientEmail: inspectionData.clientEmail,
-      serviceDate: inspectionData.serviceDate
+      phase,
+      channel: "email",
+      source: "send-inspection-email",
     });
 
-    // Validate email address with proper regex
-    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const sanitizedEmail = inspectionData.clientEmail?.trim().toLowerCase();
-    
-    if (!sanitizedEmail || !EMAIL_REGEX.test(sanitizedEmail)) {
-      console.error("❌ Email inválido:", inspectionData.clientEmail);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Formato de email inválido" 
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-        }
-      );
+    if (dedupe.duplicate) {
+      return json({ success: true, skipped: "already_sent" }, 200, req);
+    }
+    if (!dedupe.acquired) {
+      console.warn("[send-inspection-email] dedupe insert error:", dedupe.error);
+      return json({ success: true, skipped: "dedupe_error" }, 200, req);
     }
 
-    // Validate max length (RFC 5321)
-    if (sanitizedEmail.length > 254) {
-      console.error("❌ Email demasiado largo:", sanitizedEmail.length);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Email demasiado largo" 
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-        }
-      );
+    try {
+      const pdfBytes = decodeBase64Pdf(pdfBlob);
+      const result = await sendInspectionEmailWithPdf({ ...inspectionData, phase }, pdfBytes);
+      return json({
+        success: true,
+        messageId: result.messageId,
+        message: "Inspección enviada por email exitosamente",
+      }, 200, req);
+    } catch (sendError) {
+      await releaseNotificationDedupe(supabaseService, alertKey);
+      throw sendError;
     }
-
-    // Convert base64 to buffer for attachment
-    const pdfBuffer = Uint8Array.from(atob(pdfBlob), c => c.charCodeAt(0));
-    console.log("📎 PDF buffer creado, tamaño:", pdfBuffer.length, "bytes");
-
-    const isFinal = inspectionData.phase === 'final';
-    const reportLabel = isFinal ? 'Entrega del Vehículo' : 'Inspección Pre-Servicio';
-
-    const emailResponse = await resend.emails.send({
-      from: "Grúas 5 Norte <noreply@gruas5norte.cl>",
-      to: [sanitizedEmail],
-      subject: `Reporte de ${reportLabel} - ${inspectionData.folio}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #0e7c7b; text-align: center;">REPORTE DE ${reportLabel.toUpperCase()}</h1>
-          
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="color: #333; margin-top: 0;">Estimado/a ${inspectionData.clientName},</h2>
-            <p>Se ha completado exitosamente ${isFinal ? 'la entrega del vehículo' : 'la inspección pre-servicio'} para su solicitud.</p>
-            
-            <h3 style="color: #0e7c7b;">Detalles del Servicio:</h3>
-            <ul style="line-height: 1.6;">
-              <li><strong>Folio:</strong> ${inspectionData.folio}</li>
-              <li><strong>Fecha de Servicio:</strong> ${inspectionData.serviceDate}</li>
-              <li><strong>Operador:</strong> ${inspectionData.operatorName}</li>
-              <li><strong>Elementos Verificados:</strong> ${inspectionData.equipmentCount}</li>
-            </ul>
-            
-            <p>Adjunto encontrará el reporte completo de inspección en formato PDF.</p>
-            
-            <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
-            
-            <div style="text-align: center; color: #6c757d; font-size: 14px;">
-              <p><strong>Grúas 5 Norte</strong></p>
-              <p>Teléfono: +56 52 2353533</p>
-              <p>Email: asistencia@gruas5norte.cl</p>
-              <p>Copiapo, Chile</p>
-            </div>
-          </div>
-        </div>
-      `,
-      attachments: [
-        {
-          filename: `${isFinal ? 'Entrega' : 'Inspeccion'}-${inspectionData.folio}.pdf`,
-          content: Array.from(pdfBuffer),
-        },
-      ],
-    });
-
-    if (emailResponse.error) {
-      console.error("❌ Error enviando email:", emailResponse.error);
-      throw new Error(`Error de Resend: ${emailResponse.error.message}`);
-    }
-
-    console.log("✅ Email enviado exitosamente:", emailResponse.data?.id);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        messageId: emailResponse.data?.id,
-        message: "Inspección enviada por email exitosamente" 
-      }), 
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      }
-    );
-
-  } catch (error: any) {
-    console.error("💥 Error crítico en envío de email:", error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: "Error al enviar email de inspección" 
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      }
-    );
+  } catch (error) {
+    console.error("[send-inspection-email] Error:", error);
+    return json({
+      success: false,
+      error: error instanceof Error ? error.message : "Error al enviar email de inspección",
+    }, 500, req);
   }
 };
 

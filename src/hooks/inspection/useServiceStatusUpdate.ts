@@ -5,13 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
 import { operatorServiceKeys, operatorServicesKeys } from '@/hooks/operatorServicesQueryKeys';
 
-const notifyTrackingLink = (serviceId: string) => {
-  supabase.functions.invoke('send-whatsapp-tracking', { body: { service_id: serviceId } }).catch((error) => {
-    logger.warn('No se pudo disparar el envio automatico del link de seguimiento', error);
-  });
-};
-
-
 const logger = createLogger("useServiceStatusUpdate");
 export const useServiceStatusUpdate = (serviceId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -99,8 +92,7 @@ export const useServiceStatusUpdate = (serviceId: string | undefined) => {
       
       // Toast específico según el estado
       if (updatedService.status === 'in_progress') {
-        toast.success(`Servicio ${updatedService.folio} iniciado con éxito`);
-        notifyTrackingLink(updatedService.id);
+        toast.success(`Servicio ${updatedService.folio} iniciado - el seguimiento se enviará automáticamente`);
       } else if (updatedService.status === 'inspection_completed') {
         toast.success(`Servicio ${updatedService.folio} listo para entrega`);
       } else if (updatedService.status === 'completed') {

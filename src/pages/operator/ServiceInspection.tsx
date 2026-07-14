@@ -25,10 +25,7 @@ const ServiceInspection = () => {
     completedInspection,
     processInspectionMutation,
     updateServiceStatusMutation,
-    sendInspectionEmailMutation,
     handleManualDownload,
-    handleSendEmail,
-    handleSendWhatsApp,
     handleRetry,
     navigate
   } = useServiceInspection();
@@ -91,15 +88,8 @@ const ServiceInspection = () => {
     return (
       <InspectionSuccess
         folio={service.folio}
-        emailAvailable={Boolean(service.client?.email?.includes('@'))}
-        phoneAvailable={Boolean(service.client?.phone || (service as any).contactPhone)}
-        emailSent={completedInspection.emailSent}
-        whatsappSent={completedInspection.whatsappSent}
-        isSendingEmail={sendInspectionEmailMutation.isPending}
         queuedOffline={completedInspection.queuedOffline}
         onDownload={handleManualDownload}
-        onSendEmail={handleSendEmail}
-        onSendWhatsApp={handleSendWhatsApp}
         onBackToList={() => navigate('/operator')}
       />
     );

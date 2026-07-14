@@ -366,6 +366,7 @@ export const useRegenerarPdfManager = () => {
                 pdfUrl: upload.signedUrl,
                 serviceDate: service.serviceDate,
                 operatorName: service.operator?.name || '',
+                force: true,
               },
             },
           );

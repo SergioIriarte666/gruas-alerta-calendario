@@ -5,8 +5,8 @@ export type AuthorizationFailure = { response: Response };
 export type AuthorizationSuccess = {
   authHeader: string;
   role: AppRole;
-  supabaseAdmin: ReturnType<typeof createClient>;
-  user: Awaited<ReturnType<ReturnType<typeof createClient>["auth"]["getUser"]>>["data"]["user"];
+  supabaseAdmin: any;
+  user: any;
 };
 export type RequireUserRolesResult = AuthorizationFailure | AuthorizationSuccess;
 

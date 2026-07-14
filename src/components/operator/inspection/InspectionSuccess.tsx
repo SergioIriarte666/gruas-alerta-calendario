@@ -1,32 +1,18 @@
-import { CheckCircle2, Download, List, Mail, MessageCircle } from 'lucide-react';
+import { CheckCircle2, Download, List, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface InspectionSuccessProps {
   folio: string;
-  emailAvailable: boolean;
-  phoneAvailable: boolean;
-  emailSent: boolean;
-  whatsappSent: boolean;
-  isSendingEmail: boolean;
   queuedOffline?: boolean;
   onDownload: () => void;
-  onSendEmail: () => void;
-  onSendWhatsApp: () => void;
   onBackToList: () => void;
 }
 
 export const InspectionSuccess = ({
   folio,
-  emailAvailable,
-  phoneAvailable,
-  emailSent,
-  whatsappSent,
-  isSendingEmail,
   queuedOffline = false,
   onDownload,
-  onSendEmail,
-  onSendWhatsApp,
   onBackToList,
 }: InspectionSuccessProps) => (
   <div className="mx-auto max-w-xl py-6">
@@ -55,30 +41,21 @@ export const InspectionSuccess = ({
           {queuedOffline ? 'PDF disponible al sincronizar' : 'Descargar PDF'}
         </Button>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Button
-            variant="outline"
-            onClick={onSendEmail}
-            disabled={queuedOffline || !emailAvailable || isSendingEmail}
-          >
-            <Mail className="mr-2 size-4" />
-            {isSendingEmail ? 'Enviando…' : emailSent ? 'Reenviar correo' : 'Enviar por correo'}
-          </Button>
-          <Button variant="outline" onClick={onSendWhatsApp} disabled={queuedOffline || !phoneAvailable}>
-            <MessageCircle className="mr-2 size-4" />
-            {whatsappSent ? 'Reenviar WhatsApp' : 'Enviar por WhatsApp'}
-          </Button>
+        <div className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center gap-2 font-medium">
+            <Send className="size-4" />
+            Notificaciones automáticas
+          </div>
+          <p className="mt-1 text-xs">
+            {queuedOffline
+              ? 'Se encolarán cuando el dispositivo sincronice el registro.'
+              : 'El correo y WhatsApp se enviarán desde el servidor.'}
+          </p>
         </div>
 
         {queuedOffline && (
           <p className="text-center text-xs text-muted-foreground">
             La app enviará automáticamente la inspección apenas vuelva la señal.
-          </p>
-        )}
-
-        {!queuedOffline && !emailAvailable && !phoneAvailable && (
-          <p className="text-center text-xs text-muted-foreground">
-            El cliente no tiene correo ni teléfono registrados.
           </p>
         )}
 

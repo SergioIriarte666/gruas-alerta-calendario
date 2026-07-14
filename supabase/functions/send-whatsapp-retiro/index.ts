@@ -1,6 +1,11 @@
 import { requireUserRoles, withHeaders, jsonResponse } from '../_shared/auth.ts';
 import { getWhatsAppGate, normalizeChileanPhone, sendWhatsAppDocumentTemplate } from '../_shared/whatsapp.ts';
 import { getCorsHeaders } from "../_shared/cors.ts";
+import {
+  acquireNotificationDedupe,
+  notificationDedupeKey,
+  releaseNotificationDedupe,
+} from '../_shared/dedupe.ts';
 
 const corsHdrs = (req: Request) => ({ ...getCorsHeaders(req), 'Access-Control-Allow-Methods': 'POST, OPTIONS' });
 
@@ -43,6 +48,7 @@ Deno.serve(async (req: Request) => {
     const {
       folio, serviceId, clientName, clientPhone,
       contactPhone, contactPerson, pdfUrl, serviceDate, operatorName,
+      force = false,
     } = body;
 
     if (!folio || !pdfUrl) {
@@ -74,11 +80,53 @@ Deno.serve(async (req: Request) => {
       ? (contactPerson || clientName || 'Receptor')
       : (clientName || 'Cliente');
 
-    if (recipientPhone) {
-      await sendToPhone(recipientPhone, recipientName, contactPhone ? 'contact' : 'client');
+    if (!recipientPhone) {
+      return withHeaders(jsonResponse({ success: true, skipped: 'no_recipient_phone', sent: 0 }), corsHdrs(req));
     }
 
+    const normalizedRecipient = normalizeChileanPhone(recipientPhone);
+    if (!normalizedRecipient.ok) {
+      return withHeaders(jsonResponse({ success: true, skipped: 'invalid_recipient_phone', sent: 0 }), corsHdrs(req));
+    }
+
+    const { data: inspection, error: inspectionError } = await (authContext.supabaseAdmin as any)
+      .from('inspections')
+      .select('id')
+      .eq('service_id', serviceId)
+      .maybeSingle();
+
+    if (inspectionError || !inspection?.id) {
+      return withHeaders(jsonResponse({ error: 'Inspección no encontrada para dedupe' }, 404), corsHdrs(req));
+    }
+
+    const forceManualSend = force === true && authContext.role === 'admin';
+    const alertKey = notificationDedupeKey('delivery_whatsapp', inspection.id);
+    if (!forceManualSend) {
+      const dedupe = await acquireNotificationDedupe(authContext.supabaseAdmin, alertKey, {
+        service_id: serviceId,
+        inspection_id: inspection.id,
+        folio,
+        phase: 'final',
+        channel: 'whatsapp',
+        source: 'send-whatsapp-retiro',
+      });
+
+      if (dedupe.duplicate) {
+        return withHeaders(jsonResponse({ success: true, skipped: 'already_sent', sent: 0 }), corsHdrs(req));
+      }
+      if (!dedupe.acquired) {
+        console.warn('[send-whatsapp-retiro] dedupe insert error:', dedupe.error);
+        return withHeaders(jsonResponse({ success: true, skipped: 'dedupe_error', sent: 0 }), corsHdrs(req));
+      }
+    }
+
+    await sendToPhone(recipientPhone, recipientName, contactPhone ? 'contact' : 'client');
+
     const allSuccess = results.length === 0 || results.every(r => r.success);
+    if (!allSuccess && !forceManualSend) {
+      await releaseNotificationDedupe(authContext.supabaseAdmin, alertKey);
+    }
+
     return withHeaders(
       jsonResponse({ success: allSuccess, results, sent: results.length }),
       corsHdrs(req),
