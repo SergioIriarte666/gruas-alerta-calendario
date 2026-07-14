@@ -26,10 +26,10 @@ export type ParseSiiRcvResult = {
 };
 
 const stripAccents = (value: string): string =>
-  value.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 const normalizeHeader = (value: string): string =>
-  stripAccents(value.replace(/^﻿/, '').trim().toLowerCase()).replace(/\s+/g, ' ');
+  stripAccents(value.replace(/^\uFEFF/, '').trim().toLowerCase()).replace(/\s+/g, ' ');
 
 const HEADER_ALIASES: Record<string, string[]> = {
   doc_type: ['tipo doc', 'tipo dte', 'tipo documento'],

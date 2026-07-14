@@ -74,7 +74,6 @@ export const OriginPinMap = ({ lat, lng, onChange }: OriginPinMapProps) => {
     };
     // Solo se inicializa una vez; los cambios de lat/lng posteriores mueven el
     // marcador existente (efecto de abajo) en vez de recrear el mapa.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

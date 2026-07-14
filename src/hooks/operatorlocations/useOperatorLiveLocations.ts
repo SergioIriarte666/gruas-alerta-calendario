@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { OperatorLiveLocation } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
+import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
 
 const logger = createLogger('useOperatorLiveLocations');
 
@@ -16,7 +17,15 @@ const fetchLiveLocations = async (): Promise<OperatorLiveLocation[]> => {
     throw new Error(error.message || 'No se pudieron cargar las ubicaciones en vivo');
   }
 
-  return (data ?? []) as OperatorLiveLocation[];
+  return ((data ?? []) as OperatorLiveLocation[]).map((location) => (
+    hasValidChileCoordinates(location)
+      ? location
+      : {
+          ...location,
+          latitude: null,
+          longitude: null,
+        }
+  ));
 };
 
 export const useOperatorLiveLocations = () => {

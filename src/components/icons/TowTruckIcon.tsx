@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-interface TowTruckIconProps extends React.SVGProps<SVGSVGElement> {}
+type TowTruckIconProps = React.SVGProps<SVGSVGElement>;
 
 export const TowTruckIcon = ({ className, ...props }: TowTruckIconProps) => (
   <svg

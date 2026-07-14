@@ -10,6 +10,7 @@ import { OperatorStatusPanel } from '@/components/operatorlocations/OperatorStat
 import { RouteHistoryPanel } from '@/components/operatorlocations/RouteHistoryPanel';
 import { IdleMetricsPanel } from '@/components/operatorlocations/IdleMetricsPanel';
 import { cn } from '@/lib/utils';
+import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
 import {
   OPERATOR_STATUS_LABELS,
   deriveOperatorStatus,
@@ -29,7 +30,7 @@ const LIVE_FILTER_LABELS: Record<LiveFilterKey, string> = {
 };
 
 const hasKnownCoordinates = (location: OperatorLiveLocation) =>
-  location.latitude !== null && location.longitude !== null;
+  hasValidChileCoordinates(location);
 
 const formatCoordinate = (value: number | null) => (
   typeof value === 'number' ? value.toFixed(6) : 'Sin posicion registrada'

@@ -151,7 +151,6 @@ export function OriginLocationField({
     }, EXACT_LOCATION_RESOLVE_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trimmed, disabled]);
 
   const filteredQuickSuggestions = useMemo(() => {

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fromZonedTime } from 'date-fns-tz';
 import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
+import { hasValidChileCoordinates } from '@/lib/chileCoordinates';
 import type { OperatorRoutePoint, OperatorRouteSession } from '@/types/operatorLocations';
 import { createLogger } from '@/lib/logger';
 
@@ -53,7 +54,7 @@ const fetchRouteHistory = async (
   }
 
   return {
-    points: (pointsResult.data ?? []) as OperatorRoutePoint[],
+    points: ((pointsResult.data ?? []) as OperatorRoutePoint[]).filter(hasValidChileCoordinates),
     sessions: (sessionsResult.data ?? []) as OperatorRouteSession[],
   };
 };
