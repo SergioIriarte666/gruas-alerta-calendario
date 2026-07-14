@@ -49,7 +49,7 @@ interface EnhancedCostsTableProps {
   disableServerPagination?: boolean;
 }
 
-type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
+type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'payment_date' | 'associated';
 type SortDirection = 'asc' | 'desc';
 type GroupBy = 'none' | 'date' | 'category' | 'crane' | 'operator' | 'service_folio' | 'supplier' | 'payment_status';
 
@@ -208,6 +208,10 @@ export const EnhancedCostsTable = ({
           aValue = Number(a.amount);
           bValue = Number(b.amount);
           break;
+        case 'payment_date':
+          aValue = a.payment_date ? new Date(`${a.payment_date}T12:00:00Z`).getTime() : 0;
+          bValue = b.payment_date ? new Date(`${b.payment_date}T12:00:00Z`).getTime() : 0;
+          break;
         case 'associated':
           aValue = getAssociatedTo(a).toLowerCase();
           bValue = getAssociatedTo(b).toLowerCase();
@@ -334,6 +338,10 @@ export const EnhancedCostsTable = ({
     }).format(amount);
   };
 
+  const formatDate = (date: string) => {
+    return format(new Date(`${date}T12:00:00Z`), 'dd/MM/yyyy');
+  };
+
   if (loading) {
     return (
       <Card className="bg-background">
@@ -366,7 +374,14 @@ export const EnhancedCostsTable = ({
         </TableCell>
       )}
       <TableCell className="font-medium">
-        {format(new Date(`${cost.date}T12:00:00Z`), 'dd/MM/yyyy')}
+        {formatDate(cost.date)}
+      </TableCell>
+      <TableCell className="font-medium text-foreground">
+        {cost.payment_date ? (
+          formatDate(cost.payment_date)
+        ) : (
+          <span className="text-muted-foreground">N/A</span>
+        )}
       </TableCell>
       <TableCell className="max-w-xs">
         <div className="space-y-1">
@@ -570,7 +585,7 @@ export const EnhancedCostsTable = ({
       <Card className="bg-background">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table className="min-w-[800px]">
+            <Table className="min-w-[940px]">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   {onSelectionChange && (
@@ -586,6 +601,12 @@ export const EnhancedCostsTable = ({
                     <div className="flex items-center">
                       Fecha
                       <SortIcon field="date" />
+                    </div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('payment_date')}>
+                    <div className="flex items-center">
+                      Fecha de Pago
+                      <SortIcon field="payment_date" />
                     </div>
                   </TableHead>
                   <TableHead className="cursor-pointer font-semibold text-foreground" onClick={() => handleSort('description')}>
@@ -627,7 +648,7 @@ export const EnhancedCostsTable = ({
                   if (groupBy === 'none') {
                     return groupCosts.length === 0 ? (
                       <TableRow key="empty">
-                        <TableCell colSpan={onSelectionChange ? 9 : 8} className="py-8 text-center text-muted-foreground">
+                        <TableCell colSpan={onSelectionChange ? 10 : 9} className="py-8 text-center text-muted-foreground">
                           No se encontraron costos que coincidan con los filtros aplicados.
                         </TableCell>
                       </TableRow>
@@ -645,7 +666,7 @@ export const EnhancedCostsTable = ({
                         className="cursor-pointer bg-muted/30 hover:bg-muted/50"
                         onClick={() => toggleGroup(groupKey)}
                       >
-                        <TableCell colSpan={onSelectionChange ? 9 : 8}>
+                        <TableCell colSpan={onSelectionChange ? 10 : 9}>
                           <div className="flex items-center justify-between py-1">
                             <div className="flex min-w-0 flex-1 items-center gap-2 flex-wrap">
                               <span className={cn(
