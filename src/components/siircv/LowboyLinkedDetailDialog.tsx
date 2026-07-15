@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Link2, Loader2, Unlink } from 'lucide-react';
+import { AlertTriangle, Link2, Unlink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,30 @@ const formatCLP = (value: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
 const dash = (value: string | null | undefined): string => (value && String(value).trim() ? String(value) : '—');
+
+/** Glosa del tipo de DTE del SII, para derivar el documento cuando faltan los campos manuales. */
+const DTE_TIPO_LABEL: Record<number, string> = {
+  33: 'Factura Electrónica',
+  34: 'Factura Exenta',
+  56: 'Nota de Débito',
+  61: 'Nota de Crédito',
+};
+
+/**
+ * Documento a mostrar, por orden de preferencia:
+ *   1. document_type + document_number (dato manual del costo)
+ *   2. derivado del DTE: glosa de dte_tipo + dte_folio
+ */
+function resolveDocumento(detail: LinkedCostDetail): string {
+  if (detail.documentType || detail.documentNumber) {
+    return [detail.documentType, detail.documentNumber].filter(Boolean).join(' · ');
+  }
+  if (detail.dteTipo != null) {
+    const label = DTE_TIPO_LABEL[detail.dteTipo] ?? `Tipo ${detail.dteTipo}`;
+    return detail.dteFolio != null ? `${label} · ${detail.dteFolio}` : label;
+  }
+  return '—';
+}
 
 function Field({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) {
   return (
@@ -94,9 +118,22 @@ function CostBody({ detail, documentTotal }: { detail: LinkedCostDetail; documen
   const dte = [detail.dteTipo, detail.dteFolio].some((v) => v != null) || detail.dteRutEmisor
     ? `${dash(detail.dteTipo != null ? String(detail.dteTipo) : null)} · ${dash(detail.dteFolio != null ? String(detail.dteFolio) : null)}${detail.dteRutEmisor ? ` · ${detail.dteRutEmisor}` : ''}`
     : '—';
-  const documento = [detail.documentType, detail.documentNumber].some(Boolean)
-    ? `${dash(detail.documentType)} ${detail.documentNumber ?? ''}`.trim()
-    : '—';
+  const documento = resolveDocumento(detail);
+
+  // Proveedor: si viene del DTE (sin supplier_id), etiquetamos el origen.
+  const proveedor = detail.supplierName ? (
+    <>
+      {detail.supplierName}
+      {detail.supplierSource === 'dte' && <span className="ml-1 text-xs text-muted-foreground">(desde DTE)</span>}
+    </>
+  ) : '—';
+
+  // El folio de servicio en costos 'lowboy' suele ser el N° de factura (redundante con
+  // el documento) y no un servicio real. Se oculta si es redundante o si es lowboy sin
+  // servicio real asociado; se mantiene para costos G5N con servicio.
+  const showServiceFolio = Boolean(detail.serviceFolio)
+    && detail.serviceFolio !== detail.documentNumber
+    && (detail.entity !== 'lowboy' || Boolean(detail.serviceId));
 
   return (
     <div className="space-y-4">
@@ -118,12 +155,12 @@ function CostBody({ detail, documentTotal }: { detail: LinkedCostDetail; documen
         <Field label="Categoría" value={dash(detail.categoryName)} />
         <Field label="Subcategoría" value={dash(detail.subcategory)} />
         <Field label="Centro de costo" value={dash(detail.costCenterName)} />
-        <Field label="Proveedor" value={dash(detail.supplierName)} />
+        <Field label="Proveedor" value={proveedor} />
         <Field label="Documento" value={documento} />
         <Field label="DTE" value={dte} />
         <Field label="Entidad" value={dash(detail.entity)} />
         <Field label="Pagado por" value={dash(detail.paidBy)} />
-        {detail.serviceFolio && <Field label="Folio de servicio" value={detail.serviceFolio} />}
+        {showServiceFolio && <Field label="Folio de servicio" value={detail.serviceFolio} />}
       </div>
 
       {detail.description && (
