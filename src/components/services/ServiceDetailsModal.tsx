@@ -671,7 +671,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   Duplicar
                 </Button>
               )}
-              {isAdmin && (serviceData.status === 'pending' || serviceData.status === 'in_progress') && (
+              {isAdmin && (serviceData.status === 'pending' || serviceData.status === 'in_progress' || serviceData.status === 'inspection_completed') && (
                 <Button
                   variant="outline"
                   size="sm"

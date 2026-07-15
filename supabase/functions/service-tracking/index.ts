@@ -8,7 +8,12 @@ import { getCorsHeaders } from "../_shared/cors.ts";
  * para anon, este es el unico punto de acceso publico.
  */
 
-const FINISHED_STATUSES = ["completed", "cancelled", "invoiced"];
+// El seguimiento en vivo existe SOLO durante la fase operacional del rescate.
+// Cualquier otro estado —finales operacionales (completed/cancelled/failed),
+// administrativos (quoted/purchase_order_pending/with_purchase_order/invoiced/
+// partially_invoiced) o cualquiera futuro— responde "finished": un link viejo
+// abierto sobre un servicio facturado jamas debe exponer posicion.
+const ACTIVE_TRACKING_STATUSES = ["pending", "in_progress", "inspection_completed"];
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 
 // Journey stage (Fase 2): distancias del ultimo punto al origen que marcan
@@ -179,12 +184,13 @@ Deno.serve(async (req: Request) => {
     text: service.origin ?? null,
   };
 
-  if (FINISHED_STATUSES.includes(service.status)) {
-    // El trigger de revocacion corre en el mismo instante en que el servicio
-    // cierra, asi que revoked_at siempre estara seteado aqui: mostrar
-    // "finalizado" de todas formas (sin posicion, no hay riesgo de exponer
-    // tracking en vivo) en vez del invalid_link generico de mas abajo.
-    return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null, support_phone: supportPhone });
+  if (!ACTIVE_TRACKING_STATUSES.includes(service.status)) {
+    // Fuera de la fase operacional (finales o administrativos). El trigger de
+    // revocacion corre en el mismo instante en que el servicio cierra, asi que
+    // revoked_at suele estar seteado aqui; mostramos "finalizado" de todas
+    // formas (sin posicion, no hay riesgo de exponer tracking en vivo) en vez
+    // del invalid_link generico de mas abajo.
+    return jsonResponse(req, { state: "finished", folio: service.folio, journey_stage: "finished", eta: null, eta_unavailable: false, support_phone: supportPhone });
   }
 
   // Revocacion manual/anticipada (servicio aun no finalizado): a diferencia
@@ -229,6 +235,7 @@ Deno.serve(async (req: Request) => {
       origin,
       journey_stage: "assigned",
       eta: null,
+      eta_unavailable: false,
       support_phone: supportPhone,
     });
   }
@@ -251,6 +258,7 @@ Deno.serve(async (req: Request) => {
       origin,
       journey_stage: "assigned",
       eta: null,
+      eta_unavailable: false,
       support_phone: supportPhone,
     });
   }
@@ -288,14 +296,24 @@ Deno.serve(async (req: Request) => {
   }
 
   let eta: Eta = null;
+  // true cuando el origen existe pero Google no puede rutear la zona (p. ej.
+  // C-13 Termas de Juncal): el cliente muestra el fallback de distancia en linea
+  // recta en vez de "Calculando..." permanente.
+  let etaUnavailable = false;
   if (state === "active" && hasOrigin) {
     const cachedAt = link.eta_cached_at ? new Date(link.eta_cached_at as string).getTime() : 0;
-    if (now - cachedAt < ETA_CACHE_MS && link.eta_polyline) {
+    const cacheFresh = now - cachedAt < ETA_CACHE_MS;
+    if (cacheFresh && link.eta_polyline) {
+      // Cache positivo vigente.
       eta = {
         seconds: link.eta_seconds as number,
         distance_meters: link.eta_distance_meters as number,
         polyline: link.eta_polyline as string,
       };
+    } else if (cacheFresh) {
+      // Cache NEGATIVO vigente (eta_cached_at seteado pero sin polyline): la zona
+      // no es ruteable. No se re-llama a Routes hasta que expire el TTL de 60 s.
+      etaUnavailable = true;
     } else {
       eta = await fetchEta(point.latitude, point.longitude, origin.lat as number, origin.lng as number);
       if (eta) {
@@ -311,6 +329,24 @@ Deno.serve(async (req: Request) => {
             .eq("id", link.id);
         } catch {
           // no-op: el cache de ETA es una optimizacion, nunca debe romper el seguimiento publico
+        }
+      } else {
+        // Cachear tambien el resultado NEGATIVO (mismo TTL 60 s) para no reintentar
+        // Routes en cada poll de cada viewer sobre un origen no ruteable: el
+        // servicio real acumulo decenas de llamadas inutiles por esto.
+        etaUnavailable = true;
+        try {
+          await supabase
+            .from("service_tracking_links")
+            .update({
+              eta_seconds: null,
+              eta_distance_meters: null,
+              eta_polyline: null,
+              eta_cached_at: new Date().toISOString(),
+            })
+            .eq("id", link.id);
+        } catch {
+          // no-op: el cache negativo es una optimizacion, nunca debe romper el seguimiento publico
         }
       }
     }
@@ -331,6 +367,7 @@ Deno.serve(async (req: Request) => {
     origin,
     journey_stage: journeyStage,
     eta,
+    eta_unavailable: etaUnavailable,
     support_phone: supportPhone,
   });
 });

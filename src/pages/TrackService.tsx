@@ -347,6 +347,9 @@ interface TrackingResponse {
   origin?: { lat: number | null; lng: number | null; text: string | null };
   journey_stage?: JourneyStage;
   eta?: { seconds: number; distance_meters: number; polyline: string } | null;
+  // true cuando el origen existe pero Google no puede rutear la zona: la UI
+  // muestra distancia en línea recta en vez de "Calculando..." permanente.
+  eta_unavailable?: boolean;
   support_phone?: string | null;
 }
 
@@ -667,6 +670,34 @@ const EtaHero = ({ data }: { data: TrackingResponse }) => {
         </p>
         <p className="mt-0.5 text-4xl font-bold leading-none text-foreground">
           {formatDurationLabel(data.eta.seconds)}
+        </p>
+      </div>
+    );
+  }
+
+  // Origen no ruteable por Google (zona sin ruta, p. ej. C-13 Termas de Juncal):
+  // en vez de "Calculando..." permanente, mostrar la distancia en línea recta
+  // grúa->origen para dar contexto útil al cliente.
+  if (
+    data.position &&
+    data.eta_unavailable &&
+    data.origin?.lat != null &&
+    data.origin?.lng != null
+  ) {
+    const straightLineKm = haversineDistanceKm(
+      [data.position.lng, data.position.lat],
+      [data.origin.lng, data.origin.lat],
+    );
+    const kmLabel = straightLineKm >= 10
+      ? Math.round(straightLineKm)
+      : Math.round(straightLineKm * 10) / 10;
+    return (
+      <div>
+        <p className="text-2xl font-bold leading-tight text-foreground">
+          Tu grúa está a ~{kmLabel} km
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tiempo estimado no disponible en esta zona
         </p>
       </div>
     );
