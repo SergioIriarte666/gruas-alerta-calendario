@@ -8,9 +8,10 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Link2, Loader2, MoreHorizontal, Pencil, Plus, Trash2, Unlink } from 'lucide-react';
+import { ArrowUpDown, Eye, Link2, Loader2, MoreHorizontal, Pencil, Plus, Trash2, Unlink } from 'lucide-react';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { LowboyLinkDialog } from '@/components/siircv/LowboyLinkDialog';
+import { LowboyLinkedDetailDialog } from '@/components/siircv/LowboyLinkedDetailDialog';
 import { LowboyRecordForm } from '@/components/siircv/LowboyRecordForm';
 import {
   AlertDialog,
@@ -70,18 +71,23 @@ function SortableHeader({ column, label, align = 'left' }: { column: Column<SiiR
   );
 }
 
-function LinkBadge({ row }: { row: SiiRcvRecordRow }) {
+function LinkBadge({ row, onView }: { row: SiiRcvRecordRow; onView?: (record: SiiRcvRecordRow) => void }) {
   const linked = row.book_type === 'compra' ? row.linked_cost : row.linked_service;
-  const detail = row.book_type === 'compra'
-    ? row.linked_cost?.description
-    : row.linked_service ? `Servicio ${row.linked_service.folio}` : undefined;
   if (!linked) return <Badge variant="secondary" className="whitespace-nowrap font-normal">Sin vincular</Badge>;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge className="whitespace-nowrap bg-emerald-600 hover:bg-emerald-600">Vinculado</Badge>
+        <Badge
+          className="cursor-pointer whitespace-nowrap bg-emerald-600 hover:bg-emerald-700"
+          role="button"
+          tabIndex={0}
+          onClick={() => onView?.(row)}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onView?.(row); } }}
+        >
+          Vinculado
+        </Badge>
       </TooltipTrigger>
-      <TooltipContent>{detail}</TooltipContent>
+      <TooltipContent>Ver detalle del vínculo</TooltipContent>
     </Tooltip>
   );
 }
@@ -101,7 +107,13 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
   const [editingRecord, setEditingRecord] = useState<SiiRcvRecordRow | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<SiiRcvRecordRow | null>(null);
   const [linkingRecord, setLinkingRecord] = useState<SiiRcvRecordRow | null>(null);
+  const [viewingRecord, setViewingRecord] = useState<SiiRcvRecordRow | null>(null);
   const manager = useSiiRcvManager(entityRut);
+
+  // El badge/menú "Ver vínculo" abre el detalle de solo lectura del costo/servicio vinculado.
+  const openLinkedDetail = (record: SiiRcvRecordRow) => {
+    if (record.linked_cost_id || record.linked_service_id) setViewingRecord(record);
+  };
 
   const { data, isLoading } = useSiiRcvPagedRecords(
     { entityRut, bookType: bookType === 'all' ? undefined : bookType },
@@ -196,7 +208,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
         id: 'link_status',
         accessorFn: (row) => Boolean(row.linked_cost_id || row.linked_service_id),
         header: ({ column }) => <SortableHeader column={column} label="Vínculo" />,
-        cell: ({ row }) => <LinkBadge row={row.original} />,
+        cell: ({ row }) => <LinkBadge row={row.original} onView={openLinkedDetail} />,
       },
     ];
 
@@ -217,6 +229,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                   <Button variant="ghost" size="icon" aria-label={`Acciones para folio ${record.folio}`}><MoreHorizontal className="size-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {isLinked && <DropdownMenuItem onClick={() => openLinkedDetail(record)}><Eye className="mr-2 size-4" />Ver vínculo</DropdownMenuItem>}
                   <DropdownMenuItem onClick={() => openEdit(record)}><Pencil className="mr-2 size-4" />Editar</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLinkingRecord(record)}><Link2 className="mr-2 size-4" />{isLinked ? 'Cambiar vínculo' : record.book_type === 'compra' ? 'Vincular a costo' : 'Vincular a servicio'}</DropdownMenuItem>
                   {isLinked && <DropdownMenuItem onClick={() => void unlink(record)}><Unlink className="mr-2 size-4" />Desvincular</DropdownMenuItem>}
@@ -268,7 +281,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                     <div className="flex items-center gap-1">{docTypeBadge(row.doc_type)}{isAdmin && <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="size-4" /></Button>}</div>
                   </div>
                   <p className="mt-2 truncate">{row.counterpart_name || 'Sin razón social'}</p>
-                  <div className="mt-2 flex items-center justify-between"><LinkBadge row={row} /><p className="font-semibold">{formatCLP(row.total_amount)}</p></div>
+                  <div className="mt-2 flex items-center justify-between"><LinkBadge row={row} onView={openLinkedDetail} /><p className="font-semibold">{formatCLP(row.total_amount)}</p></div>
                   {isAdmin && <div className="mt-3 flex gap-2 border-t pt-3"><Button variant="outline" size="sm" className="flex-1" onClick={() => setLinkingRecord(row)}><Link2 className="mr-2 size-4" />Vincular</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeletingRecord(row)}><Trash2 className="size-4" /></Button></div>}
                 </div>
               )) : <p className="p-6 text-center text-muted-foreground">No hay registros para este filtro.</p>}
@@ -331,6 +344,18 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
           </AlertDialog>
         </>
       )}
+
+      <LowboyLinkedDetailDialog
+        open={Boolean(viewingRecord)}
+        onOpenChange={(open) => { if (!open) setViewingRecord(null); }}
+        record={viewingRecord}
+        canChangeLink={isAdmin}
+        onChangeLink={() => {
+          const record = viewingRecord;
+          setViewingRecord(null);
+          setLinkingRecord(record);
+        }}
+      />
     </TooltipProvider>
   );
 }
