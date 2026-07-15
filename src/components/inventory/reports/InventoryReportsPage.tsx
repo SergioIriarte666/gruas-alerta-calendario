@@ -14,12 +14,18 @@ import { ExecutiveDashboard } from './ExecutiveDashboard';
 import { ReportFilters } from './ReportFilters';
 import { ExportOptions } from './ExportOptions';
 import { InventoryReportFilters } from '@/hooks/useInventoryReports';
+import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
 
-export const InventoryReportsPage = () => {
+interface InventoryReportsPageProps {
+  entityFilter?: InventoryEntityFilter;
+}
+
+export const InventoryReportsPage: React.FC<InventoryReportsPageProps> = ({ entityFilter = 'all' }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [filters, setFilters] = useState<InventoryReportFilters>({});
   const [showFilters, setShowFilters] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  const effectiveFilters = { ...filters, entityFilter };
 
   const tabs = [
     {
@@ -104,7 +110,7 @@ export const InventoryReportsPage = () => {
           <CardContent className="p-0 pt-0">
             <ExportOptions 
               activeReport={activeTab} 
-              filters={filters}
+              filters={effectiveFilters}
               onClose={() => setShowExportOptions(false)}
             />
           </CardContent>
@@ -156,7 +162,7 @@ export const InventoryReportsPage = () => {
                       {tab.id === 'predictive' && 'Proyecciones y análisis predictivo de demanda.'}
                     </p>
                   </div>
-                  <tab.component filters={filters} />
+                  <tab.component filters={effectiveFilters} />
                 </CardContent>
               </Card>
             </TabsContent>

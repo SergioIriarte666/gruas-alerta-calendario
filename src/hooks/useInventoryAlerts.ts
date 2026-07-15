@@ -5,6 +5,8 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { getTodayLocal } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 import { businessClock } from '@/utils/businessClock';
+import type { EntityKey } from '@/lib/entities';
+import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
 
 
 const logger = createLogger("useInventoryAlerts");
@@ -23,7 +25,7 @@ const INVENTORY_ALERTS_SELECT = `
     id, name, sku, minimum_stock, maximum_stock, unit_of_measure,
     category:inventory_categories(id, name)
   ),
-  location:inventory_locations(id, name, code)
+  location:inventory_locations(id, name, code, entity)
 `;
 
 const INVENTORY_ALERT_CONFIG_SELECT = 'alert_type, item_id, location_id, threshold_value';
@@ -34,7 +36,7 @@ const STOCK_FOR_ALERTS_SELECT = `
   current_quantity,
   last_movement_date,
   item:inventory_items(id, name, minimum_stock, maximum_stock, safety_stock),
-  location:inventory_locations(id, name, code)
+  location:inventory_locations(id, name, code, entity)
 `;
 
 const EXPIRING_MOVEMENTS_SELECT = `
@@ -43,7 +45,7 @@ const EXPIRING_MOVEMENTS_SELECT = `
   location_id,
   expiration_date,
   item:inventory_items(id, name),
-  location:inventory_locations(id, name, code)
+  location:inventory_locations(id, name, code, entity)
 `;
 
 export interface InventoryAlert {
@@ -73,6 +75,7 @@ export interface InventoryAlert {
     id: string;
     name: string;
     code: string;
+    entity: EntityKey;
   };
 }
 
@@ -88,6 +91,7 @@ export interface ActiveAlert {
   threshold_value?: number;
   created_at: string;
   item_id: string;
+  location_id?: string;
 }
 
 export interface AlertConfiguration {
@@ -115,11 +119,26 @@ export const useInventoryAlerts = () => {
 };
 
 // Hook para obtener alertas activas con evaluación en tiempo real
-export const useActiveAlerts = () => {
+const getInventoryLocationIdsForAlertEntity = async (entityFilter: InventoryEntityFilter): Promise<string[] | null> => {
+  if (entityFilter === 'all') return null;
+
+  const { data, error } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('is_active', true)
+    .eq('entity', entityFilter);
+
+  if (error) throw error;
+  return (data || []).map((location) => location.id);
+};
+
+export const useActiveAlerts = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['active-alerts'],
+    queryKey: ['active-alerts', entityFilter],
     queryFn: async () => {
       const activeAlerts: ActiveAlert[] = [];
+      const locationIds = await getInventoryLocationIdsForAlertEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) return [];
 
       // Get alert configurations
       const { data: alertConfigs, error: configError } = await supabase
@@ -133,9 +152,13 @@ export const useActiveAlerts = () => {
       }
 
       // Obtener stock data
-      const { data: stockData, error: stockError } = await supabase
+      let stockQuery = supabase
         .from('inventory_stock')
         .select(STOCK_FOR_ALERTS_SELECT);
+
+      if (locationIds) stockQuery = stockQuery.in('location_id', locationIds);
+
+      const { data: stockData, error: stockError } = await stockQuery;
 
       if (stockError) {
         logger.error('❌ useActiveAlerts: Error fetching stock data:', stockError);
@@ -165,7 +188,8 @@ export const useActiveAlerts = () => {
               current_value: stock.current_quantity,
               threshold_value: threshold,
               created_at: businessClock.nowISO(),
-              item_id: stock.item_id
+              item_id: stock.item_id,
+              location_id: stock.location_id,
             });
           }
         }
@@ -191,7 +215,8 @@ export const useActiveAlerts = () => {
               current_value: stock.current_quantity,
               threshold_value: threshold,
               created_at: businessClock.nowISO(),
-              item_id: stock.item_id
+              item_id: stock.item_id,
+              location_id: stock.location_id,
             });
           }
         }
@@ -221,7 +246,8 @@ export const useActiveAlerts = () => {
               current_value: daysSinceMovement,
               threshold_value: threshold,
               created_at: businessClock.nowISO(),
-              item_id: stock.item_id
+              item_id: stock.item_id,
+              location_id: stock.location_id,
             });
           }
         }
@@ -231,11 +257,15 @@ export const useActiveAlerts = () => {
       const expiringConfigs = alertConfigs?.filter(config => config.alert_type === 'expiring_soon');
       
       if (expiringConfigs && expiringConfigs.length > 0) {
-        const { data: expiringData, error: expiringError } = await supabase
+        let expiringQuery = supabase
           .from('inventory_movements')
           .select(EXPIRING_MOVEMENTS_SELECT)
           .not('expiration_date', 'is', null)
           .gte('expiration_date', getTodayLocal());
+
+        if (locationIds) expiringQuery = expiringQuery.in('location_id', locationIds);
+
+        const { data: expiringData, error: expiringError } = await expiringQuery;
 
         if (expiringError) throw expiringError;
 
@@ -264,7 +294,8 @@ export const useActiveAlerts = () => {
                 current_value: daysToExpiry,
                 threshold_value: threshold,
                 created_at: businessClock.nowISO(),
-                item_id: movement.item_id
+                item_id: movement.item_id,
+                location_id: movement.location_id,
               });
             }
           }
@@ -502,21 +533,36 @@ export const useToggleAlert = () => {
 };
 
 // Hook para estadísticas de alertas
-export const useAlertStats = () => {
+export const useAlertStats = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['alert-stats'],
+    queryKey: ['alert-stats', entityFilter],
     queryFn: async () => {
       const { data: alertsData } = await supabase
         .from('inventory_alerts')
         .select('alert_type, is_active');
 
+      const locationIds = await getInventoryLocationIdsForAlertEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) {
+        return {
+          totalAlerts: alertsData?.length || 0,
+          activeConfigurations: alertsData?.filter(a => a.is_active).length || 0,
+          criticalAlerts: 0,
+          warningAlerts: 0,
+          totalActiveAlerts: 0
+        };
+      }
+
       // Get active alerts count from current query
-      const { data: stockData } = await supabase
+      let stockQuery = supabase
         .from('inventory_stock')
         .select(`
           *,
           item:inventory_items(minimum_stock, safety_stock)
         `);
+
+      if (locationIds) stockQuery = stockQuery.in('location_id', locationIds);
+
+      const { data: stockData } = await stockQuery;
       
       const criticalAlerts = stockData?.filter(stock => 
         stock.item && stock.current_quantity === 0

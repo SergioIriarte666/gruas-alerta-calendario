@@ -24,6 +24,12 @@ import {
   useInventoryLocations,
   useCreateInventoryMovement,
 } from '@/hooks/useInventory';
+import {
+  INVENTORY_LOCATION_ENTITY_LABELS,
+  getLocationEntity,
+  sortLocationsForEntity,
+  type InventoryEntityFilter,
+} from '@/utils/inventoryEntity';
 import { ProductDrawer } from './ProductDrawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -43,7 +49,11 @@ import {
   type DeleteCandidateInfo,
 } from '@/hooks/useInventoryOrphans';
 
-export const InventoryStockView = () => {
+interface InventoryStockViewProps {
+  entityFilter?: InventoryEntityFilter;
+}
+
+export const InventoryStockView: React.FC<InventoryStockViewProps> = ({ entityFilter = 'all' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -60,7 +70,7 @@ export const InventoryStockView = () => {
 
   const { data: items = [], isLoading } = useInventoryItems();
   const { data: categories = [] } = useInventoryCategories();
-  const { data: allStock = [] } = useInventoryStock();
+  const { data: allStock = [] } = useInventoryStock(entityFilter);
   const { isAdmin } = useUserPermissions();
   const { systemSettings } = useSystemSettings();
   const isMobile = useIsMobile();
@@ -74,18 +84,32 @@ export const InventoryStockView = () => {
   const [quickUnitCost, setQuickUnitCost] = useState<number>(0);
   const [quickGenerateCost, setQuickGenerateCost] = useState<boolean>(false);
 
+  const orderedLocations = React.useMemo(
+    () => sortLocationsForEntity(locations.filter((location) => location.is_active), entityFilter),
+    [locations, entityFilter],
+  );
+
   React.useEffect(() => {
-    if (!quickLocationId && locations.length > 0) {
-      setQuickLocationId(locations[0].id);
+    if (entityFilter !== 'all') {
+      const preferredLocation = orderedLocations.find((location) => getLocationEntity(location) === entityFilter);
+      if (preferredLocation && (!quickLocationId || getLocationEntity(locations.find((location) => location.id === quickLocationId)) !== entityFilter)) {
+        setQuickLocationId(preferredLocation.id);
+        return;
+      }
     }
-  }, [locations, quickLocationId]);
+
+    if (!quickLocationId && orderedLocations.length > 0) {
+      setQuickLocationId(orderedLocations[0].id);
+    }
+  }, [entityFilter, locations, orderedLocations, quickLocationId]);
 
   const getItemStock = (itemId: string) => {
     const itemStock = allStock.filter((stockRow) => stockRow.item_id === itemId);
     return itemStock.reduce((sum, stockRow) => sum + (stockRow.available_quantity || 0), 0);
   };
 
-  const activeItems = items.filter((item) => item.is_active);
+  const stockItemIds = React.useMemo(() => new Set(allStock.map((stockRow) => stockRow.item_id)), [allStock]);
+  const activeItems = items.filter((item) => item.is_active && (entityFilter === 'all' || stockItemIds.has(item.id)));
 
   const orphans = useInventoryOrphans(getItemStock, activeItems);
   const hardDelete = useInventoryItemHardDelete();
@@ -101,7 +125,40 @@ export const InventoryStockView = () => {
     return matchesSearch && matchesCategory && item.is_active;
   });
 
-  const visibleRows = filteredItems.filter((item) => showZeroStock || getItemStock(item.id) > 0);
+  const visibleRows = filteredItems.filter((item) => entityFilter !== 'all' || showZeroStock || getItemStock(item.id) > 0);
+
+  const getItemLocationRows = (itemId: string) =>
+    allStock.filter((stockRow) => stockRow.item_id === itemId && stockRow.location);
+
+  const renderLocationEntityBadges = (itemId: string) => {
+    if (entityFilter !== 'all') return null;
+    const itemLocations = getItemLocationRows(itemId);
+    if (itemLocations.length === 0) return null;
+
+    return (
+      <div className="mt-1 flex flex-wrap gap-1">
+        {itemLocations.map((stockRow) => {
+          const entity = getLocationEntity(stockRow.location);
+          return (
+            <Badge
+              key={`${stockRow.item_id}-${stockRow.location_id}`}
+              variant="outline"
+              className={cn(
+                'rounded-full px-2 py-0 text-[11px] font-medium',
+                entity === 'lowboy'
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+                  : 'border-primary/20 bg-primary/10 text-primary',
+              )}
+            >
+              {stockRow.location?.name}
+              <span className="ml-1 text-muted-foreground">·</span>
+              <span className="ml-1">{INVENTORY_LOCATION_ENTITY_LABELS[entity]}</span>
+            </Badge>
+          );
+        })}
+      </div>
+    );
+  };
 
   const getStockStatus = (item: any) => {
     const totalStock = getItemStock(item.id);
@@ -172,7 +229,7 @@ export const InventoryStockView = () => {
                     <DialogTitle>Registrar Entrada de Inventario</DialogTitle>
                     <DialogDescription className="sr-only">Formulario para registrar una entrada de stock en bodega.</DialogDescription>
                   </DialogHeader>
-                  <SimpleEntryForm onSuccess={() => setShowEntryForm(false)} />
+                  <SimpleEntryForm entityFilter={entityFilter} onSuccess={() => setShowEntryForm(false)} />
                 </DialogContent>
               </Dialog>
 
@@ -186,7 +243,7 @@ export const InventoryStockView = () => {
                     <DialogTitle>Registrar Salida de Inventario</DialogTitle>
                     <DialogDescription className="sr-only">Formulario para registrar una salida de stock en bodega.</DialogDescription>
                   </DialogHeader>
-                  <SimpleExitForm onSuccess={() => setShowExitForm(false)} />
+                  <SimpleExitForm entityFilter={entityFilter} onSuccess={() => setShowExitForm(false)} />
                 </DialogContent>
               </Dialog>
             </div>
@@ -201,7 +258,7 @@ export const InventoryStockView = () => {
                 Movimiento rápido
               </Badge>
               <Badge variant="outline">{activeItems.length} productos activos</Badge>
-              <Badge variant="outline">{locations.length} ubicaciones</Badge>
+              <Badge variant="outline">{orderedLocations.length} ubicaciones</Badge>
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
@@ -234,8 +291,11 @@ export const InventoryStockView = () => {
                     <SelectValue placeholder="Ubicación" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>
+                    {orderedLocations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                        {entityFilter === 'all' ? ` · ${INVENTORY_LOCATION_ENTITY_LABELS[getLocationEntity(location)]}` : ''}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -346,6 +406,7 @@ export const InventoryStockView = () => {
                   setShowCleanup(true);
                   orphans.scan();
                 }}
+                disabled={entityFilter !== 'all'}
                 className="shrink-0 whitespace-nowrap border-border/70 bg-background/60"
               >
                 Limpiar huérfanos
@@ -393,6 +454,7 @@ export const InventoryStockView = () => {
                           <div>
                             <p className="font-medium text-foreground">{item.name}</p>
                             {item.is_critical ? <Badge variant="outline" className="mt-1 border-danger/20 bg-danger/10 text-danger">Crítico</Badge> : null}
+                            {renderLocationEntityBadges(item.id)}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{item.sku || '-'}</td>
@@ -480,6 +542,7 @@ export const InventoryStockView = () => {
                           {item.is_critical ? <Badge variant="outline" className="border-danger/20 bg-danger/10 text-danger">Crítico</Badge> : null}
                         </div>
                         {item.sku ? <p className="mt-1 text-sm text-muted-foreground">SKU: {item.sku}</p> : null}
+                        {renderLocationEntityBadges(item.id)}
                         {isAdmin ? (
                           <p className="mt-1 text-sm text-muted-foreground">
                             Venta: <span className="font-medium text-foreground">${salePrice.price.toLocaleString('es-CL')}</span>

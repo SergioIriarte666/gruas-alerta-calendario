@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,8 +25,18 @@ import { MovementDetailsModal } from './MovementDetailsModal';
 import { MovementExportOptions } from './MovementExportOptions';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  INVENTORY_LOCATION_ENTITY_LABELS,
+  getLocationEntity,
+  type InventoryEntityFilter,
+} from '@/utils/inventoryEntity';
 
-export const MovementsHistoryTable = () => {
+interface MovementsHistoryTableProps {
+  entityFilter?: InventoryEntityFilter;
+}
+
+export const MovementsHistoryTable: React.FC<MovementsHistoryTableProps> = ({ entityFilter = 'all' }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -37,8 +48,24 @@ export const MovementsHistoryTable = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
 
-  const { data: movements = [], isLoading, refetch } = useInventoryMovements(200);
-  const { data: locations = [] } = useInventoryLocations();
+  const { data: movements = [], isLoading, refetch } = useInventoryMovements(200, entityFilter);
+  const { data: locations = [] } = useInventoryLocations(entityFilter);
+  const movementAdjustmentReferences = movements.map((movement) => `inv_movement:${movement.id}`);
+  const { data: intercompanyByReference = {} } = useQuery({
+    queryKey: ['inventory-movement-intercompany-adjustments', movementAdjustmentReferences],
+    enabled: movementAdjustmentReferences.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('intercompany_adjustments')
+        .select('reference, amount')
+        .in('reference', movementAdjustmentReferences);
+      if (error) return {};
+      return (data || []).reduce((acc, row) => {
+        if (row.reference) acc[row.reference] = Number(row.amount || 0);
+        return acc;
+      }, {} as Record<string, number>);
+    },
+  });
 
   const activeMovements = movements.filter(movement => movement.status === 'active');
 
@@ -331,7 +358,33 @@ export const MovementsHistoryTable = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {movement.location?.name}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span>{movement.location?.name}</span>
+                          {movement.movement_type === 'transfer' && movement.destination_location ? (
+                            <>
+                              <span className="text-muted-foreground">→</span>
+                              <span>{movement.destination_location.name}</span>
+                            </>
+                          ) : null}
+                          {entityFilter === 'all' && movement.location ? (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'rounded-full px-2 py-0 text-[11px] font-medium',
+                                getLocationEntity(movement.location) === 'lowboy'
+                                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700'
+                                  : 'border-primary/20 bg-primary/10 text-primary',
+                              )}
+                            >
+                              {INVENTORY_LOCATION_ENTITY_LABELS[getLocationEntity(movement.location)]}
+                            </Badge>
+                          ) : null}
+                          {intercompanyByReference[`inv_movement:${movement.id}`] !== undefined ? (
+                            <Badge variant="outline" className="rounded-full border-amber-500/30 bg-amber-500/10 px-2 py-0 text-[11px] font-medium text-amber-700">
+                              Intercompañía ${intercompanyByReference[`inv_movement:${movement.id}`].toLocaleString('es-CL')}
+                            </Badge>
+                          ) : null}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">

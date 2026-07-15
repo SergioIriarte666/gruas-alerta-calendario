@@ -24,6 +24,12 @@ import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 import { createLogger } from "@/lib/logger";
+import {
+  INVENTORY_LOCATION_ENTITY_LABELS,
+  getLocationEntity,
+  sortLocationsForEntity,
+  type InventoryEntityFilter,
+} from '@/utils/inventoryEntity';
 
 
 const logger = createLogger("SimpleEntryForm");
@@ -47,9 +53,10 @@ type EntryFormData = z.infer<typeof entrySchema>;
 
 interface SimpleEntryFormProps {
   onSuccess?: () => void;
+  entityFilter?: InventoryEntityFilter;
 }
 
-export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) => {
+export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess, entityFilter = 'all' }) => {
   const { data: items = [] } = useInventoryItems();
   const { data: locations = [] } = useInventoryLocations();
   const { data: categories = [] } = useInventoryCategories();
@@ -89,6 +96,16 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
 
   const watchedValues = watch();
   const selectedItem = items.find(item => item.id === watchedValues.item_id);
+  const orderedLocations = React.useMemo(
+    () => sortLocationsForEntity(locations.filter((location) => location.is_active), entityFilter),
+    [locations, entityFilter],
+  );
+
+  React.useEffect(() => {
+    if (entityFilter === 'all' || watchedValues.location_id) return;
+    const preferredLocation = orderedLocations.find((location) => getLocationEntity(location) === entityFilter);
+    if (preferredLocation) setValue('location_id', preferredLocation.id);
+  }, [entityFilter, orderedLocations, setValue, watchedValues.location_id]);
 
   const handleCreateNewProduct = async () => {
     if (!newProductData.name.trim()) {
@@ -357,9 +374,10 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                 <SelectValue placeholder="Seleccionar ubicación" />
               </SelectTrigger>
               <SelectContent>
-                {locations.filter(loc => loc.is_active).map((location) => (
+                {orderedLocations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
                     {location.name}
+                    {entityFilter === 'all' ? ` · ${INVENTORY_LOCATION_ENTITY_LABELS[getLocationEntity(location)]}` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>

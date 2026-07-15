@@ -23,12 +23,19 @@ import { useOperators } from '@/hooks/useOperators';
 import { toast } from 'sonner';
 import { SupplierCombobox } from '@/components/costs/form/SupplierSelector';
 import { createLogger } from "@/lib/logger";
+import {
+  INVENTORY_LOCATION_ENTITY_LABELS,
+  getLocationEntity,
+  sortLocationsForEntity,
+  type InventoryEntityFilter,
+} from '@/utils/inventoryEntity';
 
 
 const logger = createLogger("InventoryMovementForm");
 const movementSchema = z.object({
   item_id: z.string().min(1, 'Seleccione un producto'),
   location_id: z.string().min(1, 'Seleccione una ubicación'),
+  destination_location_id: z.string().optional(),
   movement_type: z.enum(['entry', 'exit', 'transfer', 'adjustment']),
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   unit_cost: z.number().optional(),
@@ -54,6 +61,15 @@ const movementSchema = z.object({
     message: 'El motivo es requerido para movimientos de salida',
     path: ['reason']
   }
+).refine(
+  (data) => {
+    if (data.movement_type !== 'transfer') return true;
+    return Boolean(data.destination_location_id) && data.destination_location_id !== data.location_id;
+  },
+  {
+    message: 'Seleccione una ubicación destino distinta para transferencias',
+    path: ['destination_location_id']
+  }
 );
 
 type MovementFormData = z.infer<typeof movementSchema>;
@@ -61,9 +77,11 @@ type MovementFormData = z.infer<typeof movementSchema>;
 interface InventoryMovementFormProps {
   onSuccess?: () => void;
   defaultMovementType?: 'entry' | 'exit' | 'transfer' | 'adjustment';
+  entityFilter?: InventoryEntityFilter;
   prefill?: Partial<{
     item_id: string;
     location_id: string;
+    destination_location_id: string;
     movement_type: 'entry' | 'exit' | 'transfer' | 'adjustment';
     quantity: number;
     unit_cost: number;
@@ -77,6 +95,7 @@ interface InventoryMovementFormProps {
 export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   onSuccess,
   defaultMovementType = 'entry',
+  entityFilter = 'all',
   prefill,
   onCreated
 }) => {
@@ -100,6 +119,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
     if (prefill) {
       if (prefill.item_id) form.setValue('item_id', prefill.item_id);
       if (prefill.location_id) form.setValue('location_id', prefill.location_id);
+      if (prefill.destination_location_id) form.setValue('destination_location_id', prefill.destination_location_id);
       if (prefill.movement_type) form.setValue('movement_type', prefill.movement_type);
       if (prefill.quantity !== undefined) form.setValue('quantity', prefill.quantity);
       if (prefill.unit_cost !== undefined) form.setValue('unit_cost', prefill.unit_cost);
@@ -111,8 +131,19 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   const watchedMovementType = form.watch('movement_type');
   const watchedItemId = form.watch('item_id');
   const watchedLocationId = form.watch('location_id');
+  const watchedDestinationLocationId = form.watch('destination_location_id');
   const watchedQuantity = form.watch('quantity');
   const selectedItem = items?.find(item => item.id === watchedItemId);
+  const orderedLocations = React.useMemo(
+    () => sortLocationsForEntity((locations || []).filter((location) => location.is_active), entityFilter),
+    [locations, entityFilter],
+  );
+
+  React.useEffect(() => {
+    if (entityFilter === 'all' || form.getValues('location_id')) return;
+    const preferredLocation = orderedLocations.find((location) => getLocationEntity(location) === entityFilter);
+    if (preferredLocation) form.setValue('location_id', preferredLocation.id);
+  }, [entityFilter, form, orderedLocations]);
 
   // Get current stock for selected item and location
   const currentStock = stockData?.find(
@@ -134,6 +165,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
       logger.debug('Calling createMovement with:', {
         item_id: data.item_id,
         location_id: data.location_id,
+        destination_location_id: data.movement_type === 'transfer' ? data.destination_location_id : null,
         movement_type: data.movement_type,
         quantity: data.quantity,
         unit_cost: data.unit_cost,
@@ -153,6 +185,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
       const created = await createMovement.mutateAsync({
         item_id: data.item_id,
         location_id: data.location_id,
+        destination_location_id: data.movement_type === 'transfer' ? data.destination_location_id : null,
         movement_type: data.movement_type,
         quantity: data.quantity,
         unit_cost: data.unit_cost,
@@ -295,7 +328,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location_id">Ubicación</Label>
+            <Label htmlFor="location_id">{watchedMovementType === 'transfer' ? 'Ubicación origen' : 'Ubicación'}</Label>
             <Select 
               value={form.watch('location_id')} 
               onValueChange={(value) => form.setValue('location_id', value)}
@@ -304,10 +337,13 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
                 <SelectValue placeholder="Seleccione una ubicación" />
               </SelectTrigger>
               <SelectContent>
-                {locations?.map((location) => (
+                {orderedLocations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
                     <div className="flex flex-col">
-                      <span className="font-medium">{location.name}</span>
+                      <span className="font-medium">
+                        {location.name}
+                        {entityFilter === 'all' ? ` · ${INVENTORY_LOCATION_ENTITY_LABELS[getLocationEntity(location)]}` : ''}
+                      </span>
                       <span className="text-sm text-muted-foreground">Código: {location.code}</span>
                     </div>
                   </SelectItem>
@@ -340,6 +376,36 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
               </div>
             )}
           </div>
+
+          {watchedMovementType === 'transfer' && (
+            <div className="space-y-2">
+              <Label htmlFor="destination_location_id">Ubicación destino</Label>
+              <Select
+                value={watchedDestinationLocationId || ''}
+                onValueChange={(value) => form.setValue('destination_location_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione destino" />
+                </SelectTrigger>
+                <SelectContent>
+                  {orderedLocations.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {location.name}
+                          {entityFilter === 'all' ? ` · ${INVENTORY_LOCATION_ENTITY_LABELS[getLocationEntity(location)]}` : ''}
+                        </span>
+                        <span className="text-sm text-muted-foreground">Código: {location.code}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.destination_location_id && (
+                <p className="text-sm text-red-600">{form.formState.errors.destination_location_id.message}</p>
+              )}
+            </div>
+          )}
 
           {/* Quantity and Cost */}
           <div className="grid grid-cols-2 gap-4">

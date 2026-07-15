@@ -2703,6 +2703,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          entity: string
           id: string
           is_active: boolean
           name: string
@@ -2713,6 +2714,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string
           id?: string
           is_active?: boolean
           name: string
@@ -2723,6 +2725,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          entity?: string
           id?: string
           is_active?: boolean
           name?: string
@@ -3008,6 +3011,7 @@ export type Database = {
           crane_id: string | null
           created_at: string
           created_by: string | null
+          destination_location_id: string | null
           expiration_date: string | null
           id: string
           item_id: string
@@ -3037,6 +3041,7 @@ export type Database = {
           crane_id?: string | null
           created_at?: string
           created_by?: string | null
+          destination_location_id?: string | null
           expiration_date?: string | null
           id?: string
           item_id: string
@@ -3066,6 +3071,7 @@ export type Database = {
           crane_id?: string | null
           created_at?: string
           created_by?: string | null
+          destination_location_id?: string | null
           expiration_date?: string | null
           id?: string
           item_id?: string
@@ -3116,6 +3122,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_destination_location_id_fkey"
+            columns: ["destination_location_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_locations"
             referencedColumns: ["id"]
           },
           {

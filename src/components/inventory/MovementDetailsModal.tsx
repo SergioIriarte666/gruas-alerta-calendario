@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { useInventoryMovementChangeHistory } from '@/hooks/useChangeHistory';
 import { ChangeHistoryPanel } from '@/components/shared/ChangeHistoryPanel';
 import { Clock } from 'lucide-react';
 import { createLogger } from "@/lib/logger";
+import { supabase } from '@/integrations/supabase/client';
 
 
 const logger = createLogger("MovementDetailsModal");
@@ -44,6 +46,18 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
   const [showEditModal, setShowEditModal] = useState(false);
   
   const cancelMovement = useCancelInventoryMovement();
+  const { data: intercompanyAdjustment } = useQuery({
+    queryKey: ['inventory-movement-intercompany-adjustment', movement.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('intercompany_adjustments')
+        .select('amount, direction')
+        .eq('reference', `inv_movement:${movement.id}`)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+  });
 
   const handleCancelMovement = async () => {
     try {
@@ -139,6 +153,15 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
               </div>
             )}
 
+            {intercompanyAdjustment && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Cuenta intercompañía:</span>
+                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-700">
+                  Intercompañía ${Number(intercompanyAdjustment.amount || 0).toLocaleString('es-CL')}
+                </Badge>
+              </div>
+            )}
+
             <Separator />
 
             <div className="space-y-2">
@@ -154,7 +177,7 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <MapPin className="size-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Ubicación:</span>
+                <span className="text-sm font-medium">{movement.movement_type === 'transfer' ? 'Ubicación origen:' : 'Ubicación:'}</span>
               </div>
               <p className="text-sm ml-6">
                 {movement.location?.name}
@@ -163,6 +186,21 @@ export const MovementDetailsModal: React.FC<MovementDetailsModalProps> = ({
                 )}
               </p>
             </div>
+
+            {movement.movement_type === 'transfer' && movement.destination_location && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <MapPin className="size-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Ubicación destino:</span>
+                </div>
+                <p className="text-sm ml-6">
+                  {movement.destination_location.name}
+                  {movement.destination_location.code && (
+                    <span className="text-muted-foreground"> ({movement.destination_location.code})</span>
+                  )}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

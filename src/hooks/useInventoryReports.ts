@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subMonths } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
+import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
 
 const _logger = createLogger('useInventoryReports');
 
@@ -73,7 +74,30 @@ export interface InventoryReportFilters {
   movementType?: string;
   craneId?: string;
   operatorId?: string;
+  entityFilter?: InventoryEntityFilter;
 }
+
+const getReportLocationIdsForEntity = async (entityFilter?: InventoryEntityFilter): Promise<string[] | null> => {
+  if (!entityFilter || entityFilter === 'all') return null;
+
+  const { data, error } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('is_active', true)
+    .eq('entity', entityFilter);
+
+  if (error) throw error;
+  return (data || []).map((location) => location.id);
+};
+
+const applyReportMovementLocationFilter = <T extends { or: (filters: string) => T }>(
+  query: T,
+  locationIds: string[] | null,
+) => {
+  if (!locationIds) return query;
+  const ids = locationIds.join(',');
+  return query.or(`location_id.in.(${ids}),destination_location_id.in.(${ids})`);
+};
 
 export interface StockReportData {
   totalItems: number;
@@ -178,10 +202,28 @@ export const useStockReport = (filters?: InventoryReportFilters) => {
   return useQuery({
     queryKey: ['stock-report', filters],
     queryFn: async (): Promise<StockReportData> => {
+      const entityLocationIds = await getReportLocationIdsForEntity(filters?.entityFilter);
+      if (entityLocationIds && entityLocationIds.length === 0) {
+        return {
+          totalItems: 0,
+          totalValue: 0,
+          lowStockItems: 0,
+          outOfStockItems: 0,
+          itemsByCategory: [],
+          itemsByLocation: [],
+          lowStockAlert: [],
+        };
+      }
+
       // Get stock data with items and categories
-      const { data: stockData, error: stockError } = await supabase
+      let query = supabase
         .from('inventory_stock')
         .select(STOCK_REPORT_SELECT);
+
+      if (entityLocationIds) query = query.in('location_id', entityLocationIds);
+      if (filters?.locationId) query = query.eq('location_id', filters.locationId);
+
+      const { data: stockData, error: stockError } = await query;
 
       if (stockError) throw stockError;
 
@@ -261,6 +303,19 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
         .select(`
           ${MOVEMENT_REPORT_SELECT}
         `);
+      const entityLocationIds = await getReportLocationIdsForEntity(filters?.entityFilter);
+      if (entityLocationIds && entityLocationIds.length === 0) {
+        return {
+          totalMovements: 0,
+          entriesCount: 0,
+          exitsCount: 0,
+          totalEntriesValue: 0,
+          totalExitsValue: 0,
+          movementsByType: [],
+          movementsByDate: [],
+          topMovedItems: [],
+        };
+      }
 
       // Apply filters
       if (filters?.dateFrom) {
@@ -273,7 +328,9 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
         query = query.eq('inventory_items.category_id', filters.categoryId);
       }
       if (filters?.locationId) {
-        query = query.eq('location_id', filters.locationId);
+        query = query.or(`location_id.eq.${filters.locationId},destination_location_id.eq.${filters.locationId}`);
+      } else if (entityLocationIds) {
+        query = applyReportMovementLocationFilter(query, entityLocationIds);
       }
       if (filters?.movementType) {
         query = query.eq('movement_type', filters.movementType);
@@ -386,12 +443,27 @@ export const useCostAnalysisReport = (filters?: InventoryReportFilters) => {
         .select(COST_ANALYSIS_SELECT)
         .not('total_cost', 'is', null)
         .eq('status', 'active');
+      const entityLocationIds = await getReportLocationIdsForEntity(filters?.entityFilter);
+      if (entityLocationIds && entityLocationIds.length === 0) {
+        return {
+          totalInventoryValue: 0,
+          averageUnitCost: 0,
+          costByCategory: [],
+          supplierAnalysis: [],
+          costTrends: [],
+        };
+      }
 
       if (filters?.dateFrom) {
         query = query.gte('movement_date', filters.dateFrom);
       }
       if (filters?.dateTo) {
         query = query.lte('movement_date', filters.dateTo);
+      }
+      if (filters?.locationId) {
+        query = query.or(`location_id.eq.${filters.locationId},destination_location_id.eq.${filters.locationId}`);
+      } else if (entityLocationIds) {
+        query = applyReportMovementLocationFilter(query, entityLocationIds);
       }
 
       const { data: movements, error } = await query;
@@ -471,19 +543,44 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
       // Get consumption data from last 6 months
       const sixMonthsAgo = format(subMonths(businessClock.todayDate(), 6), 'yyyy-MM-dd');
       
-      const { data: movements, error } = await supabase
+      const entityLocationIds = await getReportLocationIdsForEntity(filters?.entityFilter);
+      if (entityLocationIds && entityLocationIds.length === 0) {
+        return {
+          consumptionPatterns: [],
+          seasonalTrends: [],
+          craneConsumption: [],
+        };
+      }
+
+      let movementsQuery = supabase
         .from('inventory_movements')
         .select(PREDICTIVE_MOVEMENTS_SELECT)
         .eq('movement_type', 'exit')
         .gte('movement_date', sixMonthsAgo)
         .eq('status', 'active');
 
+      if (filters?.locationId) {
+        movementsQuery = movementsQuery.or(`location_id.eq.${filters.locationId},destination_location_id.eq.${filters.locationId}`);
+      } else if (entityLocationIds) {
+        movementsQuery = applyReportMovementLocationFilter(movementsQuery, entityLocationIds);
+      }
+
+      const { data: movements, error } = await movementsQuery;
+
       if (error) throw error;
 
       // Get current stock
-      const { data: stockData, error: stockError } = await supabase
+      let stockQuery = supabase
         .from('inventory_stock')
         .select(PREDICTIVE_STOCK_SELECT);
+
+      if (filters?.locationId) {
+        stockQuery = stockQuery.eq('location_id', filters.locationId);
+      } else if (entityLocationIds) {
+        stockQuery = stockQuery.in('location_id', entityLocationIds);
+      }
+
+      const { data: stockData, error: stockError } = await stockQuery;
 
       if (stockError) throw stockError;
 

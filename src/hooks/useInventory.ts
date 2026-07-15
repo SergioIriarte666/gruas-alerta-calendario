@@ -6,6 +6,8 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useUniversalSync } from './useUniversalSync';  // FASE 5
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
+import type { EntityKey } from '@/lib/entities';
+import type { InventoryEntityFilter } from '@/utils/inventoryEntity';
 
 const logger = createLogger("useInventory");
 
@@ -49,6 +51,7 @@ export interface InventoryStock {
     id: string;
     name: string;
     code: string;
+    entity: EntityKey;
   };
 }
 
@@ -56,6 +59,7 @@ export interface InventoryMovement {
   id: string;
   item_id: string;
   location_id: string;
+  destination_location_id?: string | null;
   movement_type: 'entry' | 'exit' | 'transfer' | 'adjustment';
   quantity: number;
   unit_cost?: number;
@@ -82,7 +86,14 @@ export interface InventoryMovement {
     id: string;
     name: string;
     code: string;
+    entity: EntityKey;
   };
+  destination_location?: {
+    id: string;
+    name: string;
+    code: string;
+    entity: EntityKey;
+  } | null;
   supplier?: {
     id: string;
     name: string;
@@ -122,6 +133,7 @@ export interface InventoryLocation {
   code: string;
   description?: string;
   address?: string;
+  entity: EntityKey;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -198,13 +210,14 @@ const INVENTORY_STOCK_SELECT = `
   available_quantity,
   last_movement_date,
   item:inventory_items(${INVENTORY_ITEM_EMBED_SELECT}),
-  location:inventory_locations(id, name, code)
+  location:inventory_locations(id, name, code, entity)
 `;
 
 const INVENTORY_MOVEMENT_SELECT = `
   id,
   item_id,
   location_id,
+  destination_location_id,
   movement_type,
   quantity,
   unit_cost,
@@ -227,7 +240,8 @@ const INVENTORY_MOVEMENT_SELECT = `
   supplier_invoice_id,
   supplier_invoice_item_id,
   item:inventory_items(id, name),
-  location:inventory_locations(id, name, code),
+  location:inventory_locations(id, name, code, entity),
+  destination_location:inventory_locations!inventory_movements_destination_location_id_fkey(id, name, code, entity),
   supplier:inventory_suppliers(id, name),
   crane:cranes(id, license_plate)
 `;
@@ -236,6 +250,7 @@ const INVENTORY_MOVEMENT_REFERENCE_SELECT = `
   id,
   item_id,
   location_id,
+  destination_location_id,
   movement_type,
   quantity,
   unit_cost,
@@ -258,7 +273,8 @@ const INVENTORY_MOVEMENT_REFERENCE_SELECT = `
   supplier_invoice_id,
   supplier_invoice_item_id,
   item:inventory_items(id, name, sku, code),
-  location:inventory_locations(id, name, code)
+  location:inventory_locations(id, name, code, entity),
+  destination_location:inventory_locations!inventory_movements_destination_location_id_fkey(id, name, code, entity)
 `;
 
 const INVENTORY_SUPPLIER_SELECT = `
@@ -326,15 +342,44 @@ export const usePagedInventoryItems = (page: number, pageSize: number) => {
   });
 };
 
+const getInventoryLocationIdsForEntity = async (entityFilter: InventoryEntityFilter): Promise<string[] | null> => {
+  if (entityFilter === 'all') return null;
+
+  const { data, error } = await supabase
+    .from('inventory_locations')
+    .select('id')
+    .eq('is_active', true)
+    .eq('entity', entityFilter);
+
+  if (error) throw error;
+  return (data || []).map((location) => location.id);
+};
+
+const applyMovementLocationFilter = <T extends { or: (filters: string) => T }>(
+  query: T,
+  locationIds: string[] | null,
+) => {
+  if (!locationIds) return query;
+  const ids = locationIds.join(',');
+  return query.or(`location_id.in.(${ids}),destination_location_id.in.(${ids})`);
+};
+
 // Hooks for inventory stock
-export const useInventoryStock = () => {
+export const useInventoryStock = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-stock'],
+    queryKey: ['inventory-stock', entityFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) return [];
+
+      let query = supabase
         .from('inventory_stock')
         .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
+
+      query = applyMovementLocationFilter(query, locationIds);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as InventoryStock[];
@@ -343,15 +388,22 @@ export const useInventoryStock = () => {
 };
 
 // Hooks for low stock items
-export const useLowStockItems = () => {
+export const useLowStockItems = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['low-stock-items'],
+    queryKey: ['low-stock-items', entityFilter],
     queryFn: async () => {
+      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) return [];
+
       // Get all stock data with item info
-      const { data, error } = await supabase
+      let query = supabase
         .from('inventory_stock')
         .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
+
+      query = applyMovementLocationFilter(query, locationIds);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -366,16 +418,23 @@ export const useLowStockItems = () => {
 };
 
 // Hooks for inventory movements
-export const useInventoryMovements = (limit = 50) => {
+export const useInventoryMovements = (limit = 50, entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-movements', limit],
+    queryKey: ['inventory-movements', limit, entityFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) return [];
+
+      let query = supabase
         .from('inventory_movements')
         .select(INVENTORY_MOVEMENT_SELECT)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(limit);
+
+      query = applyMovementLocationFilter(query, locationIds);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as InventoryMovement[];
@@ -404,22 +463,29 @@ export const useInventoryMovementsByReference = (reference: string | null) => {
   });
 };
 
-export const usePagedInventoryMovements = (page: number, pageSize: number) => {
+export const usePagedInventoryMovements = (page: number, pageSize: number, entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-movements', 'paged', page, pageSize],
+    queryKey: ['inventory-movements', 'paged', page, pageSize, entityFilter],
     queryFn: async () => {
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
+      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) {
+        return { movements: [], total: 0 };
+      }
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('inventory_movements')
         .select(
           INVENTORY_MOVEMENT_SELECT,
           { count: 'exact' }
         )
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .order('created_at', { ascending: false });
+
+      query = applyMovementLocationFilter(query, locationIds);
+
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
 
@@ -454,15 +520,19 @@ export const useInventoryCategories = () => {
 };
 
 // Hooks for locations
-export const useInventoryLocations = () => {
+export const useInventoryLocations = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-locations'],
+    queryKey: ['inventory-locations', entityFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('inventory_locations')
-        .select('id, name, code, description, address, is_active, created_at, updated_at, created_by')
+        .select('id, name, code, description, address, entity, is_active, created_at, updated_at, created_by')
         .eq('is_active', true)
         .order('name');
+
+      if (entityFilter !== 'all') query = query.eq('entity', entityFilter);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as InventoryLocation[];
@@ -488,23 +558,46 @@ export const useInventorySuppliers = () => {
 };
 
 // Hook for inventory statistics
-export const useInventoryStats = () => {
+export const useInventoryStats = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
-    queryKey: ['inventory-stats'],
+    queryKey: ['inventory-stats', entityFilter],
     queryFn: async () => {
       // Get total items count
-      const { count: totalItems } = await supabase
-        .from('inventory_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
+      let totalItems = 0;
+      if (entityFilter === 'all') {
+        const { count } = await supabase
+          .from('inventory_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_active', true);
+        totalItems = count || 0;
+      }
+
+      const locationIds = await getInventoryLocationIdsForEntity(entityFilter);
+      if (locationIds && locationIds.length === 0) {
+        return {
+          totalItems: 0,
+          lowStock: 0,
+          outOfStock: 0,
+          totalValue: 0
+        };
+      }
 
       // Get low stock count (need to implement this with a better query)
-      const { data: stockData } = await supabase
+      let stockQuery = supabase
         .from('inventory_stock')
         .select(`
+          item_id,
           current_quantity,
           item:inventory_items(minimum_stock)
         `);
+
+      if (locationIds) stockQuery = stockQuery.in('location_id', locationIds);
+
+      const { data: stockData } = await stockQuery;
+
+      if (entityFilter !== 'all') {
+        totalItems = new Set((stockData || []).map((stock) => stock.item_id)).size;
+      }
 
       const lowStockCount = stockData?.filter(
         stock => stock.current_quantity <= (stock.item?.minimum_stock || 0)
@@ -515,19 +608,23 @@ export const useInventoryStats = () => {
       ).length || 0;
 
       // Calculate total inventory value
-      const { data: valueData } = await supabase
+      let valueQuery = supabase
         .from('inventory_stock')
         .select(`
           current_quantity,
           item:inventory_items(unit_cost)
         `);
 
+      if (locationIds) valueQuery = valueQuery.in('location_id', locationIds);
+
+      const { data: valueData } = await valueQuery;
+
       const totalValue = valueData?.reduce((sum, stock) => {
         return sum + (stock.current_quantity * (stock.item?.unit_cost || 0));
       }, 0) || 0;
 
       return {
-        totalItems: totalItems || 0,
+        totalItems,
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         totalValue

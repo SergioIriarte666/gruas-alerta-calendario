@@ -20,6 +20,12 @@ import { XMLInventoryUpload } from '@/components/inventory/XMLInventoryUpload';
 import { useQuickEntry } from '@/hooks/useQuickEntry';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from "@/lib/logger";
+import {
+  INVENTORY_ENTITY_FILTER_LABELS,
+  INVENTORY_ENTITY_FILTER_STORAGE_KEY,
+  isInventoryEntityFilter,
+  type InventoryEntityFilter,
+} from '@/utils/inventoryEntity';
 
 
 const logger = createLogger("Inventory");
@@ -33,12 +39,24 @@ const Inventory = () => {
   const [prefill, setPrefill] = useState<any | null>(location?.state?.prefilledData || null);
   const [isXMLImportOpen, setIsXMLImportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('stock');
+  const [entityFilter, setEntityFilter] = useState<InventoryEntityFilter>(() => {
+    if (typeof window === 'undefined') return 'all';
+    const saved = window.sessionStorage.getItem(INVENTORY_ENTITY_FILTER_STORAGE_KEY);
+    return isInventoryEntityFilter(saved) ? saved : 'all';
+  });
 
-  const { data: stats, isLoading: statsLoading } = useInventoryStats();
-  const { data: recentMovements = [], isLoading: movementsLoading } = useInventoryMovements(5);
-  const { data: lowStockData = [] } = useLowStockItems();
+  const { data: stats, isLoading: statsLoading } = useInventoryStats(entityFilter);
+  const { data: recentMovements = [], isLoading: movementsLoading } = useInventoryMovements(5, entityFilter);
+  const { data: lowStockData = [] } = useLowStockItems(entityFilter);
 
   const isMobile = useIsMobile();
+
+  const handleEntityFilterChange = (value: InventoryEntityFilter) => {
+    setEntityFilter(value);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(INVENTORY_ENTITY_FILTER_STORAGE_KEY, value);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-6">
@@ -61,6 +79,7 @@ const Inventory = () => {
               {prefill?.notes && <div><span className="text-muted-foreground">Notas:</span> {prefill.notes}</div>}
             </div>
             <InventoryMovementForm
+              entityFilter={entityFilter}
               onCreated={async (movement) => {
                 const receiptPhotoPaths = prefill?.receipt_photo_paths as string[] | undefined;
                 if (receiptPhotoPaths?.length && movement?.id) {
@@ -99,14 +118,25 @@ const Inventory = () => {
         title="Gestión de Bodega"
         description="Controla stock, movimientos y reportes de inventario desde una experiencia administrativa unificada."
         actions={
-          <Button
-            onClick={() => setIsXMLImportOpen(true)}
-            size={isMobile ? 'sm' : 'default'}
-            className="flex items-center gap-2"
-          >
-            <Upload className="size-4" />
-            <span>{isMobile ? 'XML' : 'Importar XML'}</span>
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Tabs value={entityFilter} onValueChange={(value) => handleEntityFilterChange(value as InventoryEntityFilter)}>
+              <TabsList className="h-9 rounded-xl">
+                {(['all', 'gruas_5_norte', 'lowboy'] as const).map((value) => (
+                  <TabsTrigger key={value} value={value} className="h-7 px-3 text-xs sm:text-sm">
+                    {INVENTORY_ENTITY_FILTER_LABELS[value]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <Button
+              onClick={() => setIsXMLImportOpen(true)}
+              size={isMobile ? 'sm' : 'default'}
+              className="flex items-center gap-2"
+            >
+              <Upload className="size-4" />
+              <span>{isMobile ? 'XML' : 'Importar XML'}</span>
+            </Button>
+          </div>
         }
       />
 
@@ -199,15 +229,15 @@ const Inventory = () => {
           </div>
 
           <TabsContent value="stock" className="mt-4 space-y-4">
-            <InventoryStockView />
+            <InventoryStockView entityFilter={entityFilter} />
           </TabsContent>
 
           <TabsContent value="movements" className="mt-4 space-y-4">
-            <MovementsHistoryTable />
+            <MovementsHistoryTable entityFilter={entityFilter} />
           </TabsContent>
 
           <TabsContent value="reports" className="mt-4 space-y-4">
-            <InventoryReportsPage />
+            <InventoryReportsPage entityFilter={entityFilter} />
           </TabsContent>
         </Tabs>
       </SectionCard>
