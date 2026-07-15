@@ -3794,6 +3794,71 @@ export type Database = {
           },
         ]
       }
+      lowboy_sales: {
+        Row: {
+          client_name: string
+          client_rut: string
+          created_at: string
+          created_by: string | null
+          description: string
+          destination: string | null
+          executed_date: string | null
+          id: string
+          linked_rcv_record_id: string | null
+          net_amount: number
+          notes: string | null
+          origin: string | null
+          sale_type: string
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          client_rut: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          destination?: string | null
+          executed_date?: string | null
+          id?: string
+          linked_rcv_record_id?: string | null
+          net_amount: number
+          notes?: string | null
+          origin?: string | null
+          sale_type: string
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          client_rut?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          destination?: string | null
+          executed_date?: string | null
+          id?: string
+          linked_rcv_record_id?: string | null
+          net_amount?: number
+          notes?: string | null
+          origin?: string | null
+          sale_type?: string
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lowboy_sales_linked_rcv_record_id_fkey"
+            columns: ["linked_rcv_record_id"]
+            isOneToOne: false
+            referencedRelation: "sii_rcv_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_email_settings: {
         Row: {
           created_at: string

@@ -4,6 +4,7 @@ import { SiiRcvImportCard } from '@/components/siircv/SiiRcvImportCard';
 import { SiiRcvTable } from '@/components/siircv/SiiRcvTable';
 import { SiiResultadoPanel } from '@/components/siircv/SiiResultadoPanel';
 import { LowboyIvaPanel } from '@/components/siircv/LowboyIvaPanel';
+import { LowboySalesPanel } from '@/components/siircv/LowboySalesPanel';
 import { useUser } from '@/contexts/UserContext';
 
 const DEFAULT_ENTITY_RUT = '78.387.656-6';
@@ -22,8 +23,11 @@ const LibrosSii = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="import" className="space-y-4">
+      <Tabs defaultValue="ventas" className="space-y-4">
         <TabsList className="bg-muted/30 p-1">
+          <TabsTrigger value="ventas" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+            Ventas
+          </TabsTrigger>
           <TabsTrigger value="import" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             Importar / Registros
           </TabsTrigger>
@@ -35,6 +39,10 @@ const LibrosSii = () => {
         <TabsContent value="import" className="space-y-4">
           {isAdmin && <SiiRcvImportCard entityRut={entityRut} onEntityRutChange={setEntityRut} />}
           <SiiRcvTable entityRut={entityRut.trim()} />
+        </TabsContent>
+
+        <TabsContent value="ventas" className="space-y-4">
+          <LowboySalesPanel />
         </TabsContent>
 
         <TabsContent value="resultado" className="space-y-4">
