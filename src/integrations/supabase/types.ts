@@ -3794,6 +3794,33 @@ export type Database = {
           },
         ]
       }
+      notification_email_settings: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          id: string
+          send_inspection_completed: boolean
+          send_vehicle_pickup: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          send_inspection_completed?: boolean
+          send_vehicle_pickup?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          send_inspection_completed?: boolean
+          send_vehicle_pickup?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           body: string
@@ -3829,6 +3856,81 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      notification_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          inspection_id: string | null
+          kind: string
+          last_error: string | null
+          payload: Json
+          processed_at: string | null
+          service_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          inspection_id?: string | null
+          kind: string
+          last_error?: string | null
+          payload?: Json
+          processed_at?: string | null
+          service_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          inspection_id?: string | null
+          kind?: string
+          last_error?: string | null
+          payload?: Json
+          processed_at?: string | null
+          service_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_outbox_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "external_services_pending"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_outbox_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
       }
       notification_settings: {
         Row: {
@@ -7820,6 +7922,27 @@ export type Database = {
           supplier_name: string
           supplier_rut: string
         }[]
+      }
+      claim_notification_outbox: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          inspection_id: string | null
+          kind: string
+          last_error: string | null
+          payload: Json
+          processed_at: string | null
+          service_id: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "notification_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       cleanup_duplicate_inventory_costs: { Args: never; Returns: Json }
       cleanup_duplicate_payments: { Args: never; Returns: Json }
