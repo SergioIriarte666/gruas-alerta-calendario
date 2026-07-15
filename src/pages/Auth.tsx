@@ -41,6 +41,7 @@ const Auth = () => {
   const { user: profileUser, loading: profileLoading } = useUser();
   const { isBlocked, remainingSeconds, recordFailedAttempt, resetAttempts } = useLoginRateLimit();
   const navigate = useNavigate();
+  const showSocialLogin = import.meta.env.VITE_APP_VARIANT !== 'operator-mobile';
 
   // Check if user needs to set password (invited user who just clicked the link)
   useEffect(() => {
@@ -334,7 +335,7 @@ const Auth = () => {
             setPassword={setPassword}
             onSubmit={handleLogin}
             onForgotPassword={() => setShowForgotPassword(true)}
-            onGoogleLogin={handleGoogleLogin}
+            onGoogleLogin={showSocialLogin ? handleGoogleLogin : undefined}
           />
         )}
 
@@ -346,7 +347,7 @@ const Auth = () => {
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleSignUp}
-            onGoogleLogin={handleGoogleLogin}
+            onGoogleLogin={showSocialLogin ? handleGoogleLogin : undefined}
           />
         )}
       </div>

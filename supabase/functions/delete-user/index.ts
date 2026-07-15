@@ -37,14 +37,7 @@ serve(async (req: Request) => {
       .eq("id", callerUser.id)
       .single();
 
-    if (!callerProfile || callerProfile.role !== "admin") {
-      return new Response(JSON.stringify({ error: "Solo administradores pueden eliminar usuarios" }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
-      });
-    }
-
-    const { userId } = await req.json();
+    const { userId, confirmSelfDelete } = await req.json();
     if (!userId) {
       return new Response(JSON.stringify({ error: "userId requerido" }), {
         status: 400,
@@ -52,8 +45,18 @@ serve(async (req: Request) => {
       });
     }
 
-    if (userId === callerUser.id) {
-      return new Response(JSON.stringify({ error: "No puedes eliminarte a ti mismo" }), {
+    const isAdminDelete = callerProfile?.role === "admin" && userId !== callerUser.id;
+    const isSelfDelete = userId === callerUser.id && confirmSelfDelete === true;
+
+    if (!isAdminDelete && !isSelfDelete) {
+      return new Response(JSON.stringify({ error: "No autorizado para eliminar esta cuenta" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
+      });
+    }
+
+    if (userId === callerUser.id && !confirmSelfDelete) {
+      return new Response(JSON.stringify({ error: "confirmSelfDelete requerido" }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...getCorsHeaders(req) },
       });

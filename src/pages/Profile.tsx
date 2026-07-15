@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, User, Lock, Save, Camera, Loader2, ShieldCheck, Mail } from 'lucide-react';
+import { ArrowLeft, User, Lock, Save, Camera, Loader2, ShieldCheck, Mail, Trash2, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,17 @@ import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PageHeader } from '@/components/ui/page-header';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,8 +50,9 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, updateUser, forceRefreshProfile } = useUser();
+  const { user, updateUser, forceRefreshProfile, logout } = useUser();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormData>({
@@ -128,6 +140,35 @@ const Profile = () => {
     toast.success("Perfil actualizado", {
       description: "Los cambios se han guardado correctamente",
     });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || deletingAccount) return;
+
+    setDeletingAccount(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: {
+          userId: user.id,
+          confirmSelfDelete: true,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Cuenta eliminada correctamente');
+      await logout();
+      window.location.href = '/auth';
+    } catch (error: any) {
+      logger.error('Error deleting account:', error);
+      toast.error('No se pudo eliminar la cuenta', {
+        description: error?.message || 'Inténtalo nuevamente o contacta al administrador.',
+      });
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   return (
@@ -299,6 +340,42 @@ const Profile = () => {
                       </FormItem>
                     )} />
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-destructive/25 bg-card/80 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-foreground">
+                    <AlertTriangle className="mr-2 size-5 text-destructive" />
+                    Eliminar cuenta
+                  </CardTitle>
+                  <CardDescription>
+                    Elimina tu acceso y los datos de perfil asociados a esta cuenta.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button type="button" variant="destructive" className="w-full sm:w-auto">
+                        <Trash2 className="mr-2 size-4" />
+                        Eliminar mi cuenta
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar cuenta definitivamente</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción eliminará tu cuenta de acceso y no se puede deshacer. Para volver a usar la app, un administrador deberá crear una nueva cuenta.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deletingAccount}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAccount} disabled={deletingAccount}>
+                          {deletingAccount ? 'Eliminando...' : 'Confirmar eliminación'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </div>
