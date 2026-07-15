@@ -38,7 +38,7 @@ export function useXMLParsing({ onFileSelected, onParsed }: UseXMLParsingOptions
       };
       setParseResult(normalizedResult);
       onParsedRef.current?.(normalizedResult);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al analizar el archivo XML');
     } finally {
       setIsAnalyzing(false);

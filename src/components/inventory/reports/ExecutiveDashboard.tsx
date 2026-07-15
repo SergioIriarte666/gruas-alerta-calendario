@@ -8,9 +8,7 @@ import {
   TrendingDown, 
   AlertTriangle, 
   DollarSign,
-  Activity,
-  Users,
-  Truck
+  Activity
 } from 'lucide-react';
 import { 
   useStockReport, 

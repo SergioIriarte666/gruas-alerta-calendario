@@ -93,7 +93,7 @@ const fetchFilteredInvoices = async (filters: {
 const InvoiceExportModal = ({ 
   open, 
   onOpenChange, 
-  initialInvoices = [],
+  initialInvoices: _initialInvoices = [],
   initialClientId = ''
 }: InvoiceExportModalProps) => {
   const [filters, setFilters] = useState<InvoiceExportFiltersState>({

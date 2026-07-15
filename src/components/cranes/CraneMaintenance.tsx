@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink, Gauge } from 'lucide-react';
 import { useCraneMaintenance, useDeleteMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
 import { useMaintenanceCostStatus, useToggleMaintenanceCostPayment } from '@/hooks/useMaintenanceCostStatus';
 import { MaintenanceForm } from './forms/MaintenanceForm';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Crane } from '@/types';
-import { parseFromDatabase, formatForDisplayLong } from '@/utils/timezoneUtils';
+import { formatForDisplayLong } from '@/utils/timezoneUtils';
 import {
   AlertDialog,
   AlertDialogAction,

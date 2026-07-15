@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, Users, Calendar } from 'lucide-react';
+import { DollarSign, TrendingUp, Users } from 'lucide-react';
 import { useCostAnalysisReport, InventoryReportFilters } from '@/hooks/useInventoryReports';
 import { formatCurrency } from '@/lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, PieChart, Pie, Cell } from 'recharts';

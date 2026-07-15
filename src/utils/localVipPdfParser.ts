@@ -32,7 +32,7 @@ export interface LocalPurchaseOrderPdfResult {
 }
 
 const normalizeSpaces = (value: string) => value.replace(/\s+/g, ' ').trim();
-const normalizeRut = (value: string) => value.replace(/[.\s-]/g, '').toUpperCase();
+const _normalizeRut = (value: string) => value.replace(/[.\s-]/g, '').toUpperCase();
 const normalizeIdentifier = (value: string) => value.replace(/\s+/g, '').toUpperCase();
 const parseAmount = (value: string) => {
   const raw = value.trim();
@@ -442,7 +442,7 @@ const extractPdfLines = async (file: File) => {
   let pdf: any;
   try {
     pdf = await pdfjsLib.getDocument({ ...baseParams, disableWorker: false }).promise;
-  } catch (error) {
+  } catch (_error) {
     pdf = await pdfjsLib.getDocument({ ...baseParams, disableWorker: true }).promise;
   }
   const lines: string[] = [];

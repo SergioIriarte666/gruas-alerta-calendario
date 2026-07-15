@@ -7,7 +7,7 @@ import { createLogger } from '@/lib/logger';
 const logger = createLogger('EnhancedFolioGeneration');
 
 export const useEnhancedFolioGeneration = () => {
-  const { generateNextFolio, validateFolioUniqueness } = useFolioGenerator();
+  const { generateNextFolio, validateFolioUniqueness: _validateFolioUniqueness } = useFolioGenerator();
   const { validateFolio } = useFolioValidation();
 
   const generateUniqueValidFolio = useCallback(async (excludeServiceId?: string): Promise<string> => {

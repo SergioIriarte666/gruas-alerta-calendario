@@ -106,7 +106,7 @@ export const useCreateDocumentAlert = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ['document-alerts'] });
       toast.success('Alerta de documento configurada exitosamente');
     },

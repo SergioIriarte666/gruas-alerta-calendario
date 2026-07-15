@@ -8,7 +8,6 @@ import {
   useCurrentFuelPrices,
   useFuelPriceHistory,
   useDeleteFuelPrice,
-  getFuelTypeLabel,
   FUEL_TYPES,
   REFERENCE_FUEL_STATION,
   REFERENCE_FUEL_STATION_LABEL,

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Service } from '@/types';
-import { usePurchaseOrderPDFImport, MatchedService } from '@/hooks/vip/usePurchaseOrderPDFImport';
+import { usePurchaseOrderPDFImport } from '@/hooks/vip/usePurchaseOrderPDFImport';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

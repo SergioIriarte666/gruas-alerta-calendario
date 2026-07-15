@@ -17,7 +17,7 @@ interface CreditorFormProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CREDITOR_TYPES = [
+const _CREDITOR_TYPES = [
   { value: 'fiscal', label: 'Fiscal (SII, Tesorería)' },
   { value: 'bank', label: 'Banco / Institución Financiera' },
   { value: 'leasing', label: 'Leasing' },

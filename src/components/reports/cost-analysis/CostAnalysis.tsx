@@ -56,7 +56,7 @@ export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
                     content={<ChartTooltipContent 
                         indicator="dot" 
                         labelFormatter={(label) => <div className="font-bold">{label}</div>}
-                        formatter={(value, name) => ([
+                        formatter={(value, _name) => ([
                           `$${Number(value).toLocaleString('es-CL')}`,
                           'Costo Total'
                         ])}

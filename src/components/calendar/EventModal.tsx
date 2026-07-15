@@ -71,7 +71,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
         craneId: ''
       });
       setOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al crear el evento. Inténtalo nuevamente.');
     } finally {
       setIsSubmitting(false);

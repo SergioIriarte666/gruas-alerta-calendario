@@ -1,6 +1,5 @@
 import { useEnhancedServiceDetails } from './useEnhancedServiceDetails';
 import { useServiceDetails } from './useServiceDetails';
-import { isCustodyService } from '@/utils/serviceValueCalculations';
 
 /**
  * Hook unificado que decide automáticamente si usar datos básicos o mejorados

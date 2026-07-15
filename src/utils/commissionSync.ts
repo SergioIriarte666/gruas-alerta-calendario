@@ -124,7 +124,7 @@ export const bulkSyncAllCommissions = async (): Promise<{ success: boolean; mess
   try {
     logger.info('🔄 [BULK_SYNC] Starting bulk commission synchronization');
     
-    const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+    const _commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
     
     // Find services with service_resources that have commissions but no corresponding costs
     const { data: servicesWithMissingCommissions, error: queryError } = await supabase

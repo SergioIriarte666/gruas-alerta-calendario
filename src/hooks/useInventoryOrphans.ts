@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useInventoryOrphans');
+const _logger = createLogger('useInventoryOrphans');
 
 const INVENTORY_QUERY_KEYS = ['inventory-items', 'inventory-stock', 'inventory-movements'];
 

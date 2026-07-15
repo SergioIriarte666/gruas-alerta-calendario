@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AlertTriangle, ArchiveRestore, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock3, GitBranch, Loader2, Search, ShieldCheck, UserRound } from 'lucide-react';
+import { AlertTriangle, ArchiveRestore, Ban, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Loader2, Search, ShieldCheck, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';

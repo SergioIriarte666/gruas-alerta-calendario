@@ -25,17 +25,15 @@ import {
   Activity, 
   TrendingUp, 
   TrendingDown, 
-  Calendar, 
   Clock, 
   Target,
   AlertCircle,
   CheckCircle2,
   DollarSign,
   BarChart3,
-  PieChart as PieChartIcon,
-  Filter
+  PieChart as PieChartIcon
 } from 'lucide-react';
-import { format, subDays, subWeeks, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subDays, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toTitleCase } from '@/lib/utils';
 

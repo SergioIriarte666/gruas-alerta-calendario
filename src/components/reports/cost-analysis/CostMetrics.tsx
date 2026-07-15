@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ReportMetricCard } from '../shared/ReportMetricCard';
-import { DollarSign, TrendingDown, Percent, PiggyBank, Calculator, BarChart3 } from 'lucide-react';
+import { TrendingDown, Percent, PiggyBank, Calculator, BarChart3 } from 'lucide-react';
 import { CostMetrics } from '@/hooks/reports/useCostMetrics';
 
 interface CostMetricsProps {

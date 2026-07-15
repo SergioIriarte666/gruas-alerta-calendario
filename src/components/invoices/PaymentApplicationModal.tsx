@@ -3,7 +3,6 @@ import { PaymentWithDetails, ManualApplication } from '@/types/payments';
 import { usePayments } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Calculator, CheckCircle } from 'lucide-react';
@@ -83,7 +82,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
 
   const getTotalSelected = () => Math.max(0, applications.reduce((sum, app) => sum + (app.amount || 0), 0));
 
-  const isValidApplication = () => {
+  const _isValidApplication = () => {
     const total = getTotalSelected();
     const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
     return total > 0 && total <= paymentRemaining && applications.length > 0;

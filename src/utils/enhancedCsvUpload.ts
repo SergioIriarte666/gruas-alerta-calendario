@@ -2,7 +2,6 @@ import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { DataMapper, MappedServiceData } from './dataMapper';
 
-import { toLocalDateString } from '@/utils/timezoneUtils';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('EnhancedCsvUpload');
@@ -99,7 +98,7 @@ export class EnhancedCSVUploader {
         logger.debug('🏷️ Header found:', trimmed);
         return trimmed;
       },
-      step: (results, parser) => {
+      step: (results, _parser) => {
         if (onProgress) {
           const progress = Math.round((results.meta.cursor / file.size) * 100);
           onProgress({

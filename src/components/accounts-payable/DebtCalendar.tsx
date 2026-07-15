@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useDebtInstallments, DebtInstallment } from '@/hooks/useDebtInstallments';
 import { PayInstallmentModal } from './PayInstallmentModal';
-import { ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 
@@ -61,9 +60,9 @@ export const DebtCalendar = () => {
             ))}
             {days.map((day) => {
               const dayInstallments = getInstallmentsForDay(day);
-              const hasOverdue = dayInstallments.some((i) => i.status === 'pending' && i.due_date < today);
-              const hasPending = dayInstallments.some((i) => i.status === 'pending');
-              const allPaid = dayInstallments.length > 0 && dayInstallments.every((i) => i.status === 'paid');
+              const _hasOverdue = dayInstallments.some((i) => i.status === 'pending' && i.due_date < today);
+              const _hasPending = dayInstallments.some((i) => i.status === 'pending');
+              const _allPaid = dayInstallments.length > 0 && dayInstallments.every((i) => i.status === 'paid');
 
               return (
                 <div

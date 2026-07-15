@@ -57,7 +57,7 @@ export const verifySessionConsistency = async (supabase: SupabaseClient<any, "pu
     }
 
     // Test backend session by querying auth.uid()
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('profiles')
       .select('id')
       .limit(1);

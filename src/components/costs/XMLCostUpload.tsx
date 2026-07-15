@@ -33,7 +33,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     isCheckingDuplicates, isSearchingMatches, showDuplicateWarning, setShowDuplicateWarning,
     selectedSuppliers, selectedDocuments, selectedTotal,
     supplierCategoryMapping, supplierSubcategoryMapping,
-    supplierPaymentCondition, setSupplierPaymentCondition,
+    supplierPaymentCondition: _supplierPaymentCondition, setSupplierPaymentCondition,
     supplierCreditDate, setSupplierCreditDate,
     dueDateOverrides, setDueDateOverrides,
     paidOverrides, setPaidOverrides,

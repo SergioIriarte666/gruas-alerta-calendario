@@ -1,7 +1,7 @@
 import { businessClock } from '@/utils/businessClock';
 import * as React from 'react';
 import { useState } from 'react';
-import { ScanSearch, AlertTriangle, Wrench, Loader2, CheckCircle } from 'lucide-react';
+import { ScanSearch, Wrench, Loader2, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

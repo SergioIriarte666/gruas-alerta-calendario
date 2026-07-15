@@ -63,7 +63,7 @@ export const InvoiceCancellationModal = ({
       
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (_error) {
       // Error is handled in the hook
     } finally {
       setIsSubmitting(false);

@@ -225,7 +225,7 @@ const buildInspectionValues = (
   rawInspection: any | null,
   service: Service,
   photos: PreviewPhoto[],
-  isFinal: boolean,
+  _isFinal: boolean,
 ): InspectionFormValues => {
   const storedState = rawInspection?.initial_vehicle_state && typeof rawInspection.initial_vehicle_state === 'object'
     ? rawInspection.initial_vehicle_state

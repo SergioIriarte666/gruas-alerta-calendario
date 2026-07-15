@@ -10,7 +10,7 @@ interface CostChartsProps {
   costsByCategoryConfig: ChartConfig;
 }
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'];
+const _COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#6b7280'];
 
 export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) => {
   if (!metrics.costsByCategory || metrics.costsByCategory.length === 0) {
@@ -47,7 +47,7 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
                 outerRadius={90}
                 paddingAngle={2}
               >
-                {metrics.costsByCategory.map((entry, index) => (
+                {metrics.costsByCategory.map((entry, _index) => (
                   <Cell key={`cell-${entry.categoryName}`} fill={`var(--color-${entry.categoryName})`} />
                 ))}
               </Pie>

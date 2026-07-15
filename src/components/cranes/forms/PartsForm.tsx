@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CalendarIcon, Package, Phone, User, Hash, DollarSign, FileText, Gauge, Database, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Package, Phone, User, Hash, DollarSign, FileText, Gauge } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateCranePart, useUpdateCranePart, type CranePart, type CreateCranePartData } from '@/hooks/useCraneParts';
-import { useUnifiedPartsPurchase, useCheckInventoryItem } from '@/hooks/useUnifiedParts';
+import { useUnifiedPartsPurchase } from '@/hooks/useUnifiedParts';
 import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
 import { SimilarProductAlert } from './SimilarProductAlert';
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
@@ -34,7 +34,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
   const [confirmCreateNew, setConfirmCreateNew] = useState(false);
   const createMutation = useCreateCranePart();
   const updateMutation = useUpdateCranePart();
-  const unifiedPurchaseMutation = useUnifiedPartsPurchase();
+  const _unifiedPurchaseMutation = useUnifiedPartsPurchase();
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
     defaultValues: editingPart ? {
@@ -64,7 +64,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
   const totalValue = quantity * unitPrice;
 
   // Use similarity search instead of basic inventory check
-  const { similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
+  const { similarItems, shouldAlert, alertMessage, isLoading: _isLoading } = useSimilarItemsSearch(
     partName, 
     !editingPart && partName.length > 2 // Only check for new parts with meaningful names
   );
@@ -93,7 +93,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
         crane_id: craneId,
       });
       handleClose();
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation hooks
     }
   };

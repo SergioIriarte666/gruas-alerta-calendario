@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Calendar, User, ListChecks, FileText } from 'lucide-react';
+import { Check, Calendar, ListChecks, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface ClosureFormStep {

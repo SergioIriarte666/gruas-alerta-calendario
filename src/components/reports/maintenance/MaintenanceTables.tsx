@@ -164,7 +164,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                     data.partsAnalysis
                       .sort((a, b) => b.totalCost - a.totalCost)
                       .slice(0, 20)
-                      .map((part, index) => (
+                      .map((part, _index) => (
                       <TableRow key={`${part.partName}-${part.supplier}`} className="border-border">
                         <TableCell className="text-foreground font-medium">
                           {part.partName}

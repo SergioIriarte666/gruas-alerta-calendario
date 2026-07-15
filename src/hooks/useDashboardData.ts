@@ -3,9 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
-import { getCurrentMonthRange, isFutureDate, isCurrentMonth, parseFromDatabase, toLocalDateString } from '@/utils/timezoneUtils';
+import { getCurrentMonthRange, isFutureDate, isCurrentMonth, toLocalDateString } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
-import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { subMonths, startOfMonth } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
@@ -21,7 +21,7 @@ const getPreviousMonthRange = () => {
 };
 
 const fetchDashboardData = async () => {
-  const { start: startDate, end: endDate } = getCurrentMonthRange();
+  const { start: _startDate, end: _endDate } = getCurrentMonthRange();
   
   // Only fetch services from the last 2 months (current + previous) instead of ALL
   const twoMonthsAgo = subMonths(businessClock.todayDate(), 2);

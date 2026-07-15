@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Edit, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Commission } from '@/types/commissions';
 import { formatForDisplay, getCurrentChileDate, createLocalDateFromCalendar } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -42,7 +41,7 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
     
     // Crear nota con contexto del cambio
     const changeNote = notes ? ` Motivo del cambio: ${notes}` : '';
-    const batchNote = `Fecha de pago actualizada el ${formatForDisplay(getCurrentChileDate())}.${changeNote}`;
+    const _batchNote = `Fecha de pago actualizada el ${formatForDisplay(getCurrentChileDate())}.${changeNote}`;
 
     updateCommissionPaymentDate({
       commissionIds,

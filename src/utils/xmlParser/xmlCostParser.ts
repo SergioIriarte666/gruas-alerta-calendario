@@ -1,4 +1,4 @@
-import { XMLCostData, XMLParseResult, XMLValidationError, XMLStructure } from '@/types/costs';
+import { XMLCostData, XMLParseResult, XMLStructure } from '@/types/costs';
 import { createLogger } from "@/lib/logger";
 
 
@@ -210,7 +210,7 @@ export class XMLCostParser {
     const items = doc.querySelectorAll(structure.itemElement);
     const data: XMLCostData[] = [];
 
-    items.forEach((item, index) => {
+    items.forEach((item, _index) => {
       const costData: any = {};
       
       structure.fields.forEach(fieldMapping => {

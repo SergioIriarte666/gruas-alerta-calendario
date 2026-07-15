@@ -1,7 +1,7 @@
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
-import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { toLocalDateString } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { toTitleCaseEs } from '@/utils/textNormalization';
 
@@ -141,7 +141,7 @@ export class XMLSupplierParser {
   }
 
   private extractSuppliersFromXML(doc: Document): XMLSupplierData[] {
-    const suppliers: XMLSupplierData[] = [];
+    const _suppliers: XMLSupplierData[] = [];
     const uniqueSuppliers = new Map<string, XMLSupplierData>();
 
     // Detectar estructura DTE (facturas electrónicas chilenas)

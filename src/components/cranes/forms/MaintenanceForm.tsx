@@ -170,7 +170,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord, prefi
         if (onCreated) onCreated();
       }
       handleClose();
-    } catch (error) {
+    } catch (_error) {
       // Error is handled by the mutation hook
     }
   };

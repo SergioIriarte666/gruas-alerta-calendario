@@ -224,7 +224,7 @@ const Services = () => {
 
     setIsBatchDeleting(true);
     batchProgress.start('Eliminando Servicios', count);
-    let successCount = 0;
+    let _successCount = 0;
     let errorCount = 0;
 
     try {
@@ -236,7 +236,7 @@ const Services = () => {
           if (service) {
             batchProgress.update(i + 1, service.folio);
             await deleteServiceDirect(service);
-            successCount++;
+            _successCount++;
           }
         } catch (err) {
           logger.error(`Error deleting service ${serviceId}:`, err);
@@ -296,7 +296,7 @@ const Services = () => {
 
     setIsBatchDuplicating(true);
     batchProgress.start('Duplicando Servicios', 1);
-    let successCount = 0;
+    let _successCount = 0;
 
     try {
       const serviceIdArray = Array.from(selectedServiceIds);
@@ -306,7 +306,7 @@ const Services = () => {
         if (service) {
           batchProgress.update(1, service.folio);
           handleDuplicateService(service);
-          successCount++;
+          _successCount++;
           break;
         }
       }

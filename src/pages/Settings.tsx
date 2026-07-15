@@ -33,11 +33,11 @@ const Settings = () => {
   } = useSettings();
   const {
     systemSettings,
-    notificationSettings,
+    notificationSettings: _notificationSettings,
     loading: systemLoading,
     saving: systemSaving,
     updateSystemSettings,
-    updateNotificationSettings,
+    updateNotificationSettings: _updateNotificationSettings,
     saveSettings: saveSystemSettings
   } = useSystemSettings();
   const { isAdmin } = useUserPermissions();

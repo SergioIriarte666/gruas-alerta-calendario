@@ -200,7 +200,7 @@ export const useClosureAutomation = () => {
       // Build client closure data
       const clientsClosureData: ClientClosureData[] = [];
 
-      for (const [clientId, clientServices] of clientGroups.entries()) {
+      for (const [_clientId, clientServices] of clientGroups.entries()) {
         const client = clientServices[0]?.client;
         if (!client) continue;
 

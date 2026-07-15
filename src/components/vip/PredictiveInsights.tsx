@@ -8,21 +8,17 @@ import { Progress } from '@/components/ui/progress';
 import { 
   Brain, 
   TrendingUp, 
-  TrendingDown, 
   AlertTriangle, 
   Target, 
   Calendar, 
   DollarSign,
-  Clock,
   Zap,
   CheckCircle2,
-  XCircle,
   Activity,
   BarChart3
 } from 'lucide-react';
 import { toTitleCase } from '@/lib/utils';
-import { format, addDays, addWeeks, addMonths } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { addWeeks } from 'date-fns';
 
 interface PredictiveInsightsProps {
   services: Service[];
@@ -184,7 +180,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
     // Generate 6 weeks of forecast
     for (let i = 1; i <= 6; i++) {
-      const weekDate = addWeeks(now, i);
+      const _weekDate = addWeeks(now, i);
       const historical = i <= 2 ? Math.floor(Math.random() * 5) + 3 : undefined;
       
       // Simulate prediction based on trends
@@ -226,7 +222,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
     }
   };
 
-  const getImpactColor = (impact: string) => {
+  const _getImpactColor = (impact: string) => {
     switch (impact) {
       case 'high': return 'text-red-400';
       case 'medium': return 'text-amber-400';

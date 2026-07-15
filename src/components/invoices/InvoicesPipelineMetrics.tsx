@@ -2,7 +2,7 @@ import { businessClock } from '@/utils/businessClock';
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, CreditCard, DollarSign, FileText, AlertTriangle, TrendingUp } from 'lucide-react';
+import { CreditCard, DollarSign, FileText, AlertTriangle, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Invoice } from '@/types';
 

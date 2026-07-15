@@ -1,16 +1,16 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff, RefreshCw, CheckCircle } from 'lucide-react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 import { usePWACapabilities } from '@/hooks/usePWACapabilities';
 export const ConnectionStatus = () => {
   const {
     syncStatus,
-    offlineActions
+    offlineActions: _offlineActions
   } = usePWACapabilities();
   const {
     isOnline,
     pendingActions,
-    lastSync
+    lastSync: _lastSync
   } = syncStatus;
   if (isOnline && pendingActions === 0) {
     return <div className="fixed top-4 right-4 z-50">

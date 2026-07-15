@@ -140,7 +140,7 @@ export const TimezoneSettingsTab: React.FC = () => {
         timeZoneName: 'short'
       }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value || '';
       return offset;
-    } catch (error) {
+    } catch (_error) {
       return 'GMT-3';
     }
   };

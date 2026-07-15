@@ -4,7 +4,7 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { supabase } from '@/integrations/supabase/client';
 import InvoiceHistoryImport from '@/components/invoices/InvoiceHistoryImport';
 import { Button } from '@/components/ui/button';
-import { Plus, Check, X, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
+import { Plus, X, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
 import { Invoice } from '@/types';
 import {
   DropdownMenu,

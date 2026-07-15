@@ -6,13 +6,13 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("usePWACapabilities");
-interface InstallPrompt {
+interface _InstallPrompt {
   canInstall: boolean;
   install: () => Promise<void>;
   isInstalled: boolean;
 }
 
-interface NotificationStatus {
+interface _NotificationStatus {
   permission: NotificationPermission;
   request: () => Promise<NotificationPermission>;
   isSupported: boolean;
@@ -24,7 +24,7 @@ interface SyncStatus {
   lastSync: Date | null;
 }
 
-interface OfflineCapabilities {
+interface _OfflineCapabilities {
   canWorkOffline: boolean;
   hasOfflineData: boolean;
   syncInProgress: boolean;
@@ -49,7 +49,7 @@ export const usePWACapabilities = (): PWACapabilities => {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [pendingActions, setPendingActions] = useState(0);
   const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [syncInProgress, setSyncInProgress] = useState(false);
+  const [_syncInProgress, _setSyncInProgress] = useState(false);
 
   // Detectar estado online/offline
   useEffect(() => {

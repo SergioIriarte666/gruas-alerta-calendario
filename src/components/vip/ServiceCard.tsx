@@ -13,7 +13,7 @@ import {
   FileText,
   Eye
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { businessClock } from '@/utils/businessClock';
@@ -25,7 +25,7 @@ interface ServiceCardProps {
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
-  onUpdate
+  onUpdate: _onUpdate
 }) => {
   // Calcular días desde la fecha del servicio
   const serviceDate = new Date(service.serviceDate);

@@ -17,7 +17,7 @@ export interface ClosureWithClient extends ServiceClosure {
   clientName?: string;
 }
 
-const MAX_CLOSURES_FOR_INVOICES = 100;
+const _MAX_CLOSURES_FOR_INVOICES = 100;
 
 export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}) => {
   const { includeInvoiced = false, enabled = true } = options;

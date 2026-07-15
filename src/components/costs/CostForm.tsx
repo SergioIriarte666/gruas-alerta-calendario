@@ -518,7 +518,7 @@ export const CostForm = React.memo(({ isOpen, onClose, cost, prefilledData, onIn
         
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
-                    onSuccess: async (data) => {
+                    onSuccess: async (_data) => {
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         

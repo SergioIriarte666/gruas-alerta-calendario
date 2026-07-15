@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { exportServiceReport } from './reportExporter';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
-import { format as formatDate } from 'date-fns';
 import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
 import { createLogger } from "@/lib/logger";
 

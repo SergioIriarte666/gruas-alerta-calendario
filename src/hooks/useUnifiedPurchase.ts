@@ -29,7 +29,7 @@ import { useUniversalSync } from '@/hooks/useUniversalSync';
  * ```
  */
 export const useUnifiedPurchase = () => {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
   const { invalidateAll } = useUniversalSync();
 

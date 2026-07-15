@@ -24,7 +24,7 @@ interface KanbanColumnProps {
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   column,
   services,
-  clientId,
+  clientId: _clientId,
   onServiceUpdate
 }) => {
   const getColumnIcon = () => {

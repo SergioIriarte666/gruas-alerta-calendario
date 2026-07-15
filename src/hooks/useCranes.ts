@@ -237,7 +237,7 @@ export const useCranes = (activeOnly = false) => {
 
       return updatedData;
     },
-    onSuccess: (updatedData) => {
+    onSuccess: (_updatedData) => {
       // Invalidar y refrescar caches
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });

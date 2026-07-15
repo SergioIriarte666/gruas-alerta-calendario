@@ -16,7 +16,6 @@ import { ComisionManualForm } from '@/components/commissions/ComisionManualForm'
 import { useUser } from '@/contexts/UserContext';
 
 import { Commission, CommissionFilters } from '@/types/commissions';
-import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/components/ui/custom-toast';
 import { useQueryClient } from '@tanstack/react-query';

@@ -20,12 +20,9 @@ import {
   Clock,
   Eye,
   Edit,
-  User,
   Car,
-  Truck,
   Hash,
   CheckSquare,
-  SquareCheck,
   ChevronUp,
   ChevronsUpDown,
   Filter,
@@ -44,7 +41,6 @@ import { PipelineExportModal } from './PipelineExportModal';
 import { PipelineBatchActionBar } from './PipelineBatchActionBar';
 import { PipelineClosureActionBar } from '@/components/pipeline/PipelineClosureActionBar';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
-import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { getVipPipelineDisplayStatus } from '@/utils/vipPipelineStatus';
 import { toTitleCase } from '@/lib/utils';
@@ -247,7 +243,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   loading,
   clientId,
   clientName,
-  onServiceUpdate,
+  onServiceUpdate: _onServiceUpdate,
   onServiceSelect,
   onServiceEdit,
   onBatchUpdate

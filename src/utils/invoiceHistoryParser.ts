@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
-import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
+import { toLocalDateString } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from "@/lib/logger";
 

@@ -67,7 +67,7 @@ export const SupplierInvoiceSelector: React.FC<SupplierInvoiceSelectorProps> = (
 }) => {
   const { pendingInvoices, isPendingLoading } = useSupplierInvoices(supplierId);
 
-  const handleInvoiceToggle = (invoiceId: string, balance: number) => {
+  const handleInvoiceToggle = (invoiceId: string, _balance: number) => {
     let newSelection: string[];
     
     if (selectedInvoices.includes(invoiceId)) {

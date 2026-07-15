@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useMaintenanceReport, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { MaintenanceMetrics } from './maintenance/MaintenanceMetrics';
 import { MaintenanceCharts } from './maintenance/MaintenanceCharts';

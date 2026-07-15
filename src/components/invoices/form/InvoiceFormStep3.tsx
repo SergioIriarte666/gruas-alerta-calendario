@@ -4,7 +4,6 @@ import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCar
 import { FileCheck } from 'lucide-react';
 import EnhancedClosureSelector from '../EnhancedClosureSelector';
 import InvoiceSummary from '../InvoiceSummary';
-import { Invoice } from '@/types';
 import { ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 
 interface InvoiceFormStep3Props {

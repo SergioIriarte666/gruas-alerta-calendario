@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from 'react';
 import { EnhancedCSVUploader, ValidationResult, UploadProgress, UploadResult } from '@/utils/enhancedCsvUpload';
-import { MappedServiceData } from '@/utils/dataMapper';
 import { useServices } from '@/hooks/useServices';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { toast } from 'sonner';

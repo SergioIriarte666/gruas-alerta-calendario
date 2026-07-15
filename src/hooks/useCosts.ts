@@ -3,7 +3,7 @@ import { businessClock } from '@/utils/businessClock';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
+import { Cost, CostFormData } from '@/types/costs';
 import { EntityKey } from '@/lib/entities';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
@@ -11,7 +11,7 @@ import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useCosts");
-const COSTS_SELECT_CLAUSE = `
+const _COSTS_SELECT_CLAUSE = `
       *,
       cost_categories (*),
       cost_centers (*),
@@ -411,7 +411,7 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
   logger.debug('[useCosts - updateCost] Attempting to update cost:', id, costData);
 
   // Separar campos de costs y campos de crane_parts
-  const { part_name, supplier, supplier_phone, quantity, unit_price, kilometraje, ...validCostData } = costData;
+  const { part_name: _part_name, supplier: _supplier, supplier_phone: _supplier_phone, quantity: _quantity, unit_price: _unit_price, kilometraje: _kilometraje, ...validCostData } = costData;
 
   // Actualizar el costo
   const { data, error } = await supabase
@@ -743,7 +743,7 @@ const deleteCost = async (id: string) => {
 
 // Link an XML invoice to an existing cost (instead of creating a new payment)
 export const useLinkInvoiceToCost = () => {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { invalidateAll } = useUniversalSync();
 
   return useMutation({

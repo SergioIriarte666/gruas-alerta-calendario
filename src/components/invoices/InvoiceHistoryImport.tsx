@@ -126,7 +126,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [unmatchedClients, setUnmatchedClients] = useState<ResolvedUnmatchedClient[]>([]);
-  const [importing, setImporting] = useState(false);
+  const [_importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const [fileName, setFileName] = useState('');
@@ -557,7 +557,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       if (!targetClient) return;
 
       const keysToUpdate: string[] = [];
-      preview.unmatched.forEach((invoice, invoiceIndex) => {
+      preview.unmatched.forEach((invoice, _invoiceIndex) => {
         if (rutMatches(targetClient.rut, invoice.rut)) {
           keysToUpdate.push(getInvoiceImportKey(invoice));
         }
@@ -586,7 +586,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const toggleAllMatched = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.matched.forEach((inv, i) => {
+      preview?.matched.forEach((inv, _i) => {
         const key = getInvoiceImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
@@ -598,7 +598,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const toggleAllUnmatched = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.unmatched.forEach((inv, i) => {
+      preview?.unmatched.forEach((inv, _i) => {
         const key = getInvoiceImportKey(inv);
         const client = unmatchedClients.find((item) => rutMatches(item.rut, inv.rut));
         const isResolvable = client && client.resolution !== 'pending' && client.resolution !== 'ignore';
@@ -620,10 +620,10 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
   const getSelectedUnmatchedCount = () => {
     if (!preview) return 0;
-    return preview.unmatched.filter((inv, i) => {
+    return preview.unmatched.filter((inv, _i) => {
       const key = getInvoiceImportKey(inv);
       if (!selectedInvoices.has(key)) return false;
-      const nRut = normalizeRut(inv.rut);
+      const _nRut = normalizeRut(inv.rut);
       const uc = unmatchedClients.find(c => rutMatches(c.rut, inv.rut));
       return !!uc && uc.resolution !== 'ignore' && uc.resolution !== 'pending';
     }).length;
@@ -637,7 +637,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const toggleAllDuplicates = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.duplicates.forEach((inv, i) => {
+      preview?.duplicates.forEach((inv, _i) => {
         const key = getInvoiceImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
@@ -1708,7 +1708,7 @@ const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, sel
       </TableRow>
     </TableHeader>
     <TableBody>
-      {invoices.map((inv, i) => {
+      {invoices.map((inv, _i) => {
         const key = getInvoiceImportKey(inv);
         const isSelected = selectedKeys ? selectedKeys.has(key) : true;
         const effectiveStatus = getEffectiveInvoiceStatus(inv, statusOverrides);

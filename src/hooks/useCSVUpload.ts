@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react';
 import { CSVServiceUploader, UploadProgress, UploadResult } from '@/utils/csvUpload';
 import { UploadedServiceRow, ValidationResult, validateUploadedData } from '@/utils/csvValidations';
-import { Service } from '@/types';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';

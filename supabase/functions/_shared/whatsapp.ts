@@ -404,7 +404,7 @@ export async function sendWhatsAppTemplateBulk(
     recipients.map((n) => sendWhatsAppTemplate(n, templateName, parameters, options)),
   );
 
-  const results: WhatsAppSendResult[] = settled.map((s, i) =>
+  const results: WhatsAppSendResult[] = settled.map((s, _i) =>
     s.status === "fulfilled"
       ? s.value
       : {

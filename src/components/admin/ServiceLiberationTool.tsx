@@ -46,7 +46,7 @@ export const ServiceLiberationTool = () => {
   const { isAdmin } = useUserPermissions();
   const {
     searching, liberating, result, error,
-    searchByFolio, liberateInvoice, liberateClosure, clearResult,
+    searchByFolio, liberateInvoice, liberateClosure, clearResult: _clearResult,
   } = useServiceLiberation();
 
   const [searchInput, setSearchInput] = useState('');

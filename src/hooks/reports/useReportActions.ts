@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -78,7 +77,7 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
           clientId: serviceReportFilters.clientId === 'all' ? undefined : serviceReportFilters.clientId,
         }
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al generar informe', {
         description: 'Hubo un problema al generar el informe. Inténtalo de nuevo.',
       });
@@ -107,7 +106,7 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
           operatorName: operatorLabel,
         },
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al generar informe de operadores', {
         description: 'No se pudo generar el archivo. Inténtalo de nuevo.',
       });

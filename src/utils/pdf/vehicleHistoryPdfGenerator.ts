@@ -9,7 +9,7 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("vehicleHistoryPdfGenerator");
 const TMS_GREEN = [0, 150, 136] as [number, number, number];
-const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
+const _LIGHT_GRAY = [245, 245, 245] as [number, number, number];
 const WHITE = [255, 255, 255] as [number, number, number];
 const DARK_TEXT = [33, 33, 33] as [number, number, number];
 

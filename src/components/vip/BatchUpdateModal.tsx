@@ -10,7 +10,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock, DollarSign, Car, MapPin, User } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 
@@ -369,7 +368,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             
             <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
-                {selectedServices.map((service, index) => {
+                {selectedServices.map((service, _index) => {
                   const isExcluded = excludedServices.has(service.id);
                   return (
                     <div 

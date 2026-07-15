@@ -8,7 +8,7 @@ import { addDays } from 'date-fns';
 import { createLogger } from "@/lib/logger";
 
 
-const logger = createLogger("useInvoiceFormData");
+const _logger = createLogger("useInvoiceFormData");
 interface UseInvoiceFormDataProps {
   invoice?: Invoice | null;
   preselectedClosureId?: string | null;

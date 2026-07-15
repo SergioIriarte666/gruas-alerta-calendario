@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Eye, History } from 'lucide-react';
+import { Trash2, History } from 'lucide-react';
 import { useTripEstimates, useDeleteTripEstimate } from '@/hooks/useTripEstimates';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';

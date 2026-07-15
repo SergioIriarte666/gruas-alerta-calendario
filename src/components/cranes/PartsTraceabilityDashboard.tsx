@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,7 +28,7 @@ export const PartsTraceabilityDashboard = ({ craneId }: PartsTraceabilityDashboa
     item.supplier.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStockStatus = (currentStock: number, totalPurchased: number, totalConsumed: number) => {
+  const getStockStatus = (currentStock: number, totalPurchased: number, _totalConsumed: number) => {
     if (currentStock === 0) return { label: 'Sin Stock', color: 'bg-red-500' };
     if (currentStock <= totalPurchased * 0.2) return { label: 'Stock Bajo', color: 'bg-yellow-500' };
     return { label: 'Stock Normal', color: 'bg-green-500' };

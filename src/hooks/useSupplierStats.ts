@@ -4,7 +4,7 @@ import { SupplierStats } from '@/types/suppliers';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useSupplierStats');
+const _logger = createLogger('useSupplierStats');
 
 interface ExtendedSupplierStats extends SupplierStats {
   total_paid_this_month: number;

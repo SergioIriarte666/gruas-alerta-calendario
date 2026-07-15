@@ -4,7 +4,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useDebtInstallments, DebtInstallment } from '@/hooks/useDebtInstallments';
 import { PayInstallmentModal } from './PayInstallmentModal';

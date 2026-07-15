@@ -1,6 +1,4 @@
 import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 
 import { useUnifiedRealtimeManager } from '../useUnifiedRealtimeManager';
 import { createLogger } from "@/lib/logger";

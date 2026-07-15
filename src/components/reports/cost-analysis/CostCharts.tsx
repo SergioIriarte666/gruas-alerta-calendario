@@ -44,7 +44,7 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
                 outerRadius={90}
                 paddingAngle={2}
               >
-                {metrics.costsByCategory.map((entry, index) => (
+                {metrics.costsByCategory.map((entry, _index) => (
                   <Cell key={`cell-${entry.categoryName}`} fill={`var(--color-${entry.categoryName})`} />
                 ))}
               </Pie>

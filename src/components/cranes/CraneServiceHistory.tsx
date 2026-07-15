@@ -9,8 +9,7 @@ import {
   MapPin, 
   User, 
   DollarSign,
-  FileText,
-  Filter
+  FileText
 } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';

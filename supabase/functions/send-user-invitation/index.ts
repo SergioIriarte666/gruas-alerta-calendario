@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
       .select('business_name')
       .single();
 
-    const businessName = companyData?.business_name || 'TMS Grúas';
+    const _businessName = companyData?.business_name || 'TMS Grúas';
 
     // Build redirect URL - user will be redirected here after accepting invitation
     const origin = req.headers.get('origin') || 'https://gruas5norte.cl';

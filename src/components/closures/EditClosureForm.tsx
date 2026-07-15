@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import { ServiceClosure, ClosureStatus } from '@/types';
+import { ServiceClosure } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useEditClosure } from '@/hooks/closures/useEditClosure';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
@@ -55,7 +55,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
   });
   
   const {
-    register,
+    register: _register,
     handleSubmit,
     setValue,
     watch,

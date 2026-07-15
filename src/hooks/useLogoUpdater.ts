@@ -11,7 +11,7 @@ export const useLogoUpdater = () => {
 
   const updateLogo = async (
     logoFile: File | null,
-    settings: Settings
+    _settings: Settings
   ): Promise<{ success: boolean; error?: string; newLogoUrl?: string }> => {
     setIsUpdating(true);
     logger.debug("useLogoUpdater: Iniciando proceso de actualización de logo.", { tieneArchivo: !!logoFile });
@@ -63,7 +63,7 @@ export const useLogoUpdater = () => {
       if (logoFile) {
         logger.debug("useLogoUpdater: Subiendo nuevo archivo de logo...");
         newLogoPath = `public/logo-${companyId}-${Date.now()}-${logoFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: _uploadData, error: uploadError } = await supabase.storage
           .from('company-assets')
           .upload(newLogoPath, logoFile);
 

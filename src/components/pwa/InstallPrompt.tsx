@@ -13,7 +13,7 @@ interface InstallPromptProps {
   userRole?: string;
 }
 
-export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole }) => {
+export const InstallPrompt: React.FC<InstallPromptProps> = ({ userRole: _userRole }) => {
   const { canInstall, installApp } = usePWACapabilities();
   const { user } = useUser();
   const [show, setShow] = useState(false);

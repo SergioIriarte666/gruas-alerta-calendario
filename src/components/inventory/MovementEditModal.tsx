@@ -48,7 +48,7 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
   logger.debug('Movement data:', movement);
   logger.debug('Initial form data:', formData);
 
-  const { data: locations = [] } = useInventoryLocations();
+  const { data: _locations = [] } = useInventoryLocations();
   const { data: suppliers = [] } = useInventorySuppliers();
   const updateMovement = useUpdateInventoryMovement();
 

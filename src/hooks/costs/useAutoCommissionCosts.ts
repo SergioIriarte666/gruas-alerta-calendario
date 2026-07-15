@@ -14,7 +14,7 @@ interface CreateCommissionCostParams {
 
 // ✅ RESTAURADO: Sistema original de comisiones automáticas
 // Las comisiones se crean automáticamente por el trigger de BD al completar servicios
-const createCommissionCost = async ({ service, commissionAmount }: CreateCommissionCostParams) => {
+const createCommissionCost = async ({ service: _service, commissionAmount: _commissionAmount }: CreateCommissionCostParams) => {
   logger.debug('[useAutoCommissionCosts] RESTAURADO: Sistema automático de comisiones habilitado');
   logger.debug('[useAutoCommissionCosts] Las comisiones se crean automáticamente por trigger de BD');
   
@@ -23,7 +23,7 @@ const createCommissionCost = async ({ service, commissionAmount }: CreateCommiss
 };
 
 export const useAutoCommissionCosts = () => {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createCommissionCost,
@@ -84,7 +84,7 @@ export const useMigrateCommissionCosts = () => {
 
   return useMutation({
     mutationFn: migrateCommissionCosts,
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       logger.debug('[useMigrateCommissionCosts] Migration check completed');
       queryClient.invalidateQueries({ queryKey: ['costs'] });
     },

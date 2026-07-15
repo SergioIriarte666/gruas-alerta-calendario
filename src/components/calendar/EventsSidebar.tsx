@@ -65,7 +65,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
       });
       setShowForm(false);
       toast.success('Evento creado exitosamente');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al crear el evento');
     }
   };
@@ -74,7 +74,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
     try {
       await deleteEvent(eventId);
       toast.success('Evento eliminado exitosamente');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al eliminar el evento');
     }
   };

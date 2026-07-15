@@ -152,7 +152,7 @@ export const useUnifiedRealtimeManager = () => {
       channelId: 'unified-services-updates',
       table: 'services',
       event: 'UPDATE',
-      onUpdate: (payload) => {
+      onUpdate: (_payload) => {
         invalidateQueries(['services', 'costs'], 'services_update');
       }
     });
@@ -162,7 +162,7 @@ export const useUnifiedRealtimeManager = () => {
       channelId: 'unified-costs-updates',
       table: 'costs',
       event: '*',
-      onUpdate: (payload) => {
+      onUpdate: (_payload) => {
         invalidateQueries(['costs', 'services'], 'costs_update');
       }
     });
@@ -172,7 +172,7 @@ export const useUnifiedRealtimeManager = () => {
       channelId: 'unified-service-resources-updates',
       table: 'service_resources',
       event: '*',
-      onUpdate: (payload) => {
+      onUpdate: (_payload) => {
         invalidateQueries(['service_resources', 'services'], 'service_resources_update');
       }
     });
@@ -182,7 +182,7 @@ export const useUnifiedRealtimeManager = () => {
       channelId: 'unified-cost-centers-updates',
       table: 'cost_centers',
       event: '*',
-      onUpdate: (payload) => {
+      onUpdate: (_payload) => {
         invalidateQueries(['cost_centers'], 'cost_centers_update');
       }
     });
@@ -200,7 +200,7 @@ export const useUnifiedRealtimeManager = () => {
       table: 'services',
       event: 'UPDATE',
       filter: `id=eq.${serviceId}`,
-      onUpdate: (payload) => {
+      onUpdate: (_payload) => {
         logger.info(`🎯 [UNIFIED_REALTIME] Servicio específico actualizado: ${serviceId}`);
         invalidateQueries(['services', 'costs'], `specific_service_${serviceId}`);
       }

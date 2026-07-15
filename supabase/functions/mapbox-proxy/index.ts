@@ -212,7 +212,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: "Invalid action. Use 'geocode' or 'directions'" }),
       { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (_err) {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }

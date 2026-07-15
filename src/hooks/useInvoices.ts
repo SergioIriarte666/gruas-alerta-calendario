@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
-import { toast } from 'sonner';
 import { useInvoiceData, UseInvoiceDataOptions } from './invoices/useInvoiceData';
 import { useInvoiceOperations, type UpdateInvoiceOptions } from './invoices/useInvoiceOperations';
 import { createLogger } from "@/lib/logger";

@@ -11,7 +11,7 @@ const COMMISSION_CATEGORY_ID = '440296d4-09c2-4f3a-b02b-835f861df4c4';
 /**
  * Helper: aplica filtros de fecha y operador a una query de Supabase
  */
-const applyFilters = <T>(
+const applyFilters = <_T>(
   query: any,
   dateFrom?: string,
   dateTo?: string,

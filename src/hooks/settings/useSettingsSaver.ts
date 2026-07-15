@@ -85,7 +85,7 @@ export const useSettingsSaver = () => {
       }
 
       // Otros settings a local storage (user, system, notifications)
-      const { company, ...otherSettings } = settings;
+      const { company: _company, ...otherSettings } = settings;
       localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
       localStorage.removeItem('tms-settings');
 

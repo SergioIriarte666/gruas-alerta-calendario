@@ -77,7 +77,7 @@ export const HistoricalSalesTable = ({
       <ArrowDown className="ml-2 size-3 text-primary" />;
   };
 
-  const SortableHead = ({ columnKey, label, className }: { columnKey: SortKey, label: string, className?: string }) => (
+  const _SortableHead = ({ columnKey, label, className }: { columnKey: SortKey, label: string, className?: string }) => (
     <TableHead className={className}>
       <Button
         variant="ghost"

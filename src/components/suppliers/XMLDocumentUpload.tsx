@@ -31,7 +31,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({ isOpen, on
     selectedSuppliers, selectedDocuments, selectedTotalAmount,
     createPayments, setCreatePayments,
     supplierCategoryMapping, supplierSubcategoryMapping,
-    supplierPaymentCondition, setSupplierPaymentCondition,
+    supplierPaymentCondition: _supplierPaymentCondition, setSupplierPaymentCondition,
     supplierCreditDate, setSupplierCreditDate,
     dueDateOverrides, setDueDateOverrides,
     defaultDaysToAdd,

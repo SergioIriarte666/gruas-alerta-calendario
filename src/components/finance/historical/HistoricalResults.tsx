@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useInvoices } from '@/hooks/useInvoices';
 import { usePurchaseInvoices } from '@/hooks/usePurchaseInvoices';
 import { formatCurrency } from '@/lib/utils';
-import { format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, parseISO, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +21,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Invoice } from '@/types';
-import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { businessClock } from '@/utils/businessClock';
 import {
   DropdownMenu,
@@ -200,7 +198,7 @@ export const HistoricalResults: React.FC = () => {
 
     return Object.entries(months)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, val]) => ({
+      .map(([_key, val]) => ({
         month: val.label,
         ventas: val.sales,
         compras: val.purchases,

@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { X, Save, Loader2, Calendar, DollarSign, AlertTriangle, Wrench, Package } from 'lucide-react';
+import { Save, Loader2, Calendar, DollarSign, AlertTriangle, Wrench, Package } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -175,7 +175,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     setDuplicatePayment(null);
   };
 
-  const getSupplierNameById = (id: string) => {
+  const _getSupplierNameById = (id: string) => {
     return suppliers.find(s => s.id === id)?.name || 'Proveedor desconocido';
   };
 

@@ -18,7 +18,7 @@ export const useAdvancedFilters = () => {
   const [filters, setFilters] = useState<AdvancedFilters>({});
 
   const hasActiveFilters = useMemo(() => {
-    return Object.entries(filters).some(([key, value]) => {
+    return Object.entries(filters).some(([_key, value]) => {
       if (value === undefined || value === '') return false;
       if (value instanceof Date) return true;
       if (Array.isArray(value)) return value.length > 0;

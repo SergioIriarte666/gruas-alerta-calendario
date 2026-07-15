@@ -38,7 +38,7 @@ const getStatusLabel = (status: string) => {
   return status;
 };
 
-export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ onClose }) => {
+export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ onClose: _onClose }) => {
   const hook = usePaymentReconciliation();
   const { isGenerating: isGeneratingReceipt, generateAndDownload } = usePDFGeneration();
   const { user } = useUser();
@@ -65,7 +65,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     );
   };
 
-  const handleManualApplication = async (payment: PaymentWithDetails) => {
+  const _handleManualApplication = async (payment: PaymentWithDetails) => {
     const result = await hook.handleManualApplication(payment);
     if (result) {
       setAvailableInvoices(result.invoices);

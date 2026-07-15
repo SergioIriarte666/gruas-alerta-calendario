@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, Car, History, Trash2, Clock } from 'lucide-react';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
-import { isVIN, isChileanPlate } from '@/utils/vehicleIdentifiers';
+import { isVIN } from '@/utils/vehicleIdentifiers';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

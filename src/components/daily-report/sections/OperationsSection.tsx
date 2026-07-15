@@ -8,9 +8,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  FileText,
-  Eye,
-  Calendar
+  Eye
 } from 'lucide-react';
 
 interface OperationsSectionProps {

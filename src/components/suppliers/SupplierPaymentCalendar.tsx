@@ -13,7 +13,6 @@ import {
   parseFromDatabase, 
   formatForInput, 
   formatForDisplay,
-  getCurrentMonthRange,
   toChileTime
 } from '@/utils/timezoneUtils';
 

@@ -19,7 +19,7 @@ export const AiCategorySuggestion = ({
   subcategory,
   isClassifying,
   onApply,
-  source = 'history',
+  source: _source = 'history',
   className,
 }: AiCategorySuggestionProps) => {
   if (isClassifying) {

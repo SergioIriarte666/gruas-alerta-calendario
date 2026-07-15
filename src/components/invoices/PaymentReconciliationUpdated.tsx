@@ -11,12 +11,10 @@ import { usePayments, usePagedPayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
 import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
-import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { SystemHealthIndicator } from './SystemHealthIndicator';
 import { toast } from 'sonner';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { 
-  Coins, 
   RefreshCw, 
   Plus, 
   TrendingUp, 
@@ -27,10 +25,7 @@ import {
   Settings,
   Wrench,
   ChevronDown,
-  Zap,
-  Edit,
-  DollarSign,
-  Eye
+  DollarSign
 } from 'lucide-react';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { createLogger } from "@/lib/logger";
@@ -41,17 +36,17 @@ interface PaymentReconciliationProps {
   onClose?: () => void;
 }
 
-export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ onClose }) => {
+export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ onClose: _onClose }) => {
   const { 
-    payments, 
-    loading, 
+    payments: _payments, 
+    loading: _loading, 
     paymentSystemAvailable, 
     getUnpaidInvoicesForClient,
     cleanupDuplicatePayments,
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
     fixPaymentInconsistencies,
-    validateSystemIntegrity,
+    validateSystemIntegrity: _validateSystemIntegrity,
     performBackgroundMaintenance,
     refetch
   } = usePayments();
@@ -59,7 +54,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const { clients } = useClients();
 
   const [selectedClient, setSelectedClient] = useState<string>('all');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [_showPaymentForm, setShowPaymentForm] = useState(false);
   const [showPaymentHistory, setShowPaymentHistory] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
@@ -131,7 +126,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   };
 
 
-  const handleManualApplication = async (payment: PaymentWithDetails) => {
+  const _handleManualApplication = async (payment: PaymentWithDetails) => {
     const invoices = await getUnpaidInvoicesForClient(payment.client_id);
     
     if (invoices.length === 0) {
@@ -150,7 +145,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       await loadReconciliationStats();
       await loadSystemDiagnosis();
       toast.success("Datos actualizados");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error al actualizar datos");
     } finally {
       setIsProcessing(false);

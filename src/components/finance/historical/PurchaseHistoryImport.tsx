@@ -95,8 +95,8 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const queryClient = useQueryClient();
   const suppliersById = useMemo(() => new Map(suppliers.map((supplier) => [supplier.id, supplier])), [suppliers]);
   const { getMappings, saveMapping } = useImportMappings('purchase');
-  const { logs: importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('purchase', 5);
-  const { getCurrentUserId, insertInvoiceBatch, insertSupplier, loadExistingDedupData } = useHistoricalImport();
+  const { logs: _importLogs, getOverlappingLogs, saveLog } = useImportHistoryLog('purchase', 5);
+  const { getCurrentUserId, insertInvoiceBatch: _insertInvoiceBatch, insertSupplier, loadExistingDedupData } = useHistoricalImport();
   const [step, setStep] = useState<Step>('upload');
   const [activeTab, setActiveTab] = useState('matched');
   const [preview, setPreview] = useState<PurchaseImportPreview | null>(null);
@@ -351,7 +351,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     // Auto-select invoices for resolved suppliers
     if (preview && action !== 'ignore') {
        const indicesToSelect: string[] = [];
-       preview.unmatched.forEach((inv, i) => {
+       preview.unmatched.forEach((inv, _i) => {
            const nRut = normalizeRut(inv.rut);
            // Find if this invoice belongs to one of the resolved suppliers
            const supplierIndex = unmatchedSuppliers.findIndex(s => rutMatches(s.rut, nRut));
@@ -473,7 +473,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const us = unmatchedSuppliers[editingSupplierIndex];
         const nRut = normalizeRut(us.rut);
         const indicesToSelect: string[] = [];
-        preview.unmatched.forEach((inv, i) => {
+        preview.unmatched.forEach((inv, _i) => {
             if (normalizeRut(inv.rut) === nRut) {
                 indicesToSelect.push(getPurchaseImportKey(inv));
             }
@@ -718,7 +718,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const toggleAllMatched = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.matched.forEach((inv, i) => {
+      preview?.matched.forEach((inv, _i) => {
         const key = getPurchaseImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
@@ -730,7 +730,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const toggleAllUnmatched = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.unmatched.forEach((inv, i) => {
+      preview?.unmatched.forEach((inv, _i) => {
         const nRut = normalizeRut(inv.rut);
         const uc = unmatchedSuppliers.find(c => rutMatches(c.rut, nRut));
         
@@ -748,7 +748,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
   const toggleAllDuplicates = (checked: boolean) => {
     setSelectedInvoices(prev => {
       const next = new Set(prev);
-      preview?.duplicates.forEach((inv, i) => {
+      preview?.duplicates.forEach((inv, _i) => {
         const key = getPurchaseImportKey(inv);
         if (checked) next.add(key);
         else next.delete(key);
@@ -764,7 +764,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
 
   const getSelectedUnmatchedCount = () => {
     if (!preview) return 0;
-    return preview.unmatched.filter((inv, i) => {
+    return preview.unmatched.filter((inv, _i) => {
       const key = getPurchaseImportKey(inv);
       if (!selectedInvoices.has(key)) return false;
       const nRut = normalizeRut(inv.rut);
@@ -831,7 +831,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     // Auto-select invoices for this supplier
     if (preview) {
         const indicesToSelect: string[] = [];
-        preview.unmatched.forEach((inv, i) => {
+        preview.unmatched.forEach((inv, _i) => {
             if (rutMatches(inv.rut, nRut)) {
                 indicesToSelect.push(getPurchaseImportKey(inv));
             }
@@ -981,7 +981,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         // Fallback: try using the assigned ID directly
                         setSupplierRutToId(nRut, us.assignedSupplierId);
                     }
-                } catch (e) {
+                } catch (_e) {
                     setSupplierRutToId(nRut, us.assignedSupplierId);
                 }
             }
@@ -1043,7 +1043,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     setProgressStage('Preparando documentos...');
     const invoicesToInsert: any[] = [];
     // Matched invoices
-    preview.matched.forEach((inv, i) => {
+    preview.matched.forEach((inv, _i) => {
         const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key) && inv.supplierId) {
             const nRut = normalizeRut(inv.rut);
@@ -1066,7 +1066,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     });
 
     // Unmatched invoices (now resolved)
-    preview.unmatched.forEach((inv, i) => {
+    preview.unmatched.forEach((inv, _i) => {
         const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key)) {
             const nRut = normalizeRut(inv.rut);
@@ -1101,7 +1101,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     });
     
     // Duplicate invoices
-    preview.duplicates.forEach((inv, i) => {
+    preview.duplicates.forEach((inv, _i) => {
         const key = getPurchaseImportKey(inv);
         if (selectedInvoices.has(key)) {
              const nRut = normalizeRut(inv.rut);

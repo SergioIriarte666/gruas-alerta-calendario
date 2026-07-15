@@ -3,9 +3,7 @@ import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
-  Clock, 
   CheckCircle2, 
   AlertTriangle, 
   FileText, 

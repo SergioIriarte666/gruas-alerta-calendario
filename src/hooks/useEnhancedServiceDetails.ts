@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Service } from '@/types';
 import { EnhancedService, ServiceOperator } from '@/types/serviceDetails';
 import { Cost } from '@/types/costs';
 import { createLogger } from "@/lib/logger";

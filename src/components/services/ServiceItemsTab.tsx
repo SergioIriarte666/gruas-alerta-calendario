@@ -58,7 +58,7 @@ export function ServiceItemsTab({ serviceId, readOnly = false }: ServiceItemsTab
   };
 
   const handleSave = () => {
-    const existingIds = new Set(items.map((i) => i.id));
+    const _existingIds = new Set(items.map((i) => i.id));
     const draftIds = new Set(drafts.map((d) => d.id));
 
     const toDelete = items.filter((i) => !draftIds.has(i.id)).map((i) => i.id);

@@ -82,7 +82,7 @@ export const ClientFormStep1 = ({ name, rut, onChange, onSreData }: ClientFormSt
       });
 
       toast.success('Datos encontrados y aplicados al formulario');
-    } catch (err) {
+    } catch (_err) {
       toast.error('Error de conexión con el servicio SRE');
     } finally {
       setIsSearching(false);

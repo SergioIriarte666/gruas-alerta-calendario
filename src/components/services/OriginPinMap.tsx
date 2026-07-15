@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { TriangleAlert } from 'lucide-react';
-import { loadMapbox, type MapboxModule } from '@/lib/loadMapbox';
+import { loadMapbox } from '@/lib/loadMapbox';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('OriginPinMap');

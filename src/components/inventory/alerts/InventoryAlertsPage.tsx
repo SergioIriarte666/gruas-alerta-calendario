@@ -21,7 +21,7 @@ export const InventoryAlertsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("active");
   const { data: activeAlerts = [], isLoading: alertsLoading } = useActiveAlerts();
   const { data: alertStats } = useAlertStats();
-  const { canCreateAlerts, user, isAuthenticated, isLoading: permissionsLoading } = useUserPermissions();
+  const { canCreateAlerts, user, isAuthenticated: _isAuthenticated, isLoading: permissionsLoading } = useUserPermissions();
 
   const handleNewAlertClick = () => {
     logger.debug('Nueva Alerta button clicked');

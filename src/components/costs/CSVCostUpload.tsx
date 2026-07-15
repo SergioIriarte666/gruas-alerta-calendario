@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { cn } from '@/lib/utils';
@@ -12,7 +11,6 @@ import {
   AlertTriangle,
   AlertCircle,
   Download,
-  Loader2,
   X,
   FileText,
 } from 'lucide-react';
@@ -40,8 +38,8 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
     file,
     setFile,
     validationResult,
-    isUploading,
-    uploadProgress,
+    isUploading: _isUploading,
+    uploadProgress: _uploadProgress,
     parseFile,
     validate,
     uploadCosts,
@@ -144,7 +142,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
         toast.error(`${created + updated} procesados, ${skipped} omitidos, ${errors} con errores`);
         setStep('done');
       }
-    } catch (err) {
+    } catch (_err) {
       batchProgress.error('Error durante la carga');
       toast.error('Error durante la carga masiva');
       setStep('preview');

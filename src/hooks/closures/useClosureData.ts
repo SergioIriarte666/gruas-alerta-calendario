@@ -1,6 +1,5 @@
 import { ServiceClosure } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createLogger } from "@/lib/logger";
@@ -83,7 +82,7 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
         ...formatClosureData(closure),
         serviceCount: serviceCountByClosureId.get(closure.id) ?? 0,
       };
-    } catch (formatError) {
+    } catch (_formatError) {
       return {
         id: closure.id,
         folio: closure.folio || 'N/A',

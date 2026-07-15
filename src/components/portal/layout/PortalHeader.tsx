@@ -87,7 +87,7 @@ const PortalHeader: React.FC = () => {
       });
       
       await signOut();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Error al cerrar sesión', {
         description: 'Sesión cerrada forzosamente'
       });

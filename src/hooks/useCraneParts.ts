@@ -448,7 +448,7 @@ export const useDeleteCranePart = () => {
       }
       return id;
     },
-    onSuccess: (_, id) => {
+    onSuccess: (_, _id) => {
       // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
@@ -511,7 +511,7 @@ export const useCranePartsStats = (craneId: string) => {
       const directPartsValue = directParts?.reduce((sum, part) => sum + (part.total_value || 0), 0) || 0;
       const costPartsValue = costParts?.reduce((sum, cost) => sum + (cost.amount || 0), 0) || 0;
       const consumptionsValue = consumptions?.reduce((sum, consumption) => sum + (consumption.total_cost || 0), 0) || 0;
-      const totalValue = directPartsValue + costPartsValue + consumptionsValue;
+      const _totalValue = directPartsValue + costPartsValue + consumptionsValue;
 
       // Count unique suppliers from all sources
       const directSuppliers = directParts?.map(part => part.supplier) || [];

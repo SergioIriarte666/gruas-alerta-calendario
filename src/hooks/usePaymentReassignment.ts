@@ -2,7 +2,7 @@ import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('usePaymentReassignment');
+const _logger = createLogger('usePaymentReassignment');
 
 export interface PaymentInfo {
   id: string;

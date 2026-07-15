@@ -2,9 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, AlertTriangle, Calendar, Zap, Truck, Package } from 'lucide-react';
+import { AlertTriangle, Calendar, Zap, Truck, Package } from 'lucide-react';
 import { usePredictiveAnalysis, InventoryReportFilters } from '@/hooks/useInventoryReports';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, AreaChart, Area } from 'recharts';
 
 interface PredictiveAnalysisViewProps {
   filters?: InventoryReportFilters;
@@ -141,7 +141,7 @@ export const PredictiveAnalysisView: React.FC<PredictiveAnalysisViewProps> = ({ 
               <XAxis dataKey="item_name" angle={-45} textAnchor="end" height={100} />
               <YAxis />
               <Tooltip 
-                formatter={(value, name) => [
+                formatter={(value, _name) => [
                   `${Number(value).toFixed(1)} unidades/mes`,
                   'Consumo Promedio'
                 ]}

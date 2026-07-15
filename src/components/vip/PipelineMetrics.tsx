@@ -5,7 +5,6 @@ import { businessClock } from '@/utils/businessClock';
 import { 
   TrendingUp, 
   Clock, 
-  DollarSign, 
   AlertTriangle,
   CheckCircle,
   Package,

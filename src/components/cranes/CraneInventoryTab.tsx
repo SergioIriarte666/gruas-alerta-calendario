@@ -12,7 +12,6 @@ import {
   Calendar,
   ArrowUpDown,
   Warehouse,
-  ShoppingCart,
   RefreshCw,
   Loader2,
   Activity,
@@ -483,7 +482,7 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
       try {
         doc.save(`${fileName}.pdf`);
-      } catch (e) {
+      } catch (_e) {
         const pdfOutput = doc.output('blob');
         const url = URL.createObjectURL(pdfOutput);
         const link = document.createElement('a');

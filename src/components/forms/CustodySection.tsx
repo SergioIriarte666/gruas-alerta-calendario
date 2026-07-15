@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Shield, Wrench } from 'lucide-react';
-import { calculateCustodyTotal, calculateDaysBetween, isCustodyDataComplete, type CustodyData } from '@/utils/custodyCalculations';
+import { calculateCustodyTotal, isCustodyDataComplete, type CustodyData } from '@/utils/custodyCalculations';
 import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CustodySectionProps {

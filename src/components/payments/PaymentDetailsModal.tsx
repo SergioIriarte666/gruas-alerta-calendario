@@ -7,7 +7,6 @@ import {
   Calendar,
   Building,
   DollarSign,
-  FileText,
   Clock,
   Download
 } from 'lucide-react';

@@ -8,7 +8,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
-import { cn, toTitleCase } from '@/lib/utils';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServicesMobileViewProps {
   services: Service[];
@@ -31,12 +31,12 @@ export const ServicesMobileView = ({
   onDelete,
   onCloseService,
   onAddNewService,
-  sortField,
-  sortDirection,
-  onSort,
+  sortField: _sortField,
+  sortDirection: _sortDirection,
+  onSort: _onSort,
 }: ServicesMobileViewProps) => {
   const { user } = useUser();
-  const { isMobile, isTablet } = useDeviceType();
+  const { isMobile: _isMobile, isTablet: _isTablet } = useDeviceType();
   const isAdmin = user?.role === 'admin';
 
   if (services.length === 0) {

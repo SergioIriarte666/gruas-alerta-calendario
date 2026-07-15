@@ -17,7 +17,7 @@ import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { findSimilarItems, type SimilarItem, type SimilarityResult } from '@/utils/inventoryHelper';
 import { createLogger } from '@/lib/logger';
-import { cn, toTitleCase } from '@/lib/utils';
+import { toTitleCase } from '@/lib/utils';
 import {
   normalizeText, normalizeCode, isPlaceholderCode,
   buildProductDescription, buildCostDescription, buildImportSuccessMessage,

@@ -109,7 +109,7 @@ export const InspectionForm = ({
     saveFormData, 
     clearPersistedData, 
     isInitialPhaseCompleted, 
-    canProceedToFinal 
+    canProceedToFinal: _canProceedToFinal 
   } = useInspectionPersistence(serviceId);
 
   useEffect(() => {

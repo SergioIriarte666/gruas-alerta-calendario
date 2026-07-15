@@ -2,7 +2,6 @@ import React from 'react';
 import { Search, FileText, Users, Receipt, User, Truck, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useGlobalSearch, GlobalSearchResult } from '@/hooks/useGlobalSearch';
-import { cn } from '@/lib/utils';
 
 const getIconForType = (type: GlobalSearchResult['type']) => {
   const iconMap = {
@@ -37,7 +36,7 @@ export const GlobalSearch = () => {
     handleInputFocus,
     handleInputBlur,
     handleResultClick,
-    clearSearch
+    clearSearch: _clearSearch
   } = useGlobalSearch();
 
   return (

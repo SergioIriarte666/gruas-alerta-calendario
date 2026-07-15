@@ -4,7 +4,6 @@ import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
 import { addPDFHeader } from './pdf/pdfHeader';
 import { addServiceInfo, addEquipmentChecklist, addObservationsAndSignatures } from './pdf/pdfSections';
-import { addPhotosSection } from './pdf/pdfPhotos';
 import { addDigitalSignatures } from './pdf/pdfSignatures';
 import { fetchCompanyData } from './pdf/companyDataFetcher';
 import { validateInspectionData } from './pdf/pdfValidation';

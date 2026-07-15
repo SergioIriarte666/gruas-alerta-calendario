@@ -5,7 +5,7 @@ import { addMonths, addWeeks, format } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useDebts');
+const _logger = createLogger('useDebts');
 
 export interface Debt {
   id: string;

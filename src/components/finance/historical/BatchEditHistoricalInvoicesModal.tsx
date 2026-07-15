@@ -110,7 +110,7 @@ export const BatchEditHistoricalInvoicesModal = ({
     if (selectedInvoices.length === 0) return;
 
     setIsSubmitting(true);
-    const total = selectedInvoices.length;
+    const _total = selectedInvoices.length;
     let processed = 0;
 
     try {

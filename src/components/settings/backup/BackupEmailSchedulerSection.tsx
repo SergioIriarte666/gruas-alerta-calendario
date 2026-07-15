@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Send, Clock, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Mail, Send, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useBackupEmailConfig } from '@/hooks/useBackupEmailConfig';
 import { useToast } from '@/components/ui/custom-toast';
 import { formatDistanceToNow } from 'date-fns';

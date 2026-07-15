@@ -5,13 +5,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SystemSettings, NotificationSettings } from '@/types/settings';
-import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
+import { defaultReportColumnConfig } from '@/types/reportColumnConfig';
 import type { Json } from '@/integrations/supabase/types';
 import { createLogger } from "@/lib/logger";
 
 
 const logger = createLogger("useSystemSettings");
-interface SystemSettingsFromDB {
+interface _SystemSettingsFromDB {
   id: string;
   auto_backup: boolean;
   backup_frequency: 'daily' | 'weekly' | 'monthly';
@@ -84,7 +84,7 @@ export const useSystemSettings = () => {
             reportColumnConfig = typeof data.report_column_config === 'string' 
               ? JSON.parse(data.report_column_config) 
               : data.report_column_config;
-          } catch (e) {
+          } catch (_e) {
             logger.warn('Error parsing report_column_config, using defaults');
           }
         }

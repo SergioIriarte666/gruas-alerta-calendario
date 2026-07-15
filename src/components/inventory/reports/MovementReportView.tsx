@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { useMovementReport, InventoryReportFilters } from '@/hooks/useInventoryReports';
 import { formatCurrency } from '@/lib/utils';

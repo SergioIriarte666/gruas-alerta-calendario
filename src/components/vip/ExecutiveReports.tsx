@@ -1,10 +1,9 @@
 import { businessClock } from '@/utils/businessClock';
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 import {
   BarChart,
   Bar,
@@ -26,17 +25,12 @@ import {
   TrendingDown,
   Clock,
   DollarSign,
-  CheckCircle,
-  AlertCircle,
-  Users,
-  Truck,
   Target,
   Award,
   AlertTriangle,
-  Filter,
   FileText
 } from 'lucide-react';
-import { format, subDays, subMonths, differenceInDays } from 'date-fns';
+import { format, subDays, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
@@ -72,7 +66,7 @@ interface TrendData {
 
 export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   services,
-  clientId,
+  clientId: _clientId,
   clientName
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'30' | '90' | '180' | '365'>('90');

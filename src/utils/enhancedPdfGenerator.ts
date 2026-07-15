@@ -1,9 +1,7 @@
 
-import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Service } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
 import { generateInspectionPDF } from './inspectionPdfGenerator';
 import { createLogger } from "@/lib/logger";
 

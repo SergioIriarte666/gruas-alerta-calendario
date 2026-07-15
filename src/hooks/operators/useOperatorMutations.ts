@@ -2,7 +2,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import type { Database } from '@/integrations/supabase/types';
 import { Operator } from '@/types';
 import { toast } from 'sonner';
 import { createLogger } from "@/lib/logger";
@@ -23,7 +22,7 @@ export const useOperatorMutations = () => {
     });
   };
 
-  const onMutationError = (error: Error, message: string, operatorData?: any) => {
+  const _onMutationError = (error: Error, message: string, operatorData?: any) => {
     // Check for duplicate errors
     if ((error as any)?.code === '23505' || error?.message?.includes('duplicate key value')) {
       if (error?.message?.includes('rut')) {

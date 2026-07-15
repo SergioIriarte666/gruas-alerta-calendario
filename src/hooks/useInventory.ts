@@ -538,7 +538,7 @@ export const useInventoryStats = () => {
 
 // Mutation for creating inventory movements
 export const useCreateInventoryMovement = () => {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
   const { invalidateAll } = useUniversalSync();  // FASE 5: Sincronización universal
 
@@ -592,7 +592,7 @@ export const useCreateInventoryMovement = () => {
       }
 
       // Extract generateCost field before inserting to database
-      const { generateCost, ...movementData } = movement;
+      const { generateCost: _generateCost, ...movementData } = movement;
       
       const { data, error } = await supabase
         .from('inventory_movements')

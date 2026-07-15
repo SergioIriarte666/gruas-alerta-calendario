@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit, MoreHorizontal, Plus, Search, Filter, Eye, Trash2 } from 'lucide-react';
+import { Edit, MoreHorizontal, Plus, Search, Eye, Trash2 } from 'lucide-react';
 import { useInventoryItems, useInventoryCategories, useDeleteInventoryItem, type InventoryItem } from '@/hooks/useInventory';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProductFormModal } from './ProductFormModal';

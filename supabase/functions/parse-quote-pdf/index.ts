@@ -73,7 +73,7 @@ const sanitizeQuoteResult = (parsed: Record<string, unknown>) => {
     }
   }
 
-  const dedupedItems = Array.from(dedupedByKey.values()).map(({ score, ...rest }) => rest);
+  const dedupedItems = Array.from(dedupedByKey.values()).map(({ score: _score, ...rest }) => rest);
 
   const cleanedItems: SanitizedVipItem[] = [];
   const groupedByPatente = new Map<string, SanitizedVipItem[]>();
@@ -363,7 +363,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
           console.log(`Filtered out company's own RUT: ${extractedClientRut}`);
           extractedClientRut = '';
         }
-      } catch (e) {
+      } catch (_e) {
         // If company_data query fails, just proceed
       }
     }

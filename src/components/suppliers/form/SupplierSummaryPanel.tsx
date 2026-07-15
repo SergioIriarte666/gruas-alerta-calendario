@@ -26,7 +26,7 @@ export const SupplierSummaryPanel = ({
   email,
   address,
   contactName,
-  category,
+  category: _category,
   categoryLabel,
   notes,
   isActive,

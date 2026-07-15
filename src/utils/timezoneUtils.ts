@@ -1,5 +1,5 @@
 
-import { format, parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 'date-fns';
+import { parseISO, startOfMonth, endOfMonth, startOfDay, addDays } from 'date-fns';
 import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { es } from 'date-fns/locale';
 import { businessClock } from './businessClock';
@@ -22,7 +22,7 @@ let userSettingsCache: {
 const CACHE_DURATION = 30000; // 30 segundos
 
 // Función para obtener preferencias visuales del usuario (sólo dateFormat)
-const getUserSettingsFromCache = async () => {
+const _getUserSettingsFromCache = async () => {
   const now = Date.now();
   
   if (userSettingsCache && (now - userSettingsCache.lastUpdate) < CACHE_DURATION) {
@@ -77,7 +77,7 @@ export const invalidateUserSettingsCache = () => {
 export const getSystemTimezone = (): string => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch (error) {
+  } catch (_error) {
     logger.warn('No se pudo detectar la zona horaria del sistema, usando Chile como fallback');
     return CHILE_TIMEZONE;
   }

@@ -2,13 +2,11 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CalendarEvent } from '@/types/calendar';
-import { ArrowRight, Calendar, Clock, User, Truck } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, Truck } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 import { EnhancedServiceForm } from '@/components/services/EnhancedServiceForm';
-import { Service } from '@/types';
-import { ServiceFormData, ServiceOperator } from '@/types/serviceDetails';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
-import { formatForDatabase, getCurrentChileDate, getCurrentChileDateString } from '@/utils/timezoneUtils';
+import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { createLogger } from "@/lib/logger";
 
 
@@ -27,7 +25,7 @@ export const ConvertEventToServiceModal = ({
   onEventUpdate 
 }: ConvertEventToServiceModalProps) => {
   const { toast } = useToast();
-  const { createService, isCreating } = useServiceManager();
+  const { createService, isCreating: _isCreating } = useServiceManager();
   const [showServiceForm, setShowServiceForm] = useState(false);
 
   // Prepare prefilled data from event

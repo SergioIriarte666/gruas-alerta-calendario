@@ -106,7 +106,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
       });
       triggerRefresh();
       handleClose();
-    } catch (error) {
+    } catch (_error) {
       // Error handled in hook
     }
   };

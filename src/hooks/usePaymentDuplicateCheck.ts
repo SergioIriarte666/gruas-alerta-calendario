@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
+import { SupplierPaymentStatus } from '@/types/suppliers';
 import { createLogger } from "@/lib/logger";
 
 

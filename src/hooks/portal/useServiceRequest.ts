@@ -14,7 +14,7 @@ const logger = createLogger("useServiceRequest");
 const createServiceRequest = async ({
   formData,
   clientId,
-  userId,
+  userId: _userId,
 }: {
   formData: PortalRequestServiceSchema;
   clientId: string;

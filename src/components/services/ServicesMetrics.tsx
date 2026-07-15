@@ -4,8 +4,7 @@ import {
   Truck, 
   DollarSign, 
   TrendingDown, 
-  TrendingUp,
-  Calculator 
+  TrendingUp 
 } from 'lucide-react';
 import { ServicesMetrics as ServicesMetricsType } from '@/hooks/services/useServicesMetrics';
 import { formatCurrency } from '@/lib/utils';

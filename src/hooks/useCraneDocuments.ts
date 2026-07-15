@@ -80,7 +80,7 @@ export const useCraneDocuments = (craneId: string) => {
         const fileName = `${craneId}/${documentType}_${Date.now()}.${fileExt}`;
 
         // Upload file to storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: _uploadData, error: uploadError } = await supabase.storage
           .from('crane-documents')
           .upload(fileName, file, {
             cacheControl: '3600',

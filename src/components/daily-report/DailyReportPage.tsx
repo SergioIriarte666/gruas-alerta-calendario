@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { useDailyReport } from '@/hooks/useDailyReport';
-import { formatForInput, formatForDisplay } from '@/utils/timezoneUtils';
+import { formatForInput } from '@/utils/timezoneUtils';
 import { useSettings } from '@/hooks/useSettings';
 import { exportDailyReport } from '@/utils/reportExporter';
 import { useToast } from '@/components/ui/custom-toast';
@@ -16,8 +16,6 @@ import {
   Download, 
   RefreshCw,
   AlertTriangle,
-  CheckCircle,
-  Clock,
   DollarSign,
   Truck,
   Users,

@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Bell,
-  TrendingUp,
   Loader2
 } from 'lucide-react';
 import { useActiveAlerts } from '@/hooks/useInventoryAlerts';

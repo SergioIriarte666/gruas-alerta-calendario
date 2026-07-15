@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Mail, Phone, MapPin, User, Calendar, FileText } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, User, FileText } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
 import { useSupplierCategories } from '@/hooks/useSupplierCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';

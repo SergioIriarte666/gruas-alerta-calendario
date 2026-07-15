@@ -1,5 +1,5 @@
 import { Client } from '@/types';
-import { getDepartmentColor, hasMultipleDepartments } from '@/utils/departmentColors';
+import { getDepartmentColor } from '@/utils/departmentColors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from "@/components/ui/badge";
 import { Building2 } from "lucide-react";

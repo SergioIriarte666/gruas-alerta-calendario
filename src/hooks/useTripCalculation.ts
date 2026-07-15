@@ -6,7 +6,7 @@ import type { Crane } from '@/types';
 import type { RouteDirectionsResult } from '@/lib/routeDirections';
 import { fetchRouteDirections } from '@/lib/routeDirections';
 
-const logger = createLogger('useTripCalculation');
+const _logger = createLogger('useTripCalculation');
 
 export type ReturnTripConfig = 'empty' | '1_vehicle' | '2_vehicles';
 

@@ -23,7 +23,7 @@ interface ActiveAlertsListProps {
 
 export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, loading }) => {
   const [selectedAlert, setSelectedAlert] = useState<ActiveAlert | null>(null);
-  const getSeverityColor = (severity: string) => {
+  const _getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
         return 'destructive';
@@ -36,7 +36,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
     }
   };
 
-  const getSeverityIcon = (severity: string) => {
+  const _getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical':
         return <XCircle className="size-4" />;
@@ -49,7 +49,7 @@ export const ActiveAlertsList: React.FC<ActiveAlertsListProps> = ({ alerts, load
     }
   };
 
-  const getAlertTypeLabel = (type: string) => {
+  const _getAlertTypeLabel = (type: string) => {
     switch (type) {
       case 'low_stock':
         return 'Stock Bajo';

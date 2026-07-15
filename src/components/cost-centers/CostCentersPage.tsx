@@ -14,7 +14,7 @@ import { generateCostManualPDF } from '@/utils/pdf/costManualPdfGenerator';
 import { cn } from '@/lib/utils';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('CostCentersPage');
+const _logger = createLogger('CostCentersPage');
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n);

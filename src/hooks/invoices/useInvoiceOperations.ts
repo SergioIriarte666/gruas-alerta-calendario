@@ -3,7 +3,7 @@ import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
-import { formatInvoiceData, generateInvoiceFolio } from '@/utils/invoiceUtils';
+import { formatInvoiceData } from '@/utils/invoiceUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import { createLogger } from "@/lib/logger";
 
@@ -488,7 +488,7 @@ export const useInvoiceOperations = () => {
             return { serviceId, result };
           });
 
-          const results = await Promise.all(updatePromises);
+          const _results = await Promise.all(updatePromises);
         }
       } catch (servicesError) {
         logger.error('Error updating services, but invoice update succeeded:', servicesError);

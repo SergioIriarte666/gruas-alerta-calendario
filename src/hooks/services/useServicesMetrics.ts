@@ -31,7 +31,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
   const [costs, setCosts] = useState<any[]>([]);
 
   const getDateFilterInfo = useCallback((filter: DateFilter) => {
-    const currentChileDate = getCurrentChileDate();
+    const _currentChileDate = getCurrentChileDate();
     const currentChileDateString = getCurrentChileDateString();
     
     switch (filter) {

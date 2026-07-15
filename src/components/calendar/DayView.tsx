@@ -43,7 +43,7 @@ export const DayView = ({
         title: 'Evento eliminado',
         description: `El evento "${eventTitle}" ha sido eliminado correctamente`
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         type: 'error',
         title: 'Error al eliminar',

@@ -182,7 +182,7 @@ export const useUnifiedPartsPurchase = () => {
       const normalizedInput = normalizeItemName(purchaseData.part_name);
       
       // Buscar coincidencia exacta normalizada primero
-      const { data: allItems, error: searchError } = await supabase
+      const { data: allItems, error: _searchError } = await supabase
         .from('inventory_items')
         .select('id, name')
         .eq('is_active', true);
@@ -285,7 +285,7 @@ export const useUnifiedPartsPurchase = () => {
       
       return { cranePart, inventoryMovement };
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       // Use centralized invalidation
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });

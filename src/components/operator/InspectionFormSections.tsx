@@ -28,7 +28,7 @@ interface InspectionFormSectionsProps {
 export const InspectionFormSections = ({
   form,
   phase = 'initial',
-  isInitialCompleted = false,
+  isInitialCompleted: _isInitialCompleted = false,
   serviceId,
   requiresDetail = true,
   requiresPhotoSet = true,

@@ -19,7 +19,7 @@ export const PendingPaymentSelector: React.FC<PendingPaymentSelectorProps> = ({
   selectedIds,
   onSelectionChange
 }) => {
-  const handleToggle = (paymentId: string, amount: number) => {
+  const handleToggle = (paymentId: string, _amount: number) => {
     let newSelection: string[];
     if (selectedIds.includes(paymentId)) {
       newSelection = selectedIds.filter(id => id !== paymentId);

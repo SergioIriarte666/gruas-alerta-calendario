@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { 
       operatorId,
-      serviceId,
+      serviceId: _serviceId,
       folio, 
       clientName,
       serviceDate,

@@ -546,7 +546,7 @@ export const EnhancedServiceForm = React.memo(({
     selectedServiceType,
     complianceIssues,
   });
-  const complianceBlockingIssuesByField = useMemo(
+  const _complianceBlockingIssuesByField = useMemo(
     () => validationErrors.filter((error) => error.field.startsWith('compliance:') && error.severity === 'error'),
     [validationErrors],
   );

@@ -243,7 +243,7 @@ Deno.serve(async (req: Request) => {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
-  } catch (err) {
+  } catch (_err) {
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       {

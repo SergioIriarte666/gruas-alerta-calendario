@@ -64,7 +64,7 @@ export const addPhotographicSetSection = async (
     const photoHeight = photoWidth * 0.75;
 
     let validPhotosAdded = 0;
-    let currentRow = 0;
+    let _currentRow = 0;
 
     for (let i = 0; i < organizedPhotos.length; i += photosPerRow) {
       // Verificar espacio para nueva fila de fotos
@@ -130,7 +130,7 @@ export const addPhotographicSetSection = async (
       }
 
       yPosition += photoHeight + 25;
-      currentRow++;
+      _currentRow++;
     }
 
     // Agregar resumen

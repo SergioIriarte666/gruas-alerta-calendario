@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatCurrency, cn, toTitleCase } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { ServiceClosure } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -15,7 +15,6 @@ import {
   Wrench,
   Hash,
   Clock,
-  Car,
   Receipt
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -357,7 +356,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
                     </thead>
                     <tbody>
                       {invoices.map((inv) => {
-                        const invStatusConfig = getStatusConfig(inv.status === 'paid' ? 'invoiced' : inv.status);
+                        const _invStatusConfig = getStatusConfig(inv.status === 'paid' ? 'invoiced' : inv.status);
                         return (
                           <tr key={inv.id} className="border-b border-border hover:bg-muted/50">
                             <td className="py-2 px-3 text-foreground font-medium">{inv.folio}</td>

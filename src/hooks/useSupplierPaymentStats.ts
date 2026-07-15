@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useSupplierPaymentStats');
+const _logger = createLogger('useSupplierPaymentStats');
 
 export interface SupplierPaymentStat {
   supplier_id: string;

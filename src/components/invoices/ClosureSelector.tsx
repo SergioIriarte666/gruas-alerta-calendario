@@ -21,7 +21,7 @@ const ClosureSelector: React.FC<ClosureSelectorProps> = ({
   selectedClosureId,
   onClosureChange,
   isEditing = false,
-  currentInvoice,
+  currentInvoice: _currentInvoice,
   disabled = false
 }) => {
   const { closures, loading } = useClosuresForInvoices({ 

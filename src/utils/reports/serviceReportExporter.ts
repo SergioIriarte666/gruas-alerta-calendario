@@ -1,8 +1,6 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { format as formatDate, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { ExportServiceReportArgs } from './reportTypes';

@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Service } from '@/types';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('FolioValidation');

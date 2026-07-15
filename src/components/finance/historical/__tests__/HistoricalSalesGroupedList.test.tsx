@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { HistoricalSalesGroupedList } from '../HistoricalSalesGroupedList';
 import { Invoice } from '@/types';
 import { vi, describe, it, expect, beforeEach } from 'vitest';

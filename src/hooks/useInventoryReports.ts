@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays, subMonths } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useInventoryReports');
+const _logger = createLogger('useInventoryReports');
 
 const STOCK_REPORT_SELECT = `
   current_quantity,

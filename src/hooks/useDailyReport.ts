@@ -141,7 +141,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
 
   // Process services with better categorization
   const allServices = servicesRes.data || [];
-  const selectedDateObj2 = selectedDateObj;
+  const _selectedDateObj2 = selectedDateObj;
   
   const scheduled = allServices.filter(s => 
     s.service_date === dateForDB && ['pending', 'in_progress'].includes(s.status)

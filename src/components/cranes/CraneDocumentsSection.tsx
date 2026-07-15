@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { AlertAcknowledgementDialog } from '@/components/documents/AlertAcknowledgementDialog';
-import { 
-  Calendar,
+import {
   Upload,
   Download,
   Eye,
@@ -49,7 +48,7 @@ const documentTypes = [
 ];
 
 export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => {
-  const { documents, isLoading, uploading, uploadDocument, downloadDocument, getDocumentByType } = useCraneDocuments(crane.id);
+  const { documents, isLoading, uploading: _uploading, uploadDocument, downloadDocument, getDocumentByType } = useCraneDocuments(crane.id);
   const { user, isAdmin } = useUserPermissions();
   const createAcknowledgement = useCreateAlertAcknowledgement();
   const [uploadingType, setUploadingType] = useState<string | null>(null);

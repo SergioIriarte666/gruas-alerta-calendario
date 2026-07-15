@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
 import { createLogger } from '@/lib/logger';
 
-const logger = createLogger('useSupplierDetail');
+const _logger = createLogger('useSupplierDetail');
 
 const SUPPLIER_PAYMENTS_SELECT = `
   id,

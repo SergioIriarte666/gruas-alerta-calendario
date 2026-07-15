@@ -157,7 +157,7 @@ export function PendingEntriesView() {
     loadEntries();
   };
 
-  const handleServiceFormSubmit = async (serviceData: any) => {
+  const handleServiceFormSubmit = async (_serviceData: any) => {
     // After service is created, delete the quick entry
     if (selectedEntry) {
       try {

@@ -46,7 +46,7 @@ export const usePayments = () => {
 
   const checkPaymentSystemAvailability = async () => {
     try {
-      const { data, error } = await supabase.from('payments').select('id').limit(1);
+      const { data: _data, error } = await supabase.from('payments').select('id').limit(1);
       setPaymentSystemAvailable(!error);
       return !error;
     } catch {
@@ -383,7 +383,7 @@ export const usePayments = () => {
       
       if (paymentsError) throw paymentsError;
       
-      const { data: invoicesData, error: invoicesError } = await supabase
+      const { data: _invoicesData, error: invoicesError } = await supabase
         .from('invoices')
         .select('status, paid_amount')
         .eq('status', 'paid')
@@ -827,7 +827,7 @@ export const usePayments = () => {
   };
 
   // Aplicar pago a facturas específicas por número fiscal
-  const applyPaymentToSpecificInvoices = async (
+  const _applyPaymentToSpecificInvoices = async (
     paymentId: string, 
     fiscalNumbers: string[], 
     amounts?: number[]

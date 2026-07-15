@@ -11,8 +11,7 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
-  AlertCircle,
-  ArrowRight
+  AlertCircle
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/statusHelpers';
 import { VehicleFullHistoryData, VehicleHistoryRecord } from '@/hooks/useVehicleFullHistory';

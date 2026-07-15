@@ -65,7 +65,7 @@ export const ServiceCostDetailsSection = ({
   logger.debug('[ServiceCostDetailsSection] Disabled prop:', disabled);
   logger.debug('[ServiceCostDetailsSection] Add button should be disabled?', disabled);
   
-  const [nextId, setNextId] = useState(1);
+  const [_nextId, _setNextId] = useState(1);
   const {
     data: serviceCostCategory,
     isLoading: serviceCostCategoryLoading,
@@ -394,7 +394,7 @@ export const ServiceCostDetailsSection = ({
   };
 
   // ✅ NUEVO: Debounce para prevenir múltiples llamadas rápidas - MOVED INSIDE COMPONENT
-  const debouncedSaveCostDetail = useCallback(
+  const _debouncedSaveCostDetail = useCallback(
     debounce(async (costDetail: ServiceCostDetail) => {
       await saveCostDetail(costDetail);
     }, 300),

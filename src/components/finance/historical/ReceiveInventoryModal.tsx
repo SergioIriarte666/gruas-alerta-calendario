@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
 import { businessClock } from '@/utils/businessClock';
 import {
   Dialog,
@@ -71,7 +70,7 @@ export const ReceiveInventoryModal = ({
   const { mutateAsync: createMovement, isPending } = useCreateInventoryMovement();
 
   // Fetch existing movements for this invoice to show history
-  const { data: existingMovements, isLoading: isLoadingMovements } = useInventoryMovementsByReference(
+  const { data: existingMovements, isLoading: _isLoadingMovements } = useInventoryMovementsByReference(
     isOpen ? invoice?.invoice_number || null : null
   );
 

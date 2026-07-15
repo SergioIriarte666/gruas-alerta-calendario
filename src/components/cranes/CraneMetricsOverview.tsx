@@ -7,8 +7,7 @@ import {
   Truck, 
   CheckCircle, 
   Clock, 
-  DollarSign, 
-  Calendar,
+  DollarSign,
   AlertTriangle,
   Activity,
   TrendingUp,
@@ -69,7 +68,7 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
     );
   }
 
-  const getExpiryStatus = (days: number) => {
+  const _getExpiryStatus = (days: number) => {
     if (days <= 0) return 'danger';
     if (days <= 30) return 'warning';
     return 'success';

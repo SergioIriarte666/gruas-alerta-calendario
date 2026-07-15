@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye, Ban, Mail } from 'lucide-react';
+import { Edit, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye, Ban, Mail } from 'lucide-react';
 import { Invoice } from '@/types';
 import { isValid, parseISO, differenceInDays } from 'date-fns';
 import { formatForDisplay } from '@/utils/timezoneUtils';
@@ -159,7 +159,7 @@ const getStatusBadge = (status: string) => {
 const InvoicesTable = ({ 
   invoices, 
   onEdit, 
-  onDelete, 
+  onDelete: _onDelete, 
   onMarkAsPaid, 
   getInvoiceWithDetails,
   onRefresh,

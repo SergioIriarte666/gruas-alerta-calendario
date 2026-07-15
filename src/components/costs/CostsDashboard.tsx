@@ -239,7 +239,7 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-4">
                 <div className="space-y-3">
-                  {categoryBreakdown.map((cat, index) => (
+                  {categoryBreakdown.map((cat, _index) => (
                     <div key={cat.name} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-foreground font-medium truncate max-w-[200px]">

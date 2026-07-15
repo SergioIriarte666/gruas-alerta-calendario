@@ -109,7 +109,7 @@ export class BackupGenerators {
     };
   }
 
-  async generateQuickBackup(userEmail: string): Promise<BackupResult> {
+  async generateQuickBackup(_userEmail: string): Promise<BackupResult> {
     if (!this.userClient) {
       throw new Error('Se requiere un administrador autenticado para generar el respaldo rapido manual');
     }

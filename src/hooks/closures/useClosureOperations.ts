@@ -2,7 +2,7 @@ import { businessClock } from '@/utils/businessClock';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
-import { formatClosureData, generateClosureFolio } from '@/utils/closureUtils';
+import { formatClosureData } from '@/utils/closureUtils';
 import { EXCESS_ROW_SUFFIX, ClosureValueType } from '@/hooks/useServicesForClosures';
 import { createLogger } from "@/lib/logger";
 

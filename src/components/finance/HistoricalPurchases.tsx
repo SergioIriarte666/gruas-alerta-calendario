@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { usePurchaseInvoices, usePurchaseInvoiceItems } from '@/hooks/usePurchaseInvoices';
 import { usePurchaseExport } from '@/hooks/finance/usePurchaseExport';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Edit, X, MoreHorizontal, Check, Download, FileSpreadsheet, FileText, LayoutList, LayoutGrid, Users } from 'lucide-react';
+import { Plus, Trash2, Edit, X, MoreHorizontal, Download, FileSpreadsheet, FileText, LayoutList, LayoutGrid, Users } from 'lucide-react';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { toast } from 'sonner';
 import {
@@ -53,7 +53,7 @@ import { HistoricalPaginationControls } from './historical/HistoricalPaginationC
 const logger = createLogger("HistoricalPurchases");
 
 export const HistoricalPurchases = () => {
-  const { invoices, isDeleting, deleteInvoice, updateInvoice, createInvoice } = usePurchaseInvoices();
+  const { invoices, isDeleting: _isDeleting, deleteInvoice, updateInvoice, createInvoice } = usePurchaseInvoices();
   const { data: invoiceItemsMap } = usePurchaseInvoiceItems();
   const { exportToExcel, exportToPDF } = usePurchaseExport();
   const [editingInvoice, setEditingInvoice] = useState<SupplierInvoiceWithDetails | null>(null);
@@ -68,7 +68,7 @@ export const HistoricalPurchases = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grouped' | 'pipeline'>('table');
 
-  const selectedInvoices = useMemo(
+  const _selectedInvoices = useMemo(
     () => invoices.filter((inv) => selectedIds.includes(inv.id)),
     [invoices, selectedIds]
   );
@@ -262,7 +262,7 @@ export const HistoricalPurchases = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleSaveInvoice = async (id: string, updates: any) => {
+  const _handleSaveInvoice = async (id: string, updates: any) => {
     try {
       await updateInvoice({ id, data: updates });
       toast.success('Factura actualizada correctamente');
@@ -273,7 +273,7 @@ export const HistoricalPurchases = () => {
     }
   };
 
-  const handleBatchSave = async (id: string, updates: any) => {
+  const _handleBatchSave = async (id: string, updates: any) => {
     // This is called for each invoice in the batch
     await updateInvoice({ id, data: updates, suppressToast: true });
   };

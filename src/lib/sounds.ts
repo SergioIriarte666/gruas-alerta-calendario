@@ -36,7 +36,7 @@ const playNotes = (
 
       startTime += duration;
     });
-  } catch (error) {
+  } catch (_error) {
     logger.debug('Audio playback not supported');
   }
 };

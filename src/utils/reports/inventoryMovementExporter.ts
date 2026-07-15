@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format as formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { businessClock } from '@/utils/businessClock';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { Settings } from '@/types/settings';

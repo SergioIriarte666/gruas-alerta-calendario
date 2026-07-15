@@ -1,7 +1,7 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Supplier } from '@/types/suppliers';
-import { stringSimilarity, toTitleCase } from '@/lib/utils';
+import { toTitleCase } from '@/lib/utils';
 
 import { toLocalDateString, getTodayLocal } from '@/utils/timezoneUtils';
 import { businessClock } from '@/utils/businessClock';
@@ -403,7 +403,7 @@ export const processPurchaseRows = (
 
     if (!folio || !rut) continue;
 
-    const uniqueKey = `${rut}-${folio}`;
+    const _uniqueKey = `${rut}-${folio}`;
     
     // Only active suppliers may receive new invoices. If an inactive supplier
     // reaches this array, leave it unmatched for manual resolution instead.

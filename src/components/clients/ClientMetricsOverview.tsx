@@ -12,7 +12,7 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
-import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 
 interface MetricCardProps {
   icon: React.ElementType;

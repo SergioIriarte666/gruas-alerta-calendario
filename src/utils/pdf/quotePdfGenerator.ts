@@ -104,7 +104,7 @@ export const generateQuotePDF = async (
     termsRows.push(['Observaciones', formatText(service.observations)]);
   }
 
-  y = addSectionTable(doc, y, 'Condiciones Comerciales', termsRows);
+  _y = addSectionTable(doc, y, 'Condiciones Comerciales', termsRows);
 
   addFooter(doc, `Documento comercial emitido por ${context.company.businessName || 'la empresa emisora'}.`);
 

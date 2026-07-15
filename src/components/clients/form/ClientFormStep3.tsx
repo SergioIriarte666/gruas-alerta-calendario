@@ -30,7 +30,7 @@ export const ClientFormStep3 = ({
   isEditing,
   isAddingDepartment,
   newDepartmentName,
-  onDepartmentChange,
+  onDepartmentChange: _onDepartmentChange,
   onDepartmentsChange,
   onIsActiveChange,
   onBillingTypeChange,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -9,8 +9,7 @@ import {
   Calendar,
   Eye,
   Phone,
-  Mail,
-  MapPin
+  Mail
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -169,7 +168,7 @@ const SuppliersSection: React.FC<SuppliersSectionProps> = ({ data, onViewPayment
   }
 
   const totalPayments = (data.overdue?.length || 0) + (data.dueToday?.length || 0) + (data.dueThisWeek?.length || 0);
-  const totalAmount = (data.totalOverdue || 0) + (data.totalDueToday || 0) + (data.totalDueWeek || 0);
+  const _totalAmount = (data.totalOverdue || 0) + (data.totalDueToday || 0) + (data.totalDueWeek || 0);
 
   return (
     <div className="space-y-6">

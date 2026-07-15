@@ -17,7 +17,7 @@ interface CreateInventoryCostData {
 
 export const createInventoryCost = async ({
   amount,
-  description,
+  description: _description,
   date,
   item_name,
   supplier_name,

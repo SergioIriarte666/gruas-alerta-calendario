@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import EnhancedClosureSelector from '@/components/invoices/EnhancedClosureSelector';
@@ -11,7 +11,7 @@ const PerformanceTest = () => {
   const [closures, setClosures] = useState<ClosureWithClient[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedClosureId, setSelectedClosureId] = useState<string>('');
-  const [renderTime, setRenderTime] = useState<number | null>(null);
+  const [_renderTime, _setRenderTime] = useState<number | null>(null);
 
   const generateClosures = (count: number) => {
     setLoading(true);

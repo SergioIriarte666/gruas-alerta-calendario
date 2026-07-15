@@ -10,7 +10,7 @@ import { CostFormData } from '@/types/costs';
 import { useAddCost } from '@/hooks/useCosts';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { toast } from 'sonner';
-import { Fuel, Car, Package, Calculator, Tag } from 'lucide-react';
+import { Fuel, Car, Calculator, Tag } from 'lucide-react';
 
 interface ServiceExpenseModalsProps {
   isOpen: boolean;
