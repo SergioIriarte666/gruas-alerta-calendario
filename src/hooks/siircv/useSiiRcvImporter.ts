@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { computeRcvContentHash, type ParsedRcvRow } from '@/utils/siiRcvParser';
 import { normalizeRut } from '@/utils/rutFormatter';
+import { resolveRazonSocialesForRuts } from './rutResolver';
 import type { SiiBookType } from '@/types/siiRcv';
 
 const logger = createLogger('useSiiRcvImporter');
@@ -38,13 +39,25 @@ export function useSiiRcvImporter() {
       // RUT en formato estándar XX.XXX.XXX-D (dedupe estable e independiente del formato).
       const entityRut = normalizeRut(params.entityRut);
 
+      // Resolver razón social faltante (el CSV por-tipo del SII de compras no la trae).
+      // Un solo lookup por RUT aunque haya varias facturas del mismo proveedor; el
+      // content_hash NO incluye counterpart_name, así que esto no afecta la dedupe.
+      const rutsSinNombre = validRows
+        .filter((row) => !row.counterpart_name || row.counterpart_name.trim() === '')
+        .map((row) => row.counterpart_rut);
+      const resolvedNames = rutsSinNombre.length > 0
+        ? await resolveRazonSocialesForRuts(rutsSinNombre)
+        : new Map<string, string>();
+
       const hashedRows = await Promise.all(validRows.map(async (row) => ({
         entity_rut: entityRut,
         book_type: params.bookType,
         doc_type: row.doc_type,
         folio: row.folio,
         counterpart_rut: row.counterpart_rut,
-        counterpart_name: row.counterpart_name || null,
+        counterpart_name: (row.counterpart_name && row.counterpart_name.trim())
+          || resolvedNames.get(normalizeRut(row.counterpart_rut))
+          || null,
         doc_date: row.doc_date as string,
         net_amount: row.net_amount,
         exempt_amount: row.exempt_amount,

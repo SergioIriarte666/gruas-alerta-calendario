@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, UserSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { createLogger } from '@/lib/logger';
 import { parseSiiRcvCsv, type ParsedRcvRow } from '@/utils/siiRcvParser';
-import { useSiiRcvImporter } from '@/hooks/useSiiRcv';
+import { useSiiRcvImporter, useLowboyMissingNames, useLowboyRutBackfill } from '@/hooks/useSiiRcv';
 import type { SiiBookType } from '@/types/siiRcv';
 
 const logger = createLogger('SiiRcvImportCard');
@@ -25,6 +25,8 @@ interface SiiRcvImportCardProps {
 
 export function SiiRcvImportCard({ entityRut, onEntityRutChange }: SiiRcvImportCardProps) {
   const { mutateAsync: runImport, isPending, progress } = useSiiRcvImporter();
+  const { data: missingRuts = [] } = useLowboyMissingNames(entityRut);
+  const { mutate: runBackfill, isPending: isBackfilling } = useLowboyRutBackfill(entityRut);
   const [file, setFile] = useState<File | null>(null);
   const [bookType, setBookType] = useState<SiiBookType | null>(null);
   const [rows, setRows] = useState<ParsedRcvRow[]>([]);
@@ -85,8 +87,19 @@ export function SiiRcvImportCard({ entityRut, onEntityRutChange }: SiiRcvImportC
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
         <CardTitle className="text-base">Importar CSV del RCV</CardTitle>
+        {missingRuts.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => runBackfill(missingRuts)}
+            disabled={isBackfilling}
+          >
+            {isBackfilling ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UserSearch className="mr-2 size-4" />}
+            Completar razones sociales ({missingRuts.length})
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">

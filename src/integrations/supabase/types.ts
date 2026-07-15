@@ -4953,6 +4953,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rut_directory: {
+        Row: {
+          razon_social: string
+          rut: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          razon_social: string
+          rut: string
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          razon_social?: string
+          rut?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_locations: {
         Row: {
           address: string | null
