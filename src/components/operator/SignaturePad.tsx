@@ -59,6 +59,16 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
     const ctx = canvas.getContext('2d');
     ctx?.scale(ratio, ratio);
 
+    // Reasignar canvas.width/height deja el bitmap TRANSPARENTE (la prop
+    // backgroundColor="white" del componente solo se aplica en clear()/montaje,
+    // no tras un resize manual). Sin este relleno explícito, el tema oscuro se
+    // ve a través del canvas y el trazo negro queda invisible al firmar. Se
+    // fuerza fondo BLANCO, idéntico al PDF, antes de re-aplicar la firma.
+    if (ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+    }
+
     if (lastSignatureRef.current) {
       try {
         instance.fromDataURL(lastSignatureRef.current, { width, height, ratio: 1 });
@@ -126,7 +136,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
             </p>}
         </div>
 
-        <div className="border-2 border-border rounded-lg bg-background relative">
+        <div className="border-2 border-border rounded-lg bg-white relative">
           <SignatureCanvas ref={sigCanvasRef} canvasProps={{
         className: 'signature-canvas w-full h-32',
         style: {
@@ -139,7 +149,7 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
               <Check className="size-5 text-emerald-500" />
             </div>}
 
-          <div className="absolute bottom-2 left-2 text-xs text-muted-foreground">
+          <div className="absolute bottom-2 left-2 text-xs text-gray-500">
             Firme aquí con su dedo o stylus
           </div>
         </div>

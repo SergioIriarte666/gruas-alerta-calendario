@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { Preferences } from '@capacitor/preferences';
 import { toast } from 'sonner';
 import type { Service } from '@/types';
@@ -582,6 +583,66 @@ export const useOperatorLocationTracking = ({
       }
     };
   }, [evaluate, isReady]);
+
+  // Auto-recuperación al volver a foreground / reabrir tras un crash.
+  // iOS puede terminar el proceso (o el watcher nativo) mientras la app está en
+  // segundo plano; el toggle manual Pausar/Reanudar no puede ser el único
+  // mecanismo de recuperación (un traslado completo quedó sin puntos por esto).
+  // Al volver a foreground: si hay un servicio activo con tracking habilitado y
+  // sin pausa manual, garantizamos una sesión viva con el watcher re-enganchado.
+  const recoverTrackingOnForeground = useCallback(async () => {
+    if (!operatorId || !userId || !isReady || trackingDisabledRef.current) return;
+
+    await flushQueue();
+
+    const activeServiceId = serviceIdRef.current;
+
+    // Sin servicio asignado: dejar que evaluate() maneje el modo por horario.
+    if (!activeServiceId) {
+      evaluate();
+      return;
+    }
+
+    if (isPausedRef.current) return;
+
+    const hasLiveAutoServiceSession =
+      isTrackingRef.current
+      && trackingModeRef.current === 'auto_service'
+      && sessionServiceIdRef.current === activeServiceId;
+
+    if (!hasLiveAutoServiceSession) {
+      // No hay sesión viva (mismo criterio auto_service de evaluate): re-crearla.
+      void startSession('auto_service');
+      return;
+    }
+
+    // Creemos estar rastreando, pero el watcher nativo pudo morir en background
+    // sin que el estado JS se enterara. Re-enganchar la captura garantiza que el
+    // tramo de traslado siga registrando puntos.
+    if (Capacitor.isNativePlatform() && sessionIdRef.current) {
+      beginCapture(sessionIdRef.current, operatorId, userId, activeServiceId);
+    }
+  }, [beginCapture, evaluate, flushQueue, isReady, operatorId, startSession, userId]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let removeListener: (() => void) | undefined;
+    const listenerPromise = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) {
+        void recoverTrackingOnForeground();
+      }
+    });
+    void listenerPromise.then((handle) => {
+      removeListener = () => {
+        void handle.remove();
+      };
+    });
+
+    return () => {
+      removeListener?.();
+    };
+  }, [recoverTrackingOnForeground]);
 
   const permissionLabel = useMemo(() => {
     switch (permissionState) {

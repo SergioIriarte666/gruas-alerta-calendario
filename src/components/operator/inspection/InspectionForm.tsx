@@ -136,13 +136,40 @@ export const InspectionForm = ({
         if (blockedByExisting) return;
 
     // Si el servicio esta recien asignado o recien iniciado ("Iniciar Servicio"
-    // aun no completa la inspeccion inicial), comenzar limpio.
+    // aun no completa la inspeccion inicial), normalmente se comienza limpio.
+    // EXCEPCION: si existe un borrador con contenido REAL del operador (p. ej. la
+    // app crasheó a mitad de la inspeccion inicial), NO lo descartamos: lo
+    // restauramos para no perder el trabajo en terreno. Se excluyen los valores
+    // prellenados por defecto (nombres de cliente/operador) para que un formulario
+    // pristino no se confunda con un borrador recuperable.
     if (service?.status === 'pending' || service?.status === 'in_progress') {
-      logger.debug('🧹 Service is pending/in_progress - starting fresh');
-      clearPersistedData();
-      setCurrentPhase('initial');
-      setIsInitialized(true);
-      return;
+      const hasRecoverableDraft = Boolean(
+        savedData &&
+        metadata?.inspection_phase === 'initial' && (
+          savedData.photographicSet?.length ||
+          savedData.operatorSignature ||
+          savedData.clientSignature ||
+          savedData.vehicleReceptionSignature ||
+          savedData.vehicleObservations ||
+          savedData.kilometraje ||
+          savedData.equipment?.length ||
+          savedData.combustible ||
+          savedData.llaves ||
+          savedData.documentacion ||
+          savedData.clientRut
+        )
+      );
+
+      if (!hasRecoverableDraft) {
+        logger.debug('🧹 Service is pending/in_progress - starting fresh');
+        clearPersistedData();
+        setCurrentPhase('initial');
+        setIsInitialized(true);
+        return;
+      }
+
+      logger.debug('♻️ Borrador de inspección inicial recuperado tras reapertura');
+      // Cae a la lógica de carga de savedData de abajo (valida fotos + avisa).
     }
     
     // En entrega, la DB siempre es la fuente de verdad. La caché puede ayudar a
