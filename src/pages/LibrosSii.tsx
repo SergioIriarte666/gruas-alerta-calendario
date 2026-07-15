@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SiiRcvImportCard } from '@/components/siircv/SiiRcvImportCard';
 import { SiiRcvTable } from '@/components/siircv/SiiRcvTable';
 import { SiiResultadoPanel } from '@/components/siircv/SiiResultadoPanel';
+import { LowboyIvaPanel } from '@/components/siircv/LowboyIvaPanel';
 import { useUser } from '@/contexts/UserContext';
 
 const DEFAULT_ENTITY_RUT = '78.387.656-6';
@@ -37,7 +38,24 @@ const LibrosSii = () => {
         </TabsContent>
 
         <TabsContent value="resultado" className="space-y-4">
-          <SiiResultadoPanel entityRut={entityRut} />
+          <Tabs defaultValue="iva" className="space-y-4">
+            <TabsList className="bg-muted/30 p-1">
+              <TabsTrigger value="iva" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+                IVA (F29)
+              </TabsTrigger>
+              <TabsTrigger value="margen" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+                Margen / Costos
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="iva" className="space-y-4">
+              <LowboyIvaPanel entityRut={entityRut} />
+            </TabsContent>
+
+            <TabsContent value="margen" className="space-y-4">
+              <SiiResultadoPanel entityRut={entityRut} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
