@@ -1,9 +1,12 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { supabase } from '@/integrations/supabase/client';
 import { businessClock } from '@/utils/businessClock';
-import { safeParseDateOnly } from '@/utils/timezoneUtils';
+import { safeParseDateOnly, safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
+import { normalizeRut } from '@/utils/rutFormatter';
 import { createLogger } from '@/lib/logger';
 import { fetchCompanyProfile } from './companyProfileFetcher';
+import { DOC_TYPE_NOTA_CREDITO } from '@/types/siiRcv';
 import type { LowboyIvaMonth } from '@/hooks/siircv/useLowboyIva';
 
 const logger = createLogger('LowboyIvaPdf');
@@ -70,6 +73,56 @@ export interface LowboyIvaPdfInput {
   entityRut: string;
   months: LowboyIvaMonth[];
   latest: LowboyIvaMonth;
+  /** Meses visibles (YYYY-MM) para acotar el detalle por factura; vacío/undefined = todos. */
+  monthKeys?: string[];
+}
+
+type InvoiceRow = {
+  book_type: string;
+  doc_type: number;
+  folio: number;
+  doc_date: string;
+  counterpart_rut: string;
+  counterpart_name: string | null;
+  net_amount: number;
+  exempt_amount: number;
+  tax_amount: number;
+  total_amount: number;
+};
+
+// Signo F29: las notas de crédito (61) restan; el resto suma. Se refleja en los
+// montos por documento para que los totales cuadren con el resumen mensual.
+const invoiceSign = (docType: number): number => (docType === DOC_TYPE_NOTA_CREDITO ? -1 : 1);
+
+/** Trae los documentos de la entidad acotados al conjunto de meses visibles, ordenados cronológicamente. */
+async function fetchInvoices(entityRut: string, monthKeys?: string[]): Promise<InvoiceRow[]> {
+  // Cota server-side por rango (min..max de los meses visibles) + filtro exacto por
+  // el conjunto de meses, para soportar año completo, un mes o todo el historial.
+  const monthSet = monthKeys && monthKeys.length > 0 ? new Set(monthKeys) : null;
+  const sorted = monthSet ? [...monthSet].sort() : [];
+  const from = sorted.length > 0 ? `${sorted[0]}-01` : null;
+  const to = sorted.length > 0 ? `${sorted[sorted.length - 1]}-31` : null;
+
+  const rows: InvoiceRow[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    let query = supabase
+      .from('sii_rcv_records')
+      .select('book_type, doc_type, folio, doc_date, counterpart_rut, counterpart_name, net_amount, exempt_amount, tax_amount, total_amount')
+      .eq('entity_rut', entityRut);
+    if (from && to) query = query.gte('doc_date', from).lte('doc_date', to);
+    const { data, error } = await query
+      .order('doc_date', { ascending: true })
+      .order('folio', { ascending: true })
+      .range(offset, offset + 999);
+    if (error) {
+      logger.warn('No se pudieron leer documentos para el detalle por factura', error.message);
+      break;
+    }
+    rows.push(...((data ?? []) as InvoiceRow[]));
+    if (!data || data.length < 1000) break;
+  }
+
+  return monthSet ? rows.filter((r) => monthSet.has(r.doc_date.slice(0, 7))) : rows;
 }
 
 export const generateLowboyIvaPdf = async (input: LowboyIvaPdfInput): Promise<Blob> => {
@@ -203,28 +256,129 @@ export const generateLowboyIvaPdf = async (input: LowboyIvaPdfInput): Promise<Bl
         4: { fontStyle: 'bold' },
       },
       alternateRowStyles: { fillColor: [248, 250, 245] },
-      margin: { left: MARGIN, right: MARGIN },
+      margin: { left: MARGIN, right: MARGIN, bottom: 22 },
       didParseCell: (hookData) => {
         if (hookData.section === 'head') return;
         if (hookData.column.index === 0 && hookData.section === 'foot') hookData.cell.styles.halign = 'left';
       },
     });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
 
-    // ── Pie: nota + fecha de generación ─────────────────────────────────────────
-    doc.setDrawColor(...LOWBOY_GREEN);
-    doc.setLineWidth(0.4);
-    doc.line(MARGIN, 285, PAGE_W - MARGIN, 285);
-    doc.setTextColor(...GRAY);
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(7);
+    // ── Detalle compra/venta (neto+exento por mes) ──────────────────────────────
+    const totalVentas = months.reduce((s, m) => s + m.ventasNet, 0);
+    const totalCompras = months.reduce((s, m) => s + m.comprasNet, 0);
+
+    doc.setTextColor(...DARK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Detalle compra/venta', MARGIN, y);
+    y += 5;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Mes', 'Ventas netas', 'Compras netas', 'Resultado']],
+      body: monthsDesc.map((m) => [
+        monthLabel(m.month),
+        formatCLP(m.ventasNet),
+        formatCLP(m.comprasNet),
+        formatCLP(m.resultado),
+      ]),
+      foot: [['TOTAL', formatCLP(totalVentas), formatCLP(totalCompras), formatCLP(totalVentas - totalCompras)]],
+      theme: 'grid',
+      headStyles: { fillColor: LOWBOY_GREEN, textColor: WHITE, fontSize: 8.5, fontStyle: 'bold', halign: 'right' },
+      footStyles: { fillColor: [232, 240, 222], textColor: DARK, fontStyle: 'bold', fontSize: 8.5, halign: 'right' },
+      styles: { fontSize: 8, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, textColor: DARK, halign: 'right' },
+      columnStyles: { 0: { halign: 'left', cellWidth: 34 } },
+      alternateRowStyles: { fillColor: [248, 250, 245] },
+      margin: { left: MARGIN, right: MARGIN, bottom: 22 },
+      didParseCell: (hookData) => {
+        if (hookData.section === 'foot' && hookData.column.index === 0) hookData.cell.styles.halign = 'left';
+      },
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+
+    // ── Detalle por factura (documento a documento) ─────────────────────────────
+    const invoices = await fetchInvoices(normalizeRut(entityRut), input.monthKeys);
+
+    const renderInvoiceSection = (title: string, book: 'venta' | 'compra') => {
+      const rows = invoices.filter((inv) => inv.book_type === book);
+      if (rows.length === 0) return;
+
+      // Evitar título huérfano al pie de página.
+      if (y > 255) { doc.addPage(); y = 20; }
+
+      doc.setTextColor(...DARK);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(title, MARGIN, y);
+      y += 5;
+
+      let sumNeto = 0, sumIva = 0, sumTotal = 0;
+      const body = rows.map((inv) => {
+        const s = invoiceSign(inv.doc_type);
+        const neto = (Number(inv.net_amount) + Number(inv.exempt_amount)) * s;
+        const iva = Number(inv.tax_amount) * s;
+        const total = Number(inv.total_amount) * s;
+        sumNeto += neto; sumIva += iva; sumTotal += total;
+        return [
+          safeDateToDisplaySlashes(inv.doc_date),
+          String(inv.doc_type),
+          String(inv.folio),
+          inv.counterpart_rut,
+          inv.counterpart_name || '—',
+          formatCLP(neto),
+          formatCLP(iva),
+          formatCLP(total),
+        ];
+      });
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Fecha', 'Tipo', 'Folio', 'RUT', 'Razón social', 'Neto', 'IVA', 'Total']],
+        body,
+        foot: [['', '', '', '', 'TOTAL', formatCLP(sumNeto), formatCLP(sumIva), formatCLP(sumTotal)]],
+        theme: 'grid',
+        headStyles: { fillColor: LOWBOY_GREEN, textColor: WHITE, fontSize: 7.5, fontStyle: 'bold', halign: 'right' },
+        footStyles: { fillColor: [232, 240, 222], textColor: DARK, fontStyle: 'bold', fontSize: 7.5, halign: 'right' },
+        styles: { fontSize: 7, cellPadding: { top: 1.5, bottom: 1.5, left: 2, right: 2 }, textColor: DARK, halign: 'right', overflow: 'ellipsize' },
+        columnStyles: {
+          0: { halign: 'left', cellWidth: 18 },
+          1: { halign: 'center', cellWidth: 12 },
+          2: { halign: 'left', cellWidth: 20 },
+          3: { halign: 'left', cellWidth: 26 },
+          4: { halign: 'left', cellWidth: 40 },
+          5: { cellWidth: 22 },
+          6: { cellWidth: 20 },
+          7: { cellWidth: 24 },
+        },
+        alternateRowStyles: { fillColor: [248, 250, 245] },
+        margin: { left: MARGIN, right: MARGIN, bottom: 22 },
+        didParseCell: (hookData) => {
+          if (hookData.section === 'foot' && hookData.column.index === 4) hookData.cell.styles.halign = 'right';
+        },
+      });
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    };
+
+    renderInvoiceSection('Detalle de ventas por documento', 'venta');
+    renderInvoiceSection('Detalle de compras por documento', 'compra');
+
+    // ── Pie: nota + fecha de generación (en todas las páginas) ──────────────────
     const noteLines = doc.splitTextToSize(DISCLAIMER, CONTENT_W);
-    doc.text(noteLines, MARGIN, 289);
-    doc.setFont('helvetica', 'normal');
-    doc.text(
-      `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`,
-      PAGE_W - MARGIN, 293.5, { align: 'right' },
-    );
+    const generado = `Generado: ${businessClock.format(businessClock.now(), 'dd/MM/yyyy HH:mm')}`;
+    const totalPages = (doc as unknown as { getNumberOfPages: () => number }).getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(...LOWBOY_GREEN);
+      doc.setLineWidth(0.4);
+      doc.line(MARGIN, 285, PAGE_W - MARGIN, 285);
+      doc.setTextColor(...GRAY);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.text(noteLines, MARGIN, 289);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${generado} · Página ${p} de ${totalPages}`, PAGE_W - MARGIN, 293.5, { align: 'right' });
+    }
 
     return doc.output('blob');
   } catch (error) {

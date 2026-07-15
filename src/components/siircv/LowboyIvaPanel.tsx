@@ -1,14 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, Download, Info, Loader2, TrendingDown, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLowboyIva, type LowboyIvaMonth } from '@/hooks/useSiiRcv';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { generateLowboyIvaPdf } from '@/utils/pdf/lowboyIvaPdfGenerator';
+
+const ALL_YEARS = 'all';
+const ALL_MONTHS = 'all';
+
+/** 'MM' → 'Enero' (nombre de mes en español, sin corrimiento de zona horaria). */
+const monthName = (mm: string): string => {
+  const l = safeParseDateOnly(`2000-${mm}-01`).toLocaleDateString('es-CL', { month: 'long' });
+  return l.charAt(0).toUpperCase() + l.slice(1);
+};
 
 const formatCLP = (value: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value || 0);
@@ -209,20 +219,66 @@ export function LowboyIvaPanel({ entityRut }: LowboyIvaPanelProps) {
   const isMobile = useIsMobile();
   const { data, isLoading } = useLowboyIva(entityRut.trim());
   const [exporting, setExporting] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>(ALL_YEARS);
+  const [selectedMonth, setSelectedMonth] = useState<string>(ALL_MONTHS);
+  const [yearInitialized, setYearInitialized] = useState(false);
+
+  // Años presentes en los datos, del más reciente al más antiguo.
+  const years = useMemo(
+    () => (data ? [...new Set(data.months.map((m) => m.month.slice(0, 4)))].sort((a, b) => b.localeCompare(a)) : []),
+    [data],
+  );
+
+  // Meses (MM) presentes en el año seleccionado, del más reciente al más antiguo.
+  const monthsOfYear = useMemo(() => {
+    if (!data || selectedYear === ALL_YEARS) return [];
+    return [...new Set(
+      data.months.filter((m) => m.month.slice(0, 4) === selectedYear).map((m) => m.month.slice(5, 7)),
+    )].sort((a, b) => b.localeCompare(a));
+  }, [data, selectedYear]);
+
+  // Por defecto, el año más reciente con datos (el héroe muestra el F29 vigente).
+  useEffect(() => {
+    if (yearInitialized || years.length === 0) return;
+    setSelectedYear(years[0]);
+    setYearInitialized(true);
+  }, [years, yearInitialized]);
+
+  // Cambiar de año (o volver a "Todos los años") reinicia el mes a "Todos".
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    setSelectedMonth(ALL_MONTHS);
+  };
+
+  // Filtro de vista. El arrastre de remanente ya viene calculado sobre el historial
+  // completo desde useLowboyIva; aquí solo se acota qué meses se muestran/exportan.
+  const filteredMonths = useMemo(() => {
+    if (!data) return [];
+    return data.months.filter((m) => {
+      if (selectedYear !== ALL_YEARS && m.month.slice(0, 4) !== selectedYear) return false;
+      if (selectedMonth !== ALL_MONTHS && m.month.slice(5, 7) !== selectedMonth) return false;
+      return true;
+    });
+  }, [data, selectedYear, selectedMonth]);
+  const filteredLatest = filteredMonths.length > 0 ? filteredMonths[filteredMonths.length - 1] : null;
 
   const handleExport = async () => {
-    if (!data?.latest || data.months.length === 0) return;
+    if (!filteredLatest || filteredMonths.length === 0) return;
     setExporting(true);
     try {
       const blob = await generateLowboyIvaPdf({
         entityRut: entityRut.trim(),
-        months: data.months,
-        latest: data.latest,
+        months: filteredMonths,
+        latest: filteredLatest,
+        monthKeys: filteredMonths.map((m) => m.month),
       });
+      const suffix = selectedYear === ALL_YEARS
+        ? 'historico'
+        : selectedMonth === ALL_MONTHS ? selectedYear : `${selectedYear}-${selectedMonth}`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Informe_IVA_LowBoy_${data.latest.month}.pdf`;
+      link.download = `Informe_IVA_LowBoy_${suffix}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -243,7 +299,7 @@ export function LowboyIvaPanel({ entityRut }: LowboyIvaPanelProps) {
     );
   }
 
-  if (!data || data.months.length === 0 || !data.latest) {
+  if (!data || data.months.length === 0 || !filteredLatest) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
@@ -258,18 +314,48 @@ export function LowboyIvaPanel({ entityRut }: LowboyIvaPanelProps) {
   }
 
   // Tabla/cards en orden descendente (mes más reciente primero).
-  const monthsDesc = [...data.months].reverse();
+  const monthsDesc = [...filteredMonths].reverse();
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={selectedYear} onValueChange={handleYearChange}>
+            <SelectTrigger className="w-36" aria-label="Filtrar por año">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_YEARS}>Todos los años</SelectItem>
+              {years.map((year) => (
+                <SelectItem key={year} value={year}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedMonth}
+            onValueChange={setSelectedMonth}
+            disabled={selectedYear === ALL_YEARS || monthsOfYear.length === 0}
+          >
+            <SelectTrigger className="w-40" aria-label="Filtrar por mes">
+              <SelectValue placeholder="Todos los meses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_MONTHS}>Todos los meses</SelectItem>
+              {monthsOfYear.map((mm) => (
+                <SelectItem key={mm} value={mm}>{monthName(mm)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
           {exporting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Download className="mr-2 size-4" />}
           Exportar PDF
         </Button>
       </div>
 
-      <HeroCard latest={data.latest} />
+      <HeroCard latest={filteredLatest} />
 
       {isMobile ? <MonthlyCards months={monthsDesc} /> : <MonthlyTable months={monthsDesc} />}
 
