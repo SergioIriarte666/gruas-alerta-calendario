@@ -36,14 +36,14 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     // 1A. Services today/tomorrow
     supabase
       .from('services')
-      .select('id, folio, service_date, client:clients(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
       .in('status', ['pending', 'in_progress'])
       .gte('service_date', format(today, 'yyyy-MM-dd'))
       .lte('service_date', format(tomorrow, 'yyyy-MM-dd')),
     // 1B. Services this week
     supabase
       .from('services')
-      .select('id, folio, service_date, client:clients(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
       .in('status', ['pending', 'in_progress'])
       .gt('service_date', format(tomorrow, 'yyyy-MM-dd'))
       .lte('service_date', format(nextWeek, 'yyyy-MM-dd')),
@@ -230,12 +230,12 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   const [pendingServicesBaseRes, criticalServicesBaseRes, pendingClosuresBaseRes] = await Promise.all([
     supabase
       .from('services')
-      .select('id, folio, service_date, client:clients(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
       .eq('status', 'completed')
       .lte('service_date', format(serviceClosureThreshold, 'yyyy-MM-dd')),
     supabase
       .from('services')
-      .select('id, folio, service_date, client:clients(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
       .eq('status', 'completed')
       .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd')),
     supabase

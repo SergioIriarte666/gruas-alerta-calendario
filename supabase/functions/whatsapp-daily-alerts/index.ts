@@ -232,7 +232,7 @@ Deno.serve(async (req: Request) => {
   if (settings?.notify_service_no_operator) {
     const { data: noOp } = await supabase
       .from("services")
-      .select("id, folio, service_date, client:clients(name)")
+      .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
       .gte("service_date", todayISO)
       .lte("service_date", tomorrowISO)
       .is("operator_id", null)
@@ -609,7 +609,7 @@ Deno.serve(async (req: Request) => {
   } else {
     const { data: upcomingServices } = await supabase
       .from("services")
-      .select("id, folio, service_date, crane_id, operator_id, client:clients(name)")
+      .select("id, folio, service_date, crane_id, operator_id, client:clients!services_client_id_fkey(name)")
       .gte("service_date", todayISO)
       .lte("service_date", addDaysISO(todayISO, 7))
       .in("status", activeUpcomingServiceStatuses)

@@ -185,7 +185,7 @@ class OutboxWorker {
         contact_person,
         contact_phone,
         service_date,
-        client:clients(name, phone, email),
+        client:clients!services_client_id_fkey(name, phone, email),
         operator:operators(name),
         crane:cranes(license_plate)
       `)
