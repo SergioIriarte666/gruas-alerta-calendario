@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { computeRcvContentHash, type ParsedRcvRow } from '@/utils/siiRcvParser';
+import { normalizeRut } from '@/utils/rutFormatter';
 import type { SiiBookType } from '@/types/siiRcv';
 
 const logger = createLogger('useSiiRcvImporter');
@@ -32,8 +33,13 @@ export function useSiiRcvImporter() {
       const validRows = params.rows.filter((row) => !row._invalid);
       setProgress({ current: 0, total: validRows.length });
 
+      // El RUT de contraparte ya viene normalizado desde el parser; normalizamos
+      // también el de la entidad para que el content_hash siempre se calcule sobre
+      // RUT en formato estándar XX.XXX.XXX-D (dedupe estable e independiente del formato).
+      const entityRut = normalizeRut(params.entityRut);
+
       const hashedRows = await Promise.all(validRows.map(async (row) => ({
-        entity_rut: params.entityRut,
+        entity_rut: entityRut,
         book_type: params.bookType,
         doc_type: row.doc_type,
         folio: row.folio,
@@ -45,7 +51,7 @@ export function useSiiRcvImporter() {
         tax_amount: row.tax_amount,
         total_amount: row.total_amount,
         content_hash: await computeRcvContentHash({
-          entityRut: params.entityRut,
+          entityRut,
           bookType: params.bookType,
           docType: row.doc_type,
           folio: row.folio,
@@ -58,7 +64,7 @@ export function useSiiRcvImporter() {
       const { data: importRecord, error: importError } = await supabase
         .from('sii_rcv_imports')
         .insert({
-          entity_rut: params.entityRut,
+          entity_rut: entityRut,
           book_type: params.bookType,
           period: params.period,
           file_name: params.fileName,

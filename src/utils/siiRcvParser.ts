@@ -1,4 +1,5 @@
 import { createLogger } from '@/lib/logger';
+import { normalizeRut } from '@/utils/rutFormatter';
 
 const logger = createLogger('SiiRcvParser');
 
@@ -114,9 +115,6 @@ const parseSiiDate = (raw: string | undefined): string | null => {
   return `${yearRaw}-${monthRaw.padStart(2, '0')}-${dayRaw.padStart(2, '0')}`;
 };
 
-const normalizeRut = (raw: string | undefined): string =>
-  (raw ?? '').trim().toUpperCase();
-
 export async function parseSiiRcvCsv(file: File): Promise<ParseSiiRcvResult> {
   const text = await decodeFile(file);
   const rawRows = parseCsvRows(text);
@@ -157,7 +155,7 @@ export async function parseSiiRcvCsv(file: File): Promise<ParseSiiRcvResult> {
     const docType = Number.parseInt((cells[docTypeIndex] ?? '').trim(), 10);
     const folio = Number.parseInt((cells[folioIndex] ?? '').trim(), 10);
     const docDate = parseSiiDate(cells[docDateIndex]);
-    const counterpartRut = normalizeRut(cells[counterpartRutIndex]);
+    const counterpartRut = normalizeRut(cells[counterpartRutIndex] ?? '');
 
     const invalidReasons: string[] = [];
     if (!Number.isFinite(docType)) invalidReasons.push('Tipo Doc inválido');

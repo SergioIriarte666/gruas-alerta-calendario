@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { normalizeRut } from '@/utils/rutFormatter';
 import type {
   LowboyCostCandidate,
   LowboyServiceCandidate,
@@ -14,7 +15,7 @@ const recordPayload = (values: SiiRcvRecordFormValues) => ({
   book_type: values.book_type,
   doc_type: values.doc_type,
   folio: values.folio,
-  counterpart_rut: values.counterpart_rut.trim(),
+  counterpart_rut: normalizeRut(values.counterpart_rut),
   counterpart_name: values.counterpart_name.trim() || null,
   doc_date: values.doc_date,
   net_amount: values.net_amount,
@@ -36,7 +37,7 @@ export function useSiiRcvManager(entityRut: string) {
     mutationFn: async (values: SiiRcvRecordFormValues) => {
       const { error } = await supabase.from('sii_rcv_records').insert({
         ...recordPayload(values),
-        entity_rut: entityRut.trim(),
+        entity_rut: normalizeRut(entityRut),
         source: 'manual',
         content_hash: `manual:${crypto.randomUUID()}`,
       });
