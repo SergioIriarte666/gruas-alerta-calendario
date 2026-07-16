@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SiiRcvImportCard } from '@/components/siircv/SiiRcvImportCard';
 import { SiiRcvTable } from '@/components/siircv/SiiRcvTable';
@@ -15,6 +15,11 @@ const LibrosSii = () => {
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
 
+  useEffect(() => {
+    document.body.classList.add('lowboy-theme');
+    return () => document.body.classList.remove('lowboy-theme');
+  }, []);
+
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       <div className="flex flex-col gap-2">
@@ -26,16 +31,16 @@ const LibrosSii = () => {
 
       <Tabs defaultValue="ventas" className="space-y-4">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/30 p-1 sm:inline-grid sm:w-auto sm:grid-cols-4">
-          <TabsTrigger value="ventas" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="ventas" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
             Ventas
           </TabsTrigger>
-          <TabsTrigger value="import" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="import" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
             Importar / Registros
           </TabsTrigger>
-          <TabsTrigger value="containers" className="data-[state=active]:bg-teal-700 data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="containers" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
             Contenedores
           </TabsTrigger>
-          <TabsTrigger value="resultado" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="resultado" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
             Resultado
           </TabsTrigger>
         </TabsList>
@@ -56,10 +61,10 @@ const LibrosSii = () => {
         <TabsContent value="resultado" className="space-y-4">
           <Tabs defaultValue="iva" className="space-y-4">
             <TabsList className="bg-muted/30 p-1">
-              <TabsTrigger value="iva" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="iva" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
                 IVA (F29)
               </TabsTrigger>
-              <TabsTrigger value="margen" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="margen" className="data-[state=active]:bg-teal-50 data-[state=active]:text-teal-800 data-[state=active]:shadow-none dark:data-[state=active]:bg-teal-950/70 dark:data-[state=active]:text-teal-200">
                 Margen / Costos
               </TabsTrigger>
             </TabsList>

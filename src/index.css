@@ -146,6 +146,29 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
+/* Paleta operativa de Lowboy: menos saturación y contraste estable en ambos temas. */
+body.lowboy-theme {
+  --primary: 173 80% 27%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 173 80% 22%;
+  --primary-soft: 174 45% 95%;
+  --ring: 173 70% 35%;
+  --accent: 174 45% 95%;
+  --accent-foreground: 173 65% 22%;
+  --shadow-glow: 0 0 0 1px hsl(173 70% 35% / 0.10), 0 4px 12px hsl(173 70% 30% / 0.10);
+}
+
+.dark body.lowboy-theme {
+  --primary: 173 65% 36%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 173 65% 42%;
+  --primary-soft: 174 45% 15%;
+  --ring: 173 60% 45%;
+  --accent: 174 45% 15%;
+  --accent-foreground: 173 35% 88%;
+  --shadow-glow: 0 0 0 1px hsl(173 60% 45% / 0.16), 0 4px 12px hsl(0 0% 0% / 0.24);
+}
+
 /* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 8px;

@@ -79,7 +79,7 @@ const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', {
 const STATUS_BADGE: Record<LowboySaleStatus, string> = {
   confirmada: 'bg-sky-600 hover:bg-sky-700 text-white',
   ejecutada: 'bg-amber-500 hover:bg-amber-600 text-white',
-  facturada: 'bg-violet-600 hover:bg-violet-700 text-white',
+  facturada: 'bg-cyan-800 hover:bg-cyan-900 text-white',
   pagada: 'bg-emerald-600 hover:bg-emerald-700 text-white',
   cancelada: 'bg-muted text-muted-foreground line-through',
 };
@@ -371,7 +371,7 @@ export function LowboySalesPanel() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Ventas activas" value={String(kpis.activeCount)} accent="text-sky-600" />
         <KpiCard label="Por facturar (ejecutadas)" value={formatCLP(kpis.toInvoice)} accent="text-amber-600" />
-        <KpiCard label="Por cobrar (facturadas)" value={formatCLP(kpis.toCollect)} accent="text-violet-600" />
+        <KpiCard label="Por cobrar (facturadas)" value={formatCLP(kpis.toCollect)} accent="text-cyan-800 dark:text-cyan-400" />
         <KpiCard label="Pagado del mes" value={formatCLP(kpis.paidThisMonth)} accent="text-emerald-600" />
       </div>
 
