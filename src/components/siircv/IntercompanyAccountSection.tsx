@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -172,7 +173,7 @@ export function IntercompanyAccountSection({ desde, hasta }: IntercompanyAccount
                 <FormField control={form.control} name="adjustment_date" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fecha</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
+                    <FormControl><DatePickerInput value={field.value} onChange={field.onChange} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

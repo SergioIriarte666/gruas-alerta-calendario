@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -150,7 +151,7 @@ export function LowboyContainerForm({ open, onOpenChange, container, isPending, 
           </div>
           <div className="space-y-2">
             <Label htmlFor="container-date">Fecha de adquisición</Label>
-            <Input id="container-date" type="date" value={values.acquisition_date} onChange={(event) => update('acquisition_date', event.target.value)} />
+            <DatePickerInput id="container-date" value={values.acquisition_date} onChange={(value) => update('acquisition_date', value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="container-cost">Costo adquisición neto</Label>

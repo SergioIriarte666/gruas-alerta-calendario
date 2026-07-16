@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import {
   Dialog,
   DialogContent,
@@ -158,7 +159,7 @@ export function LowboyRecordForm({
               <FormField control={form.control} name="doc_date" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Fecha documento</FormLabel>
-                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormControl><DatePickerInput value={field.value} onChange={field.onChange} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

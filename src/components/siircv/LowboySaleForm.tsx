@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Box, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
@@ -299,7 +300,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="sale-executed-date">Fecha de ejecución</Label>
-                      <Input id="sale-executed-date" type="date" value={executedDate} onChange={(event) => setExecutedDate(event.target.value)} />
+                      <DatePickerInput id="sale-executed-date" value={executedDate} onChange={setExecutedDate} />
                     </div>
                     <div className="space-y-2">
                       <Label>Estado inicial</Label>
@@ -355,7 +356,7 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, 
               <FormField control={form.control} name="scheduled_date" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Fecha comprometida</FormLabel>
-                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormControl><DatePickerInput value={field.value} onChange={field.onChange} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

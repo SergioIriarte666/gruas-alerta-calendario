@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -82,7 +83,7 @@ export function LowboyContainerCostDialog({ open, onOpenChange, cost, isPending,
           </div>
           <div className="space-y-2">
             <Label htmlFor="container-extra-date">Fecha</Label>
-            <Input id="container-extra-date" type="date" value={values.cost_date} onChange={(event) => setValues((current) => ({ ...current, cost_date: event.target.value }))} />
+            <DatePickerInput id="container-extra-date" value={values.cost_date} onChange={(value) => setValues((current) => ({ ...current, cost_date: value }))} />
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label>Documento RCV relacionado</Label>

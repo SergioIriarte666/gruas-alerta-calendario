@@ -16,6 +16,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { LowboySaleForm } from '@/components/siircv/LowboySaleForm';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -509,7 +510,7 @@ export function LowboySalesPanel() {
               </DialogHeader>
               <div className="space-y-2">
                 <Label htmlFor="execute-date">Fecha de ejecución</Label>
-                <Input id="execute-date" type="date" value={executeDate} onChange={(event) => setExecuteDate(event.target.value)} />
+                <DatePickerInput id="execute-date" value={executeDate} onChange={setExecuteDate} />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setExecutingSale(null)} disabled={manager.setStatus.isPending}>Cancelar</Button>
