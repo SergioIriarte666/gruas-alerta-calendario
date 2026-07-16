@@ -46,7 +46,10 @@ export type LowboyCostCandidate = {
   date: string;
   description: string;
   amount: number;
+  entity: 'gruas_5_norte' | 'lowboy';
+  paid_by: 'gruas_5_norte' | 'lowboy';
   cost_categories: { name: string } | null;
+  linked_rcv_records: Array<{ id: string }>;
 };
 
 export type LowboySaleCandidate = {

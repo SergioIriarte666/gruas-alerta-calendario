@@ -8004,6 +8004,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_lowboy_rcv_cost_link: {
+        Args: {
+          p_cost_id: string | null
+          p_record_id: string
+        }
+        Returns: undefined
+      }
       admin_create_user: {
         Args: {
           p_client_id?: string

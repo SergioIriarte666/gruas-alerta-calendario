@@ -36,7 +36,7 @@ interface LowboyLinkDialogProps {
 
 export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink, onCreateSale }: LowboyLinkDialogProps) {
   const isPurchase = record?.book_type === 'compra';
-  const { data: costs = [], isLoading: costsLoading } = useLowboyCostCandidates(open && isPurchase);
+  const { data: costs = [], isLoading: costsLoading } = useLowboyCostCandidates(open && isPurchase, record?.id);
   const { data: sales = [], isLoading: salesLoading } = useLowboySaleCandidates(open && !isPurchase, record?.id);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -120,6 +120,7 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
                   : null;
                 const rutMatches = saleMatch?.rutMatches ?? false;
                 const title = 'amount' in candidate ? candidate.description : candidate.client_name;
+                const financedByG5n = 'amount' in candidate && candidate.paid_by === 'gruas_5_norte';
                 const detail = 'amount' in candidate
                   ? `${candidate.date} · ${candidate.cost_categories?.name ?? 'Sin categoría'}`
                   : `${candidate.client_rut} · ${candidate.description}`;
@@ -143,6 +144,7 @@ export function LowboyLinkDialog({ open, onOpenChange, record, isPending, onLink
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="truncate font-medium">{title}</span>
                         {'status' in candidate && <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">{SALE_STATUS_LABEL[candidate.status as LowboySaleStatus] ?? candidate.status}</span>}
+                        {financedByG5n && <span className="rounded-full border border-sky-600/40 bg-sky-600/5 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:text-sky-300">Financiado por G5N</span>}
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">{detail}</span>
                       <span className="mt-1 flex flex-wrap gap-1">

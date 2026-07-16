@@ -30,6 +30,7 @@ const invalidateLowboy = (queryClient: ReturnType<typeof useQueryClient>) =>
     queryClient.invalidateQueries({ queryKey: ['sii-resultado'] }),
     queryClient.invalidateQueries({ queryKey: ['lowboy-sales'] }),
     queryClient.invalidateQueries({ queryKey: ['lowboy-container-sales'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy', 'cost-candidates'] }),
     queryClient.invalidateQueries({ queryKey: ['lowboy', 'sale-candidates'] }),
   ]);
 
@@ -102,7 +103,10 @@ export function useSiiRcvManager(entityRut: string) {
       markAsInvoiced?: boolean;
     }) => {
       if (linkedCostId !== undefined) {
-        const { error } = await supabase.from('sii_rcv_records').update({ linked_cost_id: linkedCostId }).eq('id', id);
+        const { error } = await supabase.rpc('set_lowboy_rcv_cost_link', {
+          p_record_id: id,
+          p_cost_id: linkedCostId,
+        });
         if (error) throw error;
         return;
       }
@@ -126,19 +130,25 @@ export function useSiiRcvManager(entityRut: string) {
   return { createRecord, updateRecord, deleteRecord, setLink };
 }
 
-export function useLowboyCostCandidates(enabled: boolean) {
+export function useLowboyCostCandidates(enabled: boolean, currentRecordId?: string) {
   return useQuery({
-    queryKey: ['lowboy', 'cost-candidates'],
+    queryKey: ['lowboy', 'cost-candidates', currentRecordId],
     enabled,
     staleTime: 60_000,
     queryFn: async (): Promise<LowboyCostCandidate[]> => {
       const { data, error } = await supabase
         .from('costs')
-        .select('id, date, description, amount, cost_categories(name)')
+        .select(`
+          id, date, description, amount, entity, paid_by, cost_categories(name),
+          linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_cost_id_fkey(id)
+        `)
+        .eq('entity', 'lowboy')
         .order('date', { ascending: false })
         .limit(1000);
       if (error) throw error;
-      return (data ?? []) as LowboyCostCandidate[];
+      return ((data ?? []) as LowboyCostCandidate[]).filter((cost) =>
+        cost.linked_rcv_records.length === 0
+        || cost.linked_rcv_records.some((record) => record.id === currentRecordId));
     },
   });
 }
