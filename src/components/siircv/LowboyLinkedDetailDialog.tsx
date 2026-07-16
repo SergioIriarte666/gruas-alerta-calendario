@@ -18,7 +18,7 @@ import { safeDateToDisplaySlashes } from '@/utils/timezoneUtils';
 import {
   useLowboyLinkedDetail,
   type LinkedCostDetail,
-  type LinkedServiceDetail,
+  type LinkedSaleDetail,
 } from '@/hooks/useSiiRcv';
 import type { SiiRcvRecordRow } from '@/types/siiRcv';
 
@@ -63,12 +63,12 @@ function Field({ label, value, className }: { label: string; value: React.ReactN
   );
 }
 
-function ConsistencyAlert({ costo, documento }: { costo: number; documento: number }) {
+function ConsistencyAlert({ costo, documento, documentLabel = 'total del documento' }: { costo: number; documento: number; documentLabel?: string }) {
   if (Math.round(costo) === Math.round(documento)) return null;
   return (
     <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
       <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-      <span>El monto del vínculo ({formatCLP(costo)}) difiere del total del documento ({formatCLP(documento)}).</span>
+      <span>El monto del vínculo ({formatCLP(costo)}) difiere del {documentLabel} ({formatCLP(documento)}).</span>
     </div>
   );
 }
@@ -183,28 +183,32 @@ function CostBody({ detail, documentTotal }: { detail: LinkedCostDetail; documen
   );
 }
 
-function ServiceBody({ detail, documentNet }: { detail: LinkedServiceDetail; documentNet: number }) {
+function SaleBody({ detail, documentNet }: { detail: LinkedSaleDetail; documentNet: number }) {
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Servicio vinculado</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">Folio {dash(detail.folio)}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Venta LowBoy vinculada</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{dash(detail.description)}</p>
         </div>
-        <p className="whitespace-nowrap text-2xl font-bold">{formatCLP(detail.value)}</p>
+        <p className="whitespace-nowrap text-2xl font-bold">{formatCLP(detail.netAmount)}</p>
       </div>
 
-      <ConsistencyAlert costo={detail.value} documento={documentNet} />
+      <ConsistencyAlert costo={detail.netAmount} documento={documentNet} documentLabel="neto del documento" />
 
       <Separator />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Fecha del servicio" value={dash(detail.serviceDate ? safeDateToDisplaySlashes(detail.serviceDate) : null)} />
+        <Field label="Fecha comprometida" value={dash(detail.scheduledDate ? safeDateToDisplaySlashes(detail.scheduledDate) : null)} />
+        <Field label="Fecha de ejecución" value={dash(detail.executedDate ? safeDateToDisplaySlashes(detail.executedDate) : null)} />
         <Field label="Estado" value={detail.status ? <Badge variant="secondary">{detail.status}</Badge> : '—'} />
         <Field label="Cliente" value={dash(detail.clientName)} />
-        <Field label="Valor del servicio" value={formatCLP(detail.value)} />
-        <Field label="Origen → Destino" value={`${dash(detail.origin)} → ${dash(detail.destination)}`} className="sm:col-span-2" />
+        <Field label="RUT" value={dash(detail.clientRut)} />
+        <Field label="Tipo" value={dash(detail.saleType)} />
+        <Field label="Neto venta" value={formatCLP(detail.netAmount)} />
+        <Field label="Contenedores" value={detail.containers.length ? detail.containers.map((container) => container.serial_number || `Contenedor ${container.size}`).join(', ') : '—'} />
       </div>
+      {detail.notes && <Field label="Notas" value={<span className="whitespace-pre-wrap">{detail.notes}</span>} />}
     </div>
   );
 }
@@ -227,7 +231,7 @@ export function LowboyLinkedDetailDialog({ open, onOpenChange, record, onChangeL
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isPurchase ? 'Detalle del costo vinculado' : 'Detalle del servicio vinculado'}</DialogTitle>
+          <DialogTitle>{isPurchase ? 'Detalle del costo vinculado' : 'Detalle de la venta vinculada'}</DialogTitle>
           <DialogDescription>
             {record ? `Documento folio ${record.folio} por ${formatCLP(Number(record.total_amount))}.` : ''} Solo lectura.
           </DialogDescription>
@@ -251,13 +255,13 @@ export function LowboyLinkedDetailDialog({ open, onOpenChange, record, onChangeL
             <Unlink className="size-8 text-muted-foreground" />
             <p className="font-medium">El registro vinculado ya no existe</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              El costo o servicio fue eliminado. Puedes desvincular este documento o vincularlo a otro registro.
+              El costo o la venta fue eliminado. Puedes desvincular este documento o vincularlo a otro registro.
             </p>
           </div>
         ) : data.kind === 'cost' ? (
           <CostBody detail={data} documentTotal={Number(record?.total_amount) || 0} />
         ) : (
-          <ServiceBody detail={data} documentNet={Number(record?.net_amount) || 0} />
+          <SaleBody detail={data} documentNet={Number(record?.net_amount) || 0} />
         )}
 
         <DialogFooter>

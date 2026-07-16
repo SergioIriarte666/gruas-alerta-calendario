@@ -8,12 +8,17 @@ export type SiiRcvRecordRow = SiiRcvBaseRecordRow & {
     amount: number;
     date: string;
   } | null;
-  linked_service: {
+  linked_sale: {
     id: string;
-    folio: string;
-    service_date: string;
-    value: number;
-    client: { id: string; name: string } | null;
+    sale_type: string;
+    client_rut: string;
+    client_name: string;
+    description: string;
+    scheduled_date: string | null;
+    executed_date: string | null;
+    net_amount: number;
+    status: string;
+    notes: string | null;
   } | null;
   container_purchase_links: Array<{ id: string }>;
   container_cost_links: Array<{ id: string; container_id: string }>;
@@ -44,12 +49,16 @@ export type LowboyCostCandidate = {
   cost_categories: { name: string } | null;
 };
 
-export type LowboyServiceCandidate = {
+export type LowboySaleCandidate = {
   id: string;
-  folio: string;
-  service_date: string;
-  value: number;
-  client: { id: string; name: string } | null;
+  client_rut: string;
+  client_name: string;
+  description: string;
+  scheduled_date: string | null;
+  executed_date: string | null;
+  net_amount: number;
+  status: string;
+  linked_rcv_records: Array<{ id: string; folio: number }>;
 };
 
 /** Notas de crédito (61) restan; notas de débito (56) suman; el resto de DTEs suma. */

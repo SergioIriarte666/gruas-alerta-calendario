@@ -165,10 +165,10 @@ export function LowboyContainerDetailSheet({ container, open, onOpenChange, isAd
                   <p className="text-sm font-semibold">Factura de compra RCV</p>
                   <p className="text-sm text-muted-foreground">Folio {container.purchase_rcv.folio} · {container.purchase_rcv.doc_date} · {formatCLP(container.purchase_rcv.net_amount)} neto</p>
                 </div>
-                {(container.purchase_rcv.linked_cost_id || container.purchase_rcv.linked_service_id) && (
+                {container.purchase_rcv.linked_cost_id && (
                   <Button variant="ghost" size="icon" title="Ver vínculo RCV" onClick={() => setRcvDetailOpen(true)}><ExternalLink className="size-4" /></Button>
                 )}
-                {!container.purchase_rcv.linked_cost_id && !container.purchase_rcv.linked_service_id && <FileText className="size-4 text-muted-foreground" />}
+                {!container.purchase_rcv.linked_cost_id && <FileText className="size-4 text-muted-foreground" />}
               </div>
             </section>
           )}

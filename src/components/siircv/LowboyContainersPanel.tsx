@@ -14,7 +14,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLowboyContainerKpis, useLowboyContainers, useLowboyContainersManager } from '@/hooks/siircv/useLowboyContainers';
 import { cn } from '@/lib/utils';
-import type { LowboySaleFormValues } from '@/types/lowboySales';
+import type { LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
 import type { LowboyContainerFormValues, LowboyContainerRow, LowboyContainerStatus } from '@/types/lowboyContainers';
 import {
   CONTAINER_CONDITION_LABEL,
@@ -93,15 +93,15 @@ export function LowboyContainersPanel() {
     else await manager.createContainer.mutateAsync(values);
   };
 
-  const linkSale = async (saleId: string, price: number) => {
+  const linkSale = async (saleId: string, price: number, rcvRecordId?: string, markAsInvoiced?: boolean) => {
     if (!sellingContainer) return;
-    await manager.linkSale.mutateAsync({ containerId: sellingContainer.id, saleId, saleNetPrice: price });
+    await manager.linkSale.mutateAsync({ containerId: sellingContainer.id, saleId, saleNetPrice: price, rcvRecordId, markAsInvoiced });
     setSellingContainer(null);
   };
 
-  const createSale = async (values: LowboySaleFormValues) => {
+  const createSale = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState, rcvRecordId?: string) => {
     if (!sellingContainer) return;
-    await manager.createSaleAndLink.mutateAsync({ containerId: sellingContainer.id, values });
+    await manager.createSaleAndLink.mutateAsync({ containerId: sellingContainer.id, values, initialState, rcvRecordId });
     setSellingContainer(null);
   };
 

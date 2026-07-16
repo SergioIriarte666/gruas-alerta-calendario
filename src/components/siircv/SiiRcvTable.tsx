@@ -13,6 +13,7 @@ import { AppPagination } from '@/components/shared/AppPagination';
 import { LowboyLinkDialog } from '@/components/siircv/LowboyLinkDialog';
 import { LowboyLinkedDetailDialog } from '@/components/siircv/LowboyLinkedDetailDialog';
 import { LowboyRecordForm } from '@/components/siircv/LowboyRecordForm';
+import { LowboySaleForm } from '@/components/siircv/LowboySaleForm';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSiiRcvManager, useSiiRcvPagedRecords } from '@/hooks/useSiiRcv';
+import { useLowboySalesManager } from '@/hooks/siircv/useLowboySales';
+import type { LowboySaleFormValues, LowboySaleInitialState } from '@/types/lowboySales';
 import type { SiiBookType, SiiRcvRecordFormValues, SiiRcvRecordRow } from '@/types/siiRcv';
 import { DOC_TYPE_NOTA_CREDITO, DOC_TYPE_NOTA_DEBITO } from '@/types/siiRcv';
 
@@ -72,7 +75,7 @@ function SortableHeader({ column, label, align = 'left' }: { column: Column<SiiR
 }
 
 function LinkBadge({ row, onView }: { row: SiiRcvRecordRow; onView?: (record: SiiRcvRecordRow) => void }) {
-  const linked = row.book_type === 'compra' ? row.linked_cost : row.linked_service;
+  const linked = row.book_type === 'compra' ? row.linked_cost : row.linked_sale;
   if (!linked) return <Badge variant="secondary" className="whitespace-nowrap font-normal">Sin vincular</Badge>;
   return (
     <Tooltip>
@@ -113,12 +116,14 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
   const [editingRecord, setEditingRecord] = useState<SiiRcvRecordRow | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<SiiRcvRecordRow | null>(null);
   const [linkingRecord, setLinkingRecord] = useState<SiiRcvRecordRow | null>(null);
+  const [creatingSaleForRecord, setCreatingSaleForRecord] = useState<SiiRcvRecordRow | null>(null);
   const [viewingRecord, setViewingRecord] = useState<SiiRcvRecordRow | null>(null);
   const manager = useSiiRcvManager(entityRut);
+  const salesManager = useLowboySalesManager();
 
-  // El badge/menú "Ver vínculo" abre el detalle de solo lectura del costo/servicio vinculado.
+  // El badge/menú "Ver vínculo" abre el detalle de solo lectura del costo o venta vinculada.
   const openLinkedDetail = (record: SiiRcvRecordRow) => {
-    if (record.linked_cost_id || record.linked_service_id) setViewingRecord(record);
+    if (record.linked_cost_id || record.linked_sale_id) setViewingRecord(record);
   };
 
   const { data, isLoading } = useSiiRcvPagedRecords(
@@ -127,6 +132,14 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
     PAGE_SIZE,
   );
   const rows = data?.rows ?? [];
+  const salePrefill = useMemo<Partial<LowboySaleFormValues> | undefined>(() => creatingSaleForRecord ? ({
+    sale_type: 'producto',
+    client_rut: creatingSaleForRecord.counterpart_rut,
+    client_name: creatingSaleForRecord.counterpart_name ?? '',
+    description: `Venta según factura RCV folio ${creatingSaleForRecord.folio}`,
+    scheduled_date: creatingSaleForRecord.doc_date,
+    net_amount: Number(creatingSaleForRecord.net_amount),
+  }) : undefined, [creatingSaleForRecord]);
 
   const openCreate = () => {
     setEditingRecord(null);
@@ -146,18 +159,18 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
     }
   };
 
-  const handleLink = async (linkedId: string | null) => {
+  const handleLink = async (linkedId: string | null, markAsInvoiced = false) => {
     if (!linkingRecord) return;
     await manager.setLink.mutateAsync(linkingRecord.book_type === 'compra'
       ? { id: linkingRecord.id, linkedCostId: linkedId }
-      : { id: linkingRecord.id, linkedServiceId: linkedId });
+      : { id: linkingRecord.id, linkedSaleId: linkedId, markAsInvoiced });
   };
 
   const unlink = async (record: SiiRcvRecordRow) => {
     try {
-      await manager.setLink.mutateAsync(record.book_type === 'compra'
-        ? { id: record.id, linkedCostId: null }
-        : { id: record.id, linkedServiceId: null });
+    await manager.setLink.mutateAsync(record.book_type === 'compra'
+      ? { id: record.id, linkedCostId: null }
+      : { id: record.id, linkedSaleId: null });
     } catch {
       // no-op: onError already handled it
     }
@@ -212,7 +225,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
       },
       {
         id: 'link_status',
-        accessorFn: (row) => Boolean(row.linked_cost_id || row.linked_service_id),
+        accessorFn: (row) => Boolean(row.linked_cost_id || row.linked_sale_id),
         header: ({ column }) => <SortableHeader column={column} label="Vínculo" />,
         cell: ({ row }) => <div className="flex flex-wrap gap-1"><LinkBadge row={row.original} onView={openLinkedDetail} /><ContainerBadge row={row.original} /></div>,
       },
@@ -227,7 +240,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
         header: () => <div className="text-right">Acciones</div>,
         cell: ({ row }) => {
           const record = row.original;
-          const isLinked = Boolean(record.linked_cost_id || record.linked_service_id);
+          const isLinked = Boolean(record.linked_cost_id || record.linked_sale_id);
           return (
             <div className="flex justify-end">
               <DropdownMenu>
@@ -237,7 +250,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                 <DropdownMenuContent align="end">
                   {isLinked && <DropdownMenuItem onClick={() => openLinkedDetail(record)}><Eye className="mr-2 size-4" />Ver vínculo</DropdownMenuItem>}
                   <DropdownMenuItem onClick={() => openEdit(record)}><Pencil className="mr-2 size-4" />Editar</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLinkingRecord(record)}><Link2 className="mr-2 size-4" />{isLinked ? 'Cambiar vínculo' : record.book_type === 'compra' ? 'Vincular a costo' : 'Vincular a servicio'}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLinkingRecord(record)}><Link2 className="mr-2 size-4" />{isLinked ? 'Cambiar vínculo' : record.book_type === 'compra' ? 'Vincular a costo' : 'Vincular a venta'}</DropdownMenuItem>
                   {isLinked && <DropdownMenuItem onClick={() => void unlink(record)}><Unlink className="mr-2 size-4" />Desvincular</DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeletingRecord(record)}><Trash2 className="mr-2 size-4" />Eliminar</DropdownMenuItem>
@@ -288,7 +301,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                   </div>
                   <p className="mt-2 truncate">{row.counterpart_name || 'Sin razón social'}</p>
                   <div className="mt-2 flex items-center justify-between gap-2"><div className="flex flex-wrap gap-1"><LinkBadge row={row} onView={openLinkedDetail} /><ContainerBadge row={row} /></div><p className="shrink-0 font-semibold">{formatCLP(row.total_amount)}</p></div>
-                  {isAdmin && <div className="mt-3 flex gap-2 border-t pt-3"><Button variant="outline" size="sm" className="flex-1" onClick={() => setLinkingRecord(row)}><Link2 className="mr-2 size-4" />Vincular</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeletingRecord(row)}><Trash2 className="size-4" /></Button></div>}
+                  {isAdmin && <div className="mt-3 flex gap-2 border-t pt-3"><Button variant="outline" size="sm" className="flex-1" onClick={() => setLinkingRecord(row)}><Link2 className="mr-2 size-4" />{row.linked_cost_id || row.linked_sale_id ? 'Cambiar vínculo' : row.book_type === 'compra' ? 'Vincular a costo' : 'Vincular a venta'}</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeletingRecord(row)}><Trash2 className="size-4" /></Button></div>}
                 </div>
               )) : <p className="p-6 text-center text-muted-foreground">No hay registros para este filtro.</p>}
             </div>
@@ -322,12 +335,29 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
             record={linkingRecord}
             isPending={manager.setLink.isPending}
             onLink={handleLink}
+            onCreateSale={(record) => { setLinkingRecord(null); setCreatingSaleForRecord(record); }}
+          />
+          <LowboySaleForm
+            open={Boolean(creatingSaleForRecord)}
+            onOpenChange={(open) => { if (!open) setCreatingSaleForRecord(null); }}
+            sale={null}
+            isPending={salesManager.createSale.isPending || manager.setLink.isPending}
+            initialValues={salePrefill}
+            defaultRetroactive
+            defaultInitialStatus="facturada"
+            defaultExecutedDate={creatingSaleForRecord?.doc_date ?? ''}
+            onSubmit={async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState) => {
+              if (!creatingSaleForRecord) return;
+              const sale = await salesManager.createSale.mutateAsync({ values, initialState });
+              await manager.setLink.mutateAsync({ id: creatingSaleForRecord.id, linkedSaleId: sale.id });
+              setCreatingSaleForRecord(null);
+            }}
           />
           <AlertDialog open={Boolean(deletingRecord)} onOpenChange={(open) => { if (!open) setDeletingRecord(null); }}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Eliminar este registro?</AlertDialogTitle>
-                <AlertDialogDescription>Se eliminará el documento folio {deletingRecord?.folio}. Esta acción no elimina ningún costo ni servicio vinculado.</AlertDialogDescription>
+                <AlertDialogDescription>Se eliminará el documento folio {deletingRecord?.folio}. Esta acción no elimina ningún costo ni venta vinculada.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={manager.deleteRecord.isPending}>Cancelar</AlertDialogCancel>

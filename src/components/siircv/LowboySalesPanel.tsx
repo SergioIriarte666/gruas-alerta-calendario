@@ -7,6 +7,7 @@ import {
   Ban,
   Box,
   CheckCircle2,
+  FileText,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -57,6 +58,7 @@ import { businessClock } from '@/utils/businessClock';
 import { cn } from '@/lib/utils';
 import {
   type LowboySaleFormValues,
+  type LowboySaleInitialState,
   type LowboySaleRow,
   type LowboySaleStatus,
   type LowboySaleType,
@@ -116,6 +118,7 @@ type TypeFilter = 'all' | LowboySaleType;
 
 type SortKey = 'scheduled_date' | 'sale_type' | 'client_name' | 'net_amount' | 'status';
 type SortState = { key: SortKey; dir: 'asc' | 'desc' };
+type LinkedInvoice = NonNullable<LowboySaleRow['linked_rcv_records']>[number];
 
 // Orden del pipeline para ordenar por estado de forma coherente (no alfabética).
 const STATUS_ORDER: Record<LowboySaleStatus, number> = {
@@ -196,6 +199,7 @@ export function LowboySalesPanel() {
   const [executeDate, setExecuteDate] = useState(businessClock.today());
   const [cancelingSale, setCancelingSale] = useState<LowboySaleRow | null>(null);
   const [skip, setSkip] = useState<{ sale: LowboySaleRow; status: LowboySaleStatus } | null>(null);
+  const [viewingInvoice, setViewingInvoice] = useState<LinkedInvoice | null>(null);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -229,9 +233,9 @@ export function LowboySalesPanel() {
   const openCreate = () => { setEditingSale(null); setFormOpen(true); };
   const openEdit = (sale: LowboySaleRow) => { setEditingSale(sale); setFormOpen(true); };
 
-  const handleSave = async (values: LowboySaleFormValues) => {
+  const handleSave = async (values: LowboySaleFormValues, initialState?: LowboySaleInitialState) => {
     if (editingSale) await manager.updateSale.mutateAsync({ id: editingSale.id, values });
-    else await manager.createSale.mutateAsync(values);
+    else await manager.createSale.mutateAsync({ values, initialState });
   };
 
   const advance = (sale: LowboySaleRow) => {
@@ -420,6 +424,11 @@ export function LowboySalesPanel() {
                     <StatusBadge status={sale.status} />
                     <p className="font-semibold">{formatCLP(sale.net_amount)}</p>
                   </div>
+                  {sale.linked_rcv_records?.[0] && (
+                    <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={() => setViewingInvoice(sale.linked_rcv_records?.[0] ?? null)}>
+                      <FileText className="mr-1.5 size-3.5" />Factura folio {sale.linked_rcv_records[0].folio}
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -434,6 +443,7 @@ export function LowboySalesPanel() {
                     <TableHead>Descripción</TableHead>
                     <TableHead className="text-right"><SortHeader sortKey="net_amount" label="Neto" align="right" /></TableHead>
                     <TableHead><SortHeader sortKey="status" label="Estado" /></TableHead>
+                    <TableHead>Factura RCV</TableHead>
                     {isAdmin && <TableHead className="text-right">Acciones</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -451,6 +461,13 @@ export function LowboySalesPanel() {
                       <TableCell><SaleDescription sale={sale} /></TableCell>
                       <TableCell className="text-right font-semibold">{formatCLP(sale.net_amount)}</TableCell>
                       <TableCell><StatusBadge status={sale.status} /></TableCell>
+                      <TableCell>
+                        {sale.linked_rcv_records?.[0] ? (
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setViewingInvoice(sale.linked_rcv_records?.[0] ?? null)}>
+                            <FileText className="mr-1.5 size-3.5" />Folio {sale.linked_rcv_records[0].folio}
+                          </Button>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
                       {isAdmin && <TableCell><div className="flex justify-end"><RowActions sale={sale} /></div></TableCell>}
                     </TableRow>
                   ))}
@@ -564,6 +581,26 @@ export function LowboySalesPanel() {
           </AlertDialog>
         </>
       )}
+
+      <Dialog open={Boolean(viewingInvoice)} onOpenChange={(open) => { if (!open) setViewingInvoice(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Factura RCV folio {viewingInvoice?.folio}</DialogTitle>
+            <DialogDescription>Detalle del documento vinculado a la venta LowBoy.</DialogDescription>
+          </DialogHeader>
+          {viewingInvoice && (
+            <div className="grid gap-4 text-sm sm:grid-cols-2">
+              <div><p className="text-xs text-muted-foreground">Fecha</p><p className="font-medium">{viewingInvoice.doc_date}</p></div>
+              <div><p className="text-xs text-muted-foreground">Tipo DTE</p><p className="font-medium">{viewingInvoice.doc_type}</p></div>
+              <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">Cliente</p><p className="font-medium">{viewingInvoice.counterpart_name || '—'} · {viewingInvoice.counterpart_rut}</p></div>
+              <div><p className="text-xs text-muted-foreground">Neto</p><p className="font-semibold">{formatCLP(viewingInvoice.net_amount)}</p></div>
+              <div><p className="text-xs text-muted-foreground">IVA</p><p className="font-semibold">{formatCLP(viewingInvoice.tax_amount)}</p></div>
+              <div className="sm:col-span-2"><p className="text-xs text-muted-foreground">Total</p><p className="text-lg font-bold">{formatCLP(viewingInvoice.total_amount)}</p></div>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={() => setViewingInvoice(null)}>Cerrar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

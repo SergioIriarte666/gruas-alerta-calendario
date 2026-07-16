@@ -5,6 +5,18 @@ export type LowboySaleRow = Database['public']['Tables']['lowboy_sales']['Row'] 
     id: string;
     serial_number: string | null;
     size: string;
+    sale_net_price?: number | null;
+  }>;
+  linked_rcv_records?: Array<{
+    id: string;
+    folio: number;
+    doc_date: string;
+    doc_type: number;
+    counterpart_rut: string;
+    counterpart_name: string | null;
+    net_amount: number;
+    tax_amount: number;
+    total_amount: number;
   }>;
 };
 
@@ -62,4 +74,16 @@ export type LowboySaleFormValues = {
   scheduled_date: string;
   net_amount: number;
   notes: string;
+};
+
+export type LowboySaleInitialStatus = 'ejecutada' | 'facturada' | 'pagada';
+
+export type LowboySaleInitialState = {
+  status: LowboySaleInitialStatus;
+  executed_date: string;
+};
+
+export type CreateLowboySaleInput = {
+  values: LowboySaleFormValues;
+  initialState?: LowboySaleInitialState;
 };

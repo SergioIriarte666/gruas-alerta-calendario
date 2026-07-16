@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,37 +13,20 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { resolveRazonSocial } from '@/hooks/siircv/rutResolver';
 import { createLogger } from '@/lib/logger';
+import { lowboySaleFormSchema, lowboySaleInitialStateSchema } from '@/schemas/lowboySale';
 import { validateRut } from '@/utils/csvValidations';
 import { formatRut } from '@/utils/rutFormatter';
-import type { LowboySaleFormValues, LowboySaleRow, LowboySaleType } from '@/types/lowboySales';
+import { businessClock } from '@/utils/businessClock';
+import type { LowboySaleFormValues, LowboySaleInitialState, LowboySaleInitialStatus, LowboySaleRow, LowboySaleType } from '@/types/lowboySales';
 
 const logger = createLogger('LowboyVentas');
-
-const schema = z
-  .object({
-    sale_type: z.enum(['producto', 'flete']),
-    client_rut: z.string().trim().refine(validateRut, 'Use un RUT con formato 12.345.678-9'),
-    client_name: z.string().trim().min(1, 'Ingrese la razón social'),
-    description: z.string().trim().min(1, 'Ingrese una descripción'),
-    origin: z.string().trim(),
-    destination: z.string().trim(),
-    scheduled_date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Ingrese una fecha válida')
-      .or(z.literal('')),
-    net_amount: z.coerce.number().nonnegative('El monto no puede ser negativo'),
-    notes: z.string().trim(),
-  })
-  .superRefine((values, ctx) => {
-    if (values.sale_type === 'flete') {
-      if (!values.origin) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['origin'], message: 'Ingrese el origen' });
-      if (!values.destination) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['destination'], message: 'Ingrese el destino' });
-    }
-  });
 
 const emptyValues = (): LowboySaleFormValues => ({
   sale_type: 'producto',
@@ -75,23 +57,35 @@ interface LowboySaleFormProps {
   onOpenChange: (open: boolean) => void;
   sale: LowboySaleRow | null;
   isPending: boolean;
-  onSubmit: (values: LowboySaleFormValues) => Promise<void>;
+  onSubmit: (values: LowboySaleFormValues, initialState?: LowboySaleInitialState) => Promise<void>;
+  initialValues?: Partial<LowboySaleFormValues>;
+  defaultRetroactive?: boolean;
+  defaultInitialStatus?: LowboySaleInitialStatus;
+  defaultExecutedDate?: string;
 }
 
-export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit }: LowboySaleFormProps) {
+export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit, initialValues, defaultRetroactive = false, defaultInitialStatus = 'facturada', defaultExecutedDate = businessClock.today() }: LowboySaleFormProps) {
   const form = useForm<LowboySaleFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(lowboySaleFormSchema),
     defaultValues: emptyValues(),
   });
   const [resolvingRut, setResolvingRut] = useState(false);
+  const [retroactive, setRetroactive] = useState(defaultRetroactive);
+  const [initialStatus, setInitialStatus] = useState<LowboySaleInitialStatus>(defaultInitialStatus);
+  const [executedDate, setExecutedDate] = useState(defaultExecutedDate);
+  const [retroactiveError, setRetroactiveError] = useState('');
   // Evita sobrescribir una razón social que el usuario ya escribió a mano.
   const lastResolvedRut = useRef<string>('');
 
   useEffect(() => {
     if (!open) return;
-    form.reset(sale ? valuesFromSale(sale) : emptyValues());
+    form.reset(sale ? valuesFromSale(sale) : { ...emptyValues(), ...initialValues });
+    setRetroactive(!sale && defaultRetroactive);
+    setInitialStatus(defaultInitialStatus);
+    setExecutedDate(defaultExecutedDate);
+    setRetroactiveError('');
     lastResolvedRut.current = sale?.client_rut ?? '';
-  }, [form, open, sale]);
+  }, [defaultExecutedDate, defaultInitialStatus, defaultRetroactive, form, initialValues, open, sale]);
 
   const saleType = form.watch('sale_type');
   const isFlete = saleType === 'flete';
@@ -118,9 +112,14 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit }
 
   const handleSubmit = async (values: LowboySaleFormValues) => {
     try {
-      await onSubmit(values);
+      const initialState = retroactive && !sale
+        ? lowboySaleInitialStateSchema.parse({ status: initialStatus, executed_date: executedDate })
+        : undefined;
+      setRetroactiveError('');
+      await onSubmit(values, initialState);
       onOpenChange(false);
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') setRetroactiveError('Ingrese una fecha de ejecución válida.');
       // no-op: onError ya lo gestionó (el diálogo queda abierto para reintentar)
     }
   };
@@ -190,6 +189,38 @@ export function LowboySaleForm({ open, onOpenChange, sale, isPending, onSubmit }
                 </FormItem>
               )} />
             </div>
+
+            {!sale && (
+              <div className="space-y-4 rounded-md border p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <Label htmlFor="sale-retroactive">Venta ya realizada</Label>
+                    <p className="text-xs text-muted-foreground">Registra directamente una venta histórica en su estado real.</p>
+                  </div>
+                  <Switch id="sale-retroactive" checked={retroactive} onCheckedChange={setRetroactive} />
+                </div>
+                {retroactive && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="sale-executed-date">Fecha de ejecución</Label>
+                      <Input id="sale-executed-date" type="date" value={executedDate} onChange={(event) => setExecutedDate(event.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Estado inicial</Label>
+                      <Select value={initialStatus} onValueChange={(value) => setInitialStatus(value as LowboySaleInitialStatus)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ejecutada">Ejecutada</SelectItem>
+                          <SelectItem value="facturada">Facturada</SelectItem>
+                          <SelectItem value="pagada">Pagada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {retroactiveError && <p className="text-sm text-destructive sm:col-span-2">{retroactiveError}</p>}
+                  </div>
+                )}
+              </div>
+            )}
 
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem>

@@ -5,7 +5,7 @@ import { createLogger } from '@/lib/logger';
 import { normalizeRut } from '@/utils/rutFormatter';
 import type {
   LowboyCostCandidate,
-  LowboyServiceCandidate,
+  LowboySaleCandidate,
   SiiRcvRecordFormValues,
 } from '@/types/siiRcv';
 
@@ -28,6 +28,9 @@ const invalidateLowboy = (queryClient: ReturnType<typeof useQueryClient>) =>
   Promise.all([
     queryClient.invalidateQueries({ queryKey: ['sii-rcv'] }),
     queryClient.invalidateQueries({ queryKey: ['sii-resultado'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy-sales'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy-container-sales'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy', 'sale-candidates'] }),
   ]);
 
 export function useSiiRcvManager(entityRut: string) {
@@ -90,16 +93,24 @@ export function useSiiRcvManager(entityRut: string) {
     mutationFn: async ({
       id,
       linkedCostId,
-      linkedServiceId,
+      linkedSaleId,
+      markAsInvoiced = false,
     }: {
       id: string;
       linkedCostId?: string | null;
-      linkedServiceId?: string | null;
+      linkedSaleId?: string | null;
+      markAsInvoiced?: boolean;
     }) => {
-      const update = linkedCostId !== undefined
-        ? { linked_cost_id: linkedCostId }
-        : { linked_service_id: linkedServiceId ?? null };
-      const { error } = await supabase.from('sii_rcv_records').update(update).eq('id', id);
+      if (linkedCostId !== undefined) {
+        const { error } = await supabase.from('sii_rcv_records').update({ linked_cost_id: linkedCostId }).eq('id', id);
+        if (error) throw error;
+        return;
+      }
+      const { error } = await supabase.rpc('set_lowboy_rcv_sale_link', {
+        p_record_id: id,
+        p_sale_id: linkedSaleId ?? null,
+        p_mark_as_invoiced: markAsInvoiced,
+      });
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -132,19 +143,24 @@ export function useLowboyCostCandidates(enabled: boolean) {
   });
 }
 
-export function useLowboyServiceCandidates(enabled: boolean) {
+export function useLowboySaleCandidates(enabled: boolean, currentRecordId?: string) {
   return useQuery({
-    queryKey: ['lowboy', 'service-candidates'],
+    queryKey: ['lowboy', 'sale-candidates', currentRecordId],
     enabled,
     staleTime: 60_000,
-    queryFn: async (): Promise<LowboyServiceCandidate[]> => {
+    queryFn: async (): Promise<LowboySaleCandidate[]> => {
       const { data, error } = await supabase
-        .from('services')
-        .select('id, folio, service_date, value, client:clients!services_client_id_fkey(id, name)')
-        .order('service_date', { ascending: false })
+        .from('lowboy_sales')
+        .select(`
+          id, client_rut, client_name, description, scheduled_date, executed_date, net_amount, status,
+          linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_sale_id_fkey(id, folio)
+        `)
+        .neq('status', 'cancelada')
+        .order('scheduled_date', { ascending: false, nullsFirst: false })
         .limit(1000);
       if (error) throw error;
-      return (data ?? []) as LowboyServiceCandidate[];
+      return ((data ?? []) as LowboySaleCandidate[]).filter((sale) =>
+        sale.linked_rcv_records.length === 0 || sale.linked_rcv_records.some((record) => record.id === currentRecordId));
     },
   });
 }

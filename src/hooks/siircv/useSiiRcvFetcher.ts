@@ -8,12 +8,9 @@ const PAGE_SIZE = 1000;
 const LOWBOY_RECORD_SELECT = `
   *,
   linked_cost:costs!sii_rcv_records_linked_cost_id_fkey(id, description, amount, date),
-  linked_service:services!sii_rcv_records_linked_service_id_fkey(
-    id,
-    folio,
-    service_date,
-    value,
-    client:clients!services_client_id_fkey(id, name)
+  linked_sale:lowboy_sales!sii_rcv_records_linked_sale_id_fkey(
+    id, sale_type, client_rut, client_name, description, scheduled_date,
+    executed_date, net_amount, status, notes
   ),
   container_purchase_links:lowboy_containers!lowboy_containers_purchase_rcv_record_id_fkey(id),
   container_cost_links:lowboy_container_costs!lowboy_container_costs_rcv_record_id_fkey(id, container_id)

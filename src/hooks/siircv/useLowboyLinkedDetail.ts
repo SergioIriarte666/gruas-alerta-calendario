@@ -48,19 +48,22 @@ async function readRazonSocialFromCache(rut: string): Promise<string | null> {
   return data?.razon_social ?? null;
 }
 
-export type LinkedServiceDetail = {
-  kind: 'service';
+export type LinkedSaleDetail = {
+  kind: 'sale';
   id: string;
-  folio: string | null;
-  serviceDate: string | null;
-  value: number;
+  clientRut: string;
+  clientName: string;
+  description: string;
+  saleType: string;
+  scheduledDate: string | null;
+  executedDate: string | null;
+  netAmount: number;
   status: string | null;
-  origin: string | null;
-  destination: string | null;
-  clientName: string | null;
+  notes: string | null;
+  containers: Array<{ id: string; serial_number: string | null; size: string; sale_net_price: number | null }>;
 };
 
-export type LinkedDetail = LinkedCostDetail | LinkedServiceDetail | { kind: 'deleted' };
+export type LinkedDetail = LinkedCostDetail | LinkedSaleDetail | { kind: 'deleted' };
 
 async function fetchCostDetail(costId: string): Promise<LinkedDetail> {
   // costs.supplier_id apunta a inventory_suppliers (NO a suppliers). Se usa el hint
@@ -117,42 +120,49 @@ async function fetchCostDetail(costId: string): Promise<LinkedDetail> {
   };
 }
 
-async function fetchServiceDetail(serviceId: string): Promise<LinkedDetail> {
+async function fetchSaleDetail(saleId: string): Promise<LinkedDetail> {
   const { data, error } = await supabase
-    .from('services')
-    .select('id, folio, service_date, value, status, origin, destination, client:clients!services_client_id_fkey(name)')
-    .eq('id', serviceId)
+    .from('lowboy_sales')
+    .select(`
+      id, client_rut, client_name, description, sale_type, scheduled_date,
+      executed_date, net_amount, status, notes,
+      containers:lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size, sale_net_price)
+    `)
+    .eq('id', saleId)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return { kind: 'deleted' };
 
   return {
-    kind: 'service',
+    kind: 'sale',
     id: data.id,
-    folio: data.folio,
-    serviceDate: data.service_date,
-    value: Number(data.value) || 0,
+    clientRut: data.client_rut,
+    clientName: data.client_name,
+    description: data.description,
+    saleType: data.sale_type,
+    scheduledDate: data.scheduled_date,
+    executedDate: data.executed_date,
+    netAmount: Number(data.net_amount) || 0,
     status: data.status,
-    origin: data.origin,
-    destination: data.destination,
-    clientName: data.client?.name ?? null,
+    notes: data.notes,
+    containers: data.containers ?? [],
   };
 }
 
-/** Carga perezosa (solo con el modal abierto) del detalle del costo/servicio vinculado. */
+/** Carga perezosa del detalle conciliatorio de costo o venta LowBoy. */
 export function useLowboyLinkedDetail(record: SiiRcvRecordRow | null, open: boolean) {
   const linkedCostId = record?.linked_cost_id ?? null;
-  const linkedServiceId = record?.linked_service_id ?? null;
+  const linkedSaleId = record?.linked_sale_id ?? null;
 
   return useQuery({
-    queryKey: ['lowboy-linked-detail', record?.id, linkedCostId, linkedServiceId],
-    enabled: open && !!record && (!!linkedCostId || !!linkedServiceId),
+    queryKey: ['lowboy-linked-detail', record?.id, linkedCostId, linkedSaleId],
+    enabled: open && !!record && (!!linkedCostId || !!linkedSaleId),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<LinkedDetail> => {
       try {
         if (record?.book_type === 'compra' && linkedCostId) return await fetchCostDetail(linkedCostId);
-        if (record?.book_type === 'venta' && linkedServiceId) return await fetchServiceDetail(linkedServiceId);
+        if (record?.book_type === 'venta' && linkedSaleId) return await fetchSaleDetail(linkedSaleId);
         return { kind: 'deleted' };
       } catch (e) {
         logger.error('Error cargando detalle del vínculo', e);

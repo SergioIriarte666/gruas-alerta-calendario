@@ -7,6 +7,7 @@ import { businessClock } from '@/utils/businessClock';
 import { normalizeRut } from '@/utils/rutFormatter';
 import {
   ACTIVE_SALE_STATUSES,
+  type CreateLowboySaleInput,
   type LowboySaleFormValues,
   type LowboySaleRow,
   type LowboySaleStatus,
@@ -53,7 +54,13 @@ export function useLowboySales() {
     queryFn: async (): Promise<LowboySaleRow[]> => {
       const { data, error } = await supabase
         .from('lowboy_sales')
-        .select('*, lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size)')
+        .select(`
+          *,
+          lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size),
+          linked_rcv_records:sii_rcv_records!sii_rcv_records_linked_sale_id_fkey(
+            id, folio, doc_date, doc_type, counterpart_rut, counterpart_name, net_amount, tax_amount, total_amount
+          )
+        `)
         .order('scheduled_date', { ascending: true, nullsFirst: false });
       if (error) {
         logger.error('Error cargando ventas Lowboy', error);
@@ -116,17 +123,21 @@ export function useLowboySalesManager() {
     queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
     queryClient.invalidateQueries({ queryKey: ['lowboy-containers'] }),
     queryClient.invalidateQueries({ queryKey: ['lowboy-container-sales'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy', 'sale-candidates'] }),
     queryClient.invalidateQueries({ queryKey: ['sii-rcv'] }),
   ]);
 
   const createSale = useMutation({
-    mutationFn: async (values: LowboySaleFormValues) => {
+    mutationFn: async ({ values, initialState }: CreateLowboySaleInput) => {
       const { data: auth } = await supabase.auth.getUser();
-      const { error } = await supabase.from('lowboy_sales').insert({
+      const { data, error } = await supabase.from('lowboy_sales').insert({
         ...salePayload(values),
+        status: initialState?.status ?? 'confirmada',
+        executed_date: initialState?.executed_date ?? null,
         created_by: auth.user?.id ?? null,
-      });
+      }).select('*').single();
       if (error) throw error;
+      return data as LowboySaleRow;
     },
     onSuccess: async () => {
       await invalidate();

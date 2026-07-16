@@ -3937,7 +3937,6 @@ export type Database = {
           destination: string | null
           executed_date: string | null
           id: string
-          linked_rcv_record_id: string | null
           net_amount: number
           notes: string | null
           origin: string | null
@@ -3955,7 +3954,6 @@ export type Database = {
           destination?: string | null
           executed_date?: string | null
           id?: string
-          linked_rcv_record_id?: string | null
           net_amount: number
           notes?: string | null
           origin?: string | null
@@ -3973,7 +3971,6 @@ export type Database = {
           destination?: string | null
           executed_date?: string | null
           id?: string
-          linked_rcv_record_id?: string | null
           net_amount?: number
           notes?: string | null
           origin?: string | null
@@ -3982,15 +3979,7 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "lowboy_sales_linked_rcv_record_id_fkey"
-            columns: ["linked_rcv_record_id"]
-            isOneToOne: false
-            referencedRelation: "sii_rcv_records"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notification_email_settings: {
         Row: {
@@ -6665,7 +6654,7 @@ export type Database = {
           id: string
           import_id: string | null
           linked_cost_id: string | null
-          linked_service_id: string | null
+          linked_sale_id: string | null
           net_amount: number
           source: string
           tax_amount: number
@@ -6685,7 +6674,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           linked_cost_id?: string | null
-          linked_service_id?: string | null
+          linked_sale_id?: string | null
           net_amount?: number
           source?: string
           tax_amount?: number
@@ -6705,7 +6694,7 @@ export type Database = {
           id?: string
           import_id?: string | null
           linked_cost_id?: string | null
-          linked_service_id?: string | null
+          linked_sale_id?: string | null
           net_amount?: number
           source?: string
           tax_amount?: number
@@ -6734,32 +6723,11 @@ export type Database = {
             referencedColumns: ["candidate_cost_id"]
           },
           {
-            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
-            columns: ["linked_service_id"]
+            foreignKeyName: "sii_rcv_records_linked_sale_id_fkey"
+            columns: ["linked_sale_id"]
             isOneToOne: false
-            referencedRelation: "external_services_pending"
+            referencedRelation: "lowboy_sales"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
-            columns: ["linked_service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
-            columns: ["linked_service_id"]
-            isOneToOne: false
-            referencedRelation: "services_with_excess_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sii_rcv_records_linked_service_id_fkey"
-            columns: ["linked_service_id"]
-            isOneToOne: false
-            referencedRelation: "services_with_excess_summary"
-            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }
@@ -7997,6 +7965,24 @@ export type Database = {
     Functions: {
       activate_app_bundle_version: {
         Args: { p_version: string }
+        Returns: undefined
+      }
+      sell_lowboy_container: {
+        Args: {
+          p_container_id: string
+          p_mark_as_invoiced?: boolean
+          p_rcv_record_id?: string
+          p_sale_id: string
+          p_sale_net_price: number
+        }
+        Returns: undefined
+      }
+      set_lowboy_rcv_sale_link: {
+        Args: {
+          p_mark_as_invoiced?: boolean
+          p_record_id: string
+          p_sale_id: string | null
+        }
         Returns: undefined
       }
       admin_create_user: {

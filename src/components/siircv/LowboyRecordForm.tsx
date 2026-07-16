@@ -95,7 +95,7 @@ export function LowboyRecordForm({
     }
   };
 
-  const linked = Boolean(record?.linked_cost_id || record?.linked_service_id);
+  const linked = Boolean(record?.linked_cost_id || record?.linked_sale_id);
   const amountFields = [
     ['net_amount', 'Monto neto'],
     ['exempt_amount', 'Monto exento'],
