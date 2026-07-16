@@ -426,6 +426,8 @@ export const useServiceManager = () => {
               purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
               purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
               immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
+              entity: 'gruas_5_norte',
+              paid_by: 'gruas_5_norte',
             };
             
             const { error: costError } = await supabase
@@ -473,7 +475,9 @@ export const useServiceManager = () => {
               category_id: categoryId,
               subcategory: 'Servicios Terceros',
               supplier_id: serviceData.outsourcedProviderId,
-              service_folio: newService.folio
+              service_folio: newService.folio,
+              entity: 'gruas_5_norte',
+              paid_by: 'gruas_5_norte',
             };
 
             const { error: outsourcedCostError } = await supabase
@@ -912,6 +916,8 @@ export const useServiceManager = () => {
           purchase_quantity: (cost as Record<string, unknown>).purchase_quantity || null,
           purchase_unit_cost: (cost as Record<string, unknown>).purchase_unit_cost || null,
           immediate_consumption: !!(cost as Record<string, unknown>).immediate_consumption,
+          entity: 'gruas_5_norte',
+          paid_by: 'gruas_5_norte',
             created_by: createdBy
           }));
       
@@ -1181,7 +1187,9 @@ export const useServiceManager = () => {
                 category_id: categoryId,
                 subcategory: 'Servicios Terceros',
                 supplier_id: serviceData.outsourcedProviderId,
-                service_folio: svcData?.folio || id
+                service_folio: svcData?.folio || id,
+                entity: 'gruas_5_norte',
+                paid_by: 'gruas_5_norte',
               });
 
             if (createCostError) {

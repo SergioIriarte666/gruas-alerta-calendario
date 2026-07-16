@@ -39,6 +39,7 @@ interface EnhancedCostsTableProps {
   onSelectionChange?: (selected: Set<string>) => void;
   onBatchUpdate?: () => void;
   onBatchMarkPaid?: () => void;
+  onBatchDelete?: () => void;
   // Server-side pagination: cuando se proporcionan, el componente delega la paginación al padre
   serverPage?: number;
   serverPageSize?: number;
@@ -67,6 +68,7 @@ export const EnhancedCostsTable = ({
   onSelectionChange,
   onBatchUpdate,
   onBatchMarkPaid,
+  onBatchDelete,
   serverPage,
   serverPageSize,
   serverTotal,
@@ -536,6 +538,7 @@ export const EnhancedCostsTable = ({
           totalAmount={calculateSelectedTotal()}
           onBatchUpdate={onBatchUpdate}
           onBatchMarkPaid={onBatchMarkPaid}
+          onBatchDelete={onBatchDelete}
           onClearSelection={() => onSelectionChange?.(new Set())}
         />
       )}

@@ -318,6 +318,8 @@ export const useCostCSVUpload = () => {
             notes: row.notas || null,
             payment_date: row.pagado ? (row.fechaPago || row.fecha) : null,
             created_by: user?.id || null,
+            entity: 'gruas_5_norte',
+            paid_by: 'gruas_5_norte',
           }));
 
           const { error } = await supabase.from('costs').insert(insertData);

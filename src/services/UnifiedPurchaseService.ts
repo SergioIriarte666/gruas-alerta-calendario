@@ -269,6 +269,8 @@ export class UnifiedPurchaseService {
         purchase_quantity: data.quantity,
         purchase_unit_cost: data.unitCost,
         immediate_consumption: data.immediateConsumption,
+        entity: data.entity || ENTITIES.GRUAS_5_NORTE.key,
+        paid_by: data.entity === ENTITIES.LOWBOY.key ? ENTITIES.GRUAS_5_NORTE.key : ENTITIES.GRUAS_5_NORTE.key,
       })
       .select('id')
       .single();

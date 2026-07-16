@@ -87,7 +87,9 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
       subcategory: 'comisiones',
       notes: 'Comisión sincronizada automáticamente',
       crane_id: service.crane_id,
-      created_by: createdBy
+      created_by: createdBy,
+      entity: 'gruas_5_norte',
+      paid_by: 'gruas_5_norte',
     }));
 
     const { data: insertedCosts, error: insertError } = await supabase

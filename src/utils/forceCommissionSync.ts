@@ -98,7 +98,9 @@ export const forceCommissionSyncForService = async (serviceId: string): Promise<
       subcategory: 'comisiones',
       notes: 'Comisión sincronizada manualmente - corrección de emergencia',
       crane_id: service.crane_id,
-      created_by: createdBy
+      created_by: createdBy,
+      entity: 'gruas_5_norte',
+      paid_by: 'gruas_5_norte',
     }));
 
     // Step 4: Insert new commissions

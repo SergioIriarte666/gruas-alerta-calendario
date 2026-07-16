@@ -145,7 +145,9 @@ export const useSupplierPayments = () => {
           subcategory: paymentData.subcategory || 'Piezas y Repuestos',
           supplier_payment_id: paymentId,
           supplier_id: paymentData.supplier_id,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          entity: 'gruas_5_norte',
+          paid_by: 'gruas_5_norte',
         })
         .select('id')
         .single();

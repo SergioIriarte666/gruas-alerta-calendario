@@ -1,5 +1,6 @@
 import { Database } from "@/integrations/supabase/types";
 import { CreatorInfo } from "./common";
+import type { EntityKey } from "@/lib/entities";
 
 export type CostCategory = Database['public']['Tables']['cost_categories']['Row'];
 export type CostSubcategory = Database['public']['Tables']['cost_subcategories']['Row'];
@@ -62,7 +63,11 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
   creator?: CreatorInfo | null;
 };
 
-export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'], 'id' | 'created_at' | 'updated_at' | 'created_by'> & {
+type CostInsertBase = Omit<Database['public']['Tables']['costs']['Insert'], 'id' | 'created_at' | 'updated_at' | 'created_by' | 'entity' | 'paid_by'>;
+
+export type CostFormData = CostInsertBase & {
+  entity: EntityKey;
+  paid_by: EntityKey;
   // Campos adicionales para piezas y repuestos
   part_name?: string | null;
   supplier?: string | null;

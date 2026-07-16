@@ -164,6 +164,8 @@ export const usePayInstallment = () => {
         operator_id: debtOperatorId,
         notes: paymentNotes,
         created_by: userId,
+        entity: 'gruas_5_norte',
+        paid_by: 'gruas_5_norte',
       });
       if (cErr) {
         logger.error('[useDebtInstallments] Error creando costo al pagar cuota:', cErr);

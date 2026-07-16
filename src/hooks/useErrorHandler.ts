@@ -29,7 +29,23 @@ export interface ErrorHandlerOptions {
    * Contexto adicional para logging
    */
   context?: string;
+
+  /** Muestra el error original completo en un bloque expandible. */
+  showTechnicalDetails?: boolean;
 }
+
+const getTechnicalDetails = (error: any): string | undefined => {
+  if (!error) return undefined;
+
+  const details = [
+    error.message,
+    error.details,
+    error.hint,
+    error.code ? `Código: ${error.code}` : undefined,
+  ].filter(Boolean);
+
+  return details.length > 0 ? Array.from(new Set(details)).join('\n') : String(error);
+};
 
 /**
  * Hook centralizado para manejo de errores con traducción automática
@@ -46,7 +62,8 @@ export const useErrorHandler = () => {
       title = 'Error',
       showToast = true,
       onError,
-      context
+      context,
+      showTechnicalDetails = false,
     } = options;
 
     // Log del error para debugging
@@ -86,7 +103,8 @@ export const useErrorHandler = () => {
         type: 'error',
         title,
         description: message,
-        priority: 'high'
+        priority: 'high',
+        technicalDetails: showTechnicalDetails ? getTechnicalDetails(error) : undefined,
       });
     }
 

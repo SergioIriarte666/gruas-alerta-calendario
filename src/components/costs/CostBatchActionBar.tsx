@@ -1,13 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, RefreshCw, X } from 'lucide-react';
+import { CheckCircle, RefreshCw, Trash2, X } from 'lucide-react';
 
 interface CostBatchActionBarProps {
   selectedCount: number;
   totalAmount: number;
   onBatchUpdate: () => void;
   onBatchMarkPaid?: () => void;
+  onBatchDelete?: () => void;
   onClearSelection: () => void;
 }
 
@@ -16,6 +17,7 @@ export const CostBatchActionBar = ({
   totalAmount,
   onBatchUpdate,
   onBatchMarkPaid,
+  onBatchDelete,
   onClearSelection,
 }: CostBatchActionBarProps) => {
   return (
@@ -52,6 +54,12 @@ export const CostBatchActionBar = ({
               <RefreshCw className="size-4 mr-2" />
               Actualizar por Lotes
             </Button>
+            {onBatchDelete && (
+              <Button variant="destructive" size="sm" onClick={onBatchDelete}>
+                <Trash2 className="mr-2 size-4" />
+                Eliminar
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

@@ -279,6 +279,8 @@ describe('manualCostXmlImport', () => {
                       supplier_invoice_id: 'inv-1',
                     })
                   );
+                  expect(payload).not.toHaveProperty('entity');
+                  expect(payload).not.toHaveProperty('paid_by');
                   return { data: updatedCost, error: null };
                 }),
               }),

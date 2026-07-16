@@ -259,6 +259,10 @@ const addCost = async (costData: CostFormData) => {
     if (validAmount < 0) {
       throw new Error('El monto no puede ser negativo');
     }
+
+    if (!costData.entity || !costData.paid_by) {
+      throw new Error('La entidad y el financiador del costo son requeridos');
+    }
     
     // Preparar datos específicos para la tabla costs (filtrar campos de crane_parts)
     const validCostFields = {
@@ -277,8 +281,8 @@ const addCost = async (costData: CostFormData) => {
       document_number: (costData as any).document_number || null,
       location_text: (costData as any).location_text || null,
       other_reason: (costData as any).other_reason || null,
-      entity: (costData as any).entity || 'gruas_5_norte',
-      paid_by: (costData as any).paid_by || 'gruas_5_norte',
+      entity: costData.entity,
+      paid_by: costData.paid_by,
       dte_tipo: (costData as any).dte_tipo ?? null,
       dte_folio: (costData as any).dte_folio ?? null,
       dte_rut_emisor: (costData as any).dte_rut_emisor || null,
@@ -562,183 +566,44 @@ export const useUpdateCost = () => {
   });
 };
 
-const deleteCost = async (id: string) => {
-  // First, get linked data to clean up related records across modules.
+export const deleteCostRecord = async (id: string) => {
+  // Break the circular FK first. The database trigger owns cancellation and stock reversal.
   const { data: costData, error: fetchError } = await supabase
     .from('costs')
-    .select('service_id, supplier_payment_id, supplier_invoice_id')
+    .select('service_id, inventory_movement_id')
     .eq('id', id)
     .single();
 
   if (fetchError) {
     logger.error('Error fetching cost data before deletion:', fetchError);
-    throw new Error(fetchError.message);
+    throw fetchError;
   }
 
-  const linkedInvoiceId = costData?.supplier_invoice_id || null;
-  const linkedPaymentId = costData?.supplier_payment_id || null;
-  let linkedInvoiceSourceModule: string | null = null;
+  if (costData.inventory_movement_id) {
+    const { error: unlinkError } = await supabase
+      .from('costs')
+      .update({ inventory_movement_id: null })
+      .eq('id', id);
 
-  if (linkedInvoiceId) {
-    const { data: invoiceData, error: invoiceError } = await supabase
-      .from('supplier_invoices')
-      .select('id, source_module')
-      .eq('id', linkedInvoiceId)
-      .maybeSingle();
-
-    if (invoiceError) {
-      logger.error('Error fetching linked supplier invoice:', invoiceError);
-      throw new Error(invoiceError.message);
+    if (unlinkError) {
+      logger.error('Error unlinking inventory movement before cost deletion:', unlinkError);
+      throw unlinkError;
     }
-
-    linkedInvoiceSourceModule = invoiceData?.source_module || null;
-  }
-
-  // Delete inventory movements directly linked to the cost.
-  const movementIds = new Set<string>();
-  const { data: costMovements, error: costMovementsError } = await supabase
-    .from('inventory_movements')
-    .select('id')
-    .eq('cost_id', id);
-
-  if (costMovementsError) {
-    logger.error('Error fetching inventory movements linked by cost_id:', costMovementsError);
-    throw new Error(costMovementsError.message);
-  }
-
-  (costMovements || []).forEach((movement) => movementIds.add(movement.id));
-
-  // XML imports link inventory records by supplier_invoice_id, so include those too.
-  if (linkedInvoiceId && linkedInvoiceSourceModule === 'inventory_xml') {
-    const { data: invoiceMovements, error: invoiceMovementsError } = await supabase
-      .from('inventory_movements')
-      .select('id')
-      .eq('supplier_invoice_id', linkedInvoiceId);
-
-    if (invoiceMovementsError) {
-      logger.error('Error fetching inventory movements linked by supplier_invoice_id:', invoiceMovementsError);
-      throw new Error(invoiceMovementsError.message);
-    }
-
-    (invoiceMovements || []).forEach((movement) => movementIds.add(movement.id));
-  }
-
-  if (movementIds.size > 0) {
-    const { error: deleteCranePartsByMovementError } = await supabase
-      .from('crane_parts')
-      .delete()
-      .in('inventory_movement_id', Array.from(movementIds));
-
-    if (deleteCranePartsByMovementError) {
-      logger.error('Error deleting crane parts linked by inventory movement:', deleteCranePartsByMovementError);
-      throw new Error(deleteCranePartsByMovementError.message);
-    }
-
-    const { error: deleteMovementsError } = await supabase
-      .from('inventory_movements')
-      .delete()
-      .in('id', Array.from(movementIds));
-
-    if (deleteMovementsError) {
-      logger.error('Error deleting linked inventory movements:', deleteMovementsError);
-      throw new Error(deleteMovementsError.message);
-    }
-  }
-
-  const { error: deleteCranePartsByCostError } = await supabase
-    .from('crane_parts')
-    .delete()
-    .eq('cost_id', id);
-
-  if (deleteCranePartsByCostError) {
-    logger.error('Error deleting crane parts linked by cost:', deleteCranePartsByCostError);
-    throw new Error(deleteCranePartsByCostError.message);
-  }
-
-  // Remove supplier payments created or linked for this cost.
-  const paymentIds = new Set<string>();
-  if (linkedPaymentId) paymentIds.add(linkedPaymentId);
-
-  const { data: linkedPayments, error: linkedPaymentsError } = await supabase
-    .from('supplier_payments')
-    .select('id')
-    .or(
-      [
-        `cost_id.eq.${id}`,
-        linkedInvoiceId ? `supplier_invoice_id.eq.${linkedInvoiceId}` : null,
-      ]
-        .filter(Boolean)
-        .join(',')
-    );
-
-  if (linkedPaymentsError) {
-    logger.error('Error fetching linked supplier payments:', linkedPaymentsError);
-    throw new Error(linkedPaymentsError.message);
-  }
-
-  (linkedPayments || []).forEach((payment) => paymentIds.add(payment.id));
-
-  if (paymentIds.size > 0) {
-    const { error: deletePaymentsError } = await supabase
-      .from('supplier_payments')
-      .delete()
-      .in('id', Array.from(paymentIds));
-
-    if (deletePaymentsError) {
-      logger.error('Error deleting linked supplier payments:', deletePaymentsError);
-      throw new Error(deletePaymentsError.message);
-    }
-  }
-
-  // Delete XML supplier invoice package if it belongs to this flow and has no other links.
-  if (linkedInvoiceId && linkedInvoiceSourceModule === 'inventory_xml') {
-      const [otherCostsResult, otherPaymentsResult] = await Promise.all([
-        supabase
-          .from('costs')
-          .select('id', { count: 'exact', head: true })
-          .eq('supplier_invoice_id', linkedInvoiceId)
-          .neq('id', id),
-        supabase
-          .from('supplier_payments')
-          .select('id', { count: 'exact', head: true })
-          .eq('supplier_invoice_id', linkedInvoiceId),
-      ]);
-
-      if (otherCostsResult.error) {
-        logger.error('Error checking other costs linked to supplier invoice:', otherCostsResult.error);
-        throw new Error(otherCostsResult.error.message);
-      }
-
-      if (otherPaymentsResult.error) {
-        logger.error('Error checking other payments linked to supplier invoice:', otherPaymentsResult.error);
-        throw new Error(otherPaymentsResult.error.message);
-      }
-
-      const hasOtherCosts = (otherCostsResult.count || 0) > 0;
-      const hasOtherPayments = (otherPaymentsResult.count || 0) > 0;
-
-      if (!hasOtherCosts && !hasOtherPayments) {
-        const { error: deleteInvoiceError } = await supabase
-          .from('supplier_invoices')
-          .delete()
-          .eq('id', linkedInvoiceId);
-
-        if (deleteInvoiceError) {
-          logger.error('Error deleting linked supplier invoice:', deleteInvoiceError);
-          throw new Error(deleteInvoiceError.message);
-        }
-      }
   }
 
   const { error } = await supabase.from('costs').delete().eq('id', id);
 
   if (error) {
     logger.error('Error deleting cost:', error);
-    throw new Error(error.message);
+    throw error;
   }
 
-  // Return the service_id for cache invalidation
   return costData?.service_id;
+};
+
+const deleteCosts = async (ids: string[]) => {
+  const serviceIds = await Promise.all(ids.map(deleteCostRecord));
+  return serviceIds.filter((serviceId): serviceId is string => Boolean(serviceId));
 };
 
 // Link an XML invoice to an existing cost (instead of creating a new payment)
@@ -875,7 +740,7 @@ export const useDeleteCost = () => {
   const { invalidateAll } = useUniversalSync();
   
   return useMutation({
-    mutationFn: deleteCost,
+    mutationFn: deleteCostRecord,
     onSuccess: (serviceId) => {
       logger.debug('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
       invalidateAll('full');
@@ -889,7 +754,35 @@ export const useDeleteCost = () => {
     },
     onError: createMutationErrorHandler({
       title: 'Error al Eliminar Costo',
-      context: 'useDeleteCost'
+      context: 'useDeleteCost',
+      showTechnicalDetails: true,
+    }),
+  });
+};
+
+export const useDeleteCosts = () => {
+  const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
+  const { invalidateAll } = useUniversalSync();
+
+  return useMutation({
+    mutationFn: deleteCosts,
+    onSuccess: (serviceIds) => {
+      serviceIds.forEach((serviceId) => {
+        queryClient.invalidateQueries({ queryKey: ['service-costs', serviceId] });
+      });
+    },
+    onSettled: () => {
+      // Promise.all may partially complete before one deletion fails; refresh every affected module.
+      invalidateAll('full');
+      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
+      queryClient.refetchQueries({ queryKey: ['reports'] });
+    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Eliminar Costos',
+      context: 'useDeleteCosts',
+      showTechnicalDetails: true,
     }),
   });
 };

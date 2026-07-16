@@ -17,7 +17,8 @@ import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
 import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDialog';
-import { usePagedCosts, useDeleteCost } from '@/hooks/useCosts';
+import { CostBatchDeleteDialog } from '@/components/costs/CostBatchDeleteDialog';
+import { usePagedCosts, useDeleteCost, useDeleteCosts } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { useDateFilters } from '@/hooks/useDateFilters';
@@ -45,6 +46,7 @@ const CostsPage = () => {
     const [isManualXmlImportOpen, setIsManualXmlImportOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isBatchMarkPaidOpen, setIsBatchMarkPaidOpen] = useState(false);
+    const [isBatchDeleteOpen, setIsBatchDeleteOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
     const [prefilledDataForDuplication, setPrefilledDataForDuplication] = useState<ReturnType<typeof prepareCostForDuplication> | null>(null);
@@ -108,6 +110,7 @@ const CostsPage = () => {
         setPage(1);
     }, [dateFrom, dateTo, pageSize, searchTerm, filters.entity]);
     const { mutate: deleteCost } = useDeleteCost();
+    const { mutateAsync: deleteCosts } = useDeleteCosts();
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
     const { user } = useUser();
@@ -222,6 +225,12 @@ const CostsPage = () => {
         deleteCost(cost.id);
         setCostToDelete(null);
     }, [deleteCost]);
+
+    const handleConfirmBatchDelete = useCallback(async (costIds: string[]) => {
+        await deleteCosts(costIds);
+        setSelectedCostIds(new Set());
+        toast.success(`${costIds.length} costos eliminados`);
+    }, [deleteCosts]);
 
     const handleClearFilters = useCallback(() => {
         setFilters({
@@ -444,6 +453,7 @@ const CostsPage = () => {
                     onSelectionChange={setSelectedCostIds}
                     onBatchUpdate={() => setIsBatchUpdateOpen(true)}
                     onBatchMarkPaid={() => setIsBatchMarkPaidOpen(true)}
+                    onBatchDelete={() => setIsBatchDeleteOpen(true)}
                     serverPage={page}
                     serverPageSize={pageSize}
                     serverTotal={totalCostCount}
@@ -547,6 +557,13 @@ const CostsPage = () => {
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
                 onConfirmDelete={handleConfirmDelete}
+            />
+
+            <CostBatchDeleteDialog
+                costs={finalFilteredCosts.filter(c => selectedCostIds.has(c.id))}
+                open={isBatchDeleteOpen}
+                onOpenChange={setIsBatchDeleteOpen}
+                onConfirm={handleConfirmBatchDelete}
             />
         </div>
     );

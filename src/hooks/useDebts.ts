@@ -272,6 +272,8 @@ export const useCreateDebt = () => {
                 crane_id: data.crane_id || null,
                 operator_id: data.operator_id || null,
                 created_by: userId,
+                entity: 'gruas_5_norte',
+                paid_by: 'gruas_5_norte',
               });
               if (cErr) throw cErr;
             }

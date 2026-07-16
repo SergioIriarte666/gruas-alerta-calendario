@@ -10,6 +10,7 @@ interface Toast {
   type: 'success' | 'error' | 'info' | 'warning';
   duration?: number;
   priority?: 'low' | 'normal' | 'high';
+  technicalDetails?: string;
 }
 
 interface ToastContextType {
@@ -42,6 +43,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (toast.duration) return toast.duration;
       
       if (toast.priority === 'low') return 1500;
+      if (toast.technicalDetails) return 12000;
       if (toast.priority === 'high') return 4000;
       
       switch (toast.type) {
@@ -89,7 +91,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
       case 'success':
         return <CheckCircle className="size-5 text-tms-green" />;
       case 'error':
-        return <AlertCircle className="size-5 text-red-400" />;
+        return <AlertCircle className="size-5 text-white" />;
       case 'warning':
         return <AlertCircle className="size-5 text-yellow-400" />;
       case 'info':
@@ -102,7 +104,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
       case 'success':
         return 'border-l-tms-green';
       case 'error':
-        return 'border-l-red-400';
+        return 'border-red-950/70';
       case 'warning':
         return 'border-l-yellow-400';
       case 'info':
@@ -115,7 +117,7 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
       case 'success':
         return 'bg-tms-green/10 border-tms-green/30';
       case 'error':
-        return 'bg-red-500/10 border-red-500/30';
+        return 'text-white';
       case 'warning':
         return 'bg-yellow-500/10 border-yellow-500/30';
       case 'info':
@@ -130,11 +132,13 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
         getBorderColor(),
         getBackgroundColor()
       )}
-      style={{
+      style={toast.type === 'error' ? {
+        background: 'color-mix(in srgb, hsl(var(--destructive)) 70%, black)',
+        borderColor: 'color-mix(in srgb, hsl(var(--destructive)) 45%, black)',
+      } : {
         background: 'hsl(var(--card))',
         borderColor: toast.type === 'success' ? 'hsl(var(--success))' :
-                   toast.type === 'error' ? 'hsl(var(--danger))' :
-                   toast.type === 'warning' ? 'hsl(var(--warning))' : 'hsl(var(--primary))'
+          toast.type === 'warning' ? 'hsl(var(--warning))' : 'hsl(var(--primary))',
       }}
     >
       <div className="flex items-start justify-between">
@@ -142,20 +146,34 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
           {getIcon()}
           <div className="flex-1">
             {toast.title && (
-              <h4 className="font-semibold text-card-foreground text-sm">
+              <h4 className={cn("font-semibold text-sm", toast.type === 'error' ? 'text-white' : 'text-card-foreground')}>
                 {toast.title}
               </h4>
             )}
             {toast.description && (
-              <p className="text-muted-foreground text-sm mt-1">
+              <p className={cn("text-sm mt-1", toast.type === 'error' ? 'text-white/95' : 'text-muted-foreground')}>
                 {toast.description}
               </p>
+            )}
+            {toast.technicalDetails && (
+              <details className="mt-2 text-xs text-white">
+                <summary className="cursor-pointer font-medium underline decoration-white/60 underline-offset-2">
+                  Ver detalle
+                </summary>
+                <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded border border-white/30 bg-black/20 p-2 font-mono text-[11px] leading-4 text-white">
+                  {toast.technicalDetails}
+                </pre>
+              </details>
             )}
           </div>
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className="text-muted-foreground hover:text-foreground ml-2 transition-colors"
+          className={cn(
+            "ml-2 transition-colors",
+            toast.type === 'error' ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground',
+          )}
+          aria-label="Cerrar notificación"
         >
           <X className="size-4" />
         </button>

@@ -81,7 +81,9 @@ export const createInventoryCost = async ({
       date,
       description: costDescription,
       notes,
-      subcategory: finalSubcategory
+      subcategory: finalSubcategory,
+      entity: 'gruas_5_norte',
+      paid_by: 'gruas_5_norte',
     })
     .select('id')
     .single();

@@ -15,6 +15,7 @@ import { XMLCompleteParseResult, XMLDocumentData } from '@/types/suppliers';
 import { format, addDays } from 'date-fns';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import type { CostFormData } from '@/types/costs';
 import {
   HistoricalGlosaCandidate,
   HistoricalGlosaSuggestion,
@@ -544,7 +545,7 @@ export function useXmlCostUpload({ onSuccess, onClose }: UseXmlCostUploadOptions
           // de inmediato hacia esa grúa (igual que el flujo manual); si no, solo entra a bodega.
           const isLowboyImmediateConsumption = isLowboyDoc && !!lowboyCraneId;
 
-          const costData = {
+          const costData: CostFormData = {
             date: emissionDate,
             description: effectiveGlosa,
             amount: doc.total_amount,

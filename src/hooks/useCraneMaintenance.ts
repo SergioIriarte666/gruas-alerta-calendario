@@ -123,6 +123,8 @@ const syncMaintenanceCost = async (params: {
         subcategory: params.maintenanceType,
         created_by: user?.id || null,
         payment_date: paymentDate,
+        entity: 'gruas_5_norte',
+        paid_by: 'gruas_5_norte',
       });
     if (insertErr) {
       logger.error('Error creating maintenance cost:', insertErr);
