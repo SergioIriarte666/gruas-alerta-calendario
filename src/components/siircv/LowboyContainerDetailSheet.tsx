@@ -25,9 +25,9 @@ import {
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
 const STATUS_CLASS = {
-  disponible: 'bg-emerald-600 text-white',
-  reservado: 'bg-amber-500 text-white',
-  vendido: 'bg-sky-700 text-white',
+  disponible: 'bg-emerald-600 lowboy-on-color',
+  reservado: 'bg-amber-500 lowboy-on-color',
+  vendido: 'bg-sky-700 lowboy-on-color',
 } as const;
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -74,7 +74,7 @@ export function LowboyContainerDetailSheet({ container, open, onOpenChange, isAd
           <SheetHeader className="pr-8 text-left">
             <div className="flex flex-wrap items-center gap-2">
               <SheetTitle className="font-mono text-base sm:text-lg">{container.serial_number || 'CONTENEDOR SIN SERIE'}</SheetTitle>
-              {!container.serial_number && <Badge className="bg-amber-500 text-white">Sin serie</Badge>}
+              {!container.serial_number && <Badge className="bg-amber-500 lowboy-on-color">Sin serie</Badge>}
               <Badge className={STATUS_CLASS[status]}>{CONTAINER_STATUS_LABEL[status]}</Badge>
             </div>
             <SheetDescription>{CONTAINER_SIZE_LABEL[container.size as keyof typeof CONTAINER_SIZE_LABEL]} · {CONTAINER_TYPE_LABEL[container.container_type as keyof typeof CONTAINER_TYPE_LABEL]}</SheetDescription>

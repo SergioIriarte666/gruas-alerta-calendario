@@ -77,10 +77,10 @@ const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', {
 }).format(Number(value) || 0);
 
 const STATUS_BADGE: Record<LowboySaleStatus, string> = {
-  confirmada: 'bg-sky-600 hover:bg-sky-700 text-white',
-  ejecutada: 'bg-amber-500 hover:bg-amber-600 text-white',
-  facturada: 'bg-cyan-800 hover:bg-cyan-900 text-white',
-  pagada: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+  confirmada: 'bg-sky-600 hover:bg-sky-700 lowboy-on-color',
+  ejecutada: 'bg-amber-500 hover:bg-amber-600 lowboy-on-color',
+  facturada: 'bg-cyan-800 hover:bg-cyan-900 lowboy-on-color',
+  pagada: 'bg-emerald-600 hover:bg-emerald-700 lowboy-on-color',
   cancelada: 'bg-muted text-muted-foreground line-through',
 };
 
@@ -554,7 +554,7 @@ export function LowboySalesPanel() {
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={manager.setStatus.isPending}>Volver</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-amber-600 text-white hover:bg-amber-700"
+                  className="bg-amber-600 lowboy-on-color hover:bg-amber-700"
                   onClick={(event) => { event.preventDefault(); confirmCancel(); }}
                   disabled={manager.setStatus.isPending}
                 >
@@ -625,7 +625,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       onClick={onClick}
       className={cn(
         'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-        active ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-border bg-background text-muted-foreground hover:bg-muted',
+        active ? 'border-emerald-600 bg-emerald-600 lowboy-on-color' : 'border-border bg-background text-muted-foreground hover:bg-muted',
       )}
     >
       {children}

@@ -169,6 +169,10 @@ body.lowboy-theme {
   --shadow-glow: 0 0 0 1px hsl(173 60% 45% / 0.16), 0 4px 12px hsl(0 0% 0% / 0.24);
 }
 
+body.lowboy-theme .lowboy-on-color {
+  color: #fff !important;
+}
+
 /* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 8px;

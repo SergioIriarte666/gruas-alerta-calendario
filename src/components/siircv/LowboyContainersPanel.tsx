@@ -32,9 +32,9 @@ import { generateLowboyContainersPdf } from '@/utils/pdf/lowboyContainersPdfGene
 const formatCLP = (value: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Number(value) || 0);
 
 const STATUS_CLASS: Record<LowboyContainerStatus, string> = {
-  disponible: 'bg-emerald-600 text-white',
-  reservado: 'bg-amber-500 text-white',
-  vendido: 'bg-sky-700 text-white',
+  disponible: 'bg-emerald-600 lowboy-on-color',
+  reservado: 'bg-amber-500 lowboy-on-color',
+  vendido: 'bg-sky-700 lowboy-on-color',
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -45,7 +45,7 @@ function StatusBadge({ status }: { status: string }) {
 function SerialLabel({ container }: { container: LowboyContainerRow }) {
   return container.serial_number
     ? <span className="font-mono text-xs font-semibold sm:text-sm">{container.serial_number}</span>
-    : <Badge className="bg-amber-500 text-white">Sin serie</Badge>;
+    : <Badge className="bg-amber-500 lowboy-on-color">Sin serie</Badge>;
 }
 
 function Kpi({ label, value, detail, tone }: { label: string; value: string; detail?: string; tone: string }) {
@@ -170,7 +170,7 @@ export function LowboyContainersPanel() {
                 key={status}
                 type="button"
                 onClick={() => setStatusFilter(status)}
-                className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition-colors', statusFilter === status ? 'border-teal-700 bg-teal-700 text-white' : 'bg-background text-muted-foreground hover:bg-muted')}
+                className={cn('rounded-md border px-3 py-1.5 text-xs font-medium transition-colors', statusFilter === status ? 'border-teal-700 bg-teal-700 lowboy-on-color' : 'bg-background text-muted-foreground hover:bg-muted')}
               >
                 {status === 'all' ? 'Todos' : CONTAINER_STATUS_LABEL[status]}
               </button>
