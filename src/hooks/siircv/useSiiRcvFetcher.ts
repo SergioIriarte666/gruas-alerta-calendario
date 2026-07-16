@@ -14,7 +14,9 @@ const LOWBOY_RECORD_SELECT = `
     service_date,
     value,
     client:clients!services_client_id_fkey(id, name)
-  )
+  ),
+  container_purchase_links:lowboy_containers!lowboy_containers_purchase_rcv_record_id_fkey(id),
+  container_cost_links:lowboy_container_costs!lowboy_container_costs_rcv_record_id_fkey(id, container_id)
 `;
 
 export type SiiRcvFilters = {

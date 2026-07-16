@@ -3807,6 +3807,126 @@ export type Database = {
           },
         ]
       }
+      lowboy_container_costs: {
+        Row: {
+          concept: string
+          container_id: string
+          cost_date: string
+          created_at: string
+          id: string
+          net_amount: number
+          notes: string | null
+          rcv_record_id: string | null
+        }
+        Insert: {
+          concept: string
+          container_id: string
+          cost_date: string
+          created_at?: string
+          id?: string
+          net_amount: number
+          notes?: string | null
+          rcv_record_id?: string | null
+        }
+        Update: {
+          concept?: string
+          container_id?: string
+          cost_date?: string
+          created_at?: string
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          rcv_record_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lowboy_container_costs_container_id_fkey"
+            columns: ["container_id"]
+            isOneToOne: false
+            referencedRelation: "lowboy_containers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lowboy_container_costs_rcv_record_id_fkey"
+            columns: ["rcv_record_id"]
+            isOneToOne: false
+            referencedRelation: "sii_rcv_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lowboy_containers: {
+        Row: {
+          acquisition_date: string
+          acquisition_net_cost: number
+          condition: string
+          container_type: string
+          created_at: string
+          id: string
+          notes: string | null
+          purchase_rcv_record_id: string | null
+          sale_id: string | null
+          sale_net_price: number | null
+          serial_number: string | null
+          size: string
+          status: string
+          supplier_name: string | null
+          supplier_rut: string | null
+          updated_at: string
+        }
+        Insert: {
+          acquisition_date: string
+          acquisition_net_cost: number
+          condition?: string
+          container_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          purchase_rcv_record_id?: string | null
+          sale_id?: string | null
+          sale_net_price?: number | null
+          serial_number?: string | null
+          size: string
+          status?: string
+          supplier_name?: string | null
+          supplier_rut?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acquisition_date?: string
+          acquisition_net_cost?: number
+          condition?: string
+          container_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          purchase_rcv_record_id?: string | null
+          sale_id?: string | null
+          sale_net_price?: number | null
+          serial_number?: string | null
+          size?: string
+          status?: string
+          supplier_name?: string | null
+          supplier_rut?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lowboy_containers_purchase_rcv_record_id_fkey"
+            columns: ["purchase_rcv_record_id"]
+            isOneToOne: false
+            referencedRelation: "sii_rcv_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lowboy_containers_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "lowboy_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lowboy_sales: {
         Row: {
           client_name: string

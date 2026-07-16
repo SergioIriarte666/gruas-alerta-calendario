@@ -53,7 +53,7 @@ export function useLowboySales() {
     queryFn: async (): Promise<LowboySaleRow[]> => {
       const { data, error } = await supabase
         .from('lowboy_sales')
-        .select('*')
+        .select('*, lowboy_containers!lowboy_containers_sale_id_fkey(id, serial_number, size)')
         .order('scheduled_date', { ascending: true, nullsFirst: false });
       if (error) {
         logger.error('Error cargando ventas Lowboy', error);
@@ -112,7 +112,12 @@ const salePayload = (values: LowboySaleFormValues) => {
 
 export function useLowboySalesManager() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+  const invalidate = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy-containers'] }),
+    queryClient.invalidateQueries({ queryKey: ['lowboy-container-sales'] }),
+    queryClient.invalidateQueries({ queryKey: ['sii-rcv'] }),
+  ]);
 
   const createSale = useMutation({
     mutationFn: async (values: LowboySaleFormValues) => {

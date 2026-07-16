@@ -5,3 +5,4 @@ export * from './siircv/useSiiResultado';
 export * from './siircv/useLowboyIva';
 export * from './siircv/useLowboyRutBackfill';
 export * from './siircv/useLowboyLinkedDetail';
+export * from './siircv/useLowboyContainers';

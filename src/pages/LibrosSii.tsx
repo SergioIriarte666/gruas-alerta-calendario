@@ -5,6 +5,7 @@ import { SiiRcvTable } from '@/components/siircv/SiiRcvTable';
 import { SiiResultadoPanel } from '@/components/siircv/SiiResultadoPanel';
 import { LowboyIvaPanel } from '@/components/siircv/LowboyIvaPanel';
 import { LowboySalesPanel } from '@/components/siircv/LowboySalesPanel';
+import { LowboyContainersPanel } from '@/components/siircv/LowboyContainersPanel';
 import { useUser } from '@/contexts/UserContext';
 
 const DEFAULT_ENTITY_RUT = '78.387.656-6';
@@ -24,12 +25,15 @@ const LibrosSii = () => {
       </div>
 
       <Tabs defaultValue="ventas" className="space-y-4">
-        <TabsList className="bg-muted/30 p-1">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/30 p-1 sm:inline-grid sm:w-auto sm:grid-cols-4">
           <TabsTrigger value="ventas" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             Ventas
           </TabsTrigger>
           <TabsTrigger value="import" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             Importar / Registros
+          </TabsTrigger>
+          <TabsTrigger value="containers" className="data-[state=active]:bg-teal-700 data-[state=active]:text-white data-[state=active]:shadow-sm">
+            Contenedores
           </TabsTrigger>
           <TabsTrigger value="resultado" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             Resultado
@@ -43,6 +47,10 @@ const LibrosSii = () => {
 
         <TabsContent value="ventas" className="space-y-4">
           <LowboySalesPanel />
+        </TabsContent>
+
+        <TabsContent value="containers" className="space-y-4">
+          <LowboyContainersPanel />
         </TabsContent>
 
         <TabsContent value="resultado" className="space-y-4">

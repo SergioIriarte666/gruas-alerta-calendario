@@ -92,6 +92,12 @@ function LinkBadge({ row, onView }: { row: SiiRcvRecordRow; onView?: (record: Si
   );
 }
 
+function ContainerBadge({ row }: { row: SiiRcvRecordRow }) {
+  const linked = (row.container_purchase_links?.length ?? 0) > 0 || (row.container_cost_links?.length ?? 0) > 0;
+  if (!linked) return null;
+  return <Badge variant="outline" className="whitespace-nowrap border-teal-600/40 bg-teal-600/5 font-normal text-teal-700">Contenedor</Badge>;
+}
+
 interface SiiRcvTableProps {
   entityRut: string;
 }
@@ -208,7 +214,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
         id: 'link_status',
         accessorFn: (row) => Boolean(row.linked_cost_id || row.linked_service_id),
         header: ({ column }) => <SortableHeader column={column} label="Vínculo" />,
-        cell: ({ row }) => <LinkBadge row={row.original} onView={openLinkedDetail} />,
+        cell: ({ row }) => <div className="flex flex-wrap gap-1"><LinkBadge row={row.original} onView={openLinkedDetail} /><ContainerBadge row={row.original} /></div>,
       },
     ];
 
@@ -281,7 +287,7 @@ export function SiiRcvTable({ entityRut }: SiiRcvTableProps) {
                     <div className="flex items-center gap-1">{docTypeBadge(row.doc_type)}{isAdmin && <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="size-4" /></Button>}</div>
                   </div>
                   <p className="mt-2 truncate">{row.counterpart_name || 'Sin razón social'}</p>
-                  <div className="mt-2 flex items-center justify-between"><LinkBadge row={row} onView={openLinkedDetail} /><p className="font-semibold">{formatCLP(row.total_amount)}</p></div>
+                  <div className="mt-2 flex items-center justify-between gap-2"><div className="flex flex-wrap gap-1"><LinkBadge row={row} onView={openLinkedDetail} /><ContainerBadge row={row} /></div><p className="shrink-0 font-semibold">{formatCLP(row.total_amount)}</p></div>
                   {isAdmin && <div className="mt-3 flex gap-2 border-t pt-3"><Button variant="outline" size="sm" className="flex-1" onClick={() => setLinkingRecord(row)}><Link2 className="mr-2 size-4" />Vincular</Button><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeletingRecord(row)}><Trash2 className="size-4" /></Button></div>}
                 </div>
               )) : <p className="p-6 text-center text-muted-foreground">No hay registros para este filtro.</p>}

@@ -15,6 +15,8 @@ export type SiiRcvRecordRow = SiiRcvBaseRecordRow & {
     value: number;
     client: { id: string; name: string } | null;
   } | null;
+  container_purchase_links: Array<{ id: string }>;
+  container_cost_links: Array<{ id: string; container_id: string }>;
 };
 export type SiiRcvImportRow = Database['public']['Tables']['sii_rcv_imports']['Row'];
 

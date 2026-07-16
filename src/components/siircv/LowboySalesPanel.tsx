@@ -5,6 +5,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Ban,
+  Box,
   CheckCircle2,
   Loader2,
   MoreHorizontal,
@@ -159,6 +160,16 @@ function SaleDescription({ sale }: SaleDescriptionProps) {
         <p className="mt-0.5 text-xs text-muted-foreground">
           {sale.origin || '—'} → {sale.destination || '—'}
         </p>
+      )}
+      {sale.sale_type === 'producto' && (sale.lowboy_containers?.length ?? 0) > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {sale.lowboy_containers?.map((container) => (
+            <Badge key={container.id} variant="outline" className="gap-1 border-teal-600/40 bg-teal-600/5 px-1.5 py-0 text-[11px] text-teal-700">
+              <Box className="size-3" />
+              {container.serial_number || `${container.size}' sin serie`}
+            </Badge>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -507,6 +518,7 @@ export function LowboySalesPanel() {
                 <AlertDialogTitle>¿Cancelar esta venta?</AlertDialogTitle>
                 <AlertDialogDescription>
                   La venta de {cancelingSale?.client_name} quedará marcada como cancelada. No se elimina el registro.
+                  {(cancelingSale?.lowboy_containers?.length ?? 0) > 0 && ` Sus ${cancelingSale?.lowboy_containers?.length} contenedor(es) volverán a estar disponibles automáticamente.`}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -530,6 +542,7 @@ export function LowboySalesPanel() {
                 <AlertDialogTitle>¿Eliminar esta venta?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Se eliminará permanentemente la venta de {deletingSale?.client_name}. Esta acción no se puede deshacer.
+                  {(deletingSale?.lowboy_containers?.length ?? 0) > 0 && ` Sus ${deletingSale?.lowboy_containers?.length} contenedor(es) volverán a estar disponibles.`}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

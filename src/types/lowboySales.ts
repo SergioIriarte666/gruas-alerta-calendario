@@ -1,6 +1,12 @@
 import type { Database } from '@/integrations/supabase/types';
 
-export type LowboySaleRow = Database['public']['Tables']['lowboy_sales']['Row'];
+export type LowboySaleRow = Database['public']['Tables']['lowboy_sales']['Row'] & {
+  lowboy_containers?: Array<{
+    id: string;
+    serial_number: string | null;
+    size: string;
+  }>;
+};
 
 export type LowboySaleType = 'producto' | 'flete';
 export type LowboySaleStatus =
