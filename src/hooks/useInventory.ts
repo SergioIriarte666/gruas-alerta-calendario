@@ -240,7 +240,7 @@ const INVENTORY_MOVEMENT_SELECT = `
   supplier_invoice_id,
   supplier_invoice_item_id,
   item:inventory_items(id, name),
-  location:inventory_locations(id, name, code, entity),
+  location:inventory_locations!inventory_movements_location_id_fkey(id, name, code, entity),
   destination_location:inventory_locations!inventory_movements_destination_location_id_fkey(id, name, code, entity),
   supplier:inventory_suppliers(id, name),
   crane:cranes(id, license_plate)
@@ -273,7 +273,7 @@ const INVENTORY_MOVEMENT_REFERENCE_SELECT = `
   supplier_invoice_id,
   supplier_invoice_item_id,
   item:inventory_items(id, name, sku, code),
-  location:inventory_locations(id, name, code, entity),
+  location:inventory_locations!inventory_movements_location_id_fkey(id, name, code, entity),
   destination_location:inventory_locations!inventory_movements_destination_location_id_fkey(id, name, code, entity)
 `;
 
@@ -364,6 +364,14 @@ const applyMovementLocationFilter = <T extends { or: (filters: string) => T }>(
   return query.or(`location_id.in.(${ids}),destination_location_id.in.(${ids})`);
 };
 
+const applyStockLocationFilter = <T extends { in: (column: string, values: string[]) => T }>(
+  query: T,
+  locationIds: string[] | null,
+) => {
+  if (!locationIds) return query;
+  return query.in('location_id', locationIds);
+};
+
 // Hooks for inventory stock
 export const useInventoryStock = (entityFilter: InventoryEntityFilter = 'all') => {
   return useQuery({
@@ -377,7 +385,7 @@ export const useInventoryStock = (entityFilter: InventoryEntityFilter = 'all') =
         .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
 
-      query = applyMovementLocationFilter(query, locationIds);
+      query = applyStockLocationFilter(query, locationIds);
 
       const { data, error } = await query;
 
@@ -401,7 +409,7 @@ export const useLowStockItems = (entityFilter: InventoryEntityFilter = 'all') =>
         .select(INVENTORY_STOCK_SELECT)
         .order('current_quantity', { ascending: true });
 
-      query = applyMovementLocationFilter(query, locationIds);
+      query = applyStockLocationFilter(query, locationIds);
 
       const { data, error } = await query;
 
